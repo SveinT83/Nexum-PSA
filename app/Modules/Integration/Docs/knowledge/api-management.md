@@ -1152,6 +1152,15 @@ Not Found, and neither timeout nor conflict permits resend. Responses omit lease
 paths, checksums, generation/fingerprint evidence, Bcc, raw MIME, credentials, canonical identities,
 and raw provider/exception evidence.
 
+Conversation acknowledgement uses `email.read` for
+`POST /api/v1/email/mailbox/conversation-actions/preview` and `GET .../{run}`. `email.update` is
+required for `POST .../{run}/apply`, `/retry`, and `/cancel`. Preview accepts either one exact active
+account/conversation or explicitly selected placement IDs across authorized accounts. Apply is
+queued and bounded; personal Unread-for-me and optional provider Seen remain separate results.
+Responses contain opaque item/run/operation IDs, counts, statuses and safe reason codes, never mail
+content, participants, folder paths, provider errors or another user's personal state. The runtime
+flag remains default-off until `HR-2026-08-16-012` is reviewed.
+
 `GET /api/v1/email/rules`, `GET /api/v1/email/rules/{rule}`, and
 `POST /api/v1/email/rules/{rule}/preview` use `email.rules.read`. The authenticated user must also
 have Email rule-management permission. Preview reports the published rule version, account scope,

@@ -870,13 +870,26 @@
                                 </button>
                             @endif
 
-                            @if($canOrganizeSelected || ($canUsePersonalUnreadSelected && ! $this->isUnreadForMe($selectedMessage)) || $this->canUseRuleAction($selectedPlacement) || $canLinkTicketSelected)
+                            @if($canOrganizeSelected || ($canUsePersonalUnreadSelected && ! $this->isUnreadForMe($selectedMessage)) || $this->canUseRuleAction($selectedPlacement) || $canLinkTicketSelected || ($this->conversationAcknowledgementAvailable() && $selectedPlacement->email_conversation_id))
                                 <div class="dropdown">
                                     <button type="button" class="btn btn-sm btn-outline-secondary btn-icon" data-bs-toggle="dropdown" aria-expanded="false" title="More actions">
                                         <i class="bi bi-chevron-down" aria-hidden="true"></i>
                                         <span class="visually-hidden">More actions</span>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
+                                        @if($this->conversationAcknowledgementAvailable() && $selectedPlacement->email_conversation_id)
+                                            <li>
+                                                <button type="button" class="dropdown-item" wire:click="openConversationAcknowledgement(false)">
+                                                    <i class="bi bi-envelope-open me-2" aria-hidden="true"></i>Mark conversation read for me
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button type="button" class="dropdown-item" wire:click="openConversationAcknowledgement(true)">
+                                                    <i class="bi bi-envelope-exclamation me-2" aria-hidden="true"></i>Mark conversation unread for me
+                                                </button>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                        @endif
                                         @if($canUsePersonalUnreadSelected && ! $this->isUnreadForMe($selectedMessage))
                                             <li>
                                                 <button type="button" class="dropdown-item" wire:click="setSelectedUnreadForMe(true)">
@@ -971,6 +984,66 @@
                             @endif
                         </div>
 	                    </div>
+
+                        @if($conversationAcknowledgementOpen)
+                            <div class="mail-classification-editor border rounded p-3 mt-2" role="region" aria-labelledby="mail-conversation-acknowledgement-title">
+                                <div class="d-flex flex-wrap align-items-start justify-content-between gap-2">
+                                    <div>
+                                        <h2 id="mail-conversation-acknowledgement-title" class="h6 mb-1">
+                                            {{ $conversationAcknowledgementTargetUnread ? 'Mark conversation unread for me' : 'Mark conversation read for me' }}
+                                        </h2>
+                                        <p class="small text-muted mb-0">
+                                            Preview freezes only the currently visible messages in this mailbox conversation. New mail and other users are not changed.
+                                        </p>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-icon" wire:click="closeConversationAcknowledgement" title="Close conversation action">
+                                        <i class="bi bi-x-lg" aria-hidden="true"></i>
+                                        <span class="visually-hidden">Close conversation action</span>
+                                    </button>
+                                </div>
+
+                                @if(! $conversationAcknowledgementSummary)
+                                    @if($canOrganizeSelected && ! $conversationAcknowledgementTargetUnread)
+                                        <div class="form-check mt-3">
+                                            <input id="mail-conversation-provider-seen" class="form-check-input" type="checkbox" wire:model="conversationAcknowledgementProviderSeen">
+                                            <label for="mail-conversation-provider-seen" class="form-check-label">
+                                                Also request Mailbox read for each exact provider placement
+                                            </label>
+                                            <div class="form-text">This is a separate provider action and may remain pending or fail after the personal result succeeds.</div>
+                                        </div>
+                                    @endif
+                                    <div class="d-flex justify-content-end mt-3">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" wire:click="previewConversationAcknowledgement">
+                                            <i class="bi bi-eye me-1" aria-hidden="true"></i>Create preview
+                                        </button>
+                                    </div>
+                                @else
+                                    <div class="row g-2 mt-2" aria-live="polite">
+                                        <div class="col-6 col-md"><div class="border rounded p-2"><div class="small text-muted">Status</div><div class="fw-semibold">{{ ucfirst(str_replace('_', ' ', $conversationAcknowledgementSummary['status'])) }}</div></div></div>
+                                        <div class="col-6 col-md"><div class="border rounded p-2"><div class="small text-muted">Frozen messages</div><div class="fw-semibold">{{ $conversationAcknowledgementSummary['items'] }}</div></div></div>
+                                        <div class="col-6 col-md"><div class="border rounded p-2"><div class="small text-muted">Personal applied</div><div class="fw-semibold">{{ $conversationAcknowledgementSummary['personal_applied'] }}</div></div></div>
+                                        <div class="col-6 col-md"><div class="border rounded p-2"><div class="small text-muted">Mailbox pending</div><div class="fw-semibold">{{ $conversationAcknowledgementSummary['provider_pending'] }}</div></div></div>
+                                        <div class="col-6 col-md"><div class="border rounded p-2"><div class="small text-muted">Problems</div><div class="fw-semibold">{{ $conversationAcknowledgementSummary['denied'] + $conversationAcknowledgementSummary['stale'] + $conversationAcknowledgementSummary['failed'] }}</div></div></div>
+                                    </div>
+                                    @if($conversationAcknowledgementSummary['expires_at'] && $conversationAcknowledgementSummary['status'] === 'previewed')
+                                        <div class="small text-muted mt-2">Preview expires {{ $conversationAcknowledgementSummary['expires_at'] }}.</div>
+                                    @endif
+                                    <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="refreshConversationAcknowledgement">Refresh status</button>
+                                        @if(! $conversationAcknowledgementSummary['terminal'])
+                                            <button type="button" class="btn btn-sm btn-outline-danger" wire:click="cancelConversationAcknowledgement">Cancel</button>
+                                        @endif
+                                        @if($conversationAcknowledgementSummary['status'] === 'previewed')
+                                            <button type="button" class="btn btn-sm btn-primary" wire:click="applyConversationAcknowledgement" onclick="return confirm('Apply this exact frozen conversation action?');">
+                                                Confirm and apply
+                                            </button>
+                                        @elseif($conversationAcknowledgementSummary['status'] === 'partial')
+                                            <button type="button" class="btn btn-sm btn-outline-primary" wire:click="applyConversationAcknowledgement">Retry unresolved</button>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
 
 	                    @if($personalRuleModalOpen)
 	                        @php($personalRuleAttempts = $this->ruleExecutionAttemptsForPlacement($selectedPlacement))

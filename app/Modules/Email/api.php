@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Email\Controllers\Api\V1\ConversationActionsController;
 use App\Modules\Email\Controllers\Api\V1\ConversationClassificationController;
 use App\Modules\Email\Controllers\Api\V1\InboxController;
 use App\Modules\Email\Controllers\Api\V1\MailboxDraftAttachmentsController;
@@ -180,6 +181,22 @@ Route::put('email/mailbox/conversations/{conversation}/classification', [Convers
 
 Route::delete('email/mailbox/conversations/{conversation}/classification', [ConversationClassificationController::class, 'destroy'])
     ->name('email.mailbox.conversations.classification.destroy')
+    ->middleware(CheckAbilities::class.':email.update');
+
+Route::post('email/mailbox/conversation-actions/preview', [ConversationActionsController::class, 'preview'])
+    ->name('email.mailbox.conversation-actions.preview')
+    ->middleware(CheckAbilities::class.':email.read');
+Route::get('email/mailbox/conversation-actions/{run}', [ConversationActionsController::class, 'show'])
+    ->name('email.mailbox.conversation-actions.show')
+    ->middleware(CheckAbilities::class.':email.read');
+Route::post('email/mailbox/conversation-actions/{run}/apply', [ConversationActionsController::class, 'apply'])
+    ->name('email.mailbox.conversation-actions.apply')
+    ->middleware(CheckAbilities::class.':email.update');
+Route::post('email/mailbox/conversation-actions/{run}/retry', [ConversationActionsController::class, 'retry'])
+    ->name('email.mailbox.conversation-actions.retry')
+    ->middleware(CheckAbilities::class.':email.update');
+Route::post('email/mailbox/conversation-actions/{run}/cancel', [ConversationActionsController::class, 'cancel'])
+    ->name('email.mailbox.conversation-actions.cancel')
     ->middleware(CheckAbilities::class.':email.update');
 
 Route::get('email/smart-inbox/suggestions/count', [SmartInboxSuggestionsController::class, 'count'])

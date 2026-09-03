@@ -833,12 +833,14 @@ cannot be hidden by a coalesced row.
 Provider Seen remains an independent outcome. Apply records one idempotent pending `mark_seen`
 operation through `RecordEmailRemoteOperation`; it does not resolve an IMAP client. A failed or
 denied provider reservation cannot roll back a successful personal acknowledgement, and retry/readback
-cannot duplicate either effect. Historical implicit `AcknowledgeEmailConversation` calls now fail
-closed. The Livewire acknowledgement method also refuses to bypass preview/confirmation.
+cannot duplicate either effect. Historical implicit `AcknowledgeEmailConversation` calls fail
+closed. Mail and API expose only the separate preview/confirmation boundary.
 
-This backend is not an activated UI/API feature. `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED` defaults false;
-broad multi-account Archive/Move/Trash, confirmation UI, API, queue continuation and private
-invalidation remain dependency-gated under Order 12 and `HR-2026-08-16-012`.
+`EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED` still defaults false. When enabled, Mail supports active-account
+conversation preview/confirm/status/cancel. API additionally accepts exact selected placements
+across authorized accounts and supports apply/retry/cancel. `ProcessEmailConversationAcknowledgementRun`
+continues at most 25 locally actionable items per invocation on the default queue; provider effects
+remain normal remote operations. Named review `HR-2026-08-16-012` gates activation.
 
 ### Mail workspace triage actions
 The `/tech/mail` command bar keeps common actions compact:

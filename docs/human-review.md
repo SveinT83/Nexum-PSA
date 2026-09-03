@@ -597,7 +597,7 @@ Reviewed date: 2026-08-25
 | HR-2026-08-21-001 | Dev database recovery and Mail permission-repair verification | Reviewed | 2026-08-21 | Svein | 2026-08-25 |
 | HR-2026-08-16-014 | Email/Ticket correlation conflict triage | In Review (implementation reopened) | 2026-08-16 | Svein | 2026-08-25; reopened 2026-08-31 |
 | HR-2026-08-16-013 | Email/Ticket conversation relationship migration | Reviewed | 2026-08-16 | Svein | 2026-08-25 |
-| HR-2026-08-16-012 | Email conversation acknowledgement and explicit multi-account actions | Pending (Safety Rework; Activation Gated) | 2026-08-16 |  |  |
+| HR-2026-08-16-012 | Email conversation acknowledgement and explicit multi-account actions | In Review (Implemented On Dev; Runtime Disabled) | 2026-08-16 |  |  |
 | HR-2026-08-16-011 | Email compose, draft, send, and Sent API parity | Pending (Private/API Rework Implemented; Shared Collaboration Gated) | 2026-08-16 |  |  |
 | HR-2026-08-16-010 | Email deterministic rules API completion | In Review (Implemented On Dev) | 2026-08-16 |  |  |
 | HR-2026-08-16-009 | Email presence, shared draft locks, and stale-composer protection | Pending (Backend And Accessible UI Implemented; Runtime Disabled) | 2026-08-16 |  |  |
@@ -1643,12 +1643,12 @@ not marked this entry Reviewed.
 
 ### HR-2026-08-16-012 - Email Conversation Acknowledgement And Explicit Multi-Account Actions
 
-Status: Pending (Safety Rework Implemented; Activation Gated)
+Status: In Review (Implemented On Dev; Runtime Disabled)
 Added: 2026-08-16
 Environment: Authoritative Dev working copy; historical migration `2026_08_19_150000` is an inert
 marker in recovered Dev batch 120; additive `2026_08_24_140000` ran in Dev batch 128 with empty
 ledgers and its gate false; isolated SQLite plus disposable MariaDB verification; no provider call,
-personal-state runtime action or acknowledgement apply
+personal-state runtime action or acknowledgement apply on shared Dev data
 Related: `docs/feature-slices/2026-08-19-email-mail-conversation-acknowledgement-multi-account-actions.md`
 
 Scope and affected workflow: acknowledge only the exact authorized conversation-placement snapshot
@@ -1674,25 +1674,28 @@ current-schema copy before coordinated deployment. It later ran in Dev batch 128
 empty and the gate remains false. The empty down path is reversible; once either ledger contains
 evidence, rollback refuses to erase it. The migration
 itself creates no preview, personal state, provider operation or external call. Keep
-`EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED=false` after migration: the implicit legacy action now rejects,
-and the Livewire method cannot bypass the still-missing public preview/confirmation interface.
+`EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED=false` after migration until this named review. Mail/API now use
+the explicit preview/confirmation interface; Apply dispatches bounded continuation on `default`, so
+the normal queue worker and `php artisan queue:restart` are required when the flag is enabled.
 
-Risks: accidental feature activation before accessible confirmation/continuation exists; migration
+Risks: accidental feature activation before named review; migration
 and index behavior on the deployment engine; stale/revoked placement, epoch, UID or provider binding;
 truthful partial provider reconciliation; hidden-account leakage; and broad Archive/Move/Trash
-actions retargeting an open shared composer. Those broader UI/API/action paths and private
-invalidation remain Order 8/9/full-slice gated.
+actions retargeting an open shared composer. Conversation acknowledgement itself does not move a
+placement or retarget a composer; disabled private invalidation remains an explicit safe no-op.
 
 Automated verification: explicit SQLite `:memory:` with isolated `APP_CONFIG_CACHE`, array
 cache/maintenance/session stores and `HOME=/tmp`: focused
-`EmailConversationAcknowledgementSafetyTest` passes 10 tests / 110 assertions. It covers the
+`EmailConversationAcknowledgementSafetyTest` passes 13 tests / 133 assertions. It covers the
 default-off gate, forward schema and rollback refusal, preview no-mutation, active/future/explicit
 multi-account membership, inaccessible selection, exact actor/snapshot reauthorization, sanitized
 personal/provider partial failure, Organize revocation, provider pending/succeeded redelivery without
 IMAP or duplication, canonical multi-placement personal coalescing, unmasked selected failure,
-break-glass denial and the closed implicit action. The combined focused plus
+break-glass denial, closed implicit action, active and explicit-multi-account API, queued apply,
+non-enumerating readback/cancel and enabled/disabled Mail UI. The combined focused plus
 historical-quarantine, unread-epoch and remote-operation recovery package passes 60 / 522. An
 isolated authorized Mail workspace render smoke adds 1 / 11, for 61 / 533 recorded handoff coverage.
+The full Email Feature suite passes 715 tests / 7,294 assertions after the Order 12 implementation.
 The combined Order 12/13 opt-in migration contract passes 1 / 52 on MariaDB 10.11.14. For `140000`
 it proves up, every named index and foreign key, default-off configuration and boolean schema
 defaults, empty down, non-empty evidence refusal, and exact `pending` / `coalesced` status plus
@@ -1721,7 +1724,7 @@ Human checks:
   personal effect, marks the later item coalesced, changes personal state once, still reserves two
   placement-bound provider operations, and never reports false stale/partial or masks selected
   personal failure.
-- [ ] Verify the eventual Livewire/API preview and explicit confirmation controls on desktop,
+- [ ] Verify the Livewire/API preview and explicit confirmation controls on desktop,
   keyboard and mobile before enabling. Confirm the legacy callable method never mutates directly,
   Order 8 remains disabled-safe and an open shared draft cannot be silently retargeted.
 
@@ -1729,8 +1732,9 @@ Reviewer:
 Reviewed date:
 Result / notes: The 2026-08-19 summary listed `Done`/Junie without detailed review evidence. The
 2026-08-24 safety rework closes the absent relationship, implicit scope, missing action-time
-authorization and personal/provider conflation. AI has not marked this entry Reviewed. Named
-disposable migration, runtime/provider and eventual UI/API review remain required.
+authorization and personal/provider conflation; the 2026-09-03 completion adds the accessible
+UI/API and bounded queue continuation. AI has not marked this entry Reviewed. Named disposable
+migration, runtime/provider and UI/API review remain required.
 
 ### HR-2026-08-16-011 - Email Compose, Draft, Send, And Sent API Parity
 

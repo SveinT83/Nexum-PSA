@@ -386,8 +386,8 @@ named Dev browser and migration review remains Pending under `HR-2026-08-16-003`
 
 ### Conversation acknowledgement safety status
 
-Conversation-wide acknowledgement is still unavailable in the Mail interface and remains off by
-default. The safety backend now requires a separate preview before apply. A preview freezes only the
+Conversation-wide acknowledgement is implemented in Mail and API but remains off by default until
+named review. Mail opens a separate preview panel before Apply. A preview freezes only the
 currently active placements in the selected account conversation, or exact placements the user
 explicitly selected across accounts. It does not add related mail based on subject, Message-ID,
 Ticket links or correlation. New mail arriving afterward is outside that preview and stays Unread for
@@ -415,8 +415,10 @@ on the selected personal effect is reported as a failure, not hidden by the coal
 Forward migration `2026_08_24_140000_create_email_conversation_acknowledgement_action_ledger.php`
 adds the run/item ledger and refuses rollback after evidence exists. It ran in Dev batch 128 and the
 ledgers remain empty. Historical `2026_08_19_150000` stays an inert marker and creates no old acknowledgement table.
-Keep `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED=false` until the accessible preview/confirmation interface,
-continuation/retry operations, dependency checks and named review `HR-2026-08-16-012` are complete.
+Keep `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED=false` until named review `HR-2026-08-16-012` is complete.
+When enabled, Mail supports preview/confirm/status/cancel for the active account conversation. API
+also supports exact explicitly selected placements across accounts. Apply/retry uses bounded default
+queue continuation and returns only safe counts, statuses, reason codes and opaque operation IDs.
 
 Only the explicit personal read controls change Nexum `Unread for me` state. The main command bar
 shows one `Mark read` action when the selected message is unread for the current user; `Mark unread

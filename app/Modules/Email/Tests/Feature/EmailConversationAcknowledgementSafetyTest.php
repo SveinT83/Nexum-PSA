@@ -8,6 +8,7 @@ use App\Modules\Email\Actions\ApplyEmailConversationAcknowledgement;
 use App\Modules\Email\Actions\PreviewEmailConversationAcknowledgement;
 use App\Modules\Email\Actions\RecordEmailRemoteOperation;
 use App\Modules\Email\Actions\SetEmailUnreadForMe;
+use App\Modules\Email\Jobs\ProcessEmailConversationAcknowledgementRun;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailAccountUserGrant;
 use App\Modules\Email\Models\EmailAccountUserReadBaseline;
@@ -27,9 +28,11 @@ use App\Modules\Email\Services\ImapClient;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\Sanctum;
 use LogicException;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
@@ -553,6 +556,87 @@ class EmailConversationAcknowledgementSafetyTest extends TestCase
 
         $this->assertSame(0, EmailMessageUserState::query()->count());
         $this->assertSame(0, EmailRemoteOperation::query()->count());
+    }
+
+    #[Test]
+    public function api_previews_queues_and_reads_one_exact_account_conversation_without_content(): void
+    {
+        $this->enableAcknowledgement();
+        Queue::fake();
+        $mailbox = $this->mailbox($this->actor, organize: true);
+        $this->addMessage($mailbox);
+        Sanctum::actingAs($this->actor, ['email.read', 'email.update']);
+
+        $preview = $this->postJson(route('api.v1.email.mailbox.conversation-actions.preview'), [
+            'scope_kind' => EmailConversationActionRun::SCOPE_ACTIVE_ACCOUNT_CONVERSATION,
+            'account_id' => $mailbox['account']->id,
+            'conversation_id' => $mailbox['conversation']->id,
+            'target_personal_unread' => false,
+            'provider_seen_requested' => false,
+            'idempotency_key' => 'api-preview-'.Str::uuid(),
+        ])->assertCreated()
+            ->assertJsonPath('data.status', EmailConversationActionRun::STATUS_PREVIEWED)
+            ->assertJsonPath('data.counts.items', 2)
+            ->assertJsonMissing(['subject' => 'Frozen acknowledgement fixture']);
+
+        $run = EmailConversationActionRun::query()->where('public_id', $preview->json('data.id'))->firstOrFail();
+        $this->postJson(route('api.v1.email.mailbox.conversation-actions.apply', $run->public_id))
+            ->assertAccepted()
+            ->assertJsonPath('queued', true);
+        Queue::assertPushed(ProcessEmailConversationAcknowledgementRun::class, fn ($job): bool => $job->runId === $run->id);
+
+        (new ProcessEmailConversationAcknowledgementRun($run->id))->handle(
+            app(ApplyEmailConversationAcknowledgement::class),
+        );
+        $this->getJson(route('api.v1.email.mailbox.conversation-actions.show', $run->public_id))
+            ->assertOk()
+            ->assertJsonPath('data.status', EmailConversationActionRun::STATUS_APPLIED)
+            ->assertJsonPath('data.counts.personal_applied', 2)
+            ->assertJsonMissingPath('data.items.0.email_message_id');
+
+        $outsider = $this->viewer();
+        Sanctum::actingAs($outsider, ['email.read', 'email.update']);
+        $this->getJson(route('api.v1.email.mailbox.conversation-actions.show', $run->public_id))
+            ->assertNotFound();
+    }
+
+    #[Test]
+    public function explicit_multi_account_api_is_frozen_and_cancelled_without_effects(): void
+    {
+        $this->enableAcknowledgement();
+        $first = $this->mailbox($this->actor, organize: false);
+        $second = $this->mailbox($this->actor, organize: false);
+        Sanctum::actingAs($this->actor, ['email.read', 'email.update']);
+
+        $preview = $this->postJson(route('api.v1.email.mailbox.conversation-actions.preview'), [
+            'scope_kind' => EmailConversationActionRun::SCOPE_EXPLICIT_MULTI_ACCOUNT,
+            'placement_ids' => [$first['placement']->id, $second['placement']->id],
+            'target_personal_unread' => true,
+            'idempotency_key' => 'api-multi-'.Str::uuid(),
+        ])->assertCreated()
+            ->assertJsonPath('data.counts.accounts', 2)
+            ->assertJsonCount(2, 'data.items');
+
+        $this->postJson(route(
+            'api.v1.email.mailbox.conversation-actions.cancel',
+            $preview->json('data.id'),
+        ))->assertOk()->assertJsonPath('data.status', EmailConversationActionRun::STATUS_CANCELLED);
+        $this->assertSame(0, EmailMessageUserState::query()->count());
+        $this->assertSame(0, EmailRemoteOperation::query()->count());
+    }
+
+    #[Test]
+    public function mail_workspace_exposes_explicit_conversation_preview_controls_only_when_enabled(): void
+    {
+        $this->enableAcknowledgement();
+        $mailbox = $this->mailbox($this->actor, organize: true);
+
+        $this->actingAs($this->actor)
+            ->get(route('tech.mail.index', ['message' => $mailbox['message']->id]))
+            ->assertOk()
+            ->assertSee('Mark conversation read for me')
+            ->assertSee('Mark conversation unread for me')
+            ->assertDontSee('Confirm and apply');
     }
 
     private function enableAcknowledgement(): void

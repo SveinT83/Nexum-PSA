@@ -5,6 +5,7 @@ namespace App\Modules\Email\Livewire\Tech;
 use App\Models\Core\User;
 use App\Models\Settings\CommonSetting;
 use App\Modules\Email\Actions\AssistEmailComposerWithAi;
+use App\Modules\Email\Actions\CancelEmailConversationAcknowledgement;
 use App\Modules\Email\Actions\CancelEmailRemoteOperation;
 use App\Modules\Email\Actions\CreatePersonalEmailRule;
 use App\Modules\Email\Actions\CreateProviderEmailFolder;
@@ -12,6 +13,7 @@ use App\Modules\Email\Actions\LinkEmailConversationToTicket;
 use App\Modules\Email\Actions\ManageProviderEmailFolder;
 use App\Modules\Email\Actions\MarkEmailAsSpam;
 use App\Modules\Email\Actions\PerformEmailRemoteOperation;
+use App\Modules\Email\Actions\PreviewEmailConversationAcknowledgement;
 use App\Modules\Email\Actions\RecordEmailMessageOpened;
 use App\Modules\Email\Actions\RetryEmailRemoteOperation;
 use App\Modules\Email\Actions\SendEmailComposerMessage;
@@ -22,11 +24,13 @@ use App\Modules\Email\Actions\SuppressEmailConversationTicketCorrelation;
 use App\Modules\Email\Actions\UndoEmailRemoteOperation;
 use App\Modules\Email\Actions\UpdateEmailConversationClassification;
 use App\Modules\Email\Jobs\FetchImapAccount;
+use App\Modules\Email\Jobs\ProcessEmailConversationAcknowledgementRun;
 use App\Modules\Email\Livewire\Tech\Concerns\ManagesSharedComposerDraft;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailBreakGlassAccess;
 use App\Modules\Email\Models\EmailComposerDraft;
 use App\Modules\Email\Models\EmailComposerDraftAttachment;
+use App\Modules\Email\Models\EmailConversationActionRun;
 use App\Modules\Email\Models\EmailConversationClassification;
 use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailLiveProjectionStream;
@@ -226,12 +230,159 @@ class MailWorkspace extends Component
             return;
         }
 
-        // The safe action requires a separate bounded preview and explicit
-        // confirmation surface. Do not turn a callable Livewire method into
-        // an implicit whole-conversation mutation while that UI remains gated.
+        $this->openConversationAcknowledgement(false);
+    }
+
+    public function openConversationAcknowledgement(bool $targetUnread): void
+    {
+        if (! $this->conversationAcknowledgementAvailable()) {
+            $this->mailActionStatus = [
+                'type' => 'warning',
+                'message' => 'Conversation acknowledgement is not available yet.',
+            ];
+
+            return;
+        }
+
+        $placement = $this->selectedPlacementForAction();
+        if (! $placement?->email_conversation_id || ! $placement->account) {
+            $this->mailActionStatus = ['type' => 'warning', 'message' => 'Select a Mail conversation first.'];
+
+            return;
+        }
+
+        $this->conversationAcknowledgementOpen = true;
+        $this->conversationAcknowledgementTargetUnread = $targetUnread;
+        $this->conversationAcknowledgementProviderSeen = false;
+        $this->conversationAcknowledgementRunId = '';
+        $this->conversationAcknowledgementSummary = null;
+    }
+
+    public function closeConversationAcknowledgement(): void
+    {
+        $this->conversationAcknowledgementOpen = false;
+        $this->conversationAcknowledgementRunId = '';
+        $this->conversationAcknowledgementSummary = null;
+    }
+
+    public function previewConversationAcknowledgement(): void
+    {
+        $placement = $this->selectedPlacementForAction();
+        $actor = $this->user();
+        if (! $actor || ! $placement?->account || ! $placement->conversation) {
+            $this->mailActionStatus = ['type' => 'warning', 'message' => 'The selected conversation is unavailable.'];
+
+            return;
+        }
+
+        try {
+            $run = app(PreviewEmailConversationAcknowledgement::class)->activeAccountConversation(
+                $actor,
+                $placement->account,
+                $placement->conversation,
+                'mail-ui:'.Str::uuid(),
+                $this->conversationAcknowledgementTargetUnread,
+                $this->conversationAcknowledgementProviderSeen,
+            );
+            $this->conversationAcknowledgementRunId = $run->public_id;
+            $this->conversationAcknowledgementSummary = $this->conversationAcknowledgementSummary($run);
+        } catch (AuthorizationException|ValidationException $exception) {
+            $this->mailActionStatus = [
+                'type' => 'warning',
+                'message' => collect($exception instanceof ValidationException ? $exception->errors() : [])
+                    ->flatten()->first() ?: 'This conversation preview is not available.',
+            ];
+        }
+    }
+
+    public function applyConversationAcknowledgement(): void
+    {
+        $run = $this->ownedConversationAcknowledgementRun();
+        if (! $run) {
+            $this->mailActionStatus = ['type' => 'warning', 'message' => 'Create a fresh preview before applying.'];
+
+            return;
+        }
+
+        ProcessEmailConversationAcknowledgementRun::dispatch($run->id);
         $this->mailActionStatus = [
-            'type' => 'warning',
-            'message' => 'Conversation acknowledgement requires preview and confirmation.',
+            'type' => 'info',
+            'message' => 'Conversation action was queued. Refresh its status to see personal and mailbox results.',
+        ];
+        $this->conversationAcknowledgementSummary = $this->conversationAcknowledgementSummary($run);
+    }
+
+    public function refreshConversationAcknowledgement(): void
+    {
+        $run = $this->ownedConversationAcknowledgementRun();
+        if (! $run) {
+            $this->mailActionStatus = ['type' => 'warning', 'message' => 'This conversation action is unavailable.'];
+
+            return;
+        }
+
+        $this->conversationAcknowledgementSummary = $this->conversationAcknowledgementSummary($run);
+        $this->refreshMailState();
+    }
+
+    public function cancelConversationAcknowledgement(): void
+    {
+        $run = $this->ownedConversationAcknowledgementRun();
+        $actor = $this->user();
+        if (! $run || ! $actor) {
+            $this->mailActionStatus = ['type' => 'warning', 'message' => 'This conversation action is unavailable.'];
+
+            return;
+        }
+
+        $run = app(CancelEmailConversationAcknowledgement::class)->handle($run, $actor);
+        $this->conversationAcknowledgementSummary = $this->conversationAcknowledgementSummary($run);
+        $this->mailActionStatus = ['type' => 'info', 'message' => 'No new conversation-action items will be claimed.'];
+    }
+
+    public function conversationAcknowledgementAvailable(): bool
+    {
+        return config('email_live.conversation_acknowledgement_enabled', false)
+            && Schema::hasTable('email_conversation_action_runs')
+            && Schema::hasTable('email_conversation_action_items');
+    }
+
+    private function ownedConversationAcknowledgementRun(): ?EmailConversationActionRun
+    {
+        $actor = $this->user();
+        if (! $actor || $this->conversationAcknowledgementRunId === '') {
+            return null;
+        }
+
+        return EmailConversationActionRun::query()
+            ->with('items.remoteOperation')
+            ->where('public_id', $this->conversationAcknowledgementRunId)
+            ->where('requested_by', $actor->id)
+            ->first();
+    }
+
+    /** @return array<string, mixed> */
+    private function conversationAcknowledgementSummary(EmailConversationActionRun $run): array
+    {
+        $run->loadMissing('items.remoteOperation');
+
+        return [
+            'status' => $run->status,
+            'items' => $run->item_count,
+            'accounts' => $run->account_count,
+            'personal_applied' => $run->personal_applied_count,
+            'provider_pending' => $run->provider_pending_count,
+            'provider_succeeded' => $run->provider_succeeded_count,
+            'denied' => $run->denied_count,
+            'stale' => $run->stale_count,
+            'failed' => $run->failed_count,
+            'expires_at' => $run->expires_at?->format('Y-m-d H:i'),
+            'terminal' => in_array($run->status, [
+                EmailConversationActionRun::STATUS_APPLIED,
+                EmailConversationActionRun::STATUS_STALE,
+                EmailConversationActionRun::STATUS_FAILED,
+                EmailConversationActionRun::STATUS_CANCELLED,
+            ], true),
         ];
     }
 
@@ -282,6 +433,17 @@ class MailWorkspace extends Component
 
     /** @var array{type: string, message: string}|null */
     public ?array $mailActionStatus = null;
+
+    public bool $conversationAcknowledgementOpen = false;
+
+    public bool $conversationAcknowledgementTargetUnread = false;
+
+    public bool $conversationAcknowledgementProviderSeen = false;
+
+    public string $conversationAcknowledgementRunId = '';
+
+    /** @var array<string, mixed>|null */
+    public ?array $conversationAcknowledgementSummary = null;
 
     /** @var array{type: string, message: string}|null */
     public ?array $composerActionStatus = null;
