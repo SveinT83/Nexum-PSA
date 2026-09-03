@@ -2790,7 +2790,7 @@ class EmailModuleTest extends TestCase
             ->test(MailWorkspace::class)
             ->call('selectPlacement', $placement->id)
             ->assertDontSeeHtml('dropdown-toggle')
-            ->assertSee('Mark read in mailbox')
+            ->assertSee('Mark read on mail server')
             ->assertSee('Flag')
             ->assertSee('Category and tags')
             ->call('setProviderSeenForSelected', true)

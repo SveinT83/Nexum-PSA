@@ -559,7 +559,7 @@ class EmailConversationAcknowledgementSafetyTest extends TestCase
     }
 
     #[Test]
-    public function api_previews_queues_and_reads_one_exact_account_conversation_without_content(): void
+    public function api_applies_one_bounded_account_conversation_immediately_without_content_or_worker(): void
     {
         $this->enableAcknowledgement();
         Queue::fake();
@@ -581,13 +581,11 @@ class EmailConversationAcknowledgementSafetyTest extends TestCase
 
         $run = EmailConversationActionRun::query()->where('public_id', $preview->json('data.id'))->firstOrFail();
         $this->postJson(route('api.v1.email.mailbox.conversation-actions.apply', $run->public_id))
-            ->assertAccepted()
-            ->assertJsonPath('queued', true);
-        Queue::assertPushed(ProcessEmailConversationAcknowledgementRun::class, fn ($job): bool => $job->runId === $run->id);
-
-        (new ProcessEmailConversationAcknowledgementRun($run->id))->handle(
-            app(ApplyEmailConversationAcknowledgement::class),
-        );
+            ->assertOk()
+            ->assertJsonPath('queued', false)
+            ->assertJsonPath('data.status', EmailConversationActionRun::STATUS_APPLIED)
+            ->assertJsonPath('data.counts.personal_applied', 2);
+        Queue::assertNotPushed(ProcessEmailConversationAcknowledgementRun::class);
         $this->getJson(route('api.v1.email.mailbox.conversation-actions.show', $run->public_id))
             ->assertOk()
             ->assertJsonPath('data.status', EmailConversationActionRun::STATUS_APPLIED)

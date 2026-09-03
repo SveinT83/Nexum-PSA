@@ -816,7 +816,7 @@
 
                             @if($canUsePersonalUnreadSelected && $this->isUnreadForMe($selectedMessage))
                                 <button type="button" class="btn btn-sm btn-outline-success" wire:click="markSelectedReadForMe">
-                                    <i class="bi bi-envelope-open me-1" aria-hidden="true"></i>Mark read
+                                    <i class="bi bi-envelope-open me-1" aria-hidden="true"></i>Mark read for me
                                 </button>
                             @endif
 
@@ -904,11 +904,11 @@
                                             <li>
                                                 @if($selectedPlacement->provider_seen)
                                                     <button type="button" class="dropdown-item" wire:click="setProviderSeenForSelected(false)">
-                                                        <i class="bi bi-envelope me-2" aria-hidden="true"></i>Mark unread in mailbox
+                                                        <i class="bi bi-envelope me-2" aria-hidden="true"></i>Mark unread on mail server
                                                     </button>
                                                 @else
                                                     <button type="button" class="dropdown-item" wire:click="setProviderSeenForSelected(true)">
-                                                        <i class="bi bi-envelope-open me-2" aria-hidden="true"></i>Mark read in mailbox
+                                                        <i class="bi bi-envelope-open me-2" aria-hidden="true"></i>Mark read on mail server
                                                     </button>
                                                 @endif
                                             </li>

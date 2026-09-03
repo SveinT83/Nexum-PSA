@@ -3,6 +3,7 @@
 namespace App\Modules\Email\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Email\Actions\ApplyEmailConversationAcknowledgement;
 use App\Modules\Email\Actions\CancelEmailConversationAcknowledgement;
 use App\Modules\Email\Actions\PreviewEmailConversationAcknowledgement;
 use App\Modules\Email\Jobs\ProcessEmailConversationAcknowledgementRun;
@@ -66,20 +67,26 @@ class ConversationActionsController extends Controller
         return response()->json(['data' => $this->serializeRun($this->ownedRun($request, $run))]);
     }
 
-    public function apply(Request $request, string $run): JsonResponse
+    public function apply(Request $request, string $run, ApplyEmailConversationAcknowledgement $apply): JsonResponse
     {
-        $run = $this->ownedRun($request, $run);
-        ProcessEmailConversationAcknowledgementRun::dispatch($run->id);
+        $run = $apply->handle($this->ownedRun($request, $run), $request->user());
+        $queued = $run->status === EmailConversationActionRun::STATUS_APPLYING;
+        if ($queued) {
+            ProcessEmailConversationAcknowledgementRun::dispatch($run->id);
+        }
 
-        return response()->json(['data' => $this->serializeRun($run), 'queued' => true], 202);
+        return response()->json(['data' => $this->serializeRun($run), 'queued' => $queued], $queued ? 202 : 200);
     }
 
-    public function retry(Request $request, string $run): JsonResponse
+    public function retry(Request $request, string $run, ApplyEmailConversationAcknowledgement $apply): JsonResponse
     {
-        $run = $this->ownedRun($request, $run);
-        ProcessEmailConversationAcknowledgementRun::dispatch($run->id);
+        $run = $apply->handle($this->ownedRun($request, $run), $request->user());
+        $queued = $run->status === EmailConversationActionRun::STATUS_APPLYING;
+        if ($queued) {
+            ProcessEmailConversationAcknowledgementRun::dispatch($run->id);
+        }
 
-        return response()->json(['data' => $this->serializeRun($run), 'queued' => true], 202);
+        return response()->json(['data' => $this->serializeRun($run), 'queued' => $queued], $queued ? 202 : 200);
     }
 
     public function cancel(

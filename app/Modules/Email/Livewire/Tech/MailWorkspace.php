@@ -4,6 +4,7 @@ namespace App\Modules\Email\Livewire\Tech;
 
 use App\Models\Core\User;
 use App\Models\Settings\CommonSetting;
+use App\Modules\Email\Actions\ApplyEmailConversationAcknowledgement;
 use App\Modules\Email\Actions\AssistEmailComposerWithAi;
 use App\Modules\Email\Actions\CancelEmailConversationAcknowledgement;
 use App\Modules\Email\Actions\CancelEmailRemoteOperation;
@@ -304,12 +305,28 @@ class MailWorkspace extends Component
             return;
         }
 
-        ProcessEmailConversationAcknowledgementRun::dispatch($run->id);
+        $actor = $this->user();
+        if (! $actor) {
+            return;
+        }
+
+        // Apply one hard-bounded page immediately so an ordinary conversation
+        // gives truthful feedback even without a continuously running worker.
+        // Only a run larger than the 25-item action boundary is queued.
+        $run = app(ApplyEmailConversationAcknowledgement::class)->handle($run, $actor);
+        $queued = $run->status === EmailConversationActionRun::STATUS_APPLYING;
+        if ($queued) {
+            ProcessEmailConversationAcknowledgementRun::dispatch($run->id);
+        }
+
         $this->mailActionStatus = [
-            'type' => 'info',
-            'message' => 'Conversation action was queued. Refresh its status to see personal and mailbox results.',
+            'type' => $queued ? 'info' : 'success',
+            'message' => $queued
+                ? 'The first 25 messages were processed. Remaining messages are queued.'
+                : 'Conversation status was updated for you.',
         ];
         $this->conversationAcknowledgementSummary = $this->conversationAcknowledgementSummary($run);
+        $this->refreshMailState();
     }
 
     public function refreshConversationAcknowledgement(): void
