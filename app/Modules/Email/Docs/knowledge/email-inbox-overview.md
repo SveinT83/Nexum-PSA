@@ -86,50 +86,44 @@ AI data, or Ticket content. Sensitive content access fails closed when its audit
 written. Access-event history is append-only and retained even when a source delegation or emergency
 record is removed; ordinary rollback refuses to discard non-empty durable access history.
 
-## Provider Connections And Account Binding
+## Email Account Connection Setup
 
-Email provider hosts, usernames, and passwords are managed only under **Admin > System >
-Integrations > Email providers**. Email account settings own mailbox identity, defaults, owner,
-Ticket ingress, grants, and health. They show only the provider's safe label, explicit
-`legacy|integration` source, readiness, and capabilities; they never display or accept an endpoint,
-username, password, pinned address, ciphertext, or raw provider response.
+Password-based IMAP and SMTP settings are managed directly on the Email account under **Admin >
+Email > Email Accounts**. The account form owns mailbox identity, defaults, owner, Ticket ingress,
+access grants, server settings, and connection health. There is no separate provider-selection or
+mailbox-migration step in the ordinary workflow.
 
-An administrator creating a mailbox selects one active, exactly verified Integration provider. The
-binding is rechecked under the provider lifecycle lock when the account is saved or enabled. A
-private/internal provider is not listed and cannot be bound or tested unless the active operator is
-also a Superuser with `integration.email_private_endpoint_manage`. Account-management permission
-does not grant provider management or private-endpoint authority.
+**Add account** opens one mail-client-style form for the email address, display name, IMAP
+server/port/security/username/password, SMTP server/port/security/username/password, mailbox purpose,
+and access grants. **Save and test connection** encrypts the write-only passwords and queues one
+bounded check that authenticates to incoming and outgoing mail independently. The account stays
+inactive while testing and becomes active only when both checks pass and activation was requested.
 
-Provider credentials have separate staged, verified, active, retired, revoked, and destroyed
-states. Saving or rotating passwords does not make a version usable. Only explicit **Verify** may
-connect, and **Activate** accepts the exact verified version. A secret-only rotation stays on the
-same mailbox binding. Changing either provider username or endpoint means a new Integration
-connection, explicit rebind, and mailbox re-baseline; Nexum rejects an identity change disguised as
-a rotation.
+When a check fails, open and edit the same account. A blank password field preserves the saved
+password; a value replaces it. Correct the server, port, security, username, or password and save to
+test again. Safe alerts distinguish incoming and outgoing results without displaying raw provider
+responses, resolved addresses, certificate internals, credentials, or ciphertext.
 
-Every Mail/provider job records the mailbox account and positive binding version before durable
-dispatch or reservation. It rechecks that frozen binding under the account provider lock immediately
-before IMAP/SMTP. A cutover, rollback, endpoint change, or rebind therefore makes old work stale
-before network I/O. Revocation blocks new authentication, while a secret-only rotation lets current
-work resolve the new active secret. Queue, session, event, audit, and diagnostic payloads contain no
-runtime credentials.
+Every durable Mail job freezes the account binding version and rechecks it immediately before
+IMAP/SMTP. Saving new settings makes an older queued check stale, so an old result cannot activate a
+newer configuration. Queue, session, event, audit, and diagnostic payloads contain no runtime
+credentials.
 
-Existing accounts stay on their exact legacy source until the separate Integration migration flow
-completes read-only preview, local staging, explicit provider verification, activation, pause/drain,
-and exact cutover readiness. Staging alone performs no DNS lookup, provider call, send, provider
-mutation, folder change, or source switch. Cutover changes only the provider reference/source.
-Rollback is available only while the original legacy ciphertext is intact and later provider work
-has not invalidated the rollback window. Legacy-secret purge requires a later named review and
-backup/recovery proof.
+Older internal provider rows may remain as inert historical audit evidence. Deployment promotes an
+exactly verified binding into the same account and destroys the obsolete duplicate ciphertext; the
+mailbox identity, messages, Ticket links, health state and access grants do not move. Ordinary
+navigation and runtime do not expose or use the retired provider lifecycle.
 
-No failed or unavailable provider falls back to legacy credentials or Laravel's system mailer. This
-also applies to Ticket, Sales, Marketing, Commercial, Customer Portal, Storage, Booking,
-notifications, and password-reset email. An ambiguous SMTP acceptance is recorded for review and is
-never blindly retried.
+No failed or unavailable account falls back to another credential source or Laravel's system
+mailer. This also applies to Ticket, Sales, Marketing, Commercial, Customer Portal, Storage,
+Booking, notifications, and password-reset email. An ambiguous SMTP acceptance is recorded for
+review and is never blindly retried.
 
-Deployment and controlled one-account migration checks remain Pending under
-`HR-2026-08-16-006`. Automated tests do not authorize a live Verify, cutover, rollback, or secret
-purge.
+The setup change includes a one-way, fail-closed migration and no seeding. Back up the database,
+run `php artisan migrate --force`, clear Laravel caches and restart the long-lived `email,default`
+queue worker. The external every-minute Laravel scheduler runner remains required for polling,
+health checks, reconciliation, and scheduled Mail work.
+Controlled production account and receive/send checks are tracked under `HR-2026-09-01-001`.
 
 ## Provider Folders And Placements
 
@@ -392,8 +386,8 @@ named Dev browser and migration review remains Pending under `HR-2026-08-16-003`
 
 ### Conversation acknowledgement safety status
 
-Conversation-wide acknowledgement is still unavailable in the Mail interface and remains off by
-default. The safety backend now requires a separate preview before apply. A preview freezes only the
+Conversation-wide acknowledgement is implemented in Mail and API but remains off by default until
+named review. Mail opens a separate preview panel before Apply. A preview freezes only the
 currently active placements in the selected account conversation, or exact placements the user
 explicitly selected across accounts. It does not add related mail based on subject, Message-ID,
 Ticket links or correlation. New mail arriving afterward is outside that preview and stays Unread for
@@ -421,8 +415,10 @@ on the selected personal effect is reported as a failure, not hidden by the coal
 Forward migration `2026_08_24_140000_create_email_conversation_acknowledgement_action_ledger.php`
 adds the run/item ledger and refuses rollback after evidence exists. It ran in Dev batch 128 and the
 ledgers remain empty. Historical `2026_08_19_150000` stays an inert marker and creates no old acknowledgement table.
-Keep `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED=false` until the accessible preview/confirmation interface,
-continuation/retry operations, dependency checks and named review `HR-2026-08-16-012` are complete.
+Keep `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED=false` until named review `HR-2026-08-16-012` is complete.
+When enabled, Mail supports preview/confirm/status/cancel for the active account conversation. API
+also supports exact explicitly selected placements across accounts. Apply/retry uses bounded default
+queue continuation and returns only safe counts, statuses, reason codes and opaque operation IDs.
 
 Only the explicit personal read controls change Nexum `Unread for me` state. The main command bar
 shows one `Mark read` action when the selected message is unread for the current user; `Mark unread
@@ -871,11 +867,12 @@ state before writing. Repeating Undo returns the same uniquely linked inverse. L
 mixed successful effects, stale or ambiguous evidence, and mismatched targets are never locally
 compensated or presented as undone.
 
-Admin Email rules support grouped conditions. Each condition row belongs to a named group, each
-group can require all or any rows, and the rule can require all groups or any group. The rule preview
-API and runtime use the same grouped semantics. The Admin Email rules page also includes a guarded
-reprocess form where users with `email.rule_manage` can submit a stored Email message ID to run the
-published rule engine immediately or queue it.
+Admin Email rules support grouped conditions. Editing saves a durable draft that cannot affect the
+currently published rule. Publishing is a separate `email.rule_publish` action with an exact diff,
+account scope and draft checksum; it creates one immutable version. Reprocessing is also separate:
+`email.rule_reprocess` creates a bounded, local-database-only preview first, then Apply queues a
+durable run on `email-rules`. Retry and confirmed full rerun reuse successful logical action evidence
+and never replay it. Operational lists contain stable reason codes and counts, not mailbox content.
 
 Personal simple rules use the same published versions and execution-attempt ledger, but they are
 stored with `rule_kind=personal_simple` and an owner. They run only for that owner's personal Inbox
@@ -1017,6 +1014,12 @@ coverage passed 47 / 321, broad Email module/inbound coverage 155 / 1,308, and t
 directory 347 / 3,030. Browser/access review, the separate 479/650 canonical evidence, and raw
 snapshot evidence review for messages 456 and 478 remain Rework Needed under `HR-2026-08-15-006`.
 
+Current Dev was read back on 2026-09-02 and now contains message IDs 1-20, none of those historical
+IDs, and no message whose stored attachment counter exceeds its attachment rows. The old target is
+therefore retired from the active repair gate without copying or deleting evidence. The current
+placement-bound download and recovery contract passes 15 tests / 110 assertions; browser and access
+checks remain In Review under `HR-2026-08-15-006`.
+
 ## Controlled Dev Incident Recovery
 
 The 2026-08-15 recovery of the reported Trash/draft/send incident used fresh exact provider evidence
@@ -1053,11 +1056,12 @@ Implemented scopes:
 - `email.update`: mark authorized inbox messages as spam and queue polling for mailboxes the actor
   can organize; replace/clear conversation classification and dismiss/correct/apply authorized Smart
   Inbox suggestions.
-- `email.rules.read`: list, view, and preview admin-managed Email rules, and view account-scoped
-  execution/Undo eligibility. The authenticated user must also have Email rule-management
-  permission; previews and execution attempts require current mailbox View access.
-- `email.rules.execute`: apply an eligible exact provider inverse for an Admin rule execution. This
-  additionally requires current Mailbox Organize access and never authorizes local-only compensation.
+- `email.rules.read`: list, view, and preview admin-managed Email rules, version history, drafts and
+  account-scoped run/execution metadata.
+- `email.rules.write`: create and update drafts, validate them, preview an exact publication diff and
+  publish when the current user also has `email.rule_publish`.
+- `email.rules.execute`: create bounded reprocess previews and apply/cancel/retry/full-rerun them when
+  the current user also has `email.rule_reprocess`; it also applies an eligible provider inverse.
 
 Implemented routes:
 
@@ -1077,6 +1081,15 @@ Implemented routes:
 - `GET /api/v1/email/rules`
 - `GET /api/v1/email/rules/{rule}`
 - `POST /api/v1/email/rules/{rule}/preview`
+- `POST /api/v1/email/rules/drafts`
+- `GET|PUT /api/v1/email/rules/{rule}/draft`
+- `POST /api/v1/email/rules/{rule}/draft/validate`
+- `GET /api/v1/email/rules/{rule}/publish-preview`
+- `POST /api/v1/email/rules/{rule}/publish`
+- `GET /api/v1/email/rules/{rule}/versions`
+- `POST /api/v1/email/rules/{rule}/reprocess-preview`
+- `GET /api/v1/email/rule-reprocess-runs/{run}`
+- `POST /api/v1/email/rule-reprocess-runs/{run}/{apply|cancel|retry|full-rerun}`
 - `GET /api/v1/email/rules/executions/{attempt}`
 - `GET /api/v1/email/rules/executions/{attempt}/undo`
 - `POST /api/v1/email/rules/executions/{attempt}/undo`

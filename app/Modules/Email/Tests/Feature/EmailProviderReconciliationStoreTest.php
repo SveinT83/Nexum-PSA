@@ -32,6 +32,7 @@ use App\Modules\Email\Services\EmailProviderReconciliationMessagePayload;
 use App\Modules\Email\Services\EmailProviderReconciliationReadException;
 use App\Modules\Email\Services\EmailProviderReconciliationStore;
 use App\Modules\Email\Services\EmailRawMessageSnapshot;
+use App\Modules\Email\Services\EmailRulePublisher;
 use App\Modules\Email\Services\EmailUnreadForMeResolver;
 use App\Modules\Email\Services\ImapClient;
 use App\Modules\Email\Services\InboundAttachmentPersister;
@@ -1593,6 +1594,7 @@ class EmailProviderReconciliationStoreTest extends TestCase
             'email.inbox_manage',
             'email.raw_source_view',
             'email.rule_manage',
+            'email.rule_reprocess',
         ] as $permission) {
             Permission::findOrCreate($permission, 'web');
         }
@@ -1602,6 +1604,7 @@ class EmailProviderReconciliationStoreTest extends TestCase
             'email.inbox_manage',
             'email.raw_source_view',
             'email.rule_manage',
+            'email.rule_reprocess',
         ]);
         EmailAccountUserGrant::query()->create([
             'email_account_id' => $account->id,
@@ -1626,6 +1629,7 @@ class EmailProviderReconciliationStoreTest extends TestCase
             'actions_json' => [['type' => 'archive', 'value' => null]],
         ]);
         $rule->accounts()->attach($account->id);
+        app(EmailRulePublisher::class)->publish($rule, $viewer);
 
         $this->actingAs($viewer)
             ->get(route('tech.inbox.index'))
@@ -1653,9 +1657,8 @@ class EmailProviderReconciliationStoreTest extends TestCase
         ])->assertNotFound();
 
         $this->actingAs($viewer)
-            ->post(route('tech.admin.settings.email.rules.reprocess'), [
+            ->post(route('tech.admin.settings.email.rules.reprocess-preview', $rule), [
                 'email_message_id' => $message->id,
-                'run_mode' => 'queue',
             ])
             ->assertNotFound();
         Queue::assertNotPushed(ProcessInboundRules::class);

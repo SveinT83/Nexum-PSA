@@ -3,11 +3,13 @@
 namespace App\Modules\Email\Actions;
 
 use App\Models\Core\User;
+use App\Modules\Email\Jobs\AppendEmailProviderSentCopy;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailComposerDraft;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailMessage;
+use App\Modules\Email\Models\EmailSentReconciliation;
 use App\Modules\Email\Services\BodyNormalizer;
 use App\Modules\Email\Services\EmailAccountProviderRuntimeResolver;
 use App\Modules\Email\Services\EmailSendOutcomeUnresolvedException;
@@ -395,7 +397,8 @@ class SendEmailComposerMessage
             'context_json' => $acceptedContext,
         ]);
 
-        $this->recordPendingSafely($log, $placement, $sentPayload, true);
+        $reconciliation = $this->recordPendingSafely($log, $placement, $sentPayload, true);
+        $this->queueProviderSentAppendSafely($log, $reconciliation);
 
         return $log;
     }
@@ -603,9 +606,9 @@ class SendEmailComposerMessage
         ?EmailMailboxPlacement $placement,
         array $sentPayload = [],
         bool $providerAccepted = false,
-    ): void {
+    ): ?EmailSentReconciliation {
         try {
-            $this->sentReconciliations->recordPending($log, $placement, $sentPayload);
+            return $this->sentReconciliations->recordPending($log, $placement, $sentPayload);
         } catch (\Throwable $exception) {
             $this->logWarningSafely($providerAccepted
                 ? 'Outbound Mail was accepted but Sent reconciliation could not be recorded.'
@@ -631,6 +634,37 @@ class SendEmailComposerMessage
                 // The durable send reservation already exists. Never let
                 // secondary evidence recording weaken its duplicate guard.
             }
+
+            return null;
+        }
+    }
+
+    /**
+     * Queue the provider Sent copy only after SMTP acceptance and durable local
+     * reconciliation evidence exist. Dispatch failure never changes the
+     * accepted send result; the pending row remains recoverable without a
+     * second SMTP submission.
+     */
+    private function queueProviderSentAppendSafely(
+        EmailLog $log,
+        ?EmailSentReconciliation $reconciliation,
+    ): void {
+        if (! $reconciliation
+            || data_get($reconciliation->context_json, 'sent_raw_snapshot.status') !== 'stored') {
+            return;
+        }
+
+        try {
+            AppendEmailProviderSentCopy::dispatch((int) $reconciliation->id)
+                ->onQueue('email')
+                ->afterCommit();
+        } catch (\Throwable $exception) {
+            $this->logWarningSafely('Outbound Mail was accepted but the Sent append could not be queued.', [
+                'email_log_id' => $log->id,
+                'account_id' => $log->account_id,
+                'email_sent_reconciliation_id' => $reconciliation->id,
+                'exception' => $exception::class,
+            ]);
         }
     }
 

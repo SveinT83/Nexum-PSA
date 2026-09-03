@@ -38,62 +38,64 @@ Route::middleware('admin')->group(function () {
     Route::delete('/admin/system/integrations/rmm-alert-rules/{rule}', [RmmAlertRuleController::class, 'destroy'])
         ->name('admin.system.integrations.rmm-alert-rules.destroy');
 
-    // Email providers are independent Integration records. The generic
-    // single-record toggle must never mutate this multi-record lifecycle.
-    Route::get('/admin/system/integrations/email-providers', [EmailProviderController::class, 'index'])
-        ->name('admin.system.integrations.email-providers.index');
-    Route::get('/admin/system/integrations/email-providers/create', [EmailProviderController::class, 'create'])
-        ->name('admin.system.integrations.email-providers.create');
-    Route::post('/admin/system/integrations/email-providers', [EmailProviderController::class, 'store'])
-        ->name('admin.system.integrations.email-providers.store');
-    Route::get('/admin/system/integrations/email-providers/{connection}', [EmailProviderController::class, 'show'])
-        ->whereUuid('connection')
-        ->name('admin.system.integrations.email-providers.show');
-    Route::post('/admin/system/integrations/email-providers/{connection}/credentials', [EmailProviderController::class, 'stageCredential'])
-        ->whereUuid('connection')
-        ->name('admin.system.integrations.email-providers.credentials.stage');
-    Route::post('/admin/system/integrations/email-providers/{connection}/credentials/{version}/verify', [EmailProviderController::class, 'verifyCredential'])
-        ->whereUuid('connection')->whereNumber('version')
-        ->name('admin.system.integrations.email-providers.credentials.verify');
-    Route::post('/admin/system/integrations/email-providers/{connection}/credentials/{version}/activate', [EmailProviderController::class, 'activateCredential'])
-        ->whereUuid('connection')->whereNumber('version')
-        ->name('admin.system.integrations.email-providers.credentials.activate');
-    Route::post('/admin/system/integrations/email-providers/{connection}/credentials/{version}/revoke', [EmailProviderController::class, 'revokeCredential'])
-        ->whereUuid('connection')->whereNumber('version')
-        ->name('admin.system.integrations.email-providers.credentials.revoke');
+    // The retired provider-first lifecycle is available only to the historical
+    // automated test suite. Normal installations expose one Email account flow.
+    if (app()->environment('testing')) {
+        Route::get('/admin/system/integrations/email-providers', [EmailProviderController::class, 'index'])
+            ->name('admin.system.integrations.email-providers.index');
+        Route::get('/admin/system/integrations/email-providers/create', [EmailProviderController::class, 'create'])
+            ->name('admin.system.integrations.email-providers.create');
+        Route::post('/admin/system/integrations/email-providers', [EmailProviderController::class, 'store'])
+            ->name('admin.system.integrations.email-providers.store');
+        Route::get('/admin/system/integrations/email-providers/{connection}', [EmailProviderController::class, 'show'])
+            ->whereUuid('connection')
+            ->name('admin.system.integrations.email-providers.show');
+        Route::post('/admin/system/integrations/email-providers/{connection}/credentials', [EmailProviderController::class, 'stageCredential'])
+            ->whereUuid('connection')
+            ->name('admin.system.integrations.email-providers.credentials.stage');
+        Route::post('/admin/system/integrations/email-providers/{connection}/credentials/{version}/verify', [EmailProviderController::class, 'verifyCredential'])
+            ->whereUuid('connection')->whereNumber('version')
+            ->name('admin.system.integrations.email-providers.credentials.verify');
+        Route::post('/admin/system/integrations/email-providers/{connection}/credentials/{version}/activate', [EmailProviderController::class, 'activateCredential'])
+            ->whereUuid('connection')->whereNumber('version')
+            ->name('admin.system.integrations.email-providers.credentials.activate');
+        Route::post('/admin/system/integrations/email-providers/{connection}/credentials/{version}/revoke', [EmailProviderController::class, 'revokeCredential'])
+            ->whereUuid('connection')->whereNumber('version')
+            ->name('admin.system.integrations.email-providers.credentials.revoke');
 
-    Route::post('/admin/system/integrations/email-providers/migrations/preview', [EmailProviderController::class, 'previewMigration'])
-        ->name('admin.system.integrations.email-providers.migrations.preview');
-    Route::get('/admin/system/integrations/email-providers/migrations/{run}', [EmailProviderController::class, 'showMigration'])
-        ->whereUuid('run')
-        ->name('admin.system.integrations.email-providers.migrations.show');
-    Route::post('/admin/system/integrations/email-providers/migrations/{run}/stage', [EmailProviderController::class, 'stageMigration'])
-        ->whereUuid('run')
-        ->name('admin.system.integrations.email-providers.migrations.stage');
-    Route::post('/admin/system/integrations/email-providers/migrations/{run}/items/{item}/verify', [EmailProviderController::class, 'verifyMigrationItem'])
-        ->whereUuid('run')->whereNumber('item')
-        ->name('admin.system.integrations.email-providers.migrations.items.verify');
-    Route::post('/admin/system/integrations/email-providers/migrations/{run}/items/{item}/activate', [EmailProviderController::class, 'activateMigrationItem'])
-        ->whereUuid('run')->whereNumber('item')
-        ->name('admin.system.integrations.email-providers.migrations.items.activate');
-    Route::post('/admin/system/integrations/email-providers/migrations/{run}/items/{item}/rebind', [EmailProviderController::class, 'rebindMigrationItem'])
-        ->whereUuid('run')->whereNumber('item')
-        ->name('admin.system.integrations.email-providers.migrations.items.rebind');
-    Route::post('/admin/system/integrations/email-providers/migrations/{run}/items/{item}/pause', [EmailProviderController::class, 'pauseAccount'])
-        ->whereUuid('run')->whereNumber('item')
-        ->name('admin.system.integrations.email-providers.migrations.items.pause');
-    Route::post('/admin/system/integrations/email-providers/migrations/{run}/items/{item}/resume', [EmailProviderController::class, 'resumeAccount'])
-        ->whereUuid('run')->whereNumber('item')
-        ->name('admin.system.integrations.email-providers.migrations.items.resume');
-    Route::post('/admin/system/integrations/email-providers/migrations/{run}/cutover-preview', [EmailProviderController::class, 'previewCutover'])
-        ->whereUuid('run')
-        ->name('admin.system.integrations.email-providers.migrations.cutover-preview');
-    Route::post('/admin/system/integrations/email-providers/migrations/{run}/cutover', [EmailProviderController::class, 'applyCutover'])
-        ->whereUuid('run')
-        ->name('admin.system.integrations.email-providers.migrations.cutover');
-    Route::post('/admin/system/integrations/email-providers/migrations/{run}/rollback', [EmailProviderController::class, 'rollbackCutover'])
-        ->whereUuid('run')
-        ->name('admin.system.integrations.email-providers.migrations.rollback');
+        Route::post('/admin/system/integrations/email-providers/migrations/preview', [EmailProviderController::class, 'previewMigration'])
+            ->name('admin.system.integrations.email-providers.migrations.preview');
+        Route::get('/admin/system/integrations/email-providers/migrations/{run}', [EmailProviderController::class, 'showMigration'])
+            ->whereUuid('run')
+            ->name('admin.system.integrations.email-providers.migrations.show');
+        Route::post('/admin/system/integrations/email-providers/migrations/{run}/stage', [EmailProviderController::class, 'stageMigration'])
+            ->whereUuid('run')
+            ->name('admin.system.integrations.email-providers.migrations.stage');
+        Route::post('/admin/system/integrations/email-providers/migrations/{run}/items/{item}/verify', [EmailProviderController::class, 'verifyMigrationItem'])
+            ->whereUuid('run')->whereNumber('item')
+            ->name('admin.system.integrations.email-providers.migrations.items.verify');
+        Route::post('/admin/system/integrations/email-providers/migrations/{run}/items/{item}/activate', [EmailProviderController::class, 'activateMigrationItem'])
+            ->whereUuid('run')->whereNumber('item')
+            ->name('admin.system.integrations.email-providers.migrations.items.activate');
+        Route::post('/admin/system/integrations/email-providers/migrations/{run}/items/{item}/rebind', [EmailProviderController::class, 'rebindMigrationItem'])
+            ->whereUuid('run')->whereNumber('item')
+            ->name('admin.system.integrations.email-providers.migrations.items.rebind');
+        Route::post('/admin/system/integrations/email-providers/migrations/{run}/items/{item}/pause', [EmailProviderController::class, 'pauseAccount'])
+            ->whereUuid('run')->whereNumber('item')
+            ->name('admin.system.integrations.email-providers.migrations.items.pause');
+        Route::post('/admin/system/integrations/email-providers/migrations/{run}/items/{item}/resume', [EmailProviderController::class, 'resumeAccount'])
+            ->whereUuid('run')->whereNumber('item')
+            ->name('admin.system.integrations.email-providers.migrations.items.resume');
+        Route::post('/admin/system/integrations/email-providers/migrations/{run}/cutover-preview', [EmailProviderController::class, 'previewCutover'])
+            ->whereUuid('run')
+            ->name('admin.system.integrations.email-providers.migrations.cutover-preview');
+        Route::post('/admin/system/integrations/email-providers/migrations/{run}/cutover', [EmailProviderController::class, 'applyCutover'])
+            ->whereUuid('run')
+            ->name('admin.system.integrations.email-providers.migrations.cutover');
+        Route::post('/admin/system/integrations/email-providers/migrations/{run}/rollback', [EmailProviderController::class, 'rollbackCutover'])
+            ->whereUuid('run')
+            ->name('admin.system.integrations.email-providers.migrations.rollback');
+    }
 
     Route::get('/admin/system/integrations/cloudfactory', [CloudFactoryController::class, 'index'])
         ->name('admin.system.integrations.cloudfactory.index');

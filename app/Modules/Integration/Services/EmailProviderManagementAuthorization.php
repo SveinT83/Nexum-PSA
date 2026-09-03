@@ -41,6 +41,24 @@ final class EmailProviderManagementAuthorization
         return $actor;
     }
 
+    /**
+     * Authorize ordinary account-owned IMAP/SMTP configuration without
+     * coupling the mailbox screen to the internal Integration provider UI.
+     */
+    public function authorizeAccountConfiguration(#[\SensitiveParameter] User $actor): User
+    {
+        $actor = User::query()->find($actor->id);
+
+        if (! $actor?->isActive()
+            || $actor->isSystemActor()
+            || ! $actor->can(self::MAILBOX_SYNC_PERMISSION)
+            || ! $actor->can(self::EMAIL_ACCOUNT_PERMISSION)) {
+            throw new AuthorizationException('Email account configuration is unavailable.');
+        }
+
+        return $actor;
+    }
+
     public function authorizePrivateEndpoint(
         #[\SensitiveParameter] User $actor,
         #[\SensitiveParameter] string $reason,

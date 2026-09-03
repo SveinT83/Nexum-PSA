@@ -6,6 +6,13 @@
     $defaultsFor = old('defaults_for', $isEdit ? ($account->defaults_for ?? []) : []);
     $selectedKind = old('account_kind', $isEdit ? ($account->account_kind ?? \App\Modules\Email\Models\EmailAccount::KIND_SHARED) : \App\Modules\Email\Models\EmailAccount::KIND_SHARED);
     $selectedOwnerId = (int) old('owner_id', $isEdit ? ($account->owner_id ?? 0) : 0);
+    $hasSavedCredentials = $isEdit && filled($account->imap_secret) && filled($account->smtp_secret);
+    $imapTransport = old('imap_encryption', $isEdit ? ($account->imap_encryption ?? 'implicit_tls') : 'implicit_tls');
+    $smtpTransport = old('smtp_encryption', $isEdit ? ($account->smtp_encryption ?? 'starttls') : 'starttls');
+    $imapTransport = in_array($imapTransport, ['ssl', 'tls'], true) && (int) old('imap_port', $isEdit ? $account->imap_port : 993) === 993 ? 'implicit_tls' : $imapTransport;
+    $smtpTransport = in_array($smtpTransport, ['ssl', 'tls'], true) && (int) old('smtp_port', $isEdit ? $account->smtp_port : 587) === 465 ? 'implicit_tls' : $smtpTransport;
+    $imapTransport = $imapTransport === 'tls' ? 'starttls' : $imapTransport;
+    $smtpTransport = $smtpTransport === 'tls' ? 'starttls' : $smtpTransport;
     $grantRows = collect(old('grants', []))->keyBy('user_id');
     if ($grantRows->isEmpty() && $isEdit) {
         $grantRows = $account->userGrants->mapWithKeys(fn ($grant) => [
@@ -24,7 +31,7 @@
 @section('pageHeader')
   <div class="d-flex align-items-center justify-content-between">
     <h1>{{ $title }}</h1>
-    <a href="{{ route('tech.admin.settings.email.accounts') }}" class="btn btn-link">Close</a>
+    <a href="{{ route('tech.admin.settings.email.accounts') }}" class="btn btn-outline-secondary btn-sm">Close</a>
   </div>
 @endsection
 
@@ -34,28 +41,64 @@
 
 @section('content')
   <div class="col-12">
-  <form method="POST" action="{{ $isEdit ? route('tech.admin.settings.email.accounts.update', $account) : route('tech.admin.settings.email.accounts.store') }}" class="row g-4">
+    @if(session('status'))
+      <div class="alert alert-info">{{ session('status') }}</div>
+    @endif
+    @if(session('error'))
+      <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
+
+    @if($isEdit)
+      @if($account->last_test_result === 'Testing')
+        <div class="alert alert-info" data-email-connection-testing>
+          <div class="fw-semibold">Testing incoming and outgoing mail…</div>
+          <div class="small">This page refreshes automatically when the Email worker has finished.</div>
+        </div>
+        <script>window.setTimeout(() => window.location.reload(), 3000);</script>
+      @elseif($account->last_test_result === 'OK')
+        <div class="alert alert-success">
+          <div class="fw-semibold">Incoming and outgoing mail login passed.</div>
+          <div class="small">IMAP and SMTP were authenticated successfully{{ $account->last_test_at ? ' '.$account->last_test_at->diffForHumans() : '' }}.</div>
+        </div>
+      @elseif($account->last_test_result)
+        <div class="alert alert-danger">
+          <div class="fw-semibold">The connection needs attention.</div>
+          <div class="small mb-2">{{ $account->last_error_message ?: 'Check the server, port, security, username and password, then save and test again.' }}</div>
+          <div class="d-flex flex-wrap gap-3 small">
+            <span>Incoming mail: {{ $account->last_successful_fetch_at ? 'Passed' : 'Failed' }}</span>
+            <span>Outgoing mail: {{ $account->last_successful_send_at ? 'Passed' : 'Failed' }}</span>
+          </div>
+        </div>
+      @endif
+
+    @endif
+
+    <form method="POST" action="{{ $isEdit ? route('tech.admin.settings.email.accounts.update', $account) : route('tech.admin.settings.email.accounts.store') }}" class="row g-3" autocomplete="off">
       @csrf
       @if($isEdit)
         @method('PUT')
       @endif
 
+      <!-- Mailbox identity and behavior -->
       <div class="col-12">
         <div class="card">
+          <div class="card-header"><h2 class="h6 mb-0">Mailbox</h2></div>
           <div class="card-body">
-            <h2 class="h5 mb-3">General information</h2>
             <div class="row g-3">
               <div class="col-md-6">
                 <label for="address" class="form-label">Email address</label>
-                <input type="email" class="form-control" id="address" name="address" required value="{{ old('address', $isEdit ? $account->address : '') }}">
+                <input type="email" class="form-control @error('address') is-invalid @enderror" id="address" name="address" required value="{{ old('address', $isEdit ? $account->address : '') }}">
+                @error('address')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
               <div class="col-md-6">
-                <label for="from_name" class="form-label">Display name (From)</label>
-                <input type="text" class="form-control" id="from_name" name="from_name" value="{{ old('from_name', $isEdit ? $account->from_name : '') }}">
+                <label for="from_name" class="form-label">Display name</label>
+                <input type="text" class="form-control @error('from_name') is-invalid @enderror" id="from_name" name="from_name" value="{{ old('from_name', $isEdit ? $account->from_name : '') }}">
+                @error('from_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
               <div class="col-12">
                 <label for="description" class="form-label">Description</label>
-                <input type="text" class="form-control" id="description" name="description" value="{{ old('description', $isEdit ? $account->description : '') }}">
+                <input type="text" class="form-control @error('description') is-invalid @enderror" id="description" name="description" value="{{ old('description', $isEdit ? $account->description : '') }}">
+                @error('description')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
               <div class="col-md-4">
                 <label for="account_kind" class="form-label">Mailbox kind</label>
@@ -76,110 +119,137 @@
                 </select>
                 @error('owner_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
-              <div class="col-md-3">
+              <div class="col-md-4">
                 <input type="hidden" name="is_active" value="0">
-                <div class="form-check form-switch mt-4">
-                  <input class="form-check-input" type="checkbox" role="switch" id="is_active" name="is_active" value="1" {{ old('is_active', $isEdit ? (int)$account->is_active : 1) ? 'checked' : '' }}>
-                  <label class="form-check-label" for="is_active">Active</label>
-                </div>
-              </div>
-              <div class="col-md-9">
-                <div class="row g-3">
-                  <div class="col-md-4">
-                    <input type="hidden" name="is_global_default" value="0">
-                    <div class="form-check mt-4">
-                      <input class="form-check-input" type="checkbox" id="is_global_default" name="is_global_default" value="1" {{ old('is_global_default', $isEdit ? (int)$account->is_global_default : 0) ? 'checked' : '' }}>
-                      <label class="form-check-label" for="is_global_default">Default (Global)</label>
-                    </div>
-                  </div>
-                  <div class="col-md-8">
-                    <label class="form-label">Defaults for systems</label>
-                    <div class="d-flex gap-3 flex-wrap">
-                      @foreach(\App\Modules\Email\Models\EmailAccount::DEFAULT_SCOPES as $scope => $label)
-                        <div class="form-check">
-                          <input class="form-check-input" type="checkbox" id="def_{{ $scope }}" name="defaults_for[]" value="{{ $scope }}" {{ in_array($scope, (array)$defaultsFor) ? 'checked' : '' }}>
-                          <label class="form-check-label" for="def_{{ $scope }}">{{ $label }}</label>
-                        </div>
-                      @endforeach
-                    </div>
-                  </div>
+                <div class="form-check form-switch mt-md-4 pt-md-2">
+                  <input class="form-check-input" type="checkbox" role="switch" id="is_active" name="is_active" value="1" @checked((bool) old('is_active', $isEdit ? $account->is_active : true))>
+                  <label class="form-check-label" for="is_active">Activate after a successful test</label>
                 </div>
               </div>
               <div class="col-md-4">
                 <input type="hidden" name="ticket_ingress_enabled" value="0">
-                <div class="form-check form-switch mt-4">
-                  <input class="form-check-input" type="checkbox" role="switch" id="ticket_ingress_enabled" name="ticket_ingress_enabled" value="1" {{ old('ticket_ingress_enabled', $isEdit ? (int) $account->ticket_ingress_enabled : 0) ? 'checked' : '' }}>
-                  <label class="form-check-label" for="ticket_ingress_enabled">Ticket ingress</label>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" id="ticket_ingress_enabled" name="ticket_ingress_enabled" value="1" @checked((bool) old('ticket_ingress_enabled', $isEdit ? $account->ticket_ingress_enabled : false))>
+                  <label class="form-check-label" for="ticket_ingress_enabled">Create or update Tickets from incoming mail</label>
                 </div>
               </div>
-              <div class="col-12 mt-3 pt-3 border-top">
-                <div class="row">
-                  <div class="col-md-6">
-                    <label for="delete_policy" class="form-label fw-semibold">Provider cleanup policy</label>
-                    <select id="delete_policy" name="delete_policy" class="form-select" required>
-                      @php $policy = old('delete_policy', $isEdit ? $account->delete_policy : 'local_only'); @endphp
-                      <option value="local_only" {{ $policy === 'local_only' ? 'selected' : '' }}>Keep provider mail on server</option>
-                      <option value="sync_delete" {{ $policy === 'sync_delete' ? 'selected' : '' }}>Delete from provider when deleted in Nexum</option>
-                      <option value="auto_delete" {{ $policy === 'auto_delete' ? 'selected' : '' }}>Auto-delete from provider after import</option>
-                      <option value="legacy_default" {{ $policy === 'legacy_default' ? 'selected' : '' }}>Use legacy global cleanup switch</option>
-                    </select>
-                    <div class="form-text mt-2">
-                      <strong>Keep provider mail on server:</strong> recommended for normal IMAP mailboxes.
-                      Nexum hides local messages without removing the original provider message.
-                    </div>
-                  </div>
+              <div class="col-md-4">
+                <input type="hidden" name="is_global_default" value="0">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="is_global_default" name="is_global_default" value="1" @checked((bool) old('is_global_default', $isEdit ? $account->is_global_default : false))>
+                  <label class="form-check-label" for="is_global_default">Global default sender</label>
                 </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Default sender for</label>
+                <div class="d-flex gap-3 flex-wrap">
+                  @foreach(\App\Modules\Email\Models\EmailAccount::DEFAULT_SCOPES as $scope => $label)
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="def_{{ $scope }}" name="defaults_for[]" value="{{ $scope }}" @checked(in_array($scope, (array) $defaultsFor, true))>
+                      <label class="form-check-label" for="def_{{ $scope }}">{{ $label }}</label>
+                    </div>
+                  @endforeach
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="delete_policy" class="form-label">When mail is deleted in Nexum</label>
+                @php($policy = old('delete_policy', $isEdit ? $account->delete_policy : 'local_only'))
+                <select id="delete_policy" name="delete_policy" class="form-select" required>
+                  <option value="local_only" @selected($policy === 'local_only')>Keep the original on the mail server</option>
+                  <option value="sync_delete" @selected($policy === 'sync_delete')>Also move or delete it on the mail server</option>
+                  <option value="auto_delete" @selected($policy === 'auto_delete')>Automatically remove it from the server after import</option>
+                  <option value="legacy_default" @selected($policy === 'legacy_default')>Use the installation default</option>
+                </select>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Provider ownership and safe lifecycle status -->
-      <div class="col-12">
-        <div class="card">
+      <!-- Incoming and outgoing connection settings -->
+      <div class="col-lg-6">
+        <div class="card h-100">
+          <div class="card-header"><h2 class="h6 mb-0">Incoming mail (IMAP)</h2></div>
           <div class="card-body">
-            <h2 class="h5 mb-3">Email provider</h2>
-            @if($isEdit)
-              @if($account->usesIntegrationProvider())
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                  <span class="fw-semibold">{{ $account->providerConnection?->integration?->name ?? 'Unavailable provider' }}</span>
-                  <span class="badge text-bg-{{ $account->providerConnection?->status === 'active' ? 'success' : 'secondary' }}">{{ ucfirst($account->providerConnection?->status ?? 'unavailable') }}</span>
-                  <span class="small text-body-secondary">IMAP {{ data_get($account->providerConnection?->capabilities, 'imap') ? 'ready' : 'pending' }} · SMTP {{ data_get($account->providerConnection?->capabilities, 'smtp') ? 'ready' : 'pending' }}</span>
-                </div>
-                <div class="form-text">
-                  Provider identity changes require a new verified Integration connection, explicit rebind, and mailbox rebaseline.
-                  @if($account->providerConnection)
-                    <a href="{{ route('tech.admin.system.integrations.email-providers.show', $account->providerConnection->getKey()) }}">Manage provider lifecycle</a>.
-                  @else
-                    The bound provider is unavailable; keep this mailbox disabled until the binding is repaired.
-                  @endif
-                </div>
-              @else
-                <div class="alert alert-warning mb-0">
-                  This account retains read-only legacy migration evidence. Endpoints, usernames, and credentials can no longer be edited here.
-                  <a href="{{ route('tech.admin.system.integrations.email-providers.index') }}" class="alert-link">Open Email provider migration</a>.
-                </div>
-              @endif
-            @else
-              <label for="provider_integration_id" class="form-label">Verified provider</label>
-              <select id="provider_integration_id" name="provider_integration_id" class="form-select @error('provider_integration_id') is-invalid @enderror" required>
-                <option value="">Select an active provider</option>
-                @foreach($providers as $provider)
-                  <option value="{{ $provider->getKey() }}" @selected(old('provider_integration_id') === $provider->getKey())>{{ $provider->integration?->name ?? 'Email provider' }} · IMAP/SMTP ready</option>
-                @endforeach
-              </select>
-              @error('provider_integration_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-              <div class="form-text">Create and verify credentials under Integrations before adding a mailbox account.</div>
-            @endif
+            <div class="row g-3">
+              <div class="col-sm-8">
+                <label for="imap_host" class="form-label">Server</label>
+                <input type="text" class="form-control @error('imap_host') is-invalid @enderror" id="imap_host" name="imap_host" required value="{{ old('imap_host', $isEdit ? $account->imap_host : '') }}" placeholder="mail.example.com">
+                @error('imap_host')<div class="invalid-feedback">{{ $message }}</div>@enderror
+              </div>
+              <div class="col-sm-4">
+                <label for="imap_port" class="form-label">Port</label>
+                <input type="number" class="form-control @error('imap_port') is-invalid @enderror" id="imap_port" name="imap_port" min="1" max="65535" required value="{{ old('imap_port', $isEdit ? $account->imap_port : 993) }}">
+                @error('imap_port')<div class="invalid-feedback">{{ $message }}</div>@enderror
+              </div>
+              <div class="col-12">
+                <label for="imap_encryption" class="form-label">Connection security</label>
+                <select id="imap_encryption" name="imap_encryption" class="form-select @error('imap_encryption') is-invalid @enderror" required>
+                  <option value="implicit_tls" @selected($imapTransport === 'implicit_tls')>SSL/TLS (normally port 993)</option>
+                  <option value="starttls" @selected($imapTransport === 'starttls')>STARTTLS (normally port 143)</option>
+                </select>
+                @error('imap_encryption')<div class="invalid-feedback">{{ $message }}</div>@enderror
+              </div>
+              <div class="col-12">
+                <label for="imap_username" class="form-label">Username</label>
+                <input type="text" class="form-control @error('imap_username') is-invalid @enderror" id="imap_username" name="imap_username" required value="{{ old('imap_username', $isEdit ? $account->imap_username : '') }}" autocomplete="username">
+                @error('imap_username')<div class="invalid-feedback">{{ $message }}</div>@enderror
+              </div>
+              <div class="col-12">
+                <label for="imap_secret" class="form-label">Password</label>
+                <input type="password" class="form-control @error('imap_secret') is-invalid @enderror" id="imap_secret" name="imap_secret" {{ $hasSavedCredentials ? '' : 'required' }} autocomplete="new-password">
+                @error('imap_secret')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                @if($hasSavedCredentials)<div class="form-text">Leave blank to keep the saved password.</div>@endif
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
+      <div class="col-lg-6">
+        <div class="card h-100">
+          <div class="card-header"><h2 class="h6 mb-0">Outgoing mail (SMTP)</h2></div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-sm-8">
+                <label for="smtp_host" class="form-label">Server</label>
+                <input type="text" class="form-control @error('smtp_host') is-invalid @enderror" id="smtp_host" name="smtp_host" required value="{{ old('smtp_host', $isEdit ? $account->smtp_host : '') }}" placeholder="mail.example.com">
+                @error('smtp_host')<div class="invalid-feedback">{{ $message }}</div>@enderror
+              </div>
+              <div class="col-sm-4">
+                <label for="smtp_port" class="form-label">Port</label>
+                <input type="number" class="form-control @error('smtp_port') is-invalid @enderror" id="smtp_port" name="smtp_port" min="1" max="65535" required value="{{ old('smtp_port', $isEdit ? $account->smtp_port : 587) }}">
+                @error('smtp_port')<div class="invalid-feedback">{{ $message }}</div>@enderror
+              </div>
+              <div class="col-12">
+                <label for="smtp_encryption" class="form-label">Connection security</label>
+                <select id="smtp_encryption" name="smtp_encryption" class="form-select @error('smtp_encryption') is-invalid @enderror" required>
+                  <option value="starttls" @selected($smtpTransport === 'starttls')>STARTTLS (normally port 587)</option>
+                  <option value="implicit_tls" @selected($smtpTransport === 'implicit_tls')>SSL/TLS (normally port 465)</option>
+                </select>
+                @error('smtp_encryption')<div class="invalid-feedback">{{ $message }}</div>@enderror
+              </div>
+              <div class="col-12">
+                <label for="smtp_username" class="form-label">Username</label>
+                <input type="text" class="form-control @error('smtp_username') is-invalid @enderror" id="smtp_username" name="smtp_username" required value="{{ old('smtp_username', $isEdit ? $account->smtp_username : '') }}" autocomplete="username">
+                @error('smtp_username')<div class="invalid-feedback">{{ $message }}</div>@enderror
+              </div>
+              <div class="col-12">
+                <label for="smtp_secret" class="form-label">Password</label>
+                <input type="password" class="form-control @error('smtp_secret') is-invalid @enderror" id="smtp_secret" name="smtp_secret" {{ $hasSavedCredentials ? '' : 'required' }} autocomplete="new-password">
+                @error('smtp_secret')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                @if($hasSavedCredentials)<div class="form-text">Leave blank to keep the saved password.</div>@endif
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mailbox grants -->
       <div class="col-12">
         <div class="card">
+          <div class="card-header"><h2 class="h6 mb-0">Mailbox access</h2></div>
           <div class="card-body">
-            <h2 class="h5 mb-3">Mailbox access</h2>
             <div class="table-responsive">
               <table class="table table-sm align-middle mb-0">
                 <thead class="table-light">
@@ -192,62 +262,31 @@
                 </thead>
                 <tbody>
                   @forelse($users as $user)
-                    @php
-                      $grant = $grantRows->get($user->id, ['user_id' => $user->id]);
-                    @endphp
+                    @php($grant = $grantRows->get($user->id, ['user_id' => $user->id]))
                     <tr>
                       <td>
                         <input type="hidden" name="grants[{{ $user->id }}][user_id]" value="{{ $user->id }}">
                         <div class="fw-semibold">{{ $user->name }}</div>
                         <div class="text-muted small">{{ $user->email }}</div>
                       </td>
-                      <td class="text-center">
-                        <input class="form-check-input" type="checkbox" name="grants[{{ $user->id }}][can_view]" value="1" @checked((bool) ($grant['can_view'] ?? false)) aria-label="View {{ $user->name }}">
-                      </td>
-                      <td class="text-center">
-                        <input class="form-check-input" type="checkbox" name="grants[{{ $user->id }}][can_organize]" value="1" @checked((bool) ($grant['can_organize'] ?? false)) aria-label="Organize {{ $user->name }}">
-                      </td>
-                      <td class="text-center">
-                        <input class="form-check-input" type="checkbox" name="grants[{{ $user->id }}][can_send]" value="1" @checked((bool) ($grant['can_send'] ?? false)) aria-label="Send {{ $user->name }}">
-                      </td>
+                      <td class="text-center"><input class="form-check-input" type="checkbox" name="grants[{{ $user->id }}][can_view]" value="1" @checked((bool) ($grant['can_view'] ?? false)) aria-label="View {{ $user->name }}"></td>
+                      <td class="text-center"><input class="form-check-input" type="checkbox" name="grants[{{ $user->id }}][can_organize]" value="1" @checked((bool) ($grant['can_organize'] ?? false)) aria-label="Organize {{ $user->name }}"></td>
+                      <td class="text-center"><input class="form-check-input" type="checkbox" name="grants[{{ $user->id }}][can_send]" value="1" @checked((bool) ($grant['can_send'] ?? false)) aria-label="Send {{ $user->name }}"></td>
                     </tr>
                   @empty
-                    <tr>
-                      <td colspan="4" class="text-muted text-center py-4">No active users available.</td>
-                    </tr>
+                    <tr><td colspan="4" class="text-muted text-center py-4">No active users available.</td></tr>
                   @endforelse
                 </tbody>
               </table>
             </div>
-            @error('grants')<div class="text-danger small mt-2">{{ $message }}</div>@enderror
           </div>
         </div>
       </div>
 
       <div class="col-12 d-flex justify-content-end gap-2">
-        <a href="{{ route('tech.admin.settings.email.accounts') }}" class="btn btn-outline-secondary">Close</a>
-        @if($isEdit)
-          <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('email-test-form')?.submit();">Check IMAP and SMTP login</button>
-        @endif
-        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="{{ route('tech.admin.settings.email.accounts') }}" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save and test connection</button>
       </div>
     </form>
-
-    @if($isEdit)
-      <form id="email-test-form" method="POST" action="{{ route('tech.admin.settings.email.accounts.test', $account) }}" class="d-none">
-        @csrf
-      </form>
-    @endif
-    @if(session('email_test'))
-      @php($t = session('email_test'))
-      <div class="col-12">
-        <div class="alert {{ $t['overall'] === 'OK' ? 'alert-success' : ($t['overall'] === 'Warning' ? 'alert-warning' : 'alert-danger') }} mt-3">
-          <div class="fw-semibold">IMAP/SMTP login check: {{ $t['overall'] }}</div>
-          <div class="small mb-1">This verifies trusted connections and authentication. It does not send a message or prove recipient delivery.</div>
-          <div class="small">IMAP: {{ $t['imap_ok'] ? 'OK' : 'Fail' }} ({{ $t['imap_ms'] }} ms) {{ $t['imap_error'] ? '— '.$t['imap_error'] : '' }}</div>
-          <div class="small">SMTP: {{ $t['smtp_ok'] ? 'OK' : 'Fail' }} ({{ $t['smtp_ms'] }} ms) {{ $t['smtp_error'] ? '— '.$t['smtp_error'] : '' }}</div>
-        </div>
-      </div>
-    @endif
   </div>
 @endsection

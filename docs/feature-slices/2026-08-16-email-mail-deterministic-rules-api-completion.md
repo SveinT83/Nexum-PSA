@@ -1,6 +1,6 @@
 # Feature Slice: Email Mail Deterministic Rules API Completion
 
-Status: Queued / Dependency Gated
+Status: Implemented On Dev / Human Review Pending
 Date: 2026-08-16
 Level: 3
 Parent: `docs/rfc/2026-07-04-mail-module-full-email-client.md`
@@ -15,6 +15,16 @@ provider Archive/Move effect to the existing verified, idempotent remote-operati
 local-only, stale, ambiguous, mismatched, and unauthorized requests fail closed. This is a safety
 repair only and does not satisfy the draft, bounded preview, durable reprocess/retry/full-rerun, or
 complete API/OpenAPI requirements below. No migration or runtime/provider operation was performed.
+
+2026-09-03 completion note: the full Order 10 boundary is implemented on authoritative Dev. Durable
+drafts are separate from published behavior, publication requires an exact checksum and dedicated
+permission, and each publication creates an immutable version. Bounded local-only reprocess preview,
+apply, cancel, retry and warned full rerun now use durable run/item/action ledgers on the dedicated
+`email-rules` queue. Successful logical action positions are never replayed. Search selection text is
+encrypted at rest and operational API output stays content-free. Migration
+`2026_09_03_090000_complete_email_rule_drafts_and_reprocessing.php` ran in Dev batch 24; it grants
+`email.rule_publish` and `email.rule_reprocess` only to Admin/Superuser. No reprocess run or provider
+operation was started during deployment. Named review remains open under `HR-2026-08-16-010`.
 
 ## Goal
 

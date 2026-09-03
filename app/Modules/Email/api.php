@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Email\Controllers\Api\V1\ConversationActionsController;
 use App\Modules\Email\Controllers\Api\V1\ConversationClassificationController;
 use App\Modules\Email\Controllers\Api\V1\InboxController;
 use App\Modules\Email\Controllers\Api\V1\MailboxDraftAttachmentsController;
@@ -182,6 +183,22 @@ Route::delete('email/mailbox/conversations/{conversation}/classification', [Conv
     ->name('email.mailbox.conversations.classification.destroy')
     ->middleware(CheckAbilities::class.':email.update');
 
+Route::post('email/mailbox/conversation-actions/preview', [ConversationActionsController::class, 'preview'])
+    ->name('email.mailbox.conversation-actions.preview')
+    ->middleware(CheckAbilities::class.':email.read');
+Route::get('email/mailbox/conversation-actions/{run}', [ConversationActionsController::class, 'show'])
+    ->name('email.mailbox.conversation-actions.show')
+    ->middleware(CheckAbilities::class.':email.read');
+Route::post('email/mailbox/conversation-actions/{run}/apply', [ConversationActionsController::class, 'apply'])
+    ->name('email.mailbox.conversation-actions.apply')
+    ->middleware(CheckAbilities::class.':email.update');
+Route::post('email/mailbox/conversation-actions/{run}/retry', [ConversationActionsController::class, 'retry'])
+    ->name('email.mailbox.conversation-actions.retry')
+    ->middleware(CheckAbilities::class.':email.update');
+Route::post('email/mailbox/conversation-actions/{run}/cancel', [ConversationActionsController::class, 'cancel'])
+    ->name('email.mailbox.conversation-actions.cancel')
+    ->middleware(CheckAbilities::class.':email.update');
+
 Route::get('email/smart-inbox/suggestions/count', [SmartInboxSuggestionsController::class, 'count'])
     ->name('email.smart-inbox.suggestions.count')
     ->middleware(CheckAbilities::class.':email.read');
@@ -210,6 +227,26 @@ Route::post('email/smart-inbox/suggestions/{suggestion}/apply', [SmartInboxSugge
     ->name('email.smart-inbox.suggestions.apply')
     ->middleware(CheckAbilities::class.':email.update');
 
+Route::get('email/rule-reprocess-runs/{run}', [RulesController::class, 'run'])
+    ->name('email.rules.runs.show')
+    ->middleware(CheckAbilities::class.':email.rules.read');
+Route::post('email/rule-reprocess-runs/{run}/apply', [RulesController::class, 'applyRun'])
+    ->name('email.rules.runs.apply')
+    ->middleware(CheckAbilities::class.':email.rules.execute');
+Route::post('email/rule-reprocess-runs/{run}/cancel', [RulesController::class, 'cancelRun'])
+    ->name('email.rules.runs.cancel')
+    ->middleware(CheckAbilities::class.':email.rules.execute');
+Route::post('email/rule-reprocess-runs/{run}/retry', [RulesController::class, 'retryRun'])
+    ->name('email.rules.runs.retry')
+    ->middleware(CheckAbilities::class.':email.rules.execute');
+Route::post('email/rule-reprocess-runs/{run}/full-rerun', [RulesController::class, 'fullRerun'])
+    ->name('email.rules.runs.full-rerun')
+    ->middleware(CheckAbilities::class.':email.rules.execute');
+
+Route::post('email/rules/drafts', [RulesController::class, 'createDraft'])
+    ->name('email.rules.drafts.create')
+    ->middleware(CheckAbilities::class.':email.rules.write');
+
 Route::get('email/rules', [RulesController::class, 'index'])
     ->name('email.rules.index')
     ->middleware(CheckAbilities::class.':email.rules.read');
@@ -217,6 +254,28 @@ Route::get('email/rules', [RulesController::class, 'index'])
 Route::get('email/rules/{rule}', [RulesController::class, 'show'])
     ->name('email.rules.show')
     ->middleware(CheckAbilities::class.':email.rules.read');
+
+Route::get('email/rules/{rule}/draft', [RulesController::class, 'draft'])
+    ->name('email.rules.drafts.show')
+    ->middleware(CheckAbilities::class.':email.rules.read');
+Route::put('email/rules/{rule}/draft', [RulesController::class, 'saveDraft'])
+    ->name('email.rules.drafts.update')
+    ->middleware(CheckAbilities::class.':email.rules.write');
+Route::post('email/rules/{rule}/draft/validate', [RulesController::class, 'validateDraft'])
+    ->name('email.rules.drafts.validate')
+    ->middleware(CheckAbilities::class.':email.rules.write');
+Route::get('email/rules/{rule}/publish-preview', [RulesController::class, 'publishPreview'])
+    ->name('email.rules.publish-preview')
+    ->middleware(CheckAbilities::class.':email.rules.write');
+Route::post('email/rules/{rule}/publish', [RulesController::class, 'publish'])
+    ->name('email.rules.publish')
+    ->middleware(CheckAbilities::class.':email.rules.write');
+Route::get('email/rules/{rule}/versions', [RulesController::class, 'versions'])
+    ->name('email.rules.versions.index')
+    ->middleware(CheckAbilities::class.':email.rules.read');
+Route::post('email/rules/{rule}/reprocess-preview', [RulesController::class, 'reprocessPreview'])
+    ->name('email.rules.reprocess-preview')
+    ->middleware(CheckAbilities::class.':email.rules.execute');
 
 Route::post('email/rules/{rule}/preview', [RulesController::class, 'preview'])
     ->name('email.rules.preview')

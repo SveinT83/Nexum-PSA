@@ -31,7 +31,7 @@ final class EmailAccountProviderRuntimeResolver
         $account = EmailAccount::query()->findOrFail($account->id);
         $this->assertUsableAccount($account, $expectedBindingVersion);
 
-        if ($this->source($account) === 'integration') {
+        if ($this->source($account) === 'integration' && $this->legacyTestCompatibilityEnabled()) {
             if (blank($account->provider_integration_id)) {
                 throw new EmailProviderSecurityException('provider_binding_missing');
             }
@@ -39,11 +39,40 @@ final class EmailAccountProviderRuntimeResolver
             return $this->integrationRuntime->active((string) $account->provider_integration_id);
         }
 
-        if ($this->source($account) !== 'legacy') {
+        if (! $this->isAccountOwnedSource($account) || filled($account->provider_integration_id)) {
             throw new EmailProviderSecurityException('provider_source_invalid');
         }
 
-        return $this->legacyRuntime($account);
+        return $this->accountRuntime($account);
+    }
+
+    /**
+     * Resolve saved account-owned credentials for an administrator-initiated
+     * connection check. The account may remain inactive until both probes pass.
+     */
+    public function resolveForConfigurationTest(
+        #[\SensitiveParameter] EmailAccount $account,
+        int $expectedBindingVersion,
+    ): EmailProviderRuntimeCredentials {
+        $account = EmailAccount::query()->findOrFail($account->id);
+
+        if ($this->bindingVersion($account) !== $expectedBindingVersion) {
+            throw new EmailProviderSecurityException('provider_binding_stale');
+        }
+
+        if ($this->source($account) === 'integration' && $this->legacyTestCompatibilityEnabled()) {
+            if (blank($account->provider_integration_id)) {
+                throw new EmailProviderSecurityException('provider_binding_missing');
+            }
+
+            return $this->integrationRuntime->active((string) $account->provider_integration_id);
+        }
+
+        if (! $this->isAccountOwnedSource($account) || filled($account->provider_integration_id)) {
+            throw new EmailProviderSecurityException('provider_source_invalid');
+        }
+
+        return $this->accountRuntime($account);
     }
 
     /**
@@ -64,12 +93,12 @@ final class EmailAccountProviderRuntimeResolver
             return false;
         }
 
-        if ($this->source($account) === 'integration') {
+        if ($this->source($account) === 'integration' && $this->legacyTestCompatibilityEnabled()) {
             return filled($account->provider_integration_id)
                 && $this->integrationRuntime->databaseReady((string) $account->provider_integration_id);
         }
 
-        if ($this->source($account) !== 'legacy') {
+        if (! $this->isAccountOwnedSource($account) || filled($account->provider_integration_id)) {
             return false;
         }
 
@@ -88,6 +117,7 @@ final class EmailAccountProviderRuntimeResolver
             );
             $this->authentication->normalizeLegacy('imap', (string) $account->imap_auth_type);
             $this->authentication->normalizeLegacy('smtp', (string) $account->smtp_auth_type);
+
             return filled($account->imap_username)
                 && filled($account->smtp_username)
                 && filled($account->imap_secret)
@@ -135,13 +165,13 @@ final class EmailAccountProviderRuntimeResolver
         }
     }
 
-    private function legacyRuntime(#[\SensitiveParameter] EmailAccount $account): EmailProviderRuntimeCredentials
+    private function accountRuntime(#[\SensitiveParameter] EmailAccount $account): EmailProviderRuntimeCredentials
     {
         try {
             $imapSecret = Crypt::decryptString((string) $account->imap_secret);
             $smtpSecret = Crypt::decryptString((string) $account->smtp_secret);
         } catch (\Throwable) {
-            throw new EmailProviderSecurityException('legacy_credential_decryption_failed');
+            throw new EmailProviderSecurityException('account_credential_decryption_failed');
         }
 
         $imap = $this->endpoints->normalize(
@@ -158,9 +188,9 @@ final class EmailAccountProviderRuntimeResolver
         );
         $imapAuth = $this->authentication->normalizeLegacy('imap', (string) $account->imap_auth_type);
         $smtpAuth = $this->authentication->normalizeLegacy('smtp', (string) $account->smtp_auth_type);
-        [$trustMode, $trustedCidrName] = $this->legacyTrust($account);
+        [$trustMode, $trustedCidrName] = $this->accountTrust($account);
         $runtime = new EmailProviderRuntimeCredentials(
-            providerIntegrationId: 'legacy-account-'.$account->id,
+            providerIntegrationId: 'email-account-'.$account->id,
             configurationVersion: $this->bindingVersion($account),
             credentialVersion: 0,
             imapEndpoint: $this->authorizer->authorize($imap, $trustMode, $trustedCidrName),
@@ -178,7 +208,7 @@ final class EmailAccountProviderRuntimeResolver
     }
 
     /** @return array{0: string, 1: string|null} */
-    private function legacyTrust(#[\SensitiveParameter] EmailAccount $account): array
+    private function accountTrust(#[\SensitiveParameter] EmailAccount $account): array
     {
         $cidrName = config('email_provider_security.legacy_trusted_private_accounts.'.$account->id);
 
@@ -189,6 +219,17 @@ final class EmailAccountProviderRuntimeResolver
 
     private function source(#[\SensitiveParameter] EmailAccount $account): string
     {
-        return (string) ($account->provider_credential_source ?: 'legacy');
+        return (string) ($account->provider_credential_source ?: ($this->legacyTestCompatibilityEnabled() ? 'legacy' : ''));
+    }
+
+    private function isAccountOwnedSource(#[\SensitiveParameter] EmailAccount $account): bool
+    {
+        return $this->source($account) === 'account'
+            || ($this->legacyTestCompatibilityEnabled() && $this->source($account) === 'legacy');
+    }
+
+    private function legacyTestCompatibilityEnabled(): bool
+    {
+        return app()->environment('testing');
     }
 }

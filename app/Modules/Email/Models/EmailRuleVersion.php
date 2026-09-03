@@ -46,6 +46,20 @@ class EmailRuleVersion extends Model
         'account_ids_json' => 'array',
     ];
 
+    protected static function booted(): void
+    {
+        static::updating(function (self $version): void {
+            $changed = array_values(array_diff(array_keys($version->getDirty()), ['updated_at']));
+            $validSupersession = $changed === ['status']
+                && $version->getOriginal('status') === self::STATUS_PUBLISHED
+                && $version->status === self::STATUS_SUPERSEDED;
+
+            if (! $validSupersession) {
+                throw new \LogicException('Published Email rule versions are immutable.');
+            }
+        });
+    }
+
     public function rule(): BelongsTo
     {
         return $this->belongsTo(EmailRule::class, 'email_rule_id');

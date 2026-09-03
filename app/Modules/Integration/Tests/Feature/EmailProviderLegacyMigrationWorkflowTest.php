@@ -224,9 +224,8 @@ class EmailProviderLegacyMigrationWorkflowTest extends TestCase
 
         $this->actingAs($this->operator)
             ->get(route('tech.admin.system.integrations.email-providers.migrations.show', $preview->public_id))
-            ->assertOk()
-            ->assertSee('Restore '.$account->address.' with a verified provider')
-            ->assertSee('Bind verified provider');
+            ->assertRedirect(route('tech.admin.settings.email.accounts'))
+            ->assertSessionHas('status');
 
         $response = $this->actingAs($this->operator)->post(route(
             'tech.admin.system.integrations.email-providers.migrations.items.rebind',

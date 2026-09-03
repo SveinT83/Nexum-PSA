@@ -83,7 +83,9 @@ class IntegrationModuleTest extends TestCase
             ->get(route('tech.admin.system.integrations.index'))
             ->assertOk()
             ->assertViewIs('integration::Tech.Admin.System.Integrations.index')
-            ->assertViewHas('integrations');
+            ->assertViewHas('integrations')
+            ->assertDontSee('Email Providers')
+            ->assertDontSee('Manage independent IMAP/SMTP provider records');
     }
 
     #[Test]

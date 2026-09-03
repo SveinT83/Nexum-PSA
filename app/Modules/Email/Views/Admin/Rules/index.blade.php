@@ -50,34 +50,20 @@
       </div>
     </div>
 
-    <div class="card mb-4">
-      <div class="card-header py-2">
-        <div class="fw-semibold">Reprocess message</div>
+    @if($reprocessPreview)
+      <div class="alert alert-warning d-flex justify-content-between align-items-center gap-3">
+        <div>
+          <div class="fw-semibold">Reprocess preview — no actions have run</div>
+          <div class="small">Rule: {{ $reprocessPreview->rule->name }}. Selected: {{ $reprocessPreview->requested_count }}. Matched: {{ $reprocessPreview->matched_count }}. Expires {{ $reprocessPreview->expires_at?->diffForHumans() }}.</div>
+        </div>
+        @can('email.rule_reprocess')
+          <form method="POST" action="{{ route('tech.admin.settings.email.rules.reprocess-runs.apply', $reprocessPreview) }}">
+            @csrf
+            <button type="submit" class="btn btn-warning">Apply verified preview</button>
+          </form>
+        @endcan
       </div>
-      <div class="card-body">
-        <form method="POST" action="{{ route('tech.admin.settings.email.rules.reprocess') }}" class="row g-2 align-items-end">
-          @csrf
-          <div class="col-md-4">
-            <label for="email_message_id" class="form-label">Email message ID</label>
-            <input id="email_message_id" name="email_message_id" type="number" min="1" class="form-control @error('email_message_id') is-invalid @enderror" value="{{ old('email_message_id') }}" required>
-            @error('email_message_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-          </div>
-          <div class="col-md-4">
-            <label for="run_mode" class="form-label">Run mode</label>
-            <select id="run_mode" name="run_mode" class="form-select @error('run_mode') is-invalid @enderror">
-              <option value="queue" @selected(old('run_mode', 'queue') === 'queue')>Queue reprocessing</option>
-              <option value="now" @selected(old('run_mode') === 'now')>Run now</option>
-            </select>
-            @error('run_mode')<div class="invalid-feedback">{{ $message }}</div>@enderror
-          </div>
-          <div class="col-md-4">
-            <button type="submit" class="btn btn-outline-primary w-100">
-              <i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>Reprocess
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    @endif
 
     <div>
       <h2 class="h5">Custom inbound rules</h2>
@@ -114,6 +100,9 @@
                         <span class="badge text-bg-info">v{{ $rule->publishedVersion->version_number }}</span>
                       @else
                         <span class="badge text-bg-warning">Unpublished legacy</span>
+                      @endif
+                      @if($rule->draft)
+                        <span class="badge text-bg-warning">Unpublished draft</span>
                       @endif
                     </div>
                     @if($rule->description)
@@ -181,18 +170,29 @@
                     </span>
                   </td>
                   <td class="text-end">
-                    <a href="{{ route('tech.admin.settings.email.rules.edit', $rule) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
-                    <form action="{{ route('tech.admin.settings.email.rules.toggle', $rule) }}" method="POST" class="d-inline">
-                      @csrf
-                      <button type="submit" class="btn btn-sm {{ $rule->is_active ? 'btn-outline-warning' : 'btn-outline-success' }}">
-                        {{ $rule->is_active ? 'Disable' : 'Enable' }}
-                      </button>
-                    </form>
-                    <form action="{{ route('tech.admin.settings.email.rules.destroy', $rule) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this email rule?');">
-                      @csrf
-                      @method('DELETE')
-                      <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                    </form>
+                    <div class="d-flex justify-content-end gap-1 flex-wrap">
+                      <a href="{{ route('tech.admin.settings.email.rules.edit', $rule) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                      @can('email.rule_publish')
+                        <form action="{{ route('tech.admin.settings.email.rules.toggle', $rule) }}" method="POST" class="d-inline">
+                          @csrf
+                          <button type="submit" class="btn btn-sm {{ $rule->is_active ? 'btn-outline-warning' : 'btn-outline-success' }}">
+                            {{ $rule->is_active ? 'Disable' : 'Enable' }}
+                          </button>
+                        </form>
+                        <form action="{{ route('tech.admin.settings.email.rules.destroy', $rule) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this email rule?');">
+                          @csrf
+                          @method('DELETE')
+                          <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                      @endcan
+                    </div>
+                    @if($rule->publishedVersion && auth()->user()?->can('email.rule_reprocess'))
+                      <form action="{{ route('tech.admin.settings.email.rules.reprocess-preview', $rule) }}" method="POST" class="d-flex gap-1 justify-content-end mt-2">
+                        @csrf
+                        <input name="email_message_id" type="number" min="1" class="form-control form-control-sm" placeholder="Message ID" aria-label="Email message ID" required style="max-width: 125px;">
+                        <button type="submit" class="btn btn-sm btn-outline-primary">Preview rerun</button>
+                      </form>
+                    @endif
                   </td>
                 </tr>
               @endforeach

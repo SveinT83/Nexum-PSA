@@ -24,7 +24,7 @@ Current non-goals for this foundation slice:
   Smart Inbox suggestions, and expose only the documented human-reviewed actions after normal user,
   mailbox, target-domain, agent-action, and exact agent-scope checks pass.
 
-## Current Dev rollout record (2026-08-24)
+## Current Dev rollout record (updated 2026-09-02)
 
 - Mail completion migrations `2026_08_24_110000`, `120000`, `125000`, `130000`, and `140000`
   ran in Dev batches 124 through 128, one per step. The existing draft remains private and all new
@@ -34,9 +34,11 @@ Current non-goals for this foundation slice:
 - Keep `EMAIL_LIVE_ENABLED`, `EMAIL_LIVE_RUNTIME_APPROVED`, `VITE_EMAIL_LIVE_ENABLED`,
   `EMAIL_MAIL_COLLABORATION_ENABLED`, `EMAIL_MAIL_COLLABORATION_UI_ENABLED`, and
   `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED` false. Schema deployment does not activate those features.
-- Both Dev accounts use Integration-owned provider bindings at version 2 and the approved exact
-  private `/32`. The targeted cron dispatches polling and runs one database `email,default` worker.
-  The complete Laravel scheduler and the `notifications` worker are not active.
+- Dev has one active shared account with account-owned password-based IMAP/SMTP settings and a
+  positive account configuration version. No account is bound to an Integration provider, no
+  provider credential ciphertext remains, and normal runtime exposes no provider lifecycle routes.
+  The targeted cron dispatches polling and runs one database `email,default` worker. The complete
+  Laravel scheduler and the `notifications` worker are not active.
 - There are 136 unattempted inbound notification-fanout jobs. Web Push is already enabled for the
   relevant types, so an operator must review that cohort before starting notification delivery or
   the complete scheduler. No notification preference was changed during completion.
@@ -75,6 +77,9 @@ Current non-goals for this foundation slice:
   `AssistEmailComposerWithAi`, `PerformEmailRemoteOperation`, `RecordEmailRemoteOperation`,
   `RunEmailRemoteOperation`, `RetryEmailRemoteOperation`, `CancelEmailRemoteOperation`,
   `RunDueEmailRemoteOperations`
+- Jobs: `AppendEmailProviderSentCopy` queues exactly one duplicate-safe provider Sent append after
+  SMTP acceptance and durable reconciliation evidence. Normal Sent-folder synchronization confirms
+  the exact Message-ID and completes the outbound submission without another SMTP write.
 - Services: `ImapClient`, `EmailFolderProjector`, `EmailTestService`, `SmtpAccountMailer`,
   `EmailComposerDraftService`, `EmailProviderDraftSyncService`, `EmailSignatureRenderer`,
   `EmailPrivateStorage`,
@@ -499,6 +504,12 @@ snapshots. All original, duplicate, and unreferenced evidence remains preserved;
 operation copied, deleted, moved, or rewrote a file. Keep `HR-2026-08-15-006` open until a named
 human reviews the canonical evidence and browser/download behavior.
 
+That paragraph records the old recovery database. The current Dev readback on 2026-09-02 contains
+message IDs 1-20, does not contain 456/478/479, and has zero attachment-counter/row discrepancies.
+Those obsolete IDs are no longer an active code-rework target and must never be mapped onto current
+rows. The download/recovery implementation remains covered by 15 tests / 110 assertions; only its
+current browser/access human review remains open.
+
 ### EmailSignature — `app/Modules/Email/Models/EmailSignature.php`
 Backs `email_signatures`. Each technician has one Mail-owned personal signature, edited from the
 Profile workspace and surfaced below the page AI chat as a default-collapsed Mail right-bar card.
@@ -608,8 +619,9 @@ Backs `email_logs` (`database/migrations/2025_11_11_000005_create_email_logs_tab
 ### ImapClient — `app/Modules/Email/Services/ImapClient.php`
 A thin wrapper around Webklex to connect to a specific account and interact with provider folders.
 - `connect()`: resolves the exact source and expected positive binding version through
-  `EmailAccountProviderRuntimeResolver`, then builds a pinned verified-TLS transport through
-  Integration. It never selects a legacy or system fallback for an Integration-bound account.
+  `EmailAccountProviderRuntimeResolver`, then builds a pinned verified-TLS transport from the
+  account-owned IMAP settings through the shared endpoint-security policy. It never selects an
+  Integration provider, legacy secret, or system fallback.
 - `fetchUnseen(limit, page)`: opens INBOX and returns a bounded unseen page for explicit diagnostics. Automatic polling deliberately does not interpret unread state as backlog work.
 - `fetchRecent(limit)`: opens INBOX and returns the newest messages regardless of Seen state for explicit diagnostics and compatibility.
 - `mailboxState()`: returns INBOX `UIDVALIDITY` and `UIDNEXT` so automatic polling can establish and verify a durable live boundary.
@@ -626,9 +638,10 @@ Implementation notes:
 - Every provider-I/O caller holds the per-account provider lock through re-resolution, connect/auth,
   operation, and disconnect. Durable work must supply its frozen binding version; immediate work
   captures and rechecks the current version under that lock.
-- Integration enforces IMAP 993 implicit TLS or 143 STARTTLS (or a uniquely named installation
-  policy), pins the approved resolved address, keeps the original host for SNI/peer-name checks,
-  verifies certificates, rejects self-signed certificates, and requires TLS 1.2 or newer.
+- The shared endpoint-security policy enforces IMAP 993 implicit TLS or 143 STARTTLS (or a uniquely
+  named installation policy), pins the approved resolved address, keeps the original host for
+  SNI/peer-name checks, verifies certificates, rejects self-signed certificates, and requires TLS
+  1.2 or newer. Reusing security code does not transfer mailbox or credential ownership out of Email.
 - Header metadata is parsed from Webklex's supported `getHeader()->raw` source. Folded values are unfolded while repeated `Received` and `Authentication-Results` fields retain top-to-bottom order. Missing or malformed authentication evidence remains empty and therefore fails closed.
 
 ### EmailTestService — `app/Modules/Email/Services/EmailTestService.php`
@@ -820,12 +833,15 @@ cannot be hidden by a coalesced row.
 Provider Seen remains an independent outcome. Apply records one idempotent pending `mark_seen`
 operation through `RecordEmailRemoteOperation`; it does not resolve an IMAP client. A failed or
 denied provider reservation cannot roll back a successful personal acknowledgement, and retry/readback
-cannot duplicate either effect. Historical implicit `AcknowledgeEmailConversation` calls now fail
-closed. The Livewire acknowledgement method also refuses to bypass preview/confirmation.
+cannot duplicate either effect. Historical implicit `AcknowledgeEmailConversation` calls fail
+closed. Mail and API expose only the separate preview/confirmation boundary.
 
-This backend is not an activated UI/API feature. `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED` defaults false;
-broad multi-account Archive/Move/Trash, confirmation UI, API, queue continuation and private
-invalidation remain dependency-gated under Order 12 and `HR-2026-08-16-012`.
+`EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED` still defaults false. When enabled, Mail supports active-account
+conversation preview/confirm/status/cancel. API additionally accepts exact selected placements
+across authorized accounts and supports apply/retry/cancel. `ProcessEmailConversationAcknowledgementRun`
+continues only after the first immediately applied page of at most 25 locally actionable items; every
+later page remains bounded to 25 on the default queue. Provider effects remain normal remote
+operations. Named review `HR-2026-08-16-012` gates activation outside the controlled Dev review.
 
 ### Mail workspace triage actions
 The `/tech/mail` command bar keeps common actions compact:
@@ -1161,9 +1177,9 @@ Views:
 - Manages ordered inbound rules, including the explicit `normal` and `preclassification` routing phases.
 - Rules are scoped through `email_rule_accounts` to selected shared/system mailboxes with Ticket
   ingress enabled. Personal accounts cannot inherit or run legacy shared rules.
-- Every Admin save/toggle publishes an immutable `EmailRuleVersion` snapshot. Runtime execution uses
-  the published snapshot and records idempotent `EmailRuleExecutionAttempt` rows per message,
-  placement, rule, and version.
+- Admin save writes a durable draft without changing runtime behavior. A separately authorized
+  publication previews an exact diff/checksum and creates an immutable `EmailRuleVersion`. Runtime
+  uses only the published snapshot and records idempotent execution evidence.
 - Admin views and the `/api/v1/email/rules` read/preview API list admin-managed rules only.
   Personal simple rules remain owner-scoped Mail behavior and are not exposed through the Admin rule
   list.
@@ -1178,6 +1194,9 @@ Views:
   account/placement/provider ledger agree. Mixed, local-only, stale, ambiguous, or mismatched effects
   fail closed without changing the attempt or performing local compensation. Repeated application
   returns the existing uniquely linked inverse.
+- Bounded reprocess preview selects one account plus exactly one message-ID list, folder, encrypted
+  search or UTC date. Apply rechecks the frozen selection/source evidence and queues a durable run on
+  `email-rules`. Retry and confirmed full rerun never replay a successful logical action position.
 
 ### Personal simple rules
 - `CreatePersonalEmailRule` creates owner-only `personal_simple` rules from `/tech/mail`.
@@ -1201,11 +1220,11 @@ Declared in `app/Modules/Email/routes.php` with the `tech.` name prefix. Key rou
 - `tech.admin.settings.email.accounts.toggle` — toggle active
 - `tech.admin.settings.email.accounts.test` — POST run connection test
 - Additional: `tech.admin.settings.email.config`, `tech.admin.settings.email.rules`
-- API: `/api/v1/email/rules` exposes rule read/preview plus account-scoped execution detail and Undo
-  eligibility through `email.rules.read`, intersected with `email.rule_manage` and current mailbox
-  View. `POST /api/v1/email/rules/executions/{attempt}/undo` additionally requires
-  `email.rules.execute` and current Mailbox Organize, then uses the verified provider-operation
-  inverse rather than local reversal.
+- API: `/api/v1/email/rules` exposes read/preview/history through `email.rules.read`, durable
+  draft/validate/publication through `email.rules.write`, and bounded reprocess runs through
+  `email.rules.execute`. Current `email.rule_manage`, publish/reprocess permission and mailbox access
+  remain mandatory. Verified provider Undo uses the same execute ceiling plus Organize and the
+  provider-operation inverse rather than local reversal.
 - API: `/api/v1/email/mailbox/remote-operations` exposes account-scoped list/show through
   `email.read`, and guarded retry/cancel endpoints through `email.update` plus mailbox Organize.
 - API: `/api/v1/email/mailbox/conversations/{conversation}/classification` exposes scoped

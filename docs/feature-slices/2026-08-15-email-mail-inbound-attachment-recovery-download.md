@@ -1,6 +1,6 @@
 # Feature Slice: Email Mail Inbound Attachment Recovery And Download
 
-Status: Rework Needed / Partial Recovery
+Status: Implemented On Current Dev / Human Review Pending
 Date: 2026-08-15
 Parent: `docs/rfc/2026-07-04-mail-module-full-email-client.md`
 Owner: Svein / Codex
@@ -71,7 +71,14 @@ idempotent rerun returned unchanged and created no duplicate row or file. The fo
 parts belong to messages `456`, `478`, and `479`. Their exact provider-recovery calls stopped at the
 fail-closed provider resolver with `dns_answer_set_denied`; no failed call changed the database,
 filesystem, or provider. No broad search or alternate endpoint was attempted, and the four parts
-remain honestly unresolved rather than fabricated.
+remained honestly unresolved in that historical database rather than fabricated.
+
+Current Dev was read back again on 2026-09-02. It contains message IDs `1` through `20`; the old
+recovery targets `456`, `478`, and `479` are not present, and there are zero current messages whose
+stored nonzero attachment counter exceeds their actual attachment-row count. The historical bytes
+therefore cannot be attached to a current row or recovered safely. The old target is explicitly
+retired from the active implementation gate without copying, deleting, or inventing evidence. Any
+future current-row discrepancy must use a new exact preflight rather than these obsolete IDs.
 
 The original legacy source files and the duplicate account-2 legacy copies were not deleted or
 repurposed. They remain in the preserved pre-existing unreferenced-file inventory for separate
@@ -113,6 +120,8 @@ Existing Inbox and API permission contracts remain unchanged.
 
 Current automated evidence: the focused `EmailAttachmentAccessRecoveryTest` passes **15 tests / 110
 assertions**, including exact legacy-directory recovery and proof that the provider is not contacted.
+The same complete focused file passed again on 2026-09-02 after the current zero-discrepancy database
+readback.
 The earlier adjacent exact provider-read package passed 47 / 321, the broad Email module/inbound
 package 155 / 1,308, and the complete Email test directory 347 / 3,030 before this narrow follow-up.
 Pint, PHP syntax, and diff checks pass for the earlier follow-up. Controlled post-restore preflight,
@@ -131,8 +140,9 @@ resolved or explicitly deferred and a named reviewer completes the remaining che
 - [x] Placement-bound download and hidden mailbox-context denial are implemented and tested.
 - [x] The exact 19-ID preflight and local apply recovered 30 rows/files across 16 messages; rerun is
   idempotent and unchanged.
-- [ ] Recover or explicitly defer the four remaining parts for `456`, `478`, and `479` through a
-  separately reviewed endpoint-resolution path; `dns_answer_set_denied` must remain fail closed.
+- [x] The historical four-part target is explicitly retired from the current Dev gate: IDs `456`,
+  `478`, and `479` no longer exist in the current database, no current attachment-count discrepancy
+  exists, and no guessed copy/deletion was performed. `dns_answer_set_denied` remains fail closed.
 - [x] Current inventory, unchanged failure side effects, and the no-deletion boundary are recorded.
 - [ ] Complete browser/access/provider recovery checks and named human review under
-  `HR-2026-08-15-006`, which is Rework Needed.
+  `HR-2026-08-15-006`, which remains In Review.

@@ -1,11 +1,16 @@
 # Feature Slice: Integration-Owned Email Provider Credentials And Endpoint Security
 
-Status: Done / Human Review Rework Needed
+Status: Superseded By Final Account-Owned Setup
 Date: 2026-08-16
 Parent: `docs/rfc/2026-07-04-mail-module-full-email-client.md`
 ADR: `docs/adr/2026-08-16-integration-owned-email-provider-credentials-and-endpoint-security.md`
 Owner: Svein / Codex
 Human review: `HR-2026-08-16-006`
+Replacement: `docs/feature-slices/2026-09-01-email-account-connection-setup.md`
+
+> Historical implementation record only. The approved replacement keeps the reusable endpoint/TLS,
+> bounded-I/O, redaction, audit, and no-blind-send protections, but retires every provider-first
+> administration and runtime concept. It is not unfinished Mail work and must not be resumed.
 
 ## Goal
 

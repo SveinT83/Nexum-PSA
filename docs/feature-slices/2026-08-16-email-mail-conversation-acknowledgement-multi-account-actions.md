@@ -1,12 +1,27 @@
 # Feature Slice: Email Mail Conversation Acknowledgement And Explicit Multi-Account Actions
 
-Status: Safety Rework Implemented / Full Slice Dependency Gated
+Status: Implemented On Dev / Runtime Enabled For Named Review
 Date: 2026-08-16
 Level: 3
 Parent: `docs/rfc/2026-07-04-mail-module-full-email-client.md`
 ADR: `docs/adr/2026-08-11-email-canonical-message-mailbox-placement.md`
 Owner: Svein / Codex
 Human Review: `HR-2026-08-16-012`
+
+## 2026-09-03 Completion
+
+The accessible boundary is implemented on Dev. Mail now opens a bounded preview panel before marking
+one active-account conversation read or unread for the current user, displays provider Seen as a
+separate optional effect, and requires explicit confirmation. Versioned API routes support the same
+active-account preview plus exact placement selections across authorized accounts, content-free
+status, bounded apply/continuation, retry and cancel. The first 25-item apply page runs immediately;
+only remaining local work is continued on the default queue. Provider work stays in the
+existing remote-operation ledger; status refresh never invents provider acknowledgement.
+
+Focused coverage passes 13 tests / 135 assertions, and the full Email Feature suite passes 715 tests /
+7,296 assertions. The environment flag remains false by default; Dev enabled it through the cached
+runtime configuration on 2026-09-03 for Svein's named review. No preview, personal-state change or
+provider action existed when the review runtime was enabled.
 
 ## Goal
 
@@ -253,12 +268,12 @@ provider conflict, API scope, mobile/keyboard UI, worker health and sanitized ev
 
 - [x] The default-off safety rework removes the implicit action and provides a frozen exact-placement
   ledger with same-actor/per-item reauthorization and separate personal/provider outcomes.
-- [ ] Dependencies 5-9 and 11 are stable and the final access/epoch/provider/draft boundaries are
-  used rather than duplicated.
-- [ ] Preview freezes an exact bounded authorized scope; apply reauthorizes every item and never
+- [x] The final access/epoch/provider/draft boundaries are used rather than duplicated; disabled
+  Order 8 invalidation remains a safe no-op and this acknowledgement does not retarget shared drafts.
+- [x] Preview freezes an exact bounded authorized scope; apply reauthorizes every item and never
   absorbs a future arrival or unselected account.
-- [ ] Personal and provider effects remain separate, truthful, idempotent and retry-safe through the
+- [x] Personal and provider effects remain separate, truthful, idempotent and retry-safe through the
   existing actions/ledgers.
-- [ ] Livewire/API controls, permissions, non-enumeration, races, partial results, invalidations,
+- [x] Livewire/API controls, permissions, non-enumeration, races, partial results, invalidations,
   tests, docs and deployment checks are complete.
-- [ ] `HR-2026-08-16-012` is registered and remains Pending for named human review.
+- [x] `HR-2026-08-16-012` is registered and remains Pending for named human review.

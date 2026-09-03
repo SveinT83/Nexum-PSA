@@ -1,177 +1,73 @@
-Manage Email provider connections from **Admin > System > Integrations > Email providers**. This is
-the only place that accepts provider hostnames, usernames, or passwords. Email account settings show
-only a safe provider label, source, readiness, and capabilities.
+Email accounts and their connection settings are managed together under **Admin > Email > Email
+Accounts**. Ordinary administrators do not create a separate provider record or run a mailbox
+migration before adding an account.
 
-## Permissions
+## Add An Email Account
 
-- `integration.email_provider_manage` lets an active Admin or Superuser manage public Email provider
-  connections.
-- `integration.email_private_endpoint_manage` is Superuser-only and is additionally required for an
-  approved private/internal endpoint.
-- Preview, stage, Verify, cutover, and rollback also require `email.mailbox_sync_manage`.
-- Binding a provider to a mailbox also requires `email.account_manage`.
-- `system.telescope_view` is Superuser-only and gates the complete Telescope UI. Email-provider
-  authority alone does not reveal cross-domain telemetry.
+Select **Add account** and enter the same details used by an ordinary mail client:
 
-Account configuration authority does not grant mailbox content, attachment, raw-source, search,
-conversation, or send access.
+- email address and display name;
+- incoming IMAP server, port, connection security, username, and password;
+- outgoing SMTP server, port, connection security, username, and password;
+- mailbox kind, owner, Ticket ingress, default-sender scopes, delete behavior, and mailbox access.
 
-## Create And Activate A Provider
+Select **Save and test connection**. Nexum saves the account with encrypted, write-only passwords
+and queues one bounded connection check. The account remains inactive while the check runs.
 
-Create one independent provider record for one endpoint and username identity. Enter a safe label,
-the IMAP and SMTP settings, and new passwords. Existing credentials are never rendered back.
+The check authenticates to IMAP and SMTP independently. If both logins pass, Nexum activates the
+account when **Activate after a successful test** was selected. SMTP testing authenticates without
+sending a message to a recipient.
 
-Supported standard transports are:
+## Correct A Failed Account
 
-| Protocol | Port | Required transport |
+Open the same account and correct its server, port, security, username, or password. Do not create a
+replacement account. On edit, password fields are always blank:
+
+- leave a password blank to keep the saved password;
+- enter a password to replace it for that protocol;
+- select **Save and test connection** to run both checks again.
+
+The page shows **Testing**, a successful result, or safe incoming/outgoing failure guidance. A failed
+account remains inactive and editable. Raw provider responses, resolved addresses, certificate
+internals, usernames, passwords, and ciphertext are never shown in alerts or logs.
+
+Deployment automatically promotes an older exactly verified internal binding into the same Email
+account. The mailbox identity, health result and access grants remain unchanged. Historical rows
+may remain as inert audit evidence, but their duplicate encrypted credentials are destroyed and
+cannot be selected or used by Mail runtime.
+
+## Supported Secure Connections
+
+| Protocol | Port | Required security |
 | --- | ---: | --- |
-| IMAP | 993 | Implicit TLS |
+| IMAP | 993 | SSL/TLS |
 | IMAP | 143 | STARTTLS |
-| SMTP | 465 | Implicit TLS |
+| SMTP | 465 | SSL/TLS |
 | SMTP | 587 | STARTTLS |
 
-Only password authentication is supported in this lifecycle. OAuth, certificate bypass,
-self-signed certificates, plaintext transport, and arbitrary custom ports are not available. A
-non-standard port must match one uniquely named installation policy in
-`email_provider_security.additional_endpoints`.
+Plaintext transport, certificate bypass, self-signed certificate acceptance, and arbitrary custom
+ports are unavailable. An installation may add a separately reviewed endpoint policy, but that does
+not add another object to the Email account workflow. OAuth is not part of the current
+password-based account form.
 
-Saving creates credential version 1 in **Staged** state. It is not usable yet:
+## Permissions And Access
 
-1. Select **Verify**. This is the only action that resolves DNS and authenticates to the provider.
-2. Review the sanitized result. Raw provider responses, endpoints, usernames, passwords, pinned
-   addresses, and ciphertext are not displayed or retained in the event ledger.
-3. Select **Activate** only for the exact verified version. Email accounts can bind only to an
-   active, exactly verified provider.
+An active operator needs `email.account_manage` and `email.mailbox_sync_manage` to configure and
+test accounts. This authority does not grant mailbox content, attachment, raw-source, conversation,
+or send access. Those remain controlled by the account owner and explicit View, Organize, and Send
+grants.
 
-Verification uses a bounded deadline and one owner lease. Every DNS answer must be acceptable; a
-mixed public/private or otherwise unsafe set rejects the complete connection. Nexum pins one approved
-address but keeps the original normalized hostname for SNI and certificate verification, requires
-TLS 1.2 or newer, and authenticates only after TLS is established.
+## Runtime And Deployment
 
-The web request never weakens this deadline. When PHP-FPM cannot own the required signal alarm,
-**Verify** queues one unique opaque-ID job on the `email` queue. The CLI Email worker performs the
-same exact-version, authorization, DNS, TLS, IMAP, SMTP, claim, and sanitized-result workflow with
-the hard deadline available. The job never serializes endpoints, usernames, passwords, ciphertext,
-or resolved addresses. Keep the documented database `email,default` worker running.
+Connection checks use the `email` queue and serialize only the account ID, binding version, and
+requested activation state. A stale job cannot activate newer saved settings. Keep the documented
+database worker for `email,default` running and restart long-lived queue workers after deployment so
+they load the new job class.
 
-### Verification Failures
+This change includes a one-way, fail-closed database migration. Back up the database, run
+`php artisan migrate --force`, clear Laravel caches and restart queue workers. No seeding is
+required. The normal scheduler runner remains required for polling, health checks, reconciliation,
+and other scheduled Mail work.
 
-A failed **Verify** returns to the provider page and keeps the provider and credential version in
-**Staged** state. The alert gives only a safe action category:
-
-- endpoint, port, transport, or approved trust-policy mismatch: review the staged connection;
-- DNS or address-policy rejection: review the hostname and approved network scope;
-- TLS or reachability failure: check certificate trust, transport, and provider availability;
-- authentication rejection: correct the staged IMAP and SMTP credentials;
-- timeout or another active verification: wait for the bounded attempt to finish and retry;
-- stale credential or configuration snapshot: reload the page and verify the current staged version.
-
-Nexum does not display or retain raw provider responses, hostnames, usernames, passwords, resolved
-addresses, certificate internals, stack traces, or exception chains in these alerts. Do not weaken
-TLS, endpoint, private-network, or credential policy to make verification pass.
-
-## Approved Private Endpoints
-
-Private endpoints are unavailable until the installation defines a named CIDR group, for example:
-
-```php
-'trusted_private_cidrs' => [
-    'mail_cluster' => ['10.20.0.0/16', 'fd20:30::/48'],
-],
-```
-
-An active Superuser must select the exact name and record a reason. The resolved address must fall
-inside that named range. Loopback, link-local, metadata, unspecified, multicast, documentation,
-benchmark, reserved, and other always-denied destinations stay blocked even when private trust is
-selected. Admins without private-endpoint permission cannot list, bind, test, stage, verify, or
-activate such a connection.
-
-The controlled Dev rollout exposes `tronderdata_mail_dev` only when
-`EMAIL_PROVIDER_TRONDERDATA_MAIL_DEV_CIDR` contains one canonical RFC1918 IPv4 `/32`. Missing,
-broader, public, IPv6, multiple, whitespace, and control-character values omit the group entirely.
-The value is installation-local and must not be copied to production or written into documentation,
-logs, tickets, or source control. Clear Laravel configuration cache after changing it. Making the
-name available does not bind a legacy account, contact the provider, or authorize Verify, activate,
-cutover, polling, or legacy-secret removal.
-
-## Rotate Or Revoke
-
-**Stage rotation** accepts only new IMAP and SMTP passwords and preserves both usernames. Verify and
-activate the staged version explicitly. Activation retires the previous version and destroys its
-encrypted secrets. Work frozen against an old account binding fails stale before provider I/O;
-ordinary secret rotation on the same binding resolves the current active version at execution.
-
-**Revoke** destroys the selected local ciphertext and blocks new runtime authentication. It records
-only the local lifecycle result; it does not claim the password was revoked at the provider. Rotate
-or revoke only after account provider work is paused/drained and all durable Email operations are
-resolved.
-
-A username or endpoint change is a new provider identity. Create a new connection and use the
-reviewed binding/re-baseline workflow. Nexum rejects a username change disguised as a rotation,
-including after a staged version or revoked history exists.
-
-## Migrate A Legacy Email Account
-
-Existing accounts remain `legacy` until every explicit step succeeds. Never run a broad cutover.
-
-1. Select exact legacy accounts and create a read-only migration preview.
-2. Review its account scope and blockers. Preview reads no provider and exposes no secret.
-   If the legacy host/transport cannot be represented safely, create and exactly verify a replacement
-   provider first. Deactivate, pause and drain the mailbox, then use **Bind verified provider** on the
-   blocked item. This source/reference-only cutover performs no IMAP/SMTP call, preserves legacy
-   evidence for the rollback window, and refuses unresolved mailbox/provider work.
-3. Choose public or approved named-private trust for each item and **Stage locally**. Staging locks
-   the exact source fingerprint, decrypts and re-encrypts only in process, and performs no DNS,
-   provider call, send, mailbox mutation, deduplication, or source switch.
-4. Verify each staged provider separately.
-5. Activate the exact verified version, then **Pause & drain** the account.
-6. Preview cutover readiness. Every Drafts/Sent/remote operation, import, cursor re-baseline,
-   inventory, cleanup, reconciliation, and IDLE presence must be resolved.
-7. Apply the exact cutover. It changes only the account provider reference and source.
-8. Resume the account and perform the named human smoke checks.
-
-Rollback is available only inside the declared window while the original legacy ciphertext is
-intact and no later rotation, revocation, purge, rebinding, or unresolved provider work exists.
-Legacy-secret destruction is not part of this rollout. Purge readiness requires a later named human
-review and backup/recovery evidence.
-
-## Deployment And Historical Telescope Data
-
-Apply migrations `2026_08_16_112000` through `117000` and the forward permission repair
-`2026_08_21_100000`, clear caches, rebuild group-writable views, restart long-lived queue workers,
-and synchronize Integration, Email, Notification, and User Management Knowledge. In the recovered
-Dev ledger, `112000` through `117000` ran one per step in batches 106 through 111 and the permission
-repair ran in batch 121. Sanitized readback confirms all eight approved permission entries, 167
-total Admin grants, 216 total Superuser grants, unchanged totals for every other role, and both Email
-accounts still on `source=legacy` without an Integration provider binding. The permission repair
-creates only approved missing catalog/default grants and preserves unrelated role grants; do not
-substitute a full `RoleSeeder` hotfix. No seeding or provider I/O is part of this deployment.
-The Dev-only exact-private-host setting is optional and fail-closed; production must leave it blank
-unless its own separately reviewed installation rule is approved.
-
-Before `/telescope` is opened after this rollout, inventory historical provider-sensitive entries:
-
-```bash
-php artisan email-provider:telescope-remediate --limit=20000
-```
-
-The command prints counts, sequence bounds, and a SHA-256 cohort hash without printing entry content.
-If a cohort exists, review the observability loss and purge only the exact unchanged cohort:
-
-```bash
-php artisan email-provider:telescope-remediate \
-  --limit=20000 \
-  --after-sequence=0 \
-  --through-sequence=<reviewed-sequence> \
-  --cohort-hash=<reviewed-hash> \
-  --purge \
-  --acknowledge-observability-loss
-```
-
-Continue from the reported `through-sequence` until a read-only preview reports zero matches. A
-changed cohort fails without deletion. Do not run broad `telescope:clear`; unrelated diagnostic
-history is outside this review.
-
-Human review `HR-2026-08-16-006` remains Rework Needed until the repaired Admin/Superuser browser
-paths are checked. No live provider verification, account cutover, or legacy-secret purge is
-authorized merely because automated tests pass.
+Human review checklist `HR-2026-09-01-001` covers the controlled production account test and the
+first real receive/send confirmation.

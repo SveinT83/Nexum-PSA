@@ -1,10 +1,15 @@
 # Feature Slice: Email Conversation Acknowledgement And Explicit Multi-Account Actions
 
-Status: Safety Rework Implemented / Human Review Pending; Activation Gated
+Status: Superseded By Completed Order 12 Implementation
 Date: 2026-08-19
 Parent: `docs/plans/2026-08-16-email-mail-completion-slice-index.md` (Order 12)
 Approved contract: `2026-08-16-email-mail-conversation-acknowledgement-multi-account-actions.md`
 Review ID: `HR-2026-08-16-012`
+
+2026-09-03 completion: this safety-repair record remains as history. The previously missing
+Livewire/API preview, explicit confirmation, status, queued continuation, retry and cancel surfaces
+are now implemented under the approved 2026-08-16 slice. Runtime activation and named review remain
+separate gates.
 
 ## Audit And Repair Outcome
 

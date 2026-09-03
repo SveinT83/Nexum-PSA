@@ -42,11 +42,12 @@ class InboundAutomationTest extends TestCase
 
         Permission::findOrCreate('email.account_manage', 'web');
         Permission::findOrCreate('email.rule_manage', 'web');
+        Permission::findOrCreate('email.rule_publish', 'web');
         Role::findOrCreate('Admin', 'web');
 
         $this->admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->admin->assignRole('Admin');
-        $this->admin->givePermissionTo(['email.account_manage', 'email.rule_manage']);
+        $this->admin->givePermissionTo(['email.account_manage', 'email.rule_manage', 'email.rule_publish']);
     }
 
     #[Test]
@@ -64,6 +65,7 @@ class InboundAutomationTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post(route('tech.admin.settings.email.rules.store'), [
+                'intent' => 'publish',
                 'name' => 'Supplier order intake',
                 'description' => 'Recognize deterministic supplier mail before generic classification.',
                 'weight' => 5,

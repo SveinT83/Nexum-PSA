@@ -25,14 +25,11 @@ use App\Modules\Integration\Models\EmailProviderCredentialVersion;
 use App\Modules\Integration\Models\EmailProviderMigrationItem;
 use App\Modules\Integration\Models\EmailProviderMigrationRun;
 use App\Modules\Integration\Services\EmailProviderManagementAuthorization;
-use App\Modules\Integration\Services\EmailProviderRuntimeFactory;
 use App\Modules\Integration\Services\EmailProviderVerificationDeadline;
 use App\Modules\Integration\Services\EmailProviderVerificationFailurePresenter;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\View\View;
 
 final class EmailProviderController extends Controller
 {
@@ -42,42 +39,18 @@ final class EmailProviderController extends Controller
         private readonly EmailProviderVerificationDeadline $verificationDeadline,
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request): RedirectResponse
     {
-        $actor = $this->authorization->authorizeProvider($request->user(), true);
-
-        return view('integration::Tech.Admin.System.Integrations.EmailProviders.index', [
-            'connections' => EmailProviderConnection::query()
-                ->with(['integration', 'activeCredentialVersion'])
-                ->withCount('emailAccounts')
-                ->orderByDesc('created_at')
-                ->get(),
-            'legacyAccounts' => EmailAccount::query()
-                ->where(function ($query): void {
-                    $query->whereNull('provider_credential_source')
-                        ->orWhere('provider_credential_source', 'legacy');
-                })
-                ->whereNull('provider_integration_id')
-                ->orderBy('address')
-                ->get(['id', 'address', 'description', 'is_active']),
-            'runs' => EmailProviderMigrationRun::query()
-                ->orderByDesc('id')
-                ->limit(25)
-                ->get(),
-            'canManagePrivate' => $actor->can(EmailProviderManagementAuthorization::PRIVATE_ENDPOINT_PERMISSION),
-        ]);
+        return redirect()
+            ->route('tech.admin.settings.email.accounts')
+            ->with('status', 'Email accounts and connection settings are managed together here.');
     }
 
-    public function create(Request $request): View
+    public function create(Request $request): RedirectResponse
     {
-        $actor = $this->authorization->authorizeProvider($request->user(), true);
-
-        return view('integration::Tech.Admin.System.Integrations.EmailProviders.create', [
-            'canManagePrivate' => $actor->can(EmailProviderManagementAuthorization::PRIVATE_ENDPOINT_PERMISSION),
-            'trustedCidrNames' => $actor->can(EmailProviderManagementAuthorization::PRIVATE_ENDPOINT_PERMISSION)
-                ? array_keys((array) config('email_provider_security.trusted_private_cidrs', []))
-                : [],
-        ]);
+        return redirect()
+            ->route('tech.admin.settings.email.accounts.create')
+            ->with('status', 'Add the mailbox and its incoming and outgoing settings together.');
     }
 
     public function store(Request $request, CreateEmailProviderConnection $create): RedirectResponse
@@ -93,19 +66,11 @@ final class EmailProviderController extends Controller
             ->with('status', 'Email provider credentials were staged locally. Run Verify before activation.');
     }
 
-    public function show(Request $request, string $connection): View
+    public function show(Request $request, string $connection): RedirectResponse
     {
-        $connection = $this->connection($request, $connection);
-
-        return view('integration::Tech.Admin.System.Integrations.EmailProviders.show', [
-            'connection' => $connection->load([
-                'integration',
-                'credentialVersions' => fn ($query) => $query->orderByDesc('version'),
-                'emailAccounts' => fn ($query) => $query->orderBy('address'),
-            ]),
-            'isRuntimeReady' => app(EmailProviderRuntimeFactory::class)->databaseReady($connection->getKey()),
-            'verificationMessage' => $this->verificationMessage($connection),
-        ]);
+        return redirect()
+            ->route('tech.admin.settings.email.accounts')
+            ->with('status', 'Open the Email account to edit or test its connection.');
     }
 
     public function stageCredential(
@@ -203,39 +168,11 @@ final class EmailProviderController extends Controller
             ->with('status', 'Read-only migration preview created. No DNS or provider call was made.');
     }
 
-    public function showMigration(Request $request, string $run): View
+    public function showMigration(Request $request, string $run): RedirectResponse
     {
-        $this->authorization->authorizeProvider($request->user(), true);
-        $run = $this->run($run)->load(['items.account']);
-        $canManagePrivate = $request->user()->can(EmailProviderManagementAuthorization::PRIVATE_ENDPOINT_PERMISSION);
-
-        $availableProviders = EmailProviderConnection::query()
-            ->with(['integration', 'activeCredentialVersion'])
-            ->where('status', 'active')
-            ->orderBy('integration_id')
-            ->get()
-            ->filter(function (EmailProviderConnection $connection) use ($request): bool {
-                try {
-                    $this->authorization->authorizeConnectionTrust($request->user(), $connection);
-                } catch (AuthorizationException|EmailProviderSecurityException) {
-                    return false;
-                }
-
-                return app(EmailProviderRuntimeFactory::class)->databaseReadySnapshot(
-                    $connection,
-                    $connection->activeCredentialVersion,
-                );
-            })
-            ->values();
-
-        return view('integration::Tech.Admin.System.Integrations.EmailProviders.migration', [
-            'run' => $run,
-            'canManagePrivate' => $canManagePrivate,
-            'trustedCidrNames' => $canManagePrivate
-                ? array_keys((array) config('email_provider_security.trusted_private_cidrs', []))
-                : [],
-            'availableProviders' => $availableProviders,
-        ]);
+        return redirect()
+            ->route('tech.admin.settings.email.accounts')
+            ->with('status', 'Mailbox connection settings are edited directly on each Email account.');
     }
 
     public function stageMigration(

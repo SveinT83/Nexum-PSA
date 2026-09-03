@@ -21,8 +21,7 @@ return [
         env('EMAIL_PROVIDER_TRONDERDATA_MAIL_DEV_CIDR'),
     ),
 
-    // Compatibility-only mapping: email_account_id => named CIDR. New
-    // private connections must use the reviewed Integration lifecycle.
+    // Installation-reviewed mapping: email_account_id => named CIDR.
     'legacy_trusted_private_accounts' => [],
 
     'dns' => [

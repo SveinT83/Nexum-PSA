@@ -2,7 +2,18 @@
 
 @php
   $isEdit = $mode === 'edit';
-  $storedConditions = $rule->conditions_json ?: [['field' => 'subject', 'operator' => 'contains', 'value' => '']];
+  $source = $draftPayload ?? [
+      'name' => $rule->name,
+      'description' => $rule->description,
+      'weight' => $rule->weight,
+      'routing_phase' => $rule->routing_phase,
+      'is_active' => $rule->is_active,
+      'stop_processing' => $rule->stop_processing,
+      'conditions_json' => $rule->conditions_json,
+      'actions_json' => $rule->actions_json,
+      'account_ids' => $selectedAccountIds ?? [],
+  ];
+  $storedConditions = $source['conditions_json'] ?: [['field' => 'subject', 'operator' => 'contains', 'value' => '']];
   $storedGroups = data_get($storedConditions, 'groups');
   $conditionMatch = old('condition_match', is_array($storedConditions) && ! array_is_list($storedConditions) ? ($storedConditions['match'] ?? 'all') : 'all');
   $conditions = old('conditions', $storedGroups
@@ -11,8 +22,8 @@
           'group_match' => $group['match'] ?? 'all',
       ]))->values()->all()
       : $storedConditions);
-  $actions = old('actions', $rule->actions_json ?: [['type' => 'tag_message', 'value' => '']]);
-  $selectedAccountIds = collect(old('account_ids', $isEdit ? $rule->accounts->pluck('id')->all() : ($selectedAccountIds ?? [])))
+  $actions = old('actions', $source['actions_json'] ?: [['type' => 'tag_message', 'value' => '']]);
+  $selectedAccountIds = collect(old('account_ids', $source['account_ids'] ?? []))
       ->map(fn ($id) => (int) $id)
       ->all();
 @endphp
@@ -37,6 +48,16 @@
       @if($isEdit)
         @method('PUT')
       @endif
+      @if($draftLockVersion)
+        <input type="hidden" name="draft_lock_version" value="{{ $draftLockVersion }}">
+      @endif
+
+      @if($publicationPreview)
+        <div class="alert alert-info">
+          <div class="fw-semibold">Saved draft — published rule is unchanged</div>
+          <div class="small mt-1">Changed fields: {{ implode(', ', $publicationPreview['changed_fields']) ?: 'none' }}. Publishing creates a new immutable version for {{ count($publicationPreview['account_ids']) }} mailbox(es).</div>
+        </div>
+      @endif
 
       <div class="card mb-3">
         <!-- Actions: these are executed in order by the inbound rule engine after all conditions match. -->
@@ -45,23 +66,23 @@
           <div class="row g-3">
             <div class="col-md-8">
               <label for="name" class="form-label">Name</label>
-              <input id="name" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name', $rule->name) }}" required>
+              <input id="name" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name', $source['name']) }}" required>
               @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-4">
               <label for="weight" class="form-label">Weight</label>
-              <input id="weight" name="weight" type="number" min="0" max="100000" class="form-control @error('weight') is-invalid @enderror" value="{{ old('weight', $rule->weight ?? 10) }}" required>
+              <input id="weight" name="weight" type="number" min="0" max="100000" class="form-control @error('weight') is-invalid @enderror" value="{{ old('weight', $source['weight'] ?? 10) }}" required>
               @error('weight')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
             <div class="col-12">
               <label for="description" class="form-label">Description</label>
-              <textarea id="description" name="description" class="form-control" rows="2">{{ old('description', $rule->description) }}</textarea>
+              <textarea id="description" name="description" class="form-control" rows="2">{{ old('description', $source['description']) }}</textarea>
             </div>
             <div class="col-12">
               <label for="routing_phase" class="form-label">Routing phase</label>
               <select id="routing_phase" name="routing_phase" class="form-select @error('routing_phase') is-invalid @enderror" required>
-                <option value="normal" @selected(old('routing_phase', $rule->routing_phase ?? \App\Modules\Email\Models\EmailRule::ROUTING_PHASE_NORMAL) === 'normal')>Normal - after machine and AI classification</option>
-                <option value="preclassification" @selected(old('routing_phase', $rule->routing_phase) === 'preclassification')>Preclassification - before machine and AI classification</option>
+                <option value="normal" @selected(old('routing_phase', $source['routing_phase'] ?? \App\Modules\Email\Models\EmailRule::ROUTING_PHASE_NORMAL) === 'normal')>Normal - after machine and AI classification</option>
+                <option value="preclassification" @selected(old('routing_phase', $source['routing_phase']) === 'preclassification')>Preclassification - before machine and AI classification</option>
               </select>
               @error('routing_phase')<div class="invalid-feedback">{{ $message }}</div>@enderror
               <div class="form-text">Use preclassification only for explicit, narrow handoffs that must run before the generic classifier.</div>
@@ -70,14 +91,14 @@
             <div class="col-md-6">
               <div class="form-check form-switch">
                 <input type="hidden" name="is_active" value="0">
-                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" @checked(old('is_active', $rule->is_active ?? true))>
+                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" @checked(old('is_active', $source['is_active'] ?? true))>
                 <label class="form-check-label" for="is_active">Active</label>
               </div>
             </div>
             <div class="col-md-6">
               <div class="form-check form-switch">
                 <input type="hidden" name="stop_processing" value="0">
-                <input class="form-check-input" type="checkbox" id="stop_processing" name="stop_processing" value="1" @checked(old('stop_processing', $rule->stop_processing ?? false))>
+                <input class="form-check-input" type="checkbox" id="stop_processing" name="stop_processing" value="1" @checked(old('stop_processing', $source['stop_processing'] ?? false))>
                 <label class="form-check-label" for="stop_processing">Stop processing after this rule</label>
               </div>
             </div>
@@ -250,7 +271,10 @@
 
       <div class="d-flex justify-content-end gap-2">
         <a href="{{ route('tech.admin.settings.email.rules') }}" class="btn btn-outline-secondary">Cancel</a>
-        <button type="submit" class="btn btn-primary">{{ $isEdit ? 'Save rule' : 'Create rule' }}</button>
+        <button type="submit" name="intent" value="save_draft" class="btn btn-outline-primary">Save draft</button>
+        @can('email.rule_publish')
+          <button type="submit" name="intent" value="publish" class="btn btn-primary">{{ $isEdit ? 'Save and publish new version' : 'Create and publish' }}</button>
+        @endcan
       </div>
     </form>
   </div>
@@ -258,6 +282,7 @@
 
 @section('rightbar')
   <x-card.default title="Examples">
+    <p class="small text-muted">Saving a draft never changes the rule currently running. Publishing is a separate, permission-protected action.</p>
     <p class="small text-muted mb-2">Spam filter: from domain contains bad-domain.example, action archive, stop processing.</p>
     <p class="small text-muted">Ticket replies: has ticket key present, action link to ticket by subject token.</p>
     <p class="small text-muted">New inbound tickets: recipient or mailbox condition, action create ticket from inbound email. Optional value can be a queue id or slug.</p>

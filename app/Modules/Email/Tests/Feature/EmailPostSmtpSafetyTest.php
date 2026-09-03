@@ -4,6 +4,7 @@ namespace App\Modules\Email\Tests\Feature;
 
 use App\Models\Core\User;
 use App\Modules\Email\Actions\SendEmailComposerMessage;
+use App\Modules\Email\Jobs\AppendEmailProviderSentCopy;
 use App\Modules\Email\Livewire\Tech\MailWorkspace;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailAccountUserGrant;
@@ -25,6 +26,7 @@ use App\Modules\Email\Services\MailboxAccess;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -69,6 +71,40 @@ class EmailPostSmtpSafetyTest extends TestCase
         }
 
         parent::tearDown();
+    }
+
+    #[Test]
+    public function accepted_mail_queues_one_provider_sent_append_from_the_durable_reconciliation(): void
+    {
+        $this->sendableAccount();
+        Storage::fake(EmailPrivateStorage::DISK);
+        Queue::fake();
+
+        $mailer = new class extends SmtpAccountMailer
+        {
+            public function sendMessage(EmailAccount $account, array $toRecipients, string $subject, string $html, string $text, array $attachments = [], array $ccRecipients = [], array $options = []): string
+            {
+                return (string) $options['message_id'];
+            }
+        };
+        $this->app->instance(SmtpAccountMailer::class, $mailer);
+
+        Livewire::actingAs($this->actor)
+            ->test(MailWorkspace::class)
+            ->call('startCompose')
+            ->set('composerTo', 'customer@example.test')
+            ->set('composerSubject', 'Queue provider Sent append')
+            ->set('composerBodyHtml', '<p>Append this accepted message exactly once.</p>')
+            ->call('sendComposer')
+            ->assertSet('composerOpen', false);
+
+        $reconciliation = EmailSentReconciliation::query()->sole();
+
+        Queue::assertPushed(
+            AppendEmailProviderSentCopy::class,
+            fn (AppendEmailProviderSentCopy $job): bool => $job->emailSentReconciliationId === $reconciliation->id
+                && $job->queue === 'email',
+        );
     }
 
     #[Test]

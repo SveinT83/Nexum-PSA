@@ -50,7 +50,22 @@ class EmailComposerLifecycleRegressionTest extends TestCase
             "\$wire.\$set('composerBodyHtml', this.value || '', false);",
             $source,
         );
+        $this->assertStringContainsString(
+            "\$wire.\$set('composerTo', this.\$refs.to.value || '', false);",
+            $source,
+        );
+        $this->assertStringContainsString(
+            "\$wire.\$set('composerCc', this.\$refs.cc.value || '', false);",
+            $source,
+        );
+        $this->assertStringContainsString(
+            "\$wire.\$set('composerSubject', this.\$refs.subject.value || '', false);",
+            $source,
+        );
         $this->assertStringContainsString('x-on:submit.capture="sync()"', $source);
+        $this->assertStringContainsString('x-ref="to"', $source);
+        $this->assertStringContainsString('x-ref="cc"', $source);
+        $this->assertStringContainsString('x-ref="subject"', $source);
         $this->assertStringContainsString('x-ref="editor"', $source);
         $this->assertStringContainsString('wire:ignore', $source);
         $this->assertStringContainsString('contenteditable="{{ $composerShared', $source);

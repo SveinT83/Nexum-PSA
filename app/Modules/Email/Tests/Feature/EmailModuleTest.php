@@ -23,11 +23,13 @@ use App\Modules\Email\Controllers\Admin\Templates\EmailTemplateController;
 use App\Modules\Email\Controllers\Tech\InboxController;
 use App\Modules\Email\Controllers\Tech\MailController;
 use App\Modules\Email\Controllers\Tech\SignatureController;
+use App\Modules\Email\Jobs\AppendEmailProviderSentCopy;
 use App\Modules\Email\Jobs\EmailAccountHealthCheckJob;
 use App\Modules\Email\Jobs\FetchImapAccount;
 use App\Modules\Email\Jobs\PollActiveEmailAccounts;
 use App\Modules\Email\Jobs\ProcessInboundRules;
 use App\Modules\Email\Jobs\StoreInboundMessage;
+use App\Modules\Email\Jobs\TestEmailAccountConnectionJob;
 use App\Modules\Email\Livewire\Tech\MailSidebar;
 use App\Modules\Email\Livewire\Tech\MailWorkspace;
 use App\Modules\Email\Models\EmailAccount;
@@ -95,6 +97,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
@@ -134,6 +137,8 @@ class EmailModuleTest extends TestCase
             'email.inbox_manage',
             'email.account_manage',
             'email.rule_manage',
+            'email.rule_publish',
+            'email.rule_reprocess',
             'email.template_manage',
             'email.mailbox_sync_manage',
             'integration.email_provider_manage',
@@ -149,6 +154,8 @@ class EmailModuleTest extends TestCase
         Role::create(['name' => 'Admin'])->givePermissionTo([
             $permissions['email.account_manage'],
             $permissions['email.rule_manage'],
+            $permissions['email.rule_publish'],
+            $permissions['email.rule_reprocess'],
             $permissions['email.template_manage'],
             $permissions['email.mailbox_sync_manage'],
             $permissions['integration.email_provider_manage'],
@@ -2783,7 +2790,7 @@ class EmailModuleTest extends TestCase
             ->test(MailWorkspace::class)
             ->call('selectPlacement', $placement->id)
             ->assertDontSeeHtml('dropdown-toggle')
-            ->assertSee('Mark read in mailbox')
+            ->assertSee('Mark read on mail server')
             ->assertSee('Flag')
             ->assertSee('Category and tags')
             ->call('setProviderSeenForSelected', true)
@@ -5202,6 +5209,8 @@ class EmailModuleTest extends TestCase
     #[Test]
     public function send_pipeline_records_pending_provider_sent_reconciliation_after_smtp_success(): void
     {
+        Queue::fake();
+
         $account = EmailAccount::create($this->emailAccountPayload([
             'address' => 'workspace-sent-pending@example.test',
             'from_name' => 'Workspace Sent Pending',
@@ -5236,6 +5245,7 @@ class EmailModuleTest extends TestCase
         $this->assertSame('pending-sent-copy@example.test', $reconciliation->normalized_message_id);
         $this->assertNull($reconciliation->sent_email_mailbox_placement_id);
         $this->assertSame(EmailSentReconciliation::STATUS_PENDING, $log->fresh()->context_json['provider_sent']['status']);
+        Queue::assertPushed(AppendEmailProviderSentCopy::class, 1);
     }
 
     #[Test]
@@ -5307,6 +5317,7 @@ class EmailModuleTest extends TestCase
     #[Test]
     public function provider_sent_append_service_keeps_technical_append_without_workspace_dashboard(): void
     {
+        Queue::fake();
         Storage::fake('local');
 
         $account = EmailAccount::create($this->emailAccountPayload([
@@ -5370,6 +5381,7 @@ class EmailModuleTest extends TestCase
         $reconciliation = EmailSentReconciliation::query()->sole();
         $this->assertSame(EmailSentReconciliation::STATUS_PENDING, $reconciliation->status);
         $this->assertNotEmpty($reconciliation->context_json['sent_raw_path'] ?? null);
+        Queue::assertPushed(AppendEmailProviderSentCopy::class, 1);
 
         app(EmailSentReconciliationService::class)->appendProviderSentCopy($reconciliation);
 
@@ -6592,8 +6604,68 @@ class EmailModuleTest extends TestCase
     }
 
     #[Test]
+    public function email_account_connection_can_be_saved_corrected_and_tested_again_in_place(): void
+    {
+        Queue::fake();
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.settings.email.accounts.store'), $this->emailAccountFormPayload(null, [
+                'address' => 'correctable@example.test',
+                'imap_secret' => 'first-imap-password',
+                'smtp_secret' => 'first-smtp-password',
+            ]))
+            ->assertRedirect();
+
+        $account = EmailAccount::query()->where('address', 'correctable@example.test')->firstOrFail();
+        $initialImapCiphertext = $account->getAttribute('imap_secret');
+        $initialSmtpCiphertext = $account->getAttribute('smtp_secret');
+
+        $this->assertSame('account', $account->provider_credential_source);
+        $this->assertNull($account->provider_integration_id);
+        $this->assertFalse($account->is_active);
+        $this->assertSame('Testing', $account->last_test_result);
+        $this->assertSame('first-imap-password', Crypt::decryptString($initialImapCiphertext));
+        $this->assertSame('first-smtp-password', Crypt::decryptString($initialSmtpCiphertext));
+        Queue::assertPushed(TestEmailAccountConnectionJob::class, fn (TestEmailAccountConnectionJob $job): bool => $job->accountId === $account->id
+            && $job->bindingVersion === 1
+            && $job->activateWhenVerified
+        );
+
+        $this->actingAs($this->admin)
+            ->put(route('tech.admin.settings.email.accounts.update', $account), $this->emailAccountFormPayload(null, [
+                'address' => $account->address,
+                'imap_host' => 'imap-corrected.example.test',
+                'imap_secret' => '',
+                'smtp_secret' => '',
+            ]))
+            ->assertRedirect();
+
+        $account->refresh();
+        $this->assertSame('imap-corrected.example.test', $account->imap_host);
+        $this->assertSame($initialImapCiphertext, $account->getAttribute('imap_secret'));
+        $this->assertSame($initialSmtpCiphertext, $account->getAttribute('smtp_secret'));
+        $this->assertSame(2, $account->provider_binding_version);
+
+        $this->actingAs($this->admin)
+            ->put(route('tech.admin.settings.email.accounts.update', $account), $this->emailAccountFormPayload(null, [
+                'address' => $account->address,
+                'imap_host' => $account->imap_host,
+                'imap_secret' => 'corrected-imap-password',
+                'smtp_secret' => 'corrected-smtp-password',
+            ]))
+            ->assertRedirect();
+
+        $account->refresh();
+        $this->assertSame('corrected-imap-password', Crypt::decryptString($account->getAttribute('imap_secret')));
+        $this->assertSame('corrected-smtp-password', Crypt::decryptString($account->getAttribute('smtp_secret')));
+        $this->assertSame(3, $account->provider_binding_version);
+        Queue::assertPushed(TestEmailAccountConnectionJob::class, 3);
+    }
+
+    #[Test]
     public function admin_account_form_stores_kind_ticket_ingress_and_user_grants(): void
     {
+        Queue::fake();
         $provider = $this->activeEmailProvider('Admin account form provider');
 
         $this->actingAs($this->admin)
@@ -6610,7 +6682,7 @@ class EmailModuleTest extends TestCase
                     ],
                 ],
             ]))
-            ->assertRedirect(route('tech.admin.settings.email.accounts'));
+            ->assertRedirect();
 
         $account = EmailAccount::query()->where('address', 'shared-admin@example.test')->firstOrFail();
 
@@ -6637,7 +6709,7 @@ class EmailModuleTest extends TestCase
                 'address' => $account->address,
                 'grants' => [],
             ]))
-            ->assertRedirect(route('tech.admin.settings.email.accounts'));
+            ->assertRedirect();
         $this->assertFalse(EmailAccountUserReadBaseline::query()
             ->where('email_account_id', $account->id)
             ->where('user_id', $this->tech->id)
@@ -6656,13 +6728,15 @@ class EmailModuleTest extends TestCase
                     ],
                 ],
             ]))
-            ->assertRedirect(route('tech.admin.settings.email.accounts'));
+            ->assertRedirect();
         $regrantedBaseline = EmailAccountUserReadBaseline::query()
             ->where('email_account_id', $account->id)
             ->where('user_id', $this->tech->id)
             ->sole();
         $this->assertSame(2, $regrantedBaseline->access_epoch);
         $this->assertTrue($regrantedBaseline->ordinary_view_entitled);
+
+        $account->forceFill(['is_active' => true, 'last_test_result' => 'OK'])->save();
 
         foreach ([false, true] as $expectedActive) {
             $this->actingAs($this->admin)
@@ -6685,7 +6759,7 @@ class EmailModuleTest extends TestCase
                 'is_global_default' => '1',
                 'defaults_for' => ['tickets'],
             ]))
-            ->assertRedirect(route('tech.admin.settings.email.accounts'));
+            ->assertRedirect();
 
         $personal = EmailAccount::query()->where('address', 'personal-admin@example.test')->firstOrFail();
 
@@ -6708,7 +6782,7 @@ class EmailModuleTest extends TestCase
                 'address' => 'legacy-cleanup@example.test',
                 'delete_policy' => 'legacy_default',
             ]))
-            ->assertRedirect(route('tech.admin.settings.email.accounts'));
+            ->assertRedirect();
 
         $legacyCleanup = EmailAccount::query()->where('address', 'legacy-cleanup@example.test')->firstOrFail();
         $this->assertSame('legacy_default', $legacyCleanup->delete_policy);
@@ -8132,6 +8206,36 @@ class EmailModuleTest extends TestCase
     }
 
     #[Test]
+    public function connection_test_job_activates_only_the_exact_configuration_after_both_logins_pass(): void
+    {
+        $account = EmailAccount::create($this->emailAccountPayload([
+            'address' => 'connection-job@example.test',
+            'is_active' => false,
+            'provider_credential_source' => 'account',
+            'provider_binding_version' => 4,
+            'last_test_result' => 'Testing',
+        ]));
+        $result = new EmailTestResult;
+        $result->imap_ok = true;
+        $result->smtp_ok = true;
+
+        $this->mock(EmailTestService::class)
+            ->shouldReceive('runConfiguration')
+            ->once()
+            ->withArgs(fn (EmailAccount $testedAccount, int $bindingVersion): bool => $testedAccount->is($account) && $bindingVersion === 4
+            )
+            ->andReturn($result);
+
+        app()->call([new TestEmailAccountConnectionJob($account->id, 4, true), 'handle']);
+
+        $this->assertTrue($account->fresh()->is_active);
+
+        app()->call([new TestEmailAccountConnectionJob($account->id, 3, true), 'handle']);
+
+        $this->assertTrue($account->fresh()->is_active);
+    }
+
+    #[Test]
     public function admin_can_open_email_templates_from_template_hub(): void
     {
         $route = Route::getRoutes()->getByName('tech.admin.system.templatesManagement.email.index');
@@ -8152,6 +8256,7 @@ class EmailModuleTest extends TestCase
     #[Test]
     public function email_accounts_can_be_marked_as_marketing_default_sender(): void
     {
+        Queue::fake();
         $provider = $this->activeEmailProvider('Marketing account provider');
 
         $this->actingAs($this->admin)
@@ -8159,9 +8264,10 @@ class EmailModuleTest extends TestCase
                 'address' => 'marketing@example.test',
                 'defaults_for' => ['marketing'],
             ]))
-            ->assertRedirect(route('tech.admin.settings.email.accounts'));
+            ->assertRedirect();
 
         $account = EmailAccount::query()->where('address', 'marketing@example.test')->firstOrFail();
+        $account->forceFill(['is_active' => true, 'last_test_result' => 'OK'])->save();
 
         $this->assertSame(['marketing'], $account->defaults_for);
         $this->assertTrue(app(DefaultEmailAccountResolver::class)->forScope('marketing')->is($account));
@@ -8169,7 +8275,7 @@ class EmailModuleTest extends TestCase
         $this->actingAs($this->admin)
             ->get(route('tech.admin.settings.email.accounts'))
             ->assertOk()
-            ->assertSee('Default (Marketing)');
+            ->assertSee('Marketing');
     }
 
     #[Test]
@@ -9740,6 +9846,7 @@ class EmailModuleTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post(route('tech.admin.settings.email.rules.store'), [
+                'intent' => 'publish',
                 'name' => 'Archive obvious spam',
                 'description' => 'Hide sender domain before ticket routing.',
                 'weight' => 1,
@@ -9781,6 +9888,7 @@ class EmailModuleTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post(route('tech.admin.settings.email.rules.store'), [
+                'intent' => 'publish',
                 'name' => 'Create inbound sales ticket',
                 'description' => 'Route known sales mailbox into Ticket.',
                 'weight' => 20,
@@ -9811,6 +9919,7 @@ class EmailModuleTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post(route('tech.admin.settings.email.rules.store'), [
+                'intent' => 'publish',
                 'name' => 'Versioned spam archive',
                 'description' => 'Hide repeated spam without replaying side effects.',
                 'weight' => 1,
@@ -9873,6 +9982,7 @@ class EmailModuleTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post(route('tech.admin.settings.email.rules.store'), [
+                'intent' => 'publish',
                 'name' => 'API preview rule',
                 'description' => 'Preview before execution.',
                 'weight' => 7,
@@ -9935,6 +10045,7 @@ class EmailModuleTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post(route('tech.admin.settings.email.rules.store'), [
+                'intent' => 'publish',
                 'name' => 'Grouped inbound rule',
                 'description' => 'Any condition group can match.',
                 'weight' => 9,
@@ -9989,11 +10100,16 @@ class EmailModuleTest extends TestCase
 
         $this->actingAs($this->admin)
             ->from(route('tech.admin.settings.email.rules'))
-            ->post(route('tech.admin.settings.email.rules.reprocess'), [
+            ->post(route('tech.admin.settings.email.rules.reprocess-preview', $rule), [
                 'email_message_id' => $message->id,
-                'run_mode' => 'now',
             ])
             ->assertRedirect(route('tech.admin.settings.email.rules'));
+        $run = \App\Modules\Email\Models\EmailRuleReprocessRun::query()->firstOrFail();
+        app(\App\Modules\Email\Services\EmailRuleReprocessService::class)->apply($run, $this->admin);
+        (new \App\Modules\Email\Jobs\ProcessEmailRuleReprocessRun($run->id))->handle(
+            app(\App\Modules\Email\Services\InboundEmailRuleEngine::class),
+            app(\App\Modules\Email\Services\EmailRuleReprocessService::class),
+        );
 
         $this->assertTrue($message->fresh()->tags()->where('tags.name', 'grouped-rule-hit')->exists());
         $this->assertDatabaseHas('email_rule_execution_attempts', [
@@ -10013,6 +10129,7 @@ class EmailModuleTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post(route('tech.admin.settings.email.rules.store'), [
+                'intent' => 'publish',
                 'name' => 'Emit vendor signal',
                 'description' => 'Hand selected inbound mail to Signal.',
                 'weight' => 5,
@@ -10471,6 +10588,16 @@ class EmailModuleTest extends TestCase
             'defaults_for' => [],
             'ticket_ingress_enabled' => '1',
             'delete_policy' => 'local_only',
+            'imap_host' => 'imap.example.test',
+            'imap_port' => 993,
+            'imap_encryption' => 'implicit_tls',
+            'imap_username' => 'account@example.test',
+            'imap_secret' => 'secret',
+            'smtp_host' => 'smtp.example.test',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'starttls',
+            'smtp_username' => 'account@example.test',
+            'smtp_secret' => 'secret',
         ], $overrides);
 
         if ($provider !== null) {

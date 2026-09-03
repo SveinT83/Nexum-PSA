@@ -162,8 +162,10 @@ Route::middleware('admin')->group(function () {
         ->name('admin.settings.email.rules.create');
     Route::post('/admin/settings/email/rules', [RulesController::class, 'store'])
         ->name('admin.settings.email.rules.store');
-    Route::post('/admin/settings/email/rules/reprocess', [RulesController::class, 'reprocess'])
-        ->name('admin.settings.email.rules.reprocess');
+    Route::post('/admin/settings/email/rules/{rule}/reprocess-preview', [RulesController::class, 'reprocessPreview'])
+        ->name('admin.settings.email.rules.reprocess-preview');
+    Route::post('/admin/settings/email/rules/reprocess-runs/{run}/apply', [RulesController::class, 'applyReprocess'])
+        ->name('admin.settings.email.rules.reprocess-runs.apply');
     Route::get('/admin/settings/email/rules/{rule}/edit', [RulesController::class, 'edit'])
         ->name('admin.settings.email.rules.edit');
     Route::put('/admin/settings/email/rules/{rule}', [RulesController::class, 'update'])

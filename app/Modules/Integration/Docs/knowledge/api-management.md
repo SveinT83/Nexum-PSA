@@ -129,8 +129,10 @@ Implemented scopes:
   outcome.
 - `email.rules.read`: list, view, and preview Email rules with rule-management permission and
   mailbox View checks.
-- `email.rules.execute`: apply one eligible verified provider-operation inverse for an authorized
-  Email rule execution; current rule-management and Mailbox Organize access remain mandatory.
+- `email.rules.write`: create/update/validate durable Email rule drafts and publish an exact reviewed
+  draft when the current user also has `email.rule_publish`.
+- `email.rules.execute`: preview/apply/cancel/retry/full-rerun bounded Email rule runs when the user
+  also has `email.rule_reprocess`, and apply one eligible verified provider-operation inverse.
 - `notifications.read`: list and view the authenticated user notifications.
 - `notifications.update`: mark the authenticated user notifications as read.
 - `sales.read`: list and view sales opportunities and activities.
@@ -1150,11 +1152,31 @@ Not Found, and neither timeout nor conflict permits resend. Responses omit lease
 paths, checksums, generation/fingerprint evidence, Bcc, raw MIME, credentials, canonical identities,
 and raw provider/exception evidence.
 
+Conversation acknowledgement uses `email.read` for
+`POST /api/v1/email/mailbox/conversation-actions/preview` and `GET .../{run}`. `email.update` is
+required for `POST .../{run}/apply`, `/retry`, and `/cancel`. Preview accepts either one exact active
+account/conversation or explicitly selected placement IDs across authorized accounts. Apply is
+queued and bounded; personal Unread-for-me and optional provider Seen remain separate results.
+Responses contain opaque item/run/operation IDs, counts, statuses and safe reason codes, never mail
+content, participants, folder paths, provider errors or another user's personal state. The runtime
+flag remains default-off until `HR-2026-08-16-012` is reviewed.
+
 `GET /api/v1/email/rules`, `GET /api/v1/email/rules/{rule}`, and
 `POST /api/v1/email/rules/{rule}/preview` use `email.rules.read`. The authenticated user must also
 have Email rule-management permission. Preview reports the published rule version, account scope,
 condition matches, and actions that would run for one authorized message without changing the
 message, tags, Tickets, Signals, or rule execution history.
+
+`email.rules.write` covers draft create/show/update/validate, publication preview/apply and version
+history under `/api/v1/email/rules`. Draft changes never alter the running version. Publication
+requires the current draft checksum and `email.rule_publish` in addition to the token ceiling.
+
+`email.rules.execute` covers bounded reprocess preview and the durable
+`/api/v1/email/rule-reprocess-runs/{run}` show/apply/cancel/retry/full-rerun actions. A selection has
+one account and exactly one selected-ID, folder, bounded search or UTC-date selector; default cap is
+100, hard cap 500, and previews expire after 15 minutes. Search input is encrypted at rest. Apply
+reauthorizes and rejects changed selection/source evidence before queuing `email-rules`; a successful
+logical action is reused by retry/full-rerun and is never replayed.
 
 `GET /api/v1/email/rules/executions/{attempt}` and
 `GET /api/v1/email/rules/executions/{attempt}/undo` also use `email.rules.read`. They require current
