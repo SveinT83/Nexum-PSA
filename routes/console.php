@@ -1,7 +1,7 @@
 <?php
 
 use App\Jobs\Integrations\NAbleRmmSyncJob;
-use App\Modules\Contact\Actions\MigrateClientUsersToContacts;
+use App\Modules\Contact\Actions\CompleteLegacyContactCutover;
 use App\Modules\Economy\Jobs\GenerateEconomyOrdersJob;
 use App\Modules\Email\Actions\DispatchEmailAccountPolling;
 use App\Modules\Email\Jobs\CleanupEmailProviderDeletionCache;
@@ -425,15 +425,15 @@ Artisan::command('email:process-inbound-rules {--message=} {--limit=100} {--asyn
     return 0;
 })->purpose('Process stored inbound email messages through routing rules');
 
-Artisan::command('contacts:migrate-client-users', function (MigrateClientUsersToContacts $migration) {
-    $summary = $migration->handle();
+Artisan::command('contacts:migrate-client-users', function (CompleteLegacyContactCutover $cutover) {
+    $summary = $cutover->handle();
 
     foreach ($summary as $key => $value) {
         $this->line(str_replace('_', ' ', $key).': '.$value);
     }
 
     return 0;
-})->purpose('Create Contact records from legacy client_users and link compatibility records');
+})->purpose('Complete the idempotent canonical Contact cutover and preserve legacy relationships');
 
 Artisan::command('marketing:send-due {--campaign=}', function () {
     $campaignId = $this->option('campaign') ? (int) $this->option('campaign') : null;

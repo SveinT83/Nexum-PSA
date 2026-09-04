@@ -72,16 +72,18 @@ class ContactForm extends Component
             $this->site_id = $site?->id;
             $this->client_id = $site?->client_id;
             $this->selected_organization_client_id = $site?->client_id;
-            $this->organization_name = $site?->client?->name;
+            $this->selected_organization_client_name = $site?->client?->name;
+            $this->organization_name = $this->selected_organization_client_name;
 
             return;
         }
 
         $this->client_id = $activeClientId;
         $this->selected_organization_client_id = $activeClientId;
-        $this->organization_name = $activeClientId
+        $this->selected_organization_client_name = $activeClientId
             ? Client::query()->whereKey($activeClientId)->value('name')
             : null;
+        $this->organization_name = $this->selected_organization_client_name;
     }
 
     private function hydrateFromContact(int $contactId): void
@@ -135,7 +137,7 @@ class ContactForm extends Component
         $exactClient = $this->clientSuggestions()
             ->first(fn (Client $client) => mb_strtolower($client->name) === mb_strtolower(trim((string) $this->organization_name)));
 
-        if ($exactClient) {
+        if ($exactClient && $this->client_id !== $exactClient->id) {
             $this->selectClient($exactClient->id);
         }
     }

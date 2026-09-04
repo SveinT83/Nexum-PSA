@@ -28,6 +28,7 @@ has explicitly approved.
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
+| HR-2026-09-03-005 | Canonical Contact workflow and legacy production cutover | Reviewed | 2026-09-03 | Svein | 2026-09-04 |
 | HR-2026-09-03-004 | Web Push notification registry, eligible delivery, and grouped preferences | Pending | 2026-09-03 |  |  |
 | HR-2026-09-03-001 | Task templates, grouped generation, schedules, and automation actions | Pending | 2026-09-03 |  |  |
 | HR-2026-08-30-001 | Dev database and Mail private-storage reconciliation | Pending | 2026-08-30 |  |  |
@@ -46,6 +47,82 @@ has explicitly approved.
 | HR-2026-08-25-003 | AI Model Usage and Cost Telemetry (Slices 1-3) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-002 | RoleSeeder Reconciliation and Permission Sync | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+
+### HR-2026-09-03-005: Canonical Contact Workflow And Legacy Production Cutover
+
+- **Scope:** Complete GitHub Issue #253 by making Contact the only technician-visible person
+  workflow and automatically mapping every legacy Client User to canonical Contact during the normal
+  production migration without changing any stable legacy ID.
+- **Affected Modules:** Contact, Clients, Marketing, Telephony, Intake, Signal, UserManagement,
+  Ticket, Asset, Sales, Nextcloud compatibility, route permissions, migration runtime, and Contact,
+  Client, and Marketing Knowledge.
+- **Required Human Checks:**
+  - [x] On Dev desktop and a 390 px viewport, open a Client and one of its Sites. Confirm both
+    Contacts tabs show canonical rows, central Contact detail links, and only the standard New
+    Contact form. Confirm no Client User create/edit/detail form is exposed.
+  - [x] Create a Contact from a Client and from a Site. Confirm Client/Site context is correct and
+    the same Contact appears in central Contacts, Client Contacts, and Site Contacts. Edit it
+    centrally and confirm all three views update without creating a duplicate.
+  - [x] Create a Contact centrally with Client/Site relations and confirm it appears immediately on
+    both pages even when it has no pre-existing legacy bridge.
+  - [x] Permission behavior was accepted by Svein from the passing automated route matrix: a
+    technician with Client access but without Contact create/update permission cannot use canonical
+    or legacy-alias mutation routes. No limited-permission browser account was created for the run.
+  - [ ] Before production migration, create and integrity-check a database backup and stop Marketing
+    and default queue workers so identity evidence cannot change during cutover.
+  - [ ] Run the normal production migration, then run
+    `php artisan contacts:migrate-client-users` as an idempotent read-back. Confirm it exits
+    successfully, reports zero unlinked legacy rows, and a second run creates no additional
+    Contacts, relations, recipients, deliveries, or identity keys.
+  - [ ] Spot-check representative old Contacts with Ticket, Asset, Sales stakeholder/opportunity,
+    Nextcloud mapping, Telephony, Intake, User account, and Signal history. Confirm every old
+    `client_users.id` is unchanged and each bridge now has the expected `contact_id`.
+  - [ ] Spot-check Marketing manual criteria, list members, sent/claimed recipients, events, and
+    delivery identity keys. Confirm canonical Contact IDs were added, legacy IDs remain, historical
+    recipient/delivery counts did not change, and no message was queued, replayed, or sent.
+  - [ ] Run `php artisan optimize:clear`, restart the stopped workers, verify the external
+    scheduler remains healthy, and repeat authenticated Client/Site/Contact smoke checks.
+- **Expected Result:** One canonical Contact is visible and editable from every entry point. All old
+  contacts are copied automatically. Stable compatibility IDs and every dependent historical
+  relation remain resolvable. Marketing gains matching canonical identity without weakening or
+  replaying its lifetime delivery evidence.
+- **Migration / Deploy Gate:** The forward-only migration
+  `2026_09_03_180000_complete_canonical_contact_cutover` is part of the normal deploy. Do not
+  reverse or delete its additive identity data. An ambiguity or identity conflict stops deployment
+  for reviewed forward repair and safe rerun. Human review is complete and no longer blocks commit
+  or Main promotion. The unchecked production steps above remain mandatory and block production
+  migration, deployment, and release of Issue #253.
+- **Automated Dev Evidence (Not Human Review):** The complete affected matrix passes 96 tests / 787
+  assertions: Client 37 / 317, Contact 41 / 291, and Contact cutover plus Marketing delivery
+  invariant 18 / 179. It proves idempotency, stable Ticket/Asset/Sales/Nextcloud bridge IDs,
+  Marketing/Telephony/Intake/Signal/User backfill, and zero queued jobs. The path migration ran on
+  authoritative Dev in batch 3; the current Dev cohort was empty, and the immediate idempotent
+  command read-back reported zero unlinked legacy rows and zero new downstream changes. The complete
+  repository run passed 2,535 tests / 24,636 assertions with 13 failures outside #253. Twelve
+  reproduced in isolation across Commercial customer-document readiness, Email conversation UI,
+  Integration provider-verification response rendering, Notification durability, and Ticket Rule
+  evidence tests; the Email provider-health deadline passed in isolation. That separate current-tree
+  regression follow-up is recorded in TODO, and no broad-suite green claim is made here.
+  On 2026-09-04, an authenticated AI-assisted Dev browser run (not human approval) created the
+  synthetic client `Issue 253 UI Review 2026-09-04`, its default `Hovedkontor` and non-default
+  `Avdeling Nord` Sites, and Contacts through Client, Site, and central entry points. Client,
+  Site, central list/detail, and central edit read-back stayed canonical without duplicates; the
+  390 px check retained page-width containment through responsive table scrolling. The run found
+  and corrected a double-escaped multi-parameter Site link plus same-client organization hydration
+  that could replace an explicit non-default Site with the default. It also corrected a misleading
+  Default badge that treated every canonical primary relation as the Client's explicit default
+  Contact. Post-fix browser read-back saved `Kontakt Avdeling Nord` only to `Avdeling Nord` and
+  showed Default only on the actual default Contact. The AI-assisted run did not self-approve review.
+- **Human Review Confirmation:** On 2026-09-04, Svein explicitly approved the implementation from
+  the reported automated and authenticated browser evidence. This approval covers the Dev workflow,
+  responsive UI, and permission behavior; it does not claim that the unchecked production migration
+  and deployment operations have already run.
+- **Risks:** Shared email/phone identity that is ambiguous intentionally stops the cutover. A stopped
+  migration can leave only additive partial work; rerun is required after correction. Long-lived
+  workers must not resume until migration/read-back succeeds.
+- **Reviewer:** Svein
+- **Reviewed:** 2026-09-04
+- **Status:** Reviewed
 
 ### HR-2026-09-03-004: Web Push Notification Registry, Delivery, And Preferences
 

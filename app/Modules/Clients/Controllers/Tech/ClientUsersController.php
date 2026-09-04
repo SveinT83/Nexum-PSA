@@ -6,268 +6,171 @@ use App\Http\Controllers\Controller;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
-use App\Modules\Clients\Menus\SideBar\ClientsMenu;
+use App\Modules\Contact\Actions\MigrateClientUsersToContacts;
+use App\Modules\Contact\Actions\StoreContact;
+use App\Modules\Contact\Models\Contact;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
-
-//Users
+use Illuminate\Validation\Rule;
 
 class ClientUsersController extends Controller
 {
-    // ----------------------------------------------------------------------------------
-    // INDEX - List all user_management for a client or a site or all
-    // ----------------------------------------------------------------------------------
     /**
-     * Display a paginated list of client user_management (contacts).
-     *
-     * The list is filtered based on the active site or client in the session.
-     * If neither is set, it returns all client user_management.
-     *
-     * @param Request $request
-     * @param int|null $client
-     * @return View
+     * Legacy Client Contact routes remain as compatibility aliases only.
+     * Every visible workflow is redirected to the canonical Contact module.
      */
-    public function index(Request $request, $client = null)
+    public function index(Request $request, ?int $client = null): RedirectResponse
     {
-        // 1. Check URL first, then session for active site or client
-        $siteId = session('active_site_id');
-        $clientId = $client ?: session('active_client_id');
+        $parameters = array_filter([
+            'client_id' => $client,
+            'site_id' => $client ? null : $request->session()->get('active_site_id'),
+            'q' => $request->string('search')->toString() ?: null,
+        ], fn ($value): bool => filled($value));
 
-        // 2. Build the query based on the most specific context we have
-        if ($clientId && $targetClient = Client::find($clientId)) {
-             // If we have a client from URL, it overrides site context usually for index
-             if ($client) {
-                 session(['active_client_id' => $targetClient->id]);
-                 session()->forget('active_site_id');
-                 $siteId = null;
-             }
-             $query = $targetClient->contacts();
-             $targetSite = $siteId ? ClientSite::find($siteId) : null;
-        } elseif ($siteId && $targetSite = ClientSite::find($siteId)) {
-            $query = $targetSite->contacts();
-            $targetClient = $targetSite->client;
-        } else {
-            $query = ClientUser::query();
-            $targetSite = null;
-            $targetClient = null;
+        if ($client) {
+            Client::query()->findOrFail($client);
+            $request->session()->put('active_client_id', $client);
+            $request->session()->forget('active_site_id');
         }
 
-        // 3. Add search if it exists
-        if ($search = $request->get('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('client_users.name', 'like', "%$search%")
-                    ->orWhere('client_users.email', 'like', "%$search%")
-                    ->orWhere('client_users.phone', 'like', "%$search%")
-                    ->orWhere('client_users.role', 'like', "%$search%")
-                    ->orWhereHas('site', fn ($query) => $query->where('name', 'like', "%$search%"))
-                    ->orWhereHas('site.client', fn ($query) => $query->where('name', 'like', "%$search%"));
-            });
-        }
-
-        $sort = $request->string('sort', 'name')->toString();
-        $direction = $request->string('direction', 'asc')->toString() === 'desc' ? 'desc' : 'asc';
-        $sortableColumns = ['name', 'client', 'site', 'role', 'email', 'phone'];
-
-        if (! in_array($sort, $sortableColumns, true)) {
-            $sort = 'name';
-        }
-
-        $query->with(['site.client', 'user']);
-
-        if ($sort === 'client') {
-            $query->leftJoin('client_sites', 'client_users.client_site_id', '=', 'client_sites.id')
-                ->leftJoin('clients', 'client_sites.client_id', '=', 'clients.id')
-                ->select('client_users.*')
-                ->orderBy('clients.name', $direction)
-                ->orderBy('client_users.name');
-        } elseif ($sort === 'site') {
-            $query->leftJoin('client_sites', 'client_users.client_site_id', '=', 'client_sites.id')
-                ->select('client_users.*')
-                ->orderBy('client_sites.name', $direction)
-                ->orderBy('client_users.name');
-        } else {
-            $query->orderBy('client_users.'.$sort, $direction)
-                ->orderBy('client_users.name');
-        }
-
-        // 4. Get results (Run paginate only ONCE)
-        $users = $query->paginate(25)->withQueryString();
-
-        // 5. Return view
-        return view('clients::Tech.Users.index', [
-            // Keep the view contract explicit: the Blade template iterates over $users.
-            'users' => $users,
-            'user_management' => $users,
-            'site' => $targetSite,
-            'client' => $targetClient ?? ($targetSite ? $targetSite->client : null),
-            'search' => $search,
-            'sort' => $sort,
-            'direction' => $direction,
-            'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu($targetClient ?? ($targetSite ? $targetSite->client : null)),
-        ]);
+        return redirect()->route('tech.contacts.index', $parameters);
     }
 
-    // ----------------------------------------------------------------------------------
-    // SHOW - Show a single user for a client
-    // ----------------------------------------------------------------------------------
-    /**
-     * Display the details of a specific client user.
-     *
-     * @param ClientUser $ClientUser
-     * @return View
-     */
-    public function show(ClientUser $ClientUser) {
-
-        // -----------------------------------------
-        // Get client data from user's site
-        // -----------------------------------------
-        $targetClient = $ClientUser->site->client ?? null;
-
-        // -----------------------------------------
-        // Return view with user data and context
-        // -----------------------------------------
-        return view('clients::Tech.Users.show', [
-            'user' => $ClientUser,
-            'client' => $targetClient,
-            'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu($targetClient),
-        ]);
+    public function show(
+        ClientUser $ClientUser,
+        MigrateClientUsersToContacts $migration,
+    ): RedirectResponse {
+        return redirect()->route(
+            'tech.contacts.show',
+            $this->canonicalContact($ClientUser, $migration),
+        );
     }
 
-    // ----------------------------------------------------------------------------------
-    // EDIT - Edit a single user for a client
-    // ----------------------------------------------------------------------------------
-    /**
-     * Show the form for editing an existing client user.
-     *
-     * @param ClientUser $ClientUser
-     * @return View
-     */
-    public function edit(ClientUser $ClientUser) {
-
-        // -----------------------------------------
-        // Get client data from user's site
-        // -----------------------------------------
-        $client = $ClientUser->site->client ?? null;
-
-        // -----------------------------------------
-        // Get all sites for client
-        // -----------------------------------------
-        $sites = $client ? $client->sites : null;
-
-        return view('clients::Tech.Users.form', [
-            'user' => $ClientUser,
-            'client' => $client,
-            'sites' => $sites,
-            'activeSite' => $ClientUser->site,
-            'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu($client),
-        ]);
+    public function edit(
+        ClientUser $ClientUser,
+        MigrateClientUsersToContacts $migration,
+    ): RedirectResponse {
+        return redirect()->route(
+            'tech.contacts.edit',
+            $this->canonicalContact($ClientUser, $migration),
+        );
     }
 
-    // ----------------------------------------------------------------------------------
-    // CREATE - Create a new user for a client
-    // ----------------------------------------------------------------------------------
-    /**
-     * Show the form for creating a new user for a specific client.
-     *
-     * @param Client $client
-     * @return View
-     */
-    public function create(Client $client) {
-
-        // -----------------------------------------
-        // Get active site from session if available
-        // -----------------------------------------
-        $ActiveSite = session('active_site_id');
-
-        // -----------------------------------------
-        // Get active site data
-        // -----------------------------------------
-        $ActiveSite = $ActiveSite ? ClientSite::find($ActiveSite) : null;
-
-        // -----------------------------------------
-        // Get all sites for client
-        // -----------------------------------------
-        $sites = $client ? $client->sites : null;
-
-        return view('clients::Tech.Users.form', [
-            'client' => $client,
-            'sites' => $sites,
-            'activeSite' => $ActiveSite,
-            'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu($client),
-        ]);
-    }
-
-    // ----------------------------------------------------------------------------------
-    // STORE - Store a new user for a client
-    // ----------------------------------------------------------------------------------
-    /**
-     * Store a newly created client user in storage.
-     *
-     * @param Request $request
-     * @param Client $client
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function store(Request $request, Client $client)
+    public function create(Request $request, Client $client): RedirectResponse
     {
-        // 1. Validate the request
-        $validated = $request->validate([
-            'client_site_id' => 'required|exists:client_sites,id',
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:20',
-            'role' => 'nullable|string|max:100',
-            'address' => 'nullable|string|max:255',
-            'co_address' => 'nullable|string|max:255',
-            'zip' => 'nullable|string|max:20',
-            'city' => 'nullable|string|max:100',
-            'county' => 'nullable|string|max:100',
-            'country' => 'nullable|string|max:100',
-            'language' => 'nullable|string|max:10',
-        ]);
+        $siteId = $request->session()->get('active_site_id');
+        $siteBelongsToClient = $siteId && ClientSite::query()
+            ->whereKey($siteId)
+            ->where('client_id', $client->id)
+            ->exists();
 
-        // 2. Create the ClientUser
-        // Note: user_id is nullable in the migration, we don't handle linked system user_management here yet
-        $clientUser = new ClientUser($validated);
-        $clientUser->save();
-
-        // 3. Redirect back to the user view with success message
-        return redirect()->route('tech.clients.user.show', $clientUser->id)
-            ->with('success', 'User created successfully.');
+        return redirect()->route('tech.contacts.create', array_filter([
+            'client_id' => $client->id,
+            'site_id' => $siteBelongsToClient ? $siteId : null,
+        ]));
     }
 
-    // ----------------------------------------------------------------------------------
-    // UPDATE - Updates a single user for a client
-    // -----------------------------------------
-    /**
-     * Update the specified client user in storage.
-     *
-     * @param Request $request
-     * @param ClientUser $ClientUser
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function update(Request $request, ClientUser $ClientUser) {
-        // 1. Validate the request
-        $validated = $request->validate([
-            'client_site_id' => 'required|exists:client_sites,id',
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:20',
-            'role' => 'nullable|string|max:100',
-            'address' => 'nullable|string|max:255',
-            'co_address' => 'nullable|string|max:255',
-            'zip' => 'nullable|string|max:20',
-            'city' => 'nullable|string|max:100',
-            'county' => 'nullable|string|max:100',
-            'country' => 'nullable|string|max:100',
-            'language' => 'nullable|string|max:10',
-        ]);
+    public function store(
+        Request $request,
+        Client $client,
+        StoreContact $storeContact,
+    ): RedirectResponse {
+        $validated = $this->validateLegacyContact($request, $client->id);
+        $contact = $storeContact->handle(
+            $this->canonicalPayload($validated, $client->id, false)
+        );
 
-        // 2. Update the ClientUser
-        $ClientUser->update($validated);
-
-        // 3. Redirect back to the user view with success message
-        return redirect()->route('tech.clients.user.show', $ClientUser->id)
-            ->with('success', 'User updated successfully.');
+        return redirect()
+            ->route('tech.contacts.show', $contact)
+            ->with('status', 'Contact created in the central Contacts register.');
     }
 
+    public function update(
+        Request $request,
+        ClientUser $ClientUser,
+        MigrateClientUsersToContacts $migration,
+        StoreContact $storeContact,
+    ): RedirectResponse {
+        $contact = $this->canonicalContact($ClientUser, $migration);
+        $site = ClientSite::query()->findOrFail($request->integer('client_site_id'));
+        $validated = $this->validateLegacyContact($request, $site->client_id);
+        $updated = $storeContact->handle(
+            $this->canonicalPayload($validated, $site->client_id, true, $contact)
+        );
+
+        return redirect()
+            ->route('tech.contacts.show', $updated)
+            ->with('status', 'Contact updated in the central Contacts register.');
+    }
+
+    public function delete(
+        ClientUser $ClientUser,
+        MigrateClientUsersToContacts $migration,
+    ): RedirectResponse {
+        $contact = $this->canonicalContact($ClientUser, $migration);
+
+        return redirect()
+            ->route('tech.contacts.show', $contact)
+            ->with('warning', 'Contact deletion must be reviewed in the central Contacts workflow; no historical relationship was removed.');
+    }
+
+    private function canonicalContact(
+        ClientUser $clientUser,
+        MigrateClientUsersToContacts $migration,
+    ): Contact {
+        if ($clientUser->contact_id) {
+            return Contact::query()->findOrFail($clientUser->contact_id);
+        }
+
+        return $migration->migrateOne($clientUser);
+    }
+
+    private function validateLegacyContact(Request $request, int $clientId): array
+    {
+        return $request->validate([
+            'client_site_id' => [
+                'required',
+                Rule::exists('client_sites', 'id')
+                    ->where(fn ($query) => $query->where('client_id', $clientId)),
+            ],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:100'],
+            'role' => ['nullable', 'string', 'max:255'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'co_address' => ['nullable', 'string', 'max:255'],
+            'zip' => ['nullable', 'string', 'max:20'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'county' => ['nullable', 'string', 'max:100'],
+            'country' => ['nullable', 'string', 'max:100'],
+            'language' => ['nullable', 'string', 'max:10'],
+        ]);
+    }
+
+    private function canonicalPayload(
+        array $validated,
+        int $clientId,
+        bool $updateExisting,
+        ?Contact $contact = null,
+    ): array {
+        return [
+            'existing_contact_id' => $contact?->id,
+            'display_name' => $validated['name'],
+            'email' => $validated['email'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+            'job_title' => $validated['role'] ?? null,
+            'preferred_language' => $validated['language'] ?? null,
+            'relation_type' => 'contact',
+            'client_id' => $clientId,
+            'site_id' => $validated['client_site_id'],
+            'address' => $validated['address'] ?? null,
+            'co_address' => $validated['co_address'] ?? null,
+            'zip' => $validated['zip'] ?? null,
+            'city' => $validated['city'] ?? null,
+            'county' => $validated['county'] ?? null,
+            'country' => $validated['country'] ?? null,
+            'update_existing' => $updateExisting,
+            'created_from' => 'legacy_client_contact_alias',
+        ];
+    }
 }

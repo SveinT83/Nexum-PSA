@@ -68,6 +68,11 @@ class Contact extends Model
         return $this->hasOne(ClientUser::class);
     }
 
+    public function clientUsers(): HasMany
+    {
+        return $this->hasMany(ClientUser::class);
+    }
+
     public function user(): HasOne
     {
         return $this->hasOne(User::class);

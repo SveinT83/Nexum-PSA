@@ -1,27 +1,20 @@
-The Contact domain is Nexum's long-term source of truth for external people, customer contacts,
-shared mailboxes, departments, vendor representatives, and communication endpoints.
+The Contact domain is Nexum's source of truth for external people, customer contacts, shared
+mailboxes, departments, vendor representatives, and communication endpoints.
 
-The first implementation is intentionally migration-safe. Existing customer contacts in
-`client_users` continue to support Tickets, Sales, Assets, Nextcloud, and other modules while Contact
-records are introduced beside them.
+## Canonical Identity And Compatibility
 
-## Phase 1 Scope
+The central Contacts workspace, Client Contacts tab, and Site Contacts tab all read canonical
+`contacts` and `contact_relations`. They link to the same Contact create, detail, and edit routes.
+A Client or Site entry point supplies context to the standard Contact form; it does not expose a
+second Client User form.
 
-Phase 1 creates the canonical Contact tables and compatibility links:
+The canonical records use separate email, phone, address, relation, external-reference, and merge
+tables. `client_users.contact_id` and `user_management.contact_id` connect older workflows and user
+accounts to the same person.
 
-- `contacts`
-- `contact_emails`
-- `contact_phones`
-- `contact_addresses`
-- `contact_relations`
-- `contact_external_refs`
-- `contact_merge_records`
-- `client_users.contact_id`
-- `user_management.contact_id`
-
-Phase 1 also exposes a Contact workspace at `/tech/contacts`. It is available from the main
-navigation and from the Client workspace sidebar. It replaces the old Client Users view as the
-primary client contact surface while still keeping the legacy `client_users` bridge populated.
+`client_users` is internal compatibility state. Tickets, Assets, Sales, Nextcloud, and other
+legacy consumers may keep their existing Client User ID while they migrate independently. The bridge
+row and its primary key are retained so old relationships remain resolvable.
 
 ## Contact Workspace
 
@@ -94,8 +87,10 @@ Organization, Nexum removes the old client and site relations during save.
 When a Client is selected but no Site is selected, Nexum uses the Client's default Site. When the
 Client is changed, the Site selection is reset and defaults to the new Client's default Site.
 
-When a Contact is saved with a site relation, Nexum also creates or updates the linked `client_users`
-compatibility record so older ticket and client workflows continue to work during the transition.
+When a Contact is saved with a Site relation, Nexum creates or updates the linked `client_users`
+compatibility bridge. An existing bridge ID is reused when context changes. Removing a Client
+relation deactivates the old bridge and clears its default flags instead of deleting it, so Tickets,
+Assets, Sales, Nextcloud, and other historical consumers retain their references.
 
 The Role or title field suggests values that already exist on Contacts. The relation selector uses
 controlled values such as Contact, Primary contact, Technical contact, Billing contact, Site
@@ -183,46 +178,44 @@ Bulk-fix is conservative: Contacts with multiple current Client owners or multip
 rows are reported as conflicts for manual review.
 
 `POST /api/v1/clients/{client}/contacts/legacy-orphans/cleanup` accepts `client_user_ids`,
-`dry_run`, and `reason`. It is only for legacy `client_users` rows that belong to the selected
-Client and have no `contact_id`; linked rows are skipped and should be handled through Contact
-detach.
+`dry_run`, and `reason`. Selected unlinked rows are copied to canonical Contact and retain their
+stable Client User IDs. Linked rows are skipped.
 
 `DELETE /api/v1/clients/{client}/contacts/{contact}` detaches the Contact from that Client. It
-removes Contact relations for the Client and its Sites and deletes linked legacy `client_users` rows
-under that Client. It does not delete the Contact unless `delete_if_orphan` is true and the Contact
-has no remaining relations, legacy links, or User account link.
+removes canonical Client/Site relations and retires linked compatibility rows by setting them
+inactive and clearing default flags. It never deletes the stable bridge IDs. The Contact is
+soft-deleted only when `delete_if_orphan` is true and the ordinary orphan checks pass.
 
 Ownership repair calls are written to the activity log with the actor, API token ID when available,
 reason, dry-run flag, before state, result, and after state.
 
-## Migration Command
+## Automatic Legacy Cutover
 
-The migration command is:
+The forward-only migration
+`2026_09_03_180000_complete_canonical_contact_cutover.php` runs automatically during the normal
+production migration. It maps every old Client User to a canonical Contact, copies communication
+data, creates Client/Site relations, and retains every original Client User ID.
+
+The same cutover adds canonical identity to Marketing members, manual criteria, recipients, events,
+and durable delivery keys, plus Telephony calls, Intake submissions, provable Signals, and linked
+User accounts. Ticket, Asset, Sales, and Nextcloud IDs remain unchanged and valid.
+
+The action is additive and idempotent. It performs no email send, queue dispatch, provider call, or
+Marketing replay. Ambiguous identity or conflicting Marketing delivery evidence stops the migration
+for review instead of guessing. Already copied rows remain safe for a corrected rerun.
+
+The maintenance command invokes the same action for controlled read-back or rerun:
 
 ```bash
 php artisan contacts:migrate-client-users
 ```
 
-It creates Contact records from existing client contacts, links the legacy records, and creates
-relations to the connected client and site.
+A successful read-back reports zero unlinked `client_users` rows.
 
 ## Compatibility Policy
 
-`client_users` must not be removed in the first Contact release. It remains a compatibility layer
-until all dependent modules have been migrated.
-
-The safe upgrade path is:
-
-1. Add Contact tables and links.
-2. Run the client contact migration.
-3. Let old modules keep reading `client_users`.
-4. Move modules to Contact one at a time.
-5. Verify no module still depends on old fields.
-6. Remove legacy fields only in a later cleanup release.
-
-Installations should upgrade gradually through these phases. Large core-domain changes must not
-assume that an old installation can safely jump several major versions without running the required
-upgrade steps.
+Do not delete `client_users`, recycle bridge IDs, or remove legacy identity columns until every
+dependent module has migrated and a later approved ADR defines the historical-data strategy.
 
 ## Design Principles
 
@@ -249,7 +242,7 @@ Authorized Contact creation can request a portal invitation explicitly. Contact 
 create-form default and checkbox. CustomerPortal still owns invitation validation, audit, delivery,
 acceptance, accounts, and memberships.
 
-## Out Of Scope For Phase 1
+## Deferred Work
 
 - Replacing all `client_users` reads.
 - Removing old tables or columns.

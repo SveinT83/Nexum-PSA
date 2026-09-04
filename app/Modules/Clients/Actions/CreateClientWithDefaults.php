@@ -4,9 +4,9 @@ namespace App\Modules\Clients\Actions;
 
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
-use App\Models\Clients\ClientUser;
 use App\Models\System\Integrations\ClientRmmLink;
 use App\Models\System\Integrations\Integration;
+use App\Modules\Contact\Actions\StoreContact;
 use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
 
 /**
@@ -14,7 +14,10 @@ use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
  */
 class CreateClientWithDefaults
 {
-    public function __construct(private readonly CreateClientRecord $createClientRecord) {}
+    public function __construct(
+        private readonly CreateClientRecord $createClientRecord,
+        private readonly StoreContact $storeContact,
+    ) {}
 
     /**
      * @return array{client: Client, warning: string|null}
@@ -47,16 +50,18 @@ class CreateClientWithDefaults
                 'is_default' => true,
             ]);
 
-            ClientUser::query()->create([
-                'client_site_id' => $site->id,
-                'user_id' => null,
-                'role' => $data['user_role'] ?? null,
-                'name' => $data['user_name'],
+            $this->storeContact->handle([
+                'display_name' => $data['user_name'],
                 'email' => $data['user_email'] ?? null,
                 'phone' => $data['user_phone'] ?? null,
+                'job_title' => $data['user_role'] ?? null,
+                'relation_type' => 'contact',
+                'client_id' => $client->id,
+                'site_id' => $site->id,
                 'is_default_for_site' => true,
                 'is_default_for_client' => true,
                 'active' => true,
+                'created_from' => 'client_creation',
             ]);
 
             if (! empty($data['create_in_rmm'])) {

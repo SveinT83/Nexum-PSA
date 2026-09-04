@@ -723,7 +723,7 @@ class ContactModuleTest extends TestCase
     }
 
     #[Test]
-    public function api_user_can_detach_contact_from_client_without_deleting_contact(): void
+    public function api_user_can_detach_contact_while_preserving_the_stable_legacy_bridge(): void
     {
         $client = Client::factory()->create(['name' => 'Detach Client', 'client_number' => '30001']);
         $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Detach Site', 'is_default' => true]);
@@ -742,7 +742,8 @@ class ContactModuleTest extends TestCase
             ->assertOk()
             ->assertJsonPath('changed', true)
             ->assertJsonPath('plan.status', 'detached')
-            ->assertJsonPath('plan.delete_legacy_client_user_ids.0', $legacyClientUserId);
+            ->assertJsonPath('plan.retire_legacy_client_user_ids.0', $legacyClientUserId)
+            ->assertJsonCount(0, 'plan.delete_legacy_client_user_ids');
 
         $this->assertDatabaseMissing('contact_relations', [
             'contact_id' => $contact->id,
@@ -754,9 +755,13 @@ class ContactModuleTest extends TestCase
             'related_type' => $site->getMorphClass(),
             'related_id' => $site->id,
         ]);
-        $this->assertDatabaseMissing('client_users', [
+        $this->assertDatabaseHas('client_users', [
+            'id' => $legacyClientUserId,
+            'contact_id' => $contact->id,
             'client_site_id' => $site->id,
-            'email' => 'detach@example.test',
+            'active' => false,
+            'is_default_for_client' => false,
+            'is_default_for_site' => false,
         ]);
         $this->assertDatabaseHas('contacts', [
             'id' => $contact->id,
@@ -765,7 +770,7 @@ class ContactModuleTest extends TestCase
     }
 
     #[Test]
-    public function api_user_can_cleanup_legacy_client_users_without_contacts(): void
+    public function api_user_can_migrate_legacy_client_users_without_contacts(): void
     {
         $client = Client::factory()->create(['name' => 'Legacy Cleanup Client', 'client_number' => '30002']);
         $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Legacy Cleanup Site', 'is_default' => true]);
@@ -807,7 +812,7 @@ class ContactModuleTest extends TestCase
         $payload = [
             'client_user_ids' => [$orphanOne->id, $orphanTwo->id, $linkedRow->id, $otherRow->id, 999999],
             'dry_run' => true,
-            'reason' => 'Preview legacy cleanup.',
+            'reason' => 'Preview legacy migration.',
         ];
 
         $this->postJson(route('api.v1.clients.contacts.legacy-orphans.cleanup', ['client' => $client->client_number]), $payload)
@@ -816,17 +821,17 @@ class ContactModuleTest extends TestCase
             ->assertJsonPath('summary.eligible', 2)
             ->assertJsonPath('summary.changed', 0)
             ->assertJsonPath('summary.skipped', 3)
-            ->assertJsonPath('results.0.status', 'would_delete')
-            ->assertJsonPath('results.1.status', 'would_delete')
+            ->assertJsonPath('results.0.status', 'would_migrate')
+            ->assertJsonPath('results.1.status', 'would_migrate')
             ->assertJsonPath('results.2.status', 'linked_contact')
             ->assertJsonPath('results.3.status', 'wrong_client')
             ->assertJsonPath('results.4.status', 'missing_client_user');
 
-        $this->assertDatabaseHas('client_users', ['id' => $orphanOne->id]);
-        $this->assertDatabaseHas('client_users', ['id' => $orphanTwo->id]);
+        $this->assertNull($orphanOne->fresh()->contact_id);
+        $this->assertNull($orphanTwo->fresh()->contact_id);
 
         $payload['dry_run'] = false;
-        $payload['reason'] = 'Delete N8N-imported legacy rows.';
+        $payload['reason'] = 'Migrate imported legacy rows without deleting their stable IDs.';
 
         $this->postJson(route('api.v1.clients.contacts.legacy-orphans.cleanup', ['client' => $client->client_number]), $payload)
             ->assertOk()
@@ -834,13 +839,20 @@ class ContactModuleTest extends TestCase
             ->assertJsonPath('summary.eligible', 2)
             ->assertJsonPath('summary.changed', 2)
             ->assertJsonPath('summary.skipped', 3)
-            ->assertJsonPath('results.0.status', 'deleted')
-            ->assertJsonPath('results.1.status', 'deleted');
+            ->assertJsonPath('results.0.status', 'migrated')
+            ->assertJsonPath('results.1.status', 'migrated');
 
-        $this->assertDatabaseMissing('client_users', ['id' => $orphanOne->id]);
-        $this->assertDatabaseMissing('client_users', ['id' => $orphanTwo->id]);
+        $orphanOne->refresh();
+        $orphanTwo->refresh();
+
+        $this->assertNotNull($orphanOne->contact_id);
+        $this->assertNotNull($orphanTwo->contact_id);
+        $this->assertDatabaseHas('client_users', ['id' => $orphanOne->id, 'contact_id' => $orphanOne->contact_id]);
+        $this->assertDatabaseHas('client_users', ['id' => $orphanTwo->id, 'contact_id' => $orphanTwo->contact_id]);
         $this->assertDatabaseHas('client_users', ['id' => $linkedRow->id]);
-        $this->assertDatabaseHas('client_users', ['id' => $otherRow->id]);
+        $this->assertDatabaseHas('client_users', ['id' => $otherRow->id, 'contact_id' => null]);
+        $this->assertDatabaseHas('contacts', ['id' => $orphanOne->contact_id, 'display_name' => 'Imported Wrong One']);
+        $this->assertDatabaseHas('contacts', ['id' => $orphanTwo->contact_id, 'display_name' => 'Imported Wrong Two']);
         $this->assertDatabaseHas('activity_log', [
             'log_name' => 'contact_ownership',
             'event' => 'contact_ownership.legacy_orphan_cleanup',
@@ -1069,6 +1081,33 @@ class ContactModuleTest extends TestCase
     }
 
     #[Test]
+    public function live_contact_form_preserves_explicit_non_default_site_during_organization_hydration(): void
+    {
+        $client = Client::factory()->create(['name' => 'Explicit Site Client']);
+        ClientSite::factory()->create([
+            'client_id' => $client->id,
+            'name' => 'Default Site',
+            'is_default' => true,
+        ]);
+        $explicitSite = ClientSite::factory()->create([
+            'client_id' => $client->id,
+            'name' => 'Explicit Non Default Site',
+            'is_default' => false,
+        ]);
+
+        $this->actingAs($this->techUser);
+
+        Livewire::test(ContactForm::class, [
+            'activeClientId' => $client->id,
+            'activeSiteId' => $explicitSite->id,
+        ])
+            ->assertSet('client_id', $client->id)
+            ->assertSet('site_id', $explicitSite->id)
+            ->set('organization_name', $client->name)
+            ->assertSet('site_id', $explicitSite->id);
+    }
+
+    #[Test]
     public function live_contact_form_suggests_clients_from_organization(): void
     {
         $client = Client::factory()->create(['name' => 'Suggested Client']);
@@ -1248,7 +1287,7 @@ class ContactModuleTest extends TestCase
             'relation_type' => 'contact',
             'is_primary' => true,
         ]);
-        $contact->clientUser()->create([
+        $legacyBridge = $contact->clientUser()->create([
             'client_site_id' => $site->id,
             'name' => 'Free Text Contact',
             'email' => 'free-text@example.test',
@@ -1272,9 +1311,11 @@ class ContactModuleTest extends TestCase
             'related_type' => $site->getMorphClass(),
             'related_id' => $site->id,
         ]);
-        $this->assertDatabaseMissing('client_users', [
+        $this->assertDatabaseHas('client_users', [
+            'id' => $legacyBridge->id,
             'contact_id' => $contact->id,
             'client_site_id' => $site->id,
+            'active' => false,
         ]);
     }
 
@@ -1308,11 +1349,13 @@ class ContactModuleTest extends TestCase
             'relation_type' => 'contact',
             'is_primary' => true,
         ]);
-        $contact->clientUser()->create([
+        $legacyBridge = $contact->clientUser()->create([
             'client_site_id' => $oldSite->id,
             'name' => 'Move Contact',
             'email' => 'move@example.test',
             'active' => true,
+            'is_default_for_site' => true,
+            'is_default_for_client' => true,
         ]);
 
         Livewire::actingAs($this->techUser)
@@ -1339,9 +1382,12 @@ class ContactModuleTest extends TestCase
             'related_id' => $newClient->id,
         ]);
         $this->assertDatabaseHas('client_users', [
+            'id' => $legacyBridge->id,
             'contact_id' => $contact->id,
             'client_site_id' => $newSite->id,
             'email' => 'move@example.test',
+            'is_default_for_site' => true,
+            'is_default_for_client' => true,
         ]);
         $this->assertDatabaseMissing('client_users', [
             'contact_id' => $contact->id,
