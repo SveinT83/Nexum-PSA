@@ -1,5 +1,22 @@
 # Human Review Register
 
+## HR-2026-09-17-EMAIL-SAVE - Email Account Save Schema Repair
+
+Status: Pending browser verification. Owner: Svein / Codex. Added: 2026-09-17.
+Scope: Forward repair of recorded migration 104000 with missing baseline table and epoch indexes.
+Approved behavior: existing Mail RFC and HR-2026-08-16-003; incident repair authorized by Svein.
+Automated verification: 7 SQLite tests / 42 assertions; native MariaDB 1 / 12, including preserved state, retry, owner/shared backfill and blocked personal direct grants.
+Deploy only `2026_09_17_110000_repair_email_unread_access_schema.php` after a protected snapshot and a brief maintenance window. Existing workers must finish reserved jobs before DDL.
+This checklist does not block the explicitly authorized incident repair; browser checks remain required before calling the user's account setup fully verified. Main promotion remains separate.
+
+- [ ] Svein saves the personal account from Admin > Email Accounts and reaches the edit page without HTTP 500.
+- [ ] The saved account has the correct personal owner and shows the actual IMAP/SMTP test result.
+- [ ] Existing mailboxes retain their intended access and unread behavior.
+
+Risk: incomplete schema can require backup recovery if advanced epoch history exists without baselines; the migration refuses that case. Forward-only rollback retains read history. No account password or provider operation is part of the schema repair.
+Production execution/read-back: completed 2026-09-17 10:55 UTC. Only migration 2026_09_17_110000 ran; complete epochs contract, 14 baselines, 3 foreign keys, unchanged personal state and public /up HTTP 200. Maintenance restored. Backup: `/var/www/vhosts/tronderdata.no/private/nexum-unread-repair-20260917-105544-8325a0/before.json` (directory 0700, file 0600). The target personal account was still absent after repair; no passwords were requested or saved. Existing account save/correct/resave plus personal/shared/grant workflows also pass 2 tests / 43 assertions. User browser/real-provider verification remains pending.
+
+
 This file is the persistent source of truth for human verification of substantial Nexum PSA
 changes. It records what a person still needs to check, what failed, and what a named human reviewer
 has explicitly approved.

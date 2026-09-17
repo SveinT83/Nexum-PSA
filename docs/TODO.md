@@ -2,6 +2,15 @@
 
 This file is the shared coordination list for tdPSA development. Use it to delegate work across contributors and keep implementation, tests, and Knowledge/BookStack documentation moving together.
 
+## Email Account Save Production Repair (2026-09-17)
+
+Owner: Codex / Svein. Status: Done On Dev / Production Schema Repaired / Browser Review Pending.
+Authorized incident repair under the approved Mail RFC. Production recorded migration 104000 but lacked the baseline table and epoch indexes, causing account creation HTTP 500.
+Forward repair `2026_09_17_110000` passed 7 SQLite tests / 42 assertions, native MariaDB 1 / 12, and account form workflows 2 / 43.
+Applied only this migration on Dev and production after a protected production snapshot and maintenance pause. Read-back: epochs mode, 14 baselines, 3 foreign keys, unchanged personal state; public /up HTTP 200 and maintenance off.
+Next action: Svein saves the personal mailbox and confirms the real connection result under `HR-2026-09-17-EMAIL-SAVE`. Main promotion and Git push remain separate.
+Recovery instructions: `app/Modules/Email/Docs/knowledge/email-unread-schema-recovery.md`.
+
 ## Working Rules
 
 - Pick one item, add your name or initials under `Owner`, and keep the status updated.
