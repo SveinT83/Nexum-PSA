@@ -1,5 +1,7 @@
 # RFC Index
 
+- [Draft: Daily Workday Confirmation](2026-10-01-daily-workday-confirmation.md)
+
 Store Requests For Change in this folder.
 
 Use `docs/processes/rfc-process.md` for the required process and template.

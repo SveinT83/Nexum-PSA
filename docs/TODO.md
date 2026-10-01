@@ -1,5 +1,19 @@
 # tdPSA Development TODO
 
+## Daily Workday Confirmation (2026-10-01)
+
+Owner: Svein Tore / Codex. Status: Planning - RFC Draft / ADR Proposed.
+Product direction agreed; documentation requested by Svein on 2026-10-01.
+See [RFC](rfc/2026-10-01-daily-workday-confirmation.md) and
+[ADR](adr/2026-10-01-workday-time-evidence-and-billing.md).
+Scope: personal daily work/break confirmation, existing-time reconciliation,
+calendar suggestions, in-app reminders and explicit Task conversion. AI is optional;
+page/login monitoring, automatic time approval and duplicate billing are excluded.
+Next: Svein reviews the concrete ownership/access/absence/retention decisions, then
+approves bounded implementation slices. No runtime implementation is active here.
+Existing active implementation and human-review gates are unchanged. This is a
+documentation-only planning item; no new runtime human-review entry is required yet.
+
 This file is the shared coordination list for tdPSA development. Use it to delegate work across contributors and keep implementation, tests, and Knowledge/BookStack documentation moving together.
 
 ## Working Rules
