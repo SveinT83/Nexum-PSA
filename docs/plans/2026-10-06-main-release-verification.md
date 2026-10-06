@@ -1,10 +1,12 @@
 # Main Release Verification - 2026-10-06
 
-Status: release verified; PR #295 ready; Main merge blocked by required GitHub approval.
+Status: release verified; PR #295 merged and deployed on 2026-10-06.
+Current operational evidence: 2026-10-06-production-deployment.md.
 Review: HR-2026-10-06-RELEASE, In Review.
 Svein explicitly authorized merging SSO, Workday, Tripletex and other completed Dev changes.
 Remaining practical acceptance is moved to his production review; no unperformed check is
-marked Reviewed. This request authorizes Main merge, not an agent-operated production deployment.
+marked Reviewed. The initial request authorized Main merge; Svein subsequently explicitly requested
+production deployment and Workday/SSO/Tripletex setup. See the production deployment report.
 
 ## Source and scope
 
@@ -72,7 +74,8 @@ database, provider client or live runtime switches are copied into this validati
 
 ## Production deployment and acceptance
 
-Main merge does not configure or deploy production. Svein owns the actual production rollout.
+Deployment has now run on Svein's explicit request. The following is the reviewed deployment
+procedure; its execution and remaining activation/review state are in the production report.
 Keep the previous release and a restorable database backup before running schema/data changes.
 This release includes canonical-contact and Knowledge data transitions, not only additive SSO.
 
@@ -138,17 +141,11 @@ Workday data and synchronization baselines. Database restoration requires an exp
 
 ## Completion
 
-All automated release verification is complete. Pull request:
-https://github.com/SveinT83/Nexum-PSA/pull/295
-
-The ordinary merge attempt was rejected by Main's GitHub ruleset: one approving pull-request
-review is required. Automatic merge is disabled for this repository. Main remains at
-d4f3342158d47807f2509bbac3be9aee05597eb9; no Main merge or production deployment occurred.
-Obtain the required review in GitHub, then merge the exact reviewed release branch normally.
-No ruleset, approval requirement or branch protection was weakened.
-
-Production deployment, provider setup and practical human checks remain Svein's next actions
-after merge. HR-2026-10-06-RELEASE remains In Review. The authoritative Dev branch and standard
-index remain unchanged, with unfinished Vault work preserved. The completed selection is
-committed on codex/completed-dev-release-20261006; do not later promote the entire dirty Dev
-working tree as though it were this reviewed release.
+PR https://github.com/SveinT83/Nexum-PSA/pull/295 was merged by Svein at
+2026-10-06T13:36:57Z, commit f4b0d4ac1ca4a2a9c86dbbdc78c1635bb4561057.
+Codex deployed the exact merged release on Svein's subsequent explicit request.
+The earlier GitHub-review blocker is resolved; no ruleset or branch protection was weakened.
+See 2026-10-06-production-deployment.md for backups, migrations, live checks, the small
+production-only dependency correction and current feature activation state.
+HR-2026-10-06-RELEASE remains In Review. Authoritative Dev's unfinished Vault working files
+and standard index are preserved; do not promote that entire dirty working tree.

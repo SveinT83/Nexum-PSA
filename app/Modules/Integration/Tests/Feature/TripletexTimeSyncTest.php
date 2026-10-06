@@ -95,6 +95,18 @@ class TripletexTimeSyncTest extends TestCase
         });
     }
 
+    /** The scheduled entry point must honor a paused connection without contacting the provider. */
+    public function test_scheduled_command_skips_paused_connections(): void
+    {
+        $this->connection->update(['status' => 'disabled']);
+
+        $this->artisan('tripletex:sync-time')->assertSuccessful();
+
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('tripletex_workday_sync_states', 0);
+        $this->assertDatabaseCount('workdays', 0);
+    }
+
     private function save(float $hours, int $version = 0, string $comment = 'Work'): array
     {
         return app(MutateWorkday::class)->handle($this->worker, 'save', '2026-10-05', [

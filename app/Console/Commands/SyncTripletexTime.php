@@ -17,7 +17,10 @@ class SyncTripletexTime extends Command
 
     public function handle(SyncTripletexWorkdays $sync): int
     {
-        Telescope::stopRecording();
+        // Telescope is a development dependency and is absent from production installs.
+        if (class_exists(Telescope::class)) {
+            Telescope::stopRecording();
+        }
         if (! config('tripletex.enabled') || ! config('tripletex.writes_enabled')) {
             return self::SUCCESS;
         }
