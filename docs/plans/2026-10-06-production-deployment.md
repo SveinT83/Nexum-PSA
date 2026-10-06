@@ -1,6 +1,6 @@
 # Production Deployment - 2026-10-06
 
-Status: deployed; Workday active; Tripletex prepared and paused; SSO awaits local administrator reauthentication.
+Status: deployed; Workday active; Tripletex prepared and paused; SSO provider enabled and verified; personal account linking remains pending.
 Operator: Codex, explicitly requested by Svein Tore.
 Human review: HR-2026-10-06-RELEASE, In Review. Deployment is not human acceptance.
 
@@ -62,11 +62,11 @@ full-scope access and optional scopes are off; only basic is attached.
 The secret was transferred encrypted and stored through the encrypted provider model.
 No Dev identities, sessions, passwords, roles or MFA secrets were copied.
 
-SSO_ENABLED=true prepares runtime, but provider enabled=false / unverified / revision 1 currently
-keeps sign-in unavailable. The admin form is open for Svein's normal password and local Nexum TOTP.
+SSO_ENABLED=true and provider enabled=true / verified / revision 2 were independently read back
+after Svein saved through the password/TOTP-guarded admin form. The UI confirmed provider discovery.
 His account has confirmed local TOTP. The authenticator field is not a Keycloak client secret.
 Client secret remains blank in the browser to retain the encrypted prepared secret.
-After guarded Save and verify provider, explicitly link the intended work account from Profile.
+The guarded provider save is complete. The Profile Work Account page is open for personal linking.
 Actual production linking, SSO login, local MFA/recovery and emergency-account tests remain pending.
 Customer Portal retains its existing authentication.
 
@@ -99,7 +99,10 @@ Current mapping timezone UTC awaits the question above.
 TRIPLETEX_ENABLED=true and TRIPLETEX_WRITES_ENABLED=true prepare the runtime.
 The write-contract evidence is the already completed own-company production-provider CRUD pilot
 documented in 2026-10-05-tripletex-time-sync-verification.md, not a claim of new payroll tests here.
-Connection status remains disabled, with zero production synchronization state records.
+Connection status remains disabled. Setup initially had zero synchronization states. During the
+user's concurrent Workday testing, one pending state and one saved workday appeared for today
+(version 5); checked_at remains null and no sync-enable audit exists. Preserve this user-entered
+data. Any subsequent mapping/timezone change must account for that established pending state.
 The browser independently shows the single verified account, blank token and switch off.
 
 ## Production dependency correction
@@ -117,7 +120,8 @@ production preimage against f4b0d4a. Its SHA-256 is
 Production php artisan tripletex:sync-time then exited 0 with the account still paused.
 The backup and exact patch metadata are SyncTripletexTime-before.php and
 tripletex-command-hotfix.json in the protected deployment directory.
-The small correction must be retained in Main before any subsequent redeployment.
+The small correction is in PR #296 and must be retained in Main before any subsequent redeployment.
+https://github.com/SveinT83/Nexum-PSA/pull/296
 
 ## Scheduler, existing backlog and remaining review
 
@@ -146,3 +150,9 @@ Infrastructure rollback must compare current configuration with the protected ba
 
 Configuration-template reference:
 https://support.plesk.com/hc/en-us/articles/12389253620375-How-to-change-Apache-log-format-for-the-domains-hosted-on-Plesk
+
+## Editorial handoff limitation
+
+Automatic approval review rejected the combined local report-copy and website-handoff write
+with "blocked by policy". That local command did not run. The authoritative Dev report and
+review/TODO records are saved; the separate website handoff was not updated in this deployment turn.

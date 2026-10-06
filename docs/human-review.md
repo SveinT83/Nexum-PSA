@@ -5,8 +5,8 @@
 Status: In Review; automated release verification complete; production acceptance pending.
 PR #295 was merged by Svein and production deployed on his explicit request on 2026-10-06.
 Base release f4b0d4ac1ca4a2a9c86dbbdc78c1635bb4561057 plus the verified optional-Telescope
-command fix. Workday is active; Tripletex is verified/prepared and paused; SSO awaits local
-administrator password/TOTP confirmation. See plans/2026-10-06-production-deployment.md.
+command fix (PR #296). Workday is active; Tripletex is verified/prepared and paused; SSO is
+enabled and provider-verified after the guarded admin save. Personal linking/login remains pending. See plans/2026-10-06-production-deployment.md.
 Authorization: "Merget. Kan du deploye i produktsjon?" and "Aktiver Workday og klargjør SSO/Tripletex".
 This authorizes deployment/setup, not completion of the human checks below.
 Owner: Codex. Reviewer and production operator: Svein Tore.

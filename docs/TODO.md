@@ -4,11 +4,12 @@
 
 Status: Deployed; production acceptance In Review. Owner: Codex; reviewer: Svein Tore.
 PR #295 is merged and release f4b0d4a deployed on Svein's explicit request.
-Workday is active; Tripletex is verified/prepared and paused; SSO provider awaits the normal
-administrator password/TOTP save. Work-plan/mapping timezone confirmation is pending.
+Workday is active; Tripletex is verified/prepared and paused; SSO is enabled/provider-verified
+after the normal password/TOTP save. Personal SSO linking and timezone confirmation are pending.
+A user-created Workday/pending sync record now exists; preserve it when resolving timezone.
 The no-dev Tripletex command failure was corrected and tested (12 tests / 71 assertions),
 then independently verified in production. Retain the small optional-Telescope fix in Main
-before redeploying. Unfinished Vault remains excluded.
+before redeploying (PR #296). Unfinished Vault remains excluded.
 Review: HR-2026-10-06-RELEASE; evidence: plans/2026-10-06-production-deployment.md.
 Remaining human checks are not completed by deployment.
 
