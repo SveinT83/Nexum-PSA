@@ -3,12 +3,16 @@
 namespace App\Modules\Ticket\Tests\Feature;
 
 use App\Models\Core\User;
+use App\Modules\Task\Models\Task;
+use App\Modules\Task\Models\TaskTemplateGroup;
+use App\Modules\Task\Models\TaskTemplateItem;
+use App\Modules\Task\Models\TaskTemplateRun;
 use App\Modules\Ticket\Jobs\ProcessScheduledTickets;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketSchedule;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use Carbon\Carbon;
 
 class RecurringTicketAutomationTest extends TestCase
 {
@@ -83,5 +87,55 @@ class RecurringTicketAutomationTest extends TestCase
 
         $expectedPlannedStart = $plannedStart->toISOString();
         $this->assertEquals($expectedPlannedStart, $occurrences->first()->metadata['occurrence_planned_start']);
+    }
+
+    /** @test */
+    public function it_applies_the_selected_task_template_to_each_generated_ticket_occurrence()
+    {
+        $plannedStart = Carbon::now()->addDay()->startOfMinute();
+        $taskTemplate = TaskTemplateGroup::query()->create([
+            'name' => 'Recurring maintenance Tasks',
+            'slug' => 'recurring-maintenance-tasks',
+            'is_active' => true,
+        ]);
+        TaskTemplateItem::query()->create([
+            'template_group_id' => $taskTemplate->id,
+            'title' => 'Prepare {ticket.key}',
+            'sort_order' => 10,
+        ]);
+        TaskTemplateItem::query()->create([
+            'template_group_id' => $taskTemplate->id,
+            'title' => 'Complete maintenance',
+            'sort_order' => 20,
+        ]);
+        $parentTicket = Ticket::factory()->create([
+            'subject' => 'Weekly maintenance template',
+            'description' => 'Generate a Ticket and its Tasks.',
+            'created_by' => $this->admin->id,
+        ]);
+        $schedule = TicketSchedule::query()->create([
+            'ticket_id' => $parentTicket->id,
+            'task_template_group_id' => $taskTemplate->id,
+            'schedule_type' => 'recurring',
+            'planned_start_at' => $plannedStart,
+            'recurrence_rule' => 'FREQ=WEEKLY',
+            'timezone' => 'Europe/Oslo',
+            'status' => 'active',
+            'sla_mode' => 'defer_until_planned_start',
+            'created_by' => $this->admin->id,
+        ]);
+
+        app(ProcessScheduledTickets::class)->handle(app(\App\Modules\Ticket\Actions\StoreScheduledTicketOccurrence::class));
+        app(ProcessScheduledTickets::class)->handle(app(\App\Modules\Ticket\Actions\StoreScheduledTicketOccurrence::class));
+
+        $occurrence = Ticket::query()->where('metadata->parent_ticket_id', $parentTicket->id)->firstOrFail();
+        $this->assertSame(2, $occurrence->tasks()->count());
+        $this->assertSame(0, $parentTicket->tasks()->count());
+        $this->assertSame('Prepare '.$occurrence->ticket_key, $occurrence->tasks()->orderBy('sort_order')->firstOrFail()->title);
+        $this->assertSame(2, Task::query()->count());
+        $run = TaskTemplateRun::query()->sole();
+        $this->assertSame('ticket_schedule', $run->trigger_type);
+        $this->assertSame($schedule->id, $run->source_id);
+        $this->assertSame($occurrence->id, $run->owner_id);
     }
 }

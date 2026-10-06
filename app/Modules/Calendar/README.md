@@ -264,9 +264,11 @@ Useful for holiday, sickness, special workdays, and temporary schedule changes.
 
 Global calendar defaults.
 
-User-specific timezone, default calendar view, and workday defaults are owned by the
-UserManagement module in `user_preferences`. Calendar reads those preferences and uses them when
-rendering calendar views and synchronizing personal availability defaults.
+UserManagement owns display preferences in user_preferences and canonical weekly hours/timezone
+in user_profiles. Display preferences never synchronize or overwrite availability.
+The approved Workday foundation projects profile hours into effective-dated Calendar rules
+and preserves unmapped exceptions. See the UserManagement Knowledge work-plan guide.
+Plan UI/API remains behind WORKDAY_ENABLED=false until the full workflow/pilot is ready.
 
 Settings needed:
 
@@ -595,3 +597,13 @@ Even though the module should be designed fully, implementation should land in c
 - Timezone support is mandatory from the start.
 - Recurrence support is mandatory from the start.
 - External integration metadata should be present early, but provider sync logic belongs in Integration later.
+
+## Workday Absence Projections
+
+The default-off Workday absence workflow maintains one neutral Unavailable block per source.
+Shared Calendar views and links reveal no absence category. Generic edit/delete/recurrence
+operations are blocked; the owner corrects or cancels the source in My absences. Calendar
+archiving is refused while retained absence blocks exist. Cancellation releases availability
+while preserving history. Existing calendar-only events are untouched. Nextcloud skips these
+blocks; no external calendar or phone-provider operation is performed. See the Workday absence
+Knowledge guide and docs/plans/2026-10-02-workday-slice-03-verification.md for scope and evidence.

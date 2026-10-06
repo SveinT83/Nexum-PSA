@@ -23,6 +23,14 @@ class NotificationOpenController extends Controller
             404
         );
 
+        if ($notification->type === \App\Modules\Notification\Notifications\WorkdayReminderNotification::class) {
+            $service = app(\App\Modules\Workday\Actions\WorkdayReminders::class);
+            $allowed = collect($service->pending($user))->firstWhere('notification_id', $notification->id);
+            abort_unless($allowed, 404);
+            $notification->markAsRead();
+            return redirect()->to($allowed['url']);
+        }
+
         $target = $notification->type === InboundEmailRoutedNotification::class
             ? $this->currentInboundSourceUrl($notification)
             : null;

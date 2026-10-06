@@ -2,7 +2,9 @@
 
 namespace App\Modules\Notification\Notifications;
 
+use App\Modules\Notification\Channels\QueueInternalWebPushChannel;
 use App\Modules\Notification\Contracts\EmailAccountMailNotification;
+use App\Modules\Notification\Contracts\QueuesInternalWebPush;
 use App\Modules\Notification\Models\NotificationSetting;
 use App\Modules\Notification\Support\RoutesEmailThroughAccount;
 use App\Modules\Ticket\Models\Ticket;
@@ -13,7 +15,7 @@ use Illuminate\Notifications\Notification;
 /**
  * Sent when a ticket is assigned to a technician.
  */
-class TicketAssigned extends Notification implements EmailAccountMailNotification
+class TicketAssigned extends Notification implements EmailAccountMailNotification, QueuesInternalWebPush
 {
     use Queueable, RoutesEmailThroughAccount;
 
@@ -37,6 +39,9 @@ class TicketAssigned extends Notification implements EmailAccountMailNotificatio
         }
         if ($setting->mail_enabled) {
             $channels[] = $this->emailAccountMailChannel('tickets');
+        }
+        if ($setting->web_push_enabled) {
+            $channels[] = QueueInternalWebPushChannel::class;
         }
 
         // Check if Nextcloud Talk is enabled system-wide and for this user
@@ -89,6 +94,22 @@ class TicketAssigned extends Notification implements EmailAccountMailNotificatio
             'url' => route('tech.tickets.show', $this->ticket->ticket_key),
             'urlLabel' => 'View Ticket',
             'referenceId' => 'ticket-assigned-'.$this->ticket->ticket_key.'-'.time(),
+        ];
+    }
+
+    public function internalWebPushType(): string
+    {
+        return 'ticket_assigned';
+    }
+
+    public function internalWebPushPayload(): array
+    {
+        return [
+            'title' => 'Ticket assigned',
+            'body' => 'Open Nexum to review the assigned Ticket.',
+            'target_id' => $this->ticket->id,
+            'ttl' => 1800,
+            'urgency' => 'normal',
         ];
     }
 }

@@ -161,3 +161,27 @@ work calendar.
 
 Calendar event create and update must use the Calendar actions so participants, recurrence defaults,
 timestamps, actors, and future sync behavior stay consistent.
+
+## Simple employee plans (Dev, disabled by default)
+
+The approved Workday foundation reuses UserManagement weekly hours and Calendar records.
+See [Profile work-plan guide](../../../UserManagement/Docs/knowledge/work-plan.md).
+Profile projections carry provenance and effective dates; Find Time honours their disabled
+weekdays, overnight windows and timezone, while preserved unowned rules take precedence on
+applicable days. Existing consuming domains can still supply their own explicit windows.
+
+Calendar owns dated/weekly Education, Work and Other plan blocks. A modified recurrence
+occurrence is replaced once, and a cancelled occurrence is suppressed. Generic Calendar
+edit/delete routes direct plan-owned records to Profile > Work plan. Existing events retain
+their normal behavior and privacy. Phone duty is metadata, with no provider queue control.
+The complete Workday feature remains unavailable pending later slices and review.
+
+## Workday Absence Projections
+
+The default-off Workday absence workflow maintains one neutral Unavailable block per source.
+Shared Calendar views and links reveal no absence category. Generic edit/delete/recurrence
+operations are blocked; the owner corrects or cancels the source in My absences. Calendar
+archiving is refused while retained absence blocks exist. Cancellation releases availability
+while preserving history. Existing calendar-only events are untouched. Nextcloud skips these
+blocks; no external calendar or phone-provider operation is performed. See the Workday absence
+Knowledge guide and docs/plans/2026-10-02-workday-slice-03-verification.md for scope and evidence.

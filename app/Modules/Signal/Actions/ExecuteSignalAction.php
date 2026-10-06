@@ -13,8 +13,10 @@ use App\Modules\Signal\Jobs\DeliverSignalWebhook;
 use App\Modules\Signal\Models\Signal;
 use App\Modules\Signal\Models\SignalRule;
 use App\Modules\Signal\Models\SignalWebhookDelivery;
+use App\Modules\Task\Actions\ApplyTaskTemplate;
 use App\Modules\Task\Actions\StoreTask;
 use App\Modules\Task\Models\Task;
+use App\Modules\Task\Models\TaskTemplateGroup;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Models\Ticket;
@@ -307,6 +309,40 @@ class ExecuteSignalAction
 
     private function createTaskFollowUp(Signal $signal, SignalRule $rule, array $action, string $idempotencyKey): array
     {
+        $actor = $this->resolveActor($rule, $action);
+
+        if (! $actor) {
+            return ['type' => 'task_follow_up', 'status' => 'skipped', 'message' => 'Signal rule has no actor user for task creation.'];
+        }
+
+        if (filled($action['template_group_id'] ?? null)) {
+            $template = TaskTemplateGroup::query()->where('is_active', true)->find((int) $action['template_group_id']);
+            if (! $template) {
+                throw ValidationException::withMessages(['template_group_id' => 'The selected Task template is unavailable.']);
+            }
+            $run = app(ApplyTaskTemplate::class)->handle(
+                $template,
+                $actor,
+                $signal->client ?: $actor,
+                'signal_rule',
+                $idempotencyKey,
+                [
+                    'source_type' => $signal->getMorphClass(),
+                    'source_id' => $signal->id,
+                    'assigned_to' => $action['assigned_to'] ?? $action['owner_id'] ?? null,
+                    'due_offset_minutes' => $action['due_minutes_from_now'] ?? null,
+                    'metadata' => ['signal_rule_id' => $rule->id, 'signal_id' => $signal->id],
+                ],
+            );
+
+            return [
+                'type' => 'task_follow_up',
+                'status' => 'done',
+                'task_template_run_id' => $run->id,
+                'task_ids' => $run->tasks->pluck('id')->all(),
+            ];
+        }
+
         $existing = Task::query()
             ->where('source_type', 'signal')
             ->where('source_id', $signal->id)
@@ -321,12 +357,6 @@ class ExecuteSignalAction
 
         if ($existing) {
             return ['type' => 'task_follow_up', 'status' => 'skipped', 'message' => 'Task already exists for signal rule.', 'task_id' => $existing->id];
-        }
-
-        $actor = $this->resolveActor($rule, $action);
-
-        if (! $actor) {
-            return ['type' => 'task_follow_up', 'status' => 'skipped', 'message' => 'Signal rule has no actor user for task creation.'];
         }
 
         $dueMinutes = (int) ($action['due_minutes_from_now'] ?? 0);

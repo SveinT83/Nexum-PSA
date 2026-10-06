@@ -23,6 +23,9 @@ The complete action catalogue can:
 - Set or clear an authorized Ticket Custom Field.
 - Select, transition, switch, pause, or resume Workflow automation through Workflow v3 boundaries.
 - Emit a Signal for explicit cross-module automation handoff.
+- Apply an active Task template to the Ticket through the Task-owned atomic generation boundary.
+  Preview projects the group without writes; execution records the generation run and never changes
+  existing Tasks when the template is edited later.
 
 Rules are useful for deterministic routing based on channel, inbound email context, tags, queue, customer context, or other supported fields.
 

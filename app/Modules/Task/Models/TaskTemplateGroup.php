@@ -33,6 +33,21 @@ class TaskTemplateGroup extends Model
             ->orderBy('id');
     }
 
+    public function allItems(): HasMany
+    {
+        return $this->hasMany(TaskTemplateItem::class, 'template_group_id')->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function runs(): HasMany
+    {
+        return $this->hasMany(TaskTemplateRun::class, 'template_group_id');
+    }
+
+    public function recurringTemplates(): HasMany
+    {
+        return $this->hasMany(TaskRecurringTemplate::class, 'template_group_id');
+    }
+
     protected static function booted(): void
     {
         static::creating(function (TaskTemplateGroup $group): void {

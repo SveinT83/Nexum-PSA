@@ -181,7 +181,8 @@ class EmailProviderHealthDeadlineTest extends TestCase
         $worker = app('queue.worker');
         $options = new WorkerOptions(
             name: 'order6-health-deadline-test',
-            memory: 256,
+            // This test checks nested alarms, not the size of the enclosing PHPUnit process.
+            memory: max(256, (int) ceil(memory_get_usage(true) / 1024 / 1024) + 64),
             timeout: 240,
             sleep: 0,
             maxTries: 1,

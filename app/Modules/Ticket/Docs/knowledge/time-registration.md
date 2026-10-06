@@ -32,3 +32,11 @@ and uses the linked Task entries, so 5 actual minutes with a 30-minute billing m
 minutes of technician time rather than 35.
 
 The AI draft button assists with invoice text. It uses selected time rate, the technician's existing draft text, previous time entries, ticket replies, internal notes, and ticket context to propose a concise billing description without changing the saved time automatically. Driving or travel rates should produce driving/travel descriptions, not copied technical repair text.
+
+## Workday attribution
+
+When Workday is enabled, an employee may select their own direct Ticket time as evidence within
+the actual day. Task-linked rows and task_billing projections are excluded because their actual
+effort belongs to the Task source. Five actual Task minutes with thirty billing minutes therefore
+contributes five minutes of evidence. Workday selection does not update rates, billing state,
+timebank state or invoice text, and never increases the actual day total.

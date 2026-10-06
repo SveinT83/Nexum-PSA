@@ -755,6 +755,87 @@ class MailWorkspace extends Component
         $this->setSelectedUnreadForMe(false);
     }
 
+    public function markSelectedRead(): void
+    {
+        $this->setSelectedReadState(true);
+    }
+
+    public function markSelectedUnread(): void
+    {
+        $this->setSelectedReadState(false);
+    }
+
+    /**
+     * Keep the ordinary reader action simple while preserving the two read-state authorities.
+     * Shared and system mailboxes change only the actor's Nexum state. The owner of a personal
+     * mailbox also mirrors the same state to IMAP through the existing remote-operation ledger.
+     */
+    private function setSelectedReadState(bool $read): void
+    {
+        $placement = $this->selectedPlacementForAction();
+        $user = $this->user();
+
+        if (! $placement?->message || ! $placement->account || ! $user
+            || ! $this->canUsePersonalUnreadForPlacement($placement)) {
+            $this->mailActionStatus = [
+                'type' => 'warning',
+                'message' => 'Select an accessible message before changing its read status.',
+            ];
+
+            return;
+        }
+
+        try {
+            app(SetEmailUnreadForMe::class)->handle($user, $placement->message, ! $read);
+            $this->unreadForMeByMessage[$placement->message->id] = ! $read;
+        } catch (AuthorizationException) {
+            $this->mailActionStatus = [
+                'type' => 'warning',
+                'message' => 'You no longer have access to change this message.',
+            ];
+
+            return;
+        }
+
+        $actionLabel = $read ? 'read' : 'unread';
+        $this->mailActionStatus = [
+            'type' => 'success',
+            'message' => 'Marked as '.$actionLabel.'.',
+        ];
+
+        $mirrorsPersonalMailbox = $placement->account->isPersonal()
+            && (int) $placement->account->owner_id === (int) $user->id;
+
+        if ($mirrorsPersonalMailbox) {
+            try {
+                $remoteOperation = app(PerformEmailRemoteOperation::class)->handle(
+                    $placement,
+                    $read ? PerformEmailRemoteOperation::MARK_SEEN : PerformEmailRemoteOperation::MARK_UNSEEN,
+                    $user,
+                );
+
+                if ($remoteOperation->status === EmailRemoteOperation::STATUS_FAILED) {
+                    $this->mailActionStatus = [
+                        'type' => 'warning',
+                        'message' => 'Marked as '.$actionLabel.' for you, but the mail server update failed.',
+                    ];
+                } elseif ($remoteOperation->status !== EmailRemoteOperation::STATUS_SUCCEEDED) {
+                    $this->mailActionStatus = [
+                        'type' => 'info',
+                        'message' => 'Marked as '.$actionLabel.'. Mail server update is pending.',
+                    ];
+                }
+            } catch (ValidationException|RuntimeException) {
+                $this->mailActionStatus = [
+                    'type' => 'warning',
+                    'message' => 'Marked as '.$actionLabel.' for you, but the mail server could not be updated.',
+                ];
+            }
+        }
+
+        $this->dispatch('mail-state-changed');
+    }
+
     public function sendAndReceiveMail(): void
     {
         $accounts = $this->manualRefreshAccounts();
@@ -4925,6 +5006,18 @@ class MailWorkspace extends Component
                 $this->resetPersonalRuleForm();
                 $this->resetMailAiSummary();
             }
+        } elseif ($operation === PerformEmailRemoteOperation::TRASH
+            && $remoteOperation->error_code === 'REMOTE_OPERATION_SOURCE_MISSING'
+            && $placement->fresh()?->local_state === EmailMailboxPlacement::LOCAL_HIDDEN) {
+            $this->selectedPlacementId = null;
+            $this->resetClassificationForm();
+            $this->resetMoveForm();
+            $this->resetPersonalRuleForm();
+            $this->resetMailAiSummary();
+            $this->mailActionStatus = [
+                'type' => 'info',
+                'message' => 'This message is already gone from the mail server folder. The outdated entry has been removed from this view.',
+            ];
         } elseif ($remoteOperation->status === EmailRemoteOperation::STATUS_FAILED) {
             $this->mailActionStatus = [
                 'type' => 'danger',

@@ -1663,11 +1663,17 @@
                 aria-labelledby="ticketTasksHeading"
                 data-bs-parent="#ticketRightbarAccordion">
                 <div class="accordion-body p-3">
-                    <div class="d-grid mb-3">
+                    <div class="d-grid gap-2 mb-3">
                         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#ticketTaskQuickCreateModal">
                             <i class="bi bi-plus-lg" aria-hidden="true"></i>
                             New Task
                         </button>
+                        @can('task.create')
+                            <a class="btn btn-sm btn-outline-primary" href="{{ route('tech.task-templates.choose', ['owner_type' => 'ticket', 'owner_id' => $ticket->id]) }}">
+                                <i class="bi bi-list-check" aria-hidden="true"></i>
+                                Apply Task template
+                            </a>
+                        @endcan
                     </div>
 
                     <div class="list-group list-group-flush">
@@ -2065,9 +2071,7 @@
 
         <div class="accordion-item border rounded mb-2 overflow-hidden">
             @php
-                $documentationRequests = $ticket->events
-                    ->where('type', 'documentation_requested')
-                    ->sortByDesc('created_at');
+                $documentationRequests = $ticket->documentationRequests->sortByDesc('created_at');
             @endphp
             <h2 class="accordion-header" id="ticketKnowledgeHeading">
                 <button
@@ -2107,10 +2111,18 @@
                     @if($documentationRequests->isNotEmpty())
                         <div class="mb-3">
                             <div class="text-muted text-uppercase mb-1" style="font-size: .68rem;">Follow-ups</div>
-                            @foreach($documentationRequests->take(3) as $event)
+                            @foreach($documentationRequests->take(3) as $documentationRequest)
                                 <div class="border rounded px-2 py-1 mb-1 small">
-                                    <div class="fw-semibold">{{ $event->created_at?->format('Y-m-d H:i') }}</div>
-                                    <div class="text-muted">{{ $event->message }}</div>
+                                    <div class="d-flex justify-content-between gap-2">
+                                        <span class="fw-semibold">{{ $documentationRequest->created_at?->format('Y-m-d H:i') }}</span>
+                                        <span class="badge text-bg-{{ $documentationRequest->status === 'completed' ? 'success' : ($documentationRequest->status === 'publication_failed' ? 'danger' : 'warning') }}">
+                                            {{ str_replace('_', ' ', $documentationRequest->status) }}
+                                        </span>
+                                    </div>
+                                    <div class="text-muted">{{ $documentationRequest->reason ?: 'Documentation follow-up requested from ticket.' }}</div>
+                                    @if($documentationRequest->revision)
+                                        <a href="{{ route('tech.knowledge.revisions.show', $documentationRequest->revision) }}" class="small">Review exact revision {{ $documentationRequest->revision->revision_number }}</a>
+                                    @endif
                                 </div>
                             @endforeach
                         </div>

@@ -542,10 +542,10 @@ class KnowledgeController extends Controller
         $request->merge($settings->articleDefaults($request->all()));
 
         $article = $action->handle($this->validatedArticle($request));
-        $this->markArticleForBookStackPushWhenNeeded($article);
+        $revision = $article->getRelation('pendingRevision');
 
-        return redirect()->route('tech.knowledge.show', $article)
-            ->with('success', 'Article created successfully.');
+        return redirect()->route('tech.knowledge.revisions.show', $revision)
+            ->with('success', 'Article proposal created. Published content is unchanged until approval and publication.');
     }
 
     /**
@@ -553,12 +553,27 @@ class KnowledgeController extends Controller
      */
     public function show(Article $article, RecordArticleView $recordArticleView): View
     {
-        $article->load(['category', 'owner', 'clientScope', 'creator', 'updater', 'tags', 'knowledgeShelf', 'knowledgeBook', 'knowledgeChapter']);
+        $article->load([
+            'category',
+            'owner',
+            'clientScope',
+            'creator',
+            'updater',
+            'tags',
+            'knowledgeShelf',
+            'knowledgeBook',
+            'knowledgeChapter',
+            'bookStackSyncState.lastSyncedRevision',
+            'bookStackSyncState.candidateRevision',
+            'publishedRevision',
+            'revisions' => fn ($query) => $query->orderByDesc('revision_number'),
+        ]);
         $recordArticleView->handle($article);
+        $repositoryOwned = data_get($article->source_payload, 'generated_from') === 'repository-knowledge-docs';
 
         return view('knowledge::Tech.show', [
             'article' => $article,
-            'canEditArticle' => blank($article->source_system) || $this->bookStackTwoWaySyncEnabled(),
+            'canEditArticle' => ! $repositoryOwned && (blank($article->source_system) || $this->bookStackTwoWaySyncEnabled()),
         ]);
     }
 
@@ -580,11 +595,10 @@ class KnowledgeController extends Controller
      */
     public function update(Request $request, Article $article, UpdateArticle $action): RedirectResponse
     {
-        $action->handle($article, $this->validatedArticle($request));
-        $this->markArticleForBookStackPushWhenNeeded($article);
+        $revision = $action->handle($article, $this->validatedArticle($request));
 
-        return redirect()->route('tech.knowledge.show', $article)
-            ->with('success', 'Article updated successfully.');
+        return redirect()->route('tech.knowledge.revisions.show', $revision)
+            ->with('success', 'Revision proposed. Published content remains unchanged.');
     }
 
     /**

@@ -157,6 +157,8 @@ class CalendarController extends Controller
     public function updateEvent(Request $request, CalendarEvent $event, UpdateCalendarEvent $updateEvent, CalendarVisibility $visibility)
     {
         abort_unless($visibility->canManageCalendar($request->user(), $event->calendar), 403);
+        abort_if($event->source === 'work_plan', 422, 'Edit this block from Profile > Work plan.');
+        \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::assertCalendarEditable($event);
 
         $data = array_merge($this->payloadFromEvent($event), $this->validatedEvent($request, creating: false));
         $data = $this->withEventDefaults($data);
@@ -187,6 +189,8 @@ class CalendarController extends Controller
     public function destroyEvent(Request $request, CalendarEvent $event, CalendarVisibility $visibility)
     {
         abort_unless($visibility->canManageCalendar($request->user(), $event->calendar), 403);
+        abort_if($event->source === 'work_plan', 422, 'Edit this block from Profile > Work plan.');
+        \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::assertCalendarEditable($event);
 
         $event->delete();
 

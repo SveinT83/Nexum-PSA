@@ -103,11 +103,9 @@ class EmailLivePublisherStateMachineTest extends TestCase
     #[Test]
     public function global_fanout_advances_over_at_most_one_hundred_raw_candidates(): void
     {
-        $users = collect();
         foreach (range(1, 105) as $_) {
             $user = User::factory()->create(['status' => User::STATUS_DISABLED]);
             $this->accessState($user);
-            $users->push($user);
         }
 
         $change = $this->globalSource('bounded-global-page');
@@ -118,7 +116,7 @@ class EmailLivePublisherStateMachineTest extends TestCase
         $this->invoke($service, 'processPublicationPage', [(int) $publication->id]);
 
         $publication->refresh();
-        $expectedCursor = (int) $users->pluck('id')->sort()->values()->get(99);
+        $expectedCursor = (int) User::query()->orderBy('id')->limit(100)->pluck('id')->last();
         $this->assertSame(EmailLiveProjectionPublication::STATUS_PENDING, $publication->status);
         $this->assertSame(EmailLiveProjectionPublication::PHASE_ACTIVE_USERS, $publication->phase);
         $this->assertSame($expectedCursor, $publication->candidate_cursor_id);
@@ -152,7 +150,7 @@ class EmailLivePublisherStateMachineTest extends TestCase
                 $publication->status,
                 (string) $publication->error_code,
             );
-            $delivery = $publication->deliveries()->sole();
+            $delivery = $publication->deliveries()->where('user_id', $user->id)->sole();
 
             foreach (range(1, 3) as $attempt) {
                 $claimed = $this->invoke($service, 'claimDelivery', [(int) $delivery->id]);
@@ -189,17 +187,20 @@ class EmailLivePublisherStateMachineTest extends TestCase
 
         $change->refresh();
         $publication = $change->publication()->firstOrFail();
-        $delivery = $publication->deliveries()->sole();
-        $this->assertSame(EmailLiveProjectionDelivery::STATUS_SUPPRESSED, $delivery->status);
+        $deliveries = $publication->deliveries()->get();
+        $this->assertNotEmpty($deliveries);
+        $this->assertTrue($deliveries->every(
+            fn (EmailLiveProjectionDelivery $delivery): bool => $delivery->status === EmailLiveProjectionDelivery::STATUS_SUPPRESSED,
+        ));
         $this->assertSame(EmailLiveProjectionPublication::STATUS_SEALED, $publication->status);
         $this->assertSame('sealed', $publication->delivery_summary_status);
-        $this->assertSame(1, $publication->delivery_count);
+        $this->assertSame($deliveries->count(), $publication->delivery_count);
         $this->assertSame(0, $publication->delivery_appended_count);
-        $this->assertSame(1, $publication->delivery_suppressed_count);
+        $this->assertSame($deliveries->count(), $publication->delivery_suppressed_count);
         $this->assertSame(EmailLiveProjectionChange::STATUS_SEALED, $change->publication_status);
         $this->assertNotNull($change->retention_ready_at);
-        $this->assertSame(1, $change->compact_delivery_count);
-        $this->assertSame(1, $change->compact_suppressed_count);
+        $this->assertSame($deliveries->count(), $change->compact_delivery_count);
+        $this->assertSame($deliveries->count(), $change->compact_suppressed_count);
     }
 
     #[Test]
@@ -208,8 +209,10 @@ class EmailLivePublisherStateMachineTest extends TestCase
         CarbonImmutable::setTestNow('2026-08-24 14:00:00');
 
         try {
-            User::factory()->create(['status' => User::STATUS_DISABLED]);
-            $change = $this->globalSource('missing-recipient-authority');
+            $missing = User::factory()->create(['status' => User::STATUS_DISABLED]);
+            DB::unprepared('drop trigger if exists "em_live_user_access_contract_no_delete"');
+            EmailLiveUserAccessState::query()->where('user_id', $missing->id)->delete();
+            $change = $this->globalSource('missing-recipient-authority', bootstrapAccessStates: false);
             $service = app(EmailLivePublisherService::class);
             $service->publish($change);
             $publication = $change->publication()->firstOrFail();
@@ -228,6 +231,7 @@ class EmailLivePublisherStateMachineTest extends TestCase
             $this->assertSame(EmailLiveProjectionChange::STATUS_BLOCKED, $change->publication_status);
             $this->assertNull($change->sealed_at);
         } finally {
+            DB::unprepared("create trigger if not exists \"em_live_user_access_contract_no_delete\" before delete on \"email_live_user_access_states\" begin select raise(abort, 'email_live_evidence_delete_forbidden'); end");
             CarbonImmutable::setTestNow();
         }
     }
@@ -359,8 +363,20 @@ class EmailLivePublisherStateMachineTest extends TestCase
         config()->set('reverb.servers.reverb.host', '127.0.0.1');
     }
 
-    private function globalSource(string $idempotencyKey): EmailLiveProjectionChange
+    private function globalSource(string $idempotencyKey, bool $bootstrapAccessStates = true): EmailLiveProjectionChange
     {
+        if ($bootstrapAccessStates) {
+            // RefreshDatabase migrations may install protected system actors.
+            // Global fanout intentionally scans raw User rows, so give every
+            // baseline candidate frozen authority evidence unless a test is
+            // explicitly exercising the missing-authority failure path.
+            User::query()
+                ->whereNotIn('id', EmailLiveUserAccessState::query()->select('user_id'))
+                ->orderBy('id')
+                ->get()
+                ->each(fn (User $user) => $this->accessState($user));
+        }
+
         DB::transaction(fn () => app(EmailLiveInvalidator::class)->record([
             'global' => [EmailLiveProjectionChange::TYPE_TAXONOMY],
             'idempotency_key' => $idempotencyKey,
@@ -377,8 +393,9 @@ class EmailLivePublisherStateMachineTest extends TestCase
 
     private function accessState(User $user): EmailLiveUserAccessState
     {
-        return EmailLiveUserAccessState::query()->create([
-            'user_id' => $user->id,
+        return EmailLiveUserAccessState::query()->firstOrCreate(
+            ['user_id' => $user->id],
+            [
             'authorization_epoch' => 1,
             'content_ability_enable_generation' => 1,
             'global_authorization_generation_seen' => 1,

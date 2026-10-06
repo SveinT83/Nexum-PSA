@@ -9,6 +9,7 @@ use App\Models\Clients\ClientSite;
 use App\Models\System\Integrations\ClientRmmLink;
 use App\Models\System\Integrations\Integration;
 use App\Modules\Clients\Menus\SideBar\ClientsMenu;
+use App\Modules\Contact\Queries\ContactsForSite;
 use App\Modules\CustomField\Support\CustomFieldPresenter;
 use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
 use Illuminate\Http\RedirectResponse;
@@ -18,7 +19,6 @@ use Illuminate\View\View;
 
 class ClientSiteController extends Controller
 {
-
     // -----------------------------------------
     // INDEX - List all sites for a client
     // -----------------------------------------
@@ -28,8 +28,7 @@ class ClientSiteController extends Controller
      * Sites can be filtered by the active client in the session.
      * If no client is active, it displays all sites.
      *
-     * @param Request $request
-     * @param int|null $client
+     * @param  int|null  $client
      * @return View
      */
     public function index(Request $request, $client = null)
@@ -84,7 +83,7 @@ class ClientSiteController extends Controller
             'search' => $search,
             'sort' => $sort,
             'direction' => $direction,
-            'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu($targetClient)
+            'sidebarMenuItems' => (new ClientsMenu)->ClientsMenu($targetClient),
         ]);
     }
 
@@ -96,27 +95,29 @@ class ClientSiteController extends Controller
      *
      * Sets the site as the "active site" in the session and eager loads
      * relations for better performance.
-     *
-     * @param ClientSite $site
-     * @return View
      */
-    public function show(ClientSite $site, Request $request, CustomFieldPresenter $customFieldPresenter) {
-
+    public function show(
+        ClientSite $site,
+        Request $request,
+        CustomFieldPresenter $customFieldPresenter,
+        ContactsForSite $contactsForSite,
+    ): View {
         // -----------------------------------------
         // Set the active site ID in session
         // -----------------------------------------
         session(['active_site_id' => $site->id]);
 
-        // Eager load relasjoner for bedre ytelse
-        $site->load(['client', 'contacts']);
+        $site->load('client');
+        $canViewContacts = $request->user()?->can('contact.view') ?? false;
+        $contacts = $canViewContacts ? $contactsForSite->handle($site) : collect();
 
-        //Return view
         return view('clients::Tech.Sites.show', [
             'site' => $site,
             'client' => $site->client,
-            'users' => $site->contacts,
+            'contacts' => $contacts,
+            'canViewContacts' => $canViewContacts,
             'customFields' => $customFieldPresenter->visibleFor($site, $request->user()),
-            'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu($site->client),
+            'sidebarMenuItems' => (new ClientsMenu)->ClientsMenu($site->client),
         ]);
     }
 
@@ -126,10 +127,10 @@ class ClientSiteController extends Controller
     /**
      * Show the form for editing an existing site.
      *
-     * @param ClientSite $site
      * @return View
      */
-    public function edit(ClientSite $site) {
+    public function edit(ClientSite $site)
+    {
 
         // -----------------------------------------
         // Load data we need
@@ -140,7 +141,7 @@ class ClientSiteController extends Controller
             'site' => $site,
             'client' => $site->client,
             'allClients' => collect(),
-            'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu($site->client),
+            'sidebarMenuItems' => (new ClientsMenu)->ClientsMenu($site->client),
         ]);
     }
 
@@ -153,10 +154,11 @@ class ClientSiteController extends Controller
      * If a client ID is provided, the site will be pre-linked to that client.
      * Otherwise, the user will be presented with a list of all clients to choose from.
      *
-     * @param int|null $client
+     * @param  int|null  $client
      * @return View
      */
-    public function create($client = null) {
+    public function create($client = null)
+    {
 
         // -----------------------------------------
         // Try to find the Client
@@ -166,17 +168,17 @@ class ClientSiteController extends Controller
         // -----------------------------------------
         // If no Client, then vi pass them all for an selection in  the form.
         // -----------------------------------------
-        $allClients = !$targetClient ? Client::orderBy('name')->get() : collect();
+        $allClients = ! $targetClient ? Client::orderBy('name')->get() : collect();
 
         // Check if N-able RMM is active
         $nableActive = \App\Models\System\Integrations\Integration::where('type', 'rmm')->where('status', 'active')->exists();
 
         return view('clients::Tech.Sites.form', [
-            'site' => new ClientSite(),
+            'site' => new ClientSite,
             'client' => $targetClient,
             'allClients' => $allClients,
             'nableActive' => $nableActive,
-            'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu($targetClient),
+            'sidebarMenuItems' => (new ClientsMenu)->ClientsMenu($targetClient),
         ]);
     }
 
@@ -186,11 +188,11 @@ class ClientSiteController extends Controller
     /**
      * Store a newly created site in the database.
      *
-     * @param SiteRequest $request
-     * @param int|null $client
+     * @param  int|null  $client
      * @return RedirectResponse
      */
-    public function store(SiteRequest $request, $client = null) {
+    public function store(SiteRequest $request, $client = null)
+    {
 
         // -----------------------------------------
         // Validate request via FormRequest
@@ -207,13 +209,13 @@ class ClientSiteController extends Controller
         $warning = null;
 
         // -----------------------------------------
-        //Save the form to DB
+        // Save the form to DB
         // -----------------------------------------
         $site = DB::transaction(function () use ($targetClient, $data, &$warning) {
             $site = $targetClient->sites()->create($data);
 
             // Handle N-able RMM creation if requested
-            if (!empty($data['create_in_rmm'])) {
+            if (! empty($data['create_in_rmm'])) {
                 $integration = Integration::where('type', 'rmm')->where('status', 'active')->first();
                 $clientLink = $targetClient->rmmLinks()->where('integration_id', $integration?->id)->first();
 
@@ -222,7 +224,7 @@ class ClientSiteController extends Controller
                     $result = $rmmClient->addSite($clientLink->external_id, $site->name);
                     $status = $result['success'] ? 'success' : 'error';
 
-                    if ($status === 'success' && !empty($result['siteid'])) {
+                    if ($status === 'success' && ! empty($result['siteid'])) {
                         // Create RMM Link
                         ClientRmmLink::create([
                             'integration_id' => $integration->id,
@@ -231,7 +233,7 @@ class ClientSiteController extends Controller
                             'linkable_id' => $site->id,
                         ]);
                     } else {
-                        $warning = "Sites created locally, but failed to create in N-able RMM: " . ($result['error'] ?? 'Unknown error');
+                        $warning = 'Sites created locally, but failed to create in N-able RMM: '.($result['error'] ?? 'Unknown error');
                     }
                 }
             }
@@ -240,7 +242,7 @@ class ClientSiteController extends Controller
         });
 
         // -----------------------------------------
-        //Redirect wiew whit message
+        // Redirect wiew whit message
         // -----------------------------------------
         $response = redirect()->route('tech.clients.sites.show', $site)
             ->with('success', 'Sites created successfully.');
@@ -258,11 +260,10 @@ class ClientSiteController extends Controller
     /**
      * Update an existing site in the database.
      *
-     * @param ClientSite $site
-     * @param SiteRequest $request
      * @return RedirectResponse
      */
-    public function update(ClientSite $site, SiteRequest $request) {
+    public function update(ClientSite $site, SiteRequest $request)
+    {
 
         // -----------------------------------------
         // Validate request via FormRequest
@@ -270,12 +271,12 @@ class ClientSiteController extends Controller
         $data = $request->validated();
 
         // -----------------------------------------
-        //Update the site in the database
+        // Update the site in the database
         // -----------------------------------------
         $site->update($data);
 
         // -----------------------------------------
-        //Redirect with message
+        // Redirect with message
         // -----------------------------------------
         return redirect()->route('tech.clients.sites.show', $site)
             ->with('success', 'Sites updated successfully.');
@@ -287,7 +288,6 @@ class ClientSiteController extends Controller
     /**
      * Remove a site from the database.
      *
-     * @param ClientSite $site
      * @return RedirectResponse
      */
     public function destroy(ClientSite $site)

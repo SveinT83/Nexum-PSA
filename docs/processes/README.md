@@ -7,3 +7,4 @@ Current processes:
 - `rfc-process.md`
 - `adr-process.md`
 - `feature-slice-process.md`
+- `nexumpsa-eu-website-handoff.md`

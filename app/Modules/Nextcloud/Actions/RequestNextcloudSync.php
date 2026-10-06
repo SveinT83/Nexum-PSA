@@ -282,6 +282,10 @@ class RequestNextcloudSync
                     ->get();
 
                 foreach ($events as $event) {
+                    // Absence projection has no external calendar contract in this rollout.
+                    if ($event->source === \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::SOURCE) {
+                        continue;
+                    }
                     if ($event->last_synced_at && ! $event->updated_at->greaterThan($event->last_synced_at)) {
                         continue;
                     }
@@ -322,6 +326,10 @@ class RequestNextcloudSync
                 ->where('external_event_id', $remote['href'])
                 ->orWhere('external_uid', $event['uid']))
             ->first();
+
+        if ($local && $local->source === \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::SOURCE) {
+            return 'seen';
+        }
 
         if ($local && $local->last_synced_at && $local->updated_at->greaterThan($local->last_synced_at) && $local->sync_hash !== $remoteHash) {
             NextcloudSyncConflict::query()->firstOrCreate(

@@ -8,6 +8,8 @@ use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Commercial\Models\Sla\Sla;
+use App\Modules\Task\Actions\ApplyTaskTemplate;
+use App\Modules\Task\Models\TaskTemplateGroup;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Actions\AddTicketMessage;
@@ -50,6 +52,7 @@ final class TicketRuleSchema2ActionExecutor
         private readonly MutateTicketTags $mutateTags,
         private readonly AddTicketMessage $addMessage,
         private readonly TicketAssignmentEngine $assignmentEngine,
+        private readonly ApplyTaskTemplate $taskTemplates,
     ) {}
 
     /**
@@ -291,6 +294,7 @@ final class TicketRuleSchema2ActionExecutor
             TicketRuleActionProviderRegistry::UNASSIGN_OWNER,
             TicketRuleActionProviderRegistry::RERUN_ASSIGNMENT => [TicketAction::ASSIGN_OTHER],
             TicketRuleActionProviderRegistry::ADD_INTERNAL_NOTE => [TicketAction::ADD_INTERNAL_NOTE],
+            TicketRuleActionProviderRegistry::APPLY_TASK_TEMPLATE => [],
             default => [TicketAction::UPDATE_FIELDS],
         };
 
@@ -324,6 +328,11 @@ final class TicketRuleSchema2ActionExecutor
             TicketRuleActionProviderRegistry::ADD_TAGS,
             TicketRuleActionProviderRegistry::REMOVE_TAGS => $this->assertTagTargets(
                 (array) $input['tag_ids'],
+            ),
+            TicketRuleActionProviderRegistry::APPLY_TASK_TEMPLATE => $this->assertActiveModel(
+                TaskTemplateGroup::class,
+                (int) $input['template_group_id'],
+                'is_active',
             ),
             default => null,
         };
@@ -556,6 +565,13 @@ final class TicketRuleSchema2ActionExecutor
                 $event,
                 true,
             ),
+            TicketRuleActionProviderRegistry::APPLY_TASK_TEMPLATE => $this->applyTaskTemplate(
+                $ticket,
+                (int) $input['template_group_id'],
+                $actor,
+                $event,
+                $idempotencyKey,
+            ),
             default => throw new TicketRuleActionFailure(
                 'unknown_action_type',
                 'The schema 2 Ticket Rule action provider is unavailable.',
@@ -784,6 +800,43 @@ final class TicketRuleSchema2ActionExecutor
         ];
     }
 
+    private function applyTaskTemplate(
+        Ticket $ticket,
+        int $templateId,
+        User $actor,
+        TicketRuleEventEnvelope $event,
+        string $idempotencyKey,
+    ): array {
+        $template = TaskTemplateGroup::query()->where('is_active', true)->findOrFail($templateId);
+        $run = $this->taskTemplates->handle(
+            $template,
+            $actor,
+            $ticket,
+            'ticket_rule',
+            'ticket-rule:'.$idempotencyKey,
+            [
+                'source_type' => $ticket->getMorphClass(),
+                'source_id' => $ticket->id,
+                'metadata' => [
+                    'event_key' => $event->eventKey,
+                    'correlation_uuid' => $event->correlationUuid,
+                ],
+            ],
+        );
+        $taskIds = $run->tasks->pluck('id')->all();
+
+        return [
+            'status' => 'succeeded',
+            'changes' => [
+                'task_ids' => ['before' => [], 'after' => $taskIds],
+            ],
+            'after_commit' => null,
+            'reason_code' => null,
+            'derived_events' => [],
+            'task_template_run_id' => $run->id,
+        ];
+    }
+
     /**
      * @param  array<string, mixed>  $input
      * @return array<string, mixed>
@@ -843,6 +896,21 @@ final class TicketRuleSchema2ActionExecutor
                 $event,
                 false,
             ),
+            TicketRuleActionProviderRegistry::APPLY_TASK_TEMPLATE => [
+                'status' => 'planned',
+                'changes' => [
+                    'task_ids' => [
+                        'before' => [],
+                        'after' => [
+                            'type' => 'planned_identifier_list',
+                            'count' => TaskTemplateGroup::query()->find((int) $input['template_group_id'])?->allItems()->count() ?? 0,
+                        ],
+                    ],
+                ],
+                'after_commit' => null,
+                'reason_code' => null,
+                'derived_events' => [],
+            ],
             default => [
                 'status' => 'planned',
                 'changes' => [],
@@ -967,7 +1035,7 @@ final class TicketRuleSchema2ActionExecutor
     ): array {
         $result['authorization'] = [
             'permission' => $permission,
-            'ticket_action' => $ticketActions[0],
+            'ticket_action' => $ticketActions[0] ?? null,
             'ticket_actions' => $ticketActions,
             'execution_phase' => $provider['execution_phase'],
             'capability' => $provider['capability_key'],

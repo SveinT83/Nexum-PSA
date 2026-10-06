@@ -126,3 +126,18 @@ period.
 
 Do not enable direct external processing or identified technician profiles until the organization
 has recorded its own legal, security, workforce, and supplier decisions.
+
+
+## Historical export contract (2026-09-27)
+
+Approved RFC 2026-09-27-controlled-history-and-commercial-time-export adds Commercial worklog
+read abilities commercial.worklog.read and commercial.worklog-links.read. These are fixed
+pseudonymized, workload-bound projections, not ordinary identified Commercial reads. Report worklog
+now reports uncapped total and explicit truncation while retaining the per-window result limit.
+
+CoordinatorReadScope enforces installation internal_only/selected_clients/selected_work_contexts
+and workload intersections. Selected modes with empty required lists deny access. Source rows with
+missing/inconsistent Work Context cannot fall back to broader access. Worklog requires report.view,
+ticket.view and task.view; Commercial adds its existing view/timebank permissions. Internal-model
+workloads cannot use coordinator tokens. No settings or token grants are automatically changed.
+See Report and Commercial Knowledge contracts and HR-2026-09-27-WORKLOG before activation.

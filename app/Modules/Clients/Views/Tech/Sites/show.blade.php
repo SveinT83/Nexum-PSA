@@ -11,8 +11,14 @@
 
 @section('content')
     @php
-        $availableTabs = ['assets', 'users', 'custom-fields'];
-        $activeSiteTab = in_array(request('tab'), $availableTabs, true) ? request('tab') : 'assets';
+        $canViewContacts = $canViewContacts ?? false;
+        $requestedSiteTab = request('tab') === 'users' ? 'contacts' : request('tab');
+        $availableTabs = ['assets'];
+        if ($canViewContacts) {
+            $availableTabs[] = 'contacts';
+        }
+        $availableTabs[] = 'custom-fields';
+        $activeSiteTab = in_array($requestedSiteTab, $availableTabs, true) ? $requestedSiteTab : 'assets';
         if ($activeSiteTab === 'custom-fields' && ($customFields ?? collect())->isEmpty()) {
             $activeSiteTab = 'assets';
         }
@@ -87,11 +93,13 @@
                 Assets
             </button>
         </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link {{ $activeSiteTab === 'users' ? 'active ' : '' }}text-body border border-bottom-0" id="site-users-tab" data-bs-toggle="tab" data-bs-target="#site-users-pane" type="button" role="tab" aria-controls="site-users-pane" aria-selected="{{ $activeSiteTab === 'users' ? 'true' : 'false' }}">
-                Users <span class="badge text-bg-light border ms-1">{{ $users->count() }}</span>
-            </button>
-        </li>
+        @if($canViewContacts)
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {{ $activeSiteTab === 'contacts' ? 'active ' : '' }}text-body border border-bottom-0" id="site-contacts-tab" data-bs-toggle="tab" data-bs-target="#site-contacts-pane" type="button" role="tab" aria-controls="site-contacts-pane" aria-selected="{{ $activeSiteTab === 'contacts' ? 'true' : 'false' }}">
+                    Contacts <span class="badge text-bg-light border ms-1">{{ $contacts->count() }}</span>
+                </button>
+            </li>
+        @endif
         @if(($customFields ?? collect())->isNotEmpty())
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $activeSiteTab === 'custom-fields' ? 'active ' : '' }}text-body border border-bottom-0" id="site-custom-fields-tab" data-bs-toggle="tab" data-bs-target="#site-custom-fields-pane" type="button" role="tab" aria-controls="site-custom-fields-pane" aria-selected="{{ $activeSiteTab === 'custom-fields' ? 'true' : 'false' }}">
@@ -106,61 +114,77 @@
             <x-tech.assets.list-card :site="$site" />
         </div>
 
-        <div @class(['tab-pane fade', 'show active' => $activeSiteTab === 'users']) id="site-users-pane" role="tabpanel" aria-labelledby="site-users-tab" tabindex="0">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center gap-2">
-                        <h2 class="h5 mb-0">Users</h2>
-                        <span class="badge text-bg-secondary">{{ $users->count() }}</span>
+        @if($canViewContacts)
+            <div @class(['tab-pane fade', 'show active' => $activeSiteTab === 'contacts']) id="site-contacts-pane" role="tabpanel" aria-labelledby="site-contacts-tab" tabindex="0">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <h2 class="h5 mb-0">Contacts</h2>
+                            <span class="badge text-bg-secondary">{{ $contacts->count() }}</span>
+                        </div>
+                        @can('contact.create')
+                            <x-buttons.addlink :url="route('tech.contacts.create', ['client_id' => $client->id, 'site_id' => $site->id])" class="mb-0">New Contact</x-buttons.addlink>
+                        @endcan
                     </div>
-                    <x-buttons.addlink url="{{ route('tech.clients.user.create', $client) }}" class="mb-0">New User</x-buttons.addlink>
-                </div>
 
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover align-middle mb-0">
-                        <thead class="table-light">
-                        <tr>
-                            <th>Name</th>
-                            <th>Role</th>
-                            <th>E-mail</th>
-                            <th>Phone</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-
-                        <!-- ------------------------------------------------- -->
-                        <!-- For each user_management -->
-                        <!-- ------------------------------------------------- -->
-                        @forelse($users as $user)
-                            <tr class="cursor-pointer" data-href="{{ route('tech.clients.user.show', $user) }}" onclick="window.location.href = this.dataset.href">
-                                <td>{{ $user->name }}</td>
-                                <td>{{ $user->role ?: '—' }}</td>
-                                <td>
-                                    @if($user->email)
-                                        <a href="mailto:{{ $user->email }}" onclick="event.stopPropagation()">{{ $user->email }}</a>
-                                    @else
-                                        <span class="text-muted">—</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($user->phone)
-                                        <a href="tel:{{ $user->phone }}" onclick="event.stopPropagation()">{{ $user->phone }}</a>
-                                    @else
-                                        <span class="text-muted">—</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="text-muted">No users found.</td>
-                            </tr>
-                        @endforelse
-
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($contacts as $contact)
+                                    @php
+                                        $email = $contact->emails->firstWhere('is_primary', true)?->email ?: $contact->emails->first()?->email;
+                                        $phone = $contact->phones->firstWhere('is_primary', true)?->phone ?: $contact->phones->first()?->phone;
+                                        $role = $contact->job_title ?: $contact->client_context_role;
+                                    @endphp
+                                    <tr class="cursor-pointer" data-href="{{ route('tech.contacts.show', $contact) }}" onclick="window.location.href = this.dataset.href">
+                                        <td>
+                                            <a href="{{ route('tech.contacts.show', $contact) }}" class="fw-semibold text-decoration-none" onclick="event.stopPropagation()">
+                                                {{ $contact->display_name }}
+                                            </a>
+                                        </td>
+                                        <td class="{{ blank($role) ? 'text-muted' : '' }}">{{ $role ?: '—' }}</td>
+                                        <td class="{{ blank($email) ? 'text-muted' : '' }}">
+                                            @if(filled($email))
+                                                <a href="mailto:{{ $email }}" onclick="event.stopPropagation()">{{ $email }}</a>
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+                                        <td class="{{ blank($phone) ? 'text-muted' : '' }}">
+                                            @if(filled($phone))
+                                                <a href="tel:{{ $phone }}" onclick="event.stopPropagation()">{{ $phone }}</a>
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($contact->status === 'active')
+                                                <span class="badge bg-success">Active</span>
+                                            @else
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-muted">No contacts found.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
+        @endif
 
         @if(($customFields ?? collect())->isNotEmpty())
             <div @class(['tab-pane fade', 'show active' => $activeSiteTab === 'custom-fields']) id="site-custom-fields-pane" role="tabpanel" aria-labelledby="site-custom-fields-tab" tabindex="0">

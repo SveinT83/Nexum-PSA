@@ -1,7 +1,7 @@
 <?php
 
 use App\Jobs\Integrations\NAbleRmmSyncJob;
-use App\Modules\Contact\Actions\MigrateClientUsersToContacts;
+use App\Modules\Contact\Actions\CompleteLegacyContactCutover;
 use App\Modules\Economy\Jobs\GenerateEconomyOrdersJob;
 use App\Modules\Email\Actions\DispatchEmailAccountPolling;
 use App\Modules\Email\Jobs\CleanupEmailProviderDeletionCache;
@@ -30,6 +30,7 @@ use App\Modules\Storage\Actions\PurgeSupplierOrderImportTroubleshootingData;
 use App\Modules\Storage\Actions\RunSupplierOrderImportOperationsMaintenance;
 use App\Modules\Storage\Actions\SendSupplierOrderImportDailyDigest;
 use App\Modules\Storage\Jobs\RecordSupplierOrderImportQueueHeartbeat;
+use App\Modules\Task\Actions\RunDueTaskTemplateSchedules;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -38,6 +39,20 @@ use Symfony\Component\Console\Command\Command as ConsoleCommand;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+// Personal Workday discovery and durable outbox recovery; both runtime switches stay default-off.
+Schedule::command('workday:reminders')
+    ->everyMinute()
+    ->name('workday.reminders')
+    ->withoutOverlapping(5)
+    ->when(fn () => app(\App\Modules\Workday\Support\WorkdaySettings::class)->enabled());
+
+// Independent retention approval survives employee-workflow disablement; no personal queue payload.
+Schedule::command('workday:retention --execute --limit=100')
+    ->everyFiveMinutes()
+    ->name('workday.retention')
+    ->withoutOverlapping(10)
+    ->when(fn () => (bool) config('workday.retention_enabled', false));
 
 // Email polling every minute
 Schedule::job(new PollActiveEmailAccounts)
@@ -131,6 +146,11 @@ Schedule::job(new CleanupEmailProviderDeletionCache)
 Schedule::job(new \App\Modules\Ticket\Jobs\ProcessScheduledTickets)
     ->everyMinute()
     ->name('ticket.scheduled_process')
+    ->withoutOverlapping(5);
+
+Schedule::call(fn () => app(RunDueTaskTemplateSchedules::class)->handle())
+    ->everyMinute()
+    ->name('task.templates.generate_due')
     ->withoutOverlapping(5);
 
 // Supplier-order import dispatch owns a durable scheduler heartbeat and claims
@@ -419,15 +439,15 @@ Artisan::command('email:process-inbound-rules {--message=} {--limit=100} {--asyn
     return 0;
 })->purpose('Process stored inbound email messages through routing rules');
 
-Artisan::command('contacts:migrate-client-users', function (MigrateClientUsersToContacts $migration) {
-    $summary = $migration->handle();
+Artisan::command('contacts:migrate-client-users', function (CompleteLegacyContactCutover $cutover) {
+    $summary = $cutover->handle();
 
     foreach ($summary as $key => $value) {
         $this->line(str_replace('_', ' ', $key).': '.$value);
     }
 
     return 0;
-})->purpose('Create Contact records from legacy client_users and link compatibility records');
+})->purpose('Complete the idempotent canonical Contact cutover and preserve legacy relationships');
 
 Artisan::command('marketing:send-due {--campaign=}', function () {
     $campaignId = $this->option('campaign') ? (int) $this->option('campaign') : null;
@@ -438,3 +458,6 @@ Artisan::command('marketing:send-due {--campaign=}', function () {
 
     return 0;
 })->purpose('Send due marketing campaign emails through the configured marketing SMTP account');
+
+// Bounded, restart-safe two-way time reconciliation; the persisted switch is rechecked per date.
+Schedule::command('tripletex:sync-time')->everyFiveMinutes()->withoutOverlapping(10);

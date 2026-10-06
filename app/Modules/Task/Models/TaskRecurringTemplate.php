@@ -2,6 +2,7 @@
 
 namespace App\Modules\Task\Models;
 
+use App\Models\Core\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -13,15 +14,22 @@ class TaskRecurringTemplate extends Model
         'name',
         'owner_type',
         'owner_id',
+        'created_by',
         'interval',
         'interval_config',
+        'timezone',
+        'due_offset_minutes',
+        'assigned_to',
         'next_run_at',
         'last_run_at',
+        'last_result',
+        'last_failure_reason',
         'is_active',
     ];
 
     protected $casts = [
         'interval_config' => 'array',
+        'due_offset_minutes' => 'integer',
         'next_run_at' => 'datetime',
         'last_run_at' => 'datetime',
         'is_active' => 'boolean',
@@ -35,5 +43,10 @@ class TaskRecurringTemplate extends Model
     public function owner(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

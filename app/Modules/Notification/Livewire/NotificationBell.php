@@ -32,12 +32,20 @@ class NotificationBell extends Component
             return;
         }
 
-        $this->notifications = $user->unreadNotifications()
+        $query = $user->unreadNotifications();
+        app(\App\Modules\Workday\Actions\WorkdayReminders::class)->filterNotifications($query, $user);
+        $this->notifications = $query
             ->latest()
             ->take(10)
             ->get();
 
         $this->unreadCount = $this->notifications->count();
+    }
+
+    public function snoozeWorkday(string $id, int $generation): void
+    {
+        app(\App\Modules\Workday\Actions\WorkdayReminders::class)->snooze(Auth::user(), $id, $generation);
+        $this->loadNotifications();
     }
 
     public function markAsRead(string $notificationId)
@@ -52,6 +60,9 @@ class NotificationBell extends Component
     {
         $notification = Auth::user()->notifications()->findOrFail($notificationId);
 
+        if ($notification->type === \App\Modules\Notification\Notifications\WorkdayReminderNotification::class) {
+            return redirect()->route('tech.profile.notifications.open', $notification);
+        }
         if ($notification->type !== InboundEmailRoutedNotification::class) {
             $url = $notification->data['url'] ?? null;
 
@@ -76,6 +87,8 @@ class NotificationBell extends Component
 
     public function render()
     {
-        return view('notification::Livewire.notification-bell');
+        return view('notification::Livewire.notification-bell', [
+            'workdayReminders' => Auth::user() ? collect(app(\App\Modules\Workday\Actions\WorkdayReminders::class)->pending(Auth::user()))->keyBy('notification_id') : collect(),
+        ]);
     }
 }

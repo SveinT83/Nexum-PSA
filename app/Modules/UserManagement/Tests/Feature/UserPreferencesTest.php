@@ -7,8 +7,8 @@ use App\Modules\Calendar\Actions\EnsureCalendarDefaults;
 use App\Modules\Calendar\Models\Calendar;
 use App\Modules\UserManagement\Controllers\ProfileController;
 use App\Modules\UserManagement\Controllers\ProfilePreferencesController;
-use App\Modules\UserManagement\Models\UserProfile;
 use App\Modules\UserManagement\Models\UserPreference;
+use App\Modules\UserManagement\Models\UserProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Route;
@@ -117,7 +117,7 @@ class UserPreferencesTest extends TestCase
     }
 
     #[Test]
-    public function technician_can_update_preferences_and_calendar_availability_defaults(): void
+    public function technician_can_update_display_preferences_without_rewriting_calendar_availability(): void
     {
         app(EnsureCalendarDefaults::class)->ensurePersonalCalendar($this->tech);
 
@@ -141,12 +141,12 @@ class UserPreferencesTest extends TestCase
             ->where('owner_id', $this->tech->id)
             ->firstOrFail();
 
-        $this->assertSame('America/New_York', $calendar->timezone);
+        $this->assertSame('Europe/Oslo', $calendar->timezone);
         $this->assertDatabaseHas('calendar_availability_rules', [
             'calendar_id' => $calendar->id,
             'weekday' => 1,
-            'starts_at_local' => '09:00',
-            'ends_at_local' => '17:00',
+            'starts_at_local' => '08:00',
+            'ends_at_local' => '16:00',
         ]);
     }
 

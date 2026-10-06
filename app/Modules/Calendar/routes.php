@@ -4,6 +4,27 @@ use App\Modules\Calendar\Controllers\Admin\CalendarSettingsController;
 use App\Modules\Calendar\Controllers\Tech\CalendarController;
 use Illuminate\Support\Facades\Route;
 
+// Work-plan endpoints share the Calendar actions across browser and API.
+if (($tdpsaLoadingApiRoutes ?? false) === true) {
+    Route::middleware(\App\Modules\UserManagement\Http\Middleware\EnsureEmployeeWorkPlan::class)->group(function () {
+        Route::get('calendar/work-plan/blocks', [\App\Modules\Calendar\Controllers\WorkPlanBlockController::class, 'index'])
+            ->name('calendar.work-plan.blocks.index')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':calendar.work-plan.read');
+        Route::post('calendar/work-plan/blocks', [\App\Modules\Calendar\Controllers\WorkPlanBlockController::class, 'store'])
+            ->name('calendar.work-plan.blocks.store')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':calendar.work-plan.write');
+        Route::patch('calendar/work-plan/blocks/{event}', [\App\Modules\Calendar\Controllers\WorkPlanBlockController::class, 'update'])
+            ->name('calendar.work-plan.blocks.update')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':calendar.work-plan.write');
+        Route::delete('calendar/work-plan/blocks/{event}', [\App\Modules\Calendar\Controllers\WorkPlanBlockController::class, 'destroy'])
+            ->name('calendar.work-plan.blocks.destroy')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':calendar.work-plan.write');
+    });
+
+    return;
+}
+Route::middleware(\App\Modules\UserManagement\Http\Middleware\EnsureEmployeeWorkPlan::class)->group(function () {
+    Route::post('/profile/work-plan/blocks', [\App\Modules\Calendar\Controllers\WorkPlanBlockController::class, 'store'])->name('profile.work-plan.blocks.store');
+    Route::patch('/profile/work-plan/blocks/{event}', [\App\Modules\Calendar\Controllers\WorkPlanBlockController::class, 'update'])->name('profile.work-plan.blocks.update');
+    Route::delete('/profile/work-plan/blocks/{event}', [\App\Modules\Calendar\Controllers\WorkPlanBlockController::class, 'destroy'])->name('profile.work-plan.blocks.destroy');
+});
+
 Route::get('/calendar', [CalendarController::class, 'index'])
     ->name('calendar.index');
 

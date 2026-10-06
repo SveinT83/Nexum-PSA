@@ -1,5 +1,13 @@
 # Integration Module
 
+## Tripletex connection foundation
+
+Single-account company connection setup and the guarded provider client are implemented on Dev.
+Each installation keeps one Tripletex account; other integration providers are unaffected.
+Automatic Workday sync is not yet implemented. See [connection guidance](Docs/knowledge/tripletex-connection.md)
+and [verification](../../../docs/plans/2026-10-05-tripletex-connection-verification.md).
+
+
 The Integration module owns external service configuration for tdPSA. It should expose provider
 settings in Admin while keeping provider-specific API clients and sync jobs inside the module or a
 clearly owned service namespace.

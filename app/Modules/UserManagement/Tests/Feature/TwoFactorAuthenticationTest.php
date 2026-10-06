@@ -24,6 +24,17 @@ class TwoFactorAuthenticationTest extends TestCase
     }
 
     #[Test]
+    public function invalid_factor_input_never_flashes_recovery_codes_or_totp_into_session()
+    {
+        $response = $this->from(route('two-factor.login'))
+            ->withSession(['login.id' => 999, 'login.remember' => false])
+            ->post(route('two-factor.login.store'), ['recovery_code' => ['synthetic-private-code'], 'code' => 'synthetic-totp']);
+        $response->assertSessionHasErrors('recovery_code');
+        $response->assertSessionMissing('_old_input.recovery_code');
+        $response->assertSessionMissing('_old_input.code');
+    }
+
+    #[Test]
     public function user_can_view_security_settings_page()
     {
         $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
@@ -215,6 +226,7 @@ class TwoFactorAuthenticationTest extends TestCase
         $user->assignRole('Tech');
 
         $response = $this->actingAs($user)
+            ->from(route('tech.profile.security'))
             ->post(route('tech.profile.security.password'), [
                 'current_password' => 'wrong-password',
                 'password' => 'new-secure-password',
@@ -222,6 +234,12 @@ class TwoFactorAuthenticationTest extends TestCase
             ]);
 
         $response->assertSessionHasErrors('current_password');
+        $response->assertRedirect(route('tech.profile.security'));
+        $response->assertSessionMissing('_old_input.current_password');
+        $response->assertSessionMissing('_old_input.password');
+        $this->followRedirects($response)
+            ->assertOk()
+            ->assertSee('The provided password does not match your current password.');
         $this->assertTrue(\Hash::check('correct-password', $user->fresh()->password));
     }
 

@@ -78,6 +78,11 @@
                             </div>
                         @endif
 
+                        {{-- Optional internal work-account login --}}
+                        @if(\App\Modules\UserManagement\Sso\SsoProvider::available())
+                            <a href="{{ route('sso.login') }}" class="btn btn-outline-primary w-100 mb-3">Sign in with work account</a>
+                        @endif
+
                         <form action="/login" method="POST">
                             @csrf
                             <div class="mb-3">

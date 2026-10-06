@@ -75,8 +75,21 @@
                                 </div>
                             </div>
 
+                            <div class="form-check form-switch mb-3">
+                                <input type="hidden" name="automatic_inbound_sync_enabled" value="0">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       id="automatic_inbound_sync_enabled" name="automatic_inbound_sync_enabled" value="1"
+                                       {{ old('automatic_inbound_sync_enabled', $integration->config['automatic_inbound_sync_enabled'] ?? false) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="automatic_inbound_sync_enabled">
+                                    Automatically fast-forward clean inbound changes
+                                </label>
+                                <div class="form-text">
+                                    Applies a BookStack change only when it is based on the exact last synchronized revision and Nexum has not changed.
+                                </div>
+                            </div>
+
                             <div class="alert alert-info mb-0">
-                                Two-way sync is a configuration flag for the upcoming push workflow. Current manual sync still pulls BookStack content into Knowledge.
+                                Divergent or unknown-history changes create a reviewable candidate. They never overwrite the current Nexum article.
                             </div>
 
                             <div class="mt-4 d-flex gap-2">
@@ -129,15 +142,15 @@
                                 && $integration->getSecret('token_secret');
                         @endphp
 
-                        {{-- Manual sync currently pulls BookStack content into Knowledge; the two-way setting prepares the later push workflow. --}}
+                        {{-- Pull and push both use revision-aware comparison and verified provider read-back. --}}
                         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
                             <div>
                                 <p class="text-muted mb-1">
                                     Pull visible BookStack pages into Knowledge as synchronized internal articles. Scheduled pulls run automatically when due.
                                 </p>
                                 <p class="small text-muted mb-0">
-                                    Existing synced articles are skipped when the source checksum has not changed.
-                                    Sync mode: {{ ($integration->config['two_way_sync_enabled'] ?? false) ? 'Two-way planned' : 'Pull only' }}.
+                                    Clean changes use the exact last synchronized revision. Divergent changes remain reviewable in Nexum.
+                                    Sync mode: {{ ($integration->config['two_way_sync_enabled'] ?? false) ? 'Revision-aware two-way' : 'Pull only' }}.
                                 </p>
                             </div>
 
@@ -199,6 +212,18 @@
                                     <div class="border rounded p-2">
                                         <div class="small text-muted">Failed</div>
                                         <div class="fw-semibold">{{ $syncSummary['failed'] ?? 0 }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-lg-3">
+                                    <div class="border rounded p-2">
+                                        <div class="small text-muted">Candidates</div>
+                                        <div class="fw-semibold">{{ $syncSummary['candidates'] ?? 0 }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-lg-3">
+                                    <div class="border rounded p-2">
+                                        <div class="small text-muted">Conflicts</div>
+                                        <div class="fw-semibold">{{ $syncSummary['conflicts'] ?? 0 }}</div>
                                     </div>
                                 </div>
                             </div>

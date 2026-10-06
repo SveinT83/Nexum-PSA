@@ -21,7 +21,7 @@ The first slices create the Marketing and Email foundation:
 - Marketing list tables, default consent categories, default interest tags, list UI, and resolved
   list membership.
 - Mailing list audience modes for all business contacts or manually selected Contacts only.
-- Mailing list editing plus manual Contact additions/removals from existing Contacts with active
+- Mailing list editing plus manual canonical Contact additions/removals from Contacts with active
   email addresses, and guarded deletion for lists that are not used by campaigns.
 - Campaign draft, approval, recipient queue, due send job, and open/click/unsubscribe tracking
   foundation.
@@ -62,21 +62,22 @@ marketing interest is consumed by Sales/Leads context, Lead Heat, and classifica
 Technicians with `marketing.list.manage` can create and edit lists from `/tech/marketing/lists`. The
 current audiences are `all_business_contacts` and `manual_contacts`. The all-business audience can
 be segmented by shared Contact and Client tags, client industry category, contract status, postcode,
-county, and country. Location criteria match Contact address, legacy client user, and Client Site
-fields. Either audience can include manually selected existing Contacts and legacy client contacts
-that have not yet been linked to first-class Contacts.
+county, and country. Location criteria match Contact address, retained compatibility data, and
+Client Site fields. Either audience can include manually selected canonical Contacts. Saved legacy
+Client User selections remain readable and are automatically paired with canonical Contact IDs
+during the production cutover.
 
 List resolution includes:
 
 - Active Contacts with at least one email address.
 - Contacts that are not marked `do_not_email`.
 - Contacts with `marketing_consent=true` when Marketing settings require explicit opt-in.
-- Legacy `client_users` without a linked Contact while compatibility migration continues.
+- Canonical Contacts linked to retained `client_users` compatibility evidence, deduplicated as one person.
 - Selected Contact tags, when the list has Contact tag criteria.
 - Selected Client tags, when the list has Client tag criteria.
 - Selected Client industry categories, contract status, postcode, county, and country.
 - Selected manual Contacts, when the list has manual Contact criteria.
-- Selected manual legacy `client_users`, when the list has manual client contact criteria.
+- Retained manual legacy Client User criteria, resolved together with their canonical Contact IDs.
 - Contacts removed from this specific list are excluded from future refreshes until they are added
   again.
 - Suppression entries by email, domain, Contact, or Client. Suppressed recipients are not
@@ -100,13 +101,33 @@ Contact tag criteria only match first-class Contacts. Client tag, industry, cont
 criteria match Contacts related to matching Clients and legacy `client_users` that belong to
 matching Clients.
 
-Manual Contact criteria resolve first-class Contacts, and manual client contact criteria resolve
-legacy `client_users` that are not linked to Contacts yet. First-class manual Contacts use the same
-eligibility rules as automatic segments, so opted-out, inactive, or email-less Contacts are not
-materialized as recipients even if their ID remains in the saved list criteria.
+Manual Contact criteria resolve canonical Contacts. Historical manual Client User criteria are
+retained for compatibility, while the Contact cutover adds matching `manual_contact_ids` and keeps
+both identities on materialized members. Eligibility still excludes opted-out, inactive, suppressed,
+or email-less Contacts even when an ID remains in saved criteria.
 
 Default consent categories are seeded on Marketing page access: Newsletter, Security, Websites, and
 Cloud. Default interest tags prepare later open/click tracking and Sales categorization.
+
+## Canonical Contact Cutover
+
+The forward-only Contact migration automatically enriches existing Marketing data when legacy Client
+contacts are copied to canonical Contact:
+
+- `marketing_list_members` keep `client_user_id` and receive the matching `contact_id`;
+- saved `manual_client_user_ids` remain intact and matching `manual_contact_ids` are added;
+- existing campaign recipients receive canonical Contact identity;
+- campaign events receive the Contact identity of their recipient;
+- sent or claimed deliveries receive additional Contact, Client User, and normalized-email identity
+  keys on the same durable delivery.
+
+This enrichment is additive and idempotent. It never creates a new recipient, queues a due send,
+calls SMTP, or replays a campaign email. If canonical identity would point to a different durable
+delivery, Marketing blocks the recipient for review and the deployment migration stops instead of
+weakening the lifetime no-resend invariant.
+
+Legacy Client User IDs remain present because older recipient history and other domains may still
+refer to them. They are compatibility evidence, not a second user-facing contact catalogue.
 
 ## Campaigns
 

@@ -35,6 +35,8 @@ class NotificationController extends Controller
             ->notifications()
             ->latest();
 
+        app(\App\Modules\Workday\Actions\WorkdayReminders::class)->filterNotifications($query, $request->user());
+
         if ($request->boolean('unread')) {
             $query->whereNull('read_at');
         }
@@ -65,6 +67,10 @@ class NotificationController extends Controller
             404
         );
 
+        if ($notification->type === \App\Modules\Notification\Notifications\WorkdayReminderNotification::class) {
+            abort_unless(collect(app(\App\Modules\Workday\Actions\WorkdayReminders::class)->pending($request->user()))
+                ->contains('notification_id', $notification->id), 404);
+        }
         $notification->markAsRead();
         $notification = $request->user()
             ->notifications()

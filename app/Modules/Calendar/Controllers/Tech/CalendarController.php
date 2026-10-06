@@ -144,6 +144,8 @@ class CalendarController extends Controller
     public function update(Request $request, CalendarEvent $event, UpdateCalendarEvent $updateEvent, CalendarVisibility $visibility): RedirectResponse
     {
         abort_unless($visibility->canManageCalendar($request->user(), $event->calendar), 403);
+        abort_if($event->source === 'work_plan', 422, 'Edit this block from Profile > Work plan.');
+        \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::assertCalendarEditable($event);
 
         $data = $this->validatedEvent($request);
         $targetCalendar = Calendar::findOrFail($data['calendar_id']);
@@ -159,6 +161,8 @@ class CalendarController extends Controller
     public function destroy(Request $request, CalendarEvent $event, CalendarVisibility $visibility): RedirectResponse
     {
         abort_unless($visibility->canManageCalendar($request->user(), $event->calendar), 403);
+        abort_if($event->source === 'work_plan', 422, 'Edit this block from Profile > Work plan.');
+        \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::assertCalendarEditable($event);
 
         if ($event->series_id && $request->input('scope') === 'event') {
             $timezone = $event->timezone ?: $event->series?->timezone ?: 'Europe/Oslo';

@@ -27,6 +27,17 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+if (($commercialCoordinatorApiRoutes ?? false) === true) {
+    Route::get('commercial/worklog/time-consumptions', [\App\Modules\Commercial\Controllers\Api\V1\CommercialWorklogController::class, 'consumptions'])
+        ->name('commercial.worklog.time-consumptions.index')
+        ->middleware(\App\Modules\Integration\Http\Middleware\EnforceCoordinatorWorkload::class.':pseudonymized,commercial.worklog.read');
+    Route::get('commercial/worklog/contract-links', [\App\Modules\Commercial\Controllers\Api\V1\CommercialWorklogController::class, 'contractLinks'])
+        ->name('commercial.worklog.contract-links.index')
+        ->middleware(\App\Modules\Integration\Http\Middleware\EnforceCoordinatorWorkload::class.':pseudonymized,commercial.worklog-links.read');
+
+    return;
+}
+
 if (($commercialPortalRoutes ?? false) === true) {
     Route::middleware(['auth', EnsureCustomerPortalAccess::class])
         ->prefix('portal/contracts')

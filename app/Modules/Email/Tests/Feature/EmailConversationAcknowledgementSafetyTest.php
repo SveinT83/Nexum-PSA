@@ -624,7 +624,7 @@ class EmailConversationAcknowledgementSafetyTest extends TestCase
     }
 
     #[Test]
-    public function mail_workspace_exposes_explicit_conversation_preview_controls_only_when_enabled(): void
+    public function mail_workspace_keeps_advanced_conversation_preview_out_of_the_ordinary_reader(): void
     {
         $this->enableAcknowledgement();
         $mailbox = $this->mailbox($this->actor, organize: true);
@@ -632,8 +632,11 @@ class EmailConversationAcknowledgementSafetyTest extends TestCase
         $this->actingAs($this->actor)
             ->get(route('tech.mail.index', ['message' => $mailbox['message']->id]))
             ->assertOk()
-            ->assertSee('Mark conversation read for me')
-            ->assertSee('Mark conversation unread for me')
+            ->assertSee('Mark as read')
+            ->assertDontSee('Mark conversation read for me')
+            ->assertDontSee('Mark conversation unread for me')
+            ->assertDontSee('Mark read on mail server')
+            ->assertDontSee('Create preview')
             ->assertDontSee('Confirm and apply');
     }
 

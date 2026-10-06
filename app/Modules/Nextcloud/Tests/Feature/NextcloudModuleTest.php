@@ -883,6 +883,14 @@ XML, 207);
             'source' => 'local',
         ]);
 
+        // Absence projections must remain internal even when their personal Calendar is mapped.
+        $absenceBlock = CalendarEvent::query()->create([
+            'uuid' => (string) Str::uuid(), 'calendar_id' => $calendar->id,
+            'title' => 'Unavailable', 'starts_at' => now()->addDay()->setTime(12, 0)->utc(),
+            'ends_at' => now()->addDay()->setTime(13, 0)->utc(), 'timezone' => 'Europe/Oslo',
+            'source' => \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::SOURCE,
+        ]);
+
         $this->actingAs($this->admin)
             ->from(route('tech.admin.nextcloud.connections.show', $connection))
             ->post(route('tech.admin.nextcloud.connections.sync', $connection))
@@ -904,6 +912,8 @@ XML, 207);
         $this->assertSame('local-etag', $event->external_etag);
 
         $this->assertSame(1, $log->context['summary']['calendar_events_pushed']);
+        Http::assertNotSent(fn ($request) => $request->method() === 'PUT' && str_contains($request->body(), 'SUMMARY:Unavailable'));
+        $this->assertNull($absenceBlock->fresh()->external_source);
     }
 
     private function mappedCalendarFixture(): array

@@ -2,11 +2,12 @@
 
 namespace App\Modules\UserManagement\Controllers;
 
+use App\Actions\Fortify\UpdateUserPassword;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
@@ -104,16 +105,17 @@ class ProfileSecurityController extends Controller
     /**
      * Update the user's password.
      */
-    public function updatePassword(Request $request): RedirectResponse
+    public function updatePassword(Request $request, UpdateUserPassword $action): RedirectResponse
     {
-        $request->validate([
-            'current_password' => ['required', 'string', 'current_password'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
-
-        $request->user()->update([
-            'password' => Hash::make($request->input('password')),
-        ]);
+        try {
+            $action->update($request->user(), $request->only([
+                'current_password', 'password', 'password_confirmation',
+            ]));
+        } catch (ValidationException $error) {
+            // The shared Fortify action owns validation and security. This existing
+            // profile form renders the default bag, unlike Fortify's own named form.
+            throw $error->errorBag('default');
+        }
 
         return redirect()->route('tech.profile.security')
             ->with('status', 'password-updated');

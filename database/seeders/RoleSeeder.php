@@ -17,17 +17,29 @@ class RoleSeeder extends Seeder
      * @var list<string>
      */
     private const MIGRATION_MANAGED_PERMISSIONS = [
+        'workday.view_all',
+        'workday.absence_view_own', 'workday.absence_manage_own',
+        'workday.view_own', 'workday.manage_own', 'workday.confirm_own', 'workday.manage_settings',
         'ticket.rule_retry',
         'ticket.rule_full_rerun',
     ];
 
     /**
-     * @var list<string>
+     * @var array<string, list<string>>
      */
-    private const MIGRATION_MANAGED_BOOTSTRAP_ROLES = [
-        'Admin',
-        'Superuser',
+    private const FRESH_INSTALL_BOOTSTRAP_PERMISSIONS = [
+        'Admin' => [
+            'ticket.rule_retry',
+            'ticket.rule_full_rerun',
+        ],
+        'Superuser' => [
+            'ticket.rule_retry',
+            'ticket.rule_full_rerun',
+        ],
     ];
+
+    /** No additional role-bootstrap grants beyond the reviewed feature migrations. */
+    private const ROLE_CREATION_BOOTSTRAP_PERMISSIONS = [];
 
     /**
      * Seed standard Nexum PSA roles and their default permission sets.
@@ -42,6 +54,7 @@ class RoleSeeder extends Seeder
 
         foreach ($this->roles() as $roleName => $permissions) {
             $role = Role::findOrCreate($roleName, 'web');
+            $roleWasCreated = $role->wasRecentlyCreated;
             $preservedMigrationGrants = $role->permissions()
                 ->whereIn('name', self::MIGRATION_MANAGED_PERMISSIONS)
                 ->pluck('name')
@@ -55,13 +68,33 @@ class RoleSeeder extends Seeder
                 $preservedMigrationGrants,
             ))));
 
-            // Migrations precede seeders on a fresh installation, so the
-            // reviewed roles do not exist when the additive migration runs.
-            // This one-time empty-table bootstrap closes that ordering gap
-            // without re-granting a permission removed from an existing role.
-            if ($freshRoleBootstrap
-                && in_array($roleName, self::MIGRATION_MANAGED_BOOTSTRAP_ROLES, true)) {
-                $role->givePermissionTo(self::MIGRATION_MANAGED_PERMISSIONS);
+            // Existing migration-managed grants survive broad synchronization,
+            // but an explicit removal is never restored on an existing role.
+            if ($roleWasCreated) {
+                $bootstrapPermissions = self::ROLE_CREATION_BOOTSTRAP_PERMISSIONS[$roleName] ?? [];
+                // New internal roles receive self-service only; existing revocations stay revoked.
+                $bootstrapPermissions = array_merge($bootstrapPermissions, [
+                    'workday.view_own', 'workday.manage_own', 'workday.confirm_own',
+                    'workday.absence_view_own', 'workday.absence_manage_own',
+                ]);
+                if (in_array($roleName, ['Admin', 'Superuser'], true)) {
+                    $bootstrapPermissions[] = 'workday.manage_settings';
+                }
+
+                if ($roleName === 'Superuser') {
+                    $bootstrapPermissions[] = 'workday.view_all';
+                }
+
+                if ($freshRoleBootstrap) {
+                    $bootstrapPermissions = array_merge(
+                        $bootstrapPermissions,
+                        self::FRESH_INSTALL_BOOTSTRAP_PERMISSIONS[$roleName] ?? [],
+                    );
+                }
+
+                if ($bootstrapPermissions !== []) {
+                    $role->givePermissionTo(array_values(array_unique($bootstrapPermissions)));
+                }
             }
         }
 
@@ -133,6 +166,11 @@ class RoleSeeder extends Seeder
                 'calendar.manage_absence',
                 'knowledge.manage_structure',
                 'knowledge.manage_settings',
+                'knowledge.manage_drafts',
+                'knowledge.approve',
+                'knowledge.publish',
+                'knowledge.rollback',
+                'knowledge.admin',
                 'documentation.manage_templates',
                 'documentation.carrier_manage',
                 'commercial.service_manage',
@@ -289,6 +327,7 @@ class RoleSeeder extends Seeder
             'knowledge.view',
             'knowledge.create',
             'knowledge.update',
+            'knowledge.manage_drafts',
             'documentation.view',
             'documentation.create',
             'documentation.update',

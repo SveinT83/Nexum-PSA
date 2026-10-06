@@ -16,6 +16,9 @@ use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Models\Economy\Units;
 use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Commercial\Models\TimeRate;
+use App\Modules\Contact\Actions\CompleteLegacyContactCutover;
+use App\Modules\Contact\Models\Contact;
+use App\Modules\Contact\Queries\ContactsForClient;
 use App\Modules\CustomField\Models\CustomFieldDefinition;
 use App\Modules\Economy\Models\EconomyOrder;
 use App\Modules\Economy\Models\EconomyOrderLine;
@@ -57,6 +60,7 @@ class ClientTechTest extends TestCase
             'client.create',
             'client.update',
             'client.manage_settings',
+            'contact.view',
         ]);
 
         $this->adminUser = User::factory()->create([
@@ -74,6 +78,18 @@ class ClientTechTest extends TestCase
             'org_no' => null,
             'billing_email' => null,
         ]);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $siteOnlyContact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Site-only canonical contact',
+        ]);
+        $siteOnlyContact->relations()->create([
+            'related_type' => $site->getMorphClass(),
+            'related_id' => $site->id,
+            'relation_type' => 'contact',
+            'is_primary' => false,
+        ]);
 
         $response = $this->actingAs($this->techUser)
             ->get(route('tech.clients.index', ['sort' => 'org_no']));
@@ -81,6 +97,7 @@ class ClientTechTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('clients::Tech.index');
         $response->assertViewHas('clients');
+        $this->assertSame(1, (int) $response->viewData('clients')->first()->contacts_count);
         $response->assertSee('sort=org_no', false);
         $response->assertSee('New Client');
         $response->assertSee('data-href="'.route('tech.clients.show', $client).'"', false);
@@ -328,6 +345,8 @@ class ClientTechTest extends TestCase
             'is_default_for_client' => true,
             'active' => true,
         ]);
+        app(CompleteLegacyContactCutover::class)->handle();
+        $canonicalContact = $contact->fresh()->contact;
         $task = app(StoreTask::class)->handle([
             'title' => 'Review client backup',
         ], $this->techUser, $client);
@@ -361,7 +380,8 @@ class ClientTechTest extends TestCase
         ]);
         Permission::findOrCreate('ticket.view', 'web');
         Permission::findOrCreate('client.update', 'web');
-        $this->techUser->givePermissionTo(['ticket.view', 'client.update']);
+        Permission::findOrCreate('contact.create', 'web');
+        $this->techUser->givePermissionTo(['ticket.view', 'client.update', 'contact.create']);
 
         $response = $this->actingAs($this->techUser)
             ->get(route('tech.clients.show', $client));
@@ -395,8 +415,8 @@ class ClientTechTest extends TestCase
         $response->assertSee('Primary Client Contact');
         $response->assertSee('primary.contact@example.test');
         $response->assertSee('IT contact');
-        $response->assertSee(route('tech.clients.user.show', $contact), false);
-        $response->assertSee(route('tech.clients.user.create', $client), false);
+        $response->assertSee(route('tech.contacts.show', $canonicalContact), false);
+        $response->assertSee(route('tech.contacts.create', ['client_id' => $client->id]), false);
         $response->assertSee('Review client backup');
         $response->assertSee('Ticket task visible on client');
         $response->assertSee('Clicked website campaign link.');
@@ -847,51 +867,50 @@ class ClientTechTest extends TestCase
     }
 
     #[Test]
-    public function it_can_list_client_users_for_a_client()
+    public function legacy_client_contact_index_redirects_to_canonical_contacts(): void
     {
         $client = Client::factory()->create();
-        $site = ClientSite::factory()->create(['client_id' => $client->id]);
-        $clientUser = ClientUser::factory()->create(['client_site_id' => $site->id]);
 
-        $response = $this->actingAs($this->techUser)
-            ->get(route('tech.clients.users.index', $client));
-
-        $response->assertStatus(200);
-        $response->assertViewIs('clients::Tech.Users.index');
-        $response->assertViewHas('users');
-        $response->assertSee($clientUser->name);
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.users.index', $client))
+            ->assertRedirect(route('tech.contacts.index', ['client_id' => $client->id]));
     }
 
     #[Test]
-    public function it_can_show_user_profile_in_card_with_site_link(): void
+    public function legacy_client_contact_show_redirects_to_the_migrated_canonical_contact(): void
     {
         $client = Client::factory()->create();
-        $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Profile Site']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
         $clientUser = ClientUser::factory()->create([
             'client_site_id' => $site->id,
             'name' => 'Profile Contact',
-            'role' => null,
-            'phone' => null,
         ]);
 
         $response = $this->actingAs($this->techUser)
             ->get(route('tech.clients.user.show', $clientUser));
 
-        $response->assertOk();
-        $response->assertViewIs('clients::Tech.Users.show');
-        $response->assertSee('<h1>Profile Contact</h1>', false);
-        $response->assertSee('User Profile');
-        $response->assertSee('Edit User');
-        $response->assertSee(route('tech.clients.sites.show', $site), false);
-        $response->assertSee('Profile Site');
-        $response->assertSee('—');
-        $response->assertDontSee('Go to Site');
-        $response->assertDontSee('Recent activities');
+        $contact = Contact::query()->findOrFail($clientUser->fresh()->contact_id);
+
+        $response->assertRedirect(route('tech.contacts.show', $contact));
+        $this->assertDatabaseHas('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $client->getMorphClass(),
+            'related_id' => $client->id,
+        ]);
+        $this->assertDatabaseHas('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $site->getMorphClass(),
+            'related_id' => $site->id,
+        ]);
     }
 
     #[Test]
-    public function user_form_is_wrapped_in_create_or_edit_card(): void
+    public function legacy_client_contact_form_routes_redirect_to_the_canonical_form(): void
     {
+        Permission::findOrCreate('contact.create', 'web');
+        Permission::findOrCreate('contact.update', 'web');
+        $this->techUser->givePermissionTo(['contact.create', 'contact.update']);
+
         $client = Client::factory()->create();
         $site = ClientSite::factory()->create(['client_id' => $client->id]);
         $clientUser = ClientUser::factory()->create([
@@ -899,50 +918,32 @@ class ClientTechTest extends TestCase
             'name' => 'Editable Contact',
         ]);
 
-        $this->actingAs($this->techUser)
-            ->get(route('tech.clients.user.edit', $clientUser))
-            ->assertOk()
-            ->assertViewIs('clients::Tech.Users.form')
-            ->assertSee('<h2 class="h5 mb-0">Edit User</h2>', false)
-            ->assertSee('card-header', false)
-            ->assertDontSee('Recent clients');
+        $editResponse = $this->actingAs($this->techUser)
+            ->get(route('tech.clients.user.edit', $clientUser));
+
+        $contact = Contact::query()->findOrFail($clientUser->fresh()->contact_id);
+
+        $editResponse->assertRedirect(route('tech.contacts.edit', $contact));
 
         $this->actingAs($this->techUser)
             ->get(route('tech.clients.user.create', $client))
-            ->assertOk()
-            ->assertViewIs('clients::Tech.Users.form')
-            ->assertSee('<h2 class="h5 mb-0">Create User</h2>', false);
+            ->assertRedirect(route('tech.contacts.create', ['client_id' => $client->id]));
     }
 
     #[Test]
-    public function it_can_list_users_as_sortable_clickable_rows(): void
+    public function legacy_client_contact_index_preserves_search_context(): void
     {
-        $client = Client::factory()->create(['name' => 'User List Client AS']);
-        $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Main Office']);
-        $clientUser = ClientUser::factory()->create([
-            'client_site_id' => $site->id,
-            'name' => 'No Phone Contact',
-            'role' => null,
-            'email' => 'contact@example.test',
-            'phone' => null,
-        ]);
+        $client = Client::factory()->create();
 
-        $response = $this->actingAs($this->techUser)
-            ->get(route('tech.clients.users.index', ['client' => $client, 'sort' => 'email']));
-
-        $response->assertOk();
-        $response->assertViewIs('clients::Tech.Users.index');
-        $response->assertSee('Users for User List Client AS');
-        $response->assertSee('card', false);
-        $response->assertSee('sort=email', false);
-        $response->assertSee('New User');
-        $response->assertSee('data-href="'.route('tech.clients.user.show', $clientUser).'"', false);
-        $response->assertSee('No Phone Contact');
-        $response->assertSee('Main Office');
-        $response->assertSee('—');
-        $response->assertDontSee('Recent clients');
-        $response->assertDontSee('Recent activities');
-        $response->assertDontSee('Edit');
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.users.index', [
+                'client' => $client,
+                'search' => 'No Phone',
+            ]))
+            ->assertRedirect(route('tech.contacts.index', [
+                'client_id' => $client->id,
+                'q' => 'No Phone',
+            ]));
     }
 
     #[Test]
@@ -975,15 +976,29 @@ class ClientTechTest extends TestCase
     }
 
     #[Test]
-    public function site_show_lists_assets_as_sortable_clickable_rows(): void
+    public function site_show_lists_assets_and_canonical_contacts_as_clickable_rows(): void
     {
+        $this->techUser->givePermissionTo('contact.create');
+
         $client = Client::factory()->create(['name' => 'Asset List Client AS']);
         $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Asset Site']);
         $clientUser = ClientUser::factory()->create([
             'client_site_id' => $site->id,
-            'name' => 'Site Contact',
+            'name' => 'Migrated Site Contact',
             'role' => null,
             'phone' => null,
+        ]);
+        $canonicalContact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Canonical Site Contact',
+            'job_title' => 'Site Manager',
+        ]);
+        $canonicalContact->relations()->create([
+            'related_type' => $site->getMorphClass(),
+            'related_id' => $site->id,
+            'relation_type' => 'contact',
+            'is_primary' => false,
         ]);
         $asset = \App\Models\Tech\Work\Assets\Asset::create([
             'client_id' => $client->id,
@@ -994,6 +1009,9 @@ class ClientTechTest extends TestCase
             'type' => 'pc',
             'status' => 'online',
         ]);
+
+        app(CompleteLegacyContactCutover::class)->handle();
+        $migratedContact = Contact::query()->findOrFail($clientUser->fresh()->contact_id);
 
         $response = $this->actingAs($this->techUser)
             ->get(route('tech.clients.sites.show', [
@@ -1009,13 +1027,22 @@ class ClientTechTest extends TestCase
         $response->assertSee(route('tech.clients.show', $client), false);
         $response->assertSee('siteWorkspaceTabs', false);
         $response->assertSee('data-bs-target="#site-assets-pane"', false);
-        $response->assertSee('data-bs-target="#site-users-pane"', false);
+        $response->assertSee('data-bs-target="#site-contacts-pane"', false);
+        $response->assertSee('Contacts');
         $response->assertSee('Assets');
         $response->assertSee('New Asset');
         $response->assertSee('asset_sort=type', false);
         $response->assertSee('data-href="'.route('tech.assets.show', $asset).'"', false);
-        $response->assertSee('data-href="'.route('tech.clients.user.show', $clientUser).'"', false);
-        $response->assertSee('Site Contact');
+        $response->assertSee('data-href="'.route('tech.contacts.show', $migratedContact).'"', false);
+        $response->assertSee('data-href="'.route('tech.contacts.show', $canonicalContact).'"', false);
+        $response->assertDontSee(route('tech.clients.user.show', $clientUser), false);
+        $contactCreateUrl = route('tech.contacts.create', [
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+        ]);
+        $response->assertSee($contactCreateUrl);
+        $response->assertSee('Migrated Site Contact');
+        $response->assertSee('Canonical Site Contact');
         $response->assertSee('Site Workstation');
         $response->assertSee('—');
         $response->assertDontSee('Back to Client');
@@ -1110,6 +1137,11 @@ class ClientTechTest extends TestCase
         $response->assertSee('<h2 class="h5 mb-0">Create Client</h2>', false);
         $response->assertSee('name="suggested_client_number"', false);
         $response->assertSee('AS');
+        $response->assertSee('Primary contact name*');
+        $response->assertSee('Primary contact email*');
+        $response->assertSee('Primary contact phone');
+        $response->assertSee('Primary contact role');
+        $response->assertDontSee('User name*');
         $response->assertDontSee('Widgets (later)');
     }
 
@@ -1137,6 +1169,27 @@ class ClientTechTest extends TestCase
         $this->assertDatabaseHas('clients', ['name' => 'New Test Client', 'client_number' => '99999', 'client_format_id' => $format->id]);
         $this->assertDatabaseHas('client_sites', ['name' => 'Main Site']);
         $this->assertDatabaseHas('client_users', ['name' => 'Primary Contact', 'email' => 'contact@test.com']);
+        $client = Client::query()->where('name', 'New Test Client')->firstOrFail();
+        $site = ClientSite::query()->where('client_id', $client->id)->firstOrFail();
+        $contact = Contact::query()
+            ->whereHas('emails', fn ($query) => $query->where('email', 'contact@test.com'))
+            ->firstOrFail();
+
+        $this->assertDatabaseHas('client_users', [
+            'contact_id' => $contact->id,
+            'client_site_id' => $site->id,
+            'name' => 'Primary Contact',
+        ]);
+        $this->assertDatabaseHas('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $client->getMorphClass(),
+            'related_id' => $client->id,
+        ]);
+        $this->assertDatabaseHas('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $site->getMorphClass(),
+            'related_id' => $site->id,
+        ]);
     }
 
     #[Test]
@@ -1335,5 +1388,117 @@ class ClientTechTest extends TestCase
         ]);
 
         return [$client, $contract, $item];
+    }
+
+    #[Test]
+    public function client_contact_tab_uses_canonical_contacts_and_central_routes(): void
+    {
+        Permission::findOrCreate('contact.view', 'web');
+        Permission::findOrCreate('contact.create', 'web');
+        $this->techUser->givePermissionTo(['contact.view', 'contact.create']);
+
+        $client = Client::factory()->create(['name' => 'Canonical Contact Client']);
+        $site = ClientSite::factory()->create([
+            'client_id' => $client->id,
+            'name' => 'Canonical Contact Site',
+        ]);
+        $contact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Canonical Client Contact',
+            'job_title' => 'Technical Lead',
+        ]);
+        $contact->emails()->create([
+            'label' => 'work',
+            'email' => 'canonical.client@example.test',
+            'is_primary' => true,
+        ]);
+        foreach ([$client, $site] as $related) {
+            $contact->relations()->create([
+                'related_type' => $related->getMorphClass(),
+                'related_id' => $related->id,
+                'relation_type' => 'contact',
+                'is_primary' => true,
+            ]);
+        }
+
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.show', ['client' => $client, 'tab' => 'contacts']))
+            ->assertOk()
+            ->assertSee('Canonical Client Contact')
+            ->assertSee('canonical.client@example.test')
+            ->assertSee('Technical Lead')
+            ->assertSee(route('tech.contacts.show', $contact), false)
+            ->assertSee(route('tech.contacts.create', ['client_id' => $client->id]), false)
+            ->assertDontSee(route('tech.clients.user.create', $client), false);
+
+        $listedContact = app(ContactsForClient::class)->handle($client)->sole();
+        $this->assertFalse((bool) $listedContact->is_primary_for_client);
+        $this->assertDatabaseMissing('client_users', ['contact_id' => $contact->id]);
+
+        ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'contact_id' => $contact->id,
+            'is_default_for_client' => true,
+        ]);
+
+        $listedDefaultContact = app(ContactsForClient::class)->handle($client)->sole();
+        $this->assertTrue((bool) $listedDefaultContact->is_primary_for_client);
+    }
+
+    #[Test]
+    public function legacy_client_contact_create_alias_requires_contact_permission(): void
+    {
+        Permission::findOrCreate('contact.create', 'web');
+        $client = Client::factory()->create();
+
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.user.create', $client))
+            ->assertForbidden();
+
+        $this->techUser->givePermissionTo('contact.create');
+
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.user.create', $client))
+            ->assertRedirect(route('tech.contacts.create', ['client_id' => $client->id]));
+    }
+
+    #[Test]
+    public function legacy_client_contact_store_alias_writes_the_canonical_contact(): void
+    {
+        Permission::findOrCreate('contact.create', 'web');
+        Permission::findOrCreate('contact.view', 'web');
+        $this->techUser->givePermissionTo(['contact.create', 'contact.view']);
+
+        $client = Client::factory()->create(['name' => 'Legacy Alias Client']);
+        $site = ClientSite::factory()->create([
+            'client_id' => $client->id,
+            'name' => 'Legacy Alias Site',
+        ]);
+
+        $response = $this->actingAs($this->techUser)
+            ->post(route('tech.clients.user.store', $client), [
+                'client_site_id' => $site->id,
+                'name' => 'Legacy Alias Contact',
+                'email' => 'legacy.alias@example.test',
+                'phone' => '+47 955 00 001',
+                'role' => 'Operations',
+            ]);
+
+        $contact = Contact::query()
+            ->whereHas('emails', fn ($query) => $query->where('email', 'legacy.alias@example.test'))
+            ->firstOrFail();
+
+        $response->assertRedirect(route('tech.contacts.show', $contact));
+        $this->assertDatabaseHas('client_users', [
+            'contact_id' => $contact->id,
+            'client_site_id' => $site->id,
+            'name' => 'Legacy Alias Contact',
+        ]);
+        $this->assertDatabaseHas('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $client->getMorphClass(),
+            'related_id' => $client->id,
+        ]);
     }
 }

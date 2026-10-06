@@ -190,11 +190,11 @@ class TicketRuleAdminHistoryTest extends TestCase
     public function history_is_paginated_filterable_and_re_sanitized_at_presentation(): void
     {
         $secret = 'private-history-value-abc-123';
-        $initiator = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $initiatorId = 999999;
+        $initiator = new User;
+        $initiator->setAttribute($initiator->getKeyName(), $initiatorId);
         $first = $this->evidence($this->ticket('TD-2026-860102'), $secret, $initiator);
         $second = $this->evidence($this->ticket('TD-2026-860103'), 'other-private-value');
-        $initiatorId = $initiator->id;
-        $initiator->delete();
         $first['rule']->delete();
 
         $query = app(TicketRuleExecutionIndexQuery::class);

@@ -244,6 +244,7 @@
             ['name' => 'Roles', 'route' => 'tech.admin.user_management.roles.index', 'pattern' => 'tech.admin.user_management.roles.*'],
             ['name' => 'Permissions', 'route' => 'tech.admin.user_management.permissions.index', 'pattern' => 'tech.admin.user_management.permissions.*'],
             ['name' => 'Two-factor auth', 'route' => 'tech.admin.user_management.2fa-settings', 'pattern' => 'tech.admin.user_management.2fa-settings*'],
+            ['name' => 'Work account sign-in', 'route' => 'tech.admin.user_management.sso', 'pattern' => 'tech.admin.user_management.sso*'],
         ],
         'system' => [
             ['name' => 'Company profile', 'route' => 'tech.admin.system.company-profile.edit', 'pattern' => 'tech.admin.system.company-profile.*'],
@@ -283,6 +284,11 @@
             ['name' => 'Profiles and runs', 'route' => 'tech.admin.system.data-exchange.index', 'pattern' => 'tech.admin.system.data-exchange.*'],
         ],
     ];
+
+    if (auth()->user()?->can('workday.manage_settings')) {
+        $adminAreas['workday'] = ['name' => 'Workday', 'route' => 'tech.admin.settings.workday',
+            'pattern' => 'tech.admin.settings.workday*', 'icon' => 'bi-clock-history'];
+    }
 
     $adminItems = collect($adminAreas)
         ->filter(fn ($item) => Route::has($item['route']))

@@ -274,7 +274,7 @@ class UserManagementAdminTest extends TestCase
     }
 
     #[Test]
-    public function permission_seeders_create_catalog_and_sync_superuser(): void
+    public function permission_and_role_seeders_create_catalog_without_a_default_account(): void
     {
         $this->seed(\Database\Seeders\PermissionSeeder::class);
         $this->seed(\Database\Seeders\RoleSeeder::class);
@@ -285,13 +285,30 @@ class UserManagementAdminTest extends TestCase
         }
 
         $superuser = Role::where('name', 'Superuser')->firstOrFail();
+        $migrationManagedTicketPermissions = [
+            'ticket.rule_retry',
+            'ticket.rule_full_rerun',
+        ];
+        $expectedSuperuserPermissions = Permission::query()
+            ->pluck('name')
+            ->reject(fn (string $permission): bool => in_array(
+                $permission,
+                $migrationManagedTicketPermissions,
+                true,
+            ))
+            ->sort()
+            ->values()
+            ->all();
+        $actualSuperuserPermissions = $superuser->permissions()
+            ->pluck('name')
+            ->sort()
+            ->values()
+            ->all();
 
-        $this->assertSame(Permission::count(), $superuser->permissions()->count());
-
-        $defaultAdmin = User::where('email', 'admin@tdpsa.com')->firstOrFail();
-
-        $this->assertSame(User::STATUS_ACTIVE, $defaultAdmin->status);
-        $this->assertNotNull($defaultAdmin->email_verified_at);
+        $this->assertSame($expectedSuperuserPermissions, $actualSuperuserPermissions);
+        foreach ($migrationManagedTicketPermissions as $permission) {
+            $this->assertFalse($superuser->hasPermissionTo($permission));
+        }
 
         foreach (['Admin', 'Tech', 'Sales', 'Economy', 'Storage', 'Viewer'] as $role) {
             $this->assertDatabaseHas('roles', ['name' => $role]);
@@ -302,5 +319,6 @@ class UserManagementAdminTest extends TestCase
         $this->assertTrue(Role::where('name', 'Economy')->firstOrFail()->hasPermissionTo('economy.generate_orders'));
         $this->assertTrue(Role::where('name', 'Storage')->firstOrFail()->hasPermissionTo('storage.pick'));
         $this->assertFalse(Role::where('name', 'Viewer')->firstOrFail()->hasPermissionTo('ticket.update'));
+        $this->assertDatabaseMissing('user_management', ['email' => 'admin@tdpsa.com']);
     }
 }

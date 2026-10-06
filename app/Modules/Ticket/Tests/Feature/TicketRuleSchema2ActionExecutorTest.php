@@ -4,6 +4,9 @@ namespace App\Modules\Ticket\Tests\Feature;
 
 use App\Models\Core\User;
 use App\Modules\Commercial\Models\Sla\Sla;
+use App\Modules\Task\Models\Task;
+use App\Modules\Task\Models\TaskTemplateGroup;
+use App\Modules\Task\Models\TaskTemplateItem;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketMessage;
@@ -40,6 +43,7 @@ class TicketRuleSchema2ActionExecutorTest extends TestCase
             'ticket.assign',
             'ticket.note_internal',
             'signal.action.execute',
+            'task.create',
         ];
         foreach ($permissions as $permission) {
             Permission::findOrCreate($permission, 'web');
@@ -104,6 +108,31 @@ class TicketRuleSchema2ActionExecutorTest extends TestCase
         $this->assertSame([], $preview['derived_events']);
         $this->assertTrue($preview['authorization']['targets_revalidated']);
         $this->assertDatabaseCount('ticket_messages', 0);
+    }
+
+    #[Test]
+    public function task_template_action_previews_without_writes_and_applies_once_to_the_ticket(): void
+    {
+        $ticket = $this->ticket();
+        $template = TaskTemplateGroup::query()->create(['name' => 'Ticket response', 'slug' => 'ticket-response']);
+        TaskTemplateItem::query()->create(['template_group_id' => $template->id, 'title' => 'Work {ticket.key}']);
+        $action = ['type' => 'apply_task_template', 'input' => ['template_group_id' => $template->id]];
+        $executor = app(TicketRuleSchema2ActionExecutor::class);
+        $key = $this->key('task-template');
+
+        $preview = $executor->handle($ticket, $action, $this->actor, $this->event($ticket), false, $key);
+        $this->assertSame('planned', $preview['status']);
+        $this->assertDatabaseCount('tasks', 0);
+
+        $first = $executor->handle($ticket, $action, $this->actor, $this->event($ticket), true, $key);
+        $again = $executor->handle($ticket, $action, $this->actor, $this->event($ticket), true, $key);
+
+        $this->assertSame('succeeded', $first['status']);
+        $this->assertSame($first['task_template_run_id'], $again['task_template_run_id']);
+        $this->assertDatabaseCount('tasks', 1);
+        $generated = Task::query()->firstOrFail();
+        $this->assertSame($ticket->getMorphClass(), $generated->owner_type);
+        $this->assertSame($ticket->id, $generated->owner_id);
     }
 
     #[Test]

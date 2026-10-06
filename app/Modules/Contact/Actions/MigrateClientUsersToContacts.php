@@ -7,6 +7,7 @@ use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Modules\Contact\Models\Contact;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class MigrateClientUsersToContacts
 {
@@ -22,56 +23,174 @@ class MigrateClientUsersToContacts
         ];
 
         ClientUser::query()
-            ->with(['site.client', 'user'])
             ->orderBy('id')
             ->chunkById(100, function ($clientUsers) use (&$summary): void {
                 foreach ($clientUsers as $clientUser) {
-                    DB::transaction(function () use ($clientUser, &$summary): void {
-                        $summary['processed']++;
+                    $result = $this->migrateClientUser($clientUser);
 
-                        [$contact, $created] = $this->contactForClientUser($clientUser);
-                        $created ? $summary['created']++ : $summary['linked_existing']++;
-
-                        $clientUser->forceFill(['contact_id' => $contact->id])->save();
-
-                        $this->syncEmail($contact, $clientUser);
-                        $this->syncPhone($contact, $clientUser);
-                        $this->syncAddress($contact, $clientUser);
-
-                        if ($clientUser->site?->client && $this->syncRelation($contact, $clientUser->site->client, $clientUser->role ?: 'contact', $clientUser->is_default_for_client)) {
-                            $summary['client_relations']++;
-                        }
-
-                        if ($clientUser->site && $this->syncRelation($contact, $clientUser->site, $clientUser->role ?: 'site_contact', $clientUser->is_default_for_site)) {
-                            $summary['site_relations']++;
-                        }
-
-                        if ($clientUser->user && ! $clientUser->user->contact_id) {
-                            $clientUser->user->forceFill(['contact_id' => $contact->id])->save();
-                            $summary['user_links']++;
-                        }
-                    });
+                    foreach (array_keys($summary) as $key) {
+                        $summary[$key] += (int) ($result[$key] ?? 0);
+                    }
                 }
             });
 
         return $summary;
     }
 
+    public function migrateOne(ClientUser $clientUser): Contact
+    {
+        return $this->migrateClientUser($clientUser)['contact'];
+    }
+
+    /**
+     * @return array{contact: Contact, processed: int, created: int, linked_existing: int, client_relations: int, site_relations: int, user_links: int}
+     */
+    private function migrateClientUser(ClientUser $clientUser): array
+    {
+        return DB::transaction(function () use ($clientUser): array {
+            $locked = ClientUser::query()
+                ->whereKey($clientUser->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+            $locked->load(['site.client', 'user.contact', 'contact']);
+
+            [$contact, $created] = $this->contactForClientUser($locked);
+            $locked->forceFill(['contact_id' => $contact->id])->save();
+
+            $this->syncEmail($contact, $locked);
+            $this->syncPhone($contact, $locked);
+            $this->syncAddress($contact, $locked);
+
+            $clientRelationCreated = false;
+            $siteRelationCreated = false;
+
+            if ($locked->site?->client) {
+                $clientRelationCreated = $this->syncRelation(
+                    $contact,
+                    $locked->site->client,
+                    $locked->role ?: 'contact',
+                    $locked->is_default_for_client,
+                );
+            }
+
+            if ($locked->site) {
+                $siteRelationCreated = $this->syncRelation(
+                    $contact,
+                    $locked->site,
+                    $locked->role ?: 'site_contact',
+                    $locked->is_default_for_site,
+                );
+            }
+
+            $userLinked = false;
+
+            if ($locked->user) {
+                if ($locked->user->contact_id && (int) $locked->user->contact_id !== (int) $contact->id) {
+                    throw new RuntimeException('Canonical Contact cutover stopped because a linked user has conflicting identity evidence.');
+                }
+
+                if (! $locked->user->contact_id) {
+                    $locked->user->forceFill(['contact_id' => $contact->id])->save();
+                    $userLinked = true;
+                }
+            }
+
+            return [
+                'contact' => $contact,
+                'processed' => 1,
+                'created' => $created ? 1 : 0,
+                'linked_existing' => $created ? 0 : 1,
+                'client_relations' => $clientRelationCreated ? 1 : 0,
+                'site_relations' => $siteRelationCreated ? 1 : 0,
+                'user_links' => $userLinked ? 1 : 0,
+            ];
+        }, 3);
+    }
+
+    /**
+     * Explicit compatibility and user links are authoritative. Identity
+     * matching is allowed only when email/phone evidence resolves to one row.
+     *
+     * @return array{0: Contact, 1: bool}
+     */
     private function contactForClientUser(ClientUser $clientUser): array
     {
-        $email = trim((string) $clientUser->email);
-        $contact = $email !== ''
-            ? Contact::query()
-                ->whereHas('emails', fn ($query) => $query->where('email', $email))
-                ->first()
-            : null;
+        $explicit = null;
 
-        if ($contact) {
-            return [$this->updateContactFromClientUser($contact, $clientUser), false];
+        if ($clientUser->contact_id) {
+            $explicit = Contact::query()->find($clientUser->contact_id);
+
+            if (! $explicit) {
+                throw new RuntimeException('Canonical Contact cutover stopped because an explicit Contact link is unavailable.');
+            }
         }
 
-        if ($clientUser->contact) {
-            return [$this->updateContactFromClientUser($clientUser->contact, $clientUser), false];
+        $userContact = null;
+
+        if ($clientUser->user?->contact_id) {
+            $userContact = Contact::query()->find($clientUser->user->contact_id);
+
+            if (! $userContact) {
+                throw new RuntimeException('Canonical Contact cutover stopped because a user Contact link is unavailable.');
+            }
+        }
+
+        if ($explicit && $userContact && (int) $explicit->id !== (int) $userContact->id) {
+            throw new RuntimeException('Canonical Contact cutover stopped because explicit identity links conflict.');
+        }
+
+        if ($explicit || $userContact) {
+            return [
+                $this->updateContactFromClientUser($explicit ?: $userContact, $clientUser),
+                false,
+            ];
+        }
+
+        $matches = collect();
+        $email = mb_strtolower(trim((string) $clientUser->email));
+
+        if ($email !== '') {
+            $emailMatches = Contact::query()
+                ->whereHas('emails', fn ($query) => $query->whereRaw('LOWER(email) = ?', [$email]))
+                ->get();
+
+            if ($emailMatches->count() > 1) {
+                throw new RuntimeException('Canonical Contact cutover stopped because email identity evidence is ambiguous.');
+            }
+
+            $matches = $matches->merge($emailMatches);
+        }
+
+        $phone = $this->normalizePhone($clientUser->phone);
+
+        if ($phone !== '') {
+            $phoneMatches = Contact::query()
+                ->whereHas('phones')
+                ->with('phones')
+                ->get()
+                ->filter(fn (Contact $contact): bool => $contact->phones->contains(
+                    fn ($contactPhone): bool => $this->normalizePhone($contactPhone->phone) === $phone
+                ))
+                ->values();
+
+            if ($phoneMatches->count() > 1) {
+                throw new RuntimeException('Canonical Contact cutover stopped because phone identity evidence is ambiguous.');
+            }
+
+            $matches = $matches->merge($phoneMatches);
+        }
+
+        $matches = $matches->unique('id')->values();
+
+        if ($matches->count() > 1) {
+            throw new RuntimeException('Canonical Contact cutover stopped because email and phone identity evidence disagree.');
+        }
+
+        if ($matches->isNotEmpty()) {
+            return [
+                $this->updateContactFromClientUser($matches->first(), $clientUser),
+                false,
+            ];
         }
 
         return [
@@ -83,7 +202,7 @@ class MigrateClientUsersToContacts
                 'preferred_language' => $clientUser->language,
                 'communication_language' => $clientUser->language,
                 'metadata' => [
-                    'legacy_client_user_id' => $clientUser->id,
+                    'legacy_client_user_ids' => [$clientUser->id],
                     'migration_source' => 'client_users',
                 ],
             ]),
@@ -96,9 +215,12 @@ class MigrateClientUsersToContacts
         $metadata = $contact->metadata ?? [];
         $metadata['legacy_client_user_ids'] = collect($metadata['legacy_client_user_ids'] ?? [])
             ->push($clientUser->id)
+            ->map(fn ($id): int => (int) $id)
             ->unique()
+            ->sort()
             ->values()
             ->all();
+        $metadata['migration_source'] = $metadata['migration_source'] ?? 'client_users';
 
         $contact->forceFill([
             'status' => $clientUser->active ? 'active' : $contact->status,
@@ -120,24 +242,39 @@ class MigrateClientUsersToContacts
             return;
         }
 
-        $contact->emails()->firstOrCreate(
-            ['email' => $email],
-            ['label' => 'work', 'is_primary' => ! $contact->emails()->exists()]
-        );
+        $exists = $contact->emails()
+            ->whereRaw('LOWER(email) = ?', [mb_strtolower($email)])
+            ->exists();
+
+        if (! $exists) {
+            $contact->emails()->create([
+                'email' => $email,
+                'label' => 'work',
+                'is_primary' => ! $contact->emails()->where('is_primary', true)->exists(),
+            ]);
+        }
     }
 
     private function syncPhone(Contact $contact, ClientUser $clientUser): void
     {
         $phone = trim((string) $clientUser->phone);
+        $normalized = $this->normalizePhone($phone);
 
-        if ($phone === '') {
+        if ($normalized === '') {
             return;
         }
 
-        $contact->phones()->firstOrCreate(
-            ['phone' => $phone],
-            ['label' => 'work', 'is_primary' => ! $contact->phones()->exists()]
-        );
+        $exists = $contact->phones()
+            ->get()
+            ->contains(fn ($contactPhone): bool => $this->normalizePhone($contactPhone->phone) === $normalized);
+
+        if (! $exists) {
+            $contact->phones()->create([
+                'phone' => $phone,
+                'label' => 'work',
+                'is_primary' => ! $contact->phones()->where('is_primary', true)->exists(),
+            ]);
+        }
     }
 
     private function syncAddress(Contact $contact, ClientUser $clientUser): void
@@ -157,7 +294,7 @@ class MigrateClientUsersToContacts
                 'co_address' => $clientUser->co_address,
                 'county' => $clientUser->county,
                 'country' => $clientUser->country,
-                'is_primary' => ! $contact->addresses()->exists(),
+                'is_primary' => ! $contact->addresses()->where('is_primary', true)->exists(),
             ]
         );
     }
@@ -171,7 +308,9 @@ class MigrateClientUsersToContacts
             ->first();
 
         if ($relation) {
-            $relation->forceFill(['is_primary' => $relation->is_primary || $primary])->save();
+            if ($primary && ! $relation->is_primary) {
+                $relation->forceFill(['is_primary' => true])->save();
+            }
 
             return false;
         }
@@ -184,5 +323,20 @@ class MigrateClientUsersToContacts
         ]);
 
         return true;
+    }
+
+    private function normalizePhone(?string $phone): string
+    {
+        $normalized = preg_replace('/\D+/', '', (string) $phone) ?? '';
+
+        if (str_starts_with($normalized, '0047') && strlen($normalized) === 12) {
+            return substr($normalized, 4);
+        }
+
+        if (str_starts_with($normalized, '47') && strlen($normalized) === 10) {
+            return substr($normalized, 2);
+        }
+
+        return $normalized;
     }
 }

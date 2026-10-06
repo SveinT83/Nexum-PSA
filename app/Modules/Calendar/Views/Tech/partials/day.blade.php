@@ -9,6 +9,8 @@
         @forelse($dayEvents as $event)
             <button type="button" class="list-group-item list-group-item-action js-calendar-event text-start"
                 data-event-id="{{ $event['id'] }}"
+                data-source-owned="{{ ($event['source_owned'] ?? false) ? '1' : '0' }}"
+                data-source-edit-url="{{ $event['source_edit_url'] ?? '' }}"
                 data-calendar-id="{{ $event['calendar_id'] }}"
                 data-title="{{ $event['title'] }}"
                 data-description="{{ $event['description'] }}"

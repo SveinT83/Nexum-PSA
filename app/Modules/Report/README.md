@@ -42,3 +42,11 @@ Do not add production report views under `resources/views/tech/reports`.
 Version 2 should add a custom report builder with saved templates and automatic
 client report delivery. That work should build on the registry and permissions
 created here instead of bypassing the Report module.
+
+## Confirmed Workday Report
+
+config/reports.php registers the Workday-owned ConfirmedWorkReportDefinition. Its optional
+ReportVisibility policy runs before legacy Superuser/report.view discovery shortcuts. The hub
+filters domains from visible entries. Workday keeps query, detail/history UI and overview API
+ownership, with explicit workday.view_all and workdays.read-all. No confirmed totals are mixed
+with the earlier Task/Ticket worklog contract. Runtime remains default-off during pilot preparation.

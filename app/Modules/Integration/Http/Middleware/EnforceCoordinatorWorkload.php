@@ -60,6 +60,14 @@ class EnforceCoordinatorWorkload
         }
 
         $installation = AiDataEgressPolicy::installation();
+        if (! $binding->workload->supportsCoordinatorTokens()) {
+            return $this->deny($request, $binding, $profile, 'workload_type_not_allowed', Response::HTTP_FORBIDDEN, $startedAt);
+        }
+        if (($installation->context_scope === 'selected_clients' && ($binding->workload->allowed_client_ids ?? []) === [])
+            || ($installation->context_scope === 'selected_work_contexts' && ($binding->workload->allowed_work_context_ids ?? []) === [])
+            || ! in_array($installation->context_scope, ['internal_only', 'selected_clients', 'selected_work_contexts'], true)) {
+            return $this->deny($request, $binding, $profile, 'workload_context_scope_missing', Response::HTTP_FORBIDDEN, $startedAt);
+        }
         $governance = null;
         if ($binding->workload->processing_mode !== 'local_only') {
             $modelPolicy = AiModelGovernancePolicy::query()

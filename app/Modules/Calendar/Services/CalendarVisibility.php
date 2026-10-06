@@ -77,6 +77,11 @@ class CalendarVisibility
     {
         $canViewDetails = $this->canViewPrivateDetails($viewer, $event);
         $ownership = $this->ownership->forCalendar($event->calendar, $viewer);
+        $ownedAbsence = $event->source === \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::SOURCE;
+        $sourceEditUrl = $ownedAbsence && (int) $event->created_by === (int) $viewer->id
+            && $viewer->hasPermissionTo('workday.absence_manage_own', 'web')
+            && app(\App\Modules\Workday\Support\WorkdaySettings::class)->enabled()
+            ? route('tech.absences.index') : null;
 
         return [
             'id' => $event->id,
@@ -112,7 +117,9 @@ class CalendarVisibility
             'is_private' => $event->isPrivate(),
             'details_visible' => $canViewDetails,
             'participants' => $canViewDetails ? $event->participants : collect(),
-            'links' => $canViewDetails ? $event->links : collect(),
+            'links' => $canViewDetails && ! $ownedAbsence ? $event->links : collect(),
+            'source_owned' => $ownedAbsence,
+            'source_edit_url' => $sourceEditUrl,
         ];
     }
 }

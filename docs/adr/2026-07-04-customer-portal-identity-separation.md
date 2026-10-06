@@ -84,3 +84,9 @@ Keep using only public signed links:
 - Add tests proving portal-only users cannot enter tech/admin routes.
 - Update UserManagement, Contact, and Clients Knowledge docs when portal identity is implemented.
 - Revisit this ADR if a future SSO/Identity RFC changes the shared authentication provider.
+
+## 2026-10-05 Internal SSO follow-up
+
+The approved internal-keycloak-sso RFC adds an employee-only login path in UserManagement.
+This preserves the shared user provider and portal membership boundary; Customer Portal
+users retain the existing login. No portal membership becomes an internal role or SSO grant.

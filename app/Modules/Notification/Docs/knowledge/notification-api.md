@@ -27,3 +27,14 @@ the API.
 
 Notification channel administration is not part of this API slice. Channel settings remain an Admin
 UI workflow until the settings API surface is designed.
+
+## Workday reminder preferences
+
+Workday exposes own-only reminder reads, preference reads/replacement and versioned snooze through
+/api/v1/workday-reminders and /api/v1/workday-reminder-preferences. The scopes are
+workday-reminders.read and workday-reminders.write. The same Notification preference row backs
+Profile > Notifications. Workday access is default-off and requires active human identity and
+explicit own permissions; coordinator-bound tokens are denied.
+
+Ordinary notification list/open/read actions omit Workday reminders that are no longer currently
+eligible, opted in, unread or retained. Other notification types retain their existing semantics.

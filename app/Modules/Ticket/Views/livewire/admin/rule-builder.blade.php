@@ -593,6 +593,16 @@
                                             </div>
                                         </div>
                                         @break
+                                    @case('apply_task_template')
+                                        <label class="form-label" for="{{ $branch }}-task-template-{{ $actionIndex }}">Task template</label>
+                                        <select id="{{ $branch }}-task-template-{{ $actionIndex }}" class="form-select" wire:model="{{ $inputPath }}.template_group_id">
+                                            <option value="">Choose...</option>
+                                            @foreach($catalog['references']['task_template.active'] as $option)
+                                                <option value="{{ $option['value'] }}">{{ $option['label'] }}</option>
+                                            @endforeach
+                                        </select>
+                                        <div class="form-text">Creates the selected template's current Task group for the Ticket. Existing Tasks are unchanged by later edits.</div>
+                                        @break
                                     @default
                                         <p class="small text-muted mb-2">This action has no additional input.</p>
                                 @endswitch

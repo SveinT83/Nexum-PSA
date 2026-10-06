@@ -3,7 +3,9 @@
 namespace App\Modules\Notification\Notifications;
 
 use App\Models\Tech\Work\Assets\Asset;
+use App\Modules\Notification\Channels\QueueInternalWebPushChannel;
 use App\Modules\Notification\Contracts\EmailAccountMailNotification;
+use App\Modules\Notification\Contracts\QueuesInternalWebPush;
 use App\Modules\Notification\Models\NotificationSetting;
 use App\Modules\Notification\Support\RoutesEmailThroughAccount;
 use Illuminate\Bus\Queueable;
@@ -13,7 +15,7 @@ use Illuminate\Notifications\Notification;
 /**
  * Sent when an asset alert is triggered (from RMM integration).
  */
-class AssetAlertTriggered extends Notification implements EmailAccountMailNotification
+class AssetAlertTriggered extends Notification implements EmailAccountMailNotification, QueuesInternalWebPush
 {
     use Queueable, RoutesEmailThroughAccount;
 
@@ -36,6 +38,9 @@ class AssetAlertTriggered extends Notification implements EmailAccountMailNotifi
         }
         if ($setting->mail_enabled) {
             $channels[] = $this->emailAccountMailChannel('alerts');
+        }
+        if ($setting->web_push_enabled) {
+            $channels[] = QueueInternalWebPushChannel::class;
         }
 
         $talkChannel = \App\Modules\Notification\Models\NotificationChannel::getByDriver('nextcloud_talk');
@@ -85,6 +90,22 @@ class AssetAlertTriggered extends Notification implements EmailAccountMailNotifi
             'url' => route('tech.assets.show', $this->asset->id),
             'urlLabel' => 'View Asset',
             'referenceId' => 'asset-alert-'.$this->asset->id.'-'.time(),
+        ];
+    }
+
+    public function internalWebPushType(): string
+    {
+        return 'asset_alert';
+    }
+
+    public function internalWebPushPayload(): array
+    {
+        return [
+            'title' => 'Asset alert',
+            'body' => 'Open Nexum to review the asset alert.',
+            'target_id' => $this->asset->id,
+            'ttl' => 1800,
+            'urgency' => 'high',
         ];
     }
 }

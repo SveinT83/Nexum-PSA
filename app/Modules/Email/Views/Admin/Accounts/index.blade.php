@@ -18,6 +18,9 @@
     @if(session('status'))
       <div class="alert alert-info">{{ session('status') }}</div>
     @endif
+    @if(session('error'))
+      <div class="alert alert-danger" role="alert">{{ session('error') }}</div>
+    @endif
 
     @if(!isset($accounts) || $accounts->isEmpty())
       <div class="text-center py-5" data-telemetry="email_accounts_index_empty">

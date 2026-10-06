@@ -37,6 +37,9 @@ use App\Modules\Signal\Models\SignalRuleExecution;
 use App\Modules\Signal\Models\SignalWebhookDelivery;
 use App\Modules\Signal\Support\SignalSettings;
 use App\Modules\Task\Models\Task;
+use App\Modules\Task\Models\TaskTemplateGroup;
+use App\Modules\Task\Models\TaskTemplateItem;
+use App\Modules\Task\Models\TaskTemplateRun;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketMessage;
 use Illuminate\Console\Scheduling\Schedule;
@@ -466,6 +469,37 @@ class SignalModuleTest extends TestCase
         app(\App\Modules\Signal\Actions\ProcessSignalRules::class)->handle($signal->fresh());
 
         $this->assertSame(1, Task::query()->count());
+    }
+
+    #[Test]
+    public function signal_rule_can_apply_a_task_template_group_once(): void
+    {
+        $actor = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $client = Client::factory()->create(['name' => 'Template Client']);
+        $template = TaskTemplateGroup::query()->create(['name' => 'Signal response', 'slug' => 'signal-response']);
+        TaskTemplateItem::query()->create(['template_group_id' => $template->id, 'title' => 'Inspect {client}', 'sort_order' => 10]);
+        TaskTemplateItem::query()->create(['template_group_id' => $template->id, 'title' => 'Document result', 'sort_order' => 20]);
+        SignalRule::query()->create([
+            'name' => 'Template follow-up',
+            'is_active' => true,
+            'priority' => 10,
+            'conditions' => ['source_domain' => ['monitoring'], 'signal_type' => ['backup_failed']],
+            'actions' => [['type' => 'task_follow_up', 'template_group_id' => $template->id]],
+            'created_by' => $actor->id,
+            'updated_by' => $actor->id,
+        ]);
+
+        $signal = app(RecordSignal::class)->handle([
+            'source_domain' => 'monitoring',
+            'client_id' => $client->id,
+            'signal_type' => 'backup_failed',
+            'summary' => 'Backup failed.',
+        ]);
+        app(ProcessSignalRules::class)->handle($signal->fresh());
+
+        $this->assertSame(2, Task::query()->count());
+        $this->assertSame(1, TaskTemplateRun::query()->where('trigger_type', 'signal_rule')->count());
+        $this->assertSame('Inspect Template Client', Task::query()->orderBy('sort_order')->firstOrFail()->title);
     }
 
     #[Test]

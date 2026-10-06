@@ -3,21 +3,24 @@
 namespace App\Modules\Ticket\Actions;
 
 use App\Models\Core\User;
+use App\Modules\Task\Actions\ApplyTaskTemplate;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketAttachment;
 use App\Modules\Ticket\Models\TicketMessage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class StoreScheduledTicketOccurrence
 {
     public function __construct(
         private readonly StoreTicket $storeTicket,
+        private readonly ApplyTaskTemplate $taskTemplates,
     ) {}
 
     public function handle(Ticket $parent, \Carbon\Carbon $plannedStart): Ticket
     {
         return DB::transaction(function () use ($parent, $plannedStart) {
-            $schedule = $parent->schedule;
+            $schedule = $parent->schedule()->with('taskTemplateGroup')->first();
 
             $actor = $parent->created_by
                 ? User::query()->find((int) $parent->created_by)
@@ -81,6 +84,28 @@ class StoreScheduledTicketOccurrence
                         'checksum_sha1' => $attachment->checksum_sha1,
                     ]);
                 }
+            }
+
+            if ($template = $schedule?->taskTemplateGroup) {
+                if (! $actor) {
+                    throw ValidationException::withMessages([
+                        'task_template_group_id' => 'The recurring Ticket needs an available creator to apply its Task template.',
+                    ]);
+                }
+
+                $this->taskTemplates->handle(
+                    $template,
+                    $actor,
+                    $occurrence,
+                    'ticket_schedule',
+                    'ticket-schedule:'.$schedule->id.':'.$plannedStart->toISOString().':task-template:'.$template->id,
+                    [
+                        'source_type' => 'ticket_schedule',
+                        'source_id' => $schedule->id,
+                        'scheduled_for' => $plannedStart,
+                        'anchor_at' => $plannedStart,
+                    ],
+                );
             }
 
             return $occurrence;

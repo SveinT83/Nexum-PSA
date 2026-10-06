@@ -23,6 +23,7 @@ class Task extends Model
     use SoftDeletes;
 
     public const VISIBILITY_INTERNAL = 'internal';
+
     public const VISIBILITY_PRIVATE = 'private';
 
     protected $fillable = [
@@ -45,6 +46,7 @@ class Task extends Model
         'source_id',
         'template_group_id',
         'template_item_id',
+        'task_template_run_id',
         'due_at',
         'scheduled_start_at',
         'scheduled_end_at',
@@ -70,6 +72,11 @@ class Task extends Model
     public function owner(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function templateRun(): BelongsTo
+    {
+        return $this->belongsTo(TaskTemplateRun::class, 'task_template_run_id');
     }
 
     public function parent(): BelongsTo

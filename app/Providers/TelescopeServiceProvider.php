@@ -23,6 +23,24 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
         $isLocal = $this->app->environment('local');
 
         Telescope::filter(function (IncomingEntry $entry) use ($isLocal) {
+            // Workday diagnostic copies are outside its canonical three-year lifecycle.
+            if (\App\Modules\Workday\Support\WorkdayPrivacy::matches(request())
+                || \App\Modules\Workday\Actions\PurgeWorkdayDiagnostics::containsWorkday($entry->content)) {
+                return false;
+            }
+            // Recovery lists and setup responses contain intentionally revealed
+            // factors. Drop these request entries, not just named input fields:
+            // recovery JSON has numeric keys and the setup view contains a key.
+            $action = $entry->content['controller_action'] ?? null;
+            if (($entry->type === \Laravel\Telescope\EntryType::REQUEST && in_array($action, [
+                'Laravel\\Fortify\\Http\\Controllers\\RecoveryCodeController@index',
+                'Laravel\\Fortify\\Http\\Controllers\\TwoFactorQrCodeController@show',
+                'Laravel\\Fortify\\Http\\Controllers\\TwoFactorSecretKeyController@show',
+                'App\\Modules\\UserManagement\\Controllers\\ProfileSecurityController@show',
+            ], true)) || ($entry->type === \Laravel\Telescope\EntryType::EVENT
+                && ($entry->content['name'] ?? null) === \Laravel\Fortify\Events\RecoveryCodeReplaced::class)) {
+                return false;
+            }
             if (! EmailProviderTelemetryRedactor::sanitize($entry)) {
                 return false;
             }
@@ -48,6 +66,12 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
             '_token',
             'password',
             'password_confirmation',
+            'current_password',
+            'code',
+            'recovery_code',
+            '_old_input.code',
+            '_old_input.recovery_code',
+            '_old_input.current_password',
             'imap_secret',
             'imap_password',
             'imap_host',

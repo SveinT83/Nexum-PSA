@@ -7,6 +7,7 @@ use App\Models\System\Integrations\Integration;
 use App\Modules\Integration\Actions\PushKnowledgeToBookStack;
 use App\Modules\Integration\Actions\SyncBookStackToKnowledge;
 use App\Modules\Integration\Services\BookStack\BookStackClient;
+use App\Modules\Integration\Support\BookStackSyncErrorSanitizer;
 use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
 use App\Services\Integrations\TacticalRmm\TacticalRmmClient;
 use Illuminate\Http\Request;
@@ -27,7 +28,7 @@ class IntegrationsController extends Controller
         $request->validate([
             // Email providers are multi-record and have a verified credential
             // lifecycle; the generic first-record toggle is never valid.
-            'type' => 'required|string|not_in:email_provider',
+            'type' => 'required|string|not_in:email_provider,tripletex',
             'name' => 'required|string',
         ]);
 
@@ -233,6 +234,7 @@ class IntegrationsController extends Controller
             'token_secret' => 'nullable|string',
             'sync_interval_minutes' => 'nullable|integer|min:1|max:1440',
             'two_way_sync_enabled' => 'nullable|boolean',
+            'automatic_inbound_sync_enabled' => 'nullable|boolean',
         ]);
 
         $integration = Integration::firstOrCreate(
@@ -256,6 +258,7 @@ class IntegrationsController extends Controller
         $config = $integration->config ?? [];
         $config['sync_interval_minutes'] = (int) $request->input('sync_interval_minutes', $config['sync_interval_minutes'] ?? 60);
         $config['two_way_sync_enabled'] = $request->boolean('two_way_sync_enabled');
+        $config['automatic_inbound_sync_enabled'] = $request->boolean('automatic_inbound_sync_enabled');
         $config['sync_mode'] = $config['two_way_sync_enabled'] ? 'two_way' : 'pull_only';
         $config['read_only'] = ! $config['two_way_sync_enabled'];
         $config['provider_role'] = 'knowledge_source';
@@ -322,11 +325,12 @@ class IntegrationsController extends Controller
         try {
             $summary = (new SyncBookStackToKnowledge($integration, $client, $request->user()))->execute();
         } catch (\Throwable $exception) {
-            $message = 'BookStack sync failed: '.$exception->getMessage();
+            $safeError = app(BookStackSyncErrorSanitizer::class)->message($exception);
+            $message = 'BookStack sync failed: '.$safeError;
 
-            Log::error($message, [
+            Log::warning($message, [
                 'integration_id' => $integration->id,
-                'exception' => $exception,
+                'exception_class' => $exception::class,
             ]);
 
             $config = $integration->config ?? [];
@@ -336,7 +340,7 @@ class IntegrationsController extends Controller
                 'skipped' => 0,
                 'failed' => 1,
                 'total' => 0,
-                'errors' => [$exception->getMessage()],
+                'errors' => [$safeError],
             ];
             $config['last_pull_at'] = now()->toIso8601String();
 
@@ -345,17 +349,18 @@ class IntegrationsController extends Controller
                 'config' => $config,
                 'last_sync_at' => now(),
                 'is_healthy' => false,
-                'last_error' => $exception->getMessage(),
+                'last_error' => $safeError,
             ])->save();
 
             return back()->with('warning', $message);
         }
 
         $message = sprintf(
-            'BookStack sync finished. Created: %d. Updated: %d. Skipped: %d. Failed: %d.',
+            'BookStack sync finished. Created: %d. Updated: %d. Candidates: %d. Conflicts: %d. Failed: %d.',
             $summary['created'],
             $summary['updated'],
-            $summary['skipped'],
+            $summary['candidates'] ?? 0,
+            $summary['conflicts'] ?? 0,
             $summary['failed'],
         );
 

@@ -79,7 +79,7 @@
         </div>
 
         <!-- ------------------------------------------------- -->
-        <!-- Default sites and user -->
+        <!-- Default site and primary contact -->
         <!-- ------------------------------------------------- -->
         <div class="row border-bottom mt-3 mb-3 pt-3 pb-3">
 
@@ -92,27 +92,27 @@
                 <div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
 
-            <!-- Default user -->
+            <!-- Primary contact -->
             <div class="col-md-3 mb-3">
-                <label class="form-label fw-bold">User name*</label>
-                <input type="text" name="user_name" value="{{ old('user_name') ?? "General user" }}" required
+                <label class="form-label fw-bold">Primary contact name*</label>
+                <input type="text" name="user_name" value="{{ old('user_name') ?? "General contact" }}" required
                        class="form-control @error('user_name') is-invalid @enderror">
                 @error('user_name')
                 <div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
 
-            <!-- Default user email, Not required -->
+            <!-- Primary contact email -->
             <div class="col-md-3 mb-3">
-                <label class="form-label fw-bold">User email*</label>
+                <label class="form-label fw-bold">Primary contact email*</label>
                 <input type="email" name="user_email" placeholder="email@domain.com" value="{{ old('user_email') }}"
                        required class="form-control @error('user_email') is-invalid @enderror">
                 @error('user_email')
                 <div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
 
-            <!-- Default user phone, Not required -->
+            <!-- Primary contact phone -->
             <div class="col-md-3 mb-3">
-                <label class="form-label fw-bold">User phone</label>
+                <label class="form-label fw-bold">Primary contact phone</label>
                 <input type="tel" name="user_phone" value="{{ old('user_phone') }}"
                        class="form-control @error('user_phone') is-invalid @enderror">
                 @error('user_phone')
@@ -121,11 +121,11 @@
         </div>
 
         <!-- ------------------------------------------------- -->
-        <!-- Optional: User role selector -->
+        <!-- Optional: primary contact role selector -->
         <!-- ------------------------------------------------- -->
         <div class="row mb-3">
             <div class="col-md-3">
-                <label class="form-label fw-bold">User role</label>
+                <label class="form-label fw-bold">Primary contact role</label>
                 <select name="user_role" class="form-select @error('user_role') is-invalid @enderror">
                     <option value="">Select role</option>
                     @foreach(($roles ?? []) as $role)

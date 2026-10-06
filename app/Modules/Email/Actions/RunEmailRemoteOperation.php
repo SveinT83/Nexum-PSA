@@ -399,13 +399,19 @@ class RunEmailRemoteOperation
                 $attempt = null;
             }
 
-            return $this->fail(
+            $failed = $this->fail(
                 $operation,
                 $code,
                 $message,
                 EmailRemoteOperation::FAILURE_STALE,
                 false,
             );
+
+            if (! $reconciling && $operation->operation_type === PerformEmailRemoteOperation::TRASH) {
+                $this->hideMissingTrashSource($failed);
+            }
+
+            return $failed->refresh();
         } catch (Throwable $exception) {
             $providerReadFailed = $exception instanceof EmailProviderReadException;
 
@@ -629,6 +635,50 @@ class RunEmailRemoteOperation
             'target_folder_id' => $targetFolder->id,
             'target_placement_id' => $targetPlacement?->id,
         ]);
+    }
+
+    /**
+     * A missing UID is not a successful MOVE. Keep the failed preflight audit,
+     * but reconcile the exact stale source so Trash does not leave a ghost row.
+     * Other occurrences, personal read state and retained evidence stay intact.
+     */
+    private function hideMissingTrashSource(EmailRemoteOperation $operation): void
+    {
+        DB::transaction(function () use ($operation): void {
+            $placement = EmailMailboxPlacement::query()
+                ->lockForUpdate()
+                ->find($operation->email_mailbox_placement_id);
+            $operation->refresh()->load(['account', 'requester', 'folder']);
+            $operation->setRelation('placement', $placement);
+
+            if (! $placement || $this->preflightBlocker($operation)) {
+                return;
+            }
+
+            $namespace = EmailFolderUidNamespace::query()
+                ->whereKey($placement->uid_namespace_id)
+                ->where('account_id', $operation->account_id)
+                ->where('email_folder_id', $placement->email_folder_id)
+                ->where('uid_validity', $operation->expected_uid_validity)
+                ->where('status', EmailFolderUidNamespace::STATUS_ACTIVE)
+                ->first();
+            if (! $namespace
+                || (int) $placement->folder?->active_uid_namespace_id !== (int) $namespace->id) {
+                return;
+            }
+
+            $placement->forceFill([
+                'local_state' => EmailMailboxPlacement::LOCAL_HIDDEN,
+                'sync_status' => EmailMailboxPlacement::SYNC_SYNCED,
+                'sync_version' => ((int) $placement->sync_version) + 1,
+                'provider_missing_at' => now(),
+                'last_reconciled_at' => now(),
+                'sync_error_code' => null,
+                'sync_error_message' => null,
+            ])->save();
+
+            app(EmailConversationProjector::class)->refreshForPlacement($placement);
+        }, 3);
     }
 
     private function projectMovedPlacement(

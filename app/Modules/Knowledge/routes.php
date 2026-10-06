@@ -1,9 +1,11 @@
 <?php
 
+use App\Modules\CustomerPortal\Middleware\EnsureCustomerPortalAccess;
 use App\Modules\Knowledge\Controllers\Admin\KnowledgeSettingsController;
 use App\Modules\Knowledge\Controllers\Portal\PortalKnowledgeController;
+use App\Modules\Knowledge\Controllers\Tech\KnowledgeBookStackConflictController;
 use App\Modules\Knowledge\Controllers\Tech\KnowledgeController;
-use App\Modules\CustomerPortal\Middleware\EnsureCustomerPortalAccess;
+use App\Modules\Knowledge\Controllers\Tech\KnowledgeRevisionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -54,6 +56,14 @@ Route::get('/knowledge/books/{book}/pages/create', [KnowledgeController::class, 
 Route::get('/knowledge/create', [KnowledgeController::class, 'create'])->name('knowledge.create');
 Route::post('/knowledge/store', [KnowledgeController::class, 'store'])->name('knowledge.store');
 Route::get('/knowledge/show/{article}', [KnowledgeController::class, 'show'])->name('knowledge.show');
+Route::get('/knowledge/revisions/{revision}', [KnowledgeRevisionController::class, 'show'])->name('knowledge.revisions.show');
+Route::post('/knowledge/revisions/{revision}/approve', [KnowledgeRevisionController::class, 'approve'])->name('knowledge.revisions.approve');
+Route::post('/knowledge/revisions/{revision}/reject', [KnowledgeRevisionController::class, 'reject'])->name('knowledge.revisions.reject');
+Route::post('/knowledge/revisions/{revision}/publish', [KnowledgeRevisionController::class, 'publish'])->name('knowledge.revisions.publish');
+Route::post('/knowledge/revisions/{revision}/retry', [KnowledgeRevisionController::class, 'retry'])->name('knowledge.revisions.retry');
+Route::post('/knowledge/revisions/{revision}/rollback', [KnowledgeRevisionController::class, 'rollback'])->name('knowledge.revisions.rollback');
+Route::post('/knowledge/{article}/book-stack/accept-remote', [KnowledgeBookStackConflictController::class, 'acceptRemote'])->name('knowledge.book-stack.accept-remote');
+Route::post('/knowledge/{article}/book-stack/keep-nexum', [KnowledgeBookStackConflictController::class, 'keepNexum'])->name('knowledge.book-stack.keep-nexum');
 Route::get('/knowledge/edit/{article}', [KnowledgeController::class, 'edit'])->name('knowledge.edit');
 Route::put('/knowledge/update/{article}', [KnowledgeController::class, 'update'])->name('knowledge.update');
 Route::delete('/knowledge/destroy/{article}', [KnowledgeController::class, 'destroy'])->name('knowledge.destroy');

@@ -79,7 +79,7 @@ class ContractCustomerDocumentTest extends TestCase
 
         $this->assertSame('Avtaleutkast', $document['document']['type']);
         $this->assertSame('Komplett IT-avtale for kunden.', $document['description']);
-        $this->assertSame('01.09.2026', $document['dates']['start']['value']);
+        $this->assertSame($fixture['contract']->start_date->format('d.m.Y'), $document['dates']['start']['value']);
         $this->assertSame('Trønder Data AS', $document['parties']['supplier']['name']);
         $this->assertSame('999888777', $document['parties']['supplier']['organization_number']);
         $this->assertSame('Eksempel Kunde AS', $document['parties']['customer']['name']);
@@ -484,6 +484,7 @@ class ContractCustomerDocumentTest extends TestCase
         $this->rate($edr, 'Konsulenttime', '1500.00', true, 20);
         $this->rate($edr, 'Intern kostsats', '300.00', false, 30);
 
+        app(ContractTermSnapshotReadiness::class)->markReviewed($contract, $this->tech->id);
         return [
             'contract' => $contract,
             'service' => $service,
@@ -498,12 +499,16 @@ class ContractCustomerDocumentTest extends TestCase
             'org_no' => '987654321',
         ]);
 
+        $startDate = now()->addMonth()->startOfMonth();
+        $endDate = $startDate->copy()->addYear()->subDay();
+        $bindingEndDate = $endDate->copy()->subMonths(2);
+
         $contract = Contracts::query()->create(array_replace([
             'client_id' => $client->id,
             'description' => 'Kundeavtale',
-            'start_date' => '2026-09-01',
-            'end_date' => '2027-08-31',
-            'binding_end_date' => '2027-06-30',
+            'start_date' => $startDate->toDateString(),
+            'end_date' => $endDate->toDateString(),
+            'binding_end_date' => $bindingEndDate->toDateString(),
             'auto_renew' => true,
             'renewal_months' => 12,
             'approval_status' => 'draft',

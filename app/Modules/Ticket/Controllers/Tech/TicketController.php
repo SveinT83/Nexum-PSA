@@ -21,6 +21,7 @@ use App\Modules\Notification\Actions\MarkNotificationsReadBySource;
 use App\Modules\Relationship\Models\NexumRelationship;
 use App\Modules\Relationship\Support\RelationshipDirection;
 use App\Modules\Storage\Models\Item as StorageItem;
+use App\Modules\Task\Models\TaskTemplateGroup;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Actions\AddTicketMessage;
@@ -179,6 +180,7 @@ class TicketController extends Controller
                 ->where('owner_type', User::class)
                 ->where('owner_id', auth()->id())
                 ->get(),
+            'taskTemplates' => TaskTemplateGroup::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'selectedClient' => $selectedClient,
             'selectedContact' => $selectedContact,
             'selectedSite' => $selectedSite,
@@ -313,12 +315,18 @@ class TicketController extends Controller
             'planned_end_at' => 'nullable|date',
             'timezone' => 'nullable|string',
             'schedule_type' => 'nullable|string|in:one_time,recurring',
+            'recurrence_rule' => ['nullable', 'string', Rule::in(['FREQ=DAILY', 'FREQ=WEEKLY', 'FREQ=MONTHLY'])],
+            'recurrence_ends_at' => 'nullable|date',
+            'task_template_group_id' => ['nullable', 'integer', Rule::exists('task_template_groups', 'id')->where('is_active', true)],
             'sla_mode' => 'nullable|string|in:defer_until_planned_start,non_sla_until_start,normal',
             'custom_fields' => ['sometimes', 'array'],
         ]);
         $hasCustomFieldInput = array_key_exists('custom_fields', $data);
         $customFieldValues = (array) ($data['custom_fields'] ?? []);
         unset($data['custom_fields']);
+        if (! $request->boolean('is_scheduled') || ($data['schedule_type'] ?? null) !== 'recurring') {
+            $data['task_template_group_id'] = null;
+        }
 
         if (! empty($data['contact_id']) && empty($data['client_id'])) {
             return back()
@@ -420,7 +428,7 @@ class TicketController extends Controller
 
         abort_if($ticket->trashed(), 404);
 
-        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'workflowVersion', 'category', 'client', 'workContext', 'site', 'contact.site', 'contact.contact.emails', 'contact.contact.phones', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'attachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem', 'plannedLines.storageItem', 'plannedLines.approvedQuoteVersion', 'plannedLines.convertedCostEntry', 'plannedLines.purchaseOrderLine.purchaseOrder', 'salesContext.opportunity.currentQuoteVersion.quote', 'salesContext.opportunity.currentQuoteVersion.lines', 'salesContext.opportunity.quotes.versions.quote', 'salesContext.opportunity.quotes.versions.acceptanceSnapshot', 'workflowReviews.requester', 'workflowReviews.assignedReviewer', 'workflowReviews.reviewer', 'workflowEvidence.creator', 'workflowHistory.actor', 'tasks.status', 'tasks.workContext', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries', 'syncLinks.relationship']);
+        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'workflowVersion', 'category', 'client', 'workContext', 'site', 'contact.site', 'contact.contact.emails', 'contact.contact.phones', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'attachments', 'events', 'documentationRequests.revision', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem', 'plannedLines.storageItem', 'plannedLines.approvedQuoteVersion', 'plannedLines.convertedCostEntry', 'plannedLines.purchaseOrderLine.purchaseOrder', 'salesContext.opportunity.currentQuoteVersion.quote', 'salesContext.opportunity.currentQuoteVersion.lines', 'salesContext.opportunity.quotes.versions.quote', 'salesContext.opportunity.quotes.versions.acceptanceSnapshot', 'workflowReviews.requester', 'workflowReviews.assignedReviewer', 'workflowReviews.reviewer', 'workflowEvidence.creator', 'workflowHistory.actor', 'tasks.status', 'tasks.workContext', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries', 'syncLinks.relationship']);
         $messageIds = $ticket->messages->pluck('id')->all();
         $emailMessageIds = $ticket->messages
             ->map(fn (TicketMessage $message): int => (int) $message->source_inbound_email_message_id)
@@ -548,6 +556,7 @@ class TicketController extends Controller
                 ->where('owner_type', User::class)
                 ->where('owner_id', auth()->id())
                 ->get(),
+            'taskTemplates' => TaskTemplateGroup::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'customFields' => config('ticket_rules.capabilities.custom_fields.ui_write', false)
                 ? $this->customFieldsForTicket($ticket, $request->user(), $customFieldPresenter, $scopeGuard, editable: true)
                 : collect(),
@@ -875,6 +884,9 @@ class TicketController extends Controller
                 'planned_end_at' => 'nullable|date',
                 'timezone' => 'nullable|string',
                 'schedule_type' => 'nullable|string|in:one_time,recurring',
+                'recurrence_rule' => ['nullable', 'string', Rule::in(['FREQ=DAILY', 'FREQ=WEEKLY', 'FREQ=MONTHLY'])],
+                'recurrence_ends_at' => 'nullable|date',
+                'task_template_group_id' => ['nullable', 'integer', Rule::exists('task_template_groups', 'id')->where('is_active', true)],
                 'sla_mode' => 'nullable|string|in:defer_until_planned_start,non_sla_until_start,normal',
                 'custom_fields' => ['sometimes', 'array'],
             ]);
@@ -886,6 +898,9 @@ class TicketController extends Controller
         $hasCustomFieldInput = array_key_exists('custom_fields', $data);
         $customFieldValues = (array) ($data['custom_fields'] ?? []);
         unset($data['custom_fields']);
+        if (! $request->boolean('is_scheduled') || ($data['schedule_type'] ?? null) !== 'recurring') {
+            $data['task_template_group_id'] = null;
+        }
 
         $queue = TicketQueue::where('is_active', true)->findOrFail($data['queue_id']);
         \Illuminate\Support\Facades\Log::emergency('QUEUE FOUND.');
@@ -955,6 +970,9 @@ class TicketController extends Controller
             'planned_end_at' => $data['planned_end_at'] ?? null,
             'timezone' => $data['timezone'] ?? null,
             'schedule_type' => $data['schedule_type'] ?? null,
+            'recurrence_rule' => $data['recurrence_rule'] ?? null,
+            'recurrence_ends_at' => $data['recurrence_ends_at'] ?? null,
+            'task_template_group_id' => $data['task_template_group_id'] ?? null,
             'sla_mode' => $data['sla_mode'] ?? null,
         ];
 
@@ -1047,7 +1065,7 @@ class TicketController extends Controller
             'reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        TicketEvent::query()->create([
+        $event = TicketEvent::query()->create([
             'ticket_id' => $ticket->id,
             'actor_id' => $request->user()?->id,
             'type' => 'documentation_requested',
@@ -1058,6 +1076,13 @@ class TicketController extends Controller
                 'client_id' => $ticket->client_id,
                 'source' => 'ticket_show',
             ],
+        ]);
+        \App\Models\Knowledge\DocumentationRequest::query()->create([
+            'ticket_id' => $ticket->id,
+            'request_event_id' => $event->id,
+            'requested_by' => $request->user()?->id,
+            'status' => \App\Models\Knowledge\DocumentationRequest::STATUS_OPEN,
+            'reason' => $data['reason'] ?? null,
         ]);
         app(\App\Modules\Ticket\Actions\ApplyTicketWorkflowActionTrigger::class)->handle($ticket->refresh(), TicketAction::REQUEST_KNOWLEDGE_UPDATE, $request->user());
 

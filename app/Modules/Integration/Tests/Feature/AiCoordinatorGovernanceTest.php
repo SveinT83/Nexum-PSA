@@ -222,7 +222,7 @@ class AiCoordinatorGovernanceTest extends TestCase
             'tickets.read',
             'tasks.read',
         ]);
-        $ticket = Ticket::factory()->create([
+        $ticket = Ticket::factory()->state(['work_context_id' => $this->internalContextId()])->create([
             'owner_id' => $this->admin->id,
             'subject' => 'Highly sensitive customer outage',
             'description' => 'Never expose this description.',
@@ -335,6 +335,176 @@ class AiCoordinatorGovernanceTest extends TestCase
             'reason_code' => 'downstream_rejected',
             'http_status' => 422,
         ]);
+    }
+
+    #[Test]
+    public function worklog_reports_uncapped_totals_and_period_partition_recovers_every_entry(): void
+    {
+        [$token] = $this->coordinatorToken(['time-entries.read']);
+        AiDataEgressPolicy::installation()->update(['maximum_results' => 3]);
+        $ticket = Ticket::factory()->state(['work_context_id' => $this->internalContextId()])->create(['owner_id' => $this->admin->id]);
+        foreach (['2025-09-01', '2025-09-01', '2025-09-02', '2025-09-02', '2025-09-03'] as $date) {
+            $ticket->timeEntries()->create([
+                'user_id' => $this->admin->id, 'work_date' => $date,
+                'minutes' => 10, 'billable' => true,
+            ]);
+        }
+        $range = '/api/v1/worklog/time-entries?date_from=2025-09-01&date_to=2025-09-03&per_page=2';
+        $this->withToken($token)->getJson($range)->assertOk()
+            ->assertJsonPath('meta.total', 5)->assertJsonPath('meta.available_total', 3)
+            ->assertJsonPath('meta.truncated', true)->assertJsonPath('meta.next_page', 2)
+            ->assertJsonPath('meta.recovery', 'split_date_range')->assertJsonCount(2, 'data');
+        $this->withToken($token)->getJson($range.'&page=2')->assertOk()
+            ->assertJsonPath('meta.total', 5)->assertJsonPath('meta.next_page', null)
+            ->assertJsonCount(1, 'data');
+        $this->withToken($token)->getJson($range.'&page=3')->assertOk()->assertJsonCount(0, 'data');
+
+        // Discard truncated parent rows; only disjoint complete child windows are accepted.
+        $aliases = [];
+        foreach (['2025-09-01', '2025-09-02', '2025-09-03'] as $date) {
+            $response = $this->withToken($token)->getJson('/api/v1/worklog/time-entries?'.http_build_query([
+                'date_from' => $date, 'date_to' => $date, 'per_page' => 2,
+            ]))->assertOk()->assertJsonPath('meta.truncated', false);
+            $aliases = array_merge($aliases, array_column($response->json('data'), 'entry_alias'));
+        }
+        $this->assertCount(5, $aliases);
+        $this->assertCount(5, array_unique($aliases));
+    }
+
+    #[Test]
+    public function a_dense_single_day_and_truncated_technicians_never_claim_completeness(): void
+    {
+        [$token] = $this->coordinatorToken(['time-entries.read', 'worklog.read']);
+        AiDataEgressPolicy::installation()->update(['maximum_results' => 1]);
+        $ticket = Ticket::factory()->state(['work_context_id' => $this->internalContextId()])->create(['owner_id' => $this->admin->id]);
+        foreach ([$this->admin, User::factory()->create()] as $user) {
+            $ticket->timeEntries()->create([
+                'user_id' => $user->id, 'work_date' => '2025-09-01',
+                'minutes' => 10, 'billable' => false,
+            ]);
+        }
+        foreach (['time-entries', 'technicians'] as $endpoint) {
+            $this->withToken($token)->getJson('/api/v1/worklog/'.$endpoint.'?date_from=2025-09-01&date_to=2025-09-01')
+                ->assertOk()->assertJsonPath('meta.total', 2)
+                ->assertJsonPath('meta.available_total', 1)->assertJsonPath('meta.returned_count', 1)
+                ->assertJsonPath('meta.truncated', true)
+                ->assertJsonPath('meta.recovery', 'policy_limit_requires_review')
+                ->assertJsonPath('meta.maximum_results', 1)->assertJsonCount(1, 'data');
+        }
+    }
+
+    #[Test]
+    public function inclusive_date_limit_accepts_exact_days_and_rejects_resolved_reverse_ranges(): void
+    {
+        [$token] = $this->coordinatorToken(['time-entries.read']);
+        $this->withToken($token)->getJson('/api/v1/worklog/time-entries?date_from=2025-09-01&date_to=2025-10-01')
+            ->assertOk()->assertJsonPath('meta.total', 0)->assertJsonPath('meta.truncated', false);
+        $this->withToken($token)->getJson('/api/v1/worklog/time-entries?date_from=2025-09-01&date_to=2025-10-02')
+            ->assertUnprocessable();
+        $this->withToken($token)->getJson('/api/v1/worklog/time-entries?date_to=2025-09-07')
+            ->assertOk()->assertJsonPath('meta.date_from', '2025-09-01');
+        $this->travelTo(now()->setDate(2026, 9, 27));
+        $this->withToken($token)->getJson('/api/v1/worklog/time-entries?date_from=2026-09-28')
+            ->assertUnprocessable();
+    }
+
+    #[Test]
+    public function worklog_default_result_ceiling_remains_enforced_across_all_pages(): void
+    {
+        [$token] = $this->coordinatorToken(['time-entries.read']);
+        $ticket = Ticket::factory()->state(['work_context_id' => $this->internalContextId()])->create(['owner_id' => $this->admin->id]);
+        $rows = array_fill(0, 201, [
+            'ticket_id' => $ticket->id, 'user_id' => $this->admin->id,
+            'work_date' => '2025-09-01 00:00:00', 'minutes' => 1, 'billable' => true,
+        ]);
+        DB::table('ticket_time_entries')->insert($rows);
+        $aliases = [];
+        for ($page = 1; $page <= 4; $page++) {
+            $response = $this->withToken($token)->getJson('/api/v1/worklog/time-entries?'.http_build_query([
+                'date_from' => '2025-09-01', 'date_to' => '2025-09-01', 'per_page' => 50, 'page' => $page,
+            ]))->assertOk()->assertJsonPath('meta.total', 201)
+                ->assertJsonPath('meta.available_total', 200)->assertJsonPath('meta.truncated', true)
+                ->assertJsonPath('meta.next_page', $page < 4 ? $page + 1 : null)
+                ->assertJsonCount(50, 'data');
+            $aliases = array_merge($aliases, array_column($response->json('data'), 'entry_alias'));
+        }
+        $this->assertCount(200, array_unique($aliases));
+    }
+
+    #[Test]
+    public function documented_scope_expiry_network_and_disabled_policy_denials_remain_closed(): void
+    {
+        [$token, $workload] = $this->coordinatorToken(['time-entries.read']);
+        $binding = AiWorkloadTokenBinding::query()->where('ai_workload_profile_id', $workload->id)->firstOrFail();
+        $this->withToken($token)->getJson('/api/v1/worklog/technicians')
+            ->assertForbidden()->assertJsonPath('reason_code', 'required_scope_missing');
+        $binding->update(['allowed_networks' => ['192.0.2.1']]);
+        $this->withToken($token)->getJson('/api/v1/worklog/time-entries')
+            ->assertForbidden()->assertJsonPath('reason_code', 'network_not_allowed');
+        $binding->update(['allowed_networks' => [], 'expires_at' => now()->subMinute()]);
+        $this->withToken($token)->getJson('/api/v1/worklog/time-entries')
+            ->assertForbidden()->assertJsonPath('reason_code', 'workload_token_expired_or_revoked');
+        $binding->update(['expires_at' => now()->addDay()]);
+        AiDataEgressPolicy::installation()->update(['ai_enabled' => false]);
+        $this->withToken($token)->getJson('/api/v1/worklog/time-entries')
+            ->assertForbidden()->assertJsonPath('reason_code', 'ai_disabled');
+    }
+
+    #[Test]
+    public function worklog_requires_both_source_permissions_instead_of_silently_omitting_a_domain(): void
+    {
+        [$token] = $this->coordinatorToken(['time-entries.read']);
+        $this->admin->revokePermissionTo('task.view');
+        app('auth')->forgetGuards();
+        $this->withToken($token)->getJson('/api/v1/worklog/time-entries')->assertForbidden();
+    }
+
+    #[Test]
+    public function registered_task_estimates_are_labelled_instead_of_presented_as_measured_time(): void
+    {
+        [$token] = $this->coordinatorToken(['time-entries.read']);
+        $task = app(StoreTask::class)->handle(['title' => 'Estimate basis', 'estimated_minutes' => 30], $this->admin);
+        foreach (['estimated', 'manual', 'future_source'] as $source) {
+            $task->timeEntries()->create(['user_id' => $this->admin->id, 'work_date' => now()->toDateString(), 'minutes' => 10, 'billable' => false, 'source_type' => $source]);
+        }
+        $response = $this->withToken($token)->getJson('/api/v1/worklog/time-entries')->assertOk()->assertJsonCount(3, 'data');
+        $bases = array_column($response->json('data'), 'registration_basis');
+        sort($bases);
+        $this->assertSame(['estimated', 'recorded', 'unknown'], $bases);
+    }
+
+    private function internalContextId(): int
+    {
+        return \App\Modules\WorkContext\Models\WorkContext::query()->firstOrCreate(
+            ['type' => 'internal', 'client_id' => null], ['name' => 'Internal', 'is_default' => true],
+        )->id;
+    }
+
+    #[Test]
+    public function installation_context_maximum_and_workload_intersection_are_enforced(): void
+    {
+        [$token, $workload] = $this->coordinatorToken(['time-entries.read', 'tickets.read', 'tasks.read']);
+        $client = \App\Models\Clients\Client::factory()->create();
+        $context = \App\Modules\WorkContext\Models\WorkContext::query()->create(['type' => 'client', 'client_id' => $client->id, 'name' => 'Client']);
+        $ticket = Ticket::factory()->create(['client_id' => $client->id, 'work_context_id' => $context->id]);
+        $ticket->timeEntries()->create(['user_id' => $this->admin->id, 'work_date' => now()->toDateString(), 'minutes' => 15, 'billable' => true]);
+        $this->withToken($token)->getJson('/api/v1/worklog/time-entries')->assertOk()->assertJsonCount(0, 'data');
+        $task = app(StoreTask::class)->handle(['title' => 'Customer task'], $this->admin, $ticket);
+        DB::table('tickets')->where('id', $ticket->id)->update(['updated_at' => now()->subDays(10)]);
+        DB::table('tasks')->where('id', $task->id)->update(['updated_at' => now()->subDays(10)]);
+        $this->withToken($token)->getJson('/api/v1/tickets/stale')->assertOk()->assertJsonCount(0, 'data');
+        $this->withToken($token)->getJson('/api/v1/tasks/stale')->assertOk()->assertJsonCount(0, 'data');
+        AiDataEgressPolicy::installation()->update(['context_scope' => 'selected_clients']);
+        $this->withToken($token)->getJson('/api/v1/worklog/time-entries')->assertForbidden()->assertJsonPath('reason_code', 'workload_context_scope_missing');
+        $workload->update(['allowed_client_ids' => [$client->id]]);
+        $this->withToken($token)->getJson('/api/v1/worklog/time-entries')->assertOk()->assertJsonCount(1, 'data');
+        $workload->update(['allowed_work_context_ids' => [$this->internalContextId()]]);
+        $this->withToken($token)->getJson('/api/v1/worklog/time-entries')->assertOk()->assertJsonCount(0, 'data');
+        AiDataEgressPolicy::installation()->update(['context_scope' => 'selected_work_contexts']);
+        $workload->update(['allowed_work_context_ids' => [$context->id]]);
+        $this->withToken($token)->getJson('/api/v1/worklog/time-entries')->assertOk()->assertJsonCount(1, 'data');
+        $ticket->update(['work_context_id' => $this->internalContextId()]);
+        $this->withToken($token)->getJson('/api/v1/worklog/time-entries')->assertOk()->assertJsonCount(0, 'data');
     }
 
     private function coordinatorToken(array $abilities): array

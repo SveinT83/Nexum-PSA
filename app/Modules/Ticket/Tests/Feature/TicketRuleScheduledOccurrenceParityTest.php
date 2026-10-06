@@ -185,13 +185,15 @@ class TicketRuleScheduledOccurrenceParityTest extends TestCase
     public function missing_creator_account_does_not_rewrite_raw_scheduled_creator_evidence(): void
     {
         $creator = User::factory()->create(['status' => User::STATUS_ACTIVE]);
-        $creatorId = $creator->id;
+        $missingCreatorId = $creator->id + 100000;
         $parent = app(StoreTicket::class)->handle([
             'subject' => 'Creator retention parent',
             'description' => null,
             'owner_id' => null,
             'channel' => 'manual',
         ], $creator);
+        // Preserve a historical raw creator ID without fighting unrelated immutable Email evidence.
+        $parent->forceFill(['created_by' => $missingCreatorId])->save();
         $plannedStart = Carbon::now()->addDay()->startOfMinute();
         TicketSchedule::query()->create([
             'ticket_id' => $parent->id,
@@ -200,17 +202,16 @@ class TicketRuleScheduledOccurrenceParityTest extends TestCase
             'recurrence_rule' => 'FREQ=DAILY',
             'sla_mode' => 'defer_until_planned_start',
             'status' => 'active',
-            'created_by' => $creatorId,
-            'updated_by' => $creatorId,
+            'created_by' => null,
+            'updated_by' => null,
         ]);
-        $creator->delete();
 
         $occurrence = app(StoreScheduledTicketOccurrence::class)->handle(
             $parent->refresh(),
             $plannedStart,
         );
 
-        $this->assertSame($creatorId, $occurrence->created_by);
+        $this->assertSame($missingCreatorId, $occurrence->created_by);
         $this->assertNull($occurrence->updated_by);
         $this->assertSame($parent->id, $occurrence->metadata['parent_ticket_id']);
         $this->assertSame(0, TicketRuleRun::query()->count());

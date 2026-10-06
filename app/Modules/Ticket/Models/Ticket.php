@@ -6,6 +6,7 @@ use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
+use App\Models\Knowledge\DocumentationRequest;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Relationship\Models\NexumSyncLink;
@@ -192,6 +193,11 @@ class Ticket extends Model
     public function events(): HasMany
     {
         return $this->hasMany(TicketEvent::class);
+    }
+
+    public function documentationRequests(): HasMany
+    {
+        return $this->hasMany(DocumentationRequest::class);
     }
 
     public function ruleRuns(): HasMany

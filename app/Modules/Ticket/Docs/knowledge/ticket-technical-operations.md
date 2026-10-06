@@ -524,6 +524,11 @@ Routes:
 - `PUT /api/v1/tickets/{ticket}`
 - `PATCH /api/v1/tickets/{ticket}`
 
+Ticket create and update accept `contact_id` as a `client_users.id` compatibility reference. Obtain
+that Site-scoped value from `GET /api/v1/clients/{client}/contacts`; do not submit the canonical
+`contacts.id`. An update validates that the selected Contact belongs to the Ticket Client, persists
+the field through the shared Ticket mutation action, and returns the saved value for read-back.
+
 - `POST /api/v1/tickets/{ticket}/portal-visibility`
 - `POST /api/v1/tickets/{ticket}/messages`
 - `POST /api/v1/tickets/{ticket}/external-messages`

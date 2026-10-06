@@ -129,10 +129,17 @@ php artisan key:generate
 ```
 
 Configure `.env` for your database, mail, queue, cache, and integrations. For a
-local MySQL/MariaDB setup, create an empty database first, then run:
+local MySQL/MariaDB setup, create an empty database first. Database seeders never
+create or reset an administrator credential. Run the migrations and seed the
+permission/role catalog, then create the first human Superuser from an
+interactive local console:
 
 ```bash
-php artisan migrate --seed
+php artisan migrate
+php artisan db:seed --class='Database\\Seeders\\PermissionSeeder'
+php artisan db:seed --class='Database\\Seeders\\RoleSeeder'
+php artisan nexum:bootstrap-admin
+php artisan db:seed
 npm run dev
 php artisan serve
 ```
@@ -143,9 +150,20 @@ The application is then available at:
 http://127.0.0.1:8000
 ```
 
-The local seed creates an initial admin user and prints the credentials in the
-seeder output. Change that password immediately on any shared or internet-facing
-environment.
+The first two seed commands install only the permission catalog and roles needed
+by the bootstrap command. The final full seed runs after the human Superuser
+exists, so legacy domain seed data that requires a creator remains attributable.
+
+The bootstrap command has no credential arguments, environment variables, or
+configuration fallback. It prompts for the administrator identity and a strong
+password, hides password input, prints no credential, and refuses to run once a
+human Superuser exists. Re-running database seeders preserves every existing
+user, password, and role. Complete the existing 2FA enrollment flow after the
+first sign-in.
+
+Installations that ever used the legacy default administrator seeder must rotate
+that account password and review its access history before relying on this safer
+bootstrap flow.
 
 ## Useful Development Commands
 
@@ -213,8 +231,9 @@ For beta and production-like installs:
 - Configure Nextcloud and BookStack integrations only after the base install and
   migrations are complete.
 - Run `npm run build` before serving the app without the Vite dev server.
-- Change seeded credentials and review roles, permissions, 2FA enforcement, and
-  notification channel secrets before exposing the system.
+- Remove the one-time admin bootstrap secret after seeding, change that password
+  through the normal account flow, and review roles, permissions, 2FA enforcement,
+  and notification channel secrets before exposing the system.
 
 ## Testing Standard
 

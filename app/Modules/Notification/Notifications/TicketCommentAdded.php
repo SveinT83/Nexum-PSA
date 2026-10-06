@@ -2,7 +2,9 @@
 
 namespace App\Modules\Notification\Notifications;
 
+use App\Modules\Notification\Channels\QueueInternalWebPushChannel;
 use App\Modules\Notification\Contracts\EmailAccountMailNotification;
+use App\Modules\Notification\Contracts\QueuesInternalWebPush;
 use App\Modules\Notification\Models\NotificationSetting;
 use App\Modules\Notification\Support\RoutesEmailThroughAccount;
 use App\Modules\Ticket\Models\Ticket;
@@ -13,7 +15,7 @@ use Illuminate\Notifications\Notification;
 /**
  * Sent when a comment/message is added to a ticket.
  */
-class TicketCommentAdded extends Notification implements EmailAccountMailNotification
+class TicketCommentAdded extends Notification implements EmailAccountMailNotification, QueuesInternalWebPush
 {
     use Queueable, RoutesEmailThroughAccount;
 
@@ -35,6 +37,9 @@ class TicketCommentAdded extends Notification implements EmailAccountMailNotific
         }
         if ($setting->mail_enabled) {
             $channels[] = $this->emailAccountMailChannel('tickets');
+        }
+        if ($setting->web_push_enabled) {
+            $channels[] = QueueInternalWebPushChannel::class;
         }
 
         $talkChannel = \App\Modules\Notification\Models\NotificationChannel::getByDriver('nextcloud_talk');
@@ -81,6 +86,22 @@ class TicketCommentAdded extends Notification implements EmailAccountMailNotific
             'url' => route('tech.tickets.show', $this->ticket->ticket_key),
             'urlLabel' => 'View Ticket',
             'referenceId' => 'ticket-comment-'.$this->ticket->ticket_key.'-'.time(),
+        ];
+    }
+
+    public function internalWebPushType(): string
+    {
+        return 'ticket_comment_added';
+    }
+
+    public function internalWebPushPayload(): array
+    {
+        return [
+            'title' => 'New Ticket activity',
+            'body' => 'Open Nexum to review the new Ticket activity.',
+            'target_id' => $this->ticket->id,
+            'ttl' => 1800,
+            'urgency' => 'normal',
         ];
     }
 }

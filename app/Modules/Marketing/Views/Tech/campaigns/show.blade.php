@@ -449,7 +449,7 @@
                                             :value="old('body_html')"
                                             :rows="9"
                                             :height="360"
-                                            class="form-control-sm @error('body_html') is-invalid @enderror"
+                                            :class="'form-control-sm'.($errors->has('body_html') ? ' is-invalid' : '')"
                                             data-email-html
                                         />
                                         <div class="form-text">Known data placeholders: <code>@{{ contact_name }}</code>, <code>@{{ client_name }}</code>, <code>@{{ company_name }}</code>, <code>@{{ unsubscribe_url }}</code>. Campaign text should be written directly in this email.</div>

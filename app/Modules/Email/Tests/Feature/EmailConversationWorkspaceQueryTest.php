@@ -420,11 +420,11 @@ class EmailConversationWorkspaceQueryTest extends TestCase
 
         $component
             ->call('selectPlacement', $fixture['placement']->id)
-            ->assertSee('Read for me')
+            ->assertSee('Mark as unread')
             ->assertSee('Mailbox unread')
             ->call('selectPlacement', $latestPlacement->id)
-            ->assertSee('Unread for me')
-            ->assertSee('Mailbox read');
+            ->assertSee('Mark as read')
+            ->assertDontSee('Mailbox read');
     }
 
     #[Test]

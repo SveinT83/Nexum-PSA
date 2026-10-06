@@ -9,10 +9,10 @@ use App\Modules\Contact\Actions\StoreContact;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Support\ContactSettings;
 use App\Modules\Signal\Queries\RelatedSignals;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ContactController extends Controller
@@ -36,7 +36,7 @@ class ContactController extends Controller
         }
 
         $contacts = Contact::query()
-            ->with(['emails', 'phones', 'relations.related', 'clientUser.site.client'])
+            ->with(['emails', 'phones', 'relations.related', 'clientUsers.site.client'])
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($nested) use ($search): void {
                     $nested->where('display_name', 'like', '%'.$search.'%')
@@ -131,6 +131,18 @@ class ContactController extends Controller
             $validated['site_id'] = $context['activeSite']->id;
             $validated['client_id'] = $context['activeSite']->client_id;
         }
+        if (! empty($validated['client_id']) && ! empty($validated['site_id'])) {
+            $siteBelongsToClient = ClientSite::query()
+                ->whereKey($validated['site_id'])
+                ->where('client_id', $validated['client_id'])
+                ->exists();
+
+            if (! $siteBelongsToClient) {
+                throw ValidationException::withMessages([
+                    'site_id' => 'The selected site does not belong to the selected client.',
+                ]);
+            }
+        }
 
         $contact = $storeContact->handle($validated);
 
@@ -141,7 +153,7 @@ class ContactController extends Controller
 
     public function show(Contact $contact, RelatedSignals $signals): View
     {
-        $contact->load(['emails', 'phones', 'addresses', 'relations', 'externalRefs', 'clientUser.site.client', 'user']);
+        $contact->load(['emails', 'phones', 'addresses', 'relations', 'externalRefs', 'clientUser.site.client', 'clientUsers.site.client', 'user']);
 
         return view('contact::Tech.show', [
             'contact' => $contact,
@@ -162,46 +174,79 @@ class ContactController extends Controller
 
     private function contactContext(Request $request): array
     {
+        $requestedSiteId = $request->query->has('site_id')
+            ? ($request->integer('site_id') ?: null)
+            : null;
+        $requestedClientId = $request->query->has('client_id')
+            ? ($request->integer('client_id') ?: null)
+            : null;
+
+        if ($requestedSiteId) {
+            $activeSite = ClientSite::query()
+                ->with('client:id,name')
+                ->findOrFail($requestedSiteId);
+
+            if ($requestedClientId && (int) $activeSite->client_id !== (int) $requestedClientId) {
+                throw ValidationException::withMessages([
+                    'site_id' => 'The selected site does not belong to the selected client.',
+                ]);
+            }
+
+            return [
+                'activeClient' => $activeSite->client,
+                'activeSite' => $activeSite,
+            ];
+        }
+
+        if ($requestedClientId) {
+            return [
+                'activeClient' => Client::query()->findOrFail($requestedClientId),
+                'activeSite' => null,
+            ];
+        }
+
         $activeSite = ClientSite::query()
             ->with('client:id,name')
             ->find($request->session()->get('active_site_id'));
 
-        $activeClient = $activeSite?->client ?: Client::query()
-            ->find($request->session()->get('active_client_id'));
-
         return [
-            'activeClient' => $activeClient,
+            'activeClient' => $activeSite?->client ?: Client::query()
+                ->find($request->session()->get('active_client_id')),
             'activeSite' => $activeSite,
         ];
     }
 
     private function scopeByClient($query, int $clientId): void
     {
-        $clientType = (new Client())->getMorphClass();
+        $clientType = (new Client)->getMorphClass();
+        $siteType = (new ClientSite)->getMorphClass();
+        $siteIds = ClientSite::query()->where('client_id', $clientId)->pluck('id');
 
-        $query->where(function ($nested) use ($clientId, $clientType): void {
-            $nested
-                ->whereHas('relations', function ($relationQuery) use ($clientId, $clientType): void {
-                    $relationQuery
-                        ->where('related_type', $clientType)
-                        ->where('related_id', $clientId);
-                })
-                ->orWhereHas('clientUser.site', fn ($siteQuery) => $siteQuery->where('client_id', $clientId));
+        $query->where(function ($nested) use ($clientId, $clientType, $siteIds, $siteType): void {
+            $nested->whereHas('relations', function ($relations) use ($clientId, $clientType): void {
+                $relations
+                    ->where('related_type', $clientType)
+                    ->where('related_id', $clientId);
+            });
+
+            if ($siteIds->isNotEmpty()) {
+                $nested->orWhereHas('relations', function ($relations) use ($siteIds, $siteType): void {
+                    $relations
+                        ->where('related_type', $siteType)
+                        ->whereIn('related_id', $siteIds);
+                });
+            }
         });
     }
 
     private function scopeBySite($query, int $siteId): void
     {
-        $siteType = (new ClientSite())->getMorphClass();
+        $siteType = (new ClientSite)->getMorphClass();
 
-        $query->where(function ($nested) use ($siteId, $siteType): void {
-            $nested
-                ->whereHas('relations', function ($relationQuery) use ($siteId, $siteType): void {
-                    $relationQuery
-                        ->where('related_type', $siteType)
-                        ->where('related_id', $siteId);
-                })
-                ->orWhereHas('clientUser', fn ($clientUserQuery) => $clientUserQuery->where('client_site_id', $siteId));
+        $query->whereHas('relations', function ($relations) use ($siteId, $siteType): void {
+            $relations
+                ->where('related_type', $siteType)
+                ->where('related_id', $siteId);
         });
     }
 }

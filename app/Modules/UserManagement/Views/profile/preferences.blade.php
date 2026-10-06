@@ -9,7 +9,7 @@
 @section('pageHeader')
     <div class="col">
         <h1 class="h4 mb-1">User Preferences</h1>
-        <div class="text-muted small">Personal defaults used across the Nexum PSA workspace.</div>
+        <div class="text-muted small">Display defaults only. Change normal working hours in your profile or work plan.</div>
     </div>
 @endsection
 
@@ -48,7 +48,7 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="workday_start" class="form-label">Workday start</label>
+                                <label for="workday_start" class="form-label">Calendar display start</label>
                                 <input id="workday_start" type="time" name="workday_start" value="{{ old('workday_start', substr($preferences->workday_start, 0, 5)) }}" class="form-control @error('workday_start') is-invalid @enderror" required>
                                 @error('workday_start')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -56,7 +56,7 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="workday_end" class="form-label">Workday end</label>
+                                <label for="workday_end" class="form-label">Calendar display end</label>
                                 <input id="workday_end" type="time" name="workday_end" value="{{ old('workday_end', substr($preferences->workday_end, 0, 5)) }}" class="form-control @error('workday_end') is-invalid @enderror" required>
                                 @error('workday_end')
                                     <div class="invalid-feedback">{{ $message }}</div>

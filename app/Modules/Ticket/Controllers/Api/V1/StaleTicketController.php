@@ -5,6 +5,7 @@ namespace App\Modules\Ticket\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Modules\Integration\Models\AiWorkloadProfile;
 use App\Modules\Integration\Services\CoordinatorPseudonymizer;
+use App\Modules\Integration\Services\CoordinatorReadScope;
 use App\Modules\Ticket\Models\Ticket;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -56,11 +57,6 @@ class StaleTicketController extends Controller
 
     private function applyScope(Builder $query, AiWorkloadProfile $workload): void
     {
-        if (($workload->allowed_client_ids ?? []) !== []) {
-            $query->whereIn('client_id', $workload->allowed_client_ids);
-        }
-        if (($workload->allowed_work_context_ids ?? []) !== []) {
-            $query->whereIn('work_context_id', $workload->allowed_work_context_ids);
-        }
+        app(CoordinatorReadScope::class)->records($query, $workload);
     }
 }

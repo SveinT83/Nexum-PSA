@@ -36,6 +36,14 @@ class Calendar extends Model
         'metadata' => 'array',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (self $calendar) {
+            abort_if($calendar->events()->withTrashed()->where('source', \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::SOURCE)->exists(),
+                409, 'This Calendar contains retained Workday absence blocks and cannot be archived.');
+        });
+    }
+
     public function owner(): MorphTo
     {
         return $this->morphTo();

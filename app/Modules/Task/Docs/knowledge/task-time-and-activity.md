@@ -53,3 +53,31 @@ Activity is internal in beta. The task activity stream records important events:
 
 The activity table includes visibility so customer-visible task activity can be
 added later without redesigning the module.
+
+## Workday attribution
+
+When Workday is enabled, employees may select their own Task time as evidence within an actual
+workday. Manual and Ticket-linked actual Task entries retain recorded provenance; automatic
+estimate-based completion remains estimated and requires explicit employee verification.
+Date-only time remains unplaced unless the employee places it. Selecting Task time does not
+increase the workday total or change Task entries, estimates or Ticket billing projections.
+Changed sources require explicit reconciliation before a new workday confirmation.
+
+## Create an internal Task from saved activity
+
+Workday offers an explicit preview/create action for an employee's saved activity. The preview
+shows the exact description, internal Work Context, owner/assignee, open status and actual minutes.
+It uses the existing standalone Task creation and time-registration actions. The resulting Task is
+owned by and assigned to the employee, and contains one non-billable actual time entry. It is not
+completed automatically. A later completion reuses the actual time without creating estimated time.
+
+Workday replaces unattributed minutes with a source reference; its total stays unchanged. Excluded
+breaks become separate Workday placements referencing one date-level Task entry. Existing Task or
+Ticket time is linked through Sources instead of copied. No conversion enters Ticket-owned billing,
+Commercial consumption or invoice processing. A confirmed Workday receives a correction draft.
+
+The preview/create/read-back API requires workday-task-conversion.write and tasks.read/create/update,
+plus workday.manage_own and task.view/create/update. Task descriptions follow ordinary internal Task
+visibility. Workday-owned previews/receipts have the original work-date retention boundary; created
+Tasks/time keep Task ownership. See the Workday task-conversion Knowledge guide and generated
+WorkdayTaskConversion schemas. Mark both articles for Knowledge/BookStack sync at approved rollout.

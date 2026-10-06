@@ -13,6 +13,21 @@
  */
 
 return [
+    'tech.absences.index' => [['label' => 'My absences']],
+    'tech.absences.create' => [['label' => 'My absences', 'route' => 'tech.absences.index'], ['label' => 'Register absence']],
+    'tech.absences.show' => [['label' => 'My absences', 'route' => 'tech.absences.index'], ['label' => 'Absence']],
+
+    // Workday owns employee actual time; planning stays in Profile and Calendar.
+    'tech.workdays.index' => [['label' => 'My workdays']],
+    'tech.workdays.create' => [['label' => 'My workdays', 'route' => 'tech.workdays.index'], ['label' => 'Register workday']],
+    'tech.workdays.show' => [['label' => 'My workdays', 'route' => 'tech.workdays.index'], ['label' => 'Workday']],
+    'tech.workdays.overview' => [['label' => 'Confirmed workdays']],
+    'tech.workdays.overview.show' => [['label' => 'Confirmed workdays', 'route' => 'tech.workdays.overview'], ['label' => 'Workday']],
+    'tech.workdays.overview.history' => [['label' => 'Confirmed workdays', 'route' => 'tech.workdays.overview'], ['label' => 'Confirmed history']],
+    'tech.workdays.sources' => [['label' => 'My workdays', 'route' => 'tech.workdays.index'], ['label' => 'Sources and allocations']],
+    'tech.workdays.preview' => [['label' => 'My workdays', 'route' => 'tech.workdays.index'], ['label' => 'Review workday']],
+    'tech.admin.settings.workday' => [['label' => 'Admin', 'route' => 'tech.admin.index'], ['label' => 'Workday settings']],
+
 
     // Admin Dashboard
 

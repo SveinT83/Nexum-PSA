@@ -13,8 +13,8 @@ use Illuminate\Validation\ValidationException;
 class StoreContact
 {
     /**
-     * Create a Contact and keep the legacy client_users bridge populated when
-     * enough client/site context exists for older ticket and client workflows.
+     * Store the canonical Contact while maintaining stable compatibility rows
+     * for domains that still reference client_users IDs.
      */
     public function handle(array $data): Contact
     {
@@ -24,6 +24,7 @@ class StoreContact
             $client = $this->clientFromData($data, $site);
             $site ??= $client ? $this->defaultSiteForClient($client) : null;
             $contact = $this->contactFromData($data);
+            $contactAlreadyExisted = $contact !== null;
             $updateExisting = (bool) ($data['update_existing'] ?? false);
 
             if ($contact) {
@@ -40,7 +41,9 @@ class StoreContact
                     'do_not_call' => (bool) ($data['do_not_call'] ?? false),
                     'do_not_email' => (bool) ($data['do_not_email'] ?? false),
                     'marketing_consent' => (bool) ($data['marketing_consent'] ?? false),
-                    'metadata' => ['created_from' => 'tech_contacts_create'],
+                    'metadata' => [
+                        'created_from' => $data['created_from'] ?? 'tech_contacts_create',
+                    ],
                 ]);
             }
 
@@ -51,35 +54,40 @@ class StoreContact
                 $updateExisting,
                 array_key_exists('sms_allowed', $data) ? (bool) $data['sms_allowed'] : null,
             );
+            $this->syncAddress($contact, $data, $updateExisting);
 
             if ($updateExisting) {
-                $this->replaceClientContext($contact);
+                $this->replaceClientContext($contact, $site);
             }
 
+            $relationType = $data['relation_type'] ?? $settings['default_relation_type'];
+
             if ($client) {
-                $this->syncRelation($contact, $client, $data['relation_type'] ?? $settings['default_relation_type'], true);
+                $this->syncRelation($contact, $client, $relationType, true);
             }
 
             if ($site) {
-                $this->syncRelation($contact, $site, $data['relation_type'] ?? $settings['default_relation_type'], true);
+                $this->syncRelation($contact, $site, $relationType, true);
                 $this->syncClientUserBridge($contact, $site, $data, $updateExisting);
             }
 
-            return $contact;
+            $this->recordAudit($contact, $client, $site, $contactAlreadyExisted);
+
+            return $contact->refresh();
         });
     }
 
     private function contactFromData(array $data): ?Contact
     {
         if (! empty($data['existing_contact_id'])) {
-            return Contact::query()->find($data['existing_contact_id']);
+            return Contact::query()->findOrFail($data['existing_contact_id']);
         }
 
-        $email = trim((string) ($data['email'] ?? ''));
+        $email = mb_strtolower(trim((string) ($data['email'] ?? '')));
 
         if ($email !== '') {
             $contact = Contact::query()
-                ->whereHas('emails', fn ($query) => $query->where('email', $email))
+                ->whereHas('emails', fn ($query) => $query->whereRaw('LOWER(email) = ?', [$email]))
                 ->first();
 
             if ($contact) {
@@ -113,6 +121,7 @@ class StoreContact
         $metadata['updated_from_contact_form'] = true;
 
         $contact->forceFill([
+            'status' => array_key_exists('status', $data) ? $data['status'] : $contact->status,
             'display_name' => $overwrite ? $data['display_name'] : ($contact->display_name ?: $data['display_name']),
             'organization_name' => $overwrite ? ($data['organization_name'] ?? null) : ($contact->organization_name ?: ($data['organization_name'] ?? null)),
             'job_title' => $overwrite ? ($data['job_title'] ?? null) : ($contact->job_title ?: ($data['job_title'] ?? null)),
@@ -131,12 +140,18 @@ class StoreContact
             return null;
         }
 
-        return ClientSite::query()->with('client')->find($data['site_id']);
+        return ClientSite::query()->with('client')->findOrFail($data['site_id']);
     }
 
     private function clientFromData(array $data, ?ClientSite $site): ?Client
     {
         if ($site?->client) {
+            if (! empty($data['client_id']) && (int) $data['client_id'] !== (int) $site->client_id) {
+                throw ValidationException::withMessages([
+                    'site_id' => 'The selected site does not belong to the selected client.',
+                ]);
+            }
+
             return $site->client;
         }
 
@@ -144,7 +159,7 @@ class StoreContact
             return null;
         }
 
-        return Client::query()->find($data['client_id']);
+        return Client::query()->findOrFail($data['client_id']);
     }
 
     private function defaultSiteForClient(Client $client): ?ClientSite
@@ -163,15 +178,29 @@ class StoreContact
             return;
         }
 
+        $normalizedEmail = mb_strtolower($email);
         $existingEmail = Contact::query()
             ->whereKeyNot($contact->id)
-            ->whereHas('emails', fn ($query) => $query->where('email', $email))
+            ->whereHas('emails', fn ($query) => $query->whereRaw('LOWER(email) = ?', [$normalizedEmail]))
             ->exists();
 
         if ($existingEmail) {
             throw ValidationException::withMessages([
                 'email' => 'This email address already belongs to another contact.',
             ]);
+        }
+
+        $sameEmail = $contact->emails()
+            ->whereRaw('LOWER(email) = ?', [$normalizedEmail])
+            ->first();
+
+        if ($sameEmail) {
+            if ($replacePrimary && ! $sameEmail->is_primary) {
+                $contact->emails()->update(['is_primary' => false]);
+                $sameEmail->forceFill(['is_primary' => true])->save();
+            }
+
+            return;
         }
 
         if ($replacePrimary) {
@@ -187,9 +216,8 @@ class StoreContact
             }
         }
 
-        $contact->emails()->firstOrCreate([
+        $contact->emails()->create([
             'email' => $email,
-        ], [
             'label' => 'work',
             'is_primary' => ! $contact->emails()->where('is_primary', true)->exists(),
         ]);
@@ -212,15 +240,14 @@ class StoreContact
             ]);
         }
 
-        $alreadyExists = $contact->phones
-            ->contains(fn ($contactPhone) => $this->normalizePhone($contactPhone->phone) === $normalizedPhone);
+        $contact->loadMissing('phones');
+        $matchingPhone = $contact->phones->first(
+            fn ($contactPhone) => $this->normalizePhone($contactPhone->phone) === $normalizedPhone
+        );
 
-        if ($alreadyExists) {
+        if ($matchingPhone) {
             if ($smsAllowed !== null) {
-                $contact->phones
-                    ->first(fn ($contactPhone) => $this->normalizePhone($contactPhone->phone) === $normalizedPhone)
-                    ?->forceFill(['sms_allowed' => $smsAllowed])
-                    ->save();
+                $matchingPhone->forceFill(['sms_allowed' => $smsAllowed])->save();
             }
 
             return;
@@ -248,6 +275,32 @@ class StoreContact
         ]);
     }
 
+    private function syncAddress(Contact $contact, array $data, bool $replacePrimary): void
+    {
+        $keys = ['address', 'co_address', 'zip', 'city', 'county', 'country'];
+
+        if (array_intersect_key($data, array_flip($keys)) === []) {
+            return;
+        }
+
+        $values = collect($keys)
+            ->mapWithKeys(fn (string $key): array => [$key => $data[$key] ?? null])
+            ->all();
+        $address = $contact->addresses()->where('is_primary', true)->first()
+            ?: $contact->addresses()->first();
+
+        if ($address && $replacePrimary) {
+            $address->forceFill($values + ['is_primary' => true])->save();
+
+            return;
+        }
+
+        $contact->addresses()->firstOrCreate(
+            $values,
+            ['label' => 'office', 'is_primary' => ! $contact->addresses()->where('is_primary', true)->exists()]
+        );
+    }
+
     private function normalizePhone(?string $phone): string
     {
         $normalized = preg_replace('/\D+/', '', (string) $phone) ?? '';
@@ -265,7 +318,7 @@ class StoreContact
 
     private function syncRelation(Contact $contact, Client|ClientSite $related, string $type, bool $primary): void
     {
-        $contact->relations()->firstOrCreate(
+        $relation = $contact->relations()->firstOrCreate(
             [
                 'related_type' => $related->getMorphClass(),
                 'related_id' => $related->getKey(),
@@ -273,41 +326,108 @@ class StoreContact
             ],
             ['is_primary' => $primary]
         );
+
+        if ($primary && ! $relation->is_primary) {
+            $relation->forceFill(['is_primary' => true])->save();
+        }
     }
 
-    private function replaceClientContext(Contact $contact): void
+    /**
+     * Remove only canonical current-context relations. Compatibility rows are
+     * retained because their IDs are referenced by historical domain records.
+     */
+    private function replaceClientContext(Contact $contact, ?ClientSite $targetSite): void
     {
-        $clientType = (new Client())->getMorphClass();
-        $siteType = (new ClientSite())->getMorphClass();
+        $clientType = (new Client)->getMorphClass();
+        $siteType = (new ClientSite)->getMorphClass();
 
         $contact->relations()
             ->whereIn('related_type', [$clientType, $siteType])
             ->delete();
 
-        ClientUser::query()
-            ->where('contact_id', $contact->id)
-            ->delete();
+        if (! $targetSite) {
+            ClientUser::query()
+                ->where('contact_id', $contact->id)
+                ->update([
+                    'is_default_for_site' => false,
+                    'is_default_for_client' => false,
+                    'active' => false,
+                ]);
+        }
     }
 
-    private function syncClientUserBridge(Contact $contact, ClientSite $site, array $data, bool $replaceExisting = false): void
+    private function syncClientUserBridge(Contact $contact, ClientSite $site, array $data, bool $replaceExisting): void
     {
+        $bridges = ClientUser::query()
+            ->where('contact_id', $contact->id)
+            ->orderByDesc('is_default_for_client')
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
+
+        $bridge = $bridges->firstWhere('client_site_id', $site->id);
+
+        if (! $bridge && $replaceExisting) {
+            $bridge = $bridges->first();
+        }
+
+        $contact->loadMissing(['emails', 'phones']);
+        $email = trim((string) ($data['email'] ?? ''))
+            ?: ($contact->emails->firstWhere('is_primary', true)?->email ?: $contact->emails->first()?->email);
+        $phone = trim((string) ($data['phone'] ?? ''))
+            ?: ($contact->phones->firstWhere('is_primary', true)?->phone ?: $contact->phones->first()?->phone);
+
+        $values = [
+            'client_site_id' => $site->id,
+            'name' => $contact->display_name,
+            'email' => $email ?: null,
+            'phone' => $phone ?: null,
+            'role' => $data['job_title'] ?? $data['relation_type'] ?? $bridge?->role ?? 'Contact',
+            'language' => $data['preferred_language'] ?? $bridge?->language,
+            'is_default_for_site' => array_key_exists('is_default_for_site', $data)
+                ? (bool) $data['is_default_for_site']
+                : (bool) ($bridge?->is_default_for_site ?? false),
+            'is_default_for_client' => array_key_exists('is_default_for_client', $data)
+                ? (bool) $data['is_default_for_client']
+                : (bool) ($bridge?->is_default_for_client ?? false),
+            'active' => array_key_exists('active', $data)
+                ? (bool) $data['active']
+                : $contact->status === 'active',
+        ];
+
+        foreach (['address', 'co_address', 'zip', 'city', 'county', 'country'] as $key) {
+            $values[$key] = array_key_exists($key, $data) ? $data[$key] : $bridge?->{$key};
+        }
+
+        if ($bridge) {
+            $bridge->forceFill($values)->save();
+        } else {
+            $bridge = ClientUser::query()->create(['contact_id' => $contact->id] + $values);
+        }
+
         if ($replaceExisting) {
             ClientUser::query()
                 ->where('contact_id', $contact->id)
-                ->where('client_site_id', '!=', $site->id)
-                ->delete();
+                ->whereKeyNot($bridge->id)
+                ->update([
+                    'is_default_for_site' => false,
+                    'is_default_for_client' => false,
+                    'active' => false,
+                ]);
         }
+    }
 
-        ClientUser::query()->updateOrCreate(
-            ['contact_id' => $contact->id, 'client_site_id' => $site->id],
-            [
-                'name' => $contact->display_name,
-                'email' => $data['email'] ?? null,
-                'phone' => $data['phone'] ?? null,
-                'role' => $data['job_title'] ?? $data['relation_type'] ?? 'Contact',
-                'language' => $data['preferred_language'] ?? null,
-                'active' => true,
-            ]
-        );
+    private function recordAudit(Contact $contact, ?Client $client, ?ClientSite $site, bool $existed): void
+    {
+        activity('contact')
+            ->performedOn($contact)
+            ->event($existed ? 'contact.updated' : 'contact.created')
+            ->withProperties([
+                'contact_id' => $contact->id,
+                'client_id' => $client?->id,
+                'site_id' => $site?->id,
+                'compatibility_bridge_ids' => $contact->clientUsers()->pluck('id')->all(),
+            ])
+            ->log($existed ? 'Canonical Contact updated.' : 'Canonical Contact created.');
     }
 }

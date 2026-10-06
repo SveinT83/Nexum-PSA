@@ -6,6 +6,7 @@ use App\Models\Core\User;
 use App\Modules\UserManagement\Models\UserProfile;
 use App\Modules\UserManagement\Support\UserProfileData;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class UpdateUserProfile
@@ -20,6 +21,15 @@ class UpdateUserProfile
     |
     */
     public function handle(User $user, array $data, ?UploadedFile $avatar = null): UserProfile
+    {
+        return DB::transaction(function () use ($user, $data, $avatar) {
+            $user->newQuery()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+
+            return $this->persist($user, $data, $avatar);
+        });
+    }
+
+    private function persist(User $user, array $data, ?UploadedFile $avatar): UserProfile
     {
         $profile = UserProfile::query()->firstOrCreate(
             ['user_id' => $user->id],
@@ -61,6 +71,12 @@ class UpdateUserProfile
         }
 
         $profile->forceFill($payload)->save();
+
+        // Existing self/admin profile updates retain their authority and use the same
+        // projection as the dedicated schedule action, without replacing security guards.
+        if (config('workday.enabled')) {
+            app(UserWorkPlan::class)->project($user);
+        }
 
         return $profile;
     }
