@@ -32,9 +32,15 @@ without `client.update` see the same Notes content read-only. The gear action an
 form remain available for the other Client fields and can also update Notes.
 
 The Client show page also has workspace tabs for related records. `Sites` shows the Client's
-locations, while `Contacts` shows all Client contacts across all Sites so technicians can verify
-whether a Client has contacts without opening each Site first. The Contacts tab links to the
-existing Client contact detail and create flows.
+locations, while `Contacts` shows canonical Contacts related directly to the Client or any of its
+Sites. Rows open the central Contact detail page, and `New Contact` opens the standard Contact form
+with the Client context preselected. A canonical Contact created centrally with a Client/Site
+relation appears here without a separate copy.
+
+Each Site page has the same canonical Contacts behavior scoped to that Site. It no longer exposes a
+Client-owned `New User` form or legacy Client User detail page. Contact visibility and mutation use
+the `contact.view`, `contact.create`, and `contact.update` permissions rather than inheriting
+mutation authority from Client access.
 
 The `Tickets` tab appears for technicians with `ticket.view`. It lists all non-deleted Tickets
 linked directly to the selected Client, including both open and closed work, and links each row to
@@ -94,13 +100,22 @@ selected.
 When API or UI workflows mark a Site as default, other Sites for the same Client are cleared as
 default.
 
-## Contact Transition
+## Canonical Contacts And Legacy Compatibility
 
-The old `client_users` table remains a compatibility bridge while modules move to the Contact Domain.
-New integrations should create Contacts through the Contact API and pass `client_id` and `site_id`
-when a Client/Site relation should be created.
+Contact is the only technician-visible person workflow. Creating a Client also creates its primary
+person through the Contact-owned save action, so the Client, default Site, Contact, relations, and
+compatibility bridge are committed together.
 
-Do not build new long-term person workflows on `client_users`.
+The old `client_users` table remains an internal bridge while modules move to Contact IDs. Existing
+bridge primary keys are stable: Contact edits, ownership detach, and legacy cleanup retain those rows
+so Ticket, Asset, Sales, Nextcloud, Marketing, Telephony, and Intake references do not break.
+
+The production migration automatically maps every old Client User to Contact and creates canonical
+Client/Site relations. It also adds Contact identity to downstream tables that support dual identity.
+No manual import is required after deployment. Ambiguous identity stops the migration for review.
+
+New integrations must create Contacts through the Contact API and pass `client_id` and optional
+`site_id`. Do not build new person workflows on `client_users`.
 
 ## Customer Portal Memberships
 

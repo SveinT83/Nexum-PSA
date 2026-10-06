@@ -78,6 +78,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_system_actor' => 'boolean',
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 

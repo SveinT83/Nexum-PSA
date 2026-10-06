@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Tech\Clients\ClientRequest;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientFormat;
+use App\Models\Clients\ClientSite;
 use App\Models\Core\User;
 use App\Models\System\Integrations\Integration;
 use App\Modules\Clients\Actions\BuildClientTimeUsageEntries;
@@ -14,6 +15,7 @@ use App\Modules\Clients\Actions\SuggestClientNumber;
 use App\Modules\Clients\Menus\SideBar\ClientsMenu;
 use App\Modules\Commercial\Actions\CalculateClientTimebankBalances;
 use App\Modules\Commercial\Support\ClientTimebankQuickPolicy;
+use App\Modules\Contact\Queries\ContactsForClient;
 use App\Modules\CustomField\Support\CustomFieldPresenter;
 use App\Modules\Signal\Queries\RelatedSignals;
 use App\Modules\Task\Models\Task;
@@ -75,10 +77,36 @@ class ClientController extends Controller
             ]);
         }
 
+        $clientType = (new Client)->getMorphClass();
+        $siteType = (new ClientSite)->getMorphClass();
+
         $query = Client::query()
             ->select('clients.*')
             ->with(['clientFormat', 'riskAssessments.items'])
-            ->withCount(['sites', 'contacts', 'contracts']);
+            ->withCount(['sites', 'contracts'])
+            ->selectSub(function ($relations) use ($clientType, $siteType): void {
+                $relations
+                    ->from('contact_relations')
+                    ->selectRaw('COUNT(DISTINCT contact_relations.contact_id)')
+                    ->where(function ($ownership) use ($clientType, $siteType): void {
+                        $ownership
+                            ->where(function ($direct) use ($clientType): void {
+                                $direct
+                                    ->where('contact_relations.related_type', $clientType)
+                                    ->whereColumn('contact_relations.related_id', 'clients.id');
+                            })
+                            ->orWhere(function ($throughSite) use ($siteType): void {
+                                $throughSite
+                                    ->where('contact_relations.related_type', $siteType)
+                                    ->whereIn('contact_relations.related_id', function ($sites): void {
+                                        $sites
+                                            ->select('client_sites.id')
+                                            ->from('client_sites')
+                                            ->whereColumn('client_sites.client_id', 'clients.id');
+                                    });
+                            });
+                    });
+            }, 'contacts_count');
 
         if ($search = $filters['search']) {
             $query->where(function ($q) use ($search) {
@@ -178,6 +206,7 @@ class ClientController extends Controller
         ClientTimebankQuickPolicy $timebankPolicy,
         BuildClientTimeUsageEntries $timeUsageEntries,
         RelatedSignals $signals,
+        ContactsForClient $contactsForClient,
         ClientTicketListQuery $clientTickets,
     ): View {
         // -----------------------------------------
@@ -189,7 +218,8 @@ class ClientController extends Controller
         // Client Contract (s)
         // -----------------------------------------
         $contracts = $client->contracts()->with('items')->latest('updated_at')->get();
-        $contacts = $client->contacts()->with('site')->orderBy('client_users.name')->get();
+        $canViewContacts = $request->user()?->can('contact.view') ?? false;
+        $contacts = $canViewContacts ? $contactsForClient->handle($client) : collect();
         $quickTimebankPolicy = $timebankPolicy->get();
         $canViewTimebank = $request->user()?->can('commercial.timebank.view') ?? false;
         $clientTimebankBalances = $canViewTimebank
@@ -258,6 +288,7 @@ class ClientController extends Controller
             'signals' => $signals->forClient($client),
             'canViewTickets' => $canViewTickets,
             'clientTickets' => $accessibleClientTickets,
+            'canViewContacts' => $canViewContacts,
 
         ]);
     }

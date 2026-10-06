@@ -68,7 +68,7 @@
                     :value="old('body_html', $template->body_html)"
                     :rows="10"
                     :height="360"
-                    class="@error('body_html') is-invalid @enderror"
+                    :class="$errors->has('body_html') ? 'is-invalid' : ''"
                 />
                 @error('body_html')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
             </div>

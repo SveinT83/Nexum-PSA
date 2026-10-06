@@ -657,6 +657,10 @@
                                 <input type="hidden" name="ticket_ids[]" value="{{ $sourceTicket->id }}">
                             @endforeach
                             <input type="hidden" name="target_ticket_id" value="{{ $suggestion['target']->id }}">
+                            <input type="hidden" name="ticket_snapshots[{{ $suggestion['target']->id }}]" value="{{ \App\Modules\Ticket\Support\TicketMergeSnapshot::fingerprint($suggestion['target']) }}">
+                            @foreach($suggestion['sources'] as $sourceTicket)
+                                <input type="hidden" name="ticket_snapshots[{{ $sourceTicket->id }}]" value="{{ \App\Modules\Ticket\Support\TicketMergeSnapshot::fingerprint($sourceTicket) }}">
+                            @endforeach
                             <input type="hidden" name="reason" value="Merge suggestion: {{ $suggestion['reason'] }}">
                             <button type="submit" class="btn btn-sm btn-outline-warning w-100">
                                 <i class="bi bi-intersect" aria-hidden="true"></i>

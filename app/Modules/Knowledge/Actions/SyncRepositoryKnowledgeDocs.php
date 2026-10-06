@@ -137,6 +137,7 @@ class SyncRepositoryKnowledgeDocs
             'UserManagement' => $this->definition('user-management', 'User Management', 300),
             'Warroom' => $this->definition('warroom', 'Warroom', 100),
             'WorkContext' => $this->definition('work-context', 'Work Context', 830),
+            'Workday' => $this->definition('workday', 'Workday', 310),
         ];
     }
 

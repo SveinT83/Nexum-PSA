@@ -165,18 +165,17 @@ class ArticleForm extends Component
         $validated = $this->validate($this->rules());
 
         if ($this->article->exists) {
-            app(UpdateArticle::class)->handle($this->article, $validated);
-            $this->markArticleForBookStackPushWhenNeeded();
-            $message = 'Article updated successfully.';
+            $revision = app(UpdateArticle::class)->handle($this->article, $validated);
+            $message = 'Revision proposed. Published content remains unchanged.';
         } else {
             $this->article = app(StoreArticle::class)->handle($validated);
-            $this->markArticleForBookStackPushWhenNeeded();
-            $message = 'Article created successfully.';
+            $revision = $this->article->getRelation('pendingRevision');
+            $message = 'Article proposal created. Approval and publication are still required.';
         }
 
         session()->flash('success', $message);
 
-        return redirect()->route('tech.knowledge.show', $this->article);
+        return redirect()->route('tech.knowledge.revisions.show', $revision);
     }
 
     /**

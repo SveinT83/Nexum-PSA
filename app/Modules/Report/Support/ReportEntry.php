@@ -15,6 +15,7 @@ class ReportEntry
         public readonly string $permission,
         public readonly string $icon,
         public readonly array $tags,
+        public readonly ?\App\Modules\Report\Contracts\ReportVisibility $visibility = null,
     ) {}
 
     public static function fromDefinition(ReportDefinition $definition): self
@@ -28,6 +29,7 @@ class ReportEntry
             permission: $definition->permission(),
             icon: $definition->icon(),
             tags: $definition->tags(),
+            visibility: $definition instanceof \App\Modules\Report\Contracts\ReportVisibility ? $definition : null,
         );
     }
 }

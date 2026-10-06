@@ -61,3 +61,16 @@ execution exists may be retried.
 RMM routing is configured under **Admin > System > Integrations > RMM Alert Rules** and requires
 `integration.rmm_manage`. See the Integration Knowledge article **RMM Alert Rules** for conditions,
 actions, execution statuses, and operational checks.
+
+## Internal Web Push
+
+An internal user may opt in to Asset alert Web Push under Profile > Notifications. The preference
+defaults to off. Provider delivery is queued only after the normal notification path and remains
+best effort, so a push failure does not roll back or repeat the alert lifecycle or remove the in-app
+notification.
+
+Immediately before delivery, Nexum rechecks the active non-system recipient, current Asset alert
+preference, `asset.view`, and visibility of the exact Asset. The lock-screen payload is generic and
+links to the guarded Asset page. It never contains the hostname, raw alert title/text, provider
+context, Client identity, credentials, or subscription material. A resolved, removed, or no longer
+authorized target is suppressed instead of rerouted.

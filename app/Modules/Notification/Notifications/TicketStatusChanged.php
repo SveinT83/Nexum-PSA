@@ -2,7 +2,9 @@
 
 namespace App\Modules\Notification\Notifications;
 
+use App\Modules\Notification\Channels\QueueInternalWebPushChannel;
 use App\Modules\Notification\Contracts\EmailAccountMailNotification;
+use App\Modules\Notification\Contracts\QueuesInternalWebPush;
 use App\Modules\Notification\Models\NotificationSetting;
 use App\Modules\Notification\Support\RoutesEmailThroughAccount;
 use App\Modules\Ticket\Models\Ticket;
@@ -13,7 +15,7 @@ use Illuminate\Notifications\Notification;
 /**
  * Sent when a ticket's status changes (e.g., open → in progress → resolved).
  */
-class TicketStatusChanged extends Notification implements EmailAccountMailNotification
+class TicketStatusChanged extends Notification implements EmailAccountMailNotification, QueuesInternalWebPush
 {
     use Queueable, RoutesEmailThroughAccount;
 
@@ -36,6 +38,9 @@ class TicketStatusChanged extends Notification implements EmailAccountMailNotifi
         }
         if ($setting->mail_enabled) {
             $channels[] = $this->emailAccountMailChannel('tickets');
+        }
+        if ($setting->web_push_enabled) {
+            $channels[] = QueueInternalWebPushChannel::class;
         }
 
         $talkChannel = \App\Modules\Notification\Models\NotificationChannel::getByDriver('nextcloud_talk');
@@ -87,6 +92,22 @@ class TicketStatusChanged extends Notification implements EmailAccountMailNotifi
             'url' => route('tech.tickets.show', $this->ticket->ticket_key),
             'urlLabel' => 'View Ticket',
             'referenceId' => 'ticket-status-'.$this->ticket->ticket_key.'-'.$this->newStatus.'-'.time(),
+        ];
+    }
+
+    public function internalWebPushType(): string
+    {
+        return 'ticket_status_changed';
+    }
+
+    public function internalWebPushPayload(): array
+    {
+        return [
+            'title' => 'Ticket status changed',
+            'body' => 'Open Nexum to review the Ticket status change.',
+            'target_id' => $this->ticket->id,
+            'ttl' => 1800,
+            'urgency' => 'normal',
         ];
     }
 }

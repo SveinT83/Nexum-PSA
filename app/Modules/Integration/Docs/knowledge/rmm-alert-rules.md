@@ -72,8 +72,11 @@ Actions run in the displayed order:
   Rules. A later occurrence reuses the newest open Ticket for the same fingerprint and ownership
   context and adds one idempotent internal update. New Ticket keys come from a locked yearly
   sequence, so parallel alert actions cannot choose the same key.
-- **Create or reuse Task** creates through `StoreTask`. A later occurrence reuses an open Task in
-  the same context and records internal source activity.
+- **Create or reuse Task** creates through `StoreTask` when no template is selected. A later
+  occurrence reuses an open Task in the same context and records internal source activity. When an
+  active Task template is selected, the action calls Task's shared template boundary and atomically
+  creates the complete current Task group. The work-item audit retains the generation-run and Task
+  identifiers, and action-position idempotency prevents a duplicate group.
 - **Reopen linked Ticket** uses the exact configured Ticket Workflow transition. It never directly
   patches status fields. An already-open Ticket gets an update. If no scoped linked Ticket exists,
   the action is recorded as skipped and a lower fallback rule may still run.

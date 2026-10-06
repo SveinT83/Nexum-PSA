@@ -360,18 +360,19 @@ INBOX:
 - Opening or previewing a message uses a non-mutating provider/body retrieval path such as IMAP
   `BODY.PEEK`. It records the authorized user's durable `opened by` receipt but never automatically
   clears `unread for me` or queues provider `Seen`, regardless of reading-pane duration.
-- `Merk som lest` is an explicit acknowledgement of the selected message in the active account. For
-  an actor with `organize`, it marks that message read in the actor's personal state and queues
-  provider `Seen` for its active-account placement; it does not acknowledge other messages in the
-  conversation or correlated copies in other accounts. Other users' personal `unread for me` state
-  remains unchanged. A view-only personal-state action, where offered, is explicitly labelled `for
-  meg` and cannot mutate the provider. Provider mark-unread likewise requires `organize` and does not
-  silently make every user's personal state unread.
+- The ordinary reader exposes one direct `Mark as read` / `Mark as unread` action for the selected
+  message. It has no preview, confirmation panel, migration language, or separate provider-state
+  choice. The action always changes only the signed-in user's Nexum `unread for me` state; it never
+  changes another user's state or acknowledges other messages in the conversation.
+- For shared and system mailboxes, this ordinary action never changes provider `Seen`. For a personal
+  mailbox used by its owner, the same action also mirrors Seen/Unseen to the provider through the
+  normal idempotent remote-operation ledger. Delegates keep local personal state and do not silently
+  mutate the owner's provider read state.
 - A separate bulk or `Merk samtalen lest` action must preview and snapshot the currently authorized
   messages and account placements it will change, apply only to that snapshot, and reauthorize every
-  account/placement. It never acknowledges later arrivals; a new message in the same conversation is
-  `unread for me` until the user explicitly handles it. Correlated copies in another account require
-  an explicit multi-account selection rather than inheriting the active-account action.
+  account/placement. It is not part of the ordinary Mail reader UI and remains default-off. It never
+  acknowledges later arrivals; a new message in the same conversation is `unread for me` until the
+  user explicitly handles it. Correlated copies in another account require explicit selection.
 - Per-user read state has a deterministic grant baseline. A new inbound message that first becomes
   visible after the user's account-access baseline starts as `unread for me`, regardless of provider
   `Seen`. A new shared-mailbox grant defaults existing history to read-for-me so it does not flood the

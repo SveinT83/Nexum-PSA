@@ -68,9 +68,16 @@ final class EmailProviderController extends Controller
 
     public function show(Request $request, string $connection): RedirectResponse
     {
-        return redirect()
-            ->route('tech.admin.settings.email.accounts')
-            ->with('status', 'Open the Email account to edit or test its connection.');
+        // Preserve only provider feedback while this legacy URL forwards to
+        // the unified Email accounts workspace.
+        $request->session()->keep(['status', 'error']);
+        $redirect = redirect()->route('tech.admin.settings.email.accounts');
+
+        if (! $request->session()->has('status') && ! $request->session()->has('error')) {
+            $redirect->with('status', 'Open the Email account to edit or test its connection.');
+        }
+
+        return $redirect;
     }
 
     public function stageCredential(

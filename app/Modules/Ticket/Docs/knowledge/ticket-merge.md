@@ -97,6 +97,8 @@ Merge actions should always:
 
 - Require technician confirmation.
 - Use the same `MergeTickets` action as manual bulk merge.
+- Submit a fingerprint for every reviewed source and target ticket.
+- Reject stale previews without partially changing any ticket.
 - Preserve source ticket redirect behavior.
 - Preserve audit information.
 - Avoid suggesting the same ticket in multiple active suggestions at the same time.

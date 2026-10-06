@@ -21,8 +21,7 @@ class StoreTask
         private readonly EnsureTaskDefaults $ensureDefaults,
         private readonly TaskSettings $settings,
         private readonly ResolveWorkContext $workContexts,
-    ) {
-    }
+    ) {}
 
     /**
      * Create a task and its lightweight child records in one transaction.
@@ -60,11 +59,13 @@ class StoreTask
                 'source_id' => $data['source_id'] ?? null,
                 'template_group_id' => $data['template_group_id'] ?? null,
                 'template_item_id' => $data['template_item_id'] ?? null,
+                'task_template_run_id' => $data['task_template_run_id'] ?? null,
                 'due_at' => $data['due_at'] ?? null,
                 'scheduled_start_at' => $data['scheduled_start_at'] ?? null,
                 'scheduled_end_at' => $data['scheduled_end_at'] ?? null,
                 'estimated_minutes' => $data['estimated_minutes'] ?? null,
                 'blocks_owner_completion' => (bool) ($data['blocks_owner_completion'] ?? false),
+                'sort_order' => $data['sort_order'] ?? 0,
                 'metadata' => $data['metadata'] ?? null,
             ]);
 

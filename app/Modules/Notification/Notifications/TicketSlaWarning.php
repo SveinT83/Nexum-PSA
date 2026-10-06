@@ -2,9 +2,12 @@
 
 namespace App\Modules\Notification\Notifications;
 
+use App\Modules\Notification\Channels\QueueInternalWebPushChannel;
 use App\Modules\Notification\Contracts\EmailAccountMailNotification;
+use App\Modules\Notification\Contracts\QueuesInternalWebPush;
 use App\Modules\Notification\Models\NotificationSetting;
 use App\Modules\Notification\Support\RoutesEmailThroughAccount;
+use App\Modules\Ticket\Models\Ticket;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -12,7 +15,7 @@ use Illuminate\Notifications\Notification;
 /**
  * Sent when a ticket is approaching or has breached its SLA deadline.
  */
-class TicketSlaWarning extends Notification implements EmailAccountMailNotification
+class TicketSlaWarning extends Notification implements EmailAccountMailNotification, QueuesInternalWebPush
 {
     use Queueable, RoutesEmailThroughAccount;
 
@@ -36,6 +39,9 @@ class TicketSlaWarning extends Notification implements EmailAccountMailNotificat
         }
         if ($setting->mail_enabled) {
             $channels[] = $this->emailAccountMailChannel('tickets');
+        }
+        if ($setting->web_push_enabled) {
+            $channels[] = QueueInternalWebPushChannel::class;
         }
 
         $talkChannel = \App\Modules\Notification\Models\NotificationChannel::getByDriver('nextcloud_talk');
@@ -91,6 +97,22 @@ class TicketSlaWarning extends Notification implements EmailAccountMailNotificat
             'urlLabel' => 'View Ticket',
             'referenceId' => 'sla-'.$this->ticketKey.'-'.$this->slaType.'-'.$this->severity,
             'silent' => $this->severity === 'warning', // warning = silent, breached = loud
+        ];
+    }
+
+    public function internalWebPushType(): string
+    {
+        return 'ticket_sla_warning';
+    }
+
+    public function internalWebPushPayload(): array
+    {
+        return [
+            'title' => $this->severity === 'breached' ? 'Ticket SLA breached' : 'Ticket SLA warning',
+            'body' => 'Open Nexum to review the Ticket SLA status.',
+            'target_id' => Ticket::query()->where('ticket_key', $this->ticketKey)->value('id'),
+            'ttl' => 900,
+            'urgency' => $this->severity === 'breached' ? 'high' : 'normal',
         ];
     }
 }

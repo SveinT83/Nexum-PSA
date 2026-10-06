@@ -141,6 +141,7 @@ class AppServiceProvider extends ServiceProvider
             'ticket' => 'Ticket',
             'usermanagement' => 'UserManagement',
             'warroom' => 'Warroom',
+            'workday' => 'Workday',
         ] as $namespace => $module) {
             $path = base_path("app/Modules/{$module}/Views");
 

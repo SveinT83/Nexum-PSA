@@ -14,6 +14,7 @@ class CalendarEventLink extends Model
         'linkable_id',
         'relation',
         'metadata',
+        'workday_absence_id',
     ];
 
     protected $casts = [

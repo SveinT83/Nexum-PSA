@@ -52,6 +52,20 @@ class CalendarEvent extends Model
         'metadata' => 'array',
     ];
 
+    protected static function booted(): void
+    {
+        // Hide expired owned projections at the deadline, independently of physical cleanup scheduling.
+        static::addGlobalScope('workday_retention', fn ($query) => $query->where(function ($q) {
+            $q->whereNull('calendar_events.source')->orWhere('calendar_events.source', '!=', 'workday_absence')
+                ->orWhereExists(fn ($source) => $source->selectRaw('1')->from('workday_absences')
+                    ->whereColumn('workday_absences.calendar_event_id', 'calendar_events.id')->where('workday_absences.expires_at', '>', now()));
+        }));
+        // Source ownership applies to every model-based editor, including integrations.
+        static::updating(fn (self $event) => \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::assertCalendarEditable($event));
+        static::deleting(fn (self $event) => \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::assertCalendarEditable($event));
+        static::restoring(fn (self $event) => \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::assertCalendarEditable($event));
+    }
+
     public function calendar(): BelongsTo
     {
         return $this->belongsTo(Calendar::class);

@@ -291,7 +291,7 @@
                 x-show="mode === 'visual'"
                 x-ref="editor"
                 wire:ignore
-                class="mail-html-editor-surface form-control form-control-sm bg-white @error('composerBodyHtml') is-invalid @enderror"
+                class="mail-html-editor-surface form-control form-control-sm bg-body text-body @error('composerBodyHtml') is-invalid @enderror"
                 contenteditable="{{ $composerShared && ! $this->composerSharedEditable() ? 'false' : 'true' }}"
                 role="textbox"
                 aria-multiline="true"

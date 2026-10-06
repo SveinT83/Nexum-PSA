@@ -5,6 +5,7 @@ namespace App\Modules\Knowledge\Tests\Feature;
 use App\Models\Clients\Client;
 use App\Models\Core\User;
 use App\Models\Knowledge\Article;
+use App\Models\Knowledge\ArticleRevision;
 use App\Models\Knowledge\Book;
 use App\Models\Knowledge\Chapter;
 use App\Models\Knowledge\Shelf;
@@ -47,6 +48,10 @@ class KnowledgeArticleTest extends TestCase
             'knowledge.update',
             'knowledge.delete',
             'knowledge.publish',
+            'knowledge.manage_drafts',
+            'knowledge.approve',
+            'knowledge.rollback',
+            'knowledge.admin',
             'knowledge.sync_bookstack',
             'knowledge.manage_structure',
             'knowledge.manage_settings',
@@ -79,12 +84,15 @@ class KnowledgeArticleTest extends TestCase
         ]);
 
         $article = Article::firstOrFail();
+        $revision = $article->revisions()->firstOrFail();
 
-        $response->assertRedirect(route('tech.knowledge.show', $article));
+        $response->assertRedirect(route('tech.knowledge.revisions.show', $revision));
         $this->assertSame($this->tech->id, $article->owner_id);
         $this->assertSame($this->tech->id, $article->created_by);
         $this->assertNotEmpty($article->slug);
-        $this->assertNotEmpty($article->body_html);
+        $this->assertSame('draft', $article->status);
+        $this->assertSame(ArticleRevision::STATE_READY_FOR_REVIEW, $revision->state);
+        $this->assertNotEmpty($revision->body_html);
     }
 
     #[Test]
@@ -101,11 +109,13 @@ class KnowledgeArticleTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('data.title', 'API Knowledge Article')
             ->assertJsonPath('data.owner_id', $this->tech->id)
-            ->assertJsonPath('data.status', 'published');
+            ->assertJsonPath('data.status', 'draft')
+            ->assertJsonPath('meta.revision_state', ArticleRevision::STATE_READY_FOR_REVIEW)
+            ->assertJsonPath('meta.published_unchanged', true);
 
         $article = Article::query()->where('title', 'API Knowledge Article')->firstOrFail();
 
-        $this->assertNotEmpty($article->body_html);
+        $this->assertNotEmpty($article->revisions()->firstOrFail()->body_html);
 
         $this->getJson(route('api.v1.knowledge.articles.index', ['q' => 'API Knowledge']))
             ->assertOk()
@@ -121,9 +131,15 @@ class KnowledgeArticleTest extends TestCase
             'status' => 'needs_review',
         ])
             ->assertOk()
-            ->assertJsonPath('data.title', 'API Knowledge Article Updated')
-            ->assertJsonPath('data.status', 'needs_review')
-            ->assertJsonPath('data.body_html', "<p>Updated body.</p>\n");
+            ->assertJsonPath('data.title', 'API Knowledge Article')
+            ->assertJsonPath('data.status', 'draft')
+            ->assertJsonPath('meta.revision_state', ArticleRevision::STATE_READY_FOR_REVIEW)
+            ->assertJsonPath('meta.published_unchanged', true);
+
+        $proposal = $article->revisions()->latest('revision_number')->firstOrFail();
+        $this->assertSame('API Knowledge Article Updated', $proposal->title);
+        $this->assertSame('needs_review', $proposal->article_status);
+        $this->assertSame("<p>Updated body.</p>\n", $proposal->body_html);
     }
 
     #[Test]
@@ -291,15 +307,17 @@ class KnowledgeArticleTest extends TestCase
             'sync_to_book_stack' => true,
         ])
             ->assertCreated()
-            ->assertJsonPath('data.sync_status', 'pending_push');
+            ->assertJsonPath('data.sync_status', null)
+            ->assertJsonPath('meta.revision_state', ArticleRevision::STATE_READY_FOR_REVIEW);
 
         $article = Article::where('title', 'Pushable API Article')->firstOrFail();
 
-        $this->assertSame('pending_push', $article->sync_status);
-        $this->assertSame('pending_push', $chapter->fresh()->sync_status);
-        $this->assertSame('pending_push', $book->fresh()->sync_status);
-        $this->assertSame('pending_push', $shelf->fresh()->sync_status);
-        Queue::assertPushed(PushPendingKnowledgeToBookStack::class);
+        $this->assertNull($article->sync_status);
+        $this->assertSame($chapter->id, $article->revisions()->firstOrFail()->knowledge_chapter_id);
+        $this->assertSame('local', $chapter->fresh()->sync_status);
+        $this->assertSame('local', $book->fresh()->sync_status);
+        $this->assertSame('local', $shelf->fresh()->sync_status);
+        Queue::assertNotPushed(PushPendingKnowledgeToBookStack::class);
     }
 
     #[Test]
@@ -373,11 +391,13 @@ class KnowledgeArticleTest extends TestCase
         ])->assertRedirect();
 
         $article = Article::query()->where('title', 'Defaulted Knowledge Page')->firstOrFail();
+        $revision = $article->revisions()->firstOrFail();
 
         $this->assertSame('public', $article->visibility);
-        $this->assertSame('needs_review', $article->status);
-        $this->assertSame(15, $article->priority);
-        $this->assertTrue($article->next_review_at->isSameDay(now()->addDays(30)));
+        $this->assertSame('draft', $article->status);
+        $this->assertSame('needs_review', $revision->article_status);
+        $this->assertSame(15, $revision->priority);
+        $this->assertTrue($revision->next_review_at->isSameDay(now()->addDays(30)));
     }
 
     #[Test]
@@ -1553,16 +1573,19 @@ class KnowledgeArticleTest extends TestCase
             ->assertSee(route('tech.knowledge.edit', $article), false)
             ->assertSee('Edit');
 
-        $this->put(route('tech.knowledge.update', $article), [
+        $response = $this->put(route('tech.knowledge.update', $article), [
             'title' => 'VPN Setup Updated',
             'body_markdown' => 'Updated VPN setup steps',
             'visibility' => 'internal',
             'status' => 'published',
             'knowledge_book_id' => $book->id,
-        ])->assertRedirect(route('tech.knowledge.show', $article));
+        ]);
+        $revision = $article->revisions()->latest('revision_number')->firstOrFail();
 
-        $this->assertSame('pending_push', $article->fresh()->sync_status);
-        Queue::assertPushed(PushPendingKnowledgeToBookStack::class);
+        $response->assertRedirect(route('tech.knowledge.revisions.show', $revision));
+        $this->assertSame('VPN setup steps', $article->fresh()->body_markdown);
+        $this->assertNull($article->fresh()->sync_status);
+        Queue::assertNotPushed(PushPendingKnowledgeToBookStack::class);
     }
 
     #[Test]
@@ -1672,21 +1695,22 @@ class KnowledgeArticleTest extends TestCase
 
         $article = Article::where('title', 'New Synced Page')->firstOrFail();
 
-        $this->assertSame('pending_push', $article->sync_status);
-        Queue::assertPushed(PushPendingKnowledgeToBookStack::class);
+        $this->assertNull($article->sync_status);
+        Queue::assertNotPushed(PushPendingKnowledgeToBookStack::class);
 
-        $article->forceFill(['sync_status' => 'local'])->save();
-
-        $this->put(route('tech.knowledge.update', $article), [
+        $response = $this->put(route('tech.knowledge.update', $article), [
             'title' => 'New Synced Page Updated',
             'body_markdown' => 'Updated text',
             'visibility' => 'internal',
             'status' => 'published',
             'knowledge_chapter_id' => $chapter->id,
-        ])->assertRedirect(route('tech.knowledge.show', $article));
+        ]);
+        $revision = $article->revisions()->latest('revision_number')->firstOrFail();
 
-        $this->assertSame('pending_push', $article->fresh()->sync_status);
-        Queue::assertPushed(PushPendingKnowledgeToBookStack::class, 2);
+        $response->assertRedirect(route('tech.knowledge.revisions.show', $revision));
+        $this->assertSame('New Synced Page', $article->fresh()->title);
+        $this->assertNull($article->fresh()->sync_status);
+        Queue::assertNotPushed(PushPendingKnowledgeToBookStack::class);
     }
 
     #[Test]

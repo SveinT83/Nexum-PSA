@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'nextcloud_iframe' => [
+        'shared_secret' => env('NEXTCLOUD_IFRAME_SHARED_SECRET'),
+    ],
+
 ];

@@ -128,6 +128,7 @@ class StoreTicket
 
             if ($data['is_scheduled'] ?? false) {
                 $schedule = $ticket->schedule()->create([
+                    'task_template_group_id' => $data['task_template_group_id'] ?? null,
                     'schedule_type' => $data['schedule_type'] ?? 'one_time',
                     'planned_start_at' => $data['planned_start_at'] ?? null,
                     'planned_end_at' => $data['planned_end_at'] ?? null,

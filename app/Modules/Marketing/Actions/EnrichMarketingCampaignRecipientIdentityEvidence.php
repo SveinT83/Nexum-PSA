@@ -81,10 +81,6 @@ class EnrichMarketingCampaignRecipientIdentityEvidence
             $updates['client_user_id'] = (int) $clientUserId;
         }
 
-        if ($updates === []) {
-            return true;
-        }
-
         $delivery = $this->lockedDelivery($locked);
 
         if ($delivery) {
@@ -128,8 +124,10 @@ class EnrichMarketingCampaignRecipientIdentityEvidence
             }
         }
 
-        $locked->forceFill($updates)->save();
-        $recipient->forceFill($updates);
+        if ($updates !== []) {
+            $locked->forceFill($updates)->save();
+            $recipient->forceFill($updates);
+        }
 
         return true;
     }

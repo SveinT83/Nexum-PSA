@@ -13,6 +13,8 @@ use App\Modules\CustomerPortal\Models\CustomerPortalAccount;
 use App\Modules\CustomerPortal\Models\CustomerPortalMembership;
 use App\Modules\Documentation\Models\Documentation;
 use App\Modules\Documentation\Models\DocumentationTemplate;
+use App\Modules\Notification\Models\NotificationSetting;
+use App\Modules\Notification\Support\NotificationTypeRegistry;
 use App\Modules\Taxonomy\Models\Category;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -104,6 +106,7 @@ class CustomerPortalDocumentCenterTest extends TestCase
     public function technician_can_publish_and_hide_client_documentation_for_portal(): void
     {
         [$client, $site, $portalUser] = $this->portalFixture('publish-document@example.test');
+        $this->disablePortalMail($portalUser);
         $docCategory = $this->category('Portal Documents', 'documentation');
         $template = DocumentationTemplate::query()->create([
             'category_id' => $docCategory->id,
@@ -207,6 +210,20 @@ class CustomerPortalDocumentCenterTest extends TestCase
             'type' => $type,
             'is_active' => true,
         ]);
+    }
+
+    private function disablePortalMail(User $user): void
+    {
+        foreach (array_keys(NotificationTypeRegistry::labels(NotificationTypeRegistry::AUDIENCE_CUSTOMER_PORTAL)) as $type) {
+            NotificationSetting::updateOrCreate(
+                ['user_id' => $user->id, 'notification_type' => $type],
+                [
+                    'mail_enabled' => false,
+                    'database_enabled' => true,
+                    'nextcloud_talk_enabled' => false,
+                ],
+            );
+        }
     }
 
     private function documentation(DocumentationTemplate $template, Category $category, Client $client, ?ClientSite $site, string $title, string $content, mixed $portalVisibleAt): Documentation

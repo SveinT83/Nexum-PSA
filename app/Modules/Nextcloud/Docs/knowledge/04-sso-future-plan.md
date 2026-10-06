@@ -68,3 +68,10 @@ Before implementing SSO, decide:
 - how group claims map to client roles and technician roles
 - how account deprovisioning is handled across Nexum and Nextcloud
 
+
+## Internal employee implementation
+
+The approved internal Keycloak SSO RFC (2026-10-05-internal-keycloak-sso) places
+provider settings and external identity linking in UserManagement, the current shared
+authentication owner. Nextcloud user/group sync and service credentials remain separate.
+Customer-provider and Customer Portal SSO remain future scope.

@@ -1,8 +1,10 @@
 # Operational Signals Domain Idea
 
-Status: Draft, not fully discussed.
+Status: Superseded as active planning by the approved and implemented Signal RFC in
+`docs/rfc/2026-06-09-signal-domain-active-automation.md`. This file is retained as historical idea
+context; unimplemented extensions remain future scope, not open work tracked by this document.
 
-This document captures a future idea for handling incoming machine, service, monitoring, SSL, asset, and operational notification emails that are valuable but should not always become tickets.
+This document records the original direction for handling machine, service, monitoring, SSL, asset, and operational notification emails that are valuable but should not always become Tickets.
 
 ## Problem
 

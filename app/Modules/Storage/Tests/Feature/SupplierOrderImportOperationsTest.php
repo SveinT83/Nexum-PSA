@@ -4,6 +4,7 @@ namespace App\Modules\Storage\Tests\Feature;
 
 use App\Models\Core\User;
 use App\Modules\Notification\Models\NotificationSetting;
+use App\Modules\Notification\Support\NotificationTypeRegistry;
 use App\Modules\Storage\Actions\CreatePurchaseOrderImport;
 use App\Modules\Storage\Actions\DispatchDueSupplierOrderImports;
 use App\Modules\Storage\Actions\GetCurrentPurchaseOrderAutomationPolicy;
@@ -933,8 +934,8 @@ class SupplierOrderImportOperationsTest extends TestCase
     #[Test]
     public function operational_schedules_and_notification_preferences_are_registered(): void
     {
-        $this->assertArrayHasKey('storage_purchase_import_exception', NotificationSetting::TYPES);
-        $this->assertArrayHasKey('storage_purchase_import_digest', NotificationSetting::TYPES);
+        $this->assertArrayHasKey('storage_purchase_import_exception', NotificationTypeRegistry::all());
+        $this->assertArrayHasKey('storage_purchase_import_digest', NotificationTypeRegistry::all());
 
         Artisan::call('schedule:list');
         $output = Artisan::output();

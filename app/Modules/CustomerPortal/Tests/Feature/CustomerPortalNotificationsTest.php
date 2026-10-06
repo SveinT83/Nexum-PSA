@@ -8,6 +8,7 @@ use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Modules\Commercial\Models\Contracts\ContractItem;
 use App\Modules\Commercial\Models\Contracts\Contracts;
+use App\Modules\Commercial\Support\ContractTermSnapshotReadiness;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Models\ContactEmail;
 use App\Modules\Contact\Models\ContactRelation;
@@ -16,16 +17,16 @@ use App\Modules\CustomerPortal\Models\CustomerPortalMembership;
 use App\Modules\Documentation\Models\Documentation;
 use App\Modules\Documentation\Models\DocumentationTemplate;
 use App\Modules\Economy\Models\EconomyOrder;
-use App\Modules\Email\Models\EmailAccount;
-use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Knowledge\Actions\StoreArticle;
 use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use App\Modules\Notification\Models\NotificationSetting;
 use App\Modules\Notification\Notifications\CustomerPortalNotification;
+use App\Modules\Notification\Support\NotificationTypeRegistry;
 use App\Modules\Sales\Models\SalesOpportunity;
 use App\Modules\Sales\Models\SalesQuote;
 use App\Modules\Sales\Models\SalesQuoteLine;
 use App\Modules\Sales\Models\SalesQuoteVersion;
+use App\Modules\System\Support\CompanyProfileSettings;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Ticket\Actions\AddTicketMessage;
 use App\Modules\Ticket\Actions\ChangeTicketStatus;
@@ -33,7 +34,6 @@ use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
@@ -55,6 +55,9 @@ class CustomerPortalNotificationsTest extends TestCase
                 'economy.order_manage',
                 'sales.quote_manage',
                 'commercial.contract_manage',
+                'knowledge.approve',
+                'knowledge.publish',
+                'knowledge.manage_drafts',
             ]);
         app(EnsureTicketDefaults::class)->handle();
     }
@@ -232,7 +235,17 @@ class CustomerPortalNotificationsTest extends TestCase
     #[Test]
     public function implemented_portal_domains_emit_customer_notifications(): void
     {
-        $client = Client::factory()->create(['name' => 'Portal Domain Notify AS', 'active' => true]);
+        app(CompanyProfileSettings::class)->update([
+            'company_name' => 'Portal Notification Supplier',
+            'legal_name' => 'Portal Notification Supplier AS',
+            'organization_number' => '999888777',
+        ]);
+        $client = Client::factory()->create([
+            'name' => 'Portal Domain Notify AS',
+            'org_no' => '987654321',
+            'billing_email' => null,
+            'active' => true,
+        ]);
         $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Main Office']);
         $portalUser = $this->portalUser('domain-notify@example.test', $client, null);
         $this->disablePortalMail($portalUser);
@@ -284,7 +297,7 @@ class CustomerPortalNotificationsTest extends TestCase
 
         $knowledgeCategory = $this->category('Portal Knowledge', 'knowledge');
         $this->actingAs($tech);
-        app(StoreArticle::class)->handle([
+        $article = app(StoreArticle::class)->handle([
             'title' => 'Client-wide portal article',
             'body_markdown' => 'Customer knowledge.',
             'visibility' => 'client-wide',
@@ -292,6 +305,11 @@ class CustomerPortalNotificationsTest extends TestCase
             'category_id' => $knowledgeCategory->id,
             'client_scope_id' => $client->id,
         ]);
+        $revision = $article->getRelation('pendingRevision');
+
+        $this->assertPortalNotificationCount($portalUser, 'portal_knowledge_published', 0);
+        app(\App\Modules\Knowledge\Actions\TransitionArticleRevision::class)->approve($revision, $tech->id);
+        app(\App\Modules\Knowledge\Actions\PublishArticleRevision::class)->handle($revision, $tech->id);
 
         $this->assertPortalNotificationCount($portalUser, 'portal_knowledge_published', 1);
 
@@ -321,45 +339,7 @@ class CustomerPortalNotificationsTest extends TestCase
             'unit' => 'month',
             'billing_interval' => 'monthly',
         ]);
-
-        EmailAccount::query()->create([
-            'address' => 'contract-system@example.test',
-            'from_name' => 'Contract System',
-            'account_kind' => EmailAccount::KIND_SYSTEM,
-            'is_active' => true,
-            'is_global_default' => false,
-            'defaults_for' => ['system'],
-            'provider_credential_source' => 'legacy',
-            'provider_binding_version' => 1,
-            'imap_host' => '8.8.8.8',
-            'imap_port' => 993,
-            'imap_encryption' => 'ssl',
-            'imap_username' => 'contract-system@example.test',
-            'imap_secret' => Crypt::encryptString('contract-imap-secret-fixture'),
-            'imap_auth_type' => 'plain',
-            'smtp_host' => '1.1.1.1',
-            'smtp_port' => 465,
-            'smtp_encryption' => 'ssl',
-            'smtp_username' => 'contract-system@example.test',
-            'smtp_secret' => Crypt::encryptString('contract-smtp-secret-fixture'),
-            'smtp_auth_type' => 'login',
-        ]);
-        app()->instance(SmtpAccountMailer::class, new class extends SmtpAccountMailer
-        {
-            public function send(
-                EmailAccount $account,
-                string $toEmail,
-                ?string $toName,
-                string $subject,
-                string $html,
-                string $text,
-                array $attachments = [],
-                array $ccRecipients = [],
-                array $options = [],
-            ): string {
-                return '<contract-provider-fixture@example.test>';
-            }
-        });
+        app(ContractTermSnapshotReadiness::class)->markReviewed($contract, $tech->id);
 
         $this->actingAs($tech)
             ->post(route('tech.contracts.send-contract', $contract))
@@ -417,7 +397,7 @@ class CustomerPortalNotificationsTest extends TestCase
 
     private function disablePortalMail(User $user): void
     {
-        foreach (NotificationSetting::CUSTOMER_PORTAL_TYPES as $type => $label) {
+        foreach (NotificationTypeRegistry::labels(NotificationTypeRegistry::AUDIENCE_CUSTOMER_PORTAL) as $type => $label) {
             NotificationSetting::updateOrCreate(
                 ['user_id' => $user->id, 'notification_type' => $type],
                 [

@@ -16,6 +16,7 @@ class UpdateCalendarEvent
 
     public function handle(CalendarEvent $event, array $data, User $actor): CalendarEvent
     {
+        \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::assertCalendarEditable($event);
         $timezone = $data['timezone'] ?? $event->timezone;
 
         $event->forceFill([

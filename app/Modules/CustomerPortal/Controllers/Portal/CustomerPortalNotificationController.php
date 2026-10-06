@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\CustomerPortal\Support\CustomerPortalContext;
 use App\Modules\Notification\Models\NotificationSetting;
 use App\Modules\Notification\Notifications\CustomerPortalNotification;
+use App\Modules\Notification\Support\NotificationTypeRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
@@ -28,9 +29,11 @@ class CustomerPortalNotificationController extends Controller
                 ->unreadNotifications()
                 ->where('type', CustomerPortalNotification::class)
                 ->count(),
-            'types' => NotificationSetting::CUSTOMER_PORTAL_TYPES,
-            'settings' => NotificationSetting::getAllForUser($request->user())
-                ->only(array_keys(NotificationSetting::CUSTOMER_PORTAL_TYPES)),
+            'types' => NotificationTypeRegistry::labels(NotificationTypeRegistry::AUDIENCE_CUSTOMER_PORTAL),
+            'settings' => NotificationSetting::getAllForUser(
+                $request->user(),
+                array_keys(NotificationTypeRegistry::labels(NotificationTypeRegistry::AUDIENCE_CUSTOMER_PORTAL)),
+            ),
         ]);
     }
 
@@ -66,7 +69,7 @@ class CustomerPortalNotificationController extends Controller
     {
         $validated = $request->validate([
             'settings' => ['required', 'array'],
-            'settings.*.notification_type' => ['required', 'string', 'in:'.implode(',', array_keys(NotificationSetting::CUSTOMER_PORTAL_TYPES))],
+            'settings.*.notification_type' => ['required', 'string', 'distinct', 'in:'.implode(',', array_keys(NotificationTypeRegistry::labels(NotificationTypeRegistry::AUDIENCE_CUSTOMER_PORTAL)))],
             'settings.*.mail_enabled' => ['nullable', 'boolean'],
             'settings.*.database_enabled' => ['nullable', 'boolean'],
         ]);
@@ -80,6 +83,8 @@ class CustomerPortalNotificationController extends Controller
                 [
                     'mail_enabled' => (bool) ($setting['mail_enabled'] ?? false),
                     'database_enabled' => (bool) ($setting['database_enabled'] ?? false),
+                    'web_push_enabled' => false,
+                    'web_push_preview_enabled' => false,
                     'nextcloud_talk_enabled' => false,
                     'nextcloud_talk_webhook_url' => null,
                 ],

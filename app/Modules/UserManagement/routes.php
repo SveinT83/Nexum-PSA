@@ -9,6 +9,18 @@ use App\Modules\UserManagement\Controllers\ProfilePreferencesController;
 use App\Modules\UserManagement\Controllers\ProfileSecurityController;
 use Illuminate\Support\Facades\Route;
 
+// The same owning route file is explicitly loaded by the versioned API entry point.
+if (($tdpsaLoadingApiRoutes ?? false) === true) {
+    Route::middleware(\App\Modules\UserManagement\Http\Middleware\EnsureEmployeeWorkPlan::class)->group(function () {
+        Route::get('users/me/work-plan', [\App\Modules\UserManagement\Controllers\WorkPlanController::class, 'show'])
+            ->name('users.work-plan.show')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':users.work-plan.read');
+        Route::patch('users/me/work-plan', [\App\Modules\UserManagement\Controllers\WorkPlanController::class, 'update'])
+            ->name('users.work-plan.update')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':users.work-plan.update');
+    });
+
+    return;
+}
+
 /*
 |--------------------------------------------------------------------------
 | User Management Module Routes
@@ -36,8 +48,19 @@ Route::post('/invite/{token}', [AcceptInviteController::class, 'store'])
     ->name('invite.accept.post');
 
 if (isset($userManagementPublicRoutes) && $userManagementPublicRoutes === true) {
+    Route::get('/sso/login', [\App\Modules\UserManagement\Controllers\SsoController::class, 'start'])->name('sso.login')->middleware('throttle:10,1');
+    Route::get('/sso/callback', [\App\Modules\UserManagement\Controllers\SsoController::class, 'callback'])->name('sso.callback')->middleware('throttle:20,1');
+    Route::post('/sso/backchannel', [\App\Modules\UserManagement\Controllers\SsoController::class, 'backchannel'])->name('sso.backchannel')->middleware('throttle:60,1')->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]);
     return;
 }
+
+// SSO account management stays under the existing tech, account and MFA gates.
+Route::get('/profile/work-account', [\App\Modules\UserManagement\Controllers\SsoController::class, 'profile'])->name('profile.sso');
+Route::post('/profile/work-account/link', [\App\Modules\UserManagement\Controllers\SsoController::class, 'link'])->name('profile.sso.link')->middleware('throttle:5,1');
+Route::post('/profile/work-account/unlink', [\App\Modules\UserManagement\Controllers\SsoController::class, 'unlink'])->name('profile.sso.unlink')->middleware('throttle:5,1');
+Route::post('/profile/work-account/logout', [\App\Modules\UserManagement\Controllers\SsoController::class, 'logout'])->name('profile.sso.logout');
+Route::get('/admin/user_management/sso', [\App\Modules\UserManagement\Controllers\Admin\SsoSettingsController::class, 'show'])->name('admin.user_management.sso');
+Route::post('/admin/user_management/sso', [\App\Modules\UserManagement\Controllers\Admin\SsoSettingsController::class, 'update'])->name('admin.user_management.sso.update')->middleware('throttle:5,1');
 
 /*
 |--------------------------------------------------------------------------
@@ -51,6 +74,10 @@ if (isset($userManagementPublicRoutes) && $userManagementPublicRoutes === true) 
 */
 
 Route::middleware(['auth'])->group(function () {
+    Route::middleware(\App\Modules\UserManagement\Http\Middleware\EnsureEmployeeWorkPlan::class)->group(function () {
+        Route::get('/profile/work-plan', [\App\Modules\UserManagement\Controllers\WorkPlanController::class, 'show'])->name('profile.work-plan');
+        Route::patch('/profile/work-plan', [\App\Modules\UserManagement\Controllers\WorkPlanController::class, 'update'])->name('profile.work-plan.update');
+    });
     Route::get('/profile', [ProfileController::class, 'index'])
         ->name('profile.index');
     Route::patch('/profile', [ProfileController::class, 'update'])

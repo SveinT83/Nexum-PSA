@@ -21,10 +21,14 @@ class UserProfileBackfillTest extends TestCase
             'phone_work' => '+47 73502020',
             'phone_private' => '+47 40002020',
         ]);
+        $profilesExpected = User::query()->whereDoesntHave('profile')->count();
 
         $summary = app(BackfillUserProfiles::class)->handle();
 
-        $this->assertSame(1, $summary['profiles_created']);
+        // Migration-backed system actors may already exist in the test
+        // database, so assert the complete eligible cohort rather than
+        // assuming the human fixture is the only User row.
+        $this->assertSame($profilesExpected, $summary['profiles_created']);
         $this->assertSame(0, $summary['ticket_profiles_used']);
 
         $profile = UserProfile::query()->where('user_id', $user->id)->firstOrFail();

@@ -81,6 +81,30 @@ class EmailProviderCredentialVerificationResponseTest extends TestCase
     }
 
     #[Test]
+    public function verify_route_preserves_the_specific_success_through_the_legacy_redirect(): void
+    {
+        $connection = $this->createProvider();
+        $credential = $connection->credentialVersions()->sole();
+        $message = 'The exact staged credential version was verified.';
+
+        $response = $this->actingAs($this->operator)
+            ->from(route('tech.admin.system.integrations.email-providers.show', $connection->getKey()))
+            ->post(route(
+                'tech.admin.system.integrations.email-providers.credentials.verify',
+                [$connection->getKey(), $credential->version],
+            ));
+
+        $response
+            ->assertRedirect(route('tech.admin.system.integrations.email-providers.show', $connection->getKey()))
+            ->assertSessionHas('status', $message);
+
+        $this->followRedirects($response)
+            ->assertOk()
+            ->assertSee($message)
+            ->assertDontSee('Open the Email account to edit or test its connection.');
+    }
+
+    #[Test]
     public function verify_route_severs_raw_provider_failures_from_the_response_and_session(): void
     {
         $connection = $this->createProvider();

@@ -135,9 +135,14 @@ class KnowledgeArticleController extends Controller
         unset($data['sync_to_book_stack']);
 
         $article = $storeArticle->handle($data);
-        $this->markForBookStackPush($article, $syncToBookStack);
+        $revision = $article->getRelation('pendingRevision');
 
         return (new KnowledgeArticleResource($this->loadArticle($article)))
+            ->additional(['meta' => [
+                'revision_id' => $revision->id,
+                'revision_state' => $revision->state,
+                'published_unchanged' => true,
+            ]])
             ->response()
             ->setStatusCode(201);
     }
@@ -193,10 +198,14 @@ class KnowledgeArticleController extends Controller
             $validated
         );
 
-        $article = $updateArticle->handle($article, $data);
-        $this->markForBookStackPush($article, $syncToBookStack);
+        $revision = $updateArticle->handle($article, $data);
 
-        return new KnowledgeArticleResource($this->loadArticle($article));
+        return (new KnowledgeArticleResource($this->loadArticle($article->refresh())))
+            ->additional(['meta' => [
+                'revision_id' => $revision->id,
+                'revision_state' => $revision->state,
+                'published_unchanged' => true,
+            ]]);
     }
 
     public function destroy(Article $article, DeleteArticle $deleteArticle)

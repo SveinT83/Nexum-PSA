@@ -7,6 +7,7 @@ use App\Models\System\Integrations\Integration;
 use App\Modules\Integration\Actions\PushKnowledgeToBookStack;
 use App\Modules\Integration\Actions\SyncBookStackToKnowledge;
 use App\Modules\Integration\Services\BookStack\BookStackClient;
+use App\Modules\Integration\Support\BookStackSyncErrorSanitizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -50,9 +51,10 @@ class BookStackSyncController extends Controller
         try {
             $summary = (new SyncBookStackToKnowledge($integration, $client, $request->user()))->execute();
         } catch (\Throwable $exception) {
-            Log::error('BookStack API pull failed: '.$exception->getMessage(), [
+            $safeError = app(BookStackSyncErrorSanitizer::class)->message($exception);
+            Log::warning('BookStack API pull failed safely.', [
                 'integration_id' => $integration->id,
-                'exception' => $exception,
+                'exception_class' => $exception::class,
             ]);
 
             $summary = [
@@ -61,7 +63,7 @@ class BookStackSyncController extends Controller
                 'skipped' => 0,
                 'failed' => 1,
                 'total' => 0,
-                'errors' => [$exception->getMessage()],
+                'errors' => [$safeError],
             ];
 
             $config = $integration->config ?? [];
@@ -73,7 +75,7 @@ class BookStackSyncController extends Controller
                 'config' => $config,
                 'last_sync_at' => now(),
                 'is_healthy' => false,
-                'last_error' => $exception->getMessage(),
+                'last_error' => $safeError,
             ])->save();
         }
 
@@ -154,6 +156,7 @@ class BookStackSyncController extends Controller
             'last_push_at' => $config['last_push_at'] ?? null,
             'sync_interval_minutes' => $config['sync_interval_minutes'] ?? null,
             'two_way_sync_enabled' => (bool) ($config['two_way_sync_enabled'] ?? false),
+            'automatic_inbound_sync_enabled' => (bool) ($config['automatic_inbound_sync_enabled'] ?? false),
             'sync_mode' => $config['sync_mode'] ?? (($config['two_way_sync_enabled'] ?? false) ? 'two_way' : 'pull_only'),
             'last_pull_summary' => $config['last_sync_summary'] ?? null,
             'last_push_summary' => $config['last_push_summary'] ?? null,

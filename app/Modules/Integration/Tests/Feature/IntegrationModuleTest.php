@@ -1721,12 +1721,12 @@ class IntegrationModuleTest extends TestCase
         $this->actingAs($this->admin)
             ->post(route('tech.admin.system.integrations.book_stack.sync'))
             ->assertRedirect()
-            ->assertSessionHas('warning', 'BookStack sync failed: BookStack API is unavailable');
+            ->assertSessionHas('warning', 'BookStack sync failed: BookStack is currently unavailable.');
 
         $integration->refresh();
 
         $this->assertFalse($integration->is_healthy);
-        $this->assertSame('BookStack API is unavailable', $integration->last_error);
+        $this->assertSame('BookStack is currently unavailable.', $integration->last_error);
         $this->assertSame(1, $integration->config['last_sync_summary']['failed']);
         $this->assertNotNull($integration->last_sync_at);
         $this->assertNotNull($integration->config['last_error_at']);
@@ -1892,9 +1892,9 @@ class IntegrationModuleTest extends TestCase
 
         $this->assertFalse($integration->is_healthy);
         $this->assertSame(1, $integration->config['last_push_summary']['failed']);
-        $this->assertStringStartsWith('Page '.$article->id.': Provider rejected push:', $integration->last_error);
+        $this->assertStringStartsWith('Page '.$article->id.': BookStack synchronization failed safely.', $integration->last_error);
         $this->assertLessThanOrEqual(4000, mb_strlen($integration->last_error));
-        $this->assertGreaterThan(4000, mb_strlen($integration->config['last_push_summary']['errors'][0]));
+        $this->assertStringNotContainsString('details', $integration->config['last_push_summary']['errors'][0]);
     }
 
     #[Test]
@@ -2217,6 +2217,10 @@ class IntegrationModuleTest extends TestCase
     public function admin_can_push_local_knowledge_content_to_book_stack_when_two_way_sync_is_enabled(): void
     {
         Http::fake([
+            'https://docs.example.test/api/shelves?*' => Http::response(['data' => [], 'total' => 0], 200),
+            'https://docs.example.test/api/books?*' => Http::response(['data' => [], 'total' => 0], 200),
+            'https://docs.example.test/api/chapters?*' => Http::response(['data' => [], 'total' => 0], 200),
+            'https://docs.example.test/api/pages?*' => Http::response(['data' => [], 'total' => 0], 200),
             'https://docs.example.test/api/shelves' => Http::response([
                 'id' => 101,
                 'name' => 'Local Shelf',
@@ -2231,15 +2235,20 @@ class IntegrationModuleTest extends TestCase
                 'description' => 'Local book description',
                 'updated_at' => '2026-05-14T12:01:00.000000Z',
             ], 200),
+            'https://docs.example.test/api/books/202' => Http::response([
+                'id' => 202,
+                'name' => 'Local Book',
+                'slug' => 'local-book',
+                'description' => 'Local book description',
+                'updated_at' => '2026-05-14T12:01:00.000000Z',
+            ], 200),
             'https://docs.example.test/api/shelves/101' => Http::response([
                 'id' => 101,
                 'name' => 'Local Shelf',
                 'slug' => 'local-shelf',
                 'description' => 'Local shelf description',
                 'updated_at' => '2026-05-14T12:02:00.000000Z',
-                'books' => [
-                    ['id' => 202],
-                ],
+                'books' => [['id' => 202]],
             ], 200),
             'https://docs.example.test/api/chapters' => Http::response([
                 'id' => 404,
@@ -2249,12 +2258,47 @@ class IntegrationModuleTest extends TestCase
                 'description' => 'Local chapter description',
                 'priority' => 3,
                 'updated_at' => '2026-05-14T12:02:30.000000Z',
-                'book' => [
-                    'id' => 202,
-                    'slug' => 'local-book',
-                ],
+                'book' => ['id' => 202, 'slug' => 'local-book'],
+            ], 200),
+            'https://docs.example.test/api/chapters/404' => Http::response([
+                'id' => 404,
+                'book_id' => 202,
+                'name' => 'Local Chapter',
+                'slug' => 'local-chapter',
+                'description' => 'Local chapter description',
+                'priority' => 3,
+                'updated_at' => '2026-05-14T12:02:30.000000Z',
+                'book' => ['id' => 202, 'slug' => 'local-book'],
             ], 200),
             'https://docs.example.test/api/pages' => Http::response([
+                'id' => 303,
+                'book_id' => 202,
+                'chapter_id' => 404,
+                'name' => 'Local Page',
+                'slug' => 'local-page',
+                'html' => '<h1>Local Page</h1>',
+                'markdown' => '# Local Page',
+                'priority' => 5,
+                'updated_at' => '2026-05-14T12:03:00.000000Z',
+                'book' => ['id' => 202, 'slug' => 'local-book'],
+            ], 200),
+            'https://docs.example.test/api/pages/303' => Http::response([
+                'id' => 303,
+                'book_id' => 202,
+                'chapter_id' => 404,
+                'name' => 'Local Page',
+                'slug' => 'local-page',
+                'html' => '<h1>Local Page</h1>',
+                'markdown' => '# Local Page',
+                'priority' => 5,
+                'updated_at' => '2026-05-14T12:03:00.000000Z',
+                'book' => ['id' => 202, 'slug' => 'local-book'],
+            ], 200),
+        ]);
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'https://docs.example.test/api/pages/303' => Http::response([
                 'id' => 303,
                 'book_id' => 202,
                 'chapter_id' => 404,
@@ -2269,11 +2313,6 @@ class IntegrationModuleTest extends TestCase
                     'slug' => 'local-book',
                 ],
             ], 200),
-        ]);
-
-        $integration = Integration::create([
-            'name' => 'BookStack',
-            'type' => 'book_stack',
             'server' => 'https://docs.example.test',
             'status' => 'active',
             'is_healthy' => true,
@@ -2381,6 +2420,8 @@ class IntegrationModuleTest extends TestCase
     public function admin_can_push_nexum_generated_knowledge_docs_into_book_stack(): void
     {
         Http::fake([
+            'https://docs.example.test/api/chapters?*' => Http::response(['data' => [], 'total' => 0], 200),
+            'https://docs.example.test/api/pages?*' => Http::response(['data' => [], 'total' => 0], 200),
             'https://docs.example.test/api/chapters' => Http::response([
                 'id' => 730,
                 'book_id' => 339,
@@ -2389,12 +2430,49 @@ class IntegrationModuleTest extends TestCase
                 'description' => 'Canonical contact identity and migration strategy.',
                 'priority' => 320,
                 'updated_at' => '2026-05-30T12:00:00.000000Z',
-                'book' => [
-                    'id' => 339,
-                    'slug' => 'nexum-psa',
-                ],
+                'book' => ['id' => 339, 'slug' => 'nexum-psa'],
+            ], 200),
+            'https://docs.example.test/api/chapters/730' => Http::response([
+                'id' => 730,
+                'book_id' => 339,
+                'name' => 'Contacts',
+                'slug' => 'contacts',
+                'description' => 'Canonical contact identity and migration strategy.',
+                'priority' => 320,
+                'updated_at' => '2026-05-30T12:00:00.000000Z',
+                'book' => ['id' => 339, 'slug' => 'nexum-psa'],
             ], 200),
             'https://docs.example.test/api/pages' => Http::response([
+                'id' => 731,
+                'book_id' => 339,
+                'chapter_id' => 730,
+                'name' => 'Contact Domain Overview',
+                'slug' => 'contact-domain-overview',
+                'html' => '<h1>Contact Domain Overview</h1>',
+                'markdown' => 'Contact docs.',
+                'priority' => 10,
+                'updated_at' => '2026-05-30T12:01:00.000000Z',
+                'book' => ['id' => 339, 'slug' => 'nexum-psa'],
+            ], 200),
+            'https://docs.example.test/api/pages/731' => Http::response([
+                'id' => 731,
+                'book_id' => 339,
+                'chapter_id' => 730,
+                'name' => 'Contact Domain Overview',
+                'slug' => 'contact-domain-overview',
+                'html' => '<h1>Contact Domain Overview</h1>',
+                'markdown' => 'Contact docs.',
+                'priority' => 10,
+                'updated_at' => '2026-05-30T12:01:00.000000Z',
+                'book' => ['id' => 339, 'slug' => 'nexum-psa'],
+            ], 200),
+        ]);
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'https://docs.example.test/api/pages/731' => Http::response([
                 'id' => 731,
                 'book_id' => 339,
                 'chapter_id' => 730,
@@ -2409,13 +2487,6 @@ class IntegrationModuleTest extends TestCase
                     'slug' => 'nexum-psa',
                 ],
             ], 200),
-        ]);
-
-        $integration = Integration::create([
-            'name' => 'BookStack',
-            'type' => 'book_stack',
-            'server' => 'https://docs.example.test',
-            'status' => 'active',
             'is_healthy' => true,
             'config' => [
                 'sync_interval_minutes' => 10,

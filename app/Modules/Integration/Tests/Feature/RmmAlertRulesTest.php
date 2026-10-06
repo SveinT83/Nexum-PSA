@@ -24,6 +24,9 @@ use App\Modules\Signal\Models\SignalRule;
 use App\Modules\Signal\Models\SignalRuleExecution;
 use App\Modules\Task\Models\Task;
 use App\Modules\Task\Models\TaskActivity;
+use App\Modules\Task\Models\TaskTemplateGroup;
+use App\Modules\Task\Models\TaskTemplateItem;
+use App\Modules\Task\Models\TaskTemplateRun;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Models\Ticket;
@@ -217,6 +220,29 @@ class RmmAlertRulesTest extends TestCase
         $this->assertSame([$task->id], RmmAlertWorkItem::query()
             ->where('action_type', 'create_task')->pluck('target_id')->unique()->values()->all());
         Notification::assertNothingSent();
+    }
+
+    #[Test]
+    public function rmm_action_applies_a_task_template_group_with_audited_idempotency(): void
+    {
+        [, , $asset] = $this->assetContext();
+        $template = TaskTemplateGroup::query()->create(['name' => 'RMM response', 'slug' => 'rmm-response']);
+        TaskTemplateItem::query()->create(['template_group_id' => $template->id, 'title' => 'Investigate RMM alert', 'sort_order' => 10]);
+        TaskTemplateItem::query()->create(['template_group_id' => $template->id, 'title' => 'Confirm recovery', 'sort_order' => 20]);
+        $this->rule(10, [['type' => 'create_task', 'template_group_id' => $template->id]]);
+
+        app(RecordRmmAlertObservation::class)->handle($asset, $this->observation());
+
+        $this->assertDatabaseCount('tasks', 2);
+        $this->assertDatabaseCount('task_template_runs', 1);
+        $this->assertSame('rmm_alert_rule', TaskTemplateRun::query()->firstOrFail()->trigger_type);
+        $workItem = RmmAlertWorkItem::query()->firstOrFail();
+        $this->assertSame('created_from_template', data_get($workItem->metadata, 'result'));
+        $this->assertCount(2, data_get($workItem->metadata, 'task_ids'));
+
+        app(ProcessRmmAlertRules::class)->handle(RmmAlertOccurrence::query()->firstOrFail());
+        $this->assertDatabaseCount('tasks', 2);
+        $this->assertDatabaseCount('task_template_runs', 1);
     }
 
     #[Test]

@@ -427,3 +427,16 @@ that worker's dispatch record.
 
 A persistent queue worker is required for active inbound processing. Scheduler-dependent health,
 retention, and digest work must also be operational before enabling an automatic mode.
+
+## Internal Web Push
+
+Users may independently opt in to generic Web Push for supplier-import exceptions and the daily
+supplier-import digest under Profile > Notifications. Both preferences default to off. Delivery uses
+the existing default queue and is best effort after the authoritative in-app notification path; a
+provider failure never repeats an import, changes Purchase Order or inventory state, or removes the
+in-app notification.
+
+Immediately before delivery, Nexum rechecks the active non-system user, current preference, Storage
+permission, and exact current alert target. Lock-screen content identifies only an import exception
+or digest and links to the guarded Storage page. It does not expose Supplier identity, order numbers,
+line data, error details, source Email, attachment names, model/provider output, or credentials.

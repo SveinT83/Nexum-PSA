@@ -3,11 +3,16 @@
 namespace App\Modules\Integration\Actions;
 
 use App\Models\Knowledge\Article;
+use App\Models\Knowledge\ArticleBookStackSyncState;
+use App\Models\Knowledge\ArticleRevision;
 use App\Models\Knowledge\Book;
 use App\Models\Knowledge\Chapter;
 use App\Models\Knowledge\Shelf;
 use App\Models\System\Integrations\Integration;
 use App\Modules\Integration\Services\BookStack\BookStackClient;
+use App\Modules\Integration\Support\BookStackSyncErrorSanitizer;
+use App\Modules\Knowledge\Actions\PublishArticleRevision;
+use App\Modules\Knowledge\Support\ArticleRevisionIdentity;
 use Illuminate\Support\Arr;
 
 /**
@@ -81,13 +86,16 @@ class PushKnowledgeToBookStack
 
                     $response = $shelf->source_system === 'book_stack' && filled($shelf->source_id)
                         ? $this->client->updateShelf($shelf->source_id, $payload)
-                        : $this->client->createShelf($payload);
+                        : ($this->recoverExistingShelf($shelf)
+                            ?? $this->client->createShelf($payload));
+                    $remoteId = (string) Arr::get($response, 'id', $shelf->source_id);
+                    $readBack = filled($remoteId) ? $this->client->readShelf($remoteId) : [];
 
-                    $this->markShelfSynced($shelf, $response);
+                    $this->markShelfSynced($shelf, $readBack + $response);
                     $summary['shelves']++;
                 } catch (\Throwable $exception) {
                     $summary['failed']++;
-                    $summary['errors'][] = 'Shelf '.$shelf->id.': '.$exception->getMessage();
+                    $summary['errors'][] = 'Shelf '.$shelf->id.': '.$this->sanitizedError($exception);
                 }
             });
     }
@@ -122,13 +130,16 @@ class PushKnowledgeToBookStack
 
                     $response = $book->source_system === 'book_stack' && filled($book->source_id)
                         ? $this->client->updateBook($book->source_id, $payload)
-                        : $this->client->createBook($payload);
+                        : ($this->recoverExistingBook($book)
+                            ?? $this->client->createBook($payload));
+                    $remoteId = (string) Arr::get($response, 'id', $book->source_id);
+                    $readBack = filled($remoteId) ? $this->client->readBook($remoteId) : [];
 
-                    $this->markBookSynced($book, $response);
+                    $this->markBookSynced($book, $readBack + $response);
                     $summary['books']++;
                 } catch (\Throwable $exception) {
                     $summary['failed']++;
-                    $summary['errors'][] = 'Book '.$book->id.': '.$exception->getMessage();
+                    $summary['errors'][] = 'Book '.$book->id.': '.$this->sanitizedError($exception);
                 }
             });
     }
@@ -154,11 +165,12 @@ class PushKnowledgeToBookStack
                         'description' => $shelf->description,
                         'books' => $bookIds,
                     ]);
+                    $readBack = $this->client->readShelf((string) Arr::get($payload, 'id', $shelf->source_id));
 
-                    $this->markShelfSynced($shelf, $payload);
+                    $this->markShelfSynced($shelf, $readBack + $payload);
                 } catch (\Throwable $exception) {
                     $summary['failed']++;
-                    $summary['errors'][] = 'Shelf membership '.$shelf->id.': '.$exception->getMessage();
+                    $summary['errors'][] = 'Shelf membership '.$shelf->id.': '.$this->sanitizedError($exception);
                 }
             });
     }
@@ -202,13 +214,16 @@ class PushKnowledgeToBookStack
 
                     $response = $isUpdate
                         ? $this->client->updateChapter($chapter->source_id, $payload)
-                        : $this->client->createChapter($payload);
+                        : ($this->recoverExistingChapter($chapter, $payload)
+                            ?? $this->client->createChapter($payload));
+                    $remoteId = (string) Arr::get($response, 'id', $chapter->source_id);
+                    $readBack = filled($remoteId) ? $this->client->readChapter($remoteId) : [];
 
-                    $this->markChapterSynced($chapter, $response);
+                    $this->markChapterSynced($chapter, $readBack + $response);
                     $summary['chapters']++;
                 } catch (\Throwable $exception) {
                     $summary['failed']++;
-                    $summary['errors'][] = 'Chapter '.$chapter->id.': '.$exception->getMessage();
+                    $summary['errors'][] = 'Chapter '.$chapter->id.': '.$this->sanitizedError($exception);
                 }
             });
     }
@@ -246,8 +261,7 @@ class PushKnowledgeToBookStack
                 $query->whereNull('source_system')
                     ->orWhere(function ($query): void {
                         $query->where('source_system', 'book_stack')
-                            ->where('source_type', 'page')
-                            ->whereNotNull('source_id');
+                            ->where('source_type', 'page');
                     })
                     ->orWhere(function ($query): void {
                         $query->where('source_system', 'nexum')
@@ -261,7 +275,34 @@ class PushKnowledgeToBookStack
                 $summary['total']++;
 
                 try {
-                    $isUpdate = $article->source_system === 'book_stack' && filled($article->source_id);
+                    $revision = null;
+                    $revision = app(ArticleRevisionIdentity::class)->recordCurrent($article, 'nexum');
+
+                    if ($article->status !== 'published') {
+                        $summary['skipped']++;
+                        $summary['errors'][] = 'Page '.$article->id.': only a published Nexum revision can be pushed.';
+
+                        return;
+                    }
+
+                    $state = $this->outboundState($article, $revision);
+                    $explicitResolution = $state->status === ArticleBookStackSyncState::STATUS_RESOLVING_OUTBOUND
+                        && (int) $state->pending_revision_id === (int) $revision->id;
+                    $recreateRemote = $explicitResolution
+                        && in_array($state->conflict_reason, ['remote_record_deleted', 'missing_external_identifier'], true);
+
+                    if (
+                        blank($article->source_id)
+                        && ! $recreateRemote
+                        && $article->source_system === 'book_stack'
+                    ) {
+                        $summary['skipped']++;
+                        $summary['errors'][] = 'Page '.$article->id.': the missing BookStack identifier requires explicit review.';
+
+                        return;
+                    }
+
+                    $isUpdate = $article->source_system === 'book_stack' && filled($article->source_id) && ! $recreateRemote;
                     $payload = $this->pagePayload($article, $isUpdate);
 
                     if ($payload === null) {
@@ -271,21 +312,65 @@ class PushKnowledgeToBookStack
                         return;
                     }
 
-                    $response = $isUpdate
-                        ? $this->client->updatePage($article->source_id, $payload)
-                        : $this->client->createPage($payload);
-                    $this->markPageSynced($article, $response);
+                    if ($isUpdate) {
+                        $remoteBefore = $this->client->readPage($article->source_id);
+                        $remoteBeforeHash = app(ArticleRevisionIdentity::class)->remoteHash($remoteBefore);
+                        $knownRemoteChanged = filled($state->last_synced_remote_hash)
+                            && ! hash_equals($state->last_synced_remote_hash, $remoteBeforeHash);
+                        $unknownBaseDiverged = blank($state->last_synced_remote_hash)
+                            && ! hash_equals($revision->content_hash, $remoteBeforeHash);
+
+                        if (($knownRemoteChanged || $unknownBaseDiverged) && ! $explicitResolution) {
+                            $this->recordOutboundConflict($article, $state, $remoteBefore);
+                            $summary['skipped']++;
+                            $summary['errors'][] = 'Page '.$article->id.': remote content changed and requires conflict review.';
+
+                            return;
+                        }
+
+                        $response = $this->client->updatePage($article->source_id, $payload);
+                    } else {
+                        $response = $this->recoverExistingPage($article, $revision)
+                            ?? $this->client->createPage($payload);
+                    }
+
+                    $remoteId = (string) Arr::get($response, 'id', $article->source_id);
+
+                    if ($remoteId === '') {
+                        throw new \RuntimeException('BookStack did not return an external page identifier.');
+                    }
+
+                    $readBack = $this->client->readPage($remoteId);
+                    $readBackHash = app(ArticleRevisionIdentity::class)->remoteHash($readBack);
+
+                    if (! hash_equals($revision->content_hash, $readBackHash)) {
+                        throw new \RuntimeException('BookStack read-back did not match the exact outbound revision.');
+                    }
+
+                    $this->markPageSynced($article, $readBack + $response, $revision, $state);
+                    if ($revision->state === ArticleRevision::STATE_PUBLISHING) {
+                        app(PublishArticleRevision::class)->externalSucceeded($revision, [
+                            'id' => $remoteId,
+                            'hash' => $readBackHash,
+                        ]);
+                    }
+
                     $summary['pages']++;
                 } catch (\Throwable $exception) {
                     $summary['failed']++;
-                    $summary['errors'][] = 'Page '.$article->id.': '.$exception->getMessage();
+                    if ($revision?->state === ArticleRevision::STATE_PUBLISHING) {
+                        app(PublishArticleRevision::class)->externalFailed(
+                            $revision,
+                            'book_stack_publication_failed',
+                            $this->sanitizedError($exception),
+                        );
+                    }
+
+                    $summary['errors'][] = 'Page '.$article->id.': '.$this->sanitizedError($exception);
                 }
             });
     }
 
-    /**
-     * @return array<string, mixed>|null
-     */
     private function pagePayload(Article $article, bool $isUpdate = false): ?array
     {
         if ($article->knowledgeChapter?->source_system === 'book_stack' && $article->knowledgeChapter->source_id) {
@@ -388,28 +473,238 @@ class PushKnowledgeToBookStack
     /**
      * @param  array<string, mixed>  $payload
      */
-    private function markPageSynced(Article $article, array $payload): void
-    {
+    private function markPageSynced(
+        Article $article,
+        array $payload,
+        ArticleRevision $revision,
+        ArticleBookStackSyncState $state,
+    ): void {
+        $article = Article::query()
+            ->with(['knowledgeBook', 'knowledgeChapter'])
+            ->findOrFail($article->id);
+        $identity = app(ArticleRevisionIdentity::class);
+        $remoteHash = $identity->remoteHash($payload);
+        $currentHash = $identity->localHash($article);
+        $isCurrentRevision = hash_equals($revision->content_hash, $currentHash);
+        $syncStatus = $isCurrentRevision ? 'synced' : 'pending_push';
+
         $article->forceFill([
-            'title' => (string) Arr::get($payload, 'name', $article->title),
-            'slug' => (string) Arr::get($payload, 'slug', $article->slug),
-            'body_markdown' => (string) Arr::get($payload, 'markdown', $article->body_markdown),
-            'body_html' => (string) Arr::get($payload, 'html', $article->body_html),
             'source_system' => 'book_stack',
             'source_type' => 'page',
             'source_id' => (string) Arr::get($payload, 'id', $article->source_id),
             'source_url' => $this->pageUrl($article, $payload),
-            'source_checksum' => $this->payloadChecksum($payload),
+            'source_checksum' => $remoteHash,
             'source_synced_at' => now(),
             'source_updated_at' => $this->sourceUpdatedAt($payload),
-            'sync_status' => 'synced',
-            'source_payload' => $payload,
+            'sync_status' => $syncStatus,
+            'source_payload' => Arr::only($payload, [
+                'id',
+                'book_id',
+                'chapter_id',
+                'slug',
+                'priority',
+                'revision_count',
+                'book',
+                'chapter',
+                'tags',
+            ]),
+        ])->save();
+
+        $pendingRevision = $isCurrentRevision
+            ? null
+            : $identity->recordCurrent($article, 'nexum');
+
+        $state->forceFill([
+            'last_synced_revision_id' => $revision->id,
+            'pending_revision_id' => $pendingRevision?->id,
+            'candidate_revision_id' => null,
+            'external_type' => 'page',
+            'external_id' => $article->source_id,
+            'external_url' => $article->source_url,
+            'status' => $isCurrentRevision
+                ? ArticleBookStackSyncState::STATUS_SYNCED
+                : ArticleBookStackSyncState::STATUS_PENDING_OUTBOUND,
+            'last_synced_local_hash' => $revision->content_hash,
+            'last_synced_remote_hash' => $remoteHash,
+            'outbound_operation_key' => null,
+            'last_direction' => 'outbound',
+            'origin' => 'nexum',
+            'last_synced_at' => now(),
+            'remote_updated_at' => $this->sourceUpdatedAt($payload),
+            'conflict_reason' => null,
+            'remote_snapshot' => Arr::only($payload, [
+                'id',
+                'book_id',
+                'chapter_id',
+                'slug',
+                'priority',
+                'revision_count',
+                'book',
+                'chapter',
+                'tags',
+            ]),
         ])->save();
     }
 
+    private function outboundState(Article $article, ArticleRevision $revision): ArticleBookStackSyncState
+    {
+        $state = ArticleBookStackSyncState::firstOrCreate(
+            ['article_id' => $article->id],
+            [
+                'external_type' => 'page',
+                'external_id' => $article->source_system === 'book_stack' ? $article->source_id : null,
+                'external_url' => $article->source_url,
+                'status' => ArticleBookStackSyncState::STATUS_PENDING_OUTBOUND,
+                'origin' => 'nexum',
+            ],
+        );
+
+        $state->forceFill([
+            'pending_revision_id' => $revision->id,
+            'outbound_operation_key' => hash('sha256', $article->id.'|'.$revision->id.'|'.$revision->content_hash),
+            'last_direction' => 'outbound',
+        ])->save();
+
+        return $state;
+    }
+
+    private function recordOutboundConflict(
+        Article $article,
+        ArticleBookStackSyncState $state,
+        array $remotePage,
+    ): void {
+        $bookId = Arr::get($remotePage, 'book_id', Arr::get($remotePage, 'book.id'));
+        $chapterId = Arr::get($remotePage, 'chapter_id', Arr::get($remotePage, 'chapter.id'));
+        $book = filled($bookId)
+            ? Book::query()->where('source_system', 'book_stack')->where('source_id', (string) $bookId)->first()
+            : null;
+        $chapter = filled($chapterId)
+            ? Chapter::query()->where('source_system', 'book_stack')->where('source_id', (string) $chapterId)->first()
+            : null;
+        $candidate = app(ArticleRevisionIdentity::class)->recordRemoteCandidate(
+            $article,
+            $remotePage,
+            $book,
+            $chapter,
+            'conflict_candidate',
+            $state->lastSyncedRevision,
+        );
+
+        $article->forceFill(['sync_status' => 'conflict'])->save();
+        $state->forceFill([
+            'candidate_revision_id' => $candidate->id,
+            'status' => ArticleBookStackSyncState::STATUS_CONFLICT,
+            'conflict_reason' => 'remote_changed_before_outbound',
+            'remote_updated_at' => $this->sourceUpdatedAt($remotePage),
+            'remote_snapshot' => Arr::only($remotePage, [
+                'id',
+                'book_id',
+                'chapter_id',
+                'slug',
+                'priority',
+                'revision_count',
+                'book',
+                'chapter',
+                'tags',
+            ]),
+        ])->save();
+    }
+
+    private function recoverExistingPage(Article $article, ArticleRevision $revision): ?array
+    {
+        $matches = [];
+
+        foreach ($this->client->allPages() as $listedPage) {
+            if ((string) Arr::get($listedPage, 'name') !== $article->title) {
+                continue;
+            }
+
+            $remotePage = $this->client->readPage((string) Arr::get($listedPage, 'id'));
+
+            if (hash_equals($revision->content_hash, app(ArticleRevisionIdentity::class)->remoteHash($remotePage))) {
+                $matches[] = $remotePage;
+            }
+        }
+
+        if (count($matches) > 1) {
+            throw new \RuntimeException('Several BookStack pages match the pending Nexum revision.');
+        }
+
+        return $matches[0] ?? null;
+    }
+
+    private function recoverExistingShelf(Shelf $shelf): ?array
+    {
+        $matches = [];
+        foreach ($this->client->allShelves() as $listedShelf) {
+            if ((string) Arr::get($listedShelf, 'name') !== $shelf->name) {
+                continue;
+            }
+            $remote = $this->client->readShelf((string) Arr::get($listedShelf, 'id'));
+            if ($this->sameOptionalText(Arr::get($remote, 'description'), $shelf->description)) {
+                $matches[] = $remote;
+            }
+        }
+
+        return $this->singleRecoveredRecord($matches, 'shelves');
+    }
+
+    private function recoverExistingBook(Book $book): ?array
+    {
+        $matches = [];
+        foreach ($this->client->allBooks() as $listedBook) {
+            if ((string) Arr::get($listedBook, 'name') !== $book->name) {
+                continue;
+            }
+            $remote = $this->client->readBook((string) Arr::get($listedBook, 'id'));
+            if ($this->sameOptionalText(Arr::get($remote, 'description'), $book->description)) {
+                $matches[] = $remote;
+            }
+        }
+
+        return $this->singleRecoveredRecord($matches, 'books');
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function recoverExistingChapter(Chapter $chapter, array $payload): ?array
+    {
+        $matches = [];
+        foreach ($this->client->allChapters() as $listedChapter) {
+            if ((string) Arr::get($listedChapter, 'name') !== $chapter->name) {
+                continue;
+            }
+            $remote = $this->client->readChapter((string) Arr::get($listedChapter, 'id'));
+            $remoteBookId = (string) Arr::get($remote, 'book_id', Arr::get($remote, 'book.id'));
+            if (
+                $remoteBookId === (string) ($payload['book_id'] ?? '')
+                && $this->sameOptionalText(Arr::get($remote, 'description'), $chapter->description)
+                && (int) Arr::get($remote, 'priority', 0) === (int) $chapter->priority
+            ) {
+                $matches[] = $remote;
+            }
+        }
+
+        return $this->singleRecoveredRecord($matches, 'chapters');
+    }
+
     /**
-     * @param  array{shelves: int, books: int, chapters: int, pages: int, skipped: int, failed: int, total: int, errors: array<int, string>}  $summary
+     * @param  array<int, array<string, mixed>>  $matches
+     * @return array<string, mixed>|null
      */
+    private function singleRecoveredRecord(array $matches, string $type): ?array
+    {
+        if (count($matches) > 1) {
+            throw new \RuntimeException('Several BookStack '.$type.' match the pending Nexum record.');
+        }
+
+        return $matches[0] ?? null;
+    }
+
+    private function sameOptionalText(mixed $left, mixed $right): bool
+    {
+        return trim((string) $left) === trim((string) $right);
+    }
+
     private function recordSummary(array $summary): void
     {
         $config = $this->integration->config ?? [];
@@ -503,5 +798,16 @@ class PushKnowledgeToBookStack
     private function payloadChecksum(array $payload): string
     {
         return hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR));
+    }
+
+    private function sanitizedError(\Throwable $exception): string
+    {
+        logger()->warning('BookStack push failed safely.', [
+            'exception_class' => $exception::class,
+            'source_file' => basename($exception->getFile()),
+            'source_line' => $exception->getLine(),
+        ]);
+
+        return app(BookStackSyncErrorSanitizer::class)->message($exception);
     }
 }

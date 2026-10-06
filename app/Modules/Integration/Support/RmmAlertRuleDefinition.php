@@ -2,6 +2,7 @@
 
 namespace App\Modules\Integration\Support;
 
+use App\Modules\Task\Models\TaskTemplateGroup;
 use Illuminate\Validation\ValidationException;
 
 class RmmAlertRuleDefinition
@@ -29,7 +30,7 @@ class RmmAlertRuleDefinition
         ],
         'create_task' => [
             'title', 'description', 'queue_id', 'priority_id', 'category_id', 'assigned_to',
-            'due_minutes_from_now', 'estimated_minutes',
+            'due_minutes_from_now', 'estimated_minutes', 'template_group_id',
         ],
         'reopen_ticket' => ['reopen_status_id'],
         'emit_signal' => ['signal_type', 'severity', 'summary'],
@@ -39,6 +40,7 @@ class RmmAlertRuleDefinition
     private const INTEGER_FIELDS = [
         'queue_id', 'ticket_type_id', 'priority_id', 'category_id', 'owner_id', 'assigned_to',
         'due_minutes_from_now', 'estimated_minutes', 'reopen_status_id',
+        'template_group_id',
     ];
 
     /** @return array<string, mixed> */
@@ -148,6 +150,12 @@ class RmmAlertRuleDefinition
                 if ($type === 'reopen_ticket' && empty($action['reopen_status_id'])) {
                     throw ValidationException::withMessages([
                         'actions' => 'Reopen Ticket requires an active target Ticket status.',
+                    ]);
+                }
+                if ($type === 'create_task' && isset($action['template_group_id'])
+                    && ! TaskTemplateGroup::query()->whereKey($action['template_group_id'])->where('is_active', true)->exists()) {
+                    throw ValidationException::withMessages([
+                        'actions' => 'Create Task references an unavailable Task template.',
                     ]);
                 }
                 if ($type === 'emit_signal' && blank($action['signal_type'] ?? null)) {

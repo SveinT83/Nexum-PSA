@@ -55,3 +55,8 @@ Route::get('commercial/time-rates/{rate}', [CommercialController::class, 'showTi
 Route::match(['put', 'patch'], 'commercial/time-rates/{rate}', [CommercialController::class, 'updateTimeRate'])
     ->name('commercial.time-rates.update')
     ->middleware(CheckAbilities::class.':commercial.update');
+
+// Coordinator route declarations live in the domain entry point.
+$commercialCoordinatorApiRoutes = true;
+require __DIR__.'/routes.php';
+unset($commercialCoordinatorApiRoutes);

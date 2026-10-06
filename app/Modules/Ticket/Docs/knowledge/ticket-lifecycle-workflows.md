@@ -35,13 +35,20 @@ The workflow runtime validates transitions before status changes are committed. 
 
 Transitions can require a documentation follow-up before the ticket can move forward.
 
-Technicians create the follow-up from the Knowledge panel on the ticket show page. This writes a
-`documentation_requested` event to `ticket_events` with the ticket key, category, client, actor, and
-reason.
+Technicians create the follow-up from the Knowledge panel on the ticket show page. This writes the
+existing `documentation_requested` Ticket event and a durable Knowledge documentation request with
+open, review, publishing, failed, or completed state. Ticket closure is independent and never marks
+the documentation request complete.
 
-This is intentionally lightweight. It makes missing documentation visible and gives workflow rules a
-real marker to enforce now, while future Knowledge work can turn these requests into article drafts,
-queues, or approval workflows.
+An AI-attributed proposal may link one exact revision to the request. A technician with current
+`ticket.view` and `ticket.update` access may view and approve that exact revision without general
+Knowledge access. The exception exposes no Knowledge index, API, unrelated revision, or publication
+action. Publication still requires the normal Knowledge publisher permission and uses the protected
+Documentation Agent actor.
+
+The documentation request completes only after exact local read-back and, for BookStack-backed
+content, exact provider read-back. Failed provider publication remains visible and retryable without
+creating another publication or closing the follow-up.
 
 ## Manual Transitions
 

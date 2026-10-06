@@ -116,7 +116,9 @@ class TicketRuleDeliveryAuditContractTest extends TestCase
             'type' => 'set_queue',
             'value' => $alternateQueue->id,
         ]]);
-        $initiator = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $initiatorId = 999999;
+        $initiator = new User;
+        $initiator->setAttribute($initiator->getKeyName(), $initiatorId);
         $run = $this->runCreated($this->ticket(), $initiator);
 
         try {
@@ -133,8 +135,6 @@ class TicketRuleDeliveryAuditContractTest extends TestCase
             $this->assertSame('Ticket Rule evidence cannot be deleted.', $exception->getMessage());
         }
 
-        $initiatorId = $initiator->id;
-        $initiator->delete();
         $this->assertSame($initiatorId, $run->refresh()->initiator_id);
 
         $this->expectException(QueryException::class);

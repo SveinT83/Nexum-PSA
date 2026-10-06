@@ -3,17 +3,17 @@
 namespace App\Modules\Storage\Notifications;
 
 use App\Modules\Notification\Channels\NextcloudTalkChannel;
+use App\Modules\Notification\Channels\QueueInternalWebPushChannel;
 use App\Modules\Notification\Contracts\EmailAccountMailNotification;
+use App\Modules\Notification\Contracts\QueuesInternalWebPush;
 use App\Modules\Notification\Models\NotificationChannel;
 use App\Modules\Notification\Models\NotificationSetting;
 use App\Modules\Notification\Support\RoutesEmailThroughAccount;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use NotificationChannels\WebPush\WebPushChannel;
-use NotificationChannels\WebPush\WebPushMessage;
 
-class SupplierOrderImportDailyDigestNotification extends Notification implements EmailAccountMailNotification
+class SupplierOrderImportDailyDigestNotification extends Notification implements EmailAccountMailNotification, QueuesInternalWebPush
 {
     use Queueable, RoutesEmailThroughAccount;
 
@@ -43,7 +43,7 @@ class SupplierOrderImportDailyDigestNotification extends Notification implements
             $channels[] = $this->emailAccountMailChannel('alerts');
         }
         if ($setting->web_push_enabled) {
-            $channels[] = WebPushChannel::class;
+            $channels[] = QueueInternalWebPushChannel::class;
         }
         $talk = NotificationChannel::getByDriver('nextcloud_talk');
         if ($talk?->is_enabled && $setting->nextcloud_talk_enabled) {
@@ -80,18 +80,6 @@ class SupplierOrderImportDailyDigestNotification extends Notification implements
         ];
     }
 
-    public function toWebPush(mixed $notifiable, Notification $notification): WebPushMessage
-    {
-        return (new WebPushMessage)
-            ->title('Supplier-order import digest')
-            ->body($this->total.' import(s) were recorded for '.$this->period.'.')
-            ->icon('/logo.png')
-            ->badge('/logo.png')
-            ->tag('supplier-order-import-digest-'.$this->period)
-            ->data(['url' => $this->url(), 'kind' => 'storage_purchase_import_digest'])
-            ->options(['TTL' => 21600, 'urgency' => 'low']);
-    }
-
     /** @return array<string, mixed> */
     public function toNextcloudTalk(object $notifiable): array
     {
@@ -112,5 +100,21 @@ class SupplierOrderImportDailyDigestNotification extends Notification implements
     private function url(): string
     {
         return route('tech.storage.purchase-order-imports.index');
+    }
+
+    public function internalWebPushType(): string
+    {
+        return 'storage_purchase_import_digest';
+    }
+
+    public function internalWebPushPayload(): array
+    {
+        return [
+            'title' => 'Supplier-order import digest',
+            'body' => 'Open Nexum to review the supplier-order import summary.',
+            'target_id' => $this->alertId,
+            'ttl' => 21600,
+            'urgency' => 'low',
+        ];
     }
 }

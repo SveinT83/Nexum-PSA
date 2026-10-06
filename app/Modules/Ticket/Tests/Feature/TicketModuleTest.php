@@ -590,7 +590,7 @@ class TicketModuleTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $this->actingAs($this->tech)
+        $response = $this->actingAs($this->tech)
             ->get(route('tech.tickets.index'))
             ->assertOk()
             ->assertSee('Merge suggestions')
@@ -598,6 +598,33 @@ class TicketModuleTest extends TestCase
             ->assertSee($target->ticket_key)
             ->assertSee('Merge suggestion')
             ->assertSee('100%');
+
+        preg_match_all(
+            '/name="ticket_snapshots\[(\d+)\]" value="([a-f0-9]{64})"/',
+            (string) $response->getContent(),
+            $snapshotMatches,
+            PREG_SET_ORDER
+        );
+
+        $renderedSnapshots = collect($snapshotMatches)
+            ->mapWithKeys(fn (array $match): array => [(int) $match[1] => $match[2]])
+            ->all();
+
+        $this->assertSame([
+            $target->id => TicketMergeSnapshot::fingerprint($target),
+            $source->id => TicketMergeSnapshot::fingerprint($source),
+        ], $renderedSnapshots);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.merge'), [
+                'ticket_ids' => [$target->id, $source->id],
+                'target_ticket_id' => $target->id,
+                'ticket_snapshots' => $renderedSnapshots,
+                'reason' => 'Merge suggestion: identical ticket content.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $target));
+
+        $this->assertSoftDeleted('tickets', ['id' => $source->id]);
     }
 
     #[Test]
@@ -1219,6 +1246,50 @@ class TicketModuleTest extends TestCase
         $this->assertDatabaseHas('ticket_events', [
             'ticket_id' => $target->id,
             'type' => 'merged_ticket',
+        ]);
+    }
+
+    #[Test]
+    public function ticket_merge_rejects_a_stale_rendered_snapshot_without_partial_changes(): void
+    {
+        $target = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999032',
+            'subject' => 'Primary ticket before preview',
+            'owner_id' => $this->tech->id,
+        ]);
+        $source = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999033',
+            'subject' => 'Duplicate ticket before preview',
+            'owner_id' => $this->tech->id,
+        ]);
+        $renderedSnapshots = [
+            $target->id => TicketMergeSnapshot::fingerprint($target),
+            $source->id => TicketMergeSnapshot::fingerprint($source),
+        ];
+
+        $source->update(['subject' => 'Ticket changed after preview']);
+
+        $this->actingAs($this->tech)
+            ->from(route('tech.tickets.index'))
+            ->post(route('tech.tickets.merge'), [
+                'ticket_ids' => [$target->id, $source->id],
+                'target_ticket_id' => $target->id,
+                'ticket_snapshots' => $renderedSnapshots,
+                'reason' => 'Stale preview regression.',
+            ])
+            ->assertRedirect(route('tech.tickets.index'))
+            ->assertSessionHasErrors([
+                'ticket_ids' => 'The merge preview is stale. Reopen it and review the current Tickets before merging.',
+            ]);
+
+        $this->assertDatabaseHas('tickets', [
+            'id' => $source->id,
+            'merged_into_ticket_id' => null,
+            'deleted_at' => null,
+        ]);
+        $this->assertDatabaseMissing('ticket_messages', [
+            'ticket_id' => $target->id,
+            'subject' => 'Ticket merged',
         ]);
     }
 
@@ -4304,6 +4375,13 @@ class TicketModuleTest extends TestCase
             'actor_id' => $this->tech->id,
             'type' => 'documentation_requested',
             'message' => 'Document the known fix for this category.',
+        ]);
+
+        $this->assertDatabaseHas('knowledge_documentation_requests', [
+            'ticket_id' => $ticket->id,
+            'requested_by' => $this->tech->id,
+            'status' => 'open',
+            'reason' => 'Document the known fix for this category.',
         ]);
 
         $this->actingAs($this->tech)

@@ -4,11 +4,13 @@ namespace App\Modules\Task\Models;
 
 use App\Models\Core\User;
 use App\Modules\Taxonomy\Models\Category;
+use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 class TaskTemplateItem extends Model
 {
@@ -23,6 +25,9 @@ class TaskTemplateItem extends Model
         'category_id',
         'assigned_to',
         'estimated_minutes',
+        'due_offset_minutes',
+        'scheduled_start_offset_minutes',
+        'scheduled_end_offset_minutes',
         'blocks_owner_completion',
         'sort_order',
         'metadata',
@@ -30,6 +35,9 @@ class TaskTemplateItem extends Model
 
     protected $casts = [
         'estimated_minutes' => 'integer',
+        'due_offset_minutes' => 'integer',
+        'scheduled_start_offset_minutes' => 'integer',
+        'scheduled_end_offset_minutes' => 'integer',
         'blocks_owner_completion' => 'boolean',
         'sort_order' => 'integer',
         'metadata' => 'array',
@@ -78,5 +86,15 @@ class TaskTemplateItem extends Model
     public function checklistItems(): HasMany
     {
         return $this->hasMany(TaskTemplateChecklistItem::class, 'template_item_id')->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function dependencies(): HasMany
+    {
+        return $this->hasMany(TaskTemplateDependency::class, 'template_item_id');
+    }
+
+    public function tags(): MorphToMany
+    {
+        return $this->morphToMany(Tag::class, 'taggable', 'taggables')->withPivot('module')->withTimestamps();
     }
 }

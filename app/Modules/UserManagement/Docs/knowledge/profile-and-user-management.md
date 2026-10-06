@@ -1,5 +1,3 @@
-# Profile And User Management
-
 User Management owns application users, roles, permissions, user preferences, security settings, and
 the authenticated technician profile shell.
 
@@ -39,6 +37,14 @@ The Ticket module stores ticket assignment settings, including assignability, ca
 category matching, ticket tag matching, and assignment notes. User Management owns timezone, work
 hours, availability, and general profile notes.
 
+## Simple Work Plan (Dev, Disabled By Default)
+
+The approved Workday plan adds a dedicated schedule save at /tech/profile/work-plan, dated
+Calendar projections and Education/Work/Other exceptions, with matching employee API operations.
+See [Work plan](work-plan.md) for ownership, conflict preview, permissions, recurrence and read-back.
+WORKDAY_ENABLED remains false until the full workflow/pilot is ready. This does not claim that
+actual time, absence, reminders or the external NexumMCP adapter have been implemented.
+
 ## Customer Portal Users
 
 Customer Portal uses the existing `user_management` authentication table so customer contacts can
@@ -73,13 +79,21 @@ Settings and then dropped by the cleanup migration.
 - `/tech/profile` shows the profile shell and account summary.
 - `/tech/profile` also lets the signed-in user update profile image, name, email, phone numbers,
   timezone, working hours, availability notes, and profile notes.
-- `/tech/profile/preferences` manages timezone, default calendar view, normal workday defaults, and
-  personal theme preference.
+- `/tech/profile/preferences` manages display timezone, default calendar view, visible calendar
+  hours, and personal theme. It never rewrites working hours or Calendar availability.
 - `/tech/profile/security` manages password and two-factor authentication.
 - `/tech/profile/notifications` manages notification delivery preferences.
 - `/tech/tickets/profile` manages ticket assignment settings.
 - `/tech/profile/integrations` is reserved for personal integration settings.
 - `/tech/profile/view` is reserved for future deeper personal display preferences.
+
+## Password Validation
+
+Password changes on Security / 2FA require the current password and a valid, confirmed new
+password. Rejected changes show validation feedback beside the affected field and leave the
+existing password unchanged. Submitted passwords are not restored into the form after an error.
+The profile form uses the same guarded password-change action as Fortify; displaying its
+validation errors does not bypass that action or the account-security boundary.
 
 ## Avatar And Theme
 
@@ -170,6 +184,68 @@ All lifecycle actions require a current active, non-system human and repeat auth
 locking current records. These permissions never grant mailbox View, Organize, Send, raw-source,
 attachment, search, conversation, Ticket, or emergency access.
 
+## Recovery Codes And The Guarded Vault Authentication Cutover
+
+Recovery codes are personal authentication credentials. Do not paste them into Tickets, chat,
+logs, screenshots or shared documentation. Keep the generated set in an approved password store.
+
+The existing profile action and Fortify endpoint share one regeneration action. When the approved
+guarded authentication cutover is enabled, generating a new set invalidates the previous set and
+advances the account authentication epoch exactly once. Consuming a code replaces only that exact
+code. Both operations invalidate prior active Vault proofs without granting new Vault step-up or
+changing the user's Vault authority.
+
+A challenge is tied to the account's authentication epoch and factor generation. Account or factor
+changes require restarting sign-in. A pending, unconfirmed factor cannot be used for recovery login.
+Failures roll back the protected code change and associated Vault evidence together. Safe recovery
+events contain only user ID, execution ID and operation kind, never a raw code.
+
+Validation errors do not copy TOTP or recovery-code input into the session's old-input bag.
+Telescope excludes recovery-code lists, factor setup responses and legacy raw-code events, and masks
+submitted authentication factors. This protection also applies before the Vault cutover.
+
+**Deployment status:** the new guarded recovery/challenge paths are under Slice 04 verification.
+The normal authentication provider is not switched by this change. Complete factor lifecycle,
+installation/cutover verification and HR-2026-09-04-003 remain required before Vault activation.
+This is not an instruction to enable Vault or migrate existing credentials.
+
+## Pending Two-Factor Enrollment Under The Guarded Cutover
+
+Starting a first setup, restarting an unconfirmed setup, and cancelling an unconfirmed setup are
+distinct from changing an already confirmed factor. The guarded boundary requires the current
+account's password and an authenticated matching user. A restart terminally supersedes the old
+generation and creates a new pending generation; cancellation terminally disables the old generation.
+Each real change advances authentication once and invalidates prior active Vault proofs. None of
+these pending-only operations changes Vault authority or confirms a factor.
+
+Generation history is retained after cancellation, a fresh enrollment and later account changes.
+A failed protected write rolls back the generation, account epoch and associated proof evidence
+together. Credentials and recovery-code values are not stored in generation/execution history.
+
+The profile and Fortify enable/disable actions keep their legacy behavior before the coordinated
+authentication cutover. Their guarded branch accepts `current_password`; the cutover/UI acceptance
+must supply that password and complete the separate confirmed-factor authority workflow.
+Confirmed-factor disable/replacement is deliberately denied by this pending-only boundary.
+This implementation does not activate Vault or make the unfinished cutover ready for deployment.
+
+## Privileged Invitations Under Vault Authority Enforcement
+
+Accepting an invitation establishes the recipient's password. Once Vault authority enforcement is
+active, an invited Admin or Superuser remains pending until an existing administrator completes
+the separate protected activation with required approval. The invitation does not create a signed-in
+session or grant active administrator authority. Assigned roles remain intact.
+
+The invitation is used once; reusing it cannot reset the waiting account's password. Ordinary
+non-privileged invitations keep their normal activation flow. Errors roll back password, token and
+security-epoch changes together. A change in roles or enforcement state during acceptance requires
+a fresh attempt rather than trusting the original decision.
+
+**Deployment status:** the acceptance boundary and its no-login response are implemented on Dev
+under Slice 04; the complete administrator activation and authority audit flow are still unfinished.
+This behavior is not enabled by changing the normal authentication provider in this update.
+HR-2026-09-04-003 and the full cutover verification remain required. Prepared for Knowledge/BookStack
+sync as development documentation; do not present the complete activation workflow as released.
+
 ## Development Rules
 
 - New general profile features belong in User Management.
@@ -177,3 +253,11 @@ attachment, search, conversation, Ticket, or emergency access.
 - Keep existing profile routes compatible until migration work explicitly replaces them.
 - Keep the shared profile side menu in User Management.
 - Ticket-owned profile data must not be expanded beyond ticket assignment needs.
+
+## Workday notification choices
+
+Profile > Notifications includes Workday when the feature is enabled and the employee has own
+view/register/confirm permissions. In-app is selected by default; Email and Web Push require
+opt-in and configured channels/devices. Turn all channels off to disable reminders. These choices
+do not change working hours, calendar plans or actual confirmed time. See the Workday reminder
+guide for timing, absence handling and Snooze.

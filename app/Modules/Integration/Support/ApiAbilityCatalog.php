@@ -14,6 +14,20 @@ class ApiAbilityCatalog
      * Access mode is deliberately explicit so progressive read scopes do not depend on their name.
      */
     private const ACCESS_MODES = [
+        'workday-task-conversion.write' => self::ACCESS_WRITE,
+        'workday-reminders.read' => self::ACCESS_READ,
+        'workday-reminders.write' => self::ACCESS_WRITE,
+        'workday-absences.read' => self::ACCESS_READ,
+        'workday-absences.write' => self::ACCESS_WRITE,
+        'workdays.read-all' => self::ACCESS_READ,
+        'workdays.read' => self::ACCESS_READ,
+        'workdays.write' => self::ACCESS_WRITE,
+        'workdays.confirm' => self::ACCESS_WRITE,
+        'workdays.settings' => self::ACCESS_WRITE,
+        'calendar.work-plan.write' => self::ACCESS_WRITE,
+        'calendar.work-plan.read' => self::ACCESS_READ,
+        'users.work-plan.update' => self::ACCESS_WRITE,
+        'users.work-plan.read' => self::ACCESS_READ,
         'clients.read' => self::ACCESS_READ,
         'clients.create' => self::ACCESS_WRITE,
         'clients.update' => self::ACCESS_WRITE,
@@ -101,6 +115,8 @@ class ApiAbilityCatalog
         'data_exchange.import' => self::ACCESS_WRITE,
         'data_exchange.approve_import' => self::ACCESS_WRITE,
         'report.read' => self::ACCESS_READ,
+        'commercial.worklog.read' => self::ACCESS_READ,
+        'commercial.worklog-links.read' => self::ACCESS_READ,
         'worklog.read' => self::ACCESS_READ,
         'time-entries.read' => self::ACCESS_READ,
         'signals.create' => self::ACCESS_WRITE,
@@ -110,6 +126,16 @@ class ApiAbilityCatalog
     ];
 
     private const ABILITIES = [
+        'workday-task-conversion.write' => ['label' => 'Convert own activity to internal Task', 'description' => 'Explicitly preview and create non-billable internal Task time from saved activity. Also requires Task read, create and update grants.', 'domain' => 'Workday'],
+        'workday-reminders.read' => ['label' => 'Read own Workday reminders', 'description' => 'Read personal pending reminders and notification channel preferences.', 'domain' => 'Workday'],
+        'workday-reminders.write' => ['label' => 'Manage own Workday reminders', 'description' => 'Snooze own reminders and explicitly set personal notification channels.', 'domain' => 'Workday'],
+        'workdays.read-all' => ['label' => 'Read confirmed workday overview', 'description' => 'Read named confirmed time and confirmed revisions with explicit oversight permission. No drafts or absence reasons.', 'domain' => 'Workday'],
+        'workday-absences.read' => ['label' => 'Read own absence', 'description' => 'Read own restricted absence periods and revision history.', 'domain' => 'Workday'],
+        'workday-absences.write' => ['label' => 'Manage own absence', 'description' => 'Register, correct and cancel own absence with a neutral Calendar projection.', 'domain' => 'Workday'],
+        'workdays.read' => ['label' => 'Read own workdays', 'description' => 'Read own date entry context, effective planned/free time, actual time, history and exact confirmation previews.', 'domain' => 'Workday'],
+        'workdays.write' => ['label' => 'Write own workdays', 'description' => 'Save own drafts and start traceable corrections.', 'domain' => 'Workday'],
+        'workdays.confirm' => ['label' => 'Confirm own workdays', 'description' => 'Explicitly confirm a reviewed revision of own actual time.', 'domain' => 'Workday'],
+        'workdays.settings' => ['label' => 'Manage Workday settings', 'description' => 'Read and update Workday activation with administrative permission.', 'domain' => 'Workday'],
         'clients.read' => [
             'label' => 'Read clients',
             'description' => 'List and view client records.',
@@ -545,6 +571,16 @@ class ApiAbilityCatalog
             'description' => 'List and view available report definitions.',
             'domain' => 'Reports',
         ],
+        'commercial.worklog.read' => [
+            'label' => 'Read minimized direct timebank consumption',
+            'description' => 'Read workload-bound Commercial timebank facts without names, notes or prices.',
+            'domain' => 'Commercial',
+        ],
+        'commercial.worklog-links.read' => [
+            'label' => 'Read minimized time contract links',
+            'description' => 'Read workload-bound billing-basis and persisted contract allocation evidence.',
+            'domain' => 'Commercial',
+        ],
         'worklog.read' => [
             'label' => 'Read aggregate technician worklogs',
             'description' => 'Read policy-filtered aggregate or pseudonymized technician worklog summaries.',
@@ -559,6 +595,26 @@ class ApiAbilityCatalog
             'label' => 'Create signals',
             'description' => 'Record normalized Signal events from integrations and webhooks.',
             'domain' => 'Signal',
+        ],
+        'users.work-plan.read' => [
+            'label' => 'Read own work plan',
+            'description' => 'Employee-owned planning only; no actual time or account-security changes.',
+            'domain' => 'User Management',
+        ],
+        'users.work-plan.update' => [
+            'label' => 'Update own work plan',
+            'description' => 'Employee-owned planning only; no actual time or account-security changes.',
+            'domain' => 'User Management',
+        ],
+        'calendar.work-plan.read' => [
+            'label' => 'Read own plan blocks',
+            'description' => 'Employee-owned planning only; no actual time or account-security changes.',
+            'domain' => 'User Management',
+        ],
+        'calendar.work-plan.write' => [
+            'label' => 'Manage own plan blocks',
+            'description' => 'Employee-owned planning only; no actual time or account-security changes.',
+            'domain' => 'User Management',
         ],
         'users.read' => [
             'label' => 'Read users',

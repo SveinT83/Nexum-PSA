@@ -443,6 +443,7 @@
                     const eventId = button.dataset.eventId;
                     const detailsVisible = button.dataset.detailsVisible === '1';
                     const isRecurring = button.dataset.isRecurring === '1';
+                    const sourceOwned = button.dataset.sourceOwned === '1';
 
                     editForm.action = updateRoute.replace('__EVENT__', eventId);
                     deleteForm.action = deleteRoute.replace('__EVENT__', eventId);
@@ -460,10 +461,20 @@
                     document.getElementById('edit_visibility').value = button.dataset.visibility || 'default';
                     document.getElementById('calendarEventOriginalStartsAt').value = button.dataset.startsAt || '';
 
-                    notice.classList.toggle('d-none', detailsVisible);
+                    notice.classList.toggle('d-none', detailsVisible && !sourceOwned);
+                    notice.replaceChildren(document.createTextNode(sourceOwned
+                        ? 'This unavailable block is maintained in the owner’s absence register.'
+                        : 'Private event details are not available.'));
+                    if (sourceOwned && button.dataset.sourceEditUrl) {
+                        const link = document.createElement('a');
+                        link.href = button.dataset.sourceEditUrl;
+                        link.className = 'ms-2';
+                        link.textContent = 'My absences';
+                        notice.append(link);
+                    }
                     deleteScope.classList.toggle('d-none', !isRecurring);
-                    saveButton.disabled = !detailsVisible;
-                    deleteButton.disabled = !detailsVisible;
+                    saveButton.disabled = !detailsVisible || sourceOwned;
+                    deleteButton.disabled = !detailsVisible || sourceOwned;
 
                     modal.show();
                 });

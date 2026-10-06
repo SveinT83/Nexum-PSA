@@ -142,6 +142,7 @@ class NextcloudReadClient
 
     public function putCalendarEvent(NextcloudConnection $connection, string $calendarHref, CalendarEvent $event): ?string
     {
+        \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::assertCalendarEditable($event);
         $uid = $event->external_uid ?: $event->uuid;
         $href = rtrim($this->normalizeHref($calendarHref), '/').'/'.rawurlencode($uid).'.ics';
         $response = $this->dav($connection)

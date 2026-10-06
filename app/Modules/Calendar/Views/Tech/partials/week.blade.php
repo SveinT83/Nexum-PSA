@@ -20,6 +20,8 @@
             @forelse(($eventsByDay[$dateKey] ?? collect())->sortBy('starts_at') as $event)
                 <button type="button" class="calendar-event js-calendar-event text-start w-100 border-0" style="--event-color: {{ $event['calendar_color'] }}"
                     data-event-id="{{ $event['id'] }}"
+                data-source-owned="{{ ($event['source_owned'] ?? false) ? '1' : '0' }}"
+                data-source-edit-url="{{ $event['source_edit_url'] ?? '' }}"
                     data-calendar-id="{{ $event['calendar_id'] }}"
                     data-title="{{ $event['title'] }}"
                     data-description="{{ $event['description'] }}"

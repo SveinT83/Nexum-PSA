@@ -1320,7 +1320,7 @@ class EmailModuleTest extends TestCase
             ->assertDontSee('Workspace inbox message')
             ->call('selectPlacement', $sentPlacement->id)
             ->assertSee('Sent folder body.')
-            ->assertSee('Mailbox read')
+            ->assertSee('Mail server read')
             ->call('selectPlacement', $privatePlacement->id)
             ->assertDontSee('Private body.');
 
@@ -2638,6 +2638,10 @@ class EmailModuleTest extends TestCase
         ]));
         $this->grantMailbox($account, $this->tech);
 
+        $otherTech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $otherTech->assignRole('Tech');
+        $this->grantMailbox($account, $otherTech);
+
         $folder = EmailFolder::create([
             'account_id' => $account->id,
             'path' => 'INBOX',
@@ -2686,15 +2690,23 @@ class EmailModuleTest extends TestCase
         Livewire::actingAs($this->tech)
             ->test(MailWorkspace::class)
             ->call('selectPlacement', $placement->id)
-            ->call('setSelectedUnreadForMe', false)
+            ->assertSee('Mark as read')
+            ->call('markSelectedRead')
             ->assertSee('Read for me')
-            ->assertSee('Mark unread for me');
+            ->assertSee('Mark as unread');
 
         $this->assertDatabaseHas('email_message_user_states', [
             'email_message_id' => $message->id,
             'user_id' => $this->tech->id,
             'is_unread' => false,
         ]);
+        $this->assertDatabaseCount('email_remote_operations', 0);
+
+        Livewire::actingAs($otherTech)
+            ->test(MailWorkspace::class)
+            ->call('selectPlacement', $placement->id)
+            ->assertSee('Unread for me')
+            ->assertSee('Mark as read');
 
         Livewire::actingAs($this->tech)
             ->test(MailWorkspace::class)
@@ -2704,10 +2716,12 @@ class EmailModuleTest extends TestCase
     }
 
     #[Test]
-    public function mail_workspace_provider_actions_update_imap_and_remote_operation_ledger(): void
+    public function mail_workspace_personal_read_action_and_provider_actions_update_imap_and_ledger(): void
     {
         $account = EmailAccount::create($this->emailAccountPayload([
             'address' => 'workspace-actions@example.test',
+            'account_kind' => EmailAccount::KIND_PERSONAL,
+            'owner_id' => $this->tech->id,
         ]));
         $this->grantMailbox($account, $this->tech);
 
@@ -2790,20 +2804,24 @@ class EmailModuleTest extends TestCase
             ->test(MailWorkspace::class)
             ->call('selectPlacement', $placement->id)
             ->assertDontSeeHtml('dropdown-toggle')
-            ->assertSee('Mark read on mail server')
+            ->assertSee('Mark as read')
+            ->assertDontSee('Mark read on mail server')
             ->assertSee('Flag')
             ->assertSee('Category and tags')
-            ->call('setProviderSeenForSelected', true)
-            ->assertSee('Mailbox read')
-            ->assertSee('Message was marked read in the mailbox.')
+            ->call('markSelectedRead')
+            ->assertSee('Mark as unread')
+            ->assertSee('Marked as read.')
+            ->call('markSelectedUnread')
+            ->assertSee('Mark as read')
+            ->assertSee('Marked as unread.')
             ->call('setProviderFlaggedForSelected', true)
             ->assertSee('Unflag')
             ->assertSee('Message was flagged in the mailbox.');
 
-        $this->assertSame([[5011, true, 'INBOX']], $client->seenCalls);
+        $this->assertSame([[5011, true, 'INBOX'], [5011, false, 'INBOX']], $client->seenCalls);
         $this->assertSame([[5011, true, 'INBOX']], $client->flaggedCalls);
-        $this->assertSame(2, $client->connects);
-        $this->assertSame(2, $client->disconnects);
+        $this->assertSame(3, $client->connects);
+        $this->assertSame(3, $client->disconnects);
 
         $this->assertDatabaseHas('email_remote_operations', [
             'email_mailbox_placement_id' => $placement->id,
@@ -2813,14 +2831,19 @@ class EmailModuleTest extends TestCase
         ]);
         $this->assertDatabaseHas('email_remote_operations', [
             'email_mailbox_placement_id' => $placement->id,
+            'operation_type' => 'mark_unseen',
+            'status' => EmailRemoteOperation::STATUS_SUCCEEDED,
+        ]);
+        $this->assertDatabaseHas('email_remote_operations', [
+            'email_mailbox_placement_id' => $placement->id,
             'operation_type' => 'flag',
             'status' => EmailRemoteOperation::STATUS_SUCCEEDED,
         ]);
 
         $placement->refresh();
-        $this->assertTrue($placement->provider_seen);
+        $this->assertFalse($placement->provider_seen);
         $this->assertTrue($placement->provider_flagged);
-        $this->assertSame(3, $placement->sync_version);
+        $this->assertSame(4, $placement->sync_version);
     }
 
     #[Test]

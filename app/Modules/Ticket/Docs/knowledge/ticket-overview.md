@@ -131,6 +131,11 @@ Ticket create/edit:
 
 Create and edit forms handle manual ticket creation, client/contact/site/asset scope, lifecycle fields, tags, and core ticket metadata.
 
+Recurring Tickets may select an active Task Template in the Schedule card. Each future Ticket
+occurrence receives a new Task group from the template definition that is current when that
+occurrence is generated. The recurring parent does not receive or clone those Tasks. Task Template
+generation remains atomic and duplicate-safe through the Task domain.
+
 Ticket API:
 
 External systems can sync ticket conversation entries through `POST /api/v1/tickets/{ticket}/external-messages`. The endpoint is idempotent by external source and external message ID, stores the message as `author_type = external`, and avoids sending outbound customer email for imported replies. Free-form external metadata is kept for audit context, but workflow-driving fields such as reply intent and solution markers are ignored.
@@ -172,6 +177,18 @@ description remains an internal note and does not queue a customer-reply email. 
 Tickets stay silent externally: they are not visible in the Customer Portal, do not emit portal
 notifications, do not allow `Reply to contact`, and cannot be escalated to a Nexum relationship.
 Internal notes and reporting remain available.
+
+## Internal Web Push
+
+An internal technician may independently opt in to Web Push for assignment, status change, comment,
+customer reply, and SLA warning events under Profile > Notifications. Web Push remains default-off
+and best effort; the in-app notification stays authoritative.
+
+Before an ordinary Ticket push is sent, Nexum rechecks the active non-system recipient, the current
+event preference, `ticket.view`, and visibility of the exact Ticket. The lock-screen payload uses a
+generic Ticket summary and an authorized same-origin Ticket route. It does not expose the Ticket
+subject, comment text, Client/customer identity, Email content, or other record detail. Customer
+reply delivery retains the stricter inbound Email notification outbox.
 
 Technicians can publish an Unpublished Ticket from the Ticket show page. Published Tickets cannot be
 unpublished from the normal Ticket page. Portal replies are stored as public customer messages and

@@ -13,7 +13,7 @@ class ReportController extends Controller
     {
         return view('report::Tech.index', [
             'activeDomain' => $request->string('domain')->toString(),
-            'domains' => $reports->domains(),
+            'domains' => $reports->visibleFor($request->user())->pluck('domain')->unique()->sort()->values(),
             'reports' => $reports->visibleFor($request->user(), $request->string('domain')->toString()),
             'totalReports' => $reports->visibleFor($request->user())->count(),
         ]);

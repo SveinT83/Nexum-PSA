@@ -25,6 +25,13 @@
         ],
     ];
 
+    $profileSidebarItems[] = ['name' => 'Work Account', 'route' => 'tech.profile.sso', 'pattern' => ['tech.profile.sso*'], 'icon' => 'bi-person-check'];
+
+    if (config('workday.enabled')) {
+        $profileSidebarItems[] = ['name' => 'Work plan', 'route' => 'tech.profile.work-plan',
+            'pattern' => ['tech.profile.work-plan*'], 'icon' => 'bi-calendar-week'];
+    }
+
     if (Route::has('tech.profile.notifications')) {
         $profileSidebarItems[] = [
             'name' => 'Notifications',

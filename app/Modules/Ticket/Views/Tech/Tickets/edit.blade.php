@@ -244,6 +244,17 @@
                         <input type="date" id="recurrence_ends_at" name="recurrence_ends_at" class="form-control @error('recurrence_ends_at') is-invalid @enderror" value="{{ old('recurrence_ends_at', $schedule?->recurrence_ends_at?->format('Y-m-d')) }}">
                         @error('recurrence_ends_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
+                    <div class="mb-3">
+                        <label for="task_template_group_id" class="form-label">Tasks for generated Tickets</label>
+                        <select id="task_template_group_id" name="task_template_group_id" class="form-select @error('task_template_group_id') is-invalid @enderror">
+                            <option value="">Do not add predefined Tasks</option>
+                            @foreach($taskTemplates as $taskTemplate)
+                                <option value="{{ $taskTemplate->id }}" @selected(old('task_template_group_id', $schedule?->task_template_group_id) == $taskTemplate->id)>{{ $taskTemplate->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('task_template_group_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="form-text">Each future Ticket occurrence receives a new Task group from the current saved template.</div>
+                    </div>
                 </div>
 
                 <div class="mb-3">

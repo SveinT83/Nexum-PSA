@@ -384,10 +384,26 @@ historical-import plus delegation/break-glass tests / 340 assertions, and the br
 runs of 171 / 1,548 plus 157 / 1,063. No live migration or provider operation was run for this slice;
 named Dev browser and migration review remains Pending under `HR-2026-08-16-003`.
 
+### Simple read action
+
+The selected message has one direct **Mark as read** or **Mark as unread** action. It updates the
+signed-in technician's personal Nexum state immediately. Opening a message still records an
+opened-by receipt without marking it read, and no confirmation panel or migration workflow is shown.
+
+For a shared or system mailbox, the action changes only that technician's state. Other technicians
+remain unread until they act themselves, and the shared provider Seen flag is left unchanged.
+
+For a personal mailbox, the owner uses the same button and Nexum also mirrors Seen/Unseen to the
+provider through the normal remote-operation ledger. A delegate's personal read action does not
+mutate the owner's provider state.
+
+Advanced conversation-wide or multi-account acknowledgement is not shown in the ordinary reader.
+Its separately guarded API/administrative workflow remains default-off.
+
 ### Conversation acknowledgement safety status
 
 Conversation-wide acknowledgement is implemented in Mail and API but remains off by default until
-named review. Mail opens a separate preview panel before Apply. A preview freezes only the
+named review. The ordinary Mail reader does not expose its preview/apply controls. An advanced preview freezes only the
 currently active placements in the selected account conversation, or exact placements the user
 explicitly selected across accounts. It does not add related mail based on subject, Message-ID,
 Ticket links or correlation. New mail arriving afterward is outside that preview and stays Unread for
@@ -416,14 +432,13 @@ Forward migration `2026_08_24_140000_create_email_conversation_acknowledgement_a
 adds the run/item ledger and refuses rollback after evidence exists. It ran in Dev batch 128 and the
 ledgers remain empty. Historical `2026_08_19_150000` stays an inert marker and creates no old acknowledgement table.
 Keep `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED=false` until named review `HR-2026-08-16-012` is complete.
-When enabled, Mail supports preview/confirm/status/cancel for the active account conversation. API
-also supports exact explicitly selected placements across accounts. Apply/retry uses bounded default
+The guarded API supports exact explicitly selected placements across accounts. Apply/retry uses bounded default
 queue continuation and returns only safe counts, statuses, reason codes and opaque operation IDs.
 
-Only the explicit personal read controls change Nexum `Unread for me` state. The main command bar
-shows one `Mark read` action when the selected message is unread for the current user; `Mark unread
-for me` is available from More actions after it has been read. These controls affect only the current
-user. They do not change other users' personal state, provider flags, Ticket unread state, or
+Only the direct selected-message control changes Nexum `Unread for me` state. It shows `Mark as
+read` or `Mark as unread` according to the signed-in user's current state. Shared/system mailboxes
+do not change provider Seen; a personal mailbox owner also mirrors provider Seen/Unseen through the
+existing ledger. The action never changes another user's personal state, Ticket unread state, or
 Notification read state.
 
 The Mail workspace currently supports read/search/triage orientation: mailbox and folder navigation
@@ -1360,3 +1375,14 @@ draft/submission boundary from both the Livewire workspace and the versioned dra
 preview, send, submission-status, and Sent-reconciliation API. The same ledger also backs the
 default-off Order 9 shared API, but shared/team drafts remain unavailable in the workspace until its
 separate migration, runtime/UI activation and review are complete.
+
+## Deleting An Entry Already Removed At The Provider
+
+If Trash confirms that the selected source UID no longer exists in the current provider folder,
+Mail hides that outdated placement and clears the selected reader entry. Other copies and Ticket
+evidence remain intact. This also removes the obsolete placement from shared mailbox views because
+provider existence is authoritative; it does not mark anyone's personal unread state as read.
+
+The operation history retains the failed source-missing preflight rather than claiming a successful
+move to Trash. Connection/read errors, changed UID namespaces and changed local placement identity
+do not hide the message. No permanent provider deletion or automatic retry is performed.

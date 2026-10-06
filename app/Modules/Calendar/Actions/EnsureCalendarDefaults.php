@@ -30,7 +30,7 @@ class EnsureCalendarDefaults
         ];
     }
 
-    public function ensurePersonalCalendar(User $user): Calendar
+    public function ensurePersonalCalendar(User $user, bool $seedWorkingWeek = true): Calendar
     {
         $timezone = $this->setting('default_timezone', 'Europe/Oslo');
         $slugBase = Str::slug($user->name ?: 'user-'.$user->id) ?: 'user-'.$user->id;
@@ -69,7 +69,11 @@ class EnsureCalendarDefaults
             ]
         );
 
-        $this->ensureWorkingWeek($calendar, $user, $timezone);
+        // Never re-seed missing weekdays on an existing personal calendar: a disabled
+        // weekday or an effective-dated plan is deliberate, not a missing default.
+        if ($calendar->wasRecentlyCreated && $seedWorkingWeek) {
+            $this->ensureWorkingWeek($calendar, $user, $timezone);
+        }
 
         return $calendar;
     }
@@ -132,6 +136,7 @@ class EnsureCalendarDefaults
                     'weekday' => $weekday,
                 ],
                 [
+                    'metadata' => ['source' => 'calendar_default'],
                     'timezone' => $timezone,
                     'starts_at_local' => $this->setting('default_workday_start', '08:00'),
                     'ends_at_local' => $this->setting('default_workday_end', '16:00'),

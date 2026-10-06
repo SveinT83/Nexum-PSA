@@ -993,6 +993,12 @@ class InboundEmailNotificationFanoutDurabilityTest extends TestCase
             ->where('id', $detachingId)
             ->first();
 
+        // Email Live deliberately prevents deleting its authority row. Remove
+        // that unrelated test-only bootstrap evidence so this migration test
+        // can exercise the external-delivery ON DELETE SET NULL contract.
+        DB::unprepared('drop trigger if exists "em_live_user_access_contract_no_delete"');
+        DB::table('email_live_user_access_states')->where('user_id', $user->id)->delete();
+
         DB::table('notifications')->where('id', $notificationId)->delete();
         DB::table((new User)->getTable())->where('id', $user->id)->delete();
         $detached = (array) DB::table('notification_inbound_external_deliveries')
@@ -1498,6 +1504,8 @@ class InboundEmailNotificationFanoutDurabilityTest extends TestCase
             ->where('id', 1)
             ->first();
         $seal = $this->removeFanoutMigrationSeal();
+        $operator = $this->activeUser();
+        $this->actingAs($operator);
 
         try {
             $this->app->instance(
@@ -1511,7 +1519,7 @@ class InboundEmailNotificationFanoutDurabilityTest extends TestCase
                 $this->assertSame('inbound_ticket_message_pointer_repair_pending', $exception->getMessage());
             }
             try {
-                app(MarkTicketAsNotTicket::class)->handle($returnTicket);
+                app(MarkTicketAsNotTicket::class)->handle($returnTicket, $operator);
                 $this->fail('Returning mail to Inbox proceeded without the exact fanout migration seal.');
             } catch (InvalidArgumentException $exception) {
                 $this->assertSame(

@@ -14,6 +14,9 @@
                 <h4 class="mb-0"><i class="bi bi-shield-lock me-2"></i>Two-Factor Authentication Enforcement</h4>
             </div>
             <div class="card-body">
+                @can('user.manage_2fa')
+                    <p><a href="{{ route('tech.admin.user_management.sso') }}">Work account sign-in settings</a></p>
+                @endcan
                 <form action="{{ route('tech.admin.user_management.2fa-settings.update') }}" method="POST">
                     @csrf
 

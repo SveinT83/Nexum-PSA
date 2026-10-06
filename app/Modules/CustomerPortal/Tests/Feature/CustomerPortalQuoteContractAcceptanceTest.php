@@ -15,6 +15,7 @@ use App\Modules\Contact\Models\ContactRelation;
 use App\Modules\CustomerPortal\Models\CustomerPortalAccount;
 use App\Modules\CustomerPortal\Models\CustomerPortalMembership;
 use App\Modules\Notification\Models\NotificationSetting;
+use App\Modules\Notification\Support\NotificationTypeRegistry;
 use App\Modules\Sales\Models\SalesActivity;
 use App\Modules\Sales\Models\SalesOpportunity;
 use App\Modules\Sales\Models\SalesQuote;
@@ -273,7 +274,7 @@ class CustomerPortalQuoteContractAcceptanceTest extends TestCase
 
     private function disablePortalMail(User $user): void
     {
-        foreach (NotificationSetting::CUSTOMER_PORTAL_TYPES as $type => $label) {
+        foreach (NotificationTypeRegistry::labels(NotificationTypeRegistry::AUDIENCE_CUSTOMER_PORTAL) as $type => $label) {
             NotificationSetting::updateOrCreate(
                 ['user_id' => $user->id, 'notification_type' => $type],
                 [

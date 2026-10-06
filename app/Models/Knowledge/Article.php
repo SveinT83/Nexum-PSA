@@ -8,6 +8,9 @@ use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -33,6 +36,7 @@ class Article extends Model
         'next_review_at',
         'created_by',
         'updated_by',
+        'published_revision_id',
         'source_system',
         'source_type',
         'source_id',
@@ -98,6 +102,26 @@ class Article extends Model
     public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function publishedRevision(): BelongsTo
+    {
+        return $this->belongsTo(ArticleRevision::class, 'published_revision_id');
+    }
+
+    public function documentationRequests(): HasMany
+    {
+        return $this->hasMany(DocumentationRequest::class);
+    }
+
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(ArticleRevision::class);
+    }
+
+    public function bookStackSyncState(): HasOne
+    {
+        return $this->hasOne(ArticleBookStackSyncState::class);
     }
 
     protected static function boot()

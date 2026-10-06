@@ -6,6 +6,8 @@ Decision Makers: Svein / Codex
 Related RFC: `../rfc/2026-07-04-mail-module-full-email-client.md`
 Related ADR: `2026-08-11-email-conversations-as-ticket-communication-channels.md`
 
+Ordinary selected-message read-action behavior is superseded by `2026-09-03-email-simple-read-action-authority.md`.
+
 ## Context
 
 Email accounts and rules are currently global. The technician Inbox and Email Inbox API query all

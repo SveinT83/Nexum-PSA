@@ -482,6 +482,16 @@ class EmailRemoteOperationRecoveryTest extends TestCase
         $this->assertFalse($operation->canBeRetried());
         $this->assertSame('INBOX.Trash', $operation->target_folder_path);
         $this->assertSame(1, $client->uidSearches);
+        $placement->refresh();
+        $this->assertSame(EmailMailboxPlacement::LOCAL_HIDDEN, $placement->local_state);
+        $this->assertSame(EmailMailboxPlacement::SYNC_SYNCED, $placement->sync_status);
+        $this->assertNotNull($placement->provider_missing_at);
+        $this->assertSame(2, $placement->sync_version);
+        $this->assertNull($placement->sync_error_code);
+        $this->assertSame(0, $placement->conversation->fresh()->active_placement_count);
+        // Missing source projection must not erase content or invent a Trash copy.
+        $this->assertNotNull($placement->message);
+        $this->assertSame(1, EmailMailboxPlacement::query()->count());
 
         $attempt = $operation->attemptRecords()->sole();
         $this->assertSame('blocked', $attempt->outcome);
@@ -494,6 +504,165 @@ class EmailRemoteOperationRecoveryTest extends TestCase
         $result = app(RunDueEmailRemoteOperations::class)->handle();
         $this->assertSame(0, $result['processed']);
         $this->assertSame(1, $operation->fresh()->attemptRecords()->count());
+    }
+
+    #[Test]
+    public function workspace_trash_clears_a_confirmed_missing_source_and_preserves_other_occurrences(): void
+    {
+        [$account, , $placement] = $this->mailboxContext();
+        EmailFolder::create([
+            'account_id' => $account->id,
+            'path' => 'INBOX.Trash',
+            'name' => 'Trash',
+            'delimiter' => '.',
+            'parent_path' => 'INBOX',
+            'role' => EmailFolder::ROLE_TRASH,
+            'is_selectable' => true,
+            'sync_enabled' => true,
+            'uid_validity' => 88,
+        ]);
+
+        $client = new class($account) extends ImapClient
+        {
+            public int $uidSearches = 0;
+
+            public function connect(): void {}
+
+            public function folderState(string $folderPath): array
+            {
+                return ['uid_validity' => 77];
+            }
+
+            public function messageExistsByUid(int $uid, string $folderPath = 'INBOX'): bool
+            {
+                $this->uidSearches++;
+
+                return false;
+            }
+
+            public function disconnect(): void {}
+        };
+        $this->app->bind(ImapClient::class, fn () => $client);
+
+        $other = $placement->replicate();
+        $other->imap_uid = 7702;
+        $other->save();
+
+        \Livewire\Livewire::actingAs($this->actor)
+            ->test(\App\Modules\Email\Livewire\Tech\MailWorkspace::class)
+            ->set('selectedPlacementId', $placement->id)
+            ->call('trashSelected')
+            ->assertSet('selectedPlacementId', null)
+            ->assertSet('mailActionStatus.type', 'info')
+            ->assertSee('The outdated entry has been removed from this view.');
+
+        $operation = EmailRemoteOperation::query()->sole();
+        $this->assertSame(EmailMailboxPlacement::LOCAL_ACTIVE, $other->fresh()->local_state);
+        $this->assertNull($other->fresh()->provider_missing_at);
+
+        $this->assertSame(EmailRemoteOperation::STATUS_FAILED, $operation->status);
+        $this->assertSame(EmailRemoteOperation::FAILURE_STALE, $operation->failure_classification);
+        $this->assertSame('REMOTE_OPERATION_SOURCE_MISSING', $operation->status_reason_code);
+        $this->assertNull($operation->next_attempt_at);
+        $this->assertNull($operation->provider_response_json);
+        $this->assertFalse($operation->canBeRetried());
+        $this->assertSame('INBOX.Trash', $operation->target_folder_path);
+        $this->assertSame(1, $client->uidSearches);
+        $placement->refresh();
+        $this->assertSame(EmailMailboxPlacement::LOCAL_HIDDEN, $placement->local_state);
+        $this->assertSame(EmailMailboxPlacement::SYNC_SYNCED, $placement->sync_status);
+        $this->assertNotNull($placement->provider_missing_at);
+        $this->assertSame(2, $placement->sync_version);
+        $this->assertNull($placement->sync_error_code);
+        $this->assertSame(1, $placement->conversation->fresh()->active_placement_count);
+        // Missing source projection must not erase content or invent a Trash copy.
+        $this->assertNotNull($placement->message);
+        $this->assertSame(2, EmailMailboxPlacement::query()->count());
+
+        $attempt = $operation->attemptRecords()->sole();
+        $this->assertSame('blocked', $attempt->outcome);
+        $this->assertSame(EmailRemoteOperationAttempt::KIND_PREFLIGHT, $attempt->attempt_kind);
+        $this->assertSame(EmailRemoteOperation::FAILURE_STALE, $attempt->failure_classification);
+        $this->assertSame('REMOTE_OPERATION_SOURCE_MISSING', $attempt->reason_code);
+        $this->assertSame(0, $operation->attempts);
+        $this->assertSame(0, $operation->providerAttemptCount());
+
+        $result = app(RunDueEmailRemoteOperations::class)->handle();
+        $this->assertSame(0, $result['processed']);
+        $this->assertSame(1, $operation->fresh()->attemptRecords()->count());
+    }
+
+    #[Test]
+    #[\PHPUnit\Framework\Attributes\DataProvider('missingTrashSafetyCases')]
+    public function unconfirmed_or_changed_trash_sources_remain_visible(string $scenario): void
+    {
+        [$account, , $placement] = $this->mailboxContext();
+        EmailFolder::create([
+            'account_id' => $account->id,
+            'path' => 'INBOX.Trash',
+            'name' => 'Trash',
+            'delimiter' => '.',
+            'parent_path' => 'INBOX',
+            'role' => EmailFolder::ROLE_TRASH,
+            'is_selectable' => true,
+            'sync_enabled' => true,
+            'uid_validity' => 88,
+        ]);
+
+        $client = new class($account) extends ImapClient
+        {
+            public int $uidSearches = 0;
+
+            public string $scenario;
+
+            public EmailMailboxPlacement $placement;
+
+            public function connect(): void {}
+
+            public function folderState(string $folderPath): array
+            {
+                return ['uid_validity' => $this->scenario === 'namespace_changed' ? 78 : 77];
+            }
+
+            public function messageExistsByUid(int $uid, string $folderPath = 'INBOX'): bool
+            {
+                $this->uidSearches++;
+
+                if ($this->scenario === 'read_failed') {
+                    throw new EmailProviderReadException('Provider search unavailable.');
+                }
+                if ($this->scenario === 'placement_changed') {
+                    $this->placement->forceFill(['sync_version' => 2])->save();
+                }
+
+                return false;
+            }
+
+            public function disconnect(): void {}
+        };
+        $client->scenario = $scenario;
+        $client->placement = $placement;
+        $this->app->bind(ImapClient::class, fn () => $client);
+
+        $operation = app(PerformEmailRemoteOperation::class)->handle(
+            $placement,
+            PerformEmailRemoteOperation::TRASH,
+            $this->actor,
+        );
+
+        $this->assertSame(EmailRemoteOperation::STATUS_FAILED, $operation->status);
+        $this->assertSame(EmailMailboxPlacement::LOCAL_ACTIVE, $placement->fresh()->local_state);
+        $this->assertNull($placement->fresh()->provider_missing_at);
+        $this->assertNotNull($placement->fresh()->message);
+    }
+
+    public static function missingTrashSafetyCases(): array
+    {
+        return [
+            'provider read failed' => ['read_failed'],
+            'UID namespace changed' => ['namespace_changed'],
+            'placement changed during provider read' => ['placement_changed'],
+        ];
     }
 
     #[Test]

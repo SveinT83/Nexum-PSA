@@ -1,5 +1,341 @@
 # Human Review Register
 
+## HR-2026-10-06-RELEASE - Completed Dev Changes For Production Review
+
+Status: In Review; automated release verification complete; production acceptance pending.
+Owner: Codex. Reviewer and production operator: Svein Tore.
+Authorization 2026-10-06: Svein explicitly requested merging SSO, Workday and Tripletex
+to Main and performing the remaining practical checks in production. He then expanded
+the scope to other completed Dev changes: "Ta også med øvrige ferdige Dev-endringer".
+This authorizes the merge after verification of the assembled release. It does not mark
+unperformed checks Reviewed and does not authorize unfinished Vault/security rollout.
+
+Scope: completed Dev changes selected in docs/plans/2026-10-06-main-release-verification.md.
+The unfinished Vault module, migrations and guarded authentication provider remain excluded.
+Required existing checks remain open under HR-2026-10-05-SSO,
+HR-2026-10-05-WORKDAY-TRIPLETEX, HR-2026-10-01-WORKDAY and applicable included-feature
+entries. For this release, Svein explicitly moves practical acceptance after Main merge
+to his production review; older pre-merge gate wording is superseded only for included
+completed features. Vault HR-2026-09-04-003 and unrelated blocked work are not waived.
+
+Automated evidence: initial full run 2,849 passed / 10 failed; every failure resolved and
+128 final regressions passed (1,173 assertions). Strict Composer audit has zero advisories.
+The release verification report records the exact tested code tree, migration list, provider
+setup, external scheduler and rollback requirements. This evidence is not human acceptance.
+- [ ] Svein: test production SSO/local MFA and emergency login, Workday entry/editing,
+  and scoped Tripletex synchronization; confirm any remaining included-feature checks.
+
+
+## HR-2026-10-05-SSO - Internal Keycloak sign-in
+
+Status: In Review - client configured and real bounded Dev pilot verified on 2026-10-06; remaining manual checks are open.
+Evidence: docs/plans/2026-10-06-internal-sso-pilot-verification.md and the 2026-10-05 automated verification. Runtime on for the controlled Dev pilot; one explicitly linked identity.
+Owner: Codex. Reviewer: Svein Tore (partial confirmation: settings saved with local password, intended work account linked, and successful SSO login confirmed on 2026-10-06; full review not complete).
+Parent: docs/rfc/2026-10-05-internal-keycloak-sso.md; RFC approved 2026-10-05.
+Gate: this checklist blocks Main promotion, production migration/deployment and general SSO activation.
+The approved RFC permits a controlled Dev pilot after client and callback setup.
+It does not approve or finish active Vault review HR-2026-09-04-003.
+
+- [x] Svein signed in locally and confirmed saving the prepared provider with his Nexum password on 2026-10-06.
+- [x] Svein Tore explicitly confirmed the intended work account was linked and SSO login worked as expected on 2026-10-06 ("Bekrefter"). This confirmation does not cover the remaining MFA, recovery or broader review checks.
+
+Observed live by Codex: explicit linking, three SSO logins, ordinary local logout, signed back-channel revocation and browser denial, and explicit work-account logout. Additional verification on 2026-10-06: 221 broad authentication/portal tests plus 1 new isolated provider-outage emergency-admin test passed (222 tests / 1,535 assertions). Browser checks covered narrow/desktop SSO forms, labels and keyboard navigation, an empty saved-secret field, wrong-password unlink denial and preserved linking. Live TOTP/recovery and a real emergency-admin browser check still require suitable human-operated accounts. These observations do not mark the remaining human checklist Reviewed. The pilot account has no local TOTP; real Nexum MFA/recovery still needs a suitable account.
+
+- [ ] Separate Dev Keycloak confidential client: exact trusted HTTPS callbacks, RS256,
+  authorization code, S256, standard flow only, no direct grants, and back-channel logout.
+- [ ] Authorized admin can save settings; secret stays masked/encrypted and never appears in
+  page source, errors or logs. A user without user.manage_2fa is denied.
+- [ ] Employee links the intended Keycloak account after local password and existing TOTP.
+  Wrong password/factor, unknown user and duplicate subject are rejected.
+- [ ] Real SSO login returns to Nexum with the same roles; required local MFA is still enforced.
+  Portal-only, inactive, pending and system identities cannot gain internal access.
+- [ ] Regular local login, local recovery and Customer Portal still work. A separate
+  emergency admin can sign in while Keycloak is unavailable.
+- [ ] Normal logout ends Nexum only. Explicit work-account logout warns about other apps.
+  Keycloak session termination/back-channel logout ends the matching Nexum session.
+- [ ] Disabling SSO, unlinking, local password/security changes and session expiry revoke access.
+- [ ] Review desktop and narrow layouts, keyboard labels, visible errors and setup navigation.
+- [ ] Approve the pilot evidence and exact production activation plan before promotion.
+
+Migration: 2026_10_05_170000_create_internal_sso_tables.php is additive and applied on Dev
+in batch 17 after tests and preflight. No identity backfill or password/role rewrite.
+Runtime: Dev dependencies/migration already installed; SSO_ENABLED=true for the approved pilot. Separate production setup and completed review remain required.
+Risks: real client/login/logout are now verified; local TOTP/recovery and broader manual/production checks remain unverified.
+Rollback: set SSO_ENABLED=false, refresh config, retain local login and identity/audit history.
+Database rollback deletes SSO configuration/link history and is not the ordinary recovery method.
+
+
+## Implementation and deletion approval - 2026-10-05
+
+Svein Tore explicitly authorized implementation and automatic deletion synchronization in both
+directions. Create, update and delete are now in scope. Deletion of a mapped group propagates
+only after baseline/concurrency and lock checks; removing one local interval updates the
+remaining aggregate, deleting the last one removes the linked provider row. Preserve an
+audited tombstone so retries/restores do not resurrect deleted time. Never treat an incomplete
+list, inaccessible record, 403 or retention expiry as deletion. An external deletion requires
+a complete authorized rescan plus identity/absence verification; delete-versus-edit conflicts
+remain operator exceptions. Provider period approval/locks are never bypassed.
+Implementation: The bounded time-sync pilot is implemented on Dev: explicit employee mapping, effective Save, duration editing, a working on/off switch, durable bidirectional create/update/delete reconciliation and scheduled scans. Live CRUD and import editing were verified on Svein's explicitly authorized employee; all synthetic provider time was removed. Remaining broader rollout checks are listed in the pilot verification and human-review entry. Product approval does
+not authorize Main or production actions. HR-2026-10-05-WORKDAY-TRIPLETEX is In Review; only the initial save/company check has human confirmation.
+The earlier documentation-only and undecided-deletion statements below are historical and
+superseded by this explicit approval.
+
+
+## HR-2026-10-05-WORKDAY-TRIPLETEX - Automatic Time Synchronization
+
+Evidence: [functional pilot verification](plans/2026-10-05-tripletex-time-sync-verification.md).
+New migration: 2026_10_05_220000_create_tripletex_workday_sync_states.php, applied on Dev.
+Automated evidence: 223 tests / 2021 assertions; live two-way CRUD and cleanup; ordinary OS
+scheduler execution; live Dev settings HTTP 200 with one paused switch and blank token input.
+Human checks remain unchecked; automated evidence never marks them Reviewed.
+
+Status: In Review; initial connection save/company identity check confirmed by Svein Tore on 2026-10-05. The bounded own-employee pilot is now executable.
+Product direction, implementation and bidirectional deletion approved by Svein Tore on 2026-10-05.
+Live bidirectional CRUD, imported-row editing and cleanup passed on the authorized employee. See the pilot verification for automated evidence and limitations.
+Owner: Codex. Reviewer: Svein Tore; partial initial setup confirmation only, not full runtime approval.
+- [x] Save company token and receive a green company identity check. Svein Tore explicitly confirmed this on 2026-10-05; Dev metadata independently shows one verified production connection.
+- [ ] Single-account settings after this change: reload Tripletex settings; exactly one existing-account form is visible, with no add-account form. The configured company and blank token field are retained.
+
+Scope: Workday UI/API, Report/Notification cutover, Integration setup, DataExchange runs,
+Tripletex timesheet read/write and the operator exception/recovery workflow.
+Related: [RFC](rfc/2026-10-05-workday-tripletex-automatic-time-sync.md),
+[ADR](adr/2026-10-05-workday-tripletex-save-and-sync.md),
+[delivery plan](plans/2026-10-05-workday-tripletex-delivery-plan.md).
+Gate: named human review before Main promotion/merge, production migrations, deployment
+and activation. Documentation approval does not complete these checks. The implemented bounded pilot is ready for Svein to review; broader rollout checks remain open.
+
+- [ ] Sync setting below account settings: disable during queued/running work; verify both directions stop and local saves continue. Re-enable within the selected scope; pending work resumes without duplicates. The control is implemented; automated start/stop/version/permission checks pass.
+- [ ] Token input: verify the blank-keeps-existing hint appears inside the empty password field.
+
+- [ ] Company setup: verify identity, employee/activity mappings and credentials with a test
+  company. Expected: wrong-company/unmapped access fails safely; no cross-company data or secrets.
+- [ ] Nexum origin: save 45 and 90 minutes, edit and reload UI/API. Expected: no confirmation
+  step, one external record/group after read-back, accurate fractions and honest pending status.
+- [ ] Tripletex origin: create/edit duration-only time; then edit it in Nexum. Expected:
+  automatic import/update in both directions, no employee acceptance and no invented clocks.
+- [ ] Aggregation: send two intervals in one provider key and change its total in Tripletex.
+  Expected: one effective duration-only group, old intervals in history, no doubled hours.
+- [ ] Concurrent edits and locks: exercise different/same fields and approved/locked time.
+  Expected: safe automatic merge where possible, otherwise one operator exception preserving
+  both values. No silent overwrite, approve, complete, reopen or unapprove.
+- [ ] Recovery: interrupt network after create, stop workers/scheduler, revoke access and resume.
+  Expected: no duplicates/lost edits, external read-back, bounded catch-up including older dates.
+- [ ] Cutover/privacy: review existing drafts/confirmations, source allocations, overview,
+  notifications and older API clients. Expected: old private drafts remain private; saves/imports
+  have truthful attribution; no billing effects or obsolete confirmation reminders.
+- [ ] Precision/calendar: check breaks, minute fractions, overnight/DST and duration-only display
+  on desktop/mobile/keyboard. Expected: no rounding drift or fabricated calendar placement.
+- [ ] Retention/rollback: run fixture expiry and restore rehearsal. Expected: no remote deletion
+  or expired reimport; rollback pauses delivery without discarding duration-only time/history.
+- [ ] Deployment/provider gates: record permitted access model, exact migration/build/cache/
+  worker steps and actual external minute scheduler. Expected: own-company pilot is scoped;
+  customer rollout waits for the provider distribution clarification.
+- [ ] Deletion in both directions (approved 2026-10-05): remove one interval, the last interval,
+  and a Tripletex-origin record. Expected: correct aggregate update/deletion, version checks,
+  tombstones, no resurrection on retry/restore and no deletion on retention or access loss.
+
+Expected future deploy actions: additive reviewed migrations, backup/restore verification,
+API/asset/cache update where applicable, worker reload and verified schedule:run runner.
+Setup permission migration (batch 14) and single-account uniqueness migration 2026_10_05_210000_enforce_single_tripletex_connection.php (batch 15) applied on Dev only; both sync/write switches stay off.
+See [connection verification](plans/2026-10-05-tripletex-connection-verification.md).
+Full sync deployment commands remain to be added by later implementation.
+Risks: duplicate hours, decimal drift, incorrect mapping, lock/conflict handling, old-draft
+visibility and rollback incompatibility with duration-only entries.
+Rollback: pause connector delivery, preserve local/provider records and receipts, use the
+reviewed compatible application version. Do not run destructive down migrations.
+Prior HR-2026-10-01-WORKDAY approvals remain historical evidence for the old flow; they do not
+approve this new workflow. Carry remaining applicable checks forward explicitly at pilot time.
+
+## HR-2026-10-01-WORKDAY - Workday Time, Simple Plans And Absence
+
+Status: In Review. Svein's calendar modal correction is implemented/tested on Dev
+(2026-10-05). Calendar/modal UX Reviewed by Svein Tore on 2026-10-05.
+Approval: "Ser veldig bra ut. Dette er godkjent." This records acceptance of the reviewed UI;
+it does not assert unreported operational, delivery, restore or device checks.
+Stage: employee pilot active; full-width calendar and new/edit modal approved; date-entry API parity verified on Dev.
+All 60 focused Laravel tests pass across recorded runs, plus 8 JavaScript tests.
+Actual Blade output was checked with synthetic browser data: new/edit opening, closing/Escape,
+focus return, retained pending input, exact-minute payloads, preserved other intervals, overlap
+disabling and server validation reopening. This does not establish authenticated live completion.
+Authenticated live workflow, mobile/device behavior and full pilot checks remain open.
+See [modal verification](plans/2026-10-05-workday-modal-verification.md) and
+[review guide](plans/2026-10-03-workday-dev-pilot-review.md). Cleanup remains independently off.
+API follow-up (2026-10-05): 35 operations have matching generated OpenAPI/scopes.
+73 tests / 907 assertions passed, including the complete real personal-bearer minute-edit
+workflow, date context, denials, expiry and calendar regressions. See
+[API parity verification](plans/2026-10-05-workday-entry-api-verification.md).
+No live credential expansion, migration, MCP integration or production action was performed.
+Owner/implementer: Codex. Reviewer: Svein Tore; calendar/modal UX approval recorded 2026-10-05.
+Added: 2026-10-01. Target environment: Dev.
+Related: [implementation plan](plans/2026-10-01-workday-implementation-plan.md),
+[Approved RFC](rfc/2026-10-01-daily-workday-confirmation.md) and
+[Accepted ADR](adr/2026-10-01-workday-time-evidence-and-billing.md).
+Gate: named human review before merge/promotion to Main, production migrations,
+production deployment and production activation. This planned checklist does not block
+separately approved Dev-only implementation or test migrations. Documentation review now
+does not mark runtime behavior reviewed. Execute these checks only when Dev is ready.
+Svein explicitly requested continued sequential implementation and notification only when manual
+review is actually needed (2026-10-02). Do not request another partial review before pilot readiness.
+
+Scope/pages: My Day and Workday registration/history; Profile working hours/preferences
+and notifications; Calendar plan/absence blocks; Report confirmed-work overview; Workday
+settings/retention preview; personal employee API workflow. LiteLLM/MCP adapters and tool testing are deferred by Svein (2026-10-02).
+
+- [x] Calendar/modal UX: Reviewed by Svein Tore on 2026-10-05; approved visible calendar and
+  modal workflow. The detailed edge-case and broader pilot checks below remain individually tracked.
+- [ ] Personal plan: set different weekday hours and a recurring education day; save unrelated
+  preferences. Expected: the plan survives, phone-duty availability is visible, and no absence,
+  actual hours or provider queue action is inferred.
+- [ ] Manual day: navigate the month/day calendar; today is initially active. With a 09:00 start,
+  09:00-10:00 is selected; after saving it, 10:00-11:00 is selected. Opening/selecting writes nothing.
+  Click free time to open Register time and a saved block to open Edit time. Check 45-minute
+  and 90-minute proportional blocks. Edit exact minutes/activity, preserve other intervals,
+  and reject overlap on creation/editing. Close/Escape/backdrop must not save; Time entry must
+  reopen pending values. Check keyboard focus return and server errors shown inside the modal.
+  Check unknown/absent dates, short gaps, overnight End, timezone and repeated-hour occurrence.
+  Day-details save must not add the pending selection. Expected: correct actual total and
+  explicit own confirmation, with no manager approval or billing effects.
+- [ ] Source reconciliation: eight worked hours plus two Task hours remains eight; five actual
+  minutes with thirty billed contributes five. Estimates/missing sources stay distinguishable.
+  Check explicit Calendar selection, planned/estimated acknowledgement, date-only placement,
+  partial discovery notices, source revocation/change after preview and unchanged confirmed history.
+- [ ] Correction/concurrency: update a confirmed day and try a stale second browser/API write.
+  Expected: history preserved, explicit reconfirmation and a visible version conflict.
+- [ ] Absence: register, amend and cancel partial/full-day sickness or already agreed leave.
+  Expected: one consistent generic Calendar block; sickness has no manager approval queue.
+  Ordinary calendar/overview viewers cannot see its reason or medical details. Generic Calendar
+  edits/deletes are blocked and direct the owner to My absences. Check partial remaining plan
+  intervals, unknown schedule warnings, cancellation and explicit work-overlap acknowledgement.
+  Nextcloud must not export an absence projection.
+- [ ] Access: employee can manage only own data; Superuser and explicitly granted test HR role
+  see confirmed work, but cannot see other drafts or edit/confirm another person's hours.
+  Source links retain source permission checks and API grants do not bypass ownership.
+  Check Reports > Confirmed workdays: date/person filters, totals across pages, confirmed-only
+  history while correction is pending, and removal of workday.view_all for Superuser/custom HR.
+- [ ] Reminder: enable/disable in profile, snooze, confirm via API and repeat with full/partial
+  absence. Expected: one correctly timed personal reminder and suppression after opt-out or
+  confirmation. Verify real opted-in email/Web Push receipt with the test user/device.
+  Check the passive bell while another form is unsaved, next-visit display, Open/Snooze landing,
+  half-time hours, an overnight shift and repeat snooze from a stale second tab. Email/push
+  messages must stay generic and disabled preferences must suppress jobs already queued.
+- [ ] Internal Task conversion: preview/create/retry. Expected: one internal non-billable Task
+  and time source, unchanged Workday total, no Ticket billing and no automatic completion.
+  Check exact description/Task visibility, excluded breaks, adjacent overnight dates, stale tabs,
+  source changes, revoked Task scopes, and a confirmed-day correction preserving its prior version.
+- [ ] Employee API: review the date-entry and personal-token register/edit/remove/correct/confirm/read-back evidence and
+  verify the intended test employee in the combined pilot. Foreign-worker/wrong-scope attempts
+  must fail; a shared admin token is not employee delegation. Automated bearer tests support
+  this check. Live LiteLLM/MCP tool testing is deferred and is not a current release prerequisite.
+- [ ] Retention: inspect synthetic records around the three-year cutoff and run the approved
+  Dev fixture/restore rehearsal. Expected: expired owned copies/history removed, original
+  Task/Ticket/independent Calendar records and current recurring plans preserved.
+  Check preview UI/API counts, independent retention activation, an integrity failure and resumed
+  batch, original-expiry notification copies and same-request form validation. Before activation,
+  record actual backup rotation and archived log/session/cache handling; reconcile the 105 Dev
+  historical diagnostic copies. A successful application restore-check alone is insufficient.
+- [ ] Responsive/accessibility: verify desktop/mobile, keyboard use, validation and save/read-back.
+  Reminders do not interrupt an unsaved form; no future holiday/rota/saldo controls are exposed.
+
+2026-10-04 correction: no migration, permission, route, API schema or asset-build change.
+Dev compiled views cleared; graceful queue restart signalled for the shared reminder reader.
+Existing deployment and stored employee activation remain on; cleanup stays off.
+Expected deployment work: Slice 02 adds 2026_10_02_120000_create_workday_tables and 2026_10_02_120100_deploy_workday_permissions (both applied only on Dev, 2026-10-02);
+Slice 03 adds 2026_10_02_140000_create_workday_absence_tables and 2026_10_02_140100_deploy_workday_absence_permissions (also applied only on Dev, 2026-10-02).
+Slice 04 adds 2026_10_02_160000_create_workday_source_allocations (applied only on Dev, 2026-10-02; empty table).
+Slice 05 adds 2026_10_02_180000_deploy_workday_oversight_permission (Dev only, 2026-10-02; Superuser only; tokens unchanged).
+Slice 06 adds 2026_10_02_200000_create_workday_reminder_receipts (Dev only, 2026-10-02; three empty tables). Existing minute cron and default workers verified; reload default workers before future approved activation.
+Slice 07 adds 2026_10_02_210000_create_workday_task_conversion_previews (Dev only, 2026-10-02; empty table). No Task/time fixtures or token changes retained; synchronous operations need no new scheduler/queue/build work.
+Slice 08 adds no migration. WORKDAY_RETENTION_ENABLED remains false independently of employee access; its five-minute schedule requires the verified minute runner. Reload workers before approved activation. No live purge occurred.
+Slice 09 requires no migration/build/worker change; API docs/cache refreshed on Dev. All 34 API operations and real personal bearer workflows verified. MCP/LiteLLM tooling is deferred and is not a current release prerequisite.
+Feature default-off, reviewed role grants, generated OpenAPI, conditional asset build/cache refresh,
+queue reload and verified external schedule:run runner. Slice 01 requires no migration or worker/scheduler change; WORKDAY_ENABLED remains false. Main/production ownership stays with Svein.
+
+Risks: competing work-hour sources, absence privacy through Calendar editing/metadata, duplicate
+source time/billing projections, version races, external consumer identity preservation (when later integrated) and retained copies.
+Rollback: disable relevant writes/imports/reminders, preserve confirmed records and source data,
+follow the reviewed retention policy, and revert only owned code/config; no destructive down migration.
+Automated evidence for Slice 01: 75 tests / 599 assertions passed on Dev's isolated SQLite harness.
+Authenticated UI/API tests, profile-security/Calendar/Booking regression, PHP syntax and whitespace
+checks passed. Six API operations read back from trusted Dev HTTPS /docs (HTTP 200).
+Slice 02: 74 tests / 596 assertions passed, nine API operations read back over trusted Dev HTTPS, own UI/API correction and real bearer tests passed. Two Dev migrations applied; all four new tables empty and both switches off. The read-only MySQL worker-row contention probe passed. See [Slice 02 verification](plans/2026-10-02-workday-slice-02-verification.md) and [Slice 01 verification](plans/2026-10-01-workday-slice-01-verification.md). Slice 03: 121 tests / 960 assertions passed across absence, manual Workday, work plan, Calendar, Booking, Nextcloud and My Day. Six additional API operations read back over trusted Dev HTTPS; three new tables empty and both switches off. See [Slice 03 verification](plans/2026-10-02-workday-slice-03-verification.md). Slice 04: 271 distinct tests / 2236 latest assertions passed across Workday, Task, Ticket, Calendar, Report, Commercial and Integration. Both source API operations read back over trusted HTTPS; personal bearer and generated scope/schema checks passed. See [Slice 04 verification](plans/2026-10-02-workday-slice-04-verification.md). Slice 05: 136 tests / 1392 assertions passed; three confirmed overview API reads published and read back over trusted HTTPS. Explicit grants/revocation, confirmed-only projections, private source/absence boundaries and real personal bearer access passed. See [Slice 05 verification](plans/2026-10-02-workday-slice-05-verification.md). [Slice 06 verification](plans/2026-10-02-workday-slice-06-verification.md): 219 distinct tests / 2091 assertions passed, four API operations read back over trusted HTTPS, scheduler runner verified, three empty Dev tables and both switches off. No real channel receipt or employee sends. [Slice 07 verification](plans/2026-10-02-workday-slice-07-verification.md): 187 tests / 1618 assertions passed; three conversion API operations read back over trusted HTTPS, native employee lock probe passed, new table empty and both switches off. [Slice 08 verification](plans/2026-10-02-workday-slice-08-verification.md): 228 distinct tests passed after the reminder metadata contract update; retention UI/API, expiry/restore/source-preservation fixtures, trusted HTTPS OpenAPI and native locking verified. No live deletion. [Slice 09 API verification](plans/2026-10-02-workday-slice-09-api-verification.md): 196 tests / 1912 assertions passed, all 34 operations read back over trusted HTTPS with exact scopes and 49 resolved schemas. No live token/data changes. Actual browser review and the listed human checks remain pending; MCP is deferred by Svein
+and does not block this API delivery; plan approval is not runtime review. Only explicit confirmation from a named reviewer can mark this Reviewed.
+
+
+## HR-2026-09-27-WORKLOG - Controlled History And Commercial Time Export
+
+Status: Pending. Owner/reviewer: Svein. Added: 2026-09-27. Environment: Dev.
+Gate: manual review before Main promotion/production release and external workload activation.
+Dev implementation was explicitly approved; this checklist does not authorize production deployment.
+Related: approved RFC 2026-09-27-controlled-history-and-commercial-time-export and accepted ADR
+2026-09-27-time-facts-and-pseudonymous-contract-links.
+
+Scope: truthful worklog counts/truncation, inclusive calendar dates, generated OpenAPI, installation
+context maximum/source permissions, separate direct Commercial consumption and opaque contract/
+billing-allocation links. Existing provider/model/token/expiry/network/rate/audit gates remain.
+Affected surfaces: Admin -> Integrations -> Privacy & Coordinator; four worklog read operations;
+shared context enforcement for stale Ticket/Task reads. No UI code changed.
+
+- [ ] Review a synthetic approved workload and confirm only the intended recipient/model and context
+  lists are permitted. Missing required selection, unapproved/expired token or insufficient source
+  permissions must deny, and internal_only must exclude customer rows.
+- [ ] Read a fixture above maximum_results. Confirm true total, truncation, retained ceiling and
+  disjoint period recovery. A single overflowing day must remain explicitly incomplete.
+- [ ] Reconcile actual Ticket/Task minutes and separate Commercial quick consumption. Do not add
+  Task billing projections or persisted allocations to actual time; verify the 45 / 20 / 70 fixture.
+- [ ] Verify direct Ticket entry and Task-group joins use workload aliases. A foreign Client/contract
+  mismatch returns inconsistent/null links and no ordinary IDs, names, notes, prices or credentials.
+- [ ] Inspect metadata-only allow/deny audit and the generated contract, then let NexumMCP test its
+  independently updated package against the exact deployed target before enabling Paperclip export.
+
+Deployment: no migrations, seeding, assets, scheduler or queue jobs introduced. Promote only reviewed
+files, run php artisan l5-swagger:generate, refresh normal app cache/opcache and sync Report,
+Commercial and Integration Knowledge. Review binding grants manually; no automatic scope addition.
+Rollback must not restore the original context leak to an enabled external workload: disable/revoke
+its bindings first if code rollback is necessary. Source time, contracts and audit data are untouched.
+Risks: no snapshot isolation; context/permission changes can exclude historical sources; malformed/
+missing parent contexts and contract links fail closed; one dense day may still require a separate
+policy decision. Current live Dev has coordinator off and no data in the requested historic period.
+Automated evidence: 98 distinct tests / 855 latest assertions passed on Dev; final focused run
+28 / 307. The generated four-operation, 13-schema contract was read back via trusted Dev HTTPS.
+Original truncation/date/context failures have before/after evidence. Detailed source hashes,
+HTTP limits and deployment status: docs/plans/2026-09-27-worklog-api-handoff.md and the delivered
+verification-manifest.json. No full application suite was run.
+
+
+## HR-2026-09-17-EMAIL-MISSING - Trash An Already Missing Message
+
+Status: Pending. Owner/reviewer: Svein. Scope: Level 1 Mail stale-placement repair.
+Gate: browser verification before production release; Dev code verification does not approve deployment.
+Page: /tech/mail. No migration, asset build or scheduler activation required.
+
+- [ ] Delete a stale Inbox entry whose source has already moved/disappeared at the provider.
+  Expected: the old entry disappears, selection clears and an informational message explains why.
+- [ ] A valid Trash or other-folder copy remains available; Ticket evidence is unchanged.
+- [ ] A mailbox connection/read failure still reports an error and keeps the selected entry.
+
+Automated evidence: missing-source regression failed before the fix; focused action/Livewire and
+provider-read/namespace/placement-drift boundaries pass 5 tests / 65 assertions on Dev.
+The complete remote-operation recovery suite passes 40 tests / 334 assertions.
+The failed source-missing provider operation remains available as audit evidence.
+Production rollout and the actual reported mailbox remain unverified.
+
+## HR-2026-09-17-EMAIL-SAVE - Email Account Save Schema Repair
+
+Status: Pending browser verification. Owner: Svein / Codex. Added: 2026-09-17.
+Scope: Forward repair of recorded migration 104000 with missing baseline table and epoch indexes.
+Approved behavior: existing Mail RFC and HR-2026-08-16-003; incident repair authorized by Svein.
+Automated verification: 7 SQLite tests / 42 assertions; native MariaDB 1 / 12, including preserved state, retry, owner/shared backfill and blocked personal direct grants.
+Deploy only `2026_09_17_110000_repair_email_unread_access_schema.php` after a protected snapshot and a brief maintenance window. Existing workers must finish reserved jobs before DDL.
+This checklist does not block the explicitly authorized incident repair; browser checks remain required before calling the user's account setup fully verified. Main promotion remains separate.
+
+- [ ] Svein saves the personal account from Admin > Email Accounts and reaches the edit page without HTTP 500.
+- [ ] The saved account has the correct personal owner and shows the actual IMAP/SMTP test result.
+- [ ] Existing mailboxes retain their intended access and unread behavior.
+
+Risk: incomplete schema can require backup recovery if advanced epoch history exists without baselines; the migration refuses that case. Forward-only rollback retains read history. No account password or provider operation is part of the schema repair.
+Production execution/read-back: completed 2026-09-17 10:55 UTC. Only migration 2026_09_17_110000 ran; complete epochs contract, 14 baselines, 3 foreign keys, unchanged personal state and public /up HTTP 200. Maintenance restored. Backup: `/var/www/vhosts/tronderdata.no/private/nexum-unread-repair-20260917-105544-8325a0/before.json` (directory 0700, file 0600). The target personal account was still absent after repair; no passwords were requested or saved. Existing account save/correct/resave plus personal/shared/grant workflows also pass 2 tests / 43 assertions. User browser/real-provider verification remains pending.
+
+
 This file is the persistent source of truth for human verification of substantial Nexum PSA
 changes. It records what a person still needs to check, what failed, and what a named human reviewer
 has explicitly approved.
@@ -28,6 +364,16 @@ has explicitly approved.
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
+| HR-2026-10-01-WORKDAY | Calendar/modal UX approved; 35 API operations verified; remaining pilot checks open | In Review | 2026-10-01 | Svein Tore (UI, 2026-10-05) | Partial |
+| HR-2026-09-04-003 | Vault central authorization, access groups, collections, step-up, and approvals | Pending | 2026-09-04 |  |  |
+| HR-2026-09-04-002 | Vault dormant control plane, envelope cryptography, immutable secret material, and safe audit | Pending | 2026-09-04 |  |  |
+| HR-2026-09-04-001 | Knowledge revision approval, Ticket-scoped review, publication read-back, and rollback | Pending | 2026-09-04 |  |  |
+| HR-2026-09-03-006 | Composer dependency security remediation | In Review | 2026-09-03 | Svein |  |
+| HR-2026-09-03-005 | Canonical Contact workflow and legacy production cutover | Reviewed | 2026-09-03 | Svein | 2026-09-04 |
+| HR-2026-09-03-004 | Web Push notification registry, eligible delivery, and grouped preferences | Pending | 2026-09-03 |  |  |
+| HR-2026-09-03-003 | Knowledge and BookStack revision-safe synchronization | Pending | 2026-09-03 |  |  |
+| HR-2026-09-03-002 | Mail simple selected-message read action | Pending | 2026-09-03 |  |  |
+| HR-2026-09-03-001 | Task templates, grouped generation, schedules, and automation actions | Pending | 2026-09-03 |  |  |
 | HR-2026-08-30-001 | Dev database and Mail private-storage reconciliation | Pending | 2026-08-30 |  |  |
 | HR-2026-08-26-001 | Documentation Sidebar Reordering and Title Update | Reviewed | 2026-08-26 | Svein | 2026-08-31 |
 | HR-2026-08-25-014 | RMM Alert Rules pre-routing and audited actions | Reviewed | 2026-08-25 | Svein | 2026-08-31 |
@@ -44,6 +390,2114 @@ has explicitly approved.
 | HR-2026-08-25-003 | AI Model Usage and Cost Telemetry (Slices 1-3) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-002 | RoleSeeder Reconciliation and Permission Sync | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+
+
+
+### HR-2026-09-04-003: Vault Central Authorization, Access Groups, Collections, Step-Up, And Approvals
+
+Current execution checkpoint (2026-09-17): **4 of 17 main parts Done On Dev**; 04 In Progress.
+Owner: Codex / Svein. Workflow repair is Done On Dev; next product deliverable is the complete 04-A flow.
+See [the current delivery handoff](plans/2026-09-17-vault-delivery-workflow.md) for the
+active batch, terminal evidence, acceptance criteria and exact next action. Sequence 35999 passed;
+do not restart it. The linked handoff owns automation/test status. HR-2026-09-04-003 remains Pending;
+this is not a practical UI review invitation. No operational migration or runtime activation.
+Additional checks for the invitation clarification approved by Svein on 2026-09-18 (not yet reviewed):
+- [ ] A protected Admin/Superuser recipient can set a password but remains pending, sees the
+  activation-pending message and receives no authenticated session.
+- [ ] An existing administrator completes activation only through current step-up and required
+  approval/sole-admin rules; the invitation itself never grants or substitutes that authority.
+- [ ] Ordinary invitations retain activation; replay and stale role/phase attempts do not mutate access.
+These checks remain blocked on complete 04-C integration; no practical review is requested yet.
+
+The older dated continuation notes below are historical evidence, not current execution instructions.
+
+Latest continuation (2026-09-14): finalized quorum creation read-back is verified on
+SQLite and both native drivers. Native mysql PASS 1 / 199 (2614.47s); the durable
+mariadb verification 29962 ENDED exit 0, PASS 1 / 199 (2582.19s), no failures/skips.
+Logs and JUnit: /tmp/vault-quorum-verification.MXLGiY/. The earlier lost mariadb
+output remains unclassified; these results replace the need to recover it.
+Graph creation read-back now also requires the original standard-proof window through
+plan finalization and retained factor metadata at that finalization time. Withdrawal
+before use denies; later withdrawal preserves historical evidence. Existing canonical
+source, audit, guard and approval classification checks remain in force.
+A real migrated SQLite regression failed before this change (1 / 204 assertions,
+39.70s), then the focused corrected selection passed 3 / 308 (69.47s), exec 85285
+exit 0. Both changed PHP files pass Pint. Native sequence 17084 ended exit 1:
+mysql failed (1 test / 176 assertions, 2477.89s); mariadb did not start.
+The fixture's rollback catch masked the underlying RuntimeException with a boolean
+assertion. It now rethrows unexpected exceptions; no production behavior was changed.
+Diagnostic 96875 ended exit 1: SQLite 1 / 219 passed (40.91s), then mysql failed
+1 / 175 (2493.87s) with PDO SQLSTATE 45000 / vault_action_plan_source_denied.
+Logs remain in /tmp/vault-graph-factor-diagnostic.QpxIXq/. A shared short-lived proof
+across all six scenarios was a timing dependency; each scenario now creates its own
+real proof in a distinct synthetic session and asserts freshness before plan creation.
+This is a fixture-isolation correction, not yet proof of the original denial's cause.
+No production TTL, guard, clock or memory cap was relaxed. Corrected SQLite PASS
+2 / 317 (82.26s), exec 12950 exit 0; Pint passes. Native mysql PASS 1 / 226
+(3092.82s) and mariadb PASS 1 / 226 (3111.11s). Sequence 1964 ended exit 0;
+durable per-driver logs/JUnit are in /tmp/vault-graph-fixture-isolation.pru8De/.
+Both driver paths use the isolated MariaDB 10.11.14 service, not Oracle MySQL.
+The earlier failed runs remain recorded; the corrected runs resolve both regressions.
+Continuation (2026-09-15): the historical expired-on-retry evidence reader now
+reads effective terminal/source identity, same-session/purpose replacement, original
+creation provenance, commit window and closed reciprocal audit/trust under owned locks.
+The expiry finalizer uses this read-back before returning; later replacement activation
+or current account/gate changes do not erase the retained revocation. Other terminal
+causes, full generation statement provenance and current authorization remain separate.
+Initial focused SQLite 2 / 87 and source/lifecycle suite 62 / 4113 passed. Expanded
+trust-tamper tests and all Vault units PASS 858 / 28124 (69.92s), exec 1903 exit 0.
+Pint passes all three PHP files. Native sequence 70273 ended exit 1: mysql
+4 failed / 3 passed, 181 assertions, 216.71s; mariadb did not start. The two new
+history tests passed, but retained native fixture graphs exhausted the original private
+service's 4 GiB cap (SQL 1041/5 OOM), then the process exited and later connects failed.
+The same private data directory was recovered without deleting diagnostic databases,
+raising limits or touching operational MariaDB PID 692. Private service PID 772606,
+session 78212, retains skip_networking=1, 64 MiB buffer pool, 20 connections and the
+original 4 GiB limit. Four legacy multi-purpose tests now release each finished owned
+fixture after its assertions, rather than retaining every trigger graph until teardown.
+Corrected focused SQLite PASS 7 / 339 (12.67s), exec 67447 exit 0; Pint passes.
+Native rerun 11204 also ended exit 1: mysql 3 failed / 4 passed, 140 assertions,
+203.82s; mariadb did not start. Per-purpose cleanup alone did not fix the native
+allocation problem: enrollment's raw writer still exhausted the original 4 GiB cap.
+The private service was recovered again against the same retained data, PID 775248
+(session 24058), without changing the cap, network isolation or operational services.
+Five existing writer/lifecycle tests now use the already-reviewed exact eight-trigger
+cached base representation on native drivers, with the existing full live catalog
+attestation and no capability upgrade. Historical metadata-corruption tests retain
+their direct representation. Unexpected lifecycle exceptions are no longer hidden by
+rollback-sentinel assertions. No product predicates, TTL or permissions changed.
+Full SQLite verification 91698 ended exit 0: 858 / 28124, 73.01s. The previously
+failing native enrollment lifecycle now PASS 1 / 100 (246.31s), probe 41843 exit 0.
+Native sequence 30154 ended exit 0: mysql PASS 7 / 387 (926.41s), mariadb PASS
+7 / 387 (871.68s), on the same private service without another restart or limit change.
+Logs/JUnit: /tmp/vault-expiry-history.b0CCp8/{mysql,mariadb}-cached.{log,xml}.
+Retain failed original/*-fixture-release logs and the successful enrollment probe.
+The expiry read-back/finalizer and corrected native fixture matrix are verified.
+Retained terminal integration is now implemented in both graph and quorum creation
+readers. A shared metadata helper requires the exact actor/session/purpose, proof window
+at finalization, and a consistent active terminal shape, or verified expired-on-retry
+source/commit/audit history. Pending proofs and unsupported terminal owners fail closed.
+Creation trust, factor statement provenance and current authorization remain separate.
+Focused SQLite terminal/expiry tests PASS 3 / 232 (5.55s); five files pass Pint.
+Broad Vault units plus both real graph/quorum creation integrations PASS 862 / 28770
+(196.97s), sequence 65272 exit 0; log/JUnit: /tmp/vault-expiry-history.b0CCp8/sqlite-terminal-binding.*.
+Native terminal integration sequence 33244 also ended exit 0: mysql 1 / 69 (64.77s),
+mariadb 1 / 69 (65.20s), zero errors/failures/skips, both on private MariaDB 10.11.14.
+Logs/JUnit: /tmp/vault-retained-terminal.XPpz06/{mysql,mariadb}.{log,xml}.
+These completed sequences must not be restarted. No runtime is activated.
+Quorum's retained factor-use timing gap is now corrected: the standard generation
+must remain valid through actual plan finalization, not merely request time. The new
+real migrated regression failed before the fix (1 / 199, 40.63s), then passed after
+it (1 / 231, 42.67s). It covers peer unlock and cooling recovery, disabled/superseded
+before-finalization denial, later-withdrawal retention and exact guard restoration.
+Related factor/terminal units PASS 2 / 117 (0.22s); both changed PHP files pass Pint.
+Native sequence 31153 ended exit 1: mysql failed 1 test / 123 assertions (2447.66s);
+mariadb did not start. The rollback fixture masked an unexpected RuntimeException
+with assertTrue(false), so this result does not yet identify the failed predicate.
+Logs/JUnit: /tmp/vault-retained-terminal.XPpz06/quorum-factor-mysql.{log,xml}.
+The fixture now rethrows unexpected errors without changing product code or TTLs.
+Diagnostic sequence 56642 ended exit 1: SQLite PASS 1 / 231 (41.69s), mysql
+FAIL 1 / 122 (2400.19s), SQLSTATE 45000 / vault_proof_finalization_denied at the
+actual action-plan evidence finalizer. The exact denied subpredicate is not measured.
+Logs/JUnit use quorum-diagnostic-{sqlite,mysql} in the same directory; preserve them.
+The fixture reused one short-lived proof across independent plan scenarios. Each of
+its six scenarios now authenticates a separate synthetic session and creates its own
+real guarded proof, asserting active state and freshness before plan creation. This
+removes that timing dependency without changing product TTLs, guards or semantics.
+All original rollback, audit, corruption and factor-history checks remain; trusted
+audit counts account for six proofs and three retained plans. Pint passes. Corrected
+SQLite sequence 55565 ended exit 0, PASS 1 / 244 (46.93s). Native sequence 71372
+also ended exit 0: mysql PASS 1 / 244 (3397.41s), mariadb PASS 1 / 244 (3393.85s),
+zero JUnit errors/failures/skips on the same private MariaDB 10.11.14 service and limits.
+Logs/JUnit: /tmp/vault-retained-terminal.XPpz06/quorum-fresh-{sqlite,mysql,mariadb}.{log,xml}.
+Do not rerun these completed sequences. No runtime activation or operational change.
+Next retained UserSecurity work: a primary password-rehash audit reader now binds the
+finalized execution, exact consumed one-subject ledger, human/session/epoch identity,
+original effect window, released old gate and reciprocal primary audit/trust. It reads
+no current credentials or mutable account epoch and does not itself verify the parent's
+complete proof-invalidation set. The UserSecurity store reads it back after gate
+finalization so a missing/mismatched primary audit rolls back the owning transaction.
+Three PHP files pass Pint. Focused migrated SQLite rehash integration passed
+3 / 294 (97.25s), exec 8160 exit 0, primary-history-sqlite.{log,xml} in the same
+directory. Coverage includes pending/rolled-back denial, exact ownership, missing
+catalog, tampered pending trust and audit time, with exact guards restored before
+reads. The expanded test now uses a second real protected rehash to prove retained
+evidence survives a later gate/epoch change, not a synthetic account edit.
+Expanded SQLite rehash/store/resume verification ended exit 0, PASS 21 / 533
+(543.98s), exec 63528; primary-history-expanded.{log,xml} in the same directory.
+It proves retained evidence after a second actual protected rehash and all existing
+store/resume workflows. Native fixture support now uses the existing owned private
+DB wrapper, exact SHOW CREATE guard restoration and the approved compiled assembly;
+no operational database or credential is used. Fixture SQLite verification passed
+1 / 103 (38.55s), exec 40372 exit 0, primary-native-fixture-sqlite.{log,xml}.
+Native rehash verification is complete: mysql PASS 1 / 98 (2324.55s), mariadb
+PASS 1 / 98 (2505.14s), both with zero JUnit errors/failures/skips. These are the
+with_action_plans datasets on private MariaDB 10.11.14, not Oracle MySQL or all
+three assemblies. Durable logs/JUnit:
+ /tmp/vault-retained-terminal.XPpz06/primary-history-{mysql,mariadb}.{log,xml}.
+The local wrapper handle was lost after desktop refresh; ended remote runner/child
+and the complete durable results establish completion, not a recovered wrapper exit.
+Do not restart this verified sequence. Next: retained auth-security proof-set and
+terminal provenance under the same active Slice 04. Factor/recovery work remains open.
+Retained password-rehash terminal read-back now has a dedicated closed owner reader:
+the exact primary audit and consumed OLD/NEW epoch subject, every old-epoch proof across
+sessions, effective source/terminal/commit, and reciprocal audit finalized by the parent.
+One unfinished sibling denies the whole set. Earlier expiry requires its own completed
+evidence; other UserSecurity flows and unsupported historical owners still fail closed.
+The shared graph/quorum terminal helper dispatches only this supported rehash branch;
+no credential writer, runtime binding, permission or operational schema was changed.
+The first real two-session standard-proof/rehash regression passed SQLite 1 / 140
+(48.14s), exec 97242 exit 0. Pending parent and pending sibling trust deny; audit failure
+rolls back the real rehash and proof revocations; a later actual rehash preserves history.
+Expanded standard/enrollment integration passed SQLite 4 / 572 (173.15s), exec 3559
+exit 0. A missing-source-table regression first failed 1 / 24 (0.20s); the terminal
+dispatcher now closes that failure without exposing a bound database diagnostic.
+The first broad invocation named a nonexistent test file and ran no tests; its log is
+retained. Corrected all-Vault-unit plus actual graph/quorum integration verification
+passed 862 / 28821 (203.03s), exec 71555 exit 0, with zero failures. All four changed
+PHP files pass Pint; permissions are 0644 sveintore:projectusers and diff checks pass.
+Native sequence 71921 ended exit 1: mysql standard PASS 1 / 136 (3282.78s);
+enrollment errored 1 / 78 (2473.98s), total 5756.88s. MariaDB-driver stage did not run.
+The enrollment fixture incorrectly used later rehash effects-start as historical live
+proof use; that proof had expired by then. Revocation of an expired active proof is
+valid, but claiming that later instant as live proof use is correctly denied.
+The fixture now retains the actual proof-creation commit finalization per session,
+asserts that instant precedes proof expiry, and uses it for historical read-back.
+No product lifetime, guard, clock, or reader predicate was relaxed. Pint/diff checks pass.
+Corrected SQLite verification passed 2 / 294 (95.85s), exec 78652 exit 0.
+Native sequence 57635 ended exit 0. Corrected mysql enrollment PASS 1 / 140
+(3205.67s); mariadb standard/enrollment PASS 2 / 280 (6454.74s), all with zero JUnit
+errors/failures/skips. Earlier mysql standard PASS 1 / 136 (3282.78s) remains valid
+product evidence; its newer timestamp fixture also passed SQLite. Both PHP driver
+paths use private MariaDB 10.11.14, not Oracle MySQL. Do not rerun these results.
+Next bounded continuation: prove inert never-activated pending creation history so
+it cannot incorrectly invalidate a completed rehash's old-epoch proof census.
+Aborted creation and other terminal owners remain separate, closed branches.
+Preserve rehash-proof-set-mysql.{log,xml}; corrected logs/JUnit use
+rehash-historical-time-{mysql,mariadb}.{log,xml} in /tmp/vault-retained-terminal.XPpz06/.
+Sequence 57635 is complete; preserve its results and do not repeat it.
+The inert-pending census gap is now implemented with a separate metadata-only reader.
+It requires the exact never-activated pending proof, still-building creation window,
+closed human/source audit, and wholly pending reciprocal trust. It grants no access,
+does not finalize anything, and reads no live credentials. The rehash census excludes
+only that verified inert source; unsupported abort histories continue to deny.
+A real third-session pending creation reproduced the gap before the change:
+SQLite failed 1 / 79 (39.79s), exec 60813. Corrected standard/enrollment integration
+passed 2 / 324 (98.03s), exec 41442 exit 0, including forged trusted-projection denial.
+Closed metadata vectors passed 1 / 499 (0.95s), including expired pending evidence,
+all typed audit references, malformed identity, missing/duplicate rows and serialization.
+The four implementation/metadata PHP files pass Pint and retain 0644 sveintore:projectusers.
+Broad verification 63009 ended exit 0: 863 tests / 29320 assertions (206.03s), covering
+all Vault units and actual graph/quorum creation integrations. Logs/JUnit use
+rehash-inert-pending-* in /tmp/vault-retained-terminal.XPpz06/.
+A further real-writer lifecycle regression now covers all three proof purposes: actual
+pending creation, inert read-back, activation exclusion, outer rollback and committed
+activation. SQLite PASS 1 / 36 (1.84s), sequence 53534 exit 0; Pint passes the test file.
+Native sequence 10308 ended exit 0: mysql PASS 1 / 48 (151.70s) and mariadb PASS
+1 / 48 (148.30s), zero JUnit errors/failures/skips. Both PHP drivers use private
+MariaDB 10.11.14, not Oracle MySQL. Owned synthetic fixtures used the exact approved
+cached base guards. This verifies the new reader lifecycle, not a repeat of the full
+migrated rehash integration. Logs/JUnit use inert-real-writer-{sqlite,mysql,mariadb}
+in the same directory. All five affected PHP files retain 0644 sveintore:projectusers.
+No test from this sequence remains running; do not repeat completed verification.
+Continuation (2026-09-15): DatabaseVaultAbortedProofCreationReader now validates
+original creation metadata/audit, the exact building_abort revocation and the winning
+db_time_expired cleanup, including all three reciprocal trust rows, ordinary build
+windows, monotone commit sequences and closed typed references. It reads only stable
+canonical system identity, not credentials or current authorization/factor state, and
+never installs a fabricated evidence context. Partial cleanup remains distinct/denied.
+The existing abort finalizer now reads this full history before returning; failed
+read-back must roll the whole caller transaction back. No runtime binding is added.
+Initial actual migrated SQLite cleanup integration PASS 1 / 281 (84.21s), exec 87323.
+Pending plus aborted metadata vectors PASS 2 / 1743 (6.97s), exec 43940, including
+changed audit/reference/owner/timing facts, duplicate/missing rows and serialization.
+The new finalizer binding and post-finalization read-failure rollback injection PASS
+SQLite 3 / 2027 (89.38s), exec 97795 exit 0. All four affected PHP files pass Pint and
+retain 0644 sveintore:projectusers. Logs/JUnit use aborted-creation-* in
+/tmp/vault-retained-terminal.XPpz06/.
+Sequential verification 72096 completed exit 0. Broad SQLite PASS 869 / 31085
+(418.08s), native mysql PASS 1 / 334 (7388.09s), native mariadb PASS 1 / 335
+(7834.61s); all JUnit errors/failures/skips are zero. Preserve the
+aborted-creation-history-{mysql,mariadb}.{log,xml} results; do not repeat this sequence.
+Both native driver paths used separate synthetic databases on private MariaDB 10.11.14,
+not Oracle MySQL. The complete cleanup reader/finalizer is verified on both drivers.
+Continuation (2026-09-15 20:19 UTC): the password-rehash census now separately checks
+a completed aborted creation through that reader and the complete abort-capable catalog.
+The original exact source-count comparison is retained. No terminal owned by the current
+rehash may silently disappear; partial cleanup and unsupported terminal owners still deny.
+A new actual cleanup-to-rehash regression failed before this binding (1 / 81, 42.99s),
+at the expected retained proof-set denial. Only the expired pending origin is synthetic;
+cleanup, two protected rehashes and all their audit/finalization writes use actual stores.
+Standard/enrollment regressions, both actual protected rehashes and original/winning
+cleanup trust tamper cases PASS 2 / 384 (117.50s), sequence 75141 exit 0. Both changed
+PHP files pass Pint and retain 0644 sveintore:projectusers. Sequence 90516 completed exit 0:
+broad SQLite PASS 868 / 31071 (387.21s), including all six integrated rehash cases
+(1032 assertions); native mysql PASS 2 / 358 (8432.08s); native mariadb PASS 2 / 358
+(8370.44s). Both native JUnit reports have zero errors/failures/skips. Preserve
+rehash-cleanup-{mysql,mariadb}.{log,xml}; do not repeat this completed sequence.
+Both PHP drivers use private MariaDB 10.11.14, not Oracle MySQL.
+Logs/JUnit: rehash-cleanup-* under /tmp/vault-retained-terminal.XPpz06/.
+Continuation (2026-09-16 01:23 UTC): revoked-pending creation has a separate historical
+read entry point. It requires the exact still-building origin with wholly pending audit
+and its real finalized revoke-only terminal; it cannot claim completed cleanup. The
+rehash census checks this distinct branch and retains the exact source-count invariant.
+The new actual revoke-only-to-rehash regression failed before binding (1 / 81, 40.31s).
+Synthetic origins are explicit; revocation, two protected rehashes and resumed cleanup
+use actual guarded stores. Metadata vectors PASS 3 / 2507 (9.78s), including original
+pending, completed cleanup and revoked-pending standard/both enrollment purposes.
+Sequence 79254 ended exit 1: both new integrations passed the initial retained census,
+then failed in the test's audit-tamper setup (2 / 192, 82.72s). The revoke writer returns
+a transition ID, not its evidence-commit ID; the fixture now resolves the exact transition's
+commit before reading its audit. This is a fixture correction, not a product-policy change.
+Four PHP files pass Pint. Sequence 51609 completed exit 0. Its broad SQLite stage PASS
+872 / 32507 (591.60s), zero JUnit errors/failures/skips: all Vault units, all eight rehash
+cases and actual completed-creation cleanup. This resolves the test-fixture failure;
+retain the failed run for diagnosis. Actual revoke-only retention, both protected rehashes,
+tamper rejection and later resumed cleanup pass for standard and enrollment proofs.
+Native mysql PASS 2 / 362 (8893.39s), zero JUnit errors/failures/skips. Preserve
+rehash-partial-cleanup-mysql.{log,xml}; do not repeat the completed driver.
+Native mariadb PASS 2 / 362 (8871.50s), zero JUnit errors/failures/skips, verified
+2026-09-16 06:49 UTC. Preserve rehash-partial-cleanup-mariadb.{log,xml}; do not repeat.
+Both PHP drivers use private MariaDB 10.11.14, not Oracle MySQL.
+Logs/JUnit: rehash-partial-* in /tmp/vault-retained-terminal.XPpz06/.
+This remains a password-rehash reader, not a generic UserSecurity owner. Other security
+flows and factor statement provenance remain open; partial-cleanup integration is now
+verified on both native PHP driver paths. No runtime consumer or new authority is enabled.
+Continuation (2026-09-16): retained account history is being extended to the exact
+single-subject human password-update and login-identifier-change flows. They have no
+primary Vault audit; their original subject ledger and exact transition audits remain
+required. The rehash-only entry point retains its existing restriction. Actual guarded
+account changes reproduced the missing retained owner before the change: 2 failures /
+27 assertions (64.21s), account-history-before.{log,xml}. The shared proof census is
+unchanged except for explicit owner dispatch; no writer, guard, runtime binding or schema
+is widened. Sequence 92484 PASS 2 / 71 (73.06s) on SQLite. Expanded negative tests initially
+hit the schema's equal expected/consumed-count CHECK instead of the reader (sequence
+34731, 2 failed / 1 passed, 123 assertions, 69.03s). The isolated corruption fixture now
+changes both counts together; no constraint or product rule was weakened. Corrected
+sequence 71349 PASS 3 / 291 (84.08s), zero JUnit errors/failures/skips: ownership and
+redacted diagnostics, wrong flow/subject/epoch/count, unfinished parent, extra forbidden
+subject fields, pending gate, terminal trust tamper, and retention after a later change.
+All six changed PHP files pass Pint; new files are 0644 sveintore:projectusers.
+Sequence 47253 completed exit 0. Broad SQLite PASS 875 / 32798 (660.81s), zero JUnit
+errors/failures/skips: all Vault units, ten integrated rehash/account cases and actual
+completed-creation cleanup. Native mysql PASS 2 / 67 (4752.73s), zero JUnit errors,
+failures or skips. Preserve account-history-mysql.{log,xml}; do not repeat that driver.
+Native mariadb PASS 2 / 67 (4987.46s), zero JUnit errors/failures/skips, verified
+2026-09-16 09:59 UTC. Preserve account-history-mariadb.{log,xml}; do not repeat this
+completed sequence. No test process from sequence 47253 remains running.
+Logs/JUnit: account-history-{broad,mysql,mariadb}.{log,xml} in the same temporary directory.
+Both native PHP drivers use private MariaDB 10.11.14, not Oracle MySQL.
+Other UserSecurity flows, multi-subject and actorless execution
+history, factor statement provenance and authority/quorum consumers remain open.
+Evaluation checkpoint (2026-09-16): Svein questioned repeated status-only progress.
+The existing verification was allowed to finish; no additional test sequence or feature
+code was started during evaluation. Automatic continuation is now PAUSED (read back).
+Slice 04 remains In Progress, not complete or ready for practical human review.
+Before resuming feature implementation: reconcile a bounded Slice 04 completion list
+with approved requirements, measure native setup/catalog/runtime costs, and agree the
+continuation approach with Svein. Repeated full catalog compilation/attestation is a
+candidate cost center, not a measured diagnosis. Preserve all approved security gates.
+No new restriction was installed in the credential write path. Complete owner dispatch,
+factor statement provenance, authority/quorum consumption and recovery remain open.
+Prior broad creation verification remains 898 / 35894 SQLite, mysql 7 / 772 and
+mariadb 7 / 772. Previous native quorum results do not cover the new graph change.
+Authority classification/reader dispatch, recovery eligibility and root provenance,
+historical proof terminal/generation statement provenance and lifecycle work stay open.
+Slice 04 In Progress; product rows 05..16 unfinished; runtime remains disabled.
+HR-2026-09-04-003 Pending / not practical-review-ready.
+Checkpoint: docs/plans/2026-09-14-vault-action-plan-source-readback.md.
+Automatic continuation is PAUSED for delivery-workflow evaluation with Svein.
+
+
+- **Current verification rework (2026-09-13):** The routine-backed guard implementation
+  passes the isolated native unmodified writer/read-back/rollback with exact catalogs.
+  Corrected SQLite cleanup passes 1 / 260; full MariaDB cleanup/catalog-drift/provenance/
+  rollback/resume/replay passes 1 / 283 (1:16:42.10). The following MySQL stage failed
+  with OOM (1 / 36); broad verification did not start. Six cold fresh-connection rollback
+  probes pass but remain resource-heavy. Direct installation alone also failed the second
+  driver (57013: mysql PASS 1 / 282, mariadb FAIL 1 / 37). The expanded UserSecurity-aware
+  thirteen-trigger assembly passes compiler/parser/SQLite 15 / 329 and native truth/type
+  parity on both drivers. All six fresh-connection probes pass. Source-only memoization
+  and exact-byte comparison reduce later full-flow probes to about 38s without caching
+  authority/catalog results. Pure tests PASS 15 / 71. Sequence 40988 ended at the broader
+  ALL directory run: 1233 pass, 15 failures, 89 opt-in native skips; native stages did not run.
+  Authority fixture/diagnostic and profile validation-feedback corrections PASS 40 / 898
+  (467.16s, 10502 finished). Sequence 70540 ended: mysql PASS 1 / 298, mariadb FAIL
+  1 / 53 with OOM; broad did not start. Private allocator sequence 35363 ENDED exit 0:
+  mysql PASS 1 / 298, mariadb PASS 1 / 299 on the same process without reset/cache flush.
+  VmPeak 2990928 kB remains within 4 GiB. Corrected SQLite broad 41507 ENDED exit 0:
+  1248 passed, 89 opt-in
+  native skips, 48064 assertions, 2587.01s; all fifteen prior failures now pass.
+  Native skips are not driver coverage; the allocator experiment is not an operational fix.
+  Subsequent invocation-local UserSecurity attestation now has a failing-before/passing-after
+  read-count regression and pure PASS 19 / 112. Native drift passes nine denials per driver;
+  the additional in-call partial-trigger regression fails before/passes after its correction.
+  Actual helper methods pass both drivers. Whole-flow probe 7663 PASS (33.419s/30.975s).
+  Final sequence 13919 ENDED exit 0: nine final-code drift denials per driver and focused
+  consumers PASS 60 / 1270 (559.09s). This closes the bounded optimization checkpoint.
+  Action-plan base and graph/authority child guards PASS 5 / 642 on SQLite and each native
+  driver. Decoder PASS 28 / 142; all Vault units/source integration PASS 804 / 26201.
+  The subsequent pure authority subject hydrator PASS 12 / 424. These are unbound source
+  components, not complete plan finalization, operational installation or runtime readiness.
+  Subsequent complete authority/graph subject readers PASS 1 / 28 on SQLite and each
+  native driver. Every graph operation and stored entry family is covered. Final combined
+  Vault units/source/read-back PASS 823 / 27026 (67.07s), no skips; all runs finished.
+  Live enabled/runtime-approved flags remain false. Complete plan finalization and product
+  workflows are still required; practical human review is not open.
+  Current detail: docs/plans/2026-09-14-vault-action-plan-source-readback.md.
+  Remaining Slice 04 and product work still precede practical review.
+  Application checks and 4 GiB ceiling are unchanged. Not review-ready. See
+  docs/plans/2026-09-13-vault-mariadb-trigger-memory-rework.md for evidence/current resources.
+
+- [ ] When practical review opens, submit a wrong current password on Profile > Security:
+  the error must appear beside the field, passwords must remain blank, and the old password
+  must still work. The shared account-security action remains authoritative.
+- **Pending-proof creation cleanup (2026-09-13, in progress):** Source/phase tests PASS
+  4 / 144. The paired revoke-only source/commit/proof/trust definitions are now connected;
+  actual source + production audit + coupled terminal tests PASS 1 / 54 across all purposes,
+  including last-write rollback/retry. Broad and both drivers PASS 836 / 26,777 combined,
+  without skips/deferred failures; final formatting/diff/flags checks pass. The locked writer
+  now passes 1 / 66 for ownership, exact guards, replay denial and outer rollback. Shared units
+  PASS 820 / 25,597 and writer drivers PASS 1 / 66 each: combined 822 / 25,729, no skips or
+  deferred failures; those writer runs finished. The full atomic creation cleanup is now
+  connected, including exact retained-terminal resumption and staged-loser repair. Expanded
+  migrated SQLite PASS 1 / 248 (1:17.387), covering three purposes, provenance denials and
+  all three commit-write rollback boundaries. Broad PASS 836 / 26,983. A private-driver
+  test fixture aged past its five-minute lifetime while earlier cases ran; live cases now
+  run first with explicit DB-time freshness assertions. Runtime/TTL unchanged. Corrected
+  SQLite PASS 1 / 251; private drivers rerun sequentially in exec 86813 (TODO/logs).
+  No operational/runtime or practical-review readiness;
+  this checklist remains Pending.
+- **Inert replacement-transition cleanup (2026-09-13, verified bounded flow):** The new closed
+  expiry branch covers ordinary step-up and both TOTP-enrollment purposes while leaving
+  original/replacement proofs unchanged. Abort-enabled proof effects require finalized commits;
+  UserSecurity and other owner-bound transitions remain excluded. Expanded migrated transition,
+  source, expiry and staged-loser tests PASS 4 / 269 (2:06.321). Parser and shallow-conjunction
+  regressions PASS 4 / 20, preserving nested SELECT/CASE and NULL semantics. SQLite parser/AST
+  limits were fixed without removing checks. Broad PASS 829 / 26,471 (9:00.651), mysql PASS
+  1 / 124 (29:48.343), mariadb PASS 1 / 125 (27:19.098); combined 831 / 26,720, no skips
+  or deferred failures. Exec 9032 finished exit 0. Final 17-file Pint/diff/permissions pass;
+  live flags false and helpers unbound. Private schemas/server are cleaned after read-back.
+  No runtime activation. **Pending/not practical-review ready**; this is not completion of
+  authorization or the remaining product slices.
+- **Staged losing-cleanup repair (2026-09-13, verified bounded flow):** A strictly newer repair
+  can terminalize a staged expiry-cleanup loser only against exact different finalized winner
+  evidence. The winning cleanup and original attempt remain unchanged. Shared guards, locked
+  metadata reads and the atomic coordinator are implemented. SQLite baseline source/expiry
+  passes 2 / 88 and the expanded losing-cleanup test passes 1 / 57 (32.123s), including both
+  contender orders and rollback. MySQL passes 1 / 57 (34:52.271); MariaDB passes 1 / 58
+  (30:03.894). Broad regression passes 824 / 26,327 (8:20.105), combined 826 / 26,442;
+  no skips/deferred failures. All runs finished; flags remain false, helpers unbound and
+  final Pint/diff pass. TODO tracks resource cleanup and remaining source families.
+  No runtime or operational activation. This entry remains **Pending** and is **not ready for
+  practical product review**; remaining authorization and product capabilities still apply.
+- **Complete inert-attempt expiry flow (2026-09-13):** Closed shared guard/catalog assembly,
+  a two-CAS finalizer and one-transaction coordinator now cover preparation, target/trust abort,
+  and cleanup/trust finalization LAST. SQLite source/flow PASS **2 / 81** (54.891s), then the
+  expanded whole-coordinator rollback test PASS **1 / 57** (30.110s). Mid-CAS failure, outer
+  rollback, replay denial, trusted visibility and untouched live target are covered. MySQL
+  PASS **1 / 57** (34:47.701); MariaDB PASS **1 / 58** (29:56.582). Broad PASS **819 / 26,020**
+  (5:39.222), additional existing-consumer cases under the new assembly PASS **4 / 250**
+  (2:11.206). Combined **825 / 26,385**, no skips/deferred failures. All runs completed;
+  live flags false and new coordinator/finalizer unbound. TODO tracks resource cleanup. Other source
+  families and staged losing-cleanup repair remain closed. No runtime binding/activation or
+  operational migration. **Pending/not practical-review ready**.
+
+- **Locked cleanup preparation (2026-09-13):** An internal writer now locks the expired
+  attempt and its exact pending audit/trust, verifies all required guard catalogs, allocates
+  a newer cleanup commit and writes immutable source plus actual typed pending audit in the
+  caller transaction. Sealed migrated SQLite integration PASS **1 / 26** (27.898s), including
+  full rollback, live-target rejection and missing-guard rejection. MySQL PASS **1 / 26**
+  (32:50.149); MariaDB PASS **1 / 27** (26:26.092). Final broad PASS **819 / 25,989** (5:53.699),
+  combined **821 / 26,042**, no skips/deferred failures. All runs finished. Live flags false;
+  preparer autoloads but remains unbound. This is preparation only: target/trust
+  abort and cleanup finalization LAST are still required. No self-commit, runtime activation
+  or practical review surface. **Pending/not review-ready**.
+
+- **Expired-attempt abort source (2026-09-12):** Three closed immutable source guards now
+  verify canonical cleanup identity, database expiry, retained source/audit/pending trust and
+  a newer live cleanup commit. Actual migrated SQLite fixture PASS **1 / 31** (26.246s),
+  including negative cases, raw-write denial, outer rollback and immutable retention. A test-only
+  assertion was corrected to accept the exact inactive-context denial; no runtime check weakened.
+  MySQL-driver PASS **1 / 29** (30:10.631); MariaDB PASS **1 / 30** (25:29.937), verified
+  2026-09-13. Final broad PASS **818 / 25,963** (5:20.185), combined **820 / 26,022**, no skips
+  or deferred failures. All test processes finished; TODO tracks owned-resource cleanup.
+  This does not yet abort the target, finalize cleanup trust or expose a
+  runtime job. No real credentials or runtime activation. **Pending/not review-ready**.
+
+- **Integrated retained-history writer (2026-09-12):** A new real-migration test covers the
+  whole cutover and production foundation recorder, with old-history preservation, rollback,
+  successful atomic trust and explicit guard denial for raw INSERT. SQLite PASS **1 / 30**
+  (35.570s) after restoring the fixture's existing TOTP replay guard. MySQL PASS **1 / 23**
+  (46:55.925); MariaDB PASS **1 / 24** (40:08.635). Final broad PASS **817 / 25,932** (4:43.708),
+  combined **819 / 25,979**, no skips/deferred failures. No runtime policy changed; actual
+  owner-specific finalizers, classification and product work remain. **Pending/not review-ready**.
+
+- **Last-only thaw and completion (2026-09-12):** Exact stage-4 history/catalog verification
+  now precedes freeze removal, with a separate one-use stage-5 DML checkpoint and full read-back.
+  These internal helpers do not classify or activate runtime. SQLite PASS **2 / 264** (1:03.096)
+  after a test-only replay assertion correction. Seven PHP files pass Pint/diff/permissions.
+  Full drivers PASS **6 / 768** (15:51.405); broad PASS **816 / 25,902** (4:23.560), combined
+  **822 / 26,670**, no skips/deferred failures. Runtime flags false; helpers remain unbound.
+  TODO owns continuation. Integrated retained-history writer,
+  remaining owner paths and product work remain. **Pending/not practical-review ready**.
+
+- **Frozen runtime-validator switch (2026-09-12):** Exact legacy/gap/runtime restart catalogs
+  now retain the full freeze, permanent trust guard and locked guard_installed manifest.
+  Lossless timestamp preparation and repeated read-back preserve historical evidence.
+  SQLite PASS **2 / 206**; full drivers PASS **6 / 598** (14:53.583), broad PASS **816 / 25,902**
+  (4:16.300), combined **822 / 26,500**. This earlier checkpoint did not thaw, mark completed,
+  activate runtime or provide an operational entry. Review remains Pending.
+
+- **Frozen guard-installed checkpoint (2026-09-12):** A one-use owned DML context now verifies
+  permanent-only protection and the full locked backfilled manifest/trust/view before the fixed
+  revision-3-to-4 CAS. Fresh read-back follows; replay, raw writes, temporary/overlap catalogs,
+  wrong identity and ordinary transactions deny. Retained guard_installed has a separate
+  read-only verification path. SQLite rollback/empty/nonempty checks PASS **2 / 173** (35.373s).
+  Four PHP files pass Pint/diff/permissions. Full drivers PASS **6 / 507**, broad PASS
+  **816 / 25,902**, combined **822 / 26,409**. No completed marker, thaw, runtime/operational entry
+  or real secrets. Other owner/consumption/abort/classification and product work remain.
+  **Pending/not practical-review ready**.
+
+- **Frozen permanent-guard handoff (2026-09-12):** The internal installer creates and verifies
+  the permanent trust INSERT guard before removing its temporary predecessor. Only exact
+  temporary/overlap/permanent catalogs are accepted, each with the freeze and retention guards.
+  Full locked backfilled base/item/trust/view read-back accompanies the switch. Wrong identity,
+  ownership, drift, uncovered state and unknown guards deny without repair. SQLite DDL rollback
+  and overlapping restart pass on all three drivers: **6 / 384** (10:49.177). Final broad
+  **816 / 25,902 PASS** (4:18.436): **822 / 26,286**, no skips/deferred failures. Three files
+  pass Pint/diff/permissions. These runs finished; server retained only for guard-stage tests.
+  This paragraph records the earlier handoff checkpoint, before the new stage CAS above.
+  Later owner-view tables remain structural fixtures. Header remains backfilled; audit remains
+  frozen. No later-stage CAS, thaw, runtime binding, operational DDL/activation or real secrets.
+  Cutover completion, other owner/consumption/abort/classification and product work remain.
+  **Pending/not practical-review ready**; runtime flags remain false.
+
+- **Owned foundation backfill coordinator (2026-09-12):** Exact retained-stage dispatch now
+  joins capture/resume, missing-child backfill and stage CAS in one owned cutover transaction.
+  Backfilled no-op independently verifies the complete base/item/trust/view set and catalog.
+  Full fresh/partial-resume rollback, wrong identity, ordinary ownership and guard drift checks
+  PASS **6 / 268** (6:42.282), empty/nonempty SQLite/mysql/mariadb, no skips. Real foundation
+  migrations/guards; unrelated later owner-view dependencies are structural fixtures.
+  Final broad regression **816 / 25,902 PASS** (4:07.583): **822 / 26,170**, no skips or
+  deferred failures. All sessions finished; exact empty private server/schema cleanup complete.
+  Both PHP files pass Pint, diff/permissions pass; runtime flags remain false and coordinator
+  unbound. TODO records the next permanent-guard work.
+  No guard switch/thaw, later-stage completion, runtime binding, operational migration or
+  activation. Permanent guards, other owner/consumption/abort/classification and product work
+  remain. **Pending/not practical-review ready**.
+
+- **Full migrated factor boundary complete (2026-09-12):** mysql **1 / 103 PASS** (24:49.424),
+  mariadb **1 / 104 PASS** (23:31.869), final broad SQLite **816 / 25,902 PASS** (4:14.510):
+  **818 / 26,109**, no skips or deferred failures. Four PHP files pass Pint; diff and file
+  permissions pass. All runs finished; both schemas and the exact empty private server were
+  removed. Per-submission test TOTP generation leaves runtime rules unchanged. This verifies
+  the migrated factor/rate/proof boundary, not complete Slice 04 or product readiness.
+  Typed owner/consumption/abort/cutover and product work remain. No operational migration,
+  activation, real secrets, Main or production. **Pending/not practical-review ready**.
+
+- **Historical full migrated factor-boundary checkpoint (2026-09-12; sessions below are now
+  completed and resources removed):** The real-factor test
+  now accepts only its explicitly owned private MariaDB schema/socket/Connection for the full
+  assembly. Bootstrap and legacy-driver handling follow the existing isolated writer test; all
+  guards are restored before factor calls. Initial mysql run 88128 **FAILED** (21:45.087,
+  15 assertions) when a successful proof was expected after rollback checks. The test had reused
+  an initial TOTP over several submissions on the slower private database.
+  Fresh submissions now generate current DB-time codes, with safe denial diagnostics and no
+  widened/frozen verifier window. SQLite regression **1 / 103 PASS** (43.006s), Pint/diff pass.
+  The mysql retry **1 / 103 PASS** (24:49.424), and its schema was dropped. The mariadb-driver
+  run is **RUNNING**, not verified: exec 49397, PHP pid 223684, private server pO4ZmF/214040.
+  TODO records exact schema/socket/log and resume/cleanup; do not overlap/restart it. Initial
+  failure is retained as history. Final broad regression remains afterward. No operational migration,
+  activation, real secrets, Main or production. **Pending/not practical-review ready**.
+
+- **Guarded rate anchors and internal assembly (2026-09-12):** Seed/lock statements now consume
+  exact one-row contexts. Identity changes, raw/no-op writes, DELETE, REPLACE of retained anchors,
+  premature locks and extension/reset of active locks deny. A threshold lock requires the exact
+  finalized evaluated attempt/rate/trust plus real rolling 5/20 counts and the original DB clock.
+  Rate preparation/pruning require the complete exact anchor+telemetry manifest, with no runtime
+  repair. Cold SQLite connections prepare dormant names only. Both migrated attempt integrations
+  now use the full rate set. Private historical fixture DDL is explicitly outside transactions.
+  Final broad units/five migrated integrations **816 / 25,903 PASS** (4:10.531). Retention and
+  independent-process threshold contracts **2 / 118 PASS per driver** (mysql 57.658s; mariadb
+  53.276s): **820 / 26,139**, no skips/deferred failures. Missing-catalog denial does not repair
+  or write. All 12 PHP files pass Pint, diff/new-file permissions pass. Private server 75TWyF and
+  schemas were verified empty and removed; all tests finished. Runtime remains off, stores unbound,
+  no operational migrations/real secrets/Main/production. Full migrated-Maria factor boundary,
+  remaining typed owner/consumption/abort/cutover and product slices still precede practical review.
+  **Pending/not practical-review ready**; no human approval or product completion is implied.
+
+- **Bounded telemetry retention (2026-09-12):** Exact consumed-source INSERT, denied UPDATE and
+  one-use old-only DELETE guards are implemented in an explicit non-operational assembly. The
+  pruner owns a separate top-level root-first transaction, bounds batches to 1..500 and only removes
+  telemetry older than 24 hours with finalized matching durable evidence/audit. It cannot mutate
+  anchors, proofs, factors or audit; failures roll back maintenance, not an earlier attempt.
+  Real-writer tests verify raw/wrong-context/future denial, rollback, limits, catalog drift and
+  unchanged permanent audit/active locks. A mixed-collation MariaDB failure was fixed and retested.
+  Final broad units/five migrated SQLite integrations **816 / 25,891 PASS** (4:14.237), including
+  the real-factor boundary with telemetry guards. Both private-driver retention contracts
+  **1 / 25 PASS** (mysql 19.585s; mariadb 18.549s): **818 / 25,941**, no skips/deferred failures.
+  All eight PHP files pass Pint, diff and new-file permissions pass. Private server 0Zse5X and its
+  schemas were verified empty and removed; no tests remain active. Ports stay unbound, runtime
+  flags false, no operational DDL/real secrets/Main/production. Raw anchor guards/final assembly,
+  full migrated-Maria factor boundary and other owner/cutover/product work remain. **Pending/not
+  practical-review ready**; this is internal progress, not a human approval or completion handoff.
+
+- **Combined factor/rate/proof transaction (2026-09-12):** An unbound coordinator now owns standard
+  and both enrollment attempts end to end. Registered one-use evaluation claims provide the exact
+  connection/clock; standalone verifier/issuer wrappers remain top-level and are not nested. Real
+  denied-attempt audit/rate writes and successful proof issuance/reuse share the transaction.
+  Failures after real replay CAS and proof finalization roll back all changes. Locked attempts
+  skip hashing and factor/replay-field reads, retain skipped audit and never extend locks.
+  Migrated SQLite real-factor boundary **1 / 101 PASS** (40.882s); final broad units/five migrated
+  integrations **815 / 25,862 PASS** (4:07.438). Extended mysql/mariadb contracts **1 / 81 each**
+  PASS (29.944s/27.087s): current checkpoint **817 / 26,024**, no skips or deferred failures.
+  Independent PHP workers test both fifth-session and twentieth-cross-session thresholds behind
+  an observed held root lock; timestamps follow release, exactly one threshold winner and one
+  skipped attempt persist, with no undercount or extension. The filesort wait is observed through
+  exact active queries, since INNODB_LOCK_WAITS did not report this synthetic fixture's wait.
+  This is not full migrated-Maria factor-boundary or power-loss verification. Raw rate-write
+  guards/pruning, other owner/cutover paths and the product workspace remain. Runtime stays off,
+  ports unbound, no operational migration or real credentials. **Pending/not practical-review ready**.
+  Final Pint passes all nine PHP files; diff/permissions checks pass. All test sessions finished
+  and private server fF2u1U/schemas were verified empty and removed. No failed checks are deferred.
+
+- **Durable failed attempts and rate persistence (2026-09-12):** The explicit optional guard assembly
+  now finalizes exact immutable attempt/evidence/audit and trust-LAST, rejecting source mutation,
+  wrong actor/reason/reference/rate rows and direct trust updates. The real internal writer and
+  rate repository share a caller-owned transaction. One-use rate state is actor/session/epoch and
+  transaction-bound. Exact rolling counts, fifth session/twentieth cross-session failure, skipped
+  lockout without counter/lock extension, and rollback of audit/rate/lock/sequence are tested.
+  Actual migrated SQLite test **1 / 129 PASS** (42.885s); source/finalizer contracts **3 / 200**
+  and real writer/rate contracts **1 / 25** PASS on each MariaDB driver. Synthetic dependency
+  fixtures are not full migration, multi-worker concurrency or power-loss verification. Final
+  broad verification PASS **813 / 25,745** (3:28.338), yielding **821 / 26,195** with both
+  driver sets, no skips. All tests completed; no failed check deferred. All 11 PHP files pass Pint;
+  diff/permissions checks pass. Owned private server M8tXPn and schemas are cleaned. Live flags
+  remain false and new stores unbound. The complete factor/rate/issuance transaction, pruning,
+  remaining raw rate guards, owner/cutover and product workspace still remain. No operational
+  migration, real-secret use or practical-review readiness. **Pending**, no human approval implied.
+
+- **Integrated standard/enrollment proof lifecycles (2026-09-12):** Real repository create/reuse/expired
+  replacement uses the same top-level transaction, exact source/audit finalizers and trusted
+  read-back. Reuse does not extend expiry. Detached snapshots, wrong sessions, premature expiry
+  and non-expiry drift without its original mutation owner deny. Failure rolls back all new
+  evidence, old revocation and sequence allocation. Lock-order/fence regressions fail before the
+  revalidator correction and pass afterward. Actual bcrypt/TOTP/replay-CAS plus issuance passes
+  migrated SQLite 2 / 64, now including the exact pending-generation enrollment verifier and both
+  confirmation/cooling-recovery purposes. Enrollment revalidation rejects wrong kind, generation,
+  epoch, counter, session, future verification and held fences without new evidence. Proof issuance
+  never confirms the factor or authorizes an authority/recovery action. Expiry replacement and
+  outer rollback pass for all three proof variants. Final broad units plus migrated integration:
+  **808 / 25,387 PASS** (2:48.334). Both repository driver contracts: **2 / 114 PASS** on mysql
+  (1:00.915) and mariadb (1:05.560), giving **812 / 25,615**, no skips. Pint passes six files;
+  diff and 0644/project-owner checks pass. Both private servers/schemas were verified empty and
+  cleaned; no tests remain running. Live flags are false and new repositories/adapters unbound.
+  Rate/attempt/HTTP, other credential/owner/cutover and remaining product work still precede
+  practical review; **Pending**, no human approval implied.
+- **Primary rehash audit and verified login actor (2026-09-12):** The explicit full assembly now
+  binds the exact rehash primary event during gate-owned execution completion and finalizes its
+  trust LAST. Default/partial runtime remains closed. New unbound primary-audit and verified-login
+  adapters connect the real locked bcrypt preflight/credential write to the store without logging
+  in the user or granting Vault step-up. Failed passwords write nothing; failure after audit creation
+  rolls back hash/epoch/evidence; a second needsRehash=false invocation is a no-op. Tests also
+  exercise effect/audit rollback, retained proof-source resume, exact primary binding, unauthorized
+  direct trust/binding, wrong-event gate denial and final trusted read-back. SQLite coupling uses
+  explicit CASE evaluation; first-login connections prepare dormant evidence UDF names without
+  providing a capability. Opaque session digests pass between trusted adapters without raw-byte
+  extraction. A failing-before/passing-after regression additionally ties the actor to one fresh
+  transaction identity, not a reusable PDO; later transactions and reconnects cannot borrow it.
+  **802 tests / 25,183 assertions PASS** (1:52.972), no skips, across Vault/UserManagement units
+  and both actual migrated SQLite integration tests. Extra legacy Feature regression passes
+  **29 / 306** (7:05.877), giving **831 / 25,489** completed checks. Pint and diff checks pass.
+  Full migrated private mysql/mariadb now pass **1 / 236** (38:04.728) and **1 / 237** (37:51.741).
+  Completed checkpoint total **833 / 25,962**, no skips; private schemas/server were cleaned.
+  Previous checkpoint results below are historical, not these new run results.
+  Live Dev confirms both flags false and all three new adapters unbound. No operational migration,
+  bootstrap provisioning, real secrets, HTTP login activation or production change. Other credential
+  flows, owner/cutover and the remaining product slices still precede practical review.
+  **Still Pending / not review-ready; automated continuation remains active.**
+
+- **Integrated UserSecurity proof invalidation (2026-09-12):** An unbound full-assembly port now
+  connects source/audit/terminal writes and all-session enumeration to the actual mutation store.
+  Default active-proof denial remains intact. The adapter requires the complete exact guard set,
+  revokes before credential effects and leaves trust/gate completion to the parent. Exact existing
+  building sources can resume after their unchanged expiry; no fresh source/audit scope is granted.
+  SQLite's replay guard function names are prepared dormant, without verifier authority or replay
+  reset. Synthetic tests cover human/system provenance, reasons, drift, whole-set rollback,
+  unrelated users, expired retained completion and late-audit denial. Their MariaDB fixture now
+  uses Nexum's numeric user ID; the discovered collation failure was not an application defect.
+  Prior broad SQLite: **740 / 25,250** (2:59.631); selected mysql/mariadb writer contracts:
+  **6 / 384 each** (6:02.623, 6:00.113). Actual migrated SQLite parent execute/credential effect,
+  outer rollback, forced commit and exact resume pass **1 / 163** (36.872s), with trusted audit and
+  gate-LAST read-back. Final units/core/writer/precision pass **743 / 25,367** (3:05.336); strict
+  full-assembly rejection passes **1 / 3** on each MariaDB driver (21.283s, 18.031s). Ten PHP files
+  pass Pint and git diff --check passes. Existing store/resume Feature regression passes
+  **18 / 230** (7:19.272). Live Dev boot confirms both runtime flags false and the new port unbound.
+  Full migrated-Maria integration now passes **1 / 163** (mysql, 34:59.595) and **1 / 164**
+  (mariadb, 34:44.574). Completed checkpoint: **777 / 26,698**, no skips. Both private schemas
+  were cleaned and their exact empty socket-only server was shut down and removed. No pending
+  test runs remain. Applied task-owned transport patches were cleaned, preserving unrelated work.
+  The earlier issuance-only full-Maria runs DID finish: **1 / 82** and **1 / 83** (27:11.347,
+  27:30.750), completing that older checkpoint at **750 / 25,441**, no skips. Its private server
+  was cleaned. Current tests use a different owned socket-only server; see TODO. Historical
+  bullets below describe earlier checkpoints, not live pending runs. Bootstrap/factor data remain
+  synthetic; this is not real credential verification, power-loss durability or operational cutover.
+  Remaining credential-flow coverage, rehash audit and other source/owner/cutover paths still
+  precede the workspace and practical review. No runtime/public binding or real data changed.
+  **Still Pending / not review-ready.**
+
+- **MariaDB fixture follow-up (2026-09-12, 08:52 UTC wake):** Full migration completed on both
+  drivers, then the synthetic raw gate INSERT was correctly denied by 010110. The private writer
+  test now attests and drops the exact UserSecurity set before fixture seeding, matching the
+  existing isolated SQLite/UserSecurity harness, and reinstalls/attests it before writer DML.
+  SQLite recheck passes **1 / 82** (29.607s); Pint passes. Corrected full-Maria runs remain pending
+  at the sessions in TODO. The disposable socket-only server uses flush-at-commit=2; these tests
+  verify logical transactions/constraints, not crash durability. No operational DB/configuration,
+  guard, runtime binding or bootstrap authority changed. **Still Pending / not review-ready.**
+
+- **Frozen audit precision and retained terminal completion (2026-09-12):** The internal
+  VaultAuditTimestampPrecisionSchema verifies both foundation columns before a single MariaDB
+  DATETIME(0)-to-DATETIME(6) expansion. It requires disabled runtime, exact freeze, no MariaDB
+  transaction and stable native PDO; it retains the freeze and never rewrites audit values,
+  activates runtime or registers a migration. SQLite checks exact declared shape within an owned
+  transaction. The full proof catalog requires six-digit preservation. Private driver tests prove
+  retained legacy rows, microsecond round-trip, restart, wrong shape, missing freeze, runtime flags,
+  forbidden transaction and no-I/O pretend behavior.
+  The exact UserSecurity terminal branch can finish an already-created/audited source after the
+  original owner expiry. Creation and audit must predate that unchanged expiry; source INSERT
+  still requires a live owner, and ordinary issuance/replacement do not acquire the exception.
+  Historical fixtures cover both families/purposes, human/system executor, owner/audit drift,
+  rollback and pending trust/gate retention. They do NOT prove the still-missing complete
+  application invalidation/enumeration/resume coordinator or credential verification.
+  Final units plus SQLite core/writer/precision integration pass **734 / 24,866** (2:39.911).
+  Selected mysql/mariadb terminal runs each pass **3 / 186** (4:48.426, 4:55.531); precision runs
+  each pass **4 / 19** (17.810s, 15.381s): **748 / 25,276 completed**, no skips. Ten PHP files pass
+  Pint; git diff --check passes. Full migrated-Maria writer runs are still pending; see the current
+  TODO checkpoint for reusable sessions and private-server ownership. The harness uses mysql for
+  legacy application migration, then the requested Vault runtime driver, and the existing 900s
+  isolated Email preflight budget. This does not claim application-wide mariadb-driver migrations.
+  **Pending / not practical-review ready.** No operational migration, runtime/public binding,
+  real credential, Main or production change. Internal writers and remaining Slice 04 integration
+  still precede the workspace and a concrete human-review invitation.
+
+- **Shared proof/audit assembly and actual-schema writer integration (2026-09-12):** The explicit
+  full proof variant now attests every proof/trust guard, the complete UserSecurity/replay set and
+  all runtime audit-table guards. The original isolated proof variant remains exact and unchanged.
+  Partial upgrades, altered literals and missing/extra security triggers reject. SQLite prepares
+  dormant UserSecurity UDF names without neutralizing inactive-context errors or replacing a live,
+  consumed or coupled owner. Three context tests cover all fields and cross-PDO isolation.
+  An actual migrated SQLite standard/enrollment writer test exposed the old foundation-only audit
+  validator rejecting Row04 issuance. VaultAuditRuntimeGuardDefinitions is the explicit replacement
+  manifest: structural UUID/time/key/permission/scope/item/version checks plus the existing exact
+  one-use event/owner/reference predicate in BEFORE and AFTER. Existing append-only guards remain.
+  Uppercase/padded codes, invalid calendar dates and matching forged contexts cannot bypass it.
+  This library is NOT installed in the operational database; legacy/backfill definitions are unchanged.
+  Real migrated SQLite proves both proof families/purposes, pending-to-active source, trusted audit,
+  allocation rollback/retry, retained empty security gate and no leaked UserSecurity context.
+  Bootstrap/factor facts are synthetic; this is not full credential verification or UserSecurity
+  claim/invalidation execution. Selected MariaDB tests use permissive dependency tables and prove
+  validator/catalog/real audit-context/creation-finalizer behavior, not full migrated-Maria issuance.
+  Final units and both SQLite integration classes pass **725 / 24,746** (2:40.945); mysql and mariadb
+  each pass **2 / 96** (1:00.476, 0:59.438): **729 / 24,938**, no skips. The earlier broader run including
+  UserSecurity store/resume passed **743 / 24,961** (9:26.500), before the final extra code/date checks.
+  Ten PHP files pass Pint and git diff --check passes. No tests remain running; the private socket-only
+  MariaDB was shut down/removed with zero application schemas remaining. Live boot confirms both
+  runtime flags false and both public recorder/freshness bindings absent.
+  Next are internal invalidation writers/all-proof enumeration/resume, rehash-primary audit and the
+  remaining source/owner/cutover flow. MariaDB's deployed foundation DATETIME(0) must be widened under
+  the approved frozen cutover to DATETIME(6), then verified with actual migrated writer integration.
+  **Pending / not practical-review ready**; no operational migration, activation, real secrets or production change.
+
+- **Coordinated UserSecurity proof-set finalization (2026-09-12):** An explicit, non-operational
+  finalizer definition set extends the existing gate statement. It verifies the complete physical
+  subject/source set, terminal commits, exact old-proof claims and paired pending audit identities;
+  an active proof in any changed user's session blocks release. The gate BEFORE statement arms
+  a database-owned proof_set_finalize marker, consumes the exact parent context, finalizes terminal
+  trust while the execution remains subjects_complete and the gate retained, checks every result,
+  and clears the marker. The original gate CAS/AFTER completes execution last; nested or outer
+  failure rolls all those writes back. Direct trust writes and borrowing another event's pending
+  projection reject. The shared trust guard selects the immutable source's context family without
+  probing an inactive evidence context. Already-finalized terminal commits do not acquire a new
+  expiry window when the exact parent completes. The marker adds no context family or data column.
+  MariaDB tests exposed mixed-collation UUID/context equality in the older UserSecurity base guards;
+  binary identity comparisons fix it without changing server/session collation or weakening checks.
+  Final units/core plus existing UserSecurity store/resume tests pass **738 / 24,628** (9:07.375).
+  Selected mysql/mariadb contracts each pass **5 / 166** (5:41.337 and 5:41.754):
+  **748 / 24,960** combined, no skips. Eight changed PHP files pass Pint; git diff --check passes.
+  The additional actual-schema Row04 MariaDB contract passes **4 / 22** (26:26.550), including
+  complete isolated migration, exact guard reinstall/read-back and cross-PDO raw-write denial.
+  Final combined evidence is **752 / 24,982**, no skips. No tests remain running; the private
+  server was shut down and removed after zero remaining application schemas were verified.
+  Fixtures protect finalizer writes but seed parent state and do not prove the complete claim,
+  enumeration, credential-write or actorless-audit application workflow. Actual migrated SQLite
+  schema also compiles the combined definitions. Shared exact catalog/UDF preparation, internal
+  writers, full enumeration/resume, password-rehash primary audit and remaining owner/cutover
+  branches still precede operational installation and UI. denyActiveProofs remains unchanged.
+  **Pending / not practical-review ready**; no runtime, operational migration, Main or production change.
+
+- **Owned UserSecurity proof source and terminal coupling (2026-09-12):** The exact source
+  context now requires the retained execution gate, effects-started/subjects-complete owner,
+  canonical executor, inherited live expiry, OLD-to-NEW epoch subjects, historical creation trust
+  and a closed reason. Shared epoch pairs are allowed; conflicting pairs, wrong counts/actors,
+  mixed provenance and noncanonical system actors reject. The existing transition row represents
+  each per-proof source; no nineteenth UserSecurity subject kind or new table/context was added.
+  Finalizing that transition commit atomically claims only its active proof, preserves all other
+  proof fields and leaves its exact audit projection pending. The UserSecurity execution and gate
+  remain retained; fresh proof activation and direct trust finalization remain denied. Nested
+  failure and outer rollback restore the proof and commit together. Human audit insertion uses
+  the real guarded writer with user_security_mutation_execution_id, not a new reference column.
+  Both proof families/purposes and human/system terminal actors are covered; synthetic mutable
+  parent dependencies exercise exact pending and consumed epoch state, not the full protected
+  UserSecurity mutation/claim workflow or a real actorless audit writer. Actual migrated SQLite
+  core compilation also passes. Final units/core: **716 / 24,272** (2:05.963), no skips.
+  Final selected mysql/mariadb cases pass **5 / 225** each (3:40.267 and 3:44.050), totaling
+  **726 / 24,722**, no skips. Earlier source-only cases passed **7 / 188** each (3:43.972
+  and 3:42.233). Six PHP files pass Pint and git diff --check passes. No tests remain running.
+  The complete coordinated trust/parent/gate-LAST
+  finalizer, all-proof enumeration, exact owner-resume handling and application writer integration
+  remain next; denyActiveProofs is intentionally unchanged until they are complete. This does not
+  complete Slice 04, the workspace or practical review. Live boot verifies runtime disabled and
+  unapproved, foundation recorder/fresh-proof bindings absent. **Pending / not practical-review ready**.
+
+- **Enrollment and expiry source writers (2026-09-12):** The internal pending writer is renamed
+  DatabaseVaultPendingProofWriter and supports both standard facts and a separate closed enrollment
+  binding. Enrollment uses database issue time plus exactly 300 seconds, exact pending generation,
+  purpose, event, reason and typed audit reference. Standard behavior and opaque PDO binding remain
+  covered. DatabaseVaultExpiredProofReplacementWriter generates its own sequence/commit/source/audit
+  and invokes the terminal finalizer. All three proof/purpose variants run pending creation, old
+  revocation and new activation through the real writers in one owned transaction. Audit failure
+  and outer rollback restore proof states, evidence and sequences together. The mutable legacy
+  SQLite fixture now uses the real schema's BLOB session representation; comparisons were not relaxed.
+  Final units/core pass **706 / 23,949** (1:59.602); selected standard/new writer cases pass
+  **7 / 213** each on mysql and mariadb (3:16.025 and 3:14.862): **720 / 24,375**, no skips.
+  Four changed PHP files pass Pint. Test databases/server were removed after zero-schema verification.
+  This does not finish credential/enrollment verification, the complete issuance repository, other
+  terminal causes, cutover or UI. The enclosing coordinator must create the replacement in that
+  same owned transaction and cannot adopt an older persisted pending proof. Runtime remains disabled,
+  no operational migration occurred, and this checklist stays **Pending / not practical-review ready**.
+
+- **Coupled expiry and standard pending writer (2026-09-12):** The integrated non-operational
+  assembly now finalizes the expired transition's own commit, CASes only its old proof to revoked,
+  and finalizes exact terminal audit trust LAST. Replacement activation follows in the same owned
+  transaction. Both proof families and both enrollment purposes are tested, with active-slot
+  uniqueness, competing terminal-source rejection, wrong actor/session/refs/reason, security drift,
+  last-write failure and outer rollback. The internal expiry finalizer attests the exact shared
+  catalog and retains root/security/source locks; real typed audit insertion is integrated.
+  The standard pending writer allocates its own commit/sequence and source/audit rows with DB time,
+  current-security guards and a fixed PDO sink for the opaque session. Audit/source failure rolls
+  back the sequence and all new rows; query-binding logs contain no session bytes. No public
+  binding, UI, enrollment writer, complete issuance repository or other terminal cause is implied.
+  Final units/core: **701 / 23,755** (1:54.296). mysql and mariadb each pass the earlier full
+  **19 / 2,144** (7:29.154 and 7:25.982) plus final race/writer **3 / 37** (0:46.346 and
+  0:45.063), totaling **745 / 28,117**, no skips. Actual migrated SQLite core compiles these
+  integrated guards; synthetic mutable dependencies test exact rejection, not live cutover readiness.
+  Eight changed PHP files pass Pint; no operational migration or credential activation occurred.
+  Live boot remains disabled/unapproved with recorder/fresh-proof ports unbound. **Pending / not
+  practical-review ready**; this does not complete Slice 04 or the Vault product.
+
+- **Expired-on-retry proof transition source (2026-09-12):** Both proof families now have
+  one-use append-only source guards for the exact expired replacement branch. An expired
+  active target must retain its exact finalized creation/audit/trust; its pending replacement
+  must match actor/session/purpose and current factor, counter, authority/security epochs,
+  live derived lifetime and clear fences. A separate building transition commit/audit identity
+  is mandatory. Mixed trigger/executor/operation references, stale source facts, wrong context,
+  replay and source UPDATE/DELETE reject. Other terminal-trigger branches stay closed.
+  Final Vault units/core pass **693 / 23,364** (1:52.667). Identical new source cases pass
+  **3 / 231** on mysql and mariadb (1:11.642 and 1:10.391): **699 / 23,826**, no skips.
+  Actual migrated SQLite core compiles the transition INSERT guard. Mutable synthetic
+  dependency rows in the source tests deliberately isolate provenance drift; they do not
+  establish the coupled terminal finalizer, active-slot transfer, complete issuance repository
+  or operational schema readiness. No proof is revoked/activated by source insertion alone.
+  Pint --test passes the three changed PHP files; git diff --check passes. No operational
+  migration, real credential, runtime, commit, Main or production change. The isolated server
+  was removed after all tests stopped and zero private schemas remained. **Pending; not ready.**
+
+- **Coupled proof creation and guarded application finalizer (2026-09-12):** Exact one-use
+  evidence finalization now activates only its pending standard/enrollment source and updates
+  audit trust LAST. Immutable commit/proof fields, audit actor/reason/reference/owner matrix,
+  current security/factor/fences and DB time are rechecked. Direct updates, replay, missing or
+  duplicate trust, source drift and forced last-write failure reject/roll back. A CASE-selected
+  shared trust branch leaves the inactive evidence context untouched for foundation events.
+  The application finalizer requires the exact owned transaction and trigger catalogs, binds
+  current actor/session/purpose, locks root/security/source/audit metadata and verifies the
+  final trusted creation evidence. It never starts/commits a transaction or verifies credentials.
+  Final expanded units and actual-core tests pass **690 / 23,129** (1:49.961); the same full
+  source/finalizer cases pass **11 / 1,566** on each mysql and mariadb connection driver
+  (3:36.462 and 3:30.128): **712 / 26,261**, no skips. Focused SQLite passes 11 / 1,613.
+  Core compilation now covers both proof INSERT/UPDATE paths, commit and shared trust UPDATE.
+  Synthetic source metadata and unrelated owner dependency tables remain fixture boundaries;
+  the integrated test uses the real audit context/sink, audit/trust triggers, creation guards
+  and application finalizer. This does not complete terminal transitions, issuance, other
+  evidence owners, operational cutover or runtime activation. No real secret, operational
+  migration, commit, Main or production change. Pint --test passes all six changed PHP files;
+  git diff --check passes. Initial failures exposed TEXT-versus-integer fixture affinities,
+  a fixture value-access mistake and an unsafe alias substitution; these were corrected and
+  the full final runs are green. The temporary socket-only MariaDB server was shut down and
+  removed after all test processes exited and zero private schemas remained.
+  **Pending; not practical-review ready.** Automatic continuation remains active.
+
+- **Expanded verification and pending-proof source guards (2026-09-12):** The full Vault Feature
+  directory plus VaultRow04CoreAssemblyTest completed at **252 / 17,628** in 22:59.363, no skips.
+  Subsequent source guards cover both proof tables: only pending creation through one exact
+  source-stage context is allowed, matching building commit/source/event/preallocated audit,
+  current active-human security/factor/epoch/counter facts, clear installation fences and live
+  database-derived lifetime. A consumed context cannot create a second row; failed multi-row
+  attempts roll back. Source-stage lifecycle projection fields are forbidden. UPDATE deliberately
+  remains denied until creation and terminal finalizers are complete; DELETE denies retention loss.
+  Final Vault units plus all five actual-core tests passed **682 / 21,823** in 1:47.670.
+  The mysql and mariadb guard runs each passed **3 / 269** (688 / 22,361 across final runs).
+  Actual migrated SQLite tables compile both source INSERT trigger paths without inserting
+  data. Source fixtures otherwise use permissive synthetic metadata to isolate the guards;
+  they do not claim a credential verifier, source-commit writer, creation/terminal finalizer,
+  operational guard installer, shared trust finalization or complete proof lifecycle repository.
+  Initial test failures concerned inactive SQLite context inspection and missing UDF error
+  wording; fixtures now preserve that fail-closed contract rather than altering the registry.
+  Pint --test passed the three changed PHP files; git diff --check passed. No operational
+  migration, runtime activation, real credentials, commit, Main or production change. The private
+  parity server was removed only after all tests stopped and no private schemas remained.
+  **Pending; not practical-review ready.** Continue the same Slice 04; automatic continuation
+  remains active. Automated results do not complete the human-review gate.
+
+- **Live proof readers and central proof adapter (2026-09-12):** Standard step-up and
+  purpose-bound TOTP-enrollment evidence now read current installation, authority, security
+  gate, actor, generation, proof and exact creation/audit/trust metadata under the same owned
+  transaction. Root-first locking, canonical gate revision, exact raw session bytes, epoch
+  drift, active-human status, pending versus confirmed generation, terminal fields, source
+  identities and closed audit references are enforced. Database time controls validity;
+  enrollment lasts exactly 300 seconds and cannot cross-use confirmation/recovery purposes.
+  A shared typed creation-trust reader preserves the two source/event families and purpose
+  reason mapping. DatabaseVaultFreshProofEvidence connects both branches to the existing PDP
+  freshness contract, without opening or committing the enclosing transaction. Actor context
+  derives an opaque slot without exporting session bytes. No cached model/proof fallback exists.
+  Root/gate regressions failed at 9 tests / 78 assertions with three failures before correction;
+  earlier malformed/future-time regressions failed with two failures before correction.
+  Final Vault units passed **674 / 20,916**. The same proof-reader/adapter cases passed
+  **14 / 403** on each isolated MariaDB driver (mysql and mariadb): **702 tests / 21,722
+  assertions** across the three final runs, no skips. Pint --test passed six affected PHP files
+  and git diff --check passed. Synthetic reader fixtures deliberately admit malformed metadata;
+  non-proof PDP ports are test doubles. These tests do not prove protected source writes,
+  canonical plan/subject validation, full owner/origin finalizers, cutover or runtime readiness.
+  Full application tests were not run. Dev enabled/runtime approval, guarded recorder binding
+  and fresh-proof adapter binding were all read back false. No operational migration, real
+  credentials, commit, Main or production change. **Pending; not practical-review ready.**
+  Continue integrating the live adapters with coordinated source/operation writes and the
+  remaining Slice 04 contract; no additional go-ahead is required.
+
+- **Approval source trust and finalization phases (2026-09-12, automatic continuation):**
+  Authority finalization now requires the exact finalized request and selected independent
+  decision/sole-admin/TOTP-exception creation evidence, audit and trust. Coherent self-approval
+  (both source and audit naming the requester) rejects. The source-trust regression failed
+  before correction at 7 / 4,689 with four failures; the verified combined units, SQLite,
+  mysql/mariadb and actual-core run passed **691 / 43,091** in 12:39.184 without skips.
+  The next integrated checks preserve ordinary approved-to-consumed building reservations
+  until after operation apply, while exception origins require finalized consumption and open
+  obligation evidence first, reciprocal coordinator/witness/obligation IDs, consumption_finalized
+  stage and retained authority/global origin fences. Cancelled, invalidated, partial, substituted
+  or prematurely completed states reject. Lifecycle source identity/revision and exact audit
+  references are checked; the snapshot digest is structurally checked, not recomputed here.
+  The missing-phase regression failed at **7 / 6,279, four failures** before implementation.
+  Phase/compiler focused checks passed **17 / 8,283**. A separate pure lifecycle regression
+  demonstrated denial of valid peer-approved TOTP enrollment (1 / 1 failed before correction).
+  Proof purpose now follows authority.totp_confirm for either peer or exception approval, with
+  exact enrollment-proof identity; standard proof cannot substitute. Final units plus SQLite
+  authority contracts passed **675 / 28,752**. Final mysql/mariadb contracts and actual migrated
+  SQLite core verification passed **17 / 16,750** in 12:44.903 without skips: **692 tests /
+  45,502 assertions** across the two final runs. Pint --test passed all twelve changed PHP files;
+  git diff --check passed. Dev runtime, runtime approval and guarded-recorder binding remain false.
+  Fixtures deliberately isolate finalization prerequisites: they do not prove protected source
+  creation/DML, fresh proof/factor checks, canonical snapshot/payload validation, a complete
+  origin coordinator, shared Row04 trust UPDATE or operational authorization readiness.
+  Those source/coordinator/repository/cutover integrations still precede the workspace.
+  Full application tests were not run. No operational migration, runtime/public writer,
+  real credentials, commit, Main or production change. **Pending; not practical-review ready.**
+  Automatic continuation remains active; ordinary progress does not require another user go-ahead.
+
+- **Exact approval relation binding (2026-09-12, automatic continuation):**
+  Authority finalization now binds witness authorization mode, one exact request/consumption,
+  plan version/digest, requester/session/auth epoch, executor proof, and the before-state roster
+  digests. It rejects foreign/duplicate consumers, mixed decision/exception identities, quorum
+  recovery substitution, authority requests with graph scope facts, and unapproved expansion.
+  Ordinary, emergency, independent approval, sole-admin exception, TOTP-enrollment exception,
+  and peer-approved TOTP enrollment are covered. Exception origins must agree with their witness
+  and name an obligation; ordinary approvals must not carry those exception-only references.
+  Initial missing-binding regression: 6 tests / 2,796 assertions, 5 failures before the fix.
+  The broad SQLite plus MariaDB mysql/mariadb-driver run passed 686 / 35,285 in 9:44.432.
+  A subsequent peer-approved TOTP regression exposed an overly narrow proof-kind restriction
+  (1 test / 977 assertions, 1 error before correction). Final units plus all SQLite authority
+  contracts passed **672 / 26,295**; final peer-enrollment mysql/mariadb contracts plus actual
+  migrated SQLite core compilation passed **3 / 2,066** in 1:55.536. No skips. Pint passed.
+  These synthetic fixtures prove typed relation binding only. Selected decision/exception source
+  trust, live proof authority, lifecycle reservations/commit phases, complete origin fences,
+  canonical subject payloads/protected domain writes and shared trust finalization still need
+  integration. Ordinary consumption must finalize AFTER its applied operation; exception origins
+  finalize obligation/consumption first under fences. Do not replace that ordering with a blanket
+  finalized-consumption prerequisite. Full application tests were not run for this dormant increment.
+  No operational migration, public writer, runtime activation, commit or production change.
+  **Pending; not practical-review ready.** Continue Slice 04 automatically without another go-ahead.
+
+- **Finalized plan-source provenance (2026-09-12, automatic continuation):**
+  An authority mutation now rejects a plan without its exact finalized action-plan evidence
+  commit and finalized audit-trust child. Source kind/ID/installation, event/outcome, requester,
+  reason and proof references must match; unrelated typed references/owners, active or aborted
+  states, case variants and missing terminal metadata deny. Installer preflight merges shared
+  table dependencies rather than dropping later column requirements through PHP array union.
+  The four-family regression failed before the fix (5 tests / 1,320 assertions, 4 failures).
+  Focused SQLite verification passed 13 / 3,376. Final combined units, authority contracts and
+  actual migrated-core verification passed **683 tests / 30,844 assertions** in 9:37.212 on
+  SQLite/mysql/mariadb, without skips. Pint passed for all five changed PHP files.
+  These synthetic fixtures prove this source prerequisite, not fresh proof/approval authority,
+  canonical subject payloads, protected domain writes or shared Row04 trust finalization.
+  Full application tests were not run for this still-internal, runtime-disabled increment.
+  Read-only ordinary Dev checks confirm vault_enabled=false, runtime_approved=false and the
+  guarded foundation recorder remains unbound. No operational migration or activation.
+  **Pending; not practical-review ready.** Continue the integrated Slice 04 flow automatically.
+
+- **Authority plan extension and subject-set binding (2026-09-12, automatic continuation):**
+  The finalizer now compares the exact authority-plan reason and all four shared before/after
+  roster/global-facts digests. It verifies a bijection between planned and applied subject
+  identities, including installation, parent plan, contiguous sequence, closed kind and nullable
+  user/role/permission targets. Equal counts alone no longer permit a different same-sized set.
+  Missing binding columns deny before DDL. A four-family SQLite regression demonstrated the
+  missing digest binding before the fix; substituted targets, missing/extra rows, case changes,
+  NULLs and altered sequences also deny without changing pending mutation/trust state.
+  Final combined units, authority contracts and migrated-core verification passed
+  **683 tests / 28,078 assertions** in 7:08.740 on SQLite/mysql/mariadb, without skips.
+  The initial SQLite regression failed in all four families before the fix; the focused
+  completed contract passed 13 / 2,450. Pint and git diff --check passed. Full application
+  tests were not run because this is still an internal, runtime-disabled Slice 04 increment.
+  This proves identity/digest correspondence, not canonical before/after payload verification,
+  protected domain writes, proof/approval provenance, or complete authorization. Those and shared
+  Row04 trust finalization remain unfinished. No new codec, context or runtime binding was added.
+  **Pending; not practical-review ready.** Automatic continuation remains active.
+
+- **Authority primary-audit and completed-ledger binding (2026-09-12, automatic continuation):**
+  Finalization now checks the closed event/outcome/reason/operation/reference matrix, exact
+  actor, plan requester/proof, mutation/witness/UserSecurity identities, and approval references
+  where that event permits them. Values compare byte-exactly on legacy MariaDB collations.
+  The exact witness must be consumed and its paired UserSecurity execution finalized;
+  both physical subject sets must be complete, contiguous, consumed and temporally consistent.
+  Cached counts, an unrelated completed execution, active/revoked rows and partial sets deny.
+  Required audit/plan/witness/execution columns are checked before any guard DDL. The actual
+  migrated SQLite schema also compiles the installed trigger, without finalizing synthetic
+  authorization rows. Red regressions demonstrated malformed audit acceptance, unfinished
+  witness/execution acceptance and wrong-plan-requester acceptance before their fixes.
+  The four fixture families cover ordinary, approval-bound, emergency and TOTP confirmation
+  on SQLite/mysql/mariadb. The final combined units, authority contracts and migrated-core
+  run passed **682 tests / 26,654 assertions** in 7:08.498, with no skips. Earlier checkpoints
+  passed 682 / 23,714 (audit binding) and 682 / 26,234 (paired completed ledgers). The final
+  requester mismatch regression failed in all four SQLite families before the fix.
+  Pint and git diff --check passed. Read-only ordinary Dev checks still report
+  vault.enabled=false, runtime_approved=false and guarded recorder binding=false.
+  These are isolated finalizer fixtures, not proof of protected domain DML or full authorization.
+  Exact planned subject values, fresh/consumed proof and approval provenance, source-specific
+  postconditions and shared Row04 trust UPDATE integration still remain. The shared trust
+  guard continues to deny Row04 finalization. No context family/stage or state-only bypass
+  was added. No operational migration, runtime activation, real secret migration, commit or
+  push occurred. Full application tests were not run. **Pending; not practical-review ready.**
+  Automatic continuation remains active; ordinary continuation needs no new user approval.
+
+- **Guarded foundation writer adapter (2026-09-11, automatic continuation):**
+  The existing RecordVaultAuditEvent action now accepts an explicit, optional closed
+  VaultFoundationAuditRecorder port. DatabaseVaultFoundationAuditRecorder uses the existing
+  insert context/sink, verifies the exact finalized foundation child and every persisted
+  field, then returns the correctly connection-bound VaultAuditEvent model. It creates an
+  owned transaction for standalone calls or participates in the exact outer Vault owner;
+  foreign transactions deny. Failures never select legacy persistence. The port is deliberately
+  unbound in the service provider until the complete guard/cutover/runtime integration is ready.
+  Explicit canonical correlation UUID versions 1-8 are preserved; omission creates UUIDv7,
+  and both timestamps still come from one DB instant. Four foundation families under human
+  and inert-system executors, outer rollback, standalone commit, Client/key/permission metadata,
+  source mismatch, stale actor classification and missing INSERT guard are covered on
+  SQLite/mysql/mariadb. The actual migrated SQLite core also proves the returned numeric ID,
+  trusted-view visibility, exact correlation, FK integrity and unchanged container binding.
+  Final units, legacy audit/readiness, three-driver INSERT/adapter and real-core contracts
+  passed **701 tests / 25,077 assertions** in 6:53.905. Pint passed seven changed PHP files;
+  git diff --check passed. Full application tests were not run. Read-only ordinary Dev reports
+  vault.enabled=false, runtime_approved=false and guarded recorder binding=false.
+  This completes the adapter, not activation: Row04 source/operation/abort finalizers, complete
+  cutover and guarded binding, repositories/classification and integrated Slice 04 verification
+  still precede the workspace. **Pending, not practical-review ready; continuation remains active.**
+
+- **Authority finalizer NULL semantics (2026-09-11, automatic continuation):**
+  A new SQLite regression demonstrated that nullable witness/execution comparisons could
+  let a proof-backed context finalize an unrelated state-only mutation. The guard now uses
+  null-safe identity comparisons on both drivers, denies absent stage/consumed markers,
+  and binds the non-null primary audit identity to the exact trust event before consumption.
+  SQLite and mysql/mariadb tests also remove each mandatory context field independently;
+  rejected statements preserve pending mutation/trust state and clear the context. The
+  unchanged valid one-use finalization still passes. Focused tests passed **10 / 374**;
+  final units plus authority and quorum contracts passed **671 tests / 20,932 assertions**
+  in 38.945 seconds. Pint passed all three changed PHP files. Full application tests were
+  not run. These authority fixtures deliberately isolate the older operation guard using
+  simplified source/audit tables; they do not prove full source authorization, shared trust
+  UPDATE integration, or operational readiness. The shared trust gate still denies Row04
+  finalization until complete source-specific verification is implemented. No context family,
+  stage, state-only authorization path, runtime activation, or operational migration was added.
+  **Pending; not practical human-review ready.** Automatic continuation remains active.
+
+- **Atomic foundation audit finalization (2026-09-11, automatic continuation):**
+  foundation_direct now crosses pending-to-finalized inside its original audit INSERT,
+  after the trigger has verified the exact pending child. The LAST guarded write uses the
+  existing consumed insert context/statement-local marker; no extra context family, stage
+  or second public UPDATE was added. The closed UPDATE guard rechecks the whole persisted
+  source event against captured facts, exact foundation vocabulary, immutable owner fields,
+  terminal NULL matrix, and item/version parent/scope references. It records the original
+  captured DB timestamp. Read-back precedes marker cleanup and return to the sink.
+  Invalid/missing sources roll back the parent and child; direct, no-op, swapped-owner and
+  terminal changes reject. Other Row04 owners still cannot finalize through this branch.
+  The frozen backfill installer now requires the exact UPDATE guard before trust DML;
+  missing or changed bodies deny read-back/restart. Historical backfill stays immutable.
+  All four foundation families under human/system executors passed the SQLite/mysql/mariadb
+  context/sink regression: **3 tests / 2,474 assertions**. The real migrated SQLite test now
+  expects finalized/trusted visibility inside the transaction and zero rows after rollback.
+  Final combined units, INSERT, real-core and backfill contracts passed **722 tests / 25,478 assertions** in 17:07.801. Pint passed six PHP files; git diff --check passed. Full application tests were not run. Read-only ordinary Dev verified both runtime gates false and this UPDATE guard absent.
+  This is not the whole Slice 04: source/operation-specific UPDATE and abort finalizers,
+  legacy RecordVaultAuditEvent binding, final cutover and repositories/classification remain.
+  No operational migration, runtime activation, real secrets, Main, commit or push changes.
+  **Pending; not practical human-review ready; Main/production stays blocked.** Automatic
+  continuation remains active, and ordinary continuation needs no user confirmation.
+
+- **Evidence source binding (2026-09-11, automatic continuation):**
+  The insert guard now binds all twenty closed evidence source kinds to their exact audit
+  reference and permitted event family. A building commit cannot be borrowed for another
+  source, even when its expected event/outcome and the rest of the audit shape match.
+  The new regression failed on SQLite and both MariaDB drivers before the correction.
+  Missing/swapped source IDs, missing/wrong kinds, uppercase and trailing-space aliases now
+  reject with no base or child row. The final source/INSERT contracts passed **32 tests /
+  3,115 assertions** in 2:07.137; the actual migrated SQLite foundation integration passed
+  **1 / 15** in 24.715 seconds. Pint passed four changed PHP files; git diff --check passed.
+  The preceding combined checkpoint remains **737 / 25,082**, run before this final binding
+  change, not a claim that the whole suite was rerun afterward. This proves insertion identity,
+  not source semantics or finalization. Trust UPDATE/source finalizers and full cutover still
+  remain before workspace work. No operational migration, runtime activation or production
+  change. **Pending, not practical-review ready; automatic continuation remains active.**
+
+- **Shared foundation context and trusted-view correctness (2026-09-11, automatic continuation):**
+  The four foundation event types now pass through the same one-use audit context and SQL
+  sink as Row04 events. Closed factories/validation preserve legacy content UUID versions,
+  reject extra Row04 references, backfill owners and control operations, and distinguish
+  origin-free foundation system events from origin-bound Row04 cleanup. Both application
+  and SQL validation prevent the new foundation factory bypassing Row04 origin checks.
+  The database still requires an active human or exact canonical inert system actor and
+  creates only one pending child. Three-driver tests cover rejection, exact persisted
+  references, duplicate/replayed contexts and whole-transaction rollback. An actual migrated
+  SQLite core test proves that the resulting pending child is invisible to the trusted view.
+  A legacy-collation regression failed on both MariaDB drivers before byte-exact foundation
+  comparisons; the final focused collation check passed **3 / 152**.
+  A second regression proved that the trusted view incorrectly treated
+  auth_security_invalidated as an audit event type rather than a source trigger kind.
+  The corrected view follows the exact transition/evidence commit/UserSecurity execution
+  for both actual revocation event types, hiding them until the aggregate is finalized.
+  Existing unrelated finalized owners cannot substitute. Exact catalog attestation includes
+  the nested source/execution query; weakening either binding is rejected. Missing source
+  dependencies stop DDL. The corrected SQLite core contract passed **9 / 203**, and the
+  targeted three-driver view/catalog contracts passed **6 / 73** before final test expansion.
+  Final combined units, feature, real-core and three-driver contracts passed **737 tests /
+  25,082 assertions** in 17:33.127, with no skipped contracts or failures.
+  Pint passed all 17 changed PHP files; git diff --check passed. Fixtures remain synthetic:
+  isolated source/owner tables prove view predicates, not the still-missing source finalizers.
+  Full application tests were not run. Read-only ordinary Dev verification confirmed both
+  runtime gates false and the Row04 trusted view/audit trigger absent. No operational
+  migration, activation, real credential, Main, commit or push change.
+  Next: trust UPDATE/source finalizers, binding RecordVaultAuditEvent through its complete
+  guarded adapter, final cutover stages, remaining authorization repositories/classification
+  and final Slice 04 verification before dependent product slices. **Pending; not practical
+  human-review ready; Main/production remains blocked.** Automatic continuation stays active.
+
+- **Trust retention and foundation vocabulary (2026-09-11, automatic continuation):**
+  The permanent trust DELETE guard is now installed and exact-catalog checked before
+  capture/backfill DML. Conditional and native bulk deletion reject for every trust state
+  and for historical foundation rows. Real backfilled rows remain unchanged after attempted
+  deletion; missing or altered guard bodies stop read-back/resume. This completes the DELETE
+  rule, not the still-required pending-to-finalized/aborted UPDATE lifecycle. State-changing
+  INSERT-test fixtures are explicitly adversarial setup, not production finalizer evidence;
+  temporary-backfill fixture cleanup now rolls back its owning transaction.
+  Vault units plus full SQLite/mysql/mariadb INSERT contracts passed **661 / 7,728**
+  (110.55 seconds). The final zero/nonzero three-driver backfill flows and actual migrated
+  SQLite empty checkpoint passed **7 / 174** (396.79 seconds).
+  A separate regression exposed legacy RecordVaultAuditEvent accepting newly added Row04
+  outcomes/reasons before persistence. All five cases failed before the fix and pass after
+  the shared exact foundation vocabulary. The exhaustive enum/reference-presence matrix
+  and malformed-input tests passed **7 / 13,519**. Full Vault units plus the existing
+  foundation audit/readiness feature workflows passed **656 / 20,358** (33.79 seconds).
+  Generated core DDL and audit/trust INSERT SQL hashes remained identical across this
+  vocabulary refactor for SQLite/mysql/mariadb; deployed migration files were unchanged.
+  Pint passed all nine changed PHP files in the two scoped runs; git diff --check passed.
+  Full application tests were not run. All DB mutations used isolated synthetic fixtures.
+  No ordinary Dev migration, runtime activation, real credential, Main, commit or push.
+  Next: trust UPDATE lifecycle/finalizers, foundation-direct adapter, permanent-guard stage
+  transition/final cutover, remaining authorization repositories/classification and final
+  Slice 04 integration, then the dependent product slices. **Pending; not practical-review
+  ready.** This checklist continues to block Main/production. Automatic continuation stays active.
+
+- **Guarded capture/backfill checkpoint (2026-09-11, automatic continuation):**
+  FoundationAuditBackfillGuardInstaller now verifies the entire exact deployed legacy audit,
+  freeze, new audit INSERT and temporary trust INSERT catalogs before guarded writes. Both
+  new INSERT guards precede capture/backfill DML; divergent restart prefixes are rejected.
+  captureForBackfill and DatabaseFoundationAuditTrustBackfillStore reconcile the complete
+  locked base/item/trust/view sets and insert only exact missing foundation children through
+  one-use contexts. completeBackfill owns the captured/revision-2 to backfilled/revision-3
+  CAS, followed by an independent complete read-back. Incomplete children, raw/replayed
+  contexts, skipped stages, changed guards and a simulated interruption deny or roll back.
+  Repeated backfill before the CAS preserves child timestamps; later stages never silently
+  fall back to a captured read. Empty and two-entry historical manifests were exercised.
+  MariaDB original trigger source is read through SHOW CREATE: ACTION_STATEMENT was proven
+  to unescape backslashes and cannot be used for exact source comparison. Original literal
+  bytes remain exact; multiline row clauses are accepted and incompatible escape mode is
+  rejected. Existing foundation snapshots retain canonical UUID versions 1-8; new events
+  still require v7. Focused three-driver flow/catalog verification passed 12 / 168.
+  The combined Vault unit, full freeze/backfill, INSERT/context and real SQLite core suite
+  passed **698 tests / 9,016 assertions** (927.57 seconds). After aligning the internal
+  context stage spelling to the frozen stage_advance contract, the final non-empty
+  SQLite/mysql/mariadb flows and real migrated SQLite empty checkpoint passed **4 / 79**
+  (191.26 seconds). Maria flow fixtures retain documented structural owner-view tables;
+  they are not full production owner-finalizer verification. A separate read-only check
+  of the ordinary Dev database confirmed its complete legacy audit catalog matches exactly.
+  Pint passed all 13 changed PHP files; git diff --check passed. Dev health is still
+  vault_disabled (expected non-zero). Full application tests were not run at this internal
+  checkpoint; they remain part of final integrated Slice 04 verification.
+  No operational cutover, migration, activation, credential, Main, commit or push change.
+  Still required: trust lifecycle guards/finalizers, foundation-direct adapter, permanent
+  guard transition and final cutover coordinator, authorization repositories/classification,
+  final Slice 04 verification and subsequent product slices. **Pending; not ready for
+  practical human review or Main/production.** Automatic continuation remains active.
+
+- **Temporary trust INSERT boundary (2026-09-11, automatic continuation):**
+  FoundationAuditTrustBackfillGuardDefinitions adds the closed temporary branch for one
+  exact foundation_existing/finalized child bound to the captured header revision/count/
+  opaque digest and the complete immutable item/base metadata. Wrong stage, owner, event,
+  sequence, digest, references, changed base metadata, replay and mixed active contexts
+  deny. The pending audit-child branch coexists with the permanent guard; installing the
+  permanent guard closes backfill before the temporary guard is removed. Exact trust
+  trigger catalogs are checked in the isolated contracts. SQLite explicitly prepares both
+  branch function sets without installing an active context; inactive alternate functions
+  return NULL/false, active contexts are preserved, and opaque digests remain equality-only.
+  Unpaired context behavior is unchanged. The tests use raw adversarial transports only
+  inside synthetic fixtures, not a new application write API.
+  Final combined Vault units, audit insert/backfill contracts, existing MariaDB context
+  regression and complete real SQLite core assembly passed **654 tests / 8,247 assertions**
+  in 132.01 seconds, including SQLite and both mysql/mariadb driver names. Pint passed six
+  files; git diff --check passed; Dev health remains vault_disabled (expected non-zero).
+  Full application tests were not run. No operational migration, runtime activation, real
+  secret change, commit/push or Main change. Guard installation/catalog coordination,
+  freshly locked typed backfill writes, trust lifecycle finalizers and stage advancement
+  remain next. **Pending; not ready for practical human review or Main/production.**
+
+- **Atomic audit insertion (2026-09-11, automatic continuation):** internal
+  VaultAuditTrustInsertGuardDefinitions now supplies the audit AFTER INSERT and permanent
+  coupled-only trust BEFORE INSERT definitions. One consumed statement context creates
+  exactly its pending child; a child failure rolls the parent back. Exact projection
+  read-back replaces an invalid ROW_COUNT assumption exposed by MariaDB verification.
+  The shared intent grammar now also generates SQL operation/reason/executor/reference
+  shapes. All five typed owner families are checked against an existing pending owner.
+  Active human identity and the canonical disabled, role-free, permission-free system
+  actor are enforced, including rejection of login/TOTP material and incorrect origins.
+  Forged matching row/context probes independently verify the database policy; separate
+  child DML, replay, substituted identity and missing/extra references reject.
+  Final Vault unit + insert-guard + existing MariaDB context regression passed **645 tests /
+  7,494 assertions**, with SQLite and both mysql/mariadb driver names exercised using
+  synthetic socket-only databases. Real SQLite migration/core assembly additionally
+  compiled the complete trigger path without dependency stubs: **1 test / 66 assertions**.
+  These are insert-phase definitions, not an installer or authorization readiness.
+  Temporary trust-backfill guard/context, lifecycle finalizers, foundation-direct adapter,
+  exact coordinated catalogs/cutover/stage advancement, repositories and classification
+  remain required. No operational Row04 migration, runtime activation, real credential,
+  commit, push or Main change. Pint passed all six PHP files; git diff --check passed.
+  Dev health remains vault_disabled (expected non-zero); full application tests were not
+  run. **Pending; not ready for practical human review or Main/production promotion.**
+
+- **Foundation trust reconciliation (2026-09-11, automatic continuation):**
+  FoundationAuditTrustReadback now validates the complete locked trust projection against
+  the independently verified base/item manifest. Captured-checkpoint resume rejects wrong
+  provenance even when row counts and visible audit IDs still match. Missing children are
+  explicit ordered backfill work; they are never silently treated as finalized. Empty, partial
+  and complete sets, duplicate/extra children, all owner/terminal fields and UTC precision
+  are covered. Trusted-view visibility is compared to the exact retained foundation set.
+  New unit coverage passed 51 tests / 67 assertions. The combined Vault unit and freeze/
+  manifest integration run passed 661 tests / 7,296 assertions on SQLite/mysql/mariadb.
+  Expanded stale-snapshot regressions then passed on both MariaDB driver names (2 tests /
+  94 assertions). An attempted outer FOR UPDATE workaround was rejected during verification:
+  the deliberately non-updatable TEMPTABLE view remains a consistent read. A pre-existing
+  stale snapshot must deny and roll back; a fresh owned transaction correctly resumes.
+  No weakened isolation, view-definition change, bypass or automatic finalization was added.
+  Only synthetic core-schema test fixtures inserted trust rows; no operational backfill,
+  migration, runtime activation, real credential change, commit, push or Main change occurred.
+  Final unit rerun passed 632 tests / 6,737 assertions; Pint passed all four changed PHP
+  files and git diff --check passed. Dev health remains vault_disabled (expected non-zero).
+  Full application tests were not run. Next: coordinated audit AFTER INSERT and temporary
+  trust guards before any real backfill DML, then permanent guard/stage cutover and the
+  remaining Slice 04 repositories/classification. Pending; not ready for practical review.
+
+
+- **Guarded manifest persistence (2026-09-11):** exact trigger-set attestation, immutable
+  header/item guards, one-use context writes and DatabaseFoundationAuditManifestStore now
+  materialize/resume the captured checkpoint with full locked read-back and rollback.
+  Negative cases cover missing/changed guards, skipped/changed/duplicate items, premature
+  finalization, altered view predicates, missing runtime gates and context replay.
+  The MariaDB historical DATETIME(0)-to-DATETIME(6) comparison defect is fixed. SQLite CHECK
+  literal case/spacing and the complete trusted-view query are now part of exact verification.
+  Opaque manifest digests use native PDO binding and equality-only SQLite UDFs; extraction,
+  failed-comparison cleanup and absence of Laravel query-log bindings are tested.
+  Combined Vault unit, freeze/manifest integration, trust-core feature and MariaDB contract
+  verification passed: 619 tests / 7,394 assertions. The broader Vault feature run executed
+  238 tests / 8,995 assertions and found four diagnostic-message compatibility failures.
+  The expected strict-rejection message was restored; all four affected tests passed on
+  focused rerun (37 assertions). A final three-driver exact-trigger regression passed
+  (3 tests / 27 assertions). Pint passed for all 13 changed PHP files, with the final
+  diagnostic adjustment rechecked; git diff --check passed. Full application tests were not run.
+  No ordinary Dev migration, runtime activation, keys, real credentials, Main or production
+  changes occurred. Trust backfill/permanent guards, coordinated authorization repositories,
+  classification and the user workspace remain unfinished. Status remains Pending, not ready
+  for practical human review; Main/production remain blocked.
+
+
+- **Retained manifest checkpoint (2026-09-10):** FoundationAuditCutoverHeader and
+  FoundationAuditManifestReadback now validate the retained captured header against independently
+  re-read base/items, with full root/header/item/trust range locks, strict installation identity,
+  stage/revision, guard declarations, timestamps, count and opaque digest. Missing or changed
+  provenance, reordered/missing items, unknown stages and missing freeze fail closed.
+  The combined Vault unit/freeze/manifest/audit-trust run passed 604 tests / 7,181 assertions
+  in 248.96 seconds on isolated SQLite and both MariaDB driver names. The complete application
+  suite was not run. This is a read-only checkpoint, not guarded persistence, trust backfill,
+  runtime authorization or a user-visible workflow; those remain unfinished.
+  Svein's explicit approval to implement Vault-required #270/#272 dependencies is recorded in
+  TODO and the completion matrix. No ordinary Dev migration, key provisioning, credential
+  operation, runtime activation, Main or production change is part of this increment.
+  Status remains Pending; practical human review is not ready and Main/production remain blocked.
+  Final strengthened concurrency recheck passed 3 tests / 81 assertions (107.18 seconds) on
+  SQLite/mysql/mariadb, including exclusion of a competing trust INSERT followed by a successful
+  rolled-back insert after lock release. Pint passed all four changed PHP files; git diff check
+  passed. The live foundation health remains vault_disabled.
+
+- **Foundation manifest implementation (2026-09-10):** closed semantic/reference validation,
+  deterministic typed manifest/read-back with independent binary vectors, dedicated cutover
+  REPEATABLE READ / BEGIN IMMEDIATE ownership, full reference-range locks, historical UUID
+  compatibility, and rollback after PDO replacement are implemented on Dev. Malformed, unknown,
+  reordered, cross-scope or non-null Row04 references are rejected; no credential values are read.
+  Final verification: 574 tests / 7,063 assertions (121.94 seconds), including all Vault unit
+  tests, actual foundation/freeze/manifest contracts on SQLite/mysql/mariadb, audit-trust schema
+  and owned SQLite DDL rollback. Separate MariaDB audit-context/post-review/quorum regression:
+  3 / 127. Pint and git diff checks passed. No full application suite was run for this increment.
+  Dev health remains vault_disabled. No ordinary Dev migration, audit freeze/backfill, key
+  provisioning, runtime activation, commit, push, Main or production change occurred.
+  Guarded cutover persistence/backfill, permanent audit/trust guards, coordinated authorization
+  repositories, classification and final Slice 04 verification remain before the technician UI.
+  This entry is still Pending and not ready for practical human review.
+
+- **Readiness clarification (2026-09-10):** Svein visited Dev for practical review but no Vault
+  workspace exists yet. This is not a failed review of an implemented UI and no check is approved.
+  Keep this entry Pending; notify Svein for practical review only after the functional workspace
+  and its prerequisite authorization flows are available, with concrete routes and checks.
+- **Audit freeze (2026-09-10):** the internal first-step cutover fence is implemented and verified
+  against actual foundation migrations on SQLite/mysql/mariadb, including peer-PDO writes,
+  exact restart, divergent-trigger rejection, and SQLite rollback. It has no thaw API or runtime
+  entry point. Owned transaction recognition now also pins the PDO and preserves outer ownership
+  after rejected nesting. Focused checks passed 14 / 209; the full Vault unit suite passed
+  505 / 6,531. No ordinary Dev freeze, migration, worker stop, audit backfill, or activation occurred.
+  The combined unit/freeze/MariaDB audit/post-review/quorum regression passed 512 / 6,815.
+  Final freeze verification, including database-free pretend on all three driver names, passed
+  7 / 163 after formatting. The full application test suite was not run for this internal increment.
+
+- **Final UserSecurity MariaDB verification (2026-09-10):** all four separately opted-in cases
+  passed / 22 assertions (1,293.03 seconds), including a complete historical application
+  migrate:fresh through 010180 on the mysql driver against isolated MariaDB, exact guard
+  drop/reinstall/read-back, and rejection of raw protected writes from a second PDO connection.
+  All test databases were dropped by their test cleanup. This verifies that migration/guard
+  contract, not the entire application test suite or human review. No new verification failure
+  remains in the selected Vault checks; the documented historical mariadb-alias limitation remains.
+
+- **Final core assembly verification (2026-09-10):** real bounded Vault/UserSecurity migration
+  assembly and staged-FK drift/restart contracts passed both mysql and mariadb driver names:
+  4 tests / 254 assertions (1,015.98 seconds). No failed core-assembly case remains. This proves
+  the DDL/component boundary only, not coordinated guards, audit cutover, classification, or
+  final Slice 04 readiness. HR-2026-09-04-003 remains Pending and not ready for final human review.
+
+- **Additional MariaDB evidence (2026-09-10):** 18 component contracts passed / 623 assertions;
+  four separately opted-in UserSecurity checks are tracked separately. The audit-trust fixture
+  was then corrected to use the deployed foundation event collation: this reproduced a real FK
+  failure. Both audit-trust event-reference columns now retain that collation, and the final
+  SQLite/MariaDB audit-trust run passed 7 tests / 196 assertions. This does not install the audit
+  cutover or backfill; integrated cutover/guard/classification work remains required.
+
+- **Regression evidence (2026-09-10):** the broad Vault run passed 759 tests / 16,591 assertions
+  with 34 opt-in cases skipped. That process preceded the last MariaDB compatibility corrections;
+  its result is supplemented, not replaced, by the subsequent focused runs documented here.
+  After the final UUID correction, SQLite foundation guards plus core assembly passed 12 tests /
+  679 assertions. Scoped Pint passed 31 PHP files; repository `git diff --check` was clean.
+  Ordinary Dev still reports `vault_disabled`, and 010180 and earlier Row04 migrations remain
+  Pending. No operational migration, key provisioning, content activation, commit, or deployment
+  was performed. This is not the full application regression or final authorization review.
+- **Driver compatibility (2026-09-10):** foundation migration definitions now explicitly preserve
+  CHAR(36) UUIDs for both Laravel MariaDB driver names (instead of the newer native UUID type),
+  and both driver names receive the same MEDIUMBLOB/guard handling and guard read-back.
+  Existing foundation columns/data were not altered. Any already-created divergent alias schema
+  requires separate reconciliation; this does not repair it automatically. The unrelated old
+  Supplier Order migration still prevents claiming a full historical `mariadb`-alias installation.
+
+- **Integrated fixes (2026-09-10):** MariaDB assembly exposed 14 missing explicit covering indexes
+  in graph-execution/authority-witness manifests and engine CHECK spelling differences. These
+  are corrected without dropping constraints or changing existing data. CHECK normalization now
+  preserves literal case and backticks (regression demonstrated failing before the fix).
+  The latest focused schema/normalization/SQLite assembly run passed 125 tests / 4,456 assertions.
+  An attempted full historical migration chain using the `mariadb` driver alias also stopped at
+  the unrelated supplier-order migration 2026_08_05_112000; that historical compatibility issue
+  is not resolved here. Bounded Vault/UserSecurity MariaDB assembly is verified separately.
+
+- **Additional implementation (2026-09-10):** pending 010180 assembles 31 remaining authorization
+  core tables with exact staged MariaDB foreign keys and atomic SQLite final read-back. It creates
+  no operational rows, audit-trust tables/view, guard cutover, permission, runtime route, or real
+  credential. Existing foundation UUID collations are preserved at six new reference columns.
+  Runtime gates and foundation/reference catalogs must pass preflight. Automatic destructive
+  rollback is refused, including for empty coupled schema; teardown requires separate review.
+- **Verification in progress (2026-09-10):** focused SQLite checks passed 40 tests / 2,396
+  assertions; isolated affected MariaDB components passed 3 / 42, and staged-FK/reference
+  regressions passed both driver names (2 / 70). SQLite rollback/atomic-restart passed 1 / 250.
+  A broad run exposed five older proof-pipeline test fixtures attempting to recreate migrated
+  tables; these now assert and use the real migrated tables. Full regression has been restarted.
+  Final integrated verification and the remaining Slice 04 implementation are still required.
+  This entry remains Pending, not ready for final human review, and does not authorize migration.
+
+- **Focused verification (2026-09-10):** the new origin/recovery migration passed SQLite and both
+  Laravel MariaDB driver names (3 tests / 209 assertions); existing full-component MariaDB and
+  post-review gate regressions passed 10 tests / 93 assertions. Full SQLite migration/core
+  assembly checks also pass. No human check is marked Reviewed by these results.
+- **Implementation progress (2026-09-10):** 010170 adds the recovery-authorization base and two
+  post-review origin tables. Base-stage schema verification is separate from full-component
+  readiness, which still rejects missing quorum/execution/obligation dependencies. Restart and
+  partial/divergent/retained-state rollback protections are covered by isolated tests. No
+  ordinary Dev migration, operational recovery, runtime activation, or new permission is enabled.
+  This checklist remains Pending and is not yet ready for final human review.
+- **Focused verification (2026-09-09):** after the proof parent-key correction, the final isolated
+  SQLite/MariaDB run passed 20 tests / 1,987 assertions. Full Laravel regression and final Slice 04
+  verification remain outstanding. The ordinary Dev migrations remain Pending; no activation.
+- **Integrated catalog regression (2026-09-09):** the real-schema SQLite assembly test exposed
+  missing installation/id parent keys on both proof tables. These are corrected in the still-pending
+  010140 manifests and covered by exact catalog/frozen SQL checks. The complete core schema now
+  passes SQLite FK validation without Vault dependency stubs. This is not evidence that the
+  remaining MariaDB assembly, runtime guards, or human checks are complete.
+- **Additional implementation evidence (2026-09-09):** 010150 adds eight action-plan tables and
+  010160 adds eight approval tables. Isolated tests use real Vault proof/plan dependencies, exercise
+  every completed-table restart prefix, reject divergent schemas, and preserve synthetic retained
+  plans/requests on refused rollback. The full SQLite migration chain remains covered. These are
+  dormant DDL stages, not an operational approval workflow. The remaining Slice 04 guards,
+  repositories, cutover, classification, and final verification must finish before this checklist
+  is ready for the full human review. No actual Dev migration or runtime activation is authorized
+  by these test results; this entry remains Pending.
+- **Implementation evidence (2026-09-09):** 010140 adds the five step-up base tables in a separate
+  DDL stage; transition evidence follows the authority/quorum dependencies. Isolated contract tests
+  cover every completed-table restart point, divergence rejection, preserved retained state, and
+  the full SQLite migration chain. This records implementation progress, not human approval or
+  permission to migrate/activate; the review remains Pending.
+- **Scope:** Verify the approved implementation of the Level 3 dormant Vault authorization
+  control plane: Vault-owned access groups/memberships, flat collections, allow-only grants,
+  monotonic identity/authority epochs, strict password-plus-confirmed-TOTP step-up, exact approval
+  consumption, per-event evidence commits, independent approval, graph-write execution witnesses,
+  pool-shrink quorum lock, and sole-admin recovery. Slice 04 installs only dormant service/schema
+  infrastructure; it cannot enter provisioning or enforced phase.
+- **Affected Modules:** Vault authorization metadata/services/audit/tests; UserManagement password,
+  login-email, TOTP, recovery, session-reset, registration, status, role and permission mutation
+  boundaries; current Client visibility adapter; migration-managed permissions; additive migrations;
+  the CLI-only dormant control-plane provision command; developer and Knowledge documentation. There
+  is no new route or UI.
+- **Required Human Checks:**
+  - [ ] Confirm UserManagement remains authoritative for users, passwords, TOTP enrollment,
+    sessions, and general roles while Vault owns Vault access groups/memberships, collections,
+    grants, decisions, step-up proofs, authority epochs, and approval/quorum evidence.
+  - [ ] Confirm Client scope uses the named direct adapter: exact Client record plus client.view.
+    active_client_id, route middleware, empty-Admin, and Superuser fallbacks must not authorize it;
+    missing adapter/record denies. Company scope must not invent a Client.
+  - [ ] Read back all six control-plane permissions. Existing health/audit/policy/key-provider grants
+    stay unchanged; grant_manage and approval_decide belong only to Admin/Superuser; Tech/Viewer
+    receive none; no direct user or content permission is introduced.
+  - [ ] Review direct user, Vault access-group, and collection cases. Confirm collections and groups
+    are flat, a record can participate in several direct relationships, all grants are allow-only,
+    revocation is explicit and terminal, and creating any record gives its creator no content
+    access.
+  - [ ] Confirm every generic role/permission/user-status path that changes Vault authority crosses
+    one locked guard, advances all affected epochs, and cannot rename/delete protected roles or
+    permissions at either root or pivot tables, including cascade attempts. Confirm every explicit
+    User delete and user primary-key update denies in every phase; protected Admin/Superuser and all
+    six Vault-permission identities reject primary-key/name/byte-exact-web-guard mutation, delete,
+    cascade, case-spoof and delete/reinsert ABA. Confirm auth-security and
+    Vault-authority epochs are separate, have exact +1/bounded exhaustion semantics, and every
+    protected UserManagement/Spatie write uses a UserSecurity execution created first and the exact
+     one-way UNIQUE execution-to-Vault-witness-to-authority-mutation binding, incomplete application
+     rolls back or leaves a fail-closed fence, and remove then re-add cannot revive an old proof or
+     approval. Confirm the retained UserSecurity gate is claimed before any protected write, every
+     new/unrelated Row04 Vault consumer denies a committed intermediate pointer, while only the exact
+     gate-owning precommitted execution may resume its subjects/invalidation audits and the last exact
+     epoch finalizer increments revision and clears it. Wrong execution/subject/snapshot IDs deny.
+     Abort is allowed only while claimed with
+     zero effects; effects_started and later are immutable-snapshot resume-only through every forced-
+     commit stage. Ordinary Nexum login stays operational.
+     Dormant executions must carry no Vault references.
+     Confirm the UserSecurity subject register has no generic user_field/value/credential payload;
+     each password/login-identifier/TOTP/recovery/session/status/pivot kind stores only the safe typed identity/state/
+     epoch fields. For auto-increment users, an AFTER INSERT trigger must bind generated ID to the
+     precommitted NULL-target new_user_insert subject once and keep the gate pending through completion.
+     Confirm both profile actions advance auth_security_epoch for a persisted login-email change
+     without storing either email value/hash, while a no-op email and name/telephone/avatar/profile/
+      email_verified_at-only change do not. Confirm actorless Fortify self-registration may create
+      only one PENDING_INVITE human with epochs 1, no system identity, role, direct permission or
+      confirmed TOTP, and cannot create a candidate.
+      Confirm the current app-owned Fortify authenticator and decorated Eloquent provider preserve
+      hash-policy rehash: an outdated hash rehashes once only after locked successful password
+      validation, advances auth_security_epoch, invalidates old proofs and finalizes no-secret
+      evidence/audit before login; current hash, second callback and concurrent loser are no-ops, and
+      failure creates no session or leaked password/hash/cost. Confirm remember_token writes from
+      password-login remember, Nextcloud HMAC, logout, logout-other-devices and password reset use
+      only their closed contexts; unknown writes fail, no-op/config-disabled writes do not bump, and
+      token bytes never leave UserManagement. Nextcloud login must additionally require exact ACTIVE
+      human/non-system state and warroom.view and must not count as Vault step-up. Confirm Fortify 2FA
+      challenge rechecks stored user/auth epoch/TOTP-generation and recovery-code events never carry
+      the raw code.
+  - [ ] Confirm every Vault-owned graph INSERT/rename/disable/add/revoke consumes one exact one-use
+    graph-execution subject between one scope-claim write and one atomic epoch/digest scope-finalize
+    write through a cleared connection-local context. Creates must preallocate a canonical UUIDv7;
+    raw DML, replay, wrong stage/subject, concurrency, and partial commit must roll back or leave the
+    exact scope fail closed. Confirm scope anchors can never be deleted/restored/reinserted, including
+    before references or after a Client becomes inactive. Confirm grant subject/target keys are
+    non-null derived identities across all user/group by item/collection variants and prevent
+    duplicate active grants.
+  - [ ] Exercise step-up with a current password and confirmed TOTP. Confirm the proof is bound to
+    user/session/security epoch plus installation authority epoch, defaults to 600 seconds within
+    60-900 bounds with expires_at exactly verified_at plus the configured TTL, accepts only the
+    current plus/minus one TOTP counter once, enforces both 15-minute failure limits/lockout using
+    the exact trailing half-open-lower interval with a lower-bound equality test, and
+     never uses WebAuthn, recovery codes, or the existing wide-window helper. Confirm an already-
+     locked attempt skips both factors and TOTP counter, emits no proof/rate-failure row, never extends
+     lock time, and yields the same external `step_up_failed` response as every other denial. Distinct
+     internal denial/factor-evaluation reasons must be sensitive, non-serializable and readable only
+     through trusted audit/privileged diagnostics; controller, API, MCP, exception, log and flash
+     outputs are byte-identical and contain no reason or count. Confirm standard proof
+      creation and later revocation have separate immutable commit/audit evidence, while only the
+      distinct TOTP-enrollment proof supports one-use consumed/revoked lifecycle transitions,
+     exact trigger-kind/XOR provenance, pending replacement proof or exact authority/quorum source,
+     release active slots safely, and cannot race into two terminal outcomes. Password/reset/
+     recovery/session epoch changes must enumerate and revoke every active-session proof through the
+     exact UserSecurity execution before its gate clears; TOTP-counter-only CAS must not do so.
+  - [ ] Confirm UserManagement owns a retained UUIDv7 TOTP-generation record and current pointer.
+    New/replaced secrets create a new pending generation, confirmation binds that exact persisted
+    generation, disable clears the pointer, old records/evidence remain, and existing secrets are
+    backfilled without decrypting or deriving from secret values. Confirm initial unconfirmed
+    enrollment is a UserManagement flow, while confirm, confirmed-factor reset, and disable map to
+    the exact separate authority operations and governance-floor rules.
+  - [ ] Confirm sole-admin candidate count includes every human Admin/Superuser whose persisted status
+    is exactly `ACTIVE`, regardless of
+    Vault permission, TOTP, session, or step-up. A distinct candidate must be approval-eligible and
+    become decision-ready for the exact decision; an ineligible or not-yet-decision-ready second
+    candidate blocks sole-admin fallback; exact-one requester only may use the exception; zero
+    candidates deny.
+  - [ ] Confirm ordinary approval-eligible means candidate plus live approval_decide, confirmed TOTP
+    and exact company scope/Client visibility, without policy_manage, session, or active proof.
+    Governance-recovery-eligible additionally requires policy_manage and is used for the separately
+    canonical min(2,candidate count) readiness floor, recovery, unlock and policy-governance. Confirm
+    decision-ready adds a fresh active, non-revoked, same-session/actor/epoch-bound standard proof
+    referenced by the exact plan, request and concrete decision; it is reusable until TTL/revocation
+    and has no consumed state. Health/readiness never counts proof possession. Planned changes below the durable
+    eligibility floor deny. In enforced phase,
+    first TOTP confirmation uses a single-purpose password+pending-generation-code proof and the
+    exact independent-approval or sole-bootstrap/post-review path; it cannot act as normal step-up.
+  - [ ] Confirm the approval request defaults to 30 minutes within 5-60 bounds, binds the exact plan,
+    references exactly one typed pre-apply graph/authority/quorum plan with enumerated subjects,
+    derives terminal state deterministically, invalidates on any epoch/digest drift, and is consumed
+    once in the same transaction by executor=requester. Request, decision, cancellation, exception,
+    consumption, and no-approval mutations must retain their exact fresh step-up proof references.
+    Confirm immediate plans default to 5 minutes within 1-10 bounds and graph execution/authority
+    witness fences default to 30 seconds within 1-60 bounds with expiry exactly the earlier of DB
+    time plus the fence TTL and plan expiry. Confirm one mutable request lifecycle projection
+    serializes every cross-table terminal race and
+    consumption points one-way to a precreated typed pending operation without an FK cycle.
+  - [ ] Confirm every standalone trusted source is unusable until its exact evidence commit and typed
+    audit finalize. Exercise a crash at each building/cleanup stage: source-specific cleanup must
+    release proof/recovery slots and approval/post-review reservations, one locked CAS must choose a
+    winning abort, and retry must not retroactively trust or strand inert evidence.
+  - [ ] Confirm group/collection create/rename need step-up but no second approval; grant create is
+    always approval-bound; membership/item-link add is approval-bound exactly when locked
+    post-mutation reachability expands.
+  - [ ] Confirm access-reducing revocation needs current permission, fresh step-up, typed reason, and
+    audit but does not wait for an independent approver.
+  - [ ] Confirm planned candidate-roster shrink from more than one uses a different pre-state
+    governance-recovery-eligible approver who is decision-ready for the exact plan and never the
+    future sole admin; transition to zero denies. Emergency shrink must set quorum
+    lock, invalidate all evidence, and block expansion/sole exception.
+  - [ ] Confirm no-alternative quorum recovery denies before 24 hours, restores only an approver
+    roster, uses exact step-up/digests/single-use evidence, records notification outcome honestly,
+    and creates separate mandatory post-review. Confirm both sole-exception and quorum-recovery
+     and TOTP-enrollment-exception sources support ordered findings/remediation and exactly one final
+     confirmation. For each exception/recovery origin, confirm it starts assembling without a gate,
+     creates and binds every inert operation/consumption/obligation child, then claims the global gate
+     only after completeness. Confirm an
+     immutable authorization snapshot is stored before effects, obligation finalizes first,
+     consumption second, and the typed operation becomes effective and clears every fence LAST.
+     Expiry/drift before effects denies; after effects the exact snapshot-bound action is resume-only,
+     and its later audits may use a now-stale proof only through the same coordinator, consumed
+     pre-state witness, snapshot, actor, plan and operation—not for a new decision.
+     A typed human/system whole-origin abort may terminalize an assembling subset or complete claimed
+     origin only with zero consumed target/evidence subjects; the coordinator terminal-transition CAS chooses one
+     finalized attempt while crashed/building losers remain inert, and retry requires a fresh
+     plan/request/origin. Generic child cleanup is forbidden; effects_started and later remain exact
+     snapshot-bound resume-only even after graph/authority/quorum/evidence TTL or actor-epoch drift. The
+     installation-wide post-review gate must serialize
+    every obligation/evidence change against every expansion, bind plan epoch/digest, rescan all open
+    obligations/findings at DB time instead of trusting cached counts, and lazily audit a newly
+     overdue obligation before denial. Each recovery authorization has a separate exact-trigger-kind
+     consumed/revoked transition commit and audit. Confirm zero-governance-recovery-eligible expiry
+     uses only the
+     protected system actor at/after DB expiry, clears the active slot, permits a fresh retry, and
+     rejects early cleanup; pre-expiry human revocation still requires fresh step-up. Finding
+     remediation uses a mutable per-finding
+     lifecycle, so an aborted building source cannot block retry. Confirmation versus overdue must be
+     one CAS race; reviewed_at is present only after confirmation, and every later insertion must fail.
+     Confirm the gate context carries the complete before/after snapshot and is one-statement/one-use
+     with finally plus connection checkout/return clearing on both drivers.
+  - [ ] Confirm peer unlock and cooling recovery precreate an exact one-use quorum mutation, use the
+    connection-local install/apply/finalize context and authority-state pending fence, and atomically
+    bind state, plan, proof, approval/recovery, optional exact UserSecurity execution+witness pair,
+    one applied mutation primary audit, and rollback.
+  - [ ] Compare the versioned canonical-binary golden vectors on SQLite and isolated MariaDB:
+    domain tags, exact field order/types/lengths, session binding, Unicode NFC name keys, sorted sets,
+    reachability and group/collection epoch sets, typed quorum before/current/proposed facts,
+    the historically named governance-ready roster encoding for governance-recovery eligibility,
+    post-review blocker set and gate-bound plans, fresh-install empty-state/stage-snapshot documents
+    with run B, UTC/UINT64/UUIDv7 encoding, UserSecurity pre-state and post-review authorization
+    snapshots, the immutable foundation-audit-trust manifest and its exact one-entry vector,
+    emergency authority plan with
+     exact emergency_security_deactivation reason, and raw SHA-256 must match; cross-family or shape-valid false digests
+    must deny. Confirm bindable timestamps round-trip as exact UTC microseconds through MariaDB
+    DATETIME(6) and canonical SQLite text; persisted epochs/counters reject values above PHP_INT_MAX.
+    Confirm ext-intl and ext-mbstring are explicit platform/readiness requirements.
+  - [ ] Confirm production migration seeds only dormant and both drivers reject every operational
+    Row04 graph/authority/approval/quorum DML there. While dormant or provisioning, service and DB
+    guards must also reject Vault proof issuance/activation/transition, attempt/rate rows, counters,
+    runtime evidence sources and evidence commits, leaving all those tables empty. Only the closed
+    UserManagement bootstrap/security flows and exact deployment/trust-cutover sources are allowed
+    and none may issue a Vault proof. Positive trigger tests may use only the isolated,
+    non-production-autoloaded ephemeral schema assembler that seeds enforced before installing the
+    identical immutable-phase and operational guards. In that fixture only non-phase state may change
+    through exact fences while phase stays enforced; no service, route, config, command, seeder, or
+     migrated DB can change phase.
+  - [ ] Exercise the restartable migration protocol. Confirm every ordered DDL migration is
+    schema-only, idempotently creates only missing exact catalog/trigger shapes, fails divergent or
+    partial guards, stays within 64-byte names, recognizes mysql and mariadb, uses no LOCK TABLES or
+    DB transaction around MariaDB DDL, and never creates authority/baseline/journal DML. Confirm the
+    audit cutover installs a temporary base-event freeze and temporary trust-child INSERT guard
+    before trust DML; materializes one immutable item for every locked pre-cutover audit event,
+    explicitly finalizes an empty manifest, and verifies exact count/set/digest before backfill;
+    backfills only finalized-manifest foundation events under the one-use context; replaces the
+    temporary trust guard with the permanent trigger-internal-only guard; verifies 1:1 trusted view;
+    and removes freeze last.
+    Crash/re-entry, concurrent audit writes, unknown/out-of-manifest events and direct trust inserts
+    must remain frozen/pending or deny. Before first DDL, confirm MariaDB information_schema proves
+    every existing locked table is InnoDB with the exact PRIMARY/covering-index order, key type,
+    unsignedness and binary collation required by each FORCE INDEX predicate; independently alter one
+    fixture to MyISAM and one to a wrong index and prove zero Row04 objects/facts are created.
+    Recheck every new Row04 table as InnoDB before classification. On MariaDB confirm explicit
+    REPEATABLE READ and complete
+    FORCE INDEX(PRIMARY) range/gap locks block a second-connection user/role/permission/pivot/audit/
+    singleton insert during final DML classification. On file-backed SQLite confirm a dedicated
+    top-level BEGIN IMMEDIATE with two PDOs, full audit-trigger reinstall/read-back, and no reliance
+    on Laravel's DEFERRED transaction or ALTER preserving triggers.
+  - [ ] Exercise both deployment classifications. On exact empty state, confirm only the final
+    locked DML classification migration
+    creates one installation-bound bootstrap run at permissions_installed/revision 1 with one
+    finalized permission_migration transition, canonical empty/stage digests and the complete
+    six-permission fact multiset. PermissionSeeder verifies; RoleSeeder inside
+    fresh_install_role_bootstrap, interactive bootstrap_admin, dormant UserManagement TOTP
+    confirmation, system_actor_bootstrap/EnsureSystemActor, and CLI-only
+    nexum:vault-provision-control-plane advance the same run one closed
+    stage at a time through completed. Force a committed crash between every stage and confirm exact
+    same-run resume; reorder, skip, duplicate, fabricated context, changed/partial state, second run
+    and heuristic adoption deny. Confirm the frozen Admin/Superuser mapping, Tech/Viewer zero,
+    completed rerun is read-only no-op, phase remains dormant, and both runtime flags/content registry
+    stay off. The actor-ready stage must retain the same numeric exact DISABLED, roleless, non-login
+    vault-control-plane actor on retry. On non-empty installs, confirm no fresh journal exists; the
+    two narrow existing-install provisioning evidence steps and reciprocal dormant authority-state
+    pointer finalize with that same actor/execution; missing/duplicate/conflicting actor/evidence,
+    missing/removed grants and ambiguous partial state fail closed.
+   - [ ] Confirm every applied graph/authority/emergency/quorum mutation has exactly one reciprocal
+      primary audit binding and one audit-trust projection: preinserted events start pending and are
+      invisible to ordinary audit/health/export/API readers. Confirm the audit-event AFTER INSERT
+      trigger requires the exact one-use typed insert context and atomically creates the pending trust
+      child; application/direct trust INSERT, missing context, wrong owner, duplicate or committed
+      orphan deny. The finalizer binds an existing typed event,
+     moves to applied and finalizes trust LAST, and missing/wrong/duplicate/orphan events or trust rows
+      cannot become trusted. Confirm the temporary-freeze/manifest backfill handles even an empty
+      foundation table and leaves no permanent migration bypass. TOTP confirm
+     uses only its dedicated confirmed event; reset/disable use the generic authority event; emergency
+      uses only its locked event. Confirm password-hash rehash uses one dedicated UserSecurity-owned
+      success event whose initiating human is proven only by the locked just-validated-password
+      execution, never by a fabricated Vault proof. Confirm approval expiry and drift invalidation
+      use only canonical-system cleanup with exact DB-time/drift source, while cancellation stays
+      human; evidence abort enforces its closed human/system trigger/reason/XOR table. Confirm
+      cleanup/overdue audit uses the canonical exact-`DISABLED`
+      non-login
+     `vault-control-plane` system actor, never invents a human executor, role, permission, or delivery.
+  - [ ] Confirm there is still no Vault route, UI, API/MCP/portal/runtime consumer, secret writer,
+    key provisioner, reveal/copy/use action, enabled content operation, or real credential.
+- **Expected Result:** Every graph, identity-authority, step-up, approval, and quorum mutation is
+  fail-closed, typed, concurrency-safe, and independently auditable while Vault stays dormant. No
+  control-plane state or successful proof can expose or consume secret content.
+- **Migration / Deploy Gate:** This Pending checklist governs the approved implementation and remains
+open until the Feature Slice is implemented and explicitly human-reviewed. Before Dev migration
+require a complete mutation-path inventory, exact
+  UserManagement `PENDING_INVITE|ACTIVE|DISABLED` status/table and Unicode-extension readiness, no
+  pre-existing direct user grant of any migration-managed Vault permission, and a locked exact
+  empty-authority versus existing-authority classification. Empty installations follow only the
+  retained one-use bootstrap journal and bounded seed/bootstrap/TOTP/provision sequence above; every
+  stage and canonical fact snapshot is read back. Existing installations require at least one
+  prospective governance-recovery-eligible `ACTIVE` human before migration and one actual eligible
+  identity after the dormant schema plus typed provision command and finalized existing-install
+  evidence; partial/mixed state fails closed.
+  Require green SQLite plus isolated MariaDB schema/concurrency tests for both classifications.
+  Before Main/production back up DB, keep both Vault runtime gates false, apply only reviewed
+   additive migrations, read back schema/guards/finalized-only audit trust/six permissions/zero content operations, and
+   the exact untouched authority/evidence-sequence/post-review/UserSecurity singleton baselines plus
+   either no journal for existing authority or the exact untouched permissions_installed/revision-1
+   migration journal baseline, then rerun focused and complete suites. Test up-to-down with untouched
+   pre-existing pending and confirmed TOTP backfill; any later bootstrap-journal stage or runtime
+   generation/epoch/evidence transition must refuse down.
+   Pending blocks Main, deployment, runtime, and credentials.
+- **Automated Dev Evidence (Not Human Review):** Partial Slice 04 implementation is verified on Dev;
+  see the latest continuation above and docs/plans/2026-09-14-vault-action-plan-source-readback.md.
+  The 2026-09-14 final authority read-back sequence passed all listed SQLite/native/unit checks.
+  This is not completed Slice 04, practical review readiness or human approval.
+- **Risks / Recovery:** Principal risks are authority bypass through generic user/role editors,
+  write-skew reachability, stale plan consumption, TOTP replay/trace leakage, Client substitution,
+  pool shrink creating silent sole-admin, false notification claims, and deleting evidence. On any
+  mismatch keep Vault disabled, retain quorum/authorization/audit evidence, stop, and use a
+  separately reviewed bounded recovery. Never weaken guards or disable FKs to resume.
+- **Status:** Pending. Only a named human reviewer may check these items and mark this entry Reviewed.
+
+### HR-2026-09-04-002: Vault Dormant Control Plane And Cryptographic Foundation
+
+- **Scope:** Verify the Level 3 Vault foundation from Discussion #279 without enabling a credential
+  workflow: fail-closed configuration, independent key-provider boundary, envelope cryptography,
+  immutable version/tombstone records, separately destroyable encrypted material, safe append-only
+  audit, exact permissions, and secret-negative behavior.
+- **Affected Modules:** New Vault domain, shared provider registration, permissions/roles,
+  configuration, Composer platform requirements, migrations, tests, and Vault Knowledge docs.
+- **Required Human Checks:**
+  - [ ] On Dev with Vault disabled, run the health command. Confirm it exits non-zero with a safe
+    disabled reason and prints no configured path, key bytes, ciphertext, raw exception, or secret.
+  - [ ] Confirm there is no Vault menu, page, API/MCP route, portal surface, reveal/copy control,
+    runtime consumer, or legacy credential migration in this slice.
+  - [ ] Review the schema boundary: there is no encrypted-material Eloquent model or select-all
+    material path; secret versions and audit cannot be updated or deleted; ordinary material
+    update, rewrap, restore, and delete are rejected. Only the exact schema-level terminal
+    destruction transition may atomically erase all material while preserving its tombstone, and
+    this slice exposes no destruction action or permission.
+  - [ ] Review the effective grants. Tech and Viewer receive no Vault control-plane permission;
+    only the approved Admin/Superuser grants exist, and no reveal/copy/use/export/import/destroy or
+    break-glass permission has been pre-created.
+  - [ ] Run the synthetic key-provider/envelope tests with test-only material. Confirm tenant/scope,
+    item, version, schema, suite, provider, tamper, downgrade, and substitution cases fail closed
+    and that APP_KEY is never used as a Vault root or fallback.
+  - [ ] Inspect negative canary evidence for the opaque material DTO boundary, model arrays/debug,
+    logs, exceptions, session, cache, queue, audit, and command output. Confirm no select-all
+    material object is exposed and no canary plaintext, plaintext hash, DEK, KEK, or installation
+    seal key appears.
+- **Expected Result:** The Vault foundation is dormant and fail closed; independent cryptographic
+  contracts and persistence invariants are reviewable, but no user or runtime can store, reveal,
+  migrate, export, publish, or consume a real credential.
+- **Migration / Deploy Gate:** Before Main or production, back up the database, confirm libsodium is
+  available, leave Vault disabled, leave external seal/keyring paths unconfigured, run the Vault
+  schema and additive permission migrations, read back tables/triggers/grants, clear caches, and
+  run the focused Vault suite plus the MariaDB contract. This Pending checklist blocks Main
+  promotion, production migration, deployment, runtime activation, and storage of real secrets.
+- **Automated Dev Evidence (Not Human Review):**
+  - Focused Vault suite: 52 tests / 457 assertions passed, including trace/leakage, tamper, AAD,
+    scope, provider, permission, SQLite guard, and disabled-runtime failures.
+  - Isolated strict MariaDB contract: 1 test / 137 assertions passed, including 11 DATETIME columns
+    without implicit defaults/ON UPDATE and exact binary/material boundaries.
+  - Dev migration/read-back: four migrations in batch 5; five empty Vault tables; singular material
+    table; 15 triggers; MEDIUMBLOB payload; exact Admin/Superuser/Tech/Viewer grants; no content
+    permission, key locator, key material, real credential, or Vault route.
+  - Secret-free health returns the expected non-zero vault_disabled result. Independent
+    cryptographic review recorded zero open Slice 1 blockers.
+  - Complete Nexum suite: 2,608 tests / 25,215 assertions passed with HOME=/tmp.
+- **Risks / Recovery:** No real key or credential is permitted in this slice. If migration or
+  verification fails, keep Vault disabled, preserve any immutable Vault evidence, restore the
+  database backup when required, and do not configure a provider or retry with APP_KEY.
+- **Status:** Pending. Only a named human reviewer may check these items and mark this entry Reviewed.
+### HR-2026-09-04-001: Knowledge Revision Approval, Publication Read-Back, And Rollback
+
+- **Scope:** Verify the Level 3 Knowledge workflow from Issue #266: immutable proposals,
+  before/after review, exact Ticket-scoped AI approval, permission separation, guarded publication,
+  BookStack read-back/retry, rollback, repository authority, and independent documentation follow-up.
+- **Affected Modules:** Knowledge, Ticket, Integration/BookStack, Customer Portal, API permissions,
+  queue-backed publication, migrations, and repository documentation synchronization.
+- **Required Human Checks:**
+  - [ ] On Dev, edit one published local Knowledge article as a draft manager. Confirm the public and
+    technician article remain unchanged, then inspect the concise diff and complete rendered preview.
+  - [ ] As a reviewer and publisher, approve and publish the exact proposal. Confirm the published
+    article changes only after publication and the revision identity, actor, source, decision, and
+    audit events remain visible.
+  - [ ] Create two proposals from the same published base, publish one, and try the other. Confirm the
+    stale revision enters conflict and cannot overwrite the newer article.
+  - [ ] Link an AI-attributed proposal to an open Ticket documentation request. As a technician with
+    Ticket view/update but no general Knowledge or publish permission, confirm only that exact
+    revision can be viewed and approved; confirm the Knowledge index, another revision, API, and
+    publication remain denied.
+  - [ ] Publish one controlled BookStack-backed revision. Confirm the documentation request remains
+    open while publishing, completes only after exact provider read-back, and a simulated safe
+    failure stays visible and retries the same revision without creating a duplicate page.
+  - [ ] Propose rollback from an earlier published revision. Confirm publication creates a new
+    revision and all original revision content, provenance, decisions, and events remain immutable.
+  - [ ] Run one scoped repository documentation sync. Confirm its path/checksum identity is recorded
+    and manual or AI proposals against the repository-owned article fail closed.
+  - [ ] For a portal-visible test article, confirm the portal notification is created only after
+    verified publication and the portal still exposes only published content in the permitted scope.
+- **Expected Result:** Drafts never change published content; every decision and publication is
+  attributable to an exact immutable revision; stale or unauthorized work fails closed; external
+  failure is retryable without duplicates; and documentation completion reflects proven read-back.
+- **Migration / Deploy Gate:** Before Main or production, back up the database, pause affected queue
+  workers, run `php artisan migrate`, confirm migration
+  `2026_09_04_080000_add_knowledge_revision_workflow`, read back baseline pointers/hashes and the
+  protected actor permissions, run `php artisan optimize:clear`, rebuild views, restart workers, and
+  complete controlled local and BookStack smoke checks. This Pending checklist blocks Main
+  promotion, production migration, deployment, and release of this workflow.
+- **Automated Dev Evidence (Not Human Review):** The migration ran in Dev batch 4. Read-back found ten
+  published articles, ten published pointers, ten published baseline revisions, ten baseline events,
+  zero missing snapshot hashes, and zero article/revision content mismatches. The disabled-login
+  Documentation Agent has zero roles and exactly `knowledge.revision_persist` and
+  `knowledge.publish_system`; no human role has either internal permission. Focused Knowledge,
+  workflow, BookStack, Ticket, and portal groups pass 58 tests / 526 assertions. Route listing, Blade
+  clear/cache, relevant Pint, and diff whitespace checks pass.
+- **Risks / Recovery:** Do not enable publication or run provider writes until permissions, workers,
+  provider state, and the migration read-back are confirmed. If deployment verification fails,
+  disable workflow entry points, stop affected workers, preserve all revision/event history, restore
+  the database backup when required, and return to the last proven published Article projection.
+- **Status:** Pending. Only a named human reviewer may check these items and mark this entry Reviewed.
+
+### HR-2026-09-03-006: Composer Dependency Security Remediation
+
+- **Scope:** Remediate GitHub Issue #221 by replacing every vulnerable locked Composer package
+  with a patched compatible release while retaining Laravel 12, Livewire 3, PhpSpreadsheet 1,
+  PHPUnit 11, PHP 8.2 support, and existing application behavior.
+- **Affected Modules:** Shared Laravel runtime, authentication, Livewire, Mail, outbound HTTP,
+  routing, PDF, Markdown, spreadsheet import/export, queues, tests, and deployment operations.
+- **Required Human Checks:**
+  - [ ] On Dev, sign in and complete one 2FA or recovery-code flow. Confirm normal session,
+    validation-error, password-reset, invitation, and signed-link behavior remains intact.
+  - [ ] Open a representative Livewire form and Mail conversation. Confirm rendering, validation,
+    read state, compose/send staging, and safe HTML output work without browser console errors.
+  - [ ] Generate and open one customer-facing PDF, import and export one XLSX workbook, and render
+    one Knowledge Markdown article. Confirm content, download names, and formatting are correct.
+  - [ ] Exercise one configured outbound HTTP integration against its approved test endpoint and
+    confirm redirects, TLS validation, timeouts, and sanitized error handling remain correct.
+  - [ ] Process one safe queued test job and confirm scheduler registration remains visible. Do not
+    send a customer notification as part of this review.
+  - [ ] In the target deployment runtime, run `composer audit --locked` and confirm zero advisories
+    and no ignored advisory IDs. Run the repository-standard production install, clear caches,
+    rebuild views, restart long-lived queue workers, and perform authenticated web smoke checks.
+- **Expected Result:** The supported deployment installs the exact lock on PHP 8.2 or 8.3, the
+  audited dependency graph contains no known advisories or ignores, and the selected application
+  workflows behave as before the package refresh.
+- **Migration / Deploy Gate:** No database migration is introduced. Production deployment must use
+  the reviewed `composer.lock`, run `composer install --no-dev --classmap-authoritative`,
+  `php artisan optimize:clear`, `php artisan view:cache`, and `php artisan queue:restart`. If the
+  smoke checks fail, restore the previous reviewed lock, reinstall it, clear/rebuild caches, and
+  restart workers. This In Review checklist blocks Main promotion, production deployment, and release
+  of the dependency refresh.
+- **Automated Dev Evidence (Not Human Review):** The baseline audit found 58 advisories in 16
+  packages; the final strict audit has zero advisories, abandoned packages, and ignores. Composer
+  validation and an actual locked install/package discovery pass on PHP 8.2.32. PHP 8.3.32 passes
+  package discovery, all lock platform requirements, route listing, view cache, optimize clear,
+  and the Vite production build. Focused regression coverage passes 554 tests initially plus the
+  corrected 148-test Mail suite and the final 7-test/34-assertion Data Exchange XLSX matrix. After
+  reconciling the stale shared-tree regressions, the final complete PHP 8.3 Dev suite passes 2,550
+  tests / 24,750 assertions. The six formerly failing classes pass together with 88 tests / 1,102
+  assertions, and an independent post-patch review confirmed the provider-feedback follow-up fixed.
+  The PHP 8.2 CLI lacks `pdo_sqlite`, so application tests cannot start there; the exact
+  lock nevertheless installs and discovers packages on PHP 8.2, while the owning XLSX regression
+  passes on the fully provisioned PHP 8.3 Dev runtime.
+- **Human Review Progress:** On 2026-09-04 Svein authorized an AI-assisted authenticated Dev browser
+  review and explicitly accepted moving the checklist forward with the remaining data-dependent
+  checks planned for production. The Dev dashboard, Client list/detail, dynamic Contact tab, ordinary
+  form validation, Mail workspace, Data Exchange administration, and browser console rendered
+  without client-side errors. Data Exchange manual export run `#1` succeeded with zero source rows
+  and produced one empty CSV audit file. Mail had no accessible mailboxes, Knowledge had no shelves,
+  Contracts had no records, and no integrations were configured, so Mail conversation, Markdown,
+  PDF, outbound integration, and XLSX browser checks remain unchecked. The worker page also showed
+  887 ready `email-live` jobs, 827 ready `notifications` jobs, and one failed default-queue job caused
+  by a missing `ticket_schedules` table. No worker restart, retry, queue clear, customer notification,
+  or deletion was performed. Svein's approval records the completed Dev observations and the plan to
+  use representative production data; it does not accept the queue deviation or complete the
+  unchecked production controls. The automated full-suite requirement was completed separately.
+- **Risks:** This is a broad transitive patch/minor refresh. Long-lived workers must be restarted
+  after deployment. `ezyang/htmlpurifier` intentionally remains at safe 4.18.0 because 4.19.0
+  changes cache-write behavior that is incompatible with the existing shared Dev cache ownership;
+  it has no remaining advisory. `maennchen/zipstream-php` is pinned at safe 3.1.2 so the lock remains
+  installable on the declared PHP 8.2 platform.
+- **Status:** In Review
+
+
+### HR-2026-09-03-005: Canonical Contact Workflow And Legacy Production Cutover
+
+- **Scope:** Complete GitHub Issue #253 by making Contact the only technician-visible person
+  workflow and automatically mapping every legacy Client User to canonical Contact during the normal
+  production migration without changing any stable legacy ID.
+- **Affected Modules:** Contact, Clients, Marketing, Telephony, Intake, Signal, UserManagement,
+  Ticket, Asset, Sales, Nextcloud compatibility, route permissions, migration runtime, and Contact,
+  Client, and Marketing Knowledge.
+- **Required Human Checks:**
+  - [x] On Dev desktop and a 390 px viewport, open a Client and one of its Sites. Confirm both
+    Contacts tabs show canonical rows, central Contact detail links, and only the standard New
+    Contact form. Confirm no Client User create/edit/detail form is exposed.
+  - [x] Create a Contact from a Client and from a Site. Confirm Client/Site context is correct and
+    the same Contact appears in central Contacts, Client Contacts, and Site Contacts. Edit it
+    centrally and confirm all three views update without creating a duplicate.
+  - [x] Create a Contact centrally with Client/Site relations and confirm it appears immediately on
+    both pages even when it has no pre-existing legacy bridge.
+  - [x] Permission behavior was accepted by Svein from the passing automated route matrix: a
+    technician with Client access but without Contact create/update permission cannot use canonical
+    or legacy-alias mutation routes. No limited-permission browser account was created for the run.
+  - [ ] Before production migration, create and integrity-check a database backup and stop Marketing
+    and default queue workers so identity evidence cannot change during cutover.
+  - [ ] Run the normal production migration, then run
+    `php artisan contacts:migrate-client-users` as an idempotent read-back. Confirm it exits
+    successfully, reports zero unlinked legacy rows, and a second run creates no additional
+    Contacts, relations, recipients, deliveries, or identity keys.
+  - [ ] Spot-check representative old Contacts with Ticket, Asset, Sales stakeholder/opportunity,
+    Nextcloud mapping, Telephony, Intake, User account, and Signal history. Confirm every old
+    `client_users.id` is unchanged and each bridge now has the expected `contact_id`.
+  - [ ] Spot-check Marketing manual criteria, list members, sent/claimed recipients, events, and
+    delivery identity keys. Confirm canonical Contact IDs were added, legacy IDs remain, historical
+    recipient/delivery counts did not change, and no message was queued, replayed, or sent.
+  - [ ] Run `php artisan optimize:clear`, restart the stopped workers, verify the external
+    scheduler remains healthy, and repeat authenticated Client/Site/Contact smoke checks.
+- **Expected Result:** One canonical Contact is visible and editable from every entry point. All old
+  contacts are copied automatically. Stable compatibility IDs and every dependent historical
+  relation remain resolvable. Marketing gains matching canonical identity without weakening or
+  replaying its lifetime delivery evidence.
+- **Migration / Deploy Gate:** The forward-only migration
+  `2026_09_03_180000_complete_canonical_contact_cutover` is part of the normal deploy. Do not
+  reverse or delete its additive identity data. An ambiguity or identity conflict stops deployment
+  for reviewed forward repair and safe rerun. Human review is complete and no longer blocks commit
+  or Main promotion. The unchecked production steps above remain mandatory and block production
+  migration, deployment, and release of Issue #253.
+- **Automated Dev Evidence (Not Human Review):** The complete affected matrix passes 96 tests / 787
+  assertions: Client 37 / 317, Contact 41 / 291, and Contact cutover plus Marketing delivery
+  invariant 18 / 179. It proves idempotency, stable Ticket/Asset/Sales/Nextcloud bridge IDs,
+  Marketing/Telephony/Intake/Signal/User backfill, and zero queued jobs. The path migration ran on
+  authoritative Dev in batch 3; the current Dev cohort was empty, and the immediate idempotent
+  command read-back reported zero unlinked legacy rows and zero new downstream changes. The complete
+  repository run passed 2,535 tests / 24,636 assertions with 13 failures outside #253. Twelve
+  reproduced in isolation across Commercial customer-document readiness, Email conversation UI,
+  Integration provider-verification response rendering, Notification durability, and Ticket Rule
+  evidence tests; the Email provider-health deadline passed in isolation. That separate current-tree
+  regression follow-up is recorded in TODO, and no broad-suite green claim is made here.
+  On 2026-09-04, an authenticated AI-assisted Dev browser run (not human approval) created the
+  synthetic client `Issue 253 UI Review 2026-09-04`, its default `Hovedkontor` and non-default
+  `Avdeling Nord` Sites, and Contacts through Client, Site, and central entry points. Client,
+  Site, central list/detail, and central edit read-back stayed canonical without duplicates; the
+  390 px check retained page-width containment through responsive table scrolling. The run found
+  and corrected a double-escaped multi-parameter Site link plus same-client organization hydration
+  that could replace an explicit non-default Site with the default. It also corrected a misleading
+  Default badge that treated every canonical primary relation as the Client's explicit default
+  Contact. Post-fix browser read-back saved `Kontakt Avdeling Nord` only to `Avdeling Nord` and
+  showed Default only on the actual default Contact. The AI-assisted run did not self-approve review.
+- **Human Review Confirmation:** On 2026-09-04, Svein explicitly approved the implementation from
+  the reported automated and authenticated browser evidence. This approval covers the Dev workflow,
+  responsive UI, and permission behavior; it does not claim that the unchecked production migration
+  and deployment operations have already run.
+- **Risks:** Shared email/phone identity that is ambiguous intentionally stops the cutover. A stopped
+  migration can leave only additive partial work; rerun is required after correction. Long-lived
+  workers must not resume until migration/read-back succeeds.
+- **Reviewer:** Svein
+- **Reviewed:** 2026-09-04
+- **Status:** Reviewed
+
+### HR-2026-09-03-004: Web Push Notification Registry, Delivery, And Preferences
+
+- **Scope:** Complete GitHub Issue #257 through one authoritative 27-type registry, nine explicitly
+  eligible internal Web Push events, queued best-effort Ticket/Asset/Storage delivery, current
+  authorization checks, privacy-safe payloads, and grouped responsive preferences.
+- **Affected Modules:** Notification, Ticket, Asset, Storage, Customer Portal preference policy,
+  UserManagement lifecycle checks, default queue worker, profile Notification UI, and Knowledge
+  documentation.
+- **Required Human Checks:**
+  - [ ] On desktop, open Profile > Notifications and confirm the event groups, descriptions,
+    associated switches, unavailable reasons, one Save preferences action, and absence of
+    Customer Portal-only events. Traverse and operate the controls using the keyboard.
+  - [ ] At a 390 px viewport, confirm the preference groups and labels remain readable and usable
+    without horizontal page overflow.
+  - [ ] On a registered test device, opt in to one representative Ticket event, Asset alert, and
+    supplier-import event. Trigger controlled authorized examples and confirm each push is generic,
+    opens only its guarded same-origin target, and leaves the in-app notification present.
+  - [ ] Queue a controlled event, turn its Web Push preference off before the worker runs, and
+    confirm provider delivery is suppressed while the in-app notification remains.
+  - [ ] In separate controlled tests, remove the required permission, disable the user, and delete
+    or hide the exact target before the worker runs. Confirm no push is rerouted or delivered.
+  - [ ] Simulate a provider failure and confirm the source Ticket/Asset/import action is not retried
+    or rolled back and no duplicate in-app notification is created.
+  - [ ] Confirm existing device registration, current-device test, revocation, expired-subscription
+    cleanup, service-worker click handling, and inbound Email/customer-reply delivery still behave
+    as documented.
+- **Expected Result:** Every safe implemented internal event is independently configurable. Push is
+  opt-in, minimal, authorized against current state, and isolated from authoritative domain and
+  in-app persistence. Unsupported, security-sensitive, and portal events remain unavailable with a
+  clear reason.
+- **Migration / Deploy Gate:** No migration, seeding, new permission, API, route, scheduler, service
+  worker, or provider setting is required. Deploy the code, run `php artisan optimize:clear`, and
+  restart long-lived default queue workers. Existing VAPID/HTTPS/device readiness remains required.
+  This Pending checklist blocks Main promotion and production release of the Level 3 change; it does
+  not block closing the Dev-complete Issue #257.
+- **Automated Dev Evidence (Not Human Review):** Registry/delivery/UI contract passes 6 tests / 322
+  assertions; Storage passes 20 / 167; Customer Portal passes 11 / 179; affected Ticket/SLA/Asset/
+  user coverage passes 145 / 1,079; scoped PHP syntax and Pint pass. The complete Notification
+  directory has 118 passing tests and two unrelated tracked-clean Email durability-test failures
+  under concurrent Email/test-bootstrap work; no passing claim is made for those two tests.
+- **Risks:** Lock-screen presentation varies by browser/OS. A stopped default worker delays pushes.
+  Provider ambiguity is contained but remains operationally inspectable. Registry policy must be
+  updated with any future event type or eligibility change.
+- **Status:** Pending
+
+### HR-2026-09-03-003: Knowledge And BookStack Revision-Safe Synchronization
+
+- **Scope:** Deliver GitHub Issue #276 through immutable sync revisions, an honest known-base
+  model, three-way conflict decisions, exact outbound read-back, explicit review actions, and safe
+  retry/deletion/availability behavior.
+- **Affected Modules:** Knowledge, Integration/BookStack, Tech route permissions, queue worker,
+  API status, settings UI, Knowledge article UI, database schema, and Knowledge documentation.
+- **Required Human Checks:**
+  - [ ] Open `/tech/admin/system/integrations/book-stack` and confirm **Automatic clean inbound
+    sync** is separate from two-way outbound sync and is off unless intentionally enabled.
+  - [ ] After backup and migration in the target environment, confirm existing BookStack-backed
+    articles have an unknown baseline rather than a fabricated synchronized history.
+  - [ ] With a known base and automatic inbound enabled, change only the BookStack page title,
+    content, or placement; pull and confirm Nexum fast-forwards once without a feedback loop.
+  - [ ] Change the same article independently in Nexum and BookStack; pull and confirm the Nexum
+    article remains unchanged while the article page shows both current and candidate Markdown.
+  - [ ] Accept the BookStack candidate and confirm it becomes a new Nexum revision. Repeat with a
+    new conflict, choose **Keep Nexum and push**, and confirm BookStack receives exactly that
+    published revision after read-back.
+  - [ ] Disable the integration with pending work, make a remote change, re-enable, and confirm the
+    pending state survives and fresh drift is detected rather than overwritten.
+  - [ ] Delete a provider page and separately remove an external identifier in controlled test
+    records. Confirm the Nexum article remains and recreation requires explicit Keep Nexum.
+  - [ ] Confirm a user with article view access but without `knowledge.update` cannot invoke either
+    resolution action, and a user without article access cannot see candidate content.
+  - [ ] Confirm settings/API errors contain safe operational wording and never provider response
+    bodies, token values, or credentials.
+- **Expected Result:** Clean one-sided changes follow the configured policy. Unknown history,
+  divergence, deletion, stale jobs, and provider ambiguity preserve Nexum content and present an
+  explicit safe recovery path. Successful push means provider read-back proved the exact revision.
+- **Migration / Deploy Gate:** Before production, back up the database; stop BookStack/default
+  workers; run `2026_09_03_170000_create_knowledge_article_sync_revisions`; read back both tables
+  and baseline counts; run `php artisan optimize:clear`; restart workers; run one controlled pull;
+  and keep automatic clean inbound off until intentionally approved. This Pending checklist blocks
+  Main promotion, production migration, deployment, release, and policy activation.
+- **Automated Dev Evidence (Not Human Review):** Focused revision-safety and existing BookStack
+  regression plus Knowledge article coverage passes 97 tests / 948 assertions after formatting.
+  Migration `2026_09_03_170000_create_knowledge_article_sync_revisions` ran on Dev in batch 2;
+  read-back shows 0 revision rows, 0 sync-state rows, and 0 unknown-baseline rows because the current
+  Dev database has 0 BookStack source pages. Both conflict routes are registered, Blade compilation
+  succeeds, Pint passes for all 17 scoped PHP files, and `git diff --check` is clean.
+- **Risks:** A legacy unequal baseline intentionally creates review work. Provider acceptance with
+  unavailable read-back remains pending until retry proves the stored result. Revision snapshots
+  add storage proportional to actual sync-relevant changes.
+- **Status:** Pending
+
+### HR-2026-09-03-002: Mail Simple Selected-Message Read Action
+
+- **Scope:** Replace the ordinary Mail reader's acknowledgement preview and separate server-read
+  choices with one direct Mark as read/unread action, while preserving correct shared versus
+  personal mailbox authority.
+- **Affected Modules:** Email Mail Livewire reader, per-user unread state, personal-owner provider
+  remote operations, Email documentation, and test bootstrap safety.
+- **Required Human Checks:**
+  - [ ] Refresh `/tech/mail`, select an unread message in the shared `support@tronderdata.no`
+    mailbox, and confirm exactly one **Mark as read** action is visible with no preview panel,
+    migration wording, or separate mail-server read choice.
+  - [ ] Click **Mark as read** and confirm the button changes directly to **Mark as unread** without
+    opening a panel. Confirm another technician still sees that shared message as unread.
+  - [ ] Click **Mark as unread** and confirm only the signed-in technician's state changes back.
+  - [ ] On a personal mailbox owned by the signed-in technician, repeat both actions and confirm
+    provider/webmail Seen and Unseen follow. Confirm a delegate does not change the owner's
+    provider read state.
+  - [ ] Confirm opening a message alone still does not mark it read.
+- **Expected Result:** One familiar action changes personal awareness immediately. Shared mail never
+  steals another user's unread state; a personal owner's provider state follows automatically.
+- **Migration / Deploy Gate:** No migration, seeding, queue restart, or configuration flag is
+  required. Refresh compiled Blade views after deployment. Provider mirroring uses the existing
+  remote-operation ledger and IMAP connection.
+- **Automated Dev Evidence (Not Human Review):** The isolated SQLite MailWorkspace
+  regression passes 44 tests / 555 assertions, including shared two-user isolation, no remote
+  operation for shared read state, personal-owner IMAP Seen/Unseen mirroring, and absence of the
+  advanced preview/server-read controls from the ordinary reader. PHP syntax lint and Pint pass for
+  the changed PHP files. A deliberate MySQL-configured test probe stops in `tests/TestCase.php`
+  before any assertion or reset. Dev compiled Blade views were cleared and rebuilt successfully.
+- **Review History:** Svein's 2026-09-03 Dev check rejected the previous menu/panel behavior. This
+  entry tracks the simplified replacement and remains Pending until Svein repeats the checks above.
+- **Status:** Pending
+
+### HR-2026-09-03-001: Task Templates And Scheduled Generation
+
+- **Scope:** Deliver GitHub Issue #227 through the approved RFC and six ordered Feature Slices:
+  mutable Task templates, atomic grouped generation, recurring schedules, manual Ticket/Client use,
+  and Signal/Ticket/RMM rule actions.
+- **Affected Modules:** Task, Ticket, Client, Signal, Integration/RMM, permissions, scheduler, and
+  shared Work Context/Taxonomy boundaries.
+- **Required Human Checks:**
+  - [ ] Create and directly edit a single-Task template; confirm Add Task fields keep visible labels,
+    saved Task editors are collapsed by default, and the newly created Task opens once for immediate
+    editing. Confirm there is no publish, approval, version, rollback, or migration workflow.
+  - [ ] Create a grouped template with nesting, checklists, and dependencies; preview and apply it,
+    then verify the generated Tasks and completion blocking.
+  - [ ] Edit the template and confirm existing Tasks remain unchanged while the next application
+    uses the current saved definition.
+  - [ ] Configure a recurring schedule, review its next run, use Generate now, and verify a due run
+    creates one group without duplicates.
+  - [ ] In Task Template application and schedules, choose User and Client from the searchable
+    lists. Confirm typing filters the choices, no internal owner ID is requested, and Ticket is not
+    offered as a future schedule owner.
+  - [ ] Create or edit a recurring Ticket, select a Task Template under Schedule, and generate an
+    occurrence. Confirm the occurrence receives one fresh Task group, the recurring parent receives
+    none, and running the generator again does not duplicate the group.
+  - [ ] Apply a template from an authorized Ticket and Client; confirm owner/client/site context and
+    narrow/mobile layout. Confirm Ticket application returns to the same Ticket and shows its Tasks.
+  - [ ] Exercise delivered Signal Rule, Ticket Rule, and RMM Alert Rule template actions; confirm
+    rule audit, permissions, and no duplicate groups.
+  - [ ] Confirm inactive/referenced template behavior, generation history, sanitized failures, and
+    the external every-minute scheduler runner before deployment or activation.
+- **Expected Result:** Authorized users maintain one simple current template definition. Every
+  manual, scheduled, or rule-triggered application creates the expected Task graph atomically;
+  existing Tasks never change when the template is edited.
+- **Migration / Deploy Gate:** Back up the database, run the approved additive migrations, seed or
+  read back permissions, clear caches, restart affected workers if introduced, and verify the real
+  external `schedule:run` runner before enabling schedules.
+- **Automated Dev Evidence (Not Human Review):**
+  - Migration `2026_09_03_150000_create_task_template_generation_foundation` ran in Dev batch 25.
+    Database inspection confirms the 23-column `task_template_runs` table, unique idempotency key,
+    owner/source indexes, `tasks.task_template_run_id`, and recurring schedule timezone/actor/
+    assignee/result fields.
+  - Migration `2026_09_03_160000_add_task_template_group_to_ticket_schedules` ran in Dev batch 26.
+    Fresh databases receive the same nullable Ticket-schedule reference through the original table
+    definition, while upgraded databases receive it through the additive migration.
+  - The post-fix combined Task Template verification matrix passes 154 tests / 1,534 assertions.
+    It includes the complete Task, Signal, and RMM Alert Rules suites plus the focused Ticket Rule
+    registry, executor, builder, preview, publication, scheduled-Ticket SLA, recurring occurrence,
+    and occurrence-parity matrices. Coverage includes atomic graph
+    copying, checklists, tags, dependencies, current-template-only edits, rollback, idempotency,
+    management fields, persistent add-field labels, default-collapsed editors, one-time expansion of
+    the newly created item, safe item deletion, owner visibility, inactive templates, schedule CRUD,
+    timezone input, DST-safe recurrence, schedule locking, searchable User/Client owner selection,
+    rejection of future Ticket owners, recurring Ticket template persistence, and exactly-once Task
+    generation for each Ticket occurrence.
+  - PHP syntax lint passes for all changed service/controller files. Eighteen Task Template routes
+    and the every-minute `task.templates.generate_due` schedule are registered.
+  - Dev's external every-minute `schedule:run` crontab is installed and read back. Scheduler log
+    evidence shows `task.templates.generate_due` completed at 08:52 and 08:53 UTC on 2026-09-03.
+  - The Task Template delivery is committed separately from unrelated Dev work. Push, Main
+    promotion, and production deployment remain separate actions.
+- **Current Gate:** Svein accepted the Dev implementation as complete and requested closure of
+  GitHub Issue #227 on 2026-09-03. The unchecked visual/workflow checks above still require explicit
+  review before Main promotion or production release; Issue closure does not mark that release gate
+  as Reviewed.
+- **Status:** Pending
 
 ### HR-2026-08-30-001: Dev Database And Mail Private-Storage Reconciliation
 
@@ -9197,7 +11651,7 @@ not explicitly left open above. Full confirmation is not yet provided.
       provider, staged-credential, replacement-provider, or mailbox-migration workflow.
     - [x] After migration, confirm every Email account has account-owned settings, no account is
       provider-bound, and historical provider credential ciphertext is destroyed.
-    - [ ] Add a controlled account using its email address, IMAP details, and SMTP details; confirm
+    - [x] Add a controlled account using its email address, IMAP details, and SMTP details; confirm
       the page shows Testing and then separate incoming/outgoing success or safe failure guidance.
     - [ ] Enter a deliberately wrong password; confirm the same account remains inactive and
       editable, then replace the password on that account and pass both checks without creating a
@@ -9236,6 +11690,13 @@ not explicitly left open above. Full confirmation is not yet provided.
   `sent_reconciled`; the two expected message rows have one active placement each and zero Ticket
   links. The automatic Sent-append dispatch and duplicate/ambiguity guards pass 18 tests / 121
   assertions. The complete Email feature suite passes 706 tests / 7,218 assertions. For the
+  account-creation check, Svein re-added `support@tronderdata.no` on Dev and explicitly reported
+  it tested on 2026-09-03. Database read-back confirms the account is active, the connection test
+  has no error code, and both a successful SMTP send and IMAP fetch were recorded. The fresh
+  database currently has zero synced messages and zero acknowledgement action runs, so this account
+  check does not complete the separate conversation read/unread review in
+  `HR-2026-08-16-012`.
+  For the
   blank-password preservation check, the existing account description was
   changed only, both password fields were left blank, and Save and test passed both authenticated
   checks and activated the account. The description was then reverted to its original value with both

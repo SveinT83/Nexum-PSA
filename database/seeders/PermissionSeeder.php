@@ -25,6 +25,13 @@ class PermissionSeeder extends Seeder
     public function permissions(): array
     {
         return [
+            'workday.absence_view_own',
+            'workday.absence_manage_own',
+            'workday.view_all',
+            'workday.view_own',
+            'workday.manage_own',
+            'workday.confirm_own',
+            'workday.manage_settings',
             'warroom.view',
             'warroom.manage_settings',
 
@@ -110,6 +117,12 @@ class PermissionSeeder extends Seeder
             'knowledge.update',
             'knowledge.delete',
             'knowledge.publish',
+            'knowledge.manage_drafts',
+            'knowledge.approve',
+            'knowledge.rollback',
+            'knowledge.admin',
+            'knowledge.revision_persist',
+            'knowledge.publish_system',
             'knowledge.sync_bookstack',
             'knowledge.manage_structure',
             'knowledge.manage_settings',
@@ -206,6 +219,7 @@ class PermissionSeeder extends Seeder
             'risk.manage_settings',
 
             'integration.view',
+            'integration.tripletex_manage',
             'integration.api_manage',
             'integration.ai_manage',
             'integration.ai_policy_manage',
@@ -219,6 +233,7 @@ class PermissionSeeder extends Seeder
             'integration.cloudfactory_view',
             'integration.cloudfactory_manage',
             'integration.cloudfactory_write',
+
 
             'data_exchange.view',
             'data_exchange.manage',

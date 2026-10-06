@@ -82,6 +82,16 @@
             ],
         ];
 
+        if (auth()->user()?->checkPermissionTo('integration.tripletex_manage', 'web')) {
+            $integrationCards[] = [
+                'title' => 'Tripletex',
+                'icon' => 'bi-clock-history',
+                'description' => 'Configure and verify your company connection.',
+                'badge' => ['label' => 'Connection setup', 'class' => 'text-bg-light border'],
+                'actions' => [['label' => 'Settings', 'icon' => 'bi-gear', 'route' => 'tech.admin.system.integrations.tripletex.index']],
+            ];
+        }
+
         if (auth()->user()?->can('integration.rmm_manage')) {
             $integrationCards[] = [
                 'title' => 'RMM Alert Rules',

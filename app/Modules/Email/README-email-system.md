@@ -816,6 +816,16 @@ Ticket projection remains a separate later slice.
 
 ### Conversation acknowledgement safety actions
 
+The ordinary Mail reader does not expose this advanced workflow. Its selected-message read control
+is one direct `Mark as read` / `Mark as unread` action with no preview or separate server choice.
+That action always changes only the actor's Nexum state. Shared/system mailboxes leave provider
+Seen and other users unchanged. A personal mailbox owner also mirrors Seen/Unseen through
+`PerformEmailRemoteOperation`; a delegate does not mutate the owner's provider state.
+
+The advanced conversation-wide and multi-account classes below remain default-off API/
+administrative safety infrastructure. They must not be presented as the normal way to read one
+message.
+
 `PreviewEmailConversationAcknowledgement` is a read-only, bounded ledger preview for either the exact
 active-account conversation or explicit selected placement IDs. It rechecks ordinary View for every
 account, requires Organize separately for optional provider Seen, excludes break-glass/system actors
@@ -846,6 +856,8 @@ operations. Named review `HR-2026-08-16-012` gates activation outside the contro
 ### Mail workspace triage actions
 The `/tech/mail` command bar keeps common actions compact:
 
+- The selected message has one direct Mark as read/unread control; no acknowledgement preview,
+  provider Seen choice, or migration wording appears in the ordinary reader.
 - The Mail page keeps the normal Work sidemenu and adds Mail-specific Views, Mailboxes, and Folders
   below it.
 - The normal Folders navigation follows each provider mailbox's projected `parent_path` hierarchy.

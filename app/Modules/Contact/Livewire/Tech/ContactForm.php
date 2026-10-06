@@ -14,14 +14,19 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class ContactForm extends Component
 {
+    #[Locked]
     public ?int $contactId = null;
 
+    #[Locked]
     public ?int $activeClientId = null;
 
+    #[Locked]
     public ?int $activeSiteId = null;
 
     public ?int $existing_contact_id = null;
@@ -72,16 +77,18 @@ class ContactForm extends Component
             $this->site_id = $site?->id;
             $this->client_id = $site?->client_id;
             $this->selected_organization_client_id = $site?->client_id;
-            $this->organization_name = $site?->client?->name;
+            $this->selected_organization_client_name = $site?->client?->name;
+            $this->organization_name = $this->selected_organization_client_name;
 
             return;
         }
 
         $this->client_id = $activeClientId;
         $this->selected_organization_client_id = $activeClientId;
-        $this->organization_name = $activeClientId
+        $this->selected_organization_client_name = $activeClientId
             ? Client::query()->whereKey($activeClientId)->value('name')
             : null;
+        $this->organization_name = $this->selected_organization_client_name;
     }
 
     private function hydrateFromContact(int $contactId): void
@@ -135,7 +142,7 @@ class ContactForm extends Component
         $exactClient = $this->clientSuggestions()
             ->first(fn (Client $client) => mb_strtolower($client->name) === mb_strtolower(trim((string) $this->organization_name)));
 
-        if ($exactClient) {
+        if ($exactClient && $this->client_id !== $exactClient->id) {
             $this->selectClient($exactClient->id);
         }
     }
@@ -224,6 +231,18 @@ class ContactForm extends Component
             $validated['client_id'] = $site?->client_id;
         } elseif ($this->activeClientId) {
             $validated['client_id'] = $this->activeClientId;
+        }
+        if (! empty($validated['client_id']) && ! empty($validated['site_id'])) {
+            $siteBelongsToClient = ClientSite::query()
+                ->whereKey($validated['site_id'])
+                ->where('client_id', $validated['client_id'])
+                ->exists();
+
+            if (! $siteBelongsToClient) {
+                throw ValidationException::withMessages([
+                    'site_id' => 'The selected site does not belong to the selected client.',
+                ]);
+            }
         }
 
         $contact = DB::transaction(function () use ($actor, $createPortalInvitation, $shouldSendPortalInvitation, $storeContact, $validated): Contact {

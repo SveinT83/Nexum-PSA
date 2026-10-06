@@ -15,6 +15,10 @@ use Illuminate\Validation\ValidationException;
 
 class RepairContactOwnership
 {
+    public function __construct(
+        private readonly MigrateClientUsersToContacts $migrateClientUsers,
+    ) {}
+
     public function resolveClient(string|int $identifier): Client
     {
         $value = trim((string) $identifier);
@@ -28,7 +32,7 @@ class RepairContactOwnership
         $matches = $query->get()->unique('id')->values();
 
         if ($matches->isEmpty()) {
-            throw (new ModelNotFoundException())->setModel(Client::class, [$value]);
+            throw (new ModelNotFoundException)->setModel(Client::class, [$value]);
         }
 
         if ($matches->count() > 1) {
@@ -52,7 +56,7 @@ class RepairContactOwnership
             ->first();
 
         if (! $client) {
-            throw (new ModelNotFoundException())->setModel(Client::class, [$targetClientNumber]);
+            throw (new ModelNotFoundException)->setModel(Client::class, [$targetClientNumber]);
         }
 
         return $client;
@@ -63,8 +67,8 @@ class RepairContactOwnership
         $client->loadMissing('sites');
 
         $siteIds = $client->sites->pluck('id')->all();
-        $clientMorph = (new Client())->getMorphClass();
-        $siteMorph = (new ClientSite())->getMorphClass();
+        $clientMorph = (new Client)->getMorphClass();
+        $siteMorph = (new ClientSite)->getMorphClass();
 
         $relationContactIds = ContactRelation::query()
             ->where(function ($query) use ($client, $clientMorph, $siteMorph, $siteIds): void {
@@ -261,8 +265,8 @@ class RepairContactOwnership
         $client->loadMissing('sites');
         $before = $this->ownershipSnapshot($contact);
         $siteIds = $client->sites->pluck('id')->all();
-        $clientMorph = (new Client())->getMorphClass();
-        $siteMorph = (new ClientSite())->getMorphClass();
+        $clientMorph = (new Client)->getMorphClass();
+        $siteMorph = (new ClientSite)->getMorphClass();
 
         $relationIds = $contact->relations()
             ->where(function ($query) use ($client, $siteIds, $clientMorph, $siteMorph): void {
@@ -290,7 +294,8 @@ class RepairContactOwnership
         $plan = [
             'status' => ($relationIds === [] && $legacyIds === []) ? 'no_change' : 'would_detach',
             'delete_relation_ids' => $relationIds,
-            'delete_legacy_client_user_ids' => $legacyIds,
+            'retire_legacy_client_user_ids' => $legacyIds,
+            'delete_legacy_client_user_ids' => [],
             'delete_if_orphan' => $deleteIfOrphan,
         ];
 
@@ -311,7 +316,11 @@ class RepairContactOwnership
 
             ClientUser::query()
                 ->whereIn('id', $legacyIds)
-                ->delete();
+                ->update([
+                    'active' => false,
+                    'is_default_for_client' => false,
+                    'is_default_for_site' => false,
+                ]);
 
             $fresh = $contact->fresh();
 
@@ -352,7 +361,7 @@ class RepairContactOwnership
             ->keyBy('id');
 
         $results = [];
-        $deleteIds = [];
+        $migrateIds = [];
 
         foreach ($uniqueIds as $clientUserId) {
             /** @var ClientUser|null $clientUser */
@@ -383,33 +392,38 @@ class RepairContactOwnership
                 $results[] = [
                     'client_user_id' => $clientUserId,
                     'status' => 'linked_contact',
-                    'message' => 'Client user is linked to a Contact. Use the Contact detach endpoint instead.',
+                    'message' => 'Client user is already linked to a canonical Contact.',
                     'client_user' => $this->legacyClientUserPayload($clientUser),
                 ];
 
                 continue;
             }
 
-            $deleteIds[] = $clientUserId;
+            $migrateIds[] = $clientUserId;
+
+            if ($dryRun) {
+                $results[] = [
+                    'client_user_id' => $clientUserId,
+                    'status' => 'would_migrate',
+                    'client_user' => $this->legacyClientUserPayload($clientUser),
+                ];
+
+                continue;
+            }
+
+            $contact = $this->migrateClientUsers->migrateOne($clientUser);
             $results[] = [
                 'client_user_id' => $clientUserId,
-                'status' => $dryRun ? 'would_delete' : 'deleted',
-                'client_user' => $this->legacyClientUserPayload($clientUser),
+                'contact_id' => $contact->id,
+                'status' => 'migrated',
+                'client_user' => $this->legacyClientUserPayload($clientUser->fresh(['site.client'])),
             ];
-        }
-
-        if (! $dryRun && $deleteIds !== []) {
-            ClientUser::query()
-                ->whereIn('id', $deleteIds)
-                ->whereIn('client_site_id', $siteIds)
-                ->whereNull('contact_id')
-                ->delete();
         }
 
         $summary = [
             'total' => count($uniqueIds),
-            'eligible' => count($deleteIds),
-            'changed' => $dryRun ? 0 : count($deleteIds),
+            'eligible' => count($migrateIds),
+            'changed' => $dryRun ? 0 : count($migrateIds),
             'dry_run' => $dryRun,
             'skipped' => collect($results)
                 ->whereIn('status', ['missing_client_user', 'wrong_client', 'linked_contact'])
@@ -421,7 +435,7 @@ class RepairContactOwnership
 
         $auditId = $this->recordAudit($request, 'contact_ownership.legacy_orphan_cleanup', null, $client, null, $dryRun, $reason, [
             'client_user_ids' => $uniqueIds,
-            'delete_client_user_ids' => $deleteIds,
+            'migrate_client_user_ids' => $migrateIds,
         ], [
             'summary' => $summary,
             'results' => $results,
@@ -439,8 +453,8 @@ class RepairContactOwnership
     {
         $contact->loadMissing(['emails', 'phones', 'relations']);
 
-        $clientMorph = (new Client())->getMorphClass();
-        $siteMorph = (new ClientSite())->getMorphClass();
+        $clientMorph = (new Client)->getMorphClass();
+        $siteMorph = (new ClientSite)->getMorphClass();
         $targetClient->loadMissing('sites');
         $targetSiteIds = $targetClient->sites->pluck('id');
 
@@ -709,13 +723,13 @@ class RepairContactOwnership
 
     private function relatedPayload(ContactRelation $relation): ?array
     {
-        if ($relation->related_type === (new Client())->getMorphClass()) {
+        if ($relation->related_type === (new Client)->getMorphClass()) {
             $client = Client::query()->find($relation->related_id);
 
             return $client ? $this->clientPayload($client) : null;
         }
 
-        if ($relation->related_type === (new ClientSite())->getMorphClass()) {
+        if ($relation->related_type === (new ClientSite)->getMorphClass()) {
             $site = ClientSite::query()->with('client')->find($relation->related_id);
 
             return $site ? $this->sitePayload($site) : null;

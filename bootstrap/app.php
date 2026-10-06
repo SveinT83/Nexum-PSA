@@ -33,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        $middleware->append(\App\Modules\Workday\Middleware\PreventWorkdayCopies::class);
 
         // Alias custom middleware
         $middleware->alias([
@@ -46,6 +47,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Provider material must never be copied to the session's validation
         // old-input bag. Include common aliases so future forms fail closed.
         $exceptions->dontFlash([
+            'code',
+            'recovery_code',
             'imap_host',
             'imap_port',
             'imap_encryption',
@@ -75,6 +78,29 @@ return Application::configure(basePath: dirname(__DIR__))
             'trusted_cidr_name',
             'trust_mode',
         ]);
+
+        // Work text and absence input must not escape into sessions, debug responses or exception logs.
+        $exceptions->render(function (\Illuminate\Validation\ValidationException $e, \Illuminate\Http\Request $request) {
+            return \App\Modules\Workday\Support\WorkdayPrivacy::validation($e, $request);
+        });
+        $exceptions->report(function (\Throwable $e) {
+            if (\App\Modules\Workday\Support\WorkdayPrivacy::matches(request())) {
+                \Illuminate\Support\Facades\Log::error('Workday request failed.', ['exception_class' => get_class($e)]);
+
+                return false;
+            }
+        });
+        $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+            if (\App\Modules\Workday\Support\WorkdayPrivacy::matches($request)
+                && ! $e instanceof \Illuminate\Validation\ValidationException
+                && ! $e instanceof \Illuminate\Auth\AuthenticationException
+                && ! $e instanceof \Illuminate\Auth\Access\AuthorizationException
+                && ! $e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+                return $request->is('api/*') || $request->expectsJson()
+                    ? response()->json(['message' => 'Workday request failed. Please retry or contact an administrator.'], 500)
+                    : response('Workday request failed. Please retry or contact an administrator.', 500);
+            }
+        });
 
         $exceptions->shouldRenderJsonWhen(function ($request, Throwable $e) {
             if ($request->is('api/*')) {

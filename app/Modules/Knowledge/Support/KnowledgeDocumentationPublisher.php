@@ -3,8 +3,10 @@
 namespace App\Modules\Knowledge\Support;
 
 use App\Models\Knowledge\Article;
+use App\Models\Knowledge\ArticleRevision;
 use App\Models\Knowledge\Book;
 use App\Models\Knowledge\Chapter;
+use App\Modules\Knowledge\Actions\RecordArticleRevisionEvent;
 use App\Modules\Knowledge\Actions\RenderArticleBody;
 
 /**
@@ -140,6 +142,34 @@ class KnowledgeDocumentationPublisher
                 'repository_source_id' => $sourceId,
             ]),
         ])->save();
+
+        $revision = app(ArticleRevisionIdentity::class)->recordCurrent(
+            $article->fresh(['knowledgeBook', 'knowledgeChapter']),
+            origin: 'repository',
+            state: ArticleRevision::STATE_PUBLISHED,
+        );
+        $revision->forceFill([
+            'state' => ArticleRevision::STATE_PUBLISHED,
+            'approved_by' => $userId,
+            'approved_at' => now(),
+            'published_by' => $userId,
+            'published_at' => now(),
+            'publication_status' => 'verified_local',
+            'publication_read_back' => ['local' => 'repository_source_verified'],
+            'publication_read_back_at' => now(),
+        ])->save();
+        $article->forceFill(['published_revision_id' => $revision->id])->save();
+
+        if (! $revision->events()->where('event_type', 'repository_publication_verified')->exists()) {
+            app(RecordArticleRevisionEvent::class)->handle(
+                $revision,
+                'repository_publication_verified',
+                $userId,
+                null,
+                ArticleRevision::STATE_PUBLISHED,
+                metadata: ['read_back' => 'local'],
+            );
+        }
 
         return $article;
     }

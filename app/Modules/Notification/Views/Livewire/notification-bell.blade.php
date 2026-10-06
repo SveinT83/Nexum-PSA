@@ -1,4 +1,5 @@
-<div class="dropdown notification-bell">
+{{-- Passive refresh changes only the bell; no modal, focus change or automatic navigation. --}}
+<div class="dropdown notification-bell" wire:poll.60s="loadNotifications">
     <button type="button"
             class="btn btn-link position-relative text-light notification-bell-toggle"
             data-bs-toggle="dropdown"
@@ -105,6 +106,15 @@
                         </div>
                     </div>
                 </a>
+                @if(isset($workdayReminders[$notification->id]))
+                    {{-- Personal actions stay inside the bell, away from the page's unsaved forms. --}}
+                    <div class="px-3 pb-2">
+                        <span class="small text-muted">{{ $workdayReminders[$notification->id]['work_date'] }}</span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary ms-2"
+                            wire:click="snoozeWorkday('{{ $workdayReminders[$notification->id]['id'] }}', {{ $workdayReminders[$notification->id]['generation'] }})"
+                            wire:loading.attr="disabled">Snooze 30 minutes</button>
+                    </div>
+                @endif
             @endforeach
         @endif
 

@@ -5,6 +5,7 @@ namespace App\Modules\Notification\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Notification\Models\NotificationChannel;
 use App\Modules\Notification\Models\NotificationSetting;
+use App\Modules\Notification\Support\NotificationTypeRegistry;
 use App\Modules\Notification\Support\WebPushReadiness;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,8 +25,18 @@ class NotificationSettingsController extends Controller
     public function show(WebPushReadiness $webPushReadiness): View
     {
         $user = auth()->user();
-        $settings = NotificationSetting::getAllForUser($user);
-        $types = NotificationSetting::TYPES;
+        $types = NotificationTypeRegistry::labels(NotificationTypeRegistry::AUDIENCE_INTERNAL);
+        $workdayAllowed = app(\App\Modules\Workday\Support\ReminderEligibility::class)->allowed($user);
+        if (! $workdayAllowed) {
+            unset($types['workday_reminder']);
+        }
+        $groups = NotificationTypeRegistry::groupedInternal();
+        if (! $workdayAllowed) {
+            unset($groups['workday']);
+        }
+        $workdayReadiness = $workdayAllowed
+            ? app(\App\Modules\Notification\Actions\WorkdayReminderPreferences::class)->readiness($user) : [];
+        $settings = NotificationSetting::getAllForUser($user, array_keys($types));
 
         // Check if Nextcloud Talk is enabled system-wide
         $talkChannel = NotificationChannel::getByDriver('nextcloud_talk');
@@ -34,6 +45,8 @@ class NotificationSettingsController extends Controller
         return view('notification::settings.index', [
             'settings' => $settings,
             'types' => $types,
+            'groups' => $groups,
+            'workdayReadiness' => $workdayReadiness,
             'talkEnabled' => $talkEnabled,
             'webPushReadiness' => $webPushReadiness->toArray(),
         ]);
@@ -47,7 +60,7 @@ class NotificationSettingsController extends Controller
         $user = auth()->user();
         $validated = $request->validate([
             'settings' => 'required|array',
-            'settings.*.notification_type' => 'required|string|in:'.implode(',', array_keys(NotificationSetting::TYPES)),
+            'settings.*.notification_type' => 'required|string|distinct|in:'.implode(',', array_keys(NotificationTypeRegistry::labels(NotificationTypeRegistry::AUDIENCE_INTERNAL))),
             'settings.*.mail_enabled' => 'nullable|boolean',
             'settings.*.database_enabled' => 'nullable|boolean',
             'settings.*.web_push_enabled' => 'nullable|boolean',
@@ -56,12 +69,31 @@ class NotificationSettingsController extends Controller
             'settings.*.nextcloud_talk_webhook_url' => 'nullable|url|max:500',
         ]);
 
+        // Validate/persist this guarded personal preference before the ordinary type loop.
         foreach ($validated['settings'] as $settingData) {
+            if ($settingData['notification_type'] === 'workday_reminder') {
+                unset($settingData['notification_type']);
+                abort_if(filled($settingData['nextcloud_talk_webhook_url'] ?? null), 422);
+                unset($settingData['nextcloud_talk_webhook_url']);
+                app(\App\Modules\Notification\Actions\WorkdayReminderPreferences::class)->update($user,
+                    $settingData + ['database_enabled' => false, 'mail_enabled' => false, 'web_push_enabled' => false]);
+            }
+        }
+        foreach ($validated['settings'] as $settingData) {
+            if ($settingData['notification_type'] === 'workday_reminder') {
+                continue;
+            }
             $type = $settingData['notification_type'];
+            $mailEnabled = NotificationTypeRegistry::supports($type, 'mail')
+                && (bool) ($settingData['mail_enabled'] ?? false);
+            $databaseEnabled = NotificationTypeRegistry::supports($type, 'database')
+                && (bool) ($settingData['database_enabled'] ?? false);
             $webPushEnabled = NotificationSetting::supportsWebPush($type)
                 && (bool) ($settingData['web_push_enabled'] ?? false);
             $webPushPreviewEnabled = NotificationSetting::supportsWebPushPreview($type)
                 && (bool) ($settingData['web_push_preview_enabled'] ?? false);
+            $talkEnabled = NotificationTypeRegistry::supports($type, 'nextcloud_talk')
+                && (bool) ($settingData['nextcloud_talk_enabled'] ?? false);
 
             NotificationSetting::updateOrCreate(
                 [
@@ -69,12 +101,14 @@ class NotificationSettingsController extends Controller
                     'notification_type' => $type,
                 ],
                 [
-                    'mail_enabled' => $settingData['mail_enabled'] ?? false,
-                    'database_enabled' => $settingData['database_enabled'] ?? false,
+                    'mail_enabled' => $mailEnabled,
+                    'database_enabled' => $databaseEnabled,
                     'web_push_enabled' => $webPushEnabled,
                     'web_push_preview_enabled' => $webPushPreviewEnabled,
-                    'nextcloud_talk_enabled' => $settingData['nextcloud_talk_enabled'] ?? false,
-                    'nextcloud_talk_webhook_url' => $settingData['nextcloud_talk_webhook_url'] ?? null,
+                    'nextcloud_talk_enabled' => $talkEnabled,
+                    'nextcloud_talk_webhook_url' => $talkEnabled
+                        ? ($settingData['nextcloud_talk_webhook_url'] ?? null)
+                        : null,
                 ]
             );
         }

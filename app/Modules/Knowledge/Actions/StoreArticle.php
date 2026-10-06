@@ -6,7 +6,6 @@ use App\Models\Knowledge\Article;
 use App\Models\Knowledge\Book;
 use App\Models\Knowledge\Chapter;
 use App\Modules\Knowledge\Support\KnowledgeSettings;
-use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
@@ -20,9 +19,8 @@ use Illuminate\Support\Str;
 class StoreArticle
 {
     public function __construct(
-        private readonly RenderArticleBody $renderer,
         private readonly KnowledgeSettings $settings,
-        private readonly SendCustomerPortalNotification $portalNotifications,
+        private readonly CreateArticleRevision $createRevision,
     ) {}
 
     /**
@@ -30,47 +28,24 @@ class StoreArticle
      */
     public function handle(array $data): Article
     {
-        $data = $this->settings->articleDefaults($data);
+        $desired = $this->normalizeStructure($this->settings->articleDefaults($data));
 
-        if (($data['visibility'] ?? null) !== 'client-wide') {
-            $data['client_scope_id'] = null;
+        if (($desired['visibility'] ?? null) !== 'client-wide') {
+            $desired['client_scope_id'] = null;
         }
 
-        $data = $this->normalizeStructure($data);
-
-        $article = new Article($data);
+        $article = new Article($desired);
+        $article->status = 'draft';
+        $article->body_html = null;
         $article->owner_id = Auth::id();
         $article->created_by = Auth::id();
-        $article->slug = $this->uniqueSlug($data['title']);
-        $article->body_html = $this->renderer->handle($data['body_markdown']);
+        $article->slug = $this->uniqueSlug($desired['title']);
         $article->save();
 
-        $this->notifyPortalWhenClientWide($article, 'portal_knowledge_published', 'New knowledge article');
+        $revision = $this->createRevision->handle($article, $desired);
+        $article->setRelation('pendingRevision', $revision);
 
         return $article;
-    }
-
-    private function notifyPortalWhenClientWide(Article $article, string $type, string $title): void
-    {
-        if ($article->status !== 'published' || $article->visibility !== 'client-wide' || ! $article->client_scope_id) {
-            return;
-        }
-
-        $this->portalNotifications->handle(
-            type: $type,
-            clientId: (int) $article->client_scope_id,
-            siteId: null,
-            title: $title,
-            body: $article->title,
-            url: route('customer-portal.knowledge.show', $article),
-            sourceType: Article::class,
-            sourceId: $article->id,
-            clientWideVisibleToSiteMembers: true,
-            metadata: [
-                'article_id' => $article->id,
-                'visibility' => $article->visibility,
-            ],
-        );
     }
 
     /**

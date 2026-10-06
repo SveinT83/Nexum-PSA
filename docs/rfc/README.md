@@ -1,5 +1,8 @@
 # RFC Index
 
+- [Approved: Automatic Workday And Tripletex Time Synchronization](2026-10-05-workday-tripletex-automatic-time-sync.md) (setup/client tested on Dev; provider contract pending)
+- [Approved: Daily Workday Confirmation](2026-10-01-daily-workday-confirmation.md) (earlier workflow partly superseded; delivery history retained)
+
 Store Requests For Change in this folder.
 
 Use `docs/processes/rfc-process.md` for the required process and template.

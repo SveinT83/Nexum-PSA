@@ -261,6 +261,7 @@ class TicketController extends Controller
             'category_id',
             'owner_id',
             'site_id',
+            'contact_id',
             'asset_id',
         ]));
 
@@ -507,6 +508,7 @@ class TicketController extends Controller
             'category_id' => ['sometimes', 'nullable', Rule::exists((new Category)->getTable(), 'id')->where('type', 'ticket')],
             'owner_id' => ['sometimes', 'nullable', Rule::exists((new User)->getTable(), 'id')->where('status', User::STATUS_ACTIVE)],
             'site_id' => ['sometimes', 'nullable', Rule::exists('client_sites', 'id')],
+            'contact_id' => ['sometimes', 'nullable', Rule::exists('client_users', 'id')],
             'asset_id' => ['sometimes', 'nullable', Rule::exists('assets', 'id')],
         ]);
     }

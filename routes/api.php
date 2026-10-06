@@ -32,6 +32,9 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         // ------------------------------------------------------------------------------------------
         $tdpsaLoadingApiRoutes = true;
         require app_path('Modules/Asset/routes.php');
+        require app_path('Modules/UserManagement/routes.php');
+        require app_path('Modules/Workday/routes.php');
+        require app_path('Modules/Calendar/routes.php');
         unset($tdpsaLoadingApiRoutes);
 
         foreach (glob(app_path('Modules/*/api.php')) as $routeFile) {

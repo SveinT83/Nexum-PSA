@@ -116,6 +116,7 @@ class UpdateTicketFields
 
                 if ($isScheduled) {
                     $scheduleData = [
+                        'task_template_group_id' => $data['task_template_group_id'] ?? null,
                         'schedule_type' => $data['schedule_type'] ?? 'one_time',
                         'planned_start_at' => $data['planned_start_at'] ?? null,
                         'planned_end_at' => $data['planned_end_at'] ?? null,
@@ -128,7 +129,7 @@ class UpdateTicketFields
                     ];
 
                     if ($schedule) {
-                        $schedule->update(array_filter($scheduleData, fn ($value) => $value !== null || in_array($value, ['planned_start_at', 'planned_end_at', 'recurrence_rule', 'recurrence_ends_at'])));
+                        $schedule->update(array_filter($scheduleData, fn ($value) => $value !== null || in_array($value, ['task_template_group_id', 'planned_start_at', 'planned_end_at', 'recurrence_rule', 'recurrence_ends_at'])));
                     } else {
                         $scheduleData['created_by'] = $actor?->id;
                         $schedule = $ticket->schedule()->create($scheduleData);

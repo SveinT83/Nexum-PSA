@@ -21,6 +21,17 @@ if (($tdpsaLoadingCloudFactoryPublicRoutes ?? false) === true) {
 }
 
 Route::middleware('admin')->group(function () {
+    // Company-bound settings, explicit employee mapping and guarded synchronization switch.
+    Route::middleware(\App\Modules\Integration\Http\Middleware\ProtectTripletexCredentials::class)->group(function () {
+        Route::get('/admin/system/integrations/tripletex', [\App\Modules\Integration\Controllers\Admin\TripletexController::class, 'index'])->name('admin.system.integrations.tripletex.index');
+        Route::post('/admin/system/integrations/tripletex', [\App\Modules\Integration\Controllers\Admin\TripletexController::class, 'save'])->name('admin.system.integrations.tripletex.store');
+        Route::put('/admin/system/integrations/tripletex/{connection}', [\App\Modules\Integration\Controllers\Admin\TripletexController::class, 'save'])->whereUuid('connection')->name('admin.system.integrations.tripletex.update');
+        Route::post('/admin/system/integrations/tripletex/{connection}/verify', [\App\Modules\Integration\Controllers\Admin\TripletexController::class, 'verify'])->whereUuid('connection')->name('admin.system.integrations.tripletex.verify');
+        Route::post('/admin/system/integrations/tripletex/{connection}/candidates', [\App\Modules\Integration\Controllers\Admin\TripletexController::class, 'candidates'])->whereUuid('connection')->name('admin.system.integrations.tripletex.candidates');
+        Route::post('/admin/system/integrations/tripletex/{connection}/time-sync', [\App\Modules\Integration\Controllers\Admin\TripletexController::class, 'syncSetting'])->whereUuid('connection')->name('admin.system.integrations.tripletex.time-sync');
+        Route::post('/admin/system/integrations/tripletex/{connection}/mapping', [\App\Modules\Integration\Controllers\Admin\TripletexController::class, 'mapping'])->whereUuid('connection')->name('admin.system.integrations.tripletex.mapping');
+    });
+
     Route::get('/admin/system/integrations', [IntegrationsController::class, 'index'])
         ->name('admin.system.integrations.index');
 

@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 class ReportRegistry
 {
     /**
-     * @param array<int, class-string<ReportDefinition>> $definitions
+     * @param  array<int, class-string<ReportDefinition>>  $definitions
      */
     public function __construct(private readonly array $definitions = []) {}
 
@@ -53,6 +53,11 @@ class ReportRegistry
     {
         if (! $user) {
             return false;
+        }
+
+        // Domain opt-in checks run before broad legacy report discovery.
+        if ($report->visibility) {
+            return $report->visibility->visibleTo($user);
         }
 
         if ($user->hasRole('Superuser')) {

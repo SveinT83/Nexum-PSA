@@ -70,6 +70,14 @@ class EmailComposerLifecycleRegressionTest extends TestCase
         $this->assertStringContainsString('wire:ignore', $source);
         $this->assertStringContainsString('contenteditable="{{ $composerShared', $source);
         $this->assertStringContainsString("composerSharedEditable() ? 'false' : 'true' }}\"", $source);
+        $this->assertStringContainsString(
+            'mail-html-editor-surface form-control form-control-sm bg-body text-body',
+            $source,
+        );
+        $this->assertStringNotContainsString(
+            'mail-html-editor-surface form-control form-control-sm bg-white',
+            $source,
+        );
     }
 
     #[Test]

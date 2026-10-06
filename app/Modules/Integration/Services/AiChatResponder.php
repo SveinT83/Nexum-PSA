@@ -8,7 +8,6 @@ use App\Modules\Integration\Models\AiSystemSetting;
 use App\Modules\Integration\Support\AiExecutionContext;
 use App\Modules\Integration\Support\AiExecutionTrace;
 use App\Modules\Integration\Support\AiModelResult;
-use App\Modules\Integration\Support\AiModelUsage;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -198,6 +197,7 @@ class AiChatResponder
                 ->post(rtrim((string) $baseUrl, '/').'/completions', [
                     'model' => $model,
                     'prompt' => $this->completionPrompt($messages),
+                    'max_tokens' => 2000,
                 ]),
             normalize: fn (Response $response): AiModelResult => AiModelResult::fromOpenAiCompatible($response, 'completions'),
         );

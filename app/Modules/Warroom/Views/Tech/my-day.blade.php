@@ -10,6 +10,10 @@
         </div>
     </div>
     <div class="col-auto">
+        @if(app(\App\Modules\Workday\Support\WorkdaySettings::class)->enabled())
+            @can('workday.view_own')<a class="btn btn-sm btn-outline-primary me-2" href="{{ route('tech.workdays.index') }}">My workdays</a>@endcan
+            @can('workday.absence_view_own')<a class="btn btn-sm btn-outline-primary me-2" href="{{ route('tech.absences.index') }}">My absences</a>@endcan
+        @endif
         <span class="small text-muted">Updated {{ $myDay['generated_at']->format('H:i') }}</span>
     </div>
 @endsection

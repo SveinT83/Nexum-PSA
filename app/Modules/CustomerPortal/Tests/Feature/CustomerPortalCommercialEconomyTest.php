@@ -16,6 +16,8 @@ use App\Modules\CustomerPortal\Models\CustomerPortalAccount;
 use App\Modules\CustomerPortal\Models\CustomerPortalMembership;
 use App\Modules\Economy\Models\EconomyOrder;
 use App\Modules\Economy\Models\EconomyOrderLine;
+use App\Modules\Notification\Models\NotificationSetting;
+use App\Modules\Notification\Support\NotificationTypeRegistry;
 use App\Modules\System\Support\CompanyProfileSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -191,6 +193,8 @@ class CustomerPortalCommercialEconomyTest extends TestCase
     {
         [$client, $site, $portalUser] = $this->portalFixture('orders@example.test');
         [, , $sitePortalUser] = $this->portalFixture('site-orders@example.test', $client, $site);
+        $this->disablePortalMail($portalUser);
+        $this->disablePortalMail($sitePortalUser);
         $otherClient = Client::factory()->create(['name' => 'Other Order Client AS', 'active' => true]);
         $tech = $this->techUser();
 
@@ -315,6 +319,20 @@ class CustomerPortalCommercialEconomyTest extends TestCase
         $tech->assignRole('Tech');
 
         return $tech;
+    }
+
+    private function disablePortalMail(User $user): void
+    {
+        foreach (array_keys(NotificationTypeRegistry::labels(NotificationTypeRegistry::AUDIENCE_CUSTOMER_PORTAL)) as $type) {
+            NotificationSetting::updateOrCreate(
+                ['user_id' => $user->id, 'notification_type' => $type],
+                [
+                    'mail_enabled' => false,
+                    'database_enabled' => true,
+                    'nextcloud_talk_enabled' => false,
+                ],
+            );
+        }
     }
 
     private function contract(Client $client, User $tech, string $description, string $status): Contracts
