@@ -2,10 +2,11 @@
 
 ## Main Release Assembly (2026-10-06)
 
-Status: Release Verified; production acceptance pending. Owner: Codex; production reviewer: Svein Tore.
+Status: Release Verified; Main merge blocked by required GitHub review. Owner: Codex; production reviewer: Svein Tore.
 User authorized Main merge of SSO, Workday, Tripletex and other completed Dev changes,
 with remaining practical acceptance in production. Unfinished Vault remains excluded.
-Next: deliver the authorized Main merge, then Svein deploys and performs the recorded production checks.
+Next: obtain the required approving GitHub review on PR #295, then merge normally.
+Automatic merge is disabled; Main remains unchanged. Svein deploys and performs production checks afterward.
 Review: HR-2026-10-06-RELEASE; details: plans/2026-10-06-main-release-verification.md.
 Existing feature review items remain open; merge authorization is not test completion.
 

@@ -1,6 +1,6 @@
 # Main Release Verification - 2026-10-06
 
-Status: release verification complete; authorized Main merge delivery; production acceptance pending.
+Status: release verified; PR #295 ready; Main merge blocked by required GitHub approval.
 Review: HR-2026-10-06-RELEASE, In Review.
 Svein explicitly authorized merging SSO, Workday, Tripletex and other completed Dev changes.
 Remaining practical acceptance is moved to his production review; no unperformed check is
@@ -138,6 +138,17 @@ Workday data and synchronization baselines. Database restoration requires an exp
 
 ## Completion
 
-All automated release verification is complete. The release pull request records the exact
-Main merge result. Production deployment, provider setup and practical human checks remain
-Svein's next actions. HR-2026-10-06-RELEASE remains In Review.
+All automated release verification is complete. Pull request:
+https://github.com/SveinT83/Nexum-PSA/pull/295
+
+The ordinary merge attempt was rejected by Main's GitHub ruleset: one approving pull-request
+review is required. Automatic merge is disabled for this repository. Main remains at
+d4f3342158d47807f2509bbac3be9aee05597eb9; no Main merge or production deployment occurred.
+Obtain the required review in GitHub, then merge the exact reviewed release branch normally.
+No ruleset, approval requirement or branch protection was weakened.
+
+Production deployment, provider setup and practical human checks remain Svein's next actions
+after merge. HR-2026-10-06-RELEASE remains In Review. The authoritative Dev branch and standard
+index remain unchanged, with unfinished Vault work preserved. The completed selection is
+committed on codex/completed-dev-release-20261006; do not later promote the entire dirty Dev
+working tree as though it were this reviewed release.

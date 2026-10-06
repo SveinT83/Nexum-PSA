@@ -3,6 +3,8 @@
 ## HR-2026-10-06-RELEASE - Completed Dev Changes For Production Review
 
 Status: In Review; automated release verification complete; production acceptance pending.
+GitHub PR #295 is ready, but Main requires one approving review. The normal merge was rejected;
+automatic merge is disabled. Main and production remain unchanged.
 Owner: Codex. Reviewer and production operator: Svein Tore.
 Authorization 2026-10-06: Svein explicitly requested merging SSO, Workday and Tripletex
 to Main and performing the remaining practical checks in production. He then expanded
