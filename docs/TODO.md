@@ -2,13 +2,25 @@
 
 ## Main Release Assembly (2026-10-06)
 
-Status: Release Verified; Main merge blocked by required GitHub review. Owner: Codex; production reviewer: Svein Tore.
-User authorized Main merge of SSO, Workday, Tripletex and other completed Dev changes,
-with remaining practical acceptance in production. Unfinished Vault remains excluded.
-Next: obtain the required approving GitHub review on PR #295, then merge normally.
-Automatic merge is disabled; Main remains unchanged. Svein deploys and performs production checks afterward.
-Review: HR-2026-10-06-RELEASE; details: plans/2026-10-06-main-release-verification.md.
-Existing feature review items remain open; merge authorization is not test completion.
+Status: Deployed; production acceptance In Review. Owner: Codex; reviewer: Svein Tore.
+PR #295 is merged and release f4b0d4a deployed on Svein's explicit request.
+Workday is active; Tripletex is verified/prepared and paused; SSO is enabled/provider-verified
+after the normal password/TOTP save. Personal SSO linking and timezone confirmation are pending.
+A user-created Workday/pending sync record now exists; preserve it when resolving timezone.
+The no-dev Tripletex command failure was corrected and tested (12 tests / 71 assertions),
+then independently verified in production. Retain the small optional-Telescope fix in Main
+before redeploying (PR #296). Unfinished Vault remains excluded.
+Review: HR-2026-10-06-RELEASE; evidence: plans/2026-10-06-production-deployment.md.
+Remaining human checks are not completed by deployment.
+
+## Production Background Queue Backlog (2026-10-06)
+
+Status: Observed before deployment; separate operational diagnosis required.
+Approximately 186,256 queued / 168,388 failed jobs existed before the release. The current
+worker command covers default,economy,email but not email-live,notifications,supplier-orders.
+Do not mass retry or purge. Diagnose job types, provider failures and intended worker coverage
+before claiming background delivery healthy. The external minute scheduler itself is present.
+
 
 
 ## Internal Keycloak SSO (2026-10-05; Dev pilot verified 2026-10-06)
