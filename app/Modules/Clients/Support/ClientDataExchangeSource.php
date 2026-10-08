@@ -94,6 +94,9 @@ class ClientDataExchangeSource
                 'contact_email' => ['nullable', 'email', 'max:255'],
             ]);
             $rowErrors = $validator->errors()->all();
+            if (app(\App\Modules\DataExchange\Services\TripletexCustomerNumbers::class)->connection() && ! $this->findExistingClient($values)) {
+                $rowErrors[] = 'Create or link new Clients through the Client form or API while Tripletex customer synchronization is active.';
+            }
 
             if ($rowErrors !== []) {
                 $errors[$index + 1] = $rowErrors;

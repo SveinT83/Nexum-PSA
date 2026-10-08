@@ -13,7 +13,7 @@ final class TripletexTimeMapping
         $connection = Integration::where('type', 'tripletex')->first();
         $mapping = $connection?->config['time_mappings'][(string) $userId] ?? null;
 
-        return $mapping ? $mapping + ['connection_id' => $connection->id, 'enabled' => $connection->status === 'active',
+        return $mapping ? $mapping + ['connection_id' => $connection->id, 'enabled' => $connection->status === 'active' && ($connection->config['time_sync_enabled'] ?? true),
             'activities' => $connection->config['time_catalog']['activities'] ?? [],
             'projects' => $connection->config['time_catalog']['projects'] ?? []] : null;
     }

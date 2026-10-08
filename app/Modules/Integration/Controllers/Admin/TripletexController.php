@@ -73,6 +73,8 @@ final class TripletexController extends Controller
                 if (! $row->exists && ! $secret) {
                     abort(422, 'An API token is required for a new connection.');
                 }
+                $config['customer_sync_enabled'] = false;
+                $config['time_sync_enabled'] = false;
                 $config['company_id'] = (int) $data['company_id'];
                 $config['environment'] = $data['environment'];
                 $config['version'] = (int) ($config['version'] ?? 0) + 1;
@@ -173,7 +175,8 @@ final class TripletexController extends Controller
                             && ! empty($config['time_mappings']), 422, 'Verify the connection, employee mapping and runtime before enabling synchronization.');
                     }
                     $config['version']++;
-                    $row->update(['status' => $data['enabled'] ? 'active' : 'disabled', 'config' => $config]);
+                    $config['time_sync_enabled'] = (bool) $data['enabled'];
+                    $row->update(['status' => ($data['enabled'] || ($config['customer_sync_enabled'] ?? false)) ? 'active' : 'disabled', 'config' => $config]);
                     activity()->causedBy($request->user())->event('tripletex.time_sync.changed')
                         ->withProperties(['connection_id' => $row->id, 'enabled' => (bool) $data['enabled'], 'version' => $config['version']])
                         ->log('Tripletex time synchronization setting changed');
@@ -193,7 +196,7 @@ final class TripletexController extends Controller
             $row = Integration::where('type', 'tripletex')->whereKey($connection)->lockForUpdate()->firstOrFail();
             $config = $row->config;
             abort_unless((int) $config['version'] === (int) $data['version'], 409, 'Settings changed. Reload before saving.');
-            abort_unless($row->status !== 'active', 409, 'Pause synchronization before changing mappings.');
+            abort_unless($row->status !== 'active' || ! ($config['time_sync_enabled'] ?? true), 409, 'Pause time synchronization before changing mappings.');
             $user = \App\Models\Core\User::findOrFail($data['user_id']);
             abort_unless($user->status === \App\Models\Core\User::STATUS_ACTIVE && ! $user->isSystemActor(), 422, 'Select an active employee.');
             abort_unless(in_array((int) $data['employee_id'], array_column($config['time_catalog']['employees'] ?? [], 'id'), true)

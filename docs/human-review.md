@@ -1,5 +1,98 @@
 # Human Review Register
 
+## HR-2026-10-08-TRIPLETEX-PROFILES - Billing Email and Site address
+
+Status: Reviewed. Owner: Codex. Reviewer: Svein Tore.
+Human approval: Svein Tore, 2026-10-08, explicitly approved the delivered customer scope and
+requested issue closure and merge: "Perfekt. Det er godkjent. Da kan vi stenge issue og merge dette i Gitr".
+This clears the review gate for this feature. Individual manual scenario results were not supplied;
+unchecked items below retain the original test checklist rather than inventing execution evidence.
+Unrelated Workday/SSO/release reviews and production deployment are outside this approval.
+Approved scope: RFC 2026-10-08-tripletex-customer-profiles; all slices Done On Dev.
+111 distinct Laravel tests and three JavaScript checks pass. Provider read-only contract checks pass.
+First inbound reconciliation matched provider fields, preserved Contact tables and attempted zero
+provider customer writes. OS scheduler execution confirmed 2026-10-08 15:25:09 UTC; profile
+checked_at advanced to 15:25:11 UTC, synced with no error/pending write.
+Evidence: docs/plans/2026-10-08-tripletex-customer-profile-verification.md.
+Agent verification did not include real provider PUTs or interactive UI acceptance. The number checklist was approved together with this customer scope.
+Gate: customer-feature merge review cleared by Svein; production deployment is a separate action.
+The existing customer GUI setting controls operational activation; no extra environment gate.
+Migration: 2026_10_08_180000_create_tripletex_customer_profiles.php (applied on Dev, batch 19).
+Deployment: migrate this table, refresh views/opcache and ensure external schedule:run runs each minute.
+Rollback: pause customer sync and retain encrypted profile/unknown-write evidence.
+
+- [ ] Select a customer: Site address and Billing Email fill correctly; invoiceEmail never fills
+  the primary contact. Review ordinary email/phone suggestions and editable contact name.
+- [ ] New Client persists Site address, including leading-zero/foreign postal codes.
+- [ ] Edit Billing Email and Site address in Nexum; verify Tripletex and local read-back.
+- [ ] Edit these fields in Tripletex; verify Nexum updates the bound Site and Billing Email only.
+- [ ] Edit primary contact name/email/phone on either side after creation: no contact synchronization.
+- [ ] Same-field conflict retains Tripletex; independent fields merge; unrelated fields stay unchanged.
+- [ ] Pause/resume, provider outage and interrupted PUT preserve data and show truthful recovery state.
+- [ ] Missing/deleted/moved Site and number/company drift stop updates and are visible in admin status.
+- [ ] Verify actual scheduler execution and a real provider update/read-back on an intended customer.
+
+## HR-2026-10-08-TRIPLETEX-CUSTOMERS - Tripletex customer-number authority
+
+Status: Reviewed. Owner: Codex. Reviewer: Svein Tore.
+Human approval: Svein Tore, 2026-10-08, explicitly approved the delivered customer scope and
+requested issue closure and merge: "Perfekt. Det er godkjent. Da kan vi stenge issue og merge dette i Gitr".
+This clears the review gate for this feature. Individual manual scenario results were not supplied;
+unchecked items below retain the original test checklist rather than inventing execution evidence.
+Unrelated Workday/SSO/release reviews and production deployment are outside this approval.
+Approved GUI revision 2026-10-08: Svein requires the saved GUI activation to permit customer writes
+without .env editing. The extra customer-write flag is removed; this supersedes the earlier separate
+server/pilot-activation requirement. Ten focused Dev tests / 88 assertions passed, including GUI enable/create/pause with the old flag false. The GUI setting was subsequently saved on: the application audit records successful activation
+at 16:22:29 Europe/Oslo, independently read back along with customer/time both on and zero links.
+The agent did not perform this save or create a provider customer. This confirms activation works,
+but is not a named human confirmation of the complete checklist.
+Historical feedback fix (superseded by the GUI authority revision above): Svein reported a Laravel 422 exception page when saving customer sync with
+the customer-write runtime off. Fixed and verified on Dev: unavailable activation is explained
+before submission; expected runtime/link/version failures return to settings; pausing stays usable.
+Six focused cases pass across final runs, including three new HTML-form regressions.
+Human retest remains pending; no checklist item is marked complete by the automated fix.
+Live read-back: customer writes/sync off, time sync on, production provider environment, zero links;
+the exact saved connection fingerprint is unchanged. No provider request/write was made by this fix.
+Automated Dev implementation complete: 116 distinct scoped tests pass; scoped migration batch 18,
+unique/restrict constraints and empty link table read back. Live read-only lists: 414 customers,
+157 suppliers. No provider customer writes; runtime/customer switch off.
+Evidence: docs/plans/2026-10-08-tripletex-customer-number-verification.md.
+
+Scope approved in chat on 2026-10-08; approval to implement is not completed manual review.
+Parent: docs/rfc/2026-10-08-tripletex-customer-numbers.md.
+Gate: customer-feature merge review cleared by Svein; production deployment is a separate action.
+On an enabled installation the saved GUI setting is the operational authorization for customer
+writes; no separate customer runtime toggle or agent approval is required.
+An isolated Dev schema migration and read-only provider checks are part of the approved implementation.
+The separate Workday pilot review HR-2026-10-05-WORKDAY-TRIPLETEX remains open.
+
+Affected surfaces: New Client, Clients API, Client settings/imports, Admin > Integrations > Tripletex.
+Expected: shared provider-authoritative numbers only with active integration and customer switch;
+independent time behavior; existing links/numbers preserved while paused.
+Deployment: apply only database/migrations/2026_10_08_120000_create_tripletex_customer_links.php;
+refresh application caches/opcache as appropriate. No new scheduler, queue or asset build.
+Runtime: customer writes follow saved GUI consent; the global Tripletex stop is retained. No live customer writes during coding.
+Rollback: disable customer sync first; retain nonempty delivery evidence and provider identities.
+
+- [ ] Reload Tripletex settings and enable customer synchronization entirely in the GUI without
+  editing .env. Save, create the intended test Client and verify the same number in Tripletex.
+  Pause through the same GUI and verify new customer writes stop. Stale settings return a message.
+- [ ] New Client shows a read-only unreserved Tripletex number when customer sync is active.
+  Search/select the intended existing provider customer and verify ID/name/org/number before saving.
+- [ ] In an explicitly authorized test company, save two forms opened with the same suggestion.
+  Both receive distinct numbers matching provider GET read-back, with one Client/site/contact each.
+- [ ] Pause customer sync; create locally and confirm normal five-digit numbering. Existing links
+  and numbers remain. Toggle customer/time independently without starting the other workflow.
+- [ ] Existing Client/provider comparison shows both identities/numbers. Explicit adoption changes
+  only the confirmed local number; occupied numbers and stale previews refuse the action.
+- [ ] Ordinary UI/API/import edits cannot overwrite an active linked number. Editing other fields
+  with an existing six-digit number works, including while paused.
+- [ ] Provider outage/unknown POST outcome is visible without local fallback or repeated POST.
+  Reconcile the exact attempt and resubmit its original key; no duplicate provider customer appears.
+- [ ] Admin setup, link/adopt/recovery and tech lookup enforce their documented permissions.
+- [ ] Review live customer/supplier list permissions and an authorized provider write/read-back.
+  Automated synthetic HTTP tests do not prove live provider write capability.
+
 ## HR-2026-10-06-RELEASE - Completed Dev Changes For Production Review
 
 Status: In Review; automated release verification complete; production acceptance pending.

@@ -60,7 +60,7 @@ final class SyncTripletexWorkdays
     {
         return config('tripletex.enabled') && config('tripletex.writes_enabled')
             && app(WorkdaySettings::class)->enabled() && $connection->type === 'tripletex'
-            && $connection->status === 'active' && ($connection->config['write_contract_verified'] ?? false)
+            && $connection->status === 'active' && ($connection->config['time_sync_enabled'] ?? true) && ($connection->config['write_contract_verified'] ?? false)
             && ! empty($connection->config['read_verified_at']);
     }
 

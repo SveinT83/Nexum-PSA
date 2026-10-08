@@ -149,7 +149,10 @@ class ClientController extends Controller
                 required: ["name"],
                 properties: [
                     new OA\Property(property: "name", type: "string"),
-                    new OA\Property(property: "client_number", type: "string", nullable: true),
+                    new OA\Property(property: "client_number", type: "string", nullable: true, description: "Local five-digit number when customer sync is off; provider-authoritative suggestion when on."),
+                    new OA\Property(property: "tripletex_number_mode", type: "boolean", description: "Must be true when Tripletex customer-number synchronization is active."),
+                    new OA\Property(property: "tripletex_request_key", type: "string", format: "uuid", description: "Stable creation attempt key. Reuse with unchanged data after a recoverable failure."),
+                    new OA\Property(property: "tripletex_customer_id", type: "integer", nullable: true, description: "Explicit existing Tripletex customer identity; no automatic name matching."),
                     new OA\Property(property: "org_no", type: "string", nullable: true),
                     new OA\Property(property: "billing_email", type: "string", format: "email", nullable: true),
                     new OA\Property(property: "active", type: "boolean", nullable: true),
@@ -171,6 +174,9 @@ class ClientController extends Controller
         $validated = $this->validateClientPayload($request, creating: true);
 
         $client = $createClient->handle([
+                'tripletex_number_mode' => $validated['tripletex_number_mode'] ?? false,
+                'tripletex_request_key' => $validated['tripletex_request_key'] ?? null,
+                'tripletex_customer_id' => $validated['tripletex_customer_id'] ?? null,
                 'name' => $validated['name'],
                 'client_number' => $validated['client_number'] ?? null,
                 'org_no' => $validated['org_no'] ?? null,
@@ -436,16 +442,28 @@ class ClientController extends Controller
     private function validateClientPayload(Request $request, bool $creating, ?Client $client = null): array
     {
         $nameRule = $creating ? 'required' : 'sometimes';
+        $tripletex = app(\App\Modules\DataExchange\Services\TripletexCustomerNumbers::class)->connection() !== null;
+        $numberRules = ['sometimes', 'nullable', 'string'];
+        if ($creating && $tripletex) {
+            $numberRules[] = 'regex:/^[0-9]{1,10}$/';
+        } else {
+            $numberRules[] = function ($attribute, $value, $fail) use ($client) {
+                if ($client && (string) $value === (string) $client->client_number) {
+                    return; // Preserve existing imported/provider identifiers, even while paused.
+                }
+                if (! preg_match('/^\d{5}$/', (string) $value)) {
+                    $fail('Client number must be exactly 5 digits.');
+                }
+            };
+            $numberRules[] = Rule::unique('clients', 'client_number')->ignore($client?->id);
+        }
 
         return $request->validate([
             'name' => [$nameRule, 'string', 'max:255'],
-            'client_number' => [
-                'sometimes',
-                'nullable',
-                'string',
-                'regex:/^\d{5}$/',
-                Rule::unique('clients', 'client_number')->ignore($client?->id),
-            ],
+            'client_number' => $numberRules,
+            'tripletex_number_mode' => [$creating ? 'sometimes' : 'prohibited', 'boolean'],
+            'tripletex_request_key' => [$creating ? 'nullable' : 'prohibited', 'uuid'],
+            'tripletex_customer_id' => [$creating ? 'nullable' : 'prohibited', 'integer', 'min:1'],
             'org_no' => ['sometimes', 'nullable', 'string', 'max:50'],
             'client_format_id' => ['sometimes', 'nullable', Rule::exists('client_formats', 'id')],
             'website' => ['sometimes', 'nullable', 'string', 'max:255'],

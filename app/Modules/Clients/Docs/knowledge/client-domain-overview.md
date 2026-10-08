@@ -85,7 +85,9 @@ The New Client form displays the next five-digit Client number. Nexum treats the
 suggestion as an automatic value and revalidates it when the form is saved. If another Client used
 that number while the form was open, Nexum allocates the next available number and still creates
 the Client, default Site, and primary Contact transactionally. Pure numeric legacy values remain
-part of the sequence; alphanumeric external or imported identifiers do not advance it.
+part of the sequence when they fit the five-digit range. Longer numeric, alphanumeric, external, or
+imported identifiers do not advance the sequence. If the sequence reaches `99999`, allocation uses
+the first available gap in the five-digit range.
 
 A number changed by the technician is manual. Duplicate manual numbers produce a field-level
 validation error and do not create partial related records. The database unique constraint remains
@@ -232,3 +234,27 @@ GET /api/v1/clients/{client}/sites?custom_field[msp_manager_site_id]=SITE-12345
 This is intended for lightweight integration scenarios such as n8n syncing Clients and Sites from
 MSP Manager. External IDs should be sent inside the JSON `custom_fields` object, not as HTTP
 headers.
+
+## Tripletex customer numbers
+
+When the verified Tripletex integration and customer-number synchronization are active,
+New Client displays an unreserved provider-backed number and can explicitly select an existing
+Tripletex customer. Save verifies the provider identity/number before local creation.
+Linked numbers are protected from ordinary edits; explicit integration review handles conflicts
+and number adoption. When paused, local five-digit allocation remains and existing numbers/links
+are preserved. Existing non-five-digit identifiers remain valid when editing other fields.
+See [Tripletex customer numbers](../../../Integration/Docs/knowledge/tripletex-customer-numbers.md)
+for API fields, import restrictions, independent switches and recovery.
+
+## Tripletex Billing Email and Site address
+
+With the verified Tripletex connection and customer synchronization enabled, selecting a provider
+customer in New Client suggests its Billing Email, Site address and initial contact details.
+All suggestions remain reviewable. Invoice email is used only for Billing Email, never as the
+primary-contact email. Site address fields are editable; postal codes remain text.
+
+Ongoing synchronization covers Client Billing Email and one explicitly bound Site address only.
+Local changes export, provider changes import, and Tripletex wins simultaneous changes to the same
+field. Primary contacts, Site names and other Sites stay local after creation. Integration admins
+can inspect status, retry and explicitly choose the bound Site in the Tripletex customer-link review.
+See Integration Knowledge: tripletex-customer-numbers.md for pause, recovery and deployment.

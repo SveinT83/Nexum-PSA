@@ -14,6 +14,16 @@ class Client extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        // UI, API and imports share this guard; explicit integration adoption is separately audited.
+        static::saving(function (Client $client): void {
+            if ($client->exists && $client->isDirty('client_number')) {
+                app(\App\Modules\DataExchange\Services\TripletexCustomerNumbers::class)->assertNumberUnchanged($client);
+            }
+        });
+    }
+
     public function assets(): HasMany
     {
         return $this->hasMany(Asset::class);

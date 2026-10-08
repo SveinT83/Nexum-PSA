@@ -308,8 +308,20 @@ class ClientController extends Controller
         $rmmIntegration = \App\Models\System\Integrations\Integration::where('type', 'rmm')->where('status', 'active')->first();
         $nableActive = $rmmIntegration !== null;
 
+        $authority = app(\App\Modules\DataExchange\Services\TripletexCustomerNumbers::class);
+        $tripletexMode = $authority->connection() !== null;
+        $numberError = null;
+        try {
+            $suggestion = $tripletexMode ? $authority->suggestion() : $suggestClientNumber->handle();
+        } catch (\App\Modules\Integration\Exceptions\TripletexException $e) {
+            $suggestion = null;
+            $numberError = $e->getMessage().' Customer creation is paused until Tripletex can be checked.';
+        }
+
         return view('clients::Tech.create', [
-            'suggestedClientNumber' => $suggestClientNumber->handle(),
+            'tripletexMode' => $tripletexMode,
+            'numberError' => $numberError,
+            'suggestedClientNumber' => $suggestion,
             'clientFormats' => ClientFormat::activeOptions(),
             'roles' => $roles,
             'countries' => $countries,

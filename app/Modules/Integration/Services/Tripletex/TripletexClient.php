@@ -18,6 +18,8 @@ final class TripletexClient
 
     private bool $identityVerified = false;
 
+    private ?float $customerDeadline = null;
+
     public function __construct(#[\SensitiveParameter] private readonly Integration $connection) {}
 
     public function companyId(): int
@@ -40,6 +42,154 @@ final class TripletexClient
 
         // Metadata only; employee details and token entitlements are not a general-purpose log.
         return ['company_id' => $this->companyId()];
+    }
+
+    /** Include inactive customers: their numbers are still occupied. */
+    public function customers(): array
+    {
+        $this->customerDeadline ??= microtime(true) + 90;
+        $query = ['fields' => 'id,customerNumber,name,organizationNumber,email,invoiceEmail,isInactive'];
+        // The provider defaults isInactive=false; both scans are required to avoid reusing numbers.
+        $rows = array_merge($this->pages('/customer', $query + ['isInactive' => false]),
+            $this->pages('/customer', $query + ['isInactive' => true]));
+        if (count(array_unique(array_column($rows, 'id'))) !== count($rows)) {
+            throw new TripletexException('unstable_customer_list');
+        }
+        foreach ($rows as $row) {
+            if (! is_int($row['customerNumber'] ?? null) || $row['customerNumber'] < 0
+                || ! is_string($row['name'] ?? null) || ! is_bool($row['isInactive'] ?? null)) {
+                throw new TripletexException('invalid_customer_response');
+            }
+        }
+
+        return $rows;
+    }
+
+    public function supplierNumbers(): array
+    {
+        $this->customerDeadline ??= microtime(true) + 90;
+        $query = ['fields' => 'id,supplierNumber'];
+        $rows = array_merge($this->pages('/supplier', $query + ['isInactive' => false]),
+            $this->pages('/supplier', $query + ['isInactive' => true]));
+        if (count(array_unique(array_column($rows, 'id'))) !== count($rows)) {
+            throw new TripletexException('unstable_supplier_list');
+        }
+
+        return $rows;
+    }
+
+    public function customer(int $id): array
+    {
+        $this->customerDeadline ??= microtime(true) + 90;
+        $this->positiveId($id);
+        $row = $this->value($this->send('GET', '/customer/'.$id, ['query' => [
+            'fields' => 'id,customerNumber,name,organizationNumber,email,invoiceEmail,isInactive',
+        ]]));
+        if (($row['id'] ?? null) !== $id || ! is_int($row['customerNumber'] ?? null)
+            || $row['customerNumber'] < 0 || ! is_string($row['name'] ?? null)
+            || ! is_bool($row['isInactive'] ?? null)) {
+            throw new TripletexException('invalid_customer_response');
+        }
+
+        return $row;
+    }
+
+    /** Fetch only one explicitly selected/bound customer's allowed profile fields. */
+    public function customerProfile(int $id): array
+    {
+        $this->customerDeadline ??= microtime(true) + 90;
+        $this->positiveId($id);
+        $address = 'id,version,addressLine1,addressLine2,postalCode,city,country(id,isoAlpha2Code)';
+        $row = $this->value($this->send('GET', '/customer/'.$id, ['query' => [
+            'fields' => 'id,version,customerNumber,name,organizationNumber,isInactive,email,invoiceEmail,phoneNumber,phoneNumberMobile,physicalAddress('.$address.'),postalAddress('.$address.')',
+        ]]));
+        if (($row['id'] ?? null) !== $id || ! is_int($row['version'] ?? null)
+            || ! is_int($row['customerNumber'] ?? null) || ! is_bool($row['isInactive'] ?? null)) {
+            throw new TripletexException('invalid_customer_profile_response');
+        }
+        // Missing fields are not proof that a provider value has been cleared.
+        foreach (['invoiceEmail', 'physicalAddress', 'postalAddress'] as $field) {
+            if (! array_key_exists($field, $row)) {
+                throw new TripletexException('incomplete_customer_profile');
+            }
+        }
+
+        return $row;
+    }
+
+    private ?array $countryCatalog = null;
+
+    public function country(string $value): array
+    {
+        $this->countryCatalog ??= $this->pages('/country', ['fields' => 'id,name,isoAlpha2Code,isoAlpha3Code']);
+        $needle = mb_strtoupper(trim($value));
+        if (in_array($needle, ['NORWAY', 'NORGE', 'NOREG'], true)) {
+            $needle = 'NO';
+        }
+        $matches = array_values(array_filter($this->countryCatalog, fn ($country) => in_array($needle, array_map(fn ($v) => mb_strtoupper((string) $v),
+            [$country['name'] ?? '', $country['isoAlpha2Code'] ?? '', $country['isoAlpha3Code'] ?? '']), true)));
+        if (count($matches) !== 1 || ! is_int($matches[0]['id'] ?? null)
+            || ! preg_match('/^[A-Z]{2}$/', $matches[0]['isoAlpha2Code'] ?? '')) {
+            throw new TripletexException('customer_country_not_recognized');
+        }
+
+        return $matches[0];
+    }
+
+    /** Allowlisted, version-guarded partial PUT; never changes primary-contact fields. */
+    public function updateCustomerProfile(int $id, int $version, array $patch): array
+    {
+        $this->assertCustomerWrites();
+        $this->positiveId($id);
+        if ($version < 0 || $patch === [] || array_diff(array_keys($patch), ['invoiceEmail', 'physicalAddress', 'postalAddress'])) {
+            throw new TripletexException('invalid_customer_profile_patch');
+        }
+        foreach (['physicalAddress', 'postalAddress'] as $kind) {
+            if (isset($patch[$kind]) && (! is_array($patch[$kind])
+                || array_diff(array_keys($patch[$kind]), ['id', 'version', 'addressLine1', 'addressLine2', 'postalCode', 'city', 'country']))) {
+                throw new TripletexException('invalid_customer_profile_patch');
+            }
+        }
+        $this->send('PUT', '/customer/'.$id, ['json' => ['id' => $id, 'version' => $version] + $patch]);
+
+        return $this->customerProfile($id);
+    }
+
+    /** Contact hints are used only by the explicit initial-creation lookup, never by synchronization. */
+    public function customerContactHints(int $id): array
+    {
+        return $this->pages('/contact', ['customerId' => $id,
+            'fields' => 'id,firstName,lastName,email,phoneNumberMobile,phoneNumberWork,isInactive,customer(id)']);
+    }
+
+    private function assertCustomerWrites(): void
+    {
+        $current = $this->connection->fresh();
+        if (! $current || ! config('tripletex.enabled') || $current->status !== 'active'
+            || ! ($current->config['customer_sync_enabled'] ?? false)
+            || ($current->config['company_id'] ?? null) !== ($this->connection->config['company_id'] ?? null)
+            || ($current->config['environment'] ?? null) !== ($this->connection->config['environment'] ?? null)) {
+            throw new TripletexException('customer_writes_not_activated');
+        }
+    }
+
+    /** The caller persists intent first and performs an independent GET after this returns. */
+    public function createCustomer(#[\SensitiveParameter] array $payload): array
+    {
+        $this->customerDeadline ??= microtime(true) + 90;
+        $this->assertCustomerWrites();
+        if (array_diff(array_keys($payload), ['name', 'customerNumber', 'organizationNumber', 'invoiceEmail', 'physicalAddress'])
+            || ! is_string($payload['name'] ?? null) || trim($payload['name']) === ''
+            || ! is_int($payload['customerNumber'] ?? null) || $payload['customerNumber'] < 1
+            || $payload['customerNumber'] > 2147483647) {
+            throw new TripletexException('invalid_customer_payload');
+        }
+        $row = $this->value($this->send('POST', '/customer', ['json' => $payload]));
+        if (! is_int($row['id'] ?? null) || $row['id'] < 1) {
+            throw new TripletexException('write_outcome_unknown');
+        }
+
+        return ['id' => $row['id']];
     }
 
     public function employees(): array
@@ -153,7 +303,7 @@ final class TripletexClient
     {
         $current = $this->connection->exists ? $this->connection->fresh() : $this->connection;
         if (! $current || ! config('tripletex.enabled') || ! config('tripletex.writes_enabled')
-            || $current->status !== 'active'
+            || $current->status !== 'active' || ! ($current->config['time_sync_enabled'] ?? true)
             || ! ($current->config['write_contract_verified'] ?? false)) {
             throw new TripletexException('writes_not_activated');
         }
@@ -253,9 +403,12 @@ final class TripletexClient
         if ($this->connection->type !== 'tripletex') {
             throw new TripletexException('wrong_connection_type');
         }
+        if ($this->customerDeadline !== null && microtime(true) >= $this->customerDeadline) {
+            throw new TripletexException('customer_request_deadline_reached');
+        }
         // Never follow a redirect with a credential. Disable verbose tracing and telemetry copies.
         $call = function () use ($base, $method, $path, $options, $token) {
-            $request = Http::acceptJson()->asJson()->connectTimeout(5)->timeout(20)
+            $request = Http::acceptJson()->asJson()->connectTimeout(5)->timeout($this->customerDeadline === null ? 20 : max(0.1, min(20, $this->customerDeadline - microtime(true))))
                 ->withOptions(['allow_redirects' => false, 'verify' => true]);
             if ($token !== null) {
                 $request = $request->withBasicAuth('0', $token);

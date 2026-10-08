@@ -54,7 +54,11 @@ class ClientSettingsController extends Controller
             'client_number' => [
                 'nullable',
                 'string',
-                'regex:/^\d{5}$/',
+                function ($attribute, $value, $fail) use ($client) {
+                    if ((string) $value !== (string) $client->client_number && ! preg_match('/^\d{5}$/', (string) $value)) {
+                        $fail('Client number must be exactly 5 digits.');
+                    }
+                },
                 Rule::unique('clients', 'client_number')->ignore($client->id),
             ],
             'org_no' => ['nullable', 'string', 'max:50'],

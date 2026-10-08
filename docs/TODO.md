@@ -1,5 +1,67 @@
 # tdPSA Development TODO
 
+## Tripletex billing and Site address sync (2026-10-08)
+
+Status: Done / Reviewed by Svein Tore. Git delivery: scoped customer-feature PR to main.
+Approved by Svein in chat. All three slices complete.
+RFC: rfc/2026-10-08-tripletex-customer-profiles.md; ADR: adr/2026-10-08-tripletex-customer-profile-baselines.md.
+Scope: invoiceEmail <-> Billing Email and one bound Site address. Primary contact suggestions only
+at creation; no recurring contact sync. Tripletex wins same-field conflicts. Existing GUI switch.
+Verification: 111 distinct Laravel tests and three JavaScript checks pass; Dev migration batch 19.
+Live read-only profile/country/contact contracts pass. First inbound sync matched provider fields
+and preserved all Contact tables; no provider customer write attempted by the verification harness.
+External OS scheduler execution confirmed at 15:25 UTC, with independent profile timestamp read-back.
+Evidence: plans/2026-10-08-tripletex-customer-profile-verification.md.
+Review: HR-2026-10-08-TRIPLETEX-PROFILES and HR-2026-10-08-TRIPLETEX-CUSTOMERS were approved
+by Svein Tore on 2026-10-08. Scoped merge authorized; production deployment remains separate.
+Retain encrypted sync evidence on rollback.
+
+
+Approval 2026-10-08: Svein explicitly approved the delivered scope and requested Git merge.
+Verification on the scoped main candidate: 145 tests / 846 assertions without failures;
+missing test-only .env warning resolved, then 7 representative cases / 56 assertions passed cleanly.
+Next action: production rollout when requested; preserve unrelated Dev work and sync evidence.
+Earlier review-pending wording above is superseded by this approval; production deployment remains separate.
+Handbook follow-up (owner: Svein/Codex at rollout): source Knowledge is updated, but BookStack
+publication/read-back is not verified. The connected BookStack search rejected a nonempty
+Tripletex query with INVALID_ARGUMENT / query pattern validation before reaching the service.
+Retry through the supported integration during rollout; do not treat repository Markdown as proof
+of publication or extend employee access to bypass the failure.
+
+## Tripletex customer-number authority (2026-10-08)
+
+Status: Done / Reviewed by Svein Tore. Git delivery: scoped customer-feature PR to main.
+Approved GUI correction: saving customer sync on authorizes customer writes without an additional
+.env gate. Removed the extra flag in config/settings/UI/orchestration/transport; global integration,
+company identity, permissions, account locks and freshly read saved-state checks remain.
+Final focused Dev suite: 10 tests / 88 assertions passed, including GUI enable/create/pause with
+the obsolete flag false, separate time settings, stale instances, conflicts and unknown outcomes.
+Live GUI activation was audited at 16:22:29 Europe/Oslo; customer/time settings both on, zero links
+at read-back. No provider customer was created by the agent. No migration/build/queue changes.
+RFC: rfc/2026-10-08-tripletex-customer-numbers.md; ADR: adr/2026-10-08-tripletex-customer-number-authority.md.
+Evidence: plans/2026-10-08-tripletex-customer-number-verification.md.
+Review: Svein Tore approved HR-2026-10-08-TRIPLETEX-CUSTOMERS with the profile extension
+on 2026-10-08 and requested the scoped Git merge. Production deployment remains separate.
+Billing/Site extension is now approved in the profile RFC above; recurring Contact sync remains excluded. Existing #239/#297 stay completed.
+
+Approval 2026-10-08: Svein explicitly approved the delivered scope and requested Git merge.
+Verification on the scoped main candidate: 145 tests / 846 assertions without failures;
+missing test-only .env warning resolved, then 7 representative cases / 56 assertions passed cleanly.
+Next action: production rollout when requested; preserve unrelated Dev work and sync evidence.
+Earlier review-pending wording above is superseded by this approval; production deployment remains separate.
+
+## Client number suggestion validation - Issue #297 (2026-10-08)
+
+Status: Done On Dev. Owner: Codex. Level 1 Client creation regression.
+An out-of-range numeric Client identifier could advance the automatic five-digit suggestion beyond
+`99999`, causing the hidden suggestion field to fail validation and blocking both automatic and
+manual Client creation. Scope is limited to valid five-digit allocation, regression tests, and
+Client-domain documentation. Allocation now ignores out-of-range numeric identifiers and reuses an
+available five-digit gap after the sequence end. Verification: 2 focused tests / 2 assertions;
+complete `ClientTechTest` 38 tests / 318 assertions; scoped Pint, PHP syntax, and
+`git diff --check` pass. No database, permission, integration, or workflow contract changes.
+Issue #297 is completed.
+
 ## Main Release Assembly (2026-10-06)
 
 Status: Deployed; production acceptance In Review. Owner: Codex; reviewer: Svein Tore.

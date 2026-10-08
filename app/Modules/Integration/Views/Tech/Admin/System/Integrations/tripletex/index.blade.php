@@ -36,6 +36,7 @@
             </div>
         </section>
         @include('integration::Tech.Admin.System.Integrations.tripletex.time-sync')
+        @include('integration::Tech.Admin.System.Integrations.tripletex.customer-sync')
     @endforeach
     {{-- First setup only; the server also rejects additional connections. --}}
     @if($connections->isEmpty())
