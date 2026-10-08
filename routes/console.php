@@ -461,3 +461,6 @@ Artisan::command('marketing:send-due {--campaign=}', function () {
 
 // Bounded, restart-safe two-way time reconciliation; the persisted switch is rechecked per date.
 Schedule::command('tripletex:sync-time')->everyFiveMinutes()->withoutOverlapping(10);
+
+// Linked Billing Email/Site fields only; Contacts remain local after creation.
+Schedule::command('tripletex:sync-customers')->everyFiveMinutes()->withoutOverlapping(10);

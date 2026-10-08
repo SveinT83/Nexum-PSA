@@ -27,7 +27,14 @@
         </div>
         <div class="card-body">
             <form method="post" action="{{ route('tech.clients.store') }}">
+                <fieldset @disabled($numberError !== null)>
                 @csrf
+                @if($numberError)
+                    <div class="alert alert-warning" role="alert">{{ $numberError }}</div>
+                @endif
+                @if($tripletexMode)
+                    @include('integration::Tech.Admin.System.Integrations.tripletex.customer-picker')
+                @endif
                 <input type="hidden" name="suggested_client_number"
                        value="{{ old('suggested_client_number', $suggestedClientNumber) }}">
 
@@ -40,7 +47,7 @@
                     <div class="col-md-2 mb-3">
                         <label class="form-label fw-bold">Client number</label>
                         <input type="number" name="client_number" placeholder="00000"
-                               value="{{ old('client_number') ?? $suggestedClientNumber }}" required
+                               value="{{ old('client_number') ?? $suggestedClientNumber }}" required @readonly($tripletexMode)
                                class="form-control @error('client_number') is-invalid @enderror">
                         @error('client_number')
                         <div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -120,6 +127,20 @@
             </div>
         </div>
 
+        {{-- Address belongs to the default Site; contact details remain separate. --}}
+        <div class="row mb-3">
+            @foreach(['site_address' => ['Street address', 4, 255], 'site_co_address' => ['Address line 2', 4, 255],
+                'site_zip' => ['Postal code', 2, 20], 'site_city' => ['City', 2, 100],
+                'site_country' => ['Country (ISO code)', 2, 2]] as $field => [$label, $width, $length])
+                <div class="col-md-{{ $width }} mb-3">
+                    <label class="form-label fw-bold" for="{{ $field }}">{{ $label }}</label>
+                    <input type="text" id="{{ $field }}" name="{{ $field }}" maxlength="{{ $length }}"
+                        value="{{ old($field) }}" class="form-control @error($field) is-invalid @enderror">
+                    @error($field)<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+            @endforeach
+        </div>
+
         <!-- ------------------------------------------------- -->
         <!-- Optional: primary contact role selector -->
         <!-- ------------------------------------------------- -->
@@ -170,6 +191,7 @@
                 <div class="mb-0">
                     <button type="submit" class="btn btn-primary">Create Client</button>
                 </div>
+            </fieldset>
             </form>
         </div>
     </div>

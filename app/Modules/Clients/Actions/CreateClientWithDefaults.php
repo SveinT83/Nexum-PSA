@@ -26,6 +26,13 @@ class CreateClientWithDefaults
     {
         $warning = null;
         $client = $this->createClientRecord->handle([
+            'tripletex_site' => [
+                'address' => $data['site_address'] ?? '', 'co_address' => $data['site_co_address'] ?? '',
+                'zip' => $data['site_zip'] ?? '', 'city' => $data['site_city'] ?? '', 'country' => $data['site_country'] ?? '',
+            ],
+            'tripletex_number_mode' => $data['tripletex_number_mode'] ?? false,
+            'tripletex_request_key' => $data['tripletex_request_key'] ?? null,
+            'tripletex_customer_id' => $data['tripletex_customer_id'] ?? null,
             'name' => $data['name'],
             'client_number' => $data['client_number'] ?? null,
             'org_no' => $data['org_no'] ?? null,

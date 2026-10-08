@@ -308,4 +308,16 @@ class TripletexTimeSyncTest extends TestCase
         \Laravel\Sanctum\Sanctum::actingAs($this->worker, ['workdays.read']);
         $this->putJson('/api/v1/workdays/2026-10-05/save', $body, $headers)->assertForbidden();
     }
+    public function test_customer_only_connection_keeps_workday_mapping_and_delivery_paused(): void
+    {
+        $this->connection->update(['status' => 'active', 'config' => array_replace($this->connection->config, [
+            'customer_sync_enabled' => true, 'time_sync_enabled' => false,
+        ])]);
+        $mapping = app(\App\Modules\Integration\Services\Tripletex\TripletexTimeMapping::class)->forUser($this->worker->id);
+        $this->assertFalse($mapping['enabled']);
+        app(\App\Modules\DataExchange\Services\SyncTripletexWorkdays::class)->day($this->connection->id, $this->worker->id, '2026-10-05');
+        $this->assertSame(0, $this->writes);
+        Http::assertNothingSent();
+    }
+
 }

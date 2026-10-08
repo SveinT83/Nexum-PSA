@@ -793,6 +793,21 @@
                                     },
                                     "client_number": {
                                         "type": "string",
+                                        "nullable": true,
+                                        "description": "Local five-digit number when customer sync is off; provider-authoritative suggestion when on."
+                                    },
+                                    "tripletex_number_mode": {
+                                        "description": "Must be true when Tripletex customer-number synchronization is active.",
+                                        "type": "boolean"
+                                    },
+                                    "tripletex_request_key": {
+                                        "description": "Stable creation attempt key. Reuse with unchanged data after a recoverable failure.",
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "tripletex_customer_id": {
+                                        "description": "Explicit existing Tripletex customer identity; no automatic name matching.",
+                                        "type": "integer",
                                         "nullable": true
                                     },
                                     "org_no": {

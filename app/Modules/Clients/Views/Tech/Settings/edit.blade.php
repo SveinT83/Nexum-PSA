@@ -26,7 +26,7 @@
                 <div class="row g-3">
                     <div class="col-md-2">
                         <label for="client_number" class="form-label fw-semibold">Client number</label>
-                        <input id="client_number" type="text" name="client_number" value="{{ old('client_number', $client->client_number) }}" class="form-control @error('client_number') is-invalid @enderror" placeholder="00000">
+                        <input @readonly(\Illuminate\Support\Facades\Schema::hasTable('tripletex_customer_links') && \App\Modules\DataExchange\Models\TripletexCustomerLink::where('client_id', $client->id)->exists()) id="client_number" type="text" name="client_number" value="{{ old('client_number', $client->client_number) }}" class="form-control @error('client_number') is-invalid @enderror" placeholder="00000">
                         @error('client_number')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror

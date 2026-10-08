@@ -161,8 +161,18 @@ class ClientTechTest extends TestCase
         Client::factory()->create(['client_number' => '1002']);
         Client::factory()->create(['client_number' => '01003']);
         Client::factory()->create(['client_number' => 'EXT-999999']);
+        Client::factory()->create(['client_number' => '999999']);
 
         $this->assertSame('01004', app(SuggestClientNumber::class)->handle());
+    }
+
+    #[Test]
+    public function suggested_client_number_uses_an_available_gap_after_the_five_digit_sequence_end(): void
+    {
+        Client::factory()->create(['client_number' => '00001']);
+        Client::factory()->create(['client_number' => '99999']);
+
+        $this->assertSame('00002', app(SuggestClientNumber::class)->handle());
     }
 
     #[Test]

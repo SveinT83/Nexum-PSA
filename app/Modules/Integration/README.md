@@ -12,6 +12,15 @@ The Integration module owns external service configuration for tdPSA. It should 
 settings in Admin while keeping provider-specific API clients and sync jobs inside the module or a
 clearly owned service namespace.
 
+## Tripletex customer synchronization
+
+The customer GUI switch authorizes shared customer numbers, initial profile suggestions and
+two-way Billing Email/bound Site address reconciliation. Tripletex wins same-field conflicts.
+Primary contacts are suggested only during creation; recurring contact sync is excluded.
+See [customer guidance](Docs/knowledge/tripletex-customer-numbers.md),
+[profile RFC](../../../docs/rfc/2026-10-08-tripletex-customer-profiles.md) and
+[profile verification](../../../docs/plans/2026-10-08-tripletex-customer-profile-verification.md).
+
 ## Current Scope
 
 - Integration overview under Admin System Integrations.

@@ -8,7 +8,7 @@
             <input type="hidden" name="enabled" value="0">
             <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" role="switch" id="tripletex-time-sync" name="enabled" value="1"
-                    @checked($connection->status === 'active') onchange="this.form.requestSubmit()">
+                    @checked($connection->status === 'active' && ($connection->config['time_sync_enabled'] ?? true)) onchange="this.form.requestSubmit()">
                 <label class="form-check-label" for="tripletex-time-sync">Synchronize time registrations automatically</label>
             </div>
             <p class="form-text">Creates, changes and deletions synchronize both ways. Turning this off pauses transfer and keeps saved time and pending changes.</p>
@@ -22,7 +22,7 @@
                 From {{ $mapping['start_date'] }}.
             </p>
         @endforeach
-        @if($connection->status !== 'active' && !empty($connection->config['time_catalog']))
+        @if(($connection->status !== 'active' || !($connection->config['time_sync_enabled'] ?? true)) && !empty($connection->config['time_catalog']))
         <details class="mt-3"><summary>Employee mapping</summary>
             <form method="post" action="{{ route('tech.admin.system.integrations.tripletex.mapping', $connection->id) }}" class="row g-3 mt-1">
                 @csrf

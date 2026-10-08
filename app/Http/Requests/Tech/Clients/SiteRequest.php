@@ -14,18 +14,16 @@ class SiteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'client_id' => ['nullable','exists:clients,id'],
-            'name' => ['required','string','max:255'],
-            'address' => ['nullable','string','max:255'],
-            'co_address' => ['nullable','string','max:255'],
-            'zip' => ['nullable','integer','min:0','max:9999'],
-            'city' => ['nullable','string','max:255'],
-            'county' => ['nullable','string','max:255'],
-            'country' => ['nullable','string','max:255'],
-            'is_default' => ['nullable','boolean'],
-            'create_in_rmm' => ['sometimes','boolean'],
+            'client_id' => ['nullable', 'exists:clients,id'],
+            'name' => ['required', 'string', 'max:255'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'co_address' => ['nullable', 'string', 'max:255'],
+            'zip' => ['nullable', 'string', 'max:20'],
+            'city' => ['nullable', 'string', 'max:255'],
+            'county' => ['nullable', 'string', 'max:255'],
+            'country' => ['nullable', 'string', 'max:255'],
+            'is_default' => ['nullable', 'boolean'],
+            'create_in_rmm' => ['sometimes', 'boolean'],
         ];
     }
-
 }
-

@@ -63,3 +63,10 @@ the provider's unique employee/date/activity/project key, avoiding duplicate cre
 
 See the [pilot verification](../../../../../docs/plans/2026-10-05-tripletex-time-sync-verification.md)
 for tested behavior, deployment requirements and remaining rollout checks.
+
+## Customer-number synchronization
+
+The separate **Synchronize customers with Tripletex** switch makes Tripletex authoritative for new/linked Client
+numbers. It does not activate time transfer. See [customer numbers](tripletex-customer-numbers.md)
+for creation, explicit links, recovery and the independent activation requirements.
+Saving connection settings pauses both customer and time synchronization.

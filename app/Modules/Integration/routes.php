@@ -20,7 +20,22 @@ if (($tdpsaLoadingCloudFactoryPublicRoutes ?? false) === true) {
     return;
 }
 
+// Client-authorized customer lookup returns only the fields needed for explicit selection.
+Route::get('/clients/tripletex/customers', [\App\Modules\Integration\Controllers\Admin\TripletexCustomerController::class, 'lookup'])
+    ->middleware('throttle:20,1')->name('clients.tripletex.lookup');
+
+Route::get('/clients/tripletex/customer/{customer}/profile', [\App\Modules\Integration\Controllers\Admin\TripletexCustomerController::class, 'profile'])
+    ->whereNumber('customer')->middleware('throttle:20,1')->name('clients.tripletex.profile');
+
 Route::middleware('admin')->group(function () {
+    Route::post('/admin/system/integrations/tripletex/{connection}/customers/{link}/sync-profile', [\App\Modules\Integration\Controllers\Admin\TripletexCustomerController::class, 'syncProfile'])->whereUuid('connection')->whereNumber('link')->name('admin.system.integrations.tripletex.customers.sync-profile');
+    Route::post('/admin/system/integrations/tripletex/{connection}/customers/{link}/profile-site', [\App\Modules\Integration\Controllers\Admin\TripletexCustomerController::class, 'bindProfileSite'])->whereUuid('connection')->whereNumber('link')->name('admin.system.integrations.tripletex.customers.profile-site');
+
+    Route::get('/admin/system/integrations/tripletex/{connection}/customers', [\App\Modules\Integration\Controllers\Admin\TripletexCustomerController::class, 'index'])->whereUuid('connection')->name('admin.system.integrations.tripletex.customers');
+    Route::post('/admin/system/integrations/tripletex/{connection}/customer-sync', [\App\Modules\Integration\Controllers\Admin\TripletexCustomerController::class, 'setting'])->whereUuid('connection')->name('admin.system.integrations.tripletex.customer-sync');
+    Route::post('/admin/system/integrations/tripletex/{connection}/customers/link', [\App\Modules\Integration\Controllers\Admin\TripletexCustomerController::class, 'adopt'])->whereUuid('connection')->name('admin.system.integrations.tripletex.customers.link');
+    Route::post('/admin/system/integrations/tripletex/{connection}/customers/recover', [\App\Modules\Integration\Controllers\Admin\TripletexCustomerController::class, 'recover'])->whereUuid('connection')->name('admin.system.integrations.tripletex.customers.recover');
+
     // Company-bound settings, explicit employee mapping and guarded synchronization switch.
     Route::middleware(\App\Modules\Integration\Http\Middleware\ProtectTripletexCredentials::class)->group(function () {
         Route::get('/admin/system/integrations/tripletex', [\App\Modules\Integration\Controllers\Admin\TripletexController::class, 'index'])->name('admin.system.integrations.tripletex.index');

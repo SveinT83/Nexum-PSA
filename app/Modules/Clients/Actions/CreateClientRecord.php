@@ -25,6 +25,20 @@ class CreateClientRecord
      */
     public function handle(array $attributes, Closure $afterCreate): Client
     {
+        $authority = app(\App\Modules\DataExchange\Services\TripletexCustomerNumbers::class);
+        $connection = $authority->connection();
+        $providerMode = (bool) ($attributes['tripletex_number_mode'] ?? false);
+        if ($connection) {
+            if (! $providerMode) {
+                throw ValidationException::withMessages(['client_number' => 'Tripletex customer synchronization is active. Reload the form or set tripletex_number_mode and a tripletex_request_key UUID in the API.']);
+            }
+
+            return $authority->create($attributes, $afterCreate, $connection);
+        }
+        if ($providerMode || ! empty($attributes['tripletex_customer_id'])) {
+            throw ValidationException::withMessages(['client_number' => 'Tripletex customer synchronization changed or is paused. Reload before creating a local Client.']);
+        }
+        unset($attributes['tripletex_site'], $attributes['tripletex_number_mode'], $attributes['tripletex_request_key'], $attributes['tripletex_customer_id']);
         $automaticNumber = blank($attributes['client_number'] ?? null);
 
         for ($attempt = 1; $attempt <= self::MAX_AUTOMATIC_NUMBER_ATTEMPTS; $attempt++) {

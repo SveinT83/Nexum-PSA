@@ -83,7 +83,7 @@
                     <!-- Zip -->
                     <!-- ------------------------------------------------- -->
                     <div class="col-1 mt-2">
-                        <x-forms.input_text type="number" name="zip" labelName="zip"
+                        <x-forms.input_text type="text" name="zip" labelName="zip"
                                             value="{{$site->zip ?? ''}}"></x-forms.input_text>
                     </div>
 
