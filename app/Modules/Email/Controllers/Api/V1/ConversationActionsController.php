@@ -11,6 +11,8 @@ use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailConversation;
 use App\Modules\Email\Models\EmailConversationActionItem;
 use App\Modules\Email\Models\EmailConversationActionRun;
+use App\Modules\Email\Models\EmailMailboxPlacement;
+use App\Modules\Email\Support\EmailConversationReadSummary;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,20 +26,25 @@ class ConversationActionsController extends Controller
             'scope_kind' => ['required', Rule::in([
                 EmailConversationActionRun::SCOPE_ACTIVE_ACCOUNT_CONVERSATION,
                 EmailConversationActionRun::SCOPE_EXPLICIT_MULTI_ACCOUNT,
+                EmailConversationActionRun::SCOPE_ORDINARY_READ,
             ])],
-            'account_id' => ['nullable', 'integer'],
-            'conversation_id' => ['nullable', 'integer'],
-            'placement_ids' => ['nullable', 'array', 'min:1', 'max:500'],
+            'placement_id' => ['required_if:scope_kind,ordinary_conversation_read', 'integer'],
+            'account_id' => ['prohibited_if:scope_kind,ordinary_conversation_read', 'nullable', 'integer'],
+            'conversation_id' => ['prohibited_if:scope_kind,ordinary_conversation_read', 'nullable', 'integer'],
+            'placement_ids' => ['prohibited_if:scope_kind,ordinary_conversation_read', 'nullable', 'array', 'min:1', 'max:500'],
             'placement_ids.*' => ['integer', 'distinct'],
-            'target_personal_unread' => ['required', 'boolean'],
-            'provider_seen_requested' => ['sometimes', 'boolean'],
-            'item_cap' => ['sometimes', 'integer', 'min:1', 'max:500'],
+            'target_personal_unread' => ['required_unless:scope_kind,ordinary_conversation_read', 'prohibited_if:scope_kind,ordinary_conversation_read', 'boolean'],
+            'provider_seen_requested' => ['prohibited_if:scope_kind,ordinary_conversation_read', 'sometimes', 'boolean'],
+            'item_cap' => ['prohibited_if:scope_kind,ordinary_conversation_read', 'sometimes', 'integer', 'min:1', 'max:500'],
             'idempotency_key' => ['required', 'string', 'min:16', 'max:160'],
         ]);
         $actor = $request->user();
 
         try {
-            $run = $data['scope_kind'] === EmailConversationActionRun::SCOPE_ACTIVE_ACCOUNT_CONVERSATION
+            $run = $data['scope_kind'] === EmailConversationActionRun::SCOPE_ORDINARY_READ
+                ? $preview->ordinaryRead($actor, EmailMailboxPlacement::query()->findOrFail($data['placement_id']),
+                    $data['idempotency_key'])
+                : ($data['scope_kind'] === EmailConversationActionRun::SCOPE_ACTIVE_ACCOUNT_CONVERSATION
                 ? $preview->activeAccountConversation(
                     $actor,
                     EmailAccount::query()->findOrFail((int) ($data['account_id'] ?? 0)),
@@ -54,7 +61,7 @@ class ConversationActionsController extends Controller
                     (bool) $data['target_personal_unread'],
                     (bool) ($data['provider_seen_requested'] ?? false),
                     $data['item_cap'] ?? null,
-                );
+                ));
         } catch (AuthorizationException) {
             abort(404);
         }
@@ -74,6 +81,11 @@ class ConversationActionsController extends Controller
         if ($queued) {
             ProcessEmailConversationAcknowledgementRun::dispatch($run->id);
         }
+        if ($run->scope_kind === EmailConversationActionRun::SCOPE_ORDINARY_READ) {
+            // A synchronous worker may already have completed the remainder.
+            $run = $run->fresh('items.remoteOperation');
+            $queued = $run->status === EmailConversationActionRun::STATUS_APPLYING;
+        }
 
         return response()->json(['data' => $this->serializeRun($run), 'queued' => $queued], $queued ? 202 : 200);
     }
@@ -84,6 +96,11 @@ class ConversationActionsController extends Controller
         $queued = $run->status === EmailConversationActionRun::STATUS_APPLYING;
         if ($queued) {
             ProcessEmailConversationAcknowledgementRun::dispatch($run->id);
+        }
+        if ($run->scope_kind === EmailConversationActionRun::SCOPE_ORDINARY_READ) {
+            // A synchronous worker may already have completed the remainder.
+            $run = $run->fresh('items.remoteOperation');
+            $queued = $run->status === EmailConversationActionRun::STATUS_APPLYING;
         }
 
         return response()->json(['data' => $this->serializeRun($run), 'queued' => $queued], $queued ? 202 : 200);
@@ -125,7 +142,10 @@ class ConversationActionsController extends Controller
             'status' => $run->status,
             'target_personal_unread' => $run->target_personal_unread,
             'provider_seen_requested' => $run->provider_seen_requested,
+            'read_summary' => $run->scope_kind === EmailConversationActionRun::SCOPE_ORDINARY_READ
+                ? EmailConversationReadSummary::forRun($run) : null,
             'counts' => [
+                'messages' => $run->items->where('personal_selected', true)->count(),
                 'accounts' => $run->account_count,
                 'items' => $run->item_count,
                 'personal_applied' => $run->personal_applied_count,

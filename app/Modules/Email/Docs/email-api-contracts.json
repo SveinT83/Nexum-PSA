@@ -1717,14 +1717,17 @@
           "type": "string",
           "enum": [
             "active_account_conversation",
-            "explicit_multi_account"
+            "explicit_multi_account",
+            "ordinary_conversation_read"
           ]
         },
         "target_personal_unread": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Required for advanced scopes; prohibited for ordinary_conversation_read, whose target is always read."
         },
         "provider_seen_requested": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Advanced only; prohibited for ordinary_conversation_read. Owner mirroring is derived by the server."
         },
         "account_id": {
           "type": "integer",
@@ -1753,11 +1756,15 @@
           "minLength": 16,
           "maxLength": 160,
           "description": "Stable client-generated key for this logical action; reuse after an uncertain response."
+        },
+        "placement_id": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Required for ordinary_conversation_read; server derives the single account/conversation and provider-owner behavior."
         }
       },
       "required": [
         "scope_kind",
-        "target_personal_unread",
         "idempotency_key"
       ]
     },

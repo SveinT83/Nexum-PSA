@@ -16,10 +16,11 @@ class CancelEmailConversationAcknowledgement
 
     public function handle(EmailConversationActionRun $run, User $actor): EmailConversationActionRun
     {
-        $this->boundary->assertAvailable();
+        $this->boundary->assertRunAvailable($run->fresh());
 
         return DB::transaction(function () use ($run, $actor): EmailConversationActionRun {
             $run = EmailConversationActionRun::query()->lockForUpdate()->findOrFail($run->id);
+            $this->boundary->assertRunAvailable($run);
             if ((int) $run->requested_by !== (int) $actor->id
                 || $run->operation !== EmailConversationActionRun::OPERATION_ACKNOWLEDGE) {
                 throw new AuthorizationException('This mailbox action is not available.');

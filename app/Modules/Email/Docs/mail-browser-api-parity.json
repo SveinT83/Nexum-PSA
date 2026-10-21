@@ -966,6 +966,7 @@
       "acknowledgeConversation",
       "applyComposerAi",
       "applyConversationAcknowledgement",
+      "applyConversationRead",
       "applyFilters",
       "applySmartInboxPersonalRulePrefill",
       "archiveSelected",
@@ -1050,9 +1051,11 @@
       "openRuleAction",
       "personalRuleActionOptions",
       "personalRuleConditionOptions",
+      "prepareConversationRead",
       "previewConversationAcknowledgement",
       "recipientSummary",
       "refreshConversationAcknowledgement",
+      "refreshConversationRead",
       "refreshSelectedFolder",
       "remoteOperationBadgeClass",
       "remoteOperationLabel",
@@ -1113,5 +1116,19 @@
       "toggleReview"
     ]
   },
-  "livewire_note": "Local pane/selection/editor helpers need no standalone endpoint. Material reads, writes and persisted actions are covered by M01-M44 and the API contracts. Any new public interface or browser route requires a parity review."
+  "livewire_note": "Local pane/selection/editor helpers need no standalone endpoint. Material reads, writes and persisted actions are covered by M01-M44 and the API contracts. Any new public interface or browser route requires a parity review.",
+  "ordinary_conversation_read": {
+    "browser": [
+      "prepareConversationRead",
+      "applyConversationRead",
+      "refreshConversationRead"
+    ],
+    "api": [
+      "POST /api/v1/email/mailbox/conversation-actions/preview",
+      "POST /api/v1/email/mailbox/conversation-actions/{run}/apply",
+      "GET /api/v1/email/mailbox/conversation-actions/{run}"
+    ],
+    "scope_kind": "ordinary_conversation_read",
+    "policy": "Exact selected-account durable conversation snapshot; fixed personal read target; provider mirroring derived for personal owner only. Advanced scopes remain gated."
+  }
 }

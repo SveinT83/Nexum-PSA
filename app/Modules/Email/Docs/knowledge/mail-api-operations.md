@@ -35,6 +35,34 @@ state. These commands do not acknowledge Notifications, Tickets or another user'
 Attachment and raw-source downloads require their own token scopes and current exact source
 access. Raw source has separate permission. Downloads are private and preserve source-part identity.
 
+
+## Read A Whole Conversation (Dev Addition)
+
+This addition is implemented on Dev only; HR-2026-10-21-MAIL-CONVERSATION-READ is Pending.
+It has not been promoted to Main or deployed to production. Existing advanced multi-account
+acknowledgement remains disabled unless separately approved.
+
+GET /api/v1/email/mailbox/context with email.mailbox.read exposes conversation_read availability,
+scope_kind and preview_limit. This is capability discovery, never an account-access grant.
+POST /api/v1/email/mailbox/conversation-actions/preview with email.read accepts:
+
+    {"scope_kind":"ordinary_conversation_read","placement_id":123,"idempotency_key":"your-stable-client-operation-key"}
+
+The server derives one authorized complete account conversation from the exact placement. Do not
+supply account_id, conversation_id, placement_ids, item_cap, target_personal_unread or
+provider_seen_requested for this scope. The target is always personal read, and optional personal-
+owner server mirroring follows the ordinary selected-message contract. A 201 preview changes no
+read state. Inspect counts.messages (unique personal effects) and the exact snapshot before apply.
+
+POST .../conversation-actions/{run}/apply uses email.update. GET that exact run with email.read
+reads progress without applying it. Retry/cancel retain their existing email.update ceiling.
+read_summary is shared with the reader: message_count, read_count, already_read_count, pending_count,
+provider_pending_count and provider_failed_count report separate outcomes. Provider acceptance and
+personal read success are distinct. Duplicate placements do not repeat the personal effect.
+Later arrivals and other accounts/users remain outside the run. Incomplete legacy/over-limit scope
+is rejected before mutation; revoked/stale items yield truthful partial results. The existing
+advanced scope paths remain gated and unavailable scope returns HTTP 503.
+
 ## Write And Action Workflows
 
 - **Compose / Reply / Reply all / Forward:** create a private draft, use its opaque version on every

@@ -35,7 +35,7 @@ class ApplyEmailConversationAcknowledgement
         EmailConversationActionRun $run,
         User $actor,
     ): EmailConversationActionRun {
-        $this->boundary->assertAvailable();
+        $this->boundary->assertRunAvailable($run->fresh());
         $run = $this->startOrResume($run, $actor);
 
         if (in_array($run->status, [
@@ -68,6 +68,7 @@ class ApplyEmailConversationAcknowledgement
         return DB::transaction(function () use ($actor, $run): EmailConversationActionRun {
             $locked = EmailConversationActionRun::query()->lockForUpdate()->findOrFail($run->id);
             $this->assertActorOwnsRun($locked, $actor);
+            $this->boundary->assertRunAvailable($locked);
 
             if (! $this->scopeFingerprintMatches($locked)) {
                 $locked->forceFill([
@@ -196,7 +197,16 @@ class ApplyEmailConversationAcknowledgement
             }
 
             $this->applyPersonalEffect($item, $currentActor, $account, $message);
-            $this->applyProviderEffect($item, $currentActor, $account, $placement, $folder);
+            if ($run->scope_kind === EmailConversationActionRun::SCOPE_ORDINARY_READ
+                && $item->provider_status === EmailConversationActionItem::PROVIDER_PENDING
+                && (! $account->isPersonal() || (int) $account->owner_id !== (int) $currentActor->id)) {
+                $item->forceFill([
+                    'provider_status' => EmailConversationActionItem::PROVIDER_DENIED,
+                    'provider_reason_code' => 'ordinary_provider_owner_changed',
+                ])->save();
+            } else {
+                $this->applyProviderEffect($item, $currentActor, $account, $placement, $folder);
+            }
 
             $item->forceFill([
                 'claim_token' => null,
@@ -382,6 +392,16 @@ class ApplyEmailConversationAcknowledgement
 
     private function scopeFingerprintMatches(EmailConversationActionRun $run): bool
     {
+        // A valid ordinary run can never smuggle another account/conversation into its item set.
+        if ($run->scope_kind === EmailConversationActionRun::SCOPE_ORDINARY_READ
+            && $run->items()->where(function ($items) use ($run): void {
+                $items->where('account_id', '!=', $run->active_email_account_id)
+                    ->orWhere('email_conversation_id', '!=', $run->active_email_conversation_id)
+                    ->orWhere('personal_target', true);
+            })->exists()) {
+            return false;
+        }
+
         $fingerprints = $run->items()
             ->orderBy('ordinal')
             ->lockForUpdate()

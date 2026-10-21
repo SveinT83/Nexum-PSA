@@ -16,6 +16,8 @@ class EmailConversationActionRun extends Model
 
     public const SCOPE_EXPLICIT_MULTI_ACCOUNT = 'explicit_multi_account';
 
+    public const SCOPE_ORDINARY_READ = 'ordinary_conversation_read';
+
     public const STATUS_PREVIEWED = 'previewed';
 
     public const STATUS_APPLYING = 'applying';

@@ -814,7 +814,13 @@
                                 </button>
                             @endif
 
+                            {{-- Selected-message read state and explicit whole-conversation snapshot --}}
                             @if($canUsePersonalUnreadSelected)
+                                <div class="btn-group position-relative"
+                                     wire:key="conversation-read-{{ $selectedPlacement->id }}"
+                                     x-data="{ open: false }"
+                                     x-on:click.outside="open = false"
+                                     x-on:keydown.escape.window="open = false">
                                 <button
                                     type="button"
                                     class="btn btn-sm btn-outline-success"
@@ -823,6 +829,57 @@
                                     <i class="bi {{ $this->isUnreadForMe($selectedMessage) ? 'bi-envelope-open' : 'bi-envelope-exclamation' }} me-1" aria-hidden="true"></i>
                                     {{ $this->isUnreadForMe($selectedMessage) ? 'Mark as read' : 'Mark as unread' }}
                                 </button>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-success dropdown-toggle dropdown-toggle-split"
+                                            aria-label="Conversation read actions" aria-haspopup="menu"
+                                            aria-controls="conversation-read-menu-{{ $selectedPlacement->id }}"
+                                            x-bind:aria-expanded="open"
+                                            x-on:click="open = !open; if (open) $wire.prepareConversationRead()"
+                                            wire:loading.attr="disabled"
+                                            wire:target="applyConversationRead"
+                                            title="Read actions for the entire conversation">
+                                        <span class="visually-hidden">Conversation read actions</span>
+                                    </button>
+                                    <div id="conversation-read-menu-{{ $selectedPlacement->id }}"
+                                         class="dropdown-menu show p-2 mt-1 top-100 start-0 text-wrap"
+                                         style="min-width: 18rem; max-width: calc(100vw - 2rem)"
+                                         x-show="open" x-cloak role="menu">
+                                        <div class="small text-muted px-2 pb-2">
+                                            {{ $selectedPlacement->account->address }}
+                                        </div>
+                                        <div class="small px-2" wire:loading wire:target="prepareConversationRead">
+                                            Preparing the complete conversation…
+                                        </div>
+                                        <div wire:loading.remove wire:target="prepareConversationRead">
+                                            @if($conversationReadSummary && $conversationReadSummary['status'] === 'previewed')
+                                                <button type="button" class="dropdown-item text-wrap rounded"
+                                                        role="menuitem" wire:click="applyConversationRead"
+                                                        wire:loading.attr="disabled" wire:target="applyConversationRead">
+                                                    <i class="bi bi-envelope-open me-1" aria-hidden="true"></i>
+                                                    Mark all {{ $conversationReadSummary['message_count'] }} messages in conversation as read
+                                                </button>
+                                                <div class="small text-muted px-2 pt-2">
+                                                    Includes messages outside the current filter. New arrivals stay unread.
+                                                </div>
+                                            @elseif($conversationReadSummary)
+                                                <div class="small px-2" role="status"
+                                                     @if($conversationReadSummary['pending_count'] > 0 || $conversationReadSummary['provider_pending_count'] > 0)
+                                                         wire:poll.3s.visible="refreshConversationRead"
+                                                     @endif>
+                                                    {{ $conversationReadSummary['message'] }}
+                                                </div>
+                                                <button type="button" class="dropdown-item small rounded mt-2"
+                                                        role="menuitem" wire:click="refreshConversationRead">
+                                                    Refresh status
+                                                </button>
+                                            @else
+                                                <div class="small px-2" role="status">
+                                                    {{ $mailActionStatus['message'] ?? 'The complete conversation is unavailable.' }}
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
                             @endif
 
                             @if($canMarkSpamSelected)

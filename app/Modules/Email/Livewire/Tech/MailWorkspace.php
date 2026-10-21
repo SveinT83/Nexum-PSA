@@ -75,6 +75,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -744,6 +745,102 @@ class MailWorkspace extends Component
         }
 
         $this->dispatch('mail-state-changed');
+    }
+
+    #[Locked]
+    public string $conversationReadRunId = '';
+
+    #[Locked]
+    public ?array $conversationReadSummary = null;
+
+    /** Opening the arrow freezes scope; it never changes personal or provider read state. */
+    public function prepareConversationRead(): void
+    {
+        $this->conversationReadRunId = '';
+        $this->conversationReadSummary = null;
+        $placement = $this->selectedPlacementForAction();
+        $actor = $this->user();
+        if (! $actor || ! $placement || ! $this->canUsePersonalUnreadForPlacement($placement)) {
+            $this->mailActionStatus = ['type' => 'warning', 'message' => 'Select an accessible conversation first.'];
+
+            return;
+        }
+        try {
+            $run = app(PreviewEmailConversationAcknowledgement::class)->ordinaryRead(
+                $actor, $placement, 'ordinary-reader:'.Str::uuid(),
+            );
+            $this->conversationReadRunId = $run->public_id;
+            $this->conversationReadSummary = \App\Modules\Email\Support\EmailConversationReadSummary::forRun($run);
+        } catch (AuthorizationException|ValidationException $exception) {
+            $this->mailActionStatus = ['type' => 'warning', 'message' => $exception instanceof ValidationException
+                ? collect($exception->errors())->flatten()->first()
+                : 'This conversation is no longer available.'];
+        } catch (\Throwable) {
+            $this->mailActionStatus = ['type' => 'warning',
+                'message' => 'The complete conversation could not be prepared. Mark individual messages as read.'];
+        }
+    }
+
+    public function applyConversationRead(): void
+    {
+        $run = $this->ordinaryConversationReadRun();
+        if (! $run) {
+            $this->conversationReadSummary = null;
+            $this->mailActionStatus = ['type' => 'warning',
+                'message' => 'The selected conversation changed. Open the menu for a fresh snapshot.'];
+
+            return;
+        }
+        try {
+            $run = app(ApplyEmailConversationAcknowledgement::class)->handle($run, $this->user());
+            if ($run->status === EmailConversationActionRun::STATUS_APPLYING) {
+                ProcessEmailConversationAcknowledgementRun::dispatch($run->id);
+            }
+            $run = $run->fresh('items.remoteOperation');
+            $this->conversationReadSummary = \App\Modules\Email\Support\EmailConversationReadSummary::forRun($run);
+            $this->mailActionStatus = [
+                'type' => $this->conversationReadSummary['type'],
+                'message' => $this->conversationReadSummary['message'],
+            ];
+            $this->unreadForMeByMessage = [];
+            $this->dispatch('mail-state-changed');
+        } catch (\Throwable) {
+            $this->mailActionStatus = ['type' => 'warning',
+                'message' => 'The conversation update could not be confirmed. Refresh its status before retrying.'];
+        }
+    }
+
+    /** Status refresh does not apply a preview or claim any pending item. */
+    public function refreshConversationRead(): void
+    {
+        $run = $this->ordinaryConversationReadRun();
+        $this->conversationReadSummary = $run
+            ? \App\Modules\Email\Support\EmailConversationReadSummary::forRun($run) : null;
+        if ($run && $run->status !== EmailConversationActionRun::STATUS_PREVIEWED) {
+            $this->mailActionStatus = [
+                'type' => $this->conversationReadSummary['type'],
+                'message' => $this->conversationReadSummary['message'],
+            ];
+            $this->unreadForMeByMessage = [];
+        }
+    }
+
+    private function ordinaryConversationReadRun(): ?EmailConversationActionRun
+    {
+        $placement = $this->selectedPlacementForAction();
+        $actor = $this->user();
+        if (! $actor || ! $placement || $this->conversationReadRunId === ''
+            || ! $this->canUsePersonalUnreadForPlacement($placement)) {
+            return null;
+        }
+
+        return EmailConversationActionRun::query()->with('items.remoteOperation')
+            ->where('public_id', $this->conversationReadRunId)
+            ->where('requested_by', $actor->id)
+            ->where('scope_kind', EmailConversationActionRun::SCOPE_ORDINARY_READ)
+            ->where('active_email_account_id', $placement->account_id)
+            ->where('active_email_conversation_id', $placement->email_conversation_id)
+            ->first();
     }
 
     public function markSelectedReadForMe(): void

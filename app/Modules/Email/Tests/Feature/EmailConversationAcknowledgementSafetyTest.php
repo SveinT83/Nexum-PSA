@@ -640,6 +640,219 @@ class EmailConversationAcknowledgementSafetyTest extends TestCase
             ->assertDontSee('Confirm and apply');
     }
 
+    #[Test]
+    public function ordinary_read_freezes_the_whole_account_conversation_with_advanced_actions_disabled(): void
+    {
+        $mailbox = $this->mailbox($this->actor, organize: true);
+        $messages = [$mailbox['message']];
+        for ($i = 1; $i < 6; $i++) {
+            $messages[] = $this->addMessage($mailbox)['message'];
+        }
+        $peer = $this->viewer();
+        $this->grant($mailbox['account'], $peer, false);
+        $this->baseline($mailbox['account'], $peer);
+        $other = $this->mailbox($this->actor, organize: true);
+        $this->addPlacementForMessage($mailbox);
+        $run = app(PreviewEmailConversationAcknowledgement::class)->ordinaryRead(
+            $this->actor, $mailbox['placement'], 'ordinary-freeze-'.Str::uuid(),
+        );
+        $this->assertFalse(config('email_live.conversation_acknowledgement_enabled'));
+        $this->assertSame(EmailConversationActionRun::SCOPE_ORDINARY_READ, $run->scope_kind);
+        $this->assertSame(7, $run->item_count);
+        $this->assertSame(6, $run->items->where('personal_selected', true)->count());
+        $this->assertSame(0, EmailMessageUserState::query()->count());
+        $future = $this->addMessage($mailbox)['message'];
+        $result = app(ApplyEmailConversationAcknowledgement::class)->handle($run, $this->actor);
+        $this->assertSame(EmailConversationActionRun::STATUS_APPLIED, $result->status);
+        $this->assertSame(6, $result->personal_applied_count);
+        foreach ($messages as $message) {
+            $this->assertFalse(app(EmailUnreadForMeResolver::class)->resolve($message, $this->actor));
+            $this->assertTrue(app(EmailUnreadForMeResolver::class)->resolve($message, $peer));
+        }
+        $this->assertTrue(app(EmailUnreadForMeResolver::class)->resolve($future, $this->actor));
+        $this->assertTrue(app(EmailUnreadForMeResolver::class)->resolve($other['message'], $this->actor));
+        $this->assertSame(0, EmailRemoteOperation::query()->count());
+        $again = app(ApplyEmailConversationAcknowledgement::class)->handle($result, $this->actor);
+        $this->assertSame(6, $again->personal_applied_count);
+    }
+
+    #[Test]
+    public function ordinary_read_api_has_browser_parity_and_does_not_unlock_advanced_scopes(): void
+    {
+        $mailbox = $this->mailbox($this->actor, organize: true);
+        $this->addMessage($mailbox);
+        Sanctum::actingAs($this->actor, ['email.read', 'email.update', 'email.mailbox.read']);
+        $this->getJson('/api/v1/email/mailbox/context')->assertOk()
+            ->assertJsonPath('data.conversation_read.available', true)
+            ->assertJsonPath('data.conversation_read.scope_kind', 'ordinary_conversation_read')
+            ->assertJsonPath('data.conversation_read.active_account_only', true);
+        $preview = $this->postJson(route('api.v1.email.mailbox.conversation-actions.preview'), [
+            'scope_kind' => 'ordinary_conversation_read',
+            'placement_id' => $mailbox['placement']->id,
+            'idempotency_key' => 'ordinary-api-'.Str::uuid(),
+        ])->assertCreated()->assertJsonPath('data.counts.messages', 2)
+            ->assertJsonPath('data.read_summary.message_count', 2);
+        $id = $preview->json('data.id');
+        $this->assertSame(0, EmailMessageUserState::query()->count());
+        $this->postJson(route('api.v1.email.mailbox.conversation-actions.apply', $id))
+            ->assertOk()->assertJsonPath('data.read_summary.read_count', 2)
+            ->assertJsonPath('data.status', 'applied');
+        $this->getJson(route('api.v1.email.mailbox.conversation-actions.show', $id))
+            ->assertOk()->assertJsonPath('data.counts.messages', 2);
+        $this->postJson(route('api.v1.email.mailbox.conversation-actions.preview'), [
+            'scope_kind' => 'ordinary_conversation_read',
+            'placement_id' => $mailbox['placement']->id,
+            'provider_seen_requested' => true,
+            'target_personal_unread' => true,
+            'idempotency_key' => 'ordinary-forbidden-'.Str::uuid(),
+        ])->assertUnprocessable();
+        $this->postJson(route('api.v1.email.mailbox.conversation-actions.preview'), [
+            'scope_kind' => 'explicit_multi_account',
+            'placement_ids' => [$mailbox['placement']->id],
+            'target_personal_unread' => false,
+            'idempotency_key' => 'advanced-still-off-'.Str::uuid(),
+        ])->assertStatus(503);
+    }
+
+    #[Test]
+    public function ordinary_reader_menu_previews_without_reading_and_main_button_stays_single_message(): void
+    {
+        $mailbox = $this->mailbox($this->actor, organize: true);
+        for ($i = 1; $i < 6; $i++) {
+            $this->addMessage($mailbox);
+        }
+        $mailbox['message']->forceFill(['subject' => 'Only this message matches the filter'])->save();
+        $component = \Livewire\Livewire::actingAs($this->actor)
+            ->test(\App\Modules\Email\Livewire\Tech\MailWorkspace::class)
+            ->set('search', 'Only this message matches the filter')
+            ->set('selectedPlacementId', $mailbox['placement']->id)
+            ->assertSee('Conversation read actions')
+            ->call('prepareConversationRead')
+            ->assertSee('Mark all 6 messages in conversation as read')
+            ->assertSet('conversationReadSummary.message_count', 6);
+        $this->assertSame(0, EmailMessageUserState::query()->count());
+        $component->call('markSelectedRead');
+        $this->assertSame(1, EmailMessageUserState::query()->count());
+        $component->call('prepareConversationRead')->assertSet('conversationReadSummary.message_count', 6);
+        $future = $this->addMessage($mailbox)['message'];
+        $component->call('applyConversationRead')->assertSet('conversationReadSummary.read_count', 6)
+            ->assertSet('mailActionStatus.type', 'success');
+        $this->assertTrue(app(EmailUnreadForMeResolver::class)->resolve($future, $this->actor));
+    }
+
+    #[Test]
+    public function ordinary_personal_owner_provider_effect_is_separate_and_revocation_blocks_only_provider(): void
+    {
+        $mailbox = $this->mailbox($this->actor, organize: true, accountOverrides: [
+            'account_kind' => EmailAccount::KIND_PERSONAL, 'owner_id' => $this->actor->id,
+        ]);
+        $run = app(PreviewEmailConversationAcknowledgement::class)->ordinaryRead(
+            $this->actor, $mailbox['placement']->fresh(), 'ordinary-owner-'.Str::uuid(),
+        );
+        $this->assertTrue($run->provider_seen_requested);
+        $this->app->bind(ImapClient::class, fn () => throw new RuntimeException('No direct provider I/O.'));
+        $result = app(ApplyEmailConversationAcknowledgement::class)->handle($run, $this->actor);
+        $this->assertSame(1, $result->personal_applied_count);
+        $this->assertSame(1, $result->provider_pending_count);
+        $this->assertSame(1, EmailRemoteOperation::query()->count());
+
+        $second = $this->addMessage($mailbox);
+        $next = app(PreviewEmailConversationAcknowledgement::class)->ordinaryRead(
+            $this->actor, $second['placement'], 'ordinary-owner-changed-'.Str::uuid(),
+        );
+        $this->actor->revokePermissionTo('email.inbox_manage');
+        $after = app(ApplyEmailConversationAcknowledgement::class)->handle($next, $this->actor);
+        $this->assertFalse(app(EmailUnreadForMeResolver::class)->resolve($second['message'], $this->actor));
+        $this->assertSame('mailbox_organize_denied', $after->items->last()->provider_reason_code);
+        $this->assertSame(1, EmailRemoteOperation::query()->count());
+    }
+
+    #[Test]
+    public function ordinary_read_refuses_legacy_or_oversized_scope_and_reauthorizes_a_frozen_snapshot(): void
+    {
+        $mailbox = $this->mailbox($this->actor, organize: true);
+        $this->addMessage($mailbox);
+        config()->set('email_live.conversation_acknowledgement_preview_cap', 1);
+        try {
+            app(PreviewEmailConversationAcknowledgement::class)->ordinaryRead(
+                $this->actor, $mailbox['placement'], 'ordinary-too-large-'.Str::uuid(),
+            );
+            $this->fail('A bounded page must never be called the whole conversation.');
+        } catch (ValidationException) {
+            $this->assertSame(0, EmailConversationActionRun::query()->count());
+        }
+        config()->set('email_live.conversation_acknowledgement_preview_cap', 100);
+        $run = app(PreviewEmailConversationAcknowledgement::class)->ordinaryRead(
+            $this->actor, $mailbox['placement'], 'ordinary-revoked-'.Str::uuid(),
+        );
+        $mailbox['grant']->delete();
+        $result = app(ApplyEmailConversationAcknowledgement::class)->handle($run, $this->actor);
+        $this->assertSame(0, $result->personal_applied_count);
+        $this->assertSame(0, EmailMessageUserState::query()->count());
+
+        $legacy = $this->mailbox($this->actor, organize: true);
+        $legacy['placement']->forceFill(['email_conversation_id' => null])->save();
+        try {
+            app(PreviewEmailConversationAcknowledgement::class)->ordinaryRead(
+                $this->actor, $legacy['placement']->fresh(), 'ordinary-legacy-'.Str::uuid(),
+            );
+            $this->fail('An incomplete legacy scope must reject all before changing state.');
+        } catch (ValidationException) {
+            $this->assertSame(0, EmailMessageUserState::query()->count());
+        }
+    }
+
+    #[Test]
+    public function ordinary_read_continues_only_the_frozen_remainder_and_stale_reader_cannot_retarget_it(): void
+    {
+        Queue::fake();
+        $mailbox = $this->mailbox($this->actor, organize: true);
+        for ($i = 1; $i < 27; $i++) {
+            $this->addMessage($mailbox);
+        }
+        $run = app(PreviewEmailConversationAcknowledgement::class)->ordinaryRead(
+            $this->actor, $mailbox['placement'], 'ordinary-bounded-'.Str::uuid(),
+        );
+        $first = app(ApplyEmailConversationAcknowledgement::class)->handle($run, $this->actor);
+        $this->assertSame('applying', $first->status);
+        $this->assertSame(25, $first->personal_applied_count);
+        $future = $this->addMessage($mailbox)['message'];
+        (new ProcessEmailConversationAcknowledgementRun($run->id))
+            ->handle(app(ApplyEmailConversationAcknowledgement::class));
+        $this->assertSame(27, $run->fresh()->personal_applied_count);
+        $this->assertTrue(app(EmailUnreadForMeResolver::class)->resolve($future, $this->actor));
+
+        $other = $this->mailbox($this->actor, organize: true);
+        $component = \Livewire\Livewire::actingAs($this->actor)
+            ->test(\App\Modules\Email\Livewire\Tech\MailWorkspace::class)
+            ->set('selectedPlacementId', $mailbox['placement']->id)
+            ->call('prepareConversationRead')
+            ->set('selectedPlacementId', $other['placement']->id)
+            ->call('applyConversationRead')
+            ->assertSet('mailActionStatus.type', 'warning');
+        $this->assertTrue(app(EmailUnreadForMeResolver::class)->resolve($other['message'], $this->actor));
+    }
+
+    #[Test]
+    public function ordinary_api_reports_completion_when_queue_continuation_finishes_synchronously(): void
+    {
+        $mailbox = $this->mailbox($this->actor, organize: true);
+        for ($i = 1; $i < 27; $i++) {
+            $this->addMessage($mailbox);
+        }
+        Sanctum::actingAs($this->actor, ['email.read', 'email.update']);
+        $preview = $this->postJson(route('api.v1.email.mailbox.conversation-actions.preview'), [
+            'scope_kind' => 'ordinary_conversation_read',
+            'placement_id' => $mailbox['placement']->id,
+            'idempotency_key' => 'ordinary-sync-'.Str::uuid(),
+        ])->assertCreated();
+        $this->postJson(route('api.v1.email.mailbox.conversation-actions.apply', $preview->json('data.id')))
+            ->assertOk()->assertJsonPath('queued', false)
+            ->assertJsonPath('data.status', 'applied')
+            ->assertJsonPath('data.read_summary.read_count', 27)
+            ->assertJsonPath('data.read_summary.pending_count', 0);
+    }
+
     private function enableAcknowledgement(): void
     {
         config()->set('email_live.conversation_acknowledgement_enabled', true);

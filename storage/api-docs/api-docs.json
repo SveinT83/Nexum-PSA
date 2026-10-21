@@ -9972,7 +9972,7 @@
                     "Email Mailbox"
                 ],
                 "summary": "ConversationActions: Preview",
-                "description": "Required token abilities (all): email.read. Active human and current domain/mailbox authorization are checked again on every request. Preview freezes bounded evidence; it does not apply the provider/data mutation.",
+                "description": "Required token abilities (all): email.read. Active human and current domain/mailbox authorization are checked again on every request. Preview freezes bounded evidence; it does not apply the provider/data mutation. ordinary_conversation_read requires placement_id and idempotency_key, forbids caller targets/provider flags and remains available without unlocking advanced scopes.",
                 "operationId": "api_v1_email_mailbox_conversation_actions_preview",
                 "requestBody": {
                     "required": true,
@@ -9981,7 +9981,6 @@
                             "schema": {
                                 "required": [
                                     "scope_kind",
-                                    "target_personal_unread",
                                     "idempotency_key"
                                 ],
                                 "properties": {
@@ -9989,13 +9988,21 @@
                                         "type": "string",
                                         "enum": [
                                             "active_account_conversation",
-                                            "explicit_multi_account"
+                                            "explicit_multi_account",
+                                            "ordinary_conversation_read"
                                         ]
                                     },
+                                    "placement_id": {
+                                        "description": "Required for ordinary_conversation_read; derives one account conversation from this exact placement.",
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
                                     "target_personal_unread": {
+                                        "description": "Required for advanced scopes; prohibited for ordinary_conversation_read.",
                                         "type": "boolean"
                                     },
                                     "provider_seen_requested": {
+                                        "description": "Advanced only; prohibited for ordinary_conversation_read, whose owner mirroring is server-derived.",
                                         "type": "boolean"
                                     },
                                     "account_id": {
@@ -10038,7 +10045,29 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/EmailApiResult"
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/EmailApiResult"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "properties": {
+                                                        "read_summary": {
+                                                            "oneOf": [
+                                                                {
+                                                                    "$ref": "#/components/schemas/EmailConversationReadSummary"
+                                                                }
+                                                            ],
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
                                 }
                             }
                         }
@@ -10150,7 +10179,29 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/EmailApiResult"
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/EmailApiResult"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "properties": {
+                                                        "read_summary": {
+                                                            "oneOf": [
+                                                                {
+                                                                    "$ref": "#/components/schemas/EmailConversationReadSummary"
+                                                                }
+                                                            ],
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
                                 }
                             }
                         }
@@ -10262,7 +10313,29 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/EmailApiResult"
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/EmailApiResult"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "properties": {
+                                                        "read_summary": {
+                                                            "oneOf": [
+                                                                {
+                                                                    "$ref": "#/components/schemas/EmailConversationReadSummary"
+                                                                }
+                                                            ],
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
                                 }
                             }
                         }
@@ -10374,7 +10447,29 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/EmailApiResult"
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/EmailApiResult"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "properties": {
+                                                        "read_summary": {
+                                                            "oneOf": [
+                                                                {
+                                                                    "$ref": "#/components/schemas/EmailConversationReadSummary"
+                                                                }
+                                                            ],
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
                                 }
                             }
                         }
@@ -10486,7 +10581,29 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/EmailApiResult"
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/EmailApiResult"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "properties": {
+                                                        "read_summary": {
+                                                            "oneOf": [
+                                                                {
+                                                                    "$ref": "#/components/schemas/EmailConversationReadSummary"
+                                                                }
+                                                            ],
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
                                 }
                             }
                         }
@@ -33707,6 +33824,70 @@
                     },
                     "use_default_template": {
                         "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "EmailConversationReadSummary": {
+                "required": [
+                    "status",
+                    "message_count",
+                    "read_count",
+                    "already_read_count",
+                    "pending_count",
+                    "provider_pending_count",
+                    "provider_failed_count",
+                    "type",
+                    "message"
+                ],
+                "properties": {
+                    "status": {
+                        "description": "Read-only live result projection shared by the ordinary reader and API.",
+                        "type": "string",
+                        "enum": [
+                            "previewed",
+                            "applying",
+                            "applied",
+                            "partial",
+                            "stale",
+                            "failed",
+                            "cancelled"
+                        ]
+                    },
+                    "message_count": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "read_count": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "already_read_count": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "pending_count": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "provider_pending_count": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "provider_failed_count": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "success",
+                            "info",
+                            "warning"
+                        ]
+                    },
+                    "message": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
