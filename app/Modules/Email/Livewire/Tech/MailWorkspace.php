@@ -10,9 +10,7 @@ use App\Modules\Email\Actions\CancelEmailConversationAcknowledgement;
 use App\Modules\Email\Actions\CancelEmailRemoteOperation;
 use App\Modules\Email\Actions\CreatePersonalEmailRule;
 use App\Modules\Email\Actions\CreateProviderEmailFolder;
-use App\Modules\Email\Actions\LinkEmailConversationToTicket;
 use App\Modules\Email\Actions\ManageProviderEmailFolder;
-use App\Modules\Email\Actions\MarkEmailAsSpam;
 use App\Modules\Email\Actions\PerformEmailRemoteOperation;
 use App\Modules\Email\Actions\PreviewEmailConversationAcknowledgement;
 use App\Modules\Email\Actions\RecordEmailMessageOpened;
@@ -58,7 +56,6 @@ use App\Modules\Email\Services\EmailRemoteOperationEvidenceSanitizer;
 use App\Modules\Email\Services\EmailRemoteOperationUndoEligibility;
 use App\Modules\Email\Services\EmailSignatureRenderer;
 use App\Modules\Email\Services\EmailSubmissionConflictException;
-use App\Modules\Email\Services\EmailUnreadForMeResolver;
 use App\Modules\Email\Services\HtmlSanitizer;
 use App\Modules\Email\Services\MailAiAgentRuntime;
 use App\Modules\Email\Services\MailboxAccess;
@@ -67,12 +64,10 @@ use App\Modules\Email\Services\MailboxAccessUseGuard;
 use App\Modules\Email\Services\ResolveMailboxAccessDecision;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
-use App\Modules\Ticket\Actions\CreateTicketFromInboundEmail;
 use App\Modules\Ticket\Models\Ticket;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -777,12 +772,14 @@ class MailWorkspace extends Component
         $user = $this->user();
         if (! $placement?->message || ! $user || ! $this->canUsePersonalUnreadForPlacement($placement)) {
             $this->mailActionStatus = ['type' => 'warning', 'message' => 'Select an accessible message before changing its read status.'];
+
             return;
         }
         try {
             $result = app(\App\Modules\Email\Actions\SetEmailSelectedReadState::class)->handle($user, $placement, $read);
         } catch (AuthorizationException) {
             $this->mailActionStatus = ['type' => 'warning', 'message' => 'You no longer have access to change this message.'];
+
             return;
         }
         $this->unreadForMeByMessage[$placement->message->id] = ! $read;
@@ -965,6 +962,7 @@ class MailWorkspace extends Component
         $user = $this->user();
         if (! $placement?->message || ! $user || ! $this->canCreateTicketFromPlacement($placement)) {
             $this->mailActionStatus = ['type' => 'warning', 'message' => 'You need Ticket create permission and mailbox Organize access before creating a Ticket from this email.'];
+
             return;
         }
         try {
@@ -972,6 +970,7 @@ class MailWorkspace extends Component
             $ticket = $result['ticket'];
         } catch (\Throwable) {
             $this->mailActionStatus = ['type' => 'danger', 'message' => 'The Ticket action could not be completed. No partial Ticket was retained.'];
+
             return;
         }
         $this->mailActionStatus = ['type' => 'success', 'message' => 'Ticket '.$ticket->ticket_key.' was linked from the selected email.'];
@@ -3098,13 +3097,9 @@ class MailWorkspace extends Component
         return $body !== '' ? Str::limit($body, 160) : 'No preview text.';
     }
 
-
-
     /**
      * @return array<string, string>
      */
-
-
     public function usesBreakGlassForPlacement(?EmailMailboxPlacement $placement): bool
     {
         if (! $placement?->account || ! $this->user()) {
@@ -3508,8 +3503,6 @@ class MailWorkspace extends Component
         )->get();
     }
 
-
-
     /**
      * Reauthorize and audit every account before the subsequent list/search query can load mail.
      * Revocation or expiry removes only that account; durable audit failures intentionally bubble
@@ -3568,11 +3561,6 @@ class MailWorkspace extends Component
     }
 
     /** @return array<int> */
-
-
-
-
-
 
     /** @return Collection<int, EmailBreakGlassAccess> */
     private function activeBreakGlassAccesses(): Collection
@@ -3948,24 +3936,20 @@ class MailWorkspace extends Component
      * @return Builder<EmailMailboxPlacement>
      */
 
-
     /**
      * @param  array<int>  $accountIds
      * @return Builder<EmailMailboxPlacement>
      */
-
 
     /**
      * @param  array<int>  $accountIds
      * @return LengthAwarePaginator<int, EmailMailboxPlacement>
      */
 
-
     /**
      * Return a SQL subquery containing one placement ID per durable,
      * account-scoped conversation after all current list filters are applied.
      */
-
 
     /**
      * @param  array<int>  $accountIds
@@ -3976,7 +3960,6 @@ class MailWorkspace extends Component
      * }
      */
 
-
     /**
      * Hydrate the list-only aggregate attributes without loading each durable
      * conversation's placements into PHP.
@@ -3986,19 +3969,11 @@ class MailWorkspace extends Component
      * @param  array<int>  $accountIds
      */
 
-
     /**
      * @param  Collection<int, EmailMailboxPlacement>  $leaders
      * @param  array<int>  $accountIds
      * @return array<string, array{count: int, placement_ids: array<int, int>, unread_for_me: int, mailbox_unread: int, group_key: string}>
      */
-
-
-
-
-
-
-
 
     /**
      * @param  array<int>  $accountIds
@@ -4115,7 +4090,6 @@ class MailWorkspace extends Component
      * }
      */
 
-
     /**
      * @return array{
      *     placements: Collection<int, EmailMailboxPlacement>,
@@ -4124,7 +4098,6 @@ class MailWorkspace extends Component
      *     can_load_more: bool
      * }
      */
-
 
     /**
      * @param  array<int>  $accountIds
@@ -4157,16 +4130,6 @@ class MailWorkspace extends Component
             'provider_unread' => $unread->where('provider_seen', false)->count(),
         ];
     }
-
-
-
-
-
-
-
-
-
-
 
     /**
      * @return array{visible: bool, stats: array<string, int>, items: array<int, array<string, mixed>>}
@@ -4416,11 +4379,18 @@ class MailWorkspace extends Component
             return false;
         }
 
-        return EmailFolder::query()
-            ->where('account_id', $placement->account_id)
-            ->where('role', $role)
-            ->where('is_selectable', true)
-            ->exists();
+        // Command visibility must use the same provider-role, source-folder
+        // and sync eligibility checks as the browser/API mutation itself.
+        $operation = match ($role) {
+            EmailFolder::ROLE_ARCHIVE => PerformEmailRemoteOperation::ARCHIVE,
+            EmailFolder::ROLE_TRASH => PerformEmailRemoteOperation::TRASH,
+        };
+
+        try {
+            return app(PerformEmailRemoteOperation::class)->targetFolderFor($placement, $operation) !== null;
+        } catch (ValidationException) {
+            return false;
+        }
     }
 
     private function prefillPersonalRuleForm(EmailMailboxPlacement $placement): void
@@ -4675,8 +4645,6 @@ class MailWorkspace extends Component
             ->limit(250)
             ->get();
     }
-
-
 
     private function dispatchFilterChange(): void
     {
@@ -5123,6 +5091,4 @@ class MailWorkspace extends Component
             default => 'reply',
         };
     }
-
-
 }

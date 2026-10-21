@@ -190,6 +190,15 @@ class PerformEmailRemoteOperation
             return null;
         }
 
+        // A second normal Delete must not move mail between Trash folders or
+        // mistake the excluded source for a missing provider Trash capability.
+        $sourceFolder = $placement->folder;
+        if ($operation === self::TRASH && $sourceFolder && $this->folderHasRole($sourceFolder, $role)) {
+            throw ValidationException::withMessages([
+                'target_folder' => 'This message is already in Trash.',
+            ]);
+        }
+
         $folder = EmailFolder::query()
             ->where('account_id', $placement->account_id)
             ->where('is_selectable', true)
