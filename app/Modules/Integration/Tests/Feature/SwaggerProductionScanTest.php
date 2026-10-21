@@ -16,13 +16,16 @@ class SwaggerProductionScanTest extends TestCase
         $directory = sys_get_temp_dir().'/nexum-swagger-production-'.Str::uuid();
         File::makeDirectory($directory, 0700, true);
         $sentinel = $directory.'/development-parent.php';
-        File::put($sentinel, '<?php throw new RuntimeException("Swagger loaded a development-only test parent.");');
+        File::put($sentinel, '<?php throw new RuntimeException("Swagger loaded a development-only parent.");');
 
         // A separate PHP process has no PHPUnit bootstrap. A poison parent makes any accidental
         // reflection of module tests fail even when this test runner has dev dependencies installed.
         $program = <<<'PHP'
 $loader = require getcwd().'/vendor/autoload.php';
-$loader->addClassMap(['Tests\\TestCase' => getenv('NEXUM_SWAGGER_TEST_SENTINEL')]);
+$loader->addClassMap([
+    'Tests\\TestCase' => getenv('NEXUM_SWAGGER_TEST_SENTINEL'),
+    'Laravel\\Telescope\\TelescopeApplicationServiceProvider' => getenv('NEXUM_SWAGGER_TEST_SENTINEL'),
+]);
 $app = require getcwd().'/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
