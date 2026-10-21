@@ -7,7 +7,7 @@ Level: 3 (user-visible read-state workflow and shared browser/API runtime contra
 Parent: 2026-07-04-mail-module-full-email-client.md
 Related implementation: ../feature-slices/2026-08-16-email-mail-conversation-acknowledgement-multi-account-actions.md
 Related review: HR-2026-08-16-012 (In Review; advanced runtime disabled)
-Implementation status: Implemented and verified on authoritative Dev; human review In Review; controlled production rollout authorized.
+Implementation status: Deployed to production through Main PR #305; human review In Review.
 Verification: ../plans/2026-10-21-mail-conversation-read-verification.md.
 Human review: HR-2026-10-21-MAIL-CONVERSATION-READ In Review.
 
@@ -154,3 +154,5 @@ Svein Tore explicitly requested Main promotion and production deployment on 2026
 Dev does not receive incoming mail. This supersedes the earlier deployment hold for this scoped
 addition; remaining real-mail checks stay In Review and move to production. It does not approve
 the older advanced acknowledgement or collaboration runtime.
+
+Production evidence: ../plans/2026-10-21-mail-conversation-read-production-deployment.md.

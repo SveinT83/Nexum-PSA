@@ -1,6 +1,6 @@
 # Mail Trash Command Regression - 2026-10-21
 
-Status: Implementation verified / Human Review Reviewed. Level 1 correction under the approved Mail RFC.
+Status: Merged to Main / Human Review Reviewed / Production deployment not performed. Level 1 correction under the approved Mail RFC.
 Owner: Codex. Reviewer/promotion owner: Svein Tore.
 Human-review checklist: HR-2026-10-21-MAIL-TRASH-TARGET Reviewed by Svein Tore on 2026-10-21.
 Explicit chat approval: "Godkjent". Individual scenario results were not supplied; no provider
@@ -95,3 +95,24 @@ Main candidate is tested on the Dev host with synthetic configuration and isolat
 Immutable Main candidate validation on the Dev host: 81 tests passed / 715 assertions, 56.60 seconds,
 PHPUnit exit 0. All five scoped implementation/source files had exact Main preimages. The selected
 PHP files are byte-identical to the reviewed Dev code. No production action is included.
+
+## Main Promotion Completed
+
+Svein Tore explicitly requested Main on 2026-10-21. PR #304 merged normally on 2026-10-21 at
+19:41:28 UTC (21:41 Europe/Oslo): https://github.com/SveinT83/Nexum-PSA/pull/304.
+Main commit: 1ad1b54cac4026465489e901d08a864ced52de31. Independent GitHub read-back confirms merged/closed;
+an independent fetch confirms origin/main equals this SHA, its entire tree equals the tested
+candidate, and all eight scoped file SHA-256 hashes match. The ordinary Dev branch, HEAD and
+Git index are unchanged. No production deployment or mailbox/provider write was performed.
+Production deployment and the earlier ambiguous provider operation remain separate follow-ups.
+
+BookStack page 495 revision 72 records the Main merge and was independently read back; production
+status remains explicitly undeployed for this correction. The existing website handoff item was
+updated and read back with the same Main status and preserved production/publication gate.
+
+## Subsequent Production Deployment
+
+Svein Tore subsequently explicitly requested production. This reviewed correction was included in
+application SHA 71ce9ff10d2e04220b557e56dc206c2ddc1d883d, deployed and independently read back on
+2026-10-21 at 20:59:21 UTC. See 2026-10-21-mail-conversation-read-production-deployment.md.
+Earlier statements about a separate production request describe the initial Main-only handoff.

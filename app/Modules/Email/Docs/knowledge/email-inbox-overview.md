@@ -469,11 +469,11 @@ flag/unflag it, archive it, or move it to another same-account selectable provid
 and can move it to mailbox Trash through the visible trash icon when the provider has exposed the
 target folder. These provider actions do not change another user's personal `Unread for me` state.
 
-## Mark the entire conversation as read (Dev)
+## Mark the entire conversation as read
 
-Availability: implemented on Dev on 2026-10-21 under the approved conversation-read RFC.
-Human-review checklist HR-2026-10-21-MAIL-CONVERSATION-READ is Pending. This addition has not
-been promoted to Main or deployed to production.
+Availability: deployed to production on 2026-10-21 following Svein Tore's explicit request.
+Human-review checklist HR-2026-10-21-MAIL-CONVERSATION-READ is In Review; remaining real-mail
+and provider checks must be completed in production because Dev does not receive mail.
 
 1. Open Mail and select the conversation in the intended mailbox.
 2. The main Mark as read / Mark as unread button still applies to the selected individual email.
@@ -494,7 +494,7 @@ over the configured limit is refused before any all action; use the individual-m
 or wait for complete synchronization rather than treating a visible page as the whole thread.
 
 Correction (2026-10-21; human-review checklist HR-2026-10-21-MAIL-TRASH-TARGET Reviewed
-by Svein Tore on 2026-10-21; merged to Main through PR #304; not yet deployed to production): the reader uses the same target-folder checks as the
+by Svein Tore on 2026-10-21; deployed to production with PR #305 on 2026-10-21): the reader uses the same target-folder checks as the
 mailbox operation. **Move to Trash** is unavailable when the selected message is already in Trash,
 or its target is disabled/non-selectable. A stale browser action or API request for a message
 already in Trash reports **This message is already in Trash.** and does not move it again.
