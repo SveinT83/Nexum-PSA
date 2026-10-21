@@ -99,6 +99,11 @@ The consistent full database dump and gzip integrity passed; the temporary datab
 was removed. A retry may reuse this verified protected database snapshot because the code-only
 attempt made no schema/data transition; take a fresh code/environment snapshot for the retry.
 No restore rehearsal or real provider write is claimed.
+
+Before retry, direct production inspection confirmed the optional Telescope parent/provider are
+also absent. The scanner now excludes that development-only local provider too. The regression
+poisons both Tests/TestCase and the Telescope parent; it fails before the added exclusion and the
+final 23-test / 1,487-assertion package passes afterward. There was no second failed production attempt.
 Protected production preflight evidence:
  /var/www/vhosts/tronderdata.no/private/mail-api-preflight-20261021-final.json
 The release tree and logs remain outside the repository under /tmp/nexum-mail-main-20261021.

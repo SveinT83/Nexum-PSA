@@ -156,9 +156,12 @@ return [
              * @note This option overwrites `paths.excludes`
              * @see \OpenApi\scan
              */
-            // Module test classes require development-only parents and are never API sources.
+            // Test classes and the local Telescope provider require development-only parents.
             // Exclude them before reflection so production --no-dev autoloading is supported.
-            'exclude' => glob(base_path('app/Modules/*/Tests'), GLOB_ONLYDIR) ?: [],
+            'exclude' => array_merge(
+                glob(base_path('app/Modules/*/Tests'), GLOB_ONLYDIR) ?: [],
+                [app_path('Providers/TelescopeServiceProvider.php')],
+            ),
 
             /*
              * Allows to generate specs either for OpenAPI 3.0.0 or OpenAPI 3.1.0.
