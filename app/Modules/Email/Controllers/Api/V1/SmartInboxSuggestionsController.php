@@ -23,17 +23,6 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Email', description: 'API endpoints for inbox messages and email operations.')]
 class SmartInboxSuggestionsController extends Controller
 {
-    #[OA\Get(
-        path: '/api/v1/email/smart-inbox/suggestions',
-        operationId: 'listEmailSmartInboxSuggestions',
-        summary: 'List the current user Smart Inbox review queue',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        responses: [
-            new OA\Response(response: 200, description: 'User and mailbox scoped suggestion queue'),
-            new OA\Response(response: 404, description: 'Requested mailbox is outside the caller scope'),
-        ],
-    )]
     public function index(
         Request $request,
         MailboxAccess $mailboxAccess,
@@ -92,14 +81,6 @@ class SmartInboxSuggestionsController extends Controller
         return EmailSmartInboxSuggestionResource::collection($suggestions);
     }
 
-    #[OA\Get(
-        path: '/api/v1/email/smart-inbox/suggestions/count',
-        operationId: 'countEmailSmartInboxSuggestions',
-        summary: 'Count current user Smart Inbox suggestions by state',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        responses: [new OA\Response(response: 200, description: 'Suggestion counts')],
-    )]
     public function count(
         Request $request,
         MailboxAccess $mailboxAccess,
@@ -128,17 +109,6 @@ class SmartInboxSuggestionsController extends Controller
         ]);
     }
 
-    #[OA\Get(
-        path: '/api/v1/email/smart-inbox/suggestions/{suggestion}',
-        operationId: 'showEmailSmartInboxSuggestion',
-        summary: 'Show one current user Smart Inbox suggestion',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        responses: [
-            new OA\Response(response: 200, description: 'Suggestion detail and audit events'),
-            new OA\Response(response: 404, description: 'Suggestion not found in caller scope'),
-        ],
-    )]
     public function show(
         Request $request,
         int $suggestion,
@@ -149,18 +119,6 @@ class SmartInboxSuggestionsController extends Controller
         return new EmailSmartInboxSuggestionResource($visible->load(['aiAgent:id,name', 'events']));
     }
 
-    #[OA\Post(
-        path: '/api/v1/email/mailbox/conversations/{conversation}/smart-inbox/analyze',
-        operationId: 'analyzeEmailConversationForSmartInbox',
-        summary: 'Explicitly analyze one authorized Mail conversation',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        responses: [
-            new OA\Response(response: 200, description: 'Durable non-writing review suggestions'),
-            new OA\Response(response: 404, description: 'Conversation or placement not found in caller scope'),
-            new OA\Response(response: 422, description: 'AI governance or source state blocked analysis'),
-        ],
-    )]
     public function analyze(
         Request $request,
         int $conversation,
@@ -189,21 +147,6 @@ class SmartInboxSuggestionsController extends Controller
         return EmailSmartInboxSuggestionResource::collection($suggestions);
     }
 
-    #[OA\Post(
-        path: '/api/v1/email/smart-inbox/suggestions/{suggestion}/dismiss',
-        operationId: 'dismissEmailSmartInboxSuggestion',
-        summary: 'Dismiss one current Smart Inbox suggestion',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        parameters: [
-            new OA\Parameter(name: 'suggestion', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Dismissed suggestion and audit events'),
-            new OA\Response(response: 404, description: 'Suggestion not found in caller scope'),
-            new OA\Response(response: 422, description: 'Suggestion is stale or terminal'),
-        ],
-    )]
     public function dismiss(
         Request $request,
         int $suggestion,
@@ -217,21 +160,6 @@ class SmartInboxSuggestionsController extends Controller
         );
     }
 
-    #[OA\Patch(
-        path: '/api/v1/email/smart-inbox/suggestions/{suggestion}',
-        operationId: 'correctEmailSmartInboxSuggestion',
-        summary: 'Correct one current Smart Inbox suggestion',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        parameters: [
-            new OA\Parameter(name: 'suggestion', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Corrected bounded proposal and audit events'),
-            new OA\Response(response: 404, description: 'Suggestion not found in caller scope'),
-            new OA\Response(response: 422, description: 'Suggestion is stale, terminal, or invalid'),
-        ],
-    )]
     public function correct(
         Request $request,
         int $suggestion,
@@ -256,22 +184,6 @@ class SmartInboxSuggestionsController extends Controller
         );
     }
 
-    #[OA\Post(
-        path: '/api/v1/email/smart-inbox/suggestions/{suggestion}/apply',
-        operationId: 'applyEmailSmartInboxSuggestion',
-        summary: 'Apply one reviewed and currently authorized Smart Inbox suggestion',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        parameters: [
-            new OA\Parameter(name: 'suggestion', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Applied suggestion with durable domain reference'),
-            new OA\Response(response: 403, description: 'Current target or agent authority is missing'),
-            new OA\Response(response: 404, description: 'Suggestion not found in caller scope'),
-            new OA\Response(response: 422, description: 'Suggestion is stale, terminal, conflicted, or invalid'),
-        ],
-    )]
     public function apply(
         Request $request,
         int $suggestion,

@@ -3,7 +3,6 @@
 namespace App\Modules\Email\Controllers\Admin;
 
 use App\Modules\Email\Actions\BuildEmailSmartInboxRulePrefill;
-use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailRemoteOperation;
@@ -206,7 +205,7 @@ class RulesController extends Controller
         abort_unless($rule->isAdminManaged(), 404);
         $this->authorizePublish($request);
 
-        $rule->delete();
+        app(\App\Modules\Email\Actions\DeleteEmailAdminRule::class)->handle($request->user(), $rule);
 
         return back()->with('success', 'Email rule deleted.');
     }
@@ -576,19 +575,12 @@ class RulesController extends Controller
 
     private function tags()
     {
-        return Tag::query()
-            ->where('active', true)
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        return app(\App\Modules\Email\Services\EmailRuleFormReferences::class)->tags();
     }
 
     private function emailCategories()
     {
-        return Category::query()
-            ->where('type', Category::TYPE_EMAIL)
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'name', 'slug']);
+        return app(\App\Modules\Email\Services\EmailRuleFormReferences::class)->emailCategories();
     }
 
     private function resolveEmailCategory(string $value): Category
@@ -614,23 +606,12 @@ class RulesController extends Controller
 
     private function ruleAccounts()
     {
-        return EmailAccount::query()
-            ->where('account_kind', '!=', EmailAccount::KIND_PERSONAL)
-            ->where('ticket_ingress_enabled', true)
-            ->orderBy('address')
-            ->get(['id', 'address', 'account_kind']);
+        return app(\App\Modules\Email\Services\EmailRuleFormReferences::class)->ruleAccounts();
     }
 
     private function providerFolders()
     {
-        return EmailFolder::query()
-            ->whereIn('account_id', $this->ruleAccounts()->pluck('id'))
-            ->where('is_selectable', true)
-            ->where('sync_enabled', true)
-            ->with('account:id,address')
-            ->orderBy('account_id')
-            ->orderBy('name')
-            ->get(['id', 'account_id', 'name', 'path', 'role']);
+        return app(\App\Modules\Email\Services\EmailRuleFormReferences::class)->providerFolders();
     }
 
     /**

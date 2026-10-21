@@ -8,7 +8,6 @@ use App\Modules\Email\Actions\ApplyEmailUnreadHandover;
 use App\Modules\Email\Actions\ExpireEmailUnreadHandoverPreviews;
 use App\Modules\Email\Actions\PreviewEmailUnreadHandover;
 use App\Modules\Email\Models\EmailAccount;
-use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailMailboxDelegation;
 use App\Modules\Email\Models\EmailUnreadHandoverRun;
 use App\Modules\Email\Services\EmailOrdinaryMailboxEntitlementResolver;
@@ -18,7 +17,6 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class UnreadHandoverController extends Controller
@@ -33,46 +31,11 @@ class UnreadHandoverController extends Controller
         Request $request,
         ExpireEmailUnreadHandoverPreviews $expirePreviews,
     ): View {
-        /** @var User $actor */
-        $actor = $request->user();
-        $this->authorizeManagerOrNotFound($actor, $account);
+        $this->authorizeManagerOrNotFound($request->user(), $account);
         $expirePreviews->handle($account);
 
-        $runs = EmailUnreadHandoverRun::query()
-            ->where('email_account_id', $account->id)
-            ->with([
-                'requestedBy:id,name',
-                'targetUser:id,name',
-            ])
-            ->withCount('items')
-            ->latest('id')
-            ->limit(50)
-            ->get();
-        $scopeFolderIds = $runs
-            ->flatMap(fn (EmailUnreadHandoverRun $run): array => (array) $run->folder_scope_json)
-            ->map(fn (mixed $id): int => (int) $id)
-            ->filter()
-            ->unique();
-        $folderLabels = EmailFolder::query()
-            ->where('account_id', $account->id)
-            ->whereIn('id', $scopeFolderIds)
-            ->get(['id', 'path'])
-            ->mapWithKeys(fn (EmailFolder $folder): array => [$folder->id => $folder->path]);
-
-        return view('email::Tech.unread-handover.index', [
-            'account' => $account,
-            'actor' => $actor,
-            'folders' => EmailFolder::query()
-                ->where('account_id', $account->id)
-                ->where('is_selectable', true)
-                ->where('sync_enabled', true)
-                ->orderBy('path')
-                ->get(['id', 'name', 'path', 'role']),
-            'folderLabels' => $folderLabels,
-            'runs' => $runs,
-            'targets' => $this->currentTargets($account),
-            'idempotencyKey' => (string) Str::uuid(),
-        ]);
+        return view('email::Tech.unread-handover.index',
+            app(\App\Modules\Email\Services\EmailUnreadHandoverContext::class)->handle($account, $request, $expirePreviews));
     }
 
     public function preview(

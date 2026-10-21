@@ -17,7 +17,6 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Email Mail collaboration', description: 'Default-off shared Mail coordination without content-bearing events.')]
 class MailboxPresenceController extends Controller
 {
-    #[OA\Get(path: '/api/v1/email/mailbox/conversations/{conversation}/presence', operationId: 'showEmailMailboxPresence', summary: 'Show current authorized expiring reading/typing presence', security: [['bearerAuth' => []]], tags: ['Email Mail collaboration'], responses: [new OA\Response(response: 200, description: 'Current permission-filtered presence'), new OA\Response(response: 404, description: 'Conversation/source outside current scope'), new OA\Response(response: 503, description: 'Collaboration remains disabled')])]
     public function show(
         Request $request,
         string $conversation,
@@ -35,7 +34,6 @@ class MailboxPresenceController extends Controller
         }
     }
 
-    #[OA\Post(path: '/api/v1/email/mailbox/conversations/{conversation}/presence', operationId: 'heartbeatEmailMailboxPresence', summary: 'Refresh one bounded per-tab reading or typing presence hint', security: [['bearerAuth' => []]], tags: ['Email Mail collaboration'], responses: [new OA\Response(response: 200, description: 'Heartbeat accepted or presence safely unavailable'), new OA\Response(response: 404, description: 'Conversation/source outside current scope'), new OA\Response(response: 503, description: 'Collaboration remains disabled')])]
     public function heartbeat(
         Request $request,
         string $conversation,
@@ -74,7 +72,6 @@ class MailboxPresenceController extends Controller
         ]]);
     }
 
-    #[OA\Delete(path: '/api/v1/email/mailbox/conversations/{conversation}/presence', operationId: 'leaveEmailMailboxPresence', summary: 'Best-effort leave for one opaque tab presence hint', security: [['bearerAuth' => []]], tags: ['Email Mail collaboration'], responses: [new OA\Response(response: 204, description: 'Presence removed or left to expire'), new OA\Response(response: 503, description: 'Collaboration remains disabled')])]
     public function leave(
         Request $request,
         string $conversation,

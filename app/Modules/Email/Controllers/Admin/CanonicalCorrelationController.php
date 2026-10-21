@@ -10,7 +10,6 @@ use App\Modules\Email\Actions\ResumeEmailCanonicalCorrelationRun;
 use App\Modules\Email\Actions\ReviewEmailCanonicalCorrelationCandidate;
 use App\Modules\Email\Actions\StartEmailCanonicalCorrelationRun;
 use App\Modules\Email\Models\EmailAccount;
-use App\Modules\Email\Models\EmailCanonicalCorrelationCandidate;
 use App\Modules\Email\Models\EmailCanonicalCorrelationRun;
 use App\Modules\Email\Services\MailboxAccess;
 use App\Modules\Email\Services\ResolveMailboxAccessDecision;
@@ -28,44 +27,15 @@ class CanonicalCorrelationController extends Controller
 
     public function index(Request $request): View
     {
-        $actor = $this->operator($request);
-        $accounts = $this->mailboxAccess
-            ->scopeAccounts(EmailAccount::query(), $actor, MailboxAccess::VIEW)
-            ->orderBy('address')
-            ->get(['id', 'address', 'account_kind']);
-        $allowedIds = $accounts->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
-        $runs = EmailCanonicalCorrelationRun::query()
-            ->where('requested_by', $actor->id)
-            ->latest('id')
-            ->limit(50)
-            ->get()
-            ->filter(fn (EmailCanonicalCorrelationRun $run): bool => collect($run->account_scope_json)
-                ->every(fn (mixed $id): bool => in_array((int) $id, $allowedIds, true)));
+        $data = app()->call([app(\App\Modules\Email\Services\EmailCanonicalCorrelationOperations::class), 'index'], ['request' => $request]);
 
-        return view('email::Admin.Correlation.index', compact('accounts', 'runs'));
+        return view('email::Admin.Correlation.index', $data);
     }
 
     public function store(Request $request, StartEmailCanonicalCorrelationRun $start): RedirectResponse
     {
-        $actor = $this->operator($request);
-        $data = $request->validate([
-            'account_ids' => ['required', 'array', 'min:1', 'max:25'],
-            'account_ids.*' => ['required', 'integer', 'distinct'],
-            'min_message_id' => ['nullable', 'integer', 'min:1'],
-            'max_message_id' => ['nullable', 'integer', 'min:1', 'gte:min_message_id'],
-            'message_cap' => ['nullable', 'integer'],
-            'group_cap' => ['nullable', 'integer'],
-            'pair_cap' => ['nullable', 'integer'],
-            'per_group_cap' => ['nullable', 'integer'],
-        ]);
-        $run = $start->handle($actor, $data['account_ids'], array_filter([
-            'min_message_id' => $data['min_message_id'] ?? null,
-            'max_message_id' => $data['max_message_id'] ?? null,
-            'message_cap' => $data['message_cap'] ?? null,
-            'group_cap' => $data['group_cap'] ?? null,
-            'pair_cap' => $data['pair_cap'] ?? null,
-            'per_group_cap' => $data['per_group_cap'] ?? null,
-        ], fn (mixed $value): bool => $value !== null));
+        $data = app()->call([app(\App\Modules\Email\Services\EmailCanonicalCorrelationOperations::class), 'store'], ['request' => $request]);
+        $run = $data['run'];
 
         return redirect()
             ->route('tech.admin.settings.email.correlation.show', $run)
@@ -76,19 +46,9 @@ class CanonicalCorrelationController extends Controller
         Request $request,
         string $run,
     ): View {
-        $actor = $this->operator($request);
-        $run = EmailCanonicalCorrelationRun::query()
-            ->where('requested_by', $actor->id)
-            ->findOrFail((int) $run);
-        $accounts = $this->authorizeRun($run, $actor);
-        $candidates = $run->candidates()
-            ->withExists(['inspections as inspected_by_current_user' => fn ($inspections) => $inspections
-                ->where('inspected_by', $actor->id)])
-            ->orderBy('candidate_class')
-            ->orderBy('id')
-            ->paginate(50);
+        $data = app()->call([app(\App\Modules\Email\Services\EmailCanonicalCorrelationOperations::class), 'show'], ['request' => $request, 'run' => $run]);
 
-        return view('email::Admin.Correlation.show', compact('run', 'accounts', 'candidates'));
+        return view('email::Admin.Correlation.show', $data);
     }
 
     public function inspect(
@@ -96,13 +56,9 @@ class CanonicalCorrelationController extends Controller
         string $candidate,
         InspectEmailCanonicalCorrelationCandidate $inspect,
     ): View {
-        $actor = $this->operator($request);
-        $candidate = EmailCanonicalCorrelationCandidate::query()
-            ->whereHas('run', fn ($runs) => $runs->where('requested_by', $actor->id))
-            ->findOrFail((int) $candidate);
-        $inspection = $inspect->handle($candidate, $actor);
+        $data = app()->call([app(\App\Modules\Email\Services\EmailCanonicalCorrelationOperations::class), 'inspect'], ['request' => $request, 'candidate' => $candidate]);
 
-        return view('email::Admin.Correlation.inspect', $inspection);
+        return view('email::Admin.Correlation.inspect', $data);
     }
 
     public function review(
@@ -110,15 +66,8 @@ class CanonicalCorrelationController extends Controller
         string $candidate,
         ReviewEmailCanonicalCorrelationCandidate $review,
     ): RedirectResponse {
-        $actor = $this->operator($request);
-        $candidate = EmailCanonicalCorrelationCandidate::query()
-            ->whereHas('run', fn ($runs) => $runs->where('requested_by', $actor->id))
-            ->findOrFail((int) $candidate);
-        $data = $request->validate([
-            'review_state' => ['required', 'string'],
-            'reason_code' => ['required', 'string', 'max:80'],
-        ]);
-        $review->handle($candidate, $actor, $data['review_state'], $data['reason_code']);
+        $data = app()->call([app(\App\Modules\Email\Services\EmailCanonicalCorrelationOperations::class), 'review'], ['request' => $request, 'candidate' => $candidate]);
+        $candidate = $data['candidate'];
 
         return back()->with('success', 'The metadata-only shadow review was recorded.');
     }
@@ -128,11 +77,8 @@ class CanonicalCorrelationController extends Controller
         string $run,
         ResumeEmailCanonicalCorrelationRun $resume,
     ): RedirectResponse {
-        $actor = $this->operator($request);
-        $run = EmailCanonicalCorrelationRun::query()
-            ->where('requested_by', $actor->id)
-            ->findOrFail((int) $run);
-        $resume->handle($run, $actor);
+        $data = app()->call([app(\App\Modules\Email\Services\EmailCanonicalCorrelationOperations::class), 'resume'], ['request' => $request, 'run' => $run]);
+        $run = $data['run'];
 
         return back()->with('success', 'The bounded shadow run was queued from its durable cursor.');
     }
@@ -142,11 +88,8 @@ class CanonicalCorrelationController extends Controller
         string $run,
         CancelEmailCanonicalCorrelationRun $cancel,
     ): RedirectResponse {
-        $actor = $this->operator($request);
-        $run = EmailCanonicalCorrelationRun::query()
-            ->where('requested_by', $actor->id)
-            ->findOrFail((int) $run);
-        $cancel->handle($run, $actor);
+        $data = app()->call([app(\App\Modules\Email\Services\EmailCanonicalCorrelationOperations::class), 'cancel'], ['request' => $request, 'run' => $run]);
+        $run = $data['run'];
 
         return back()->with('success', 'The shadow run was cancelled.');
     }

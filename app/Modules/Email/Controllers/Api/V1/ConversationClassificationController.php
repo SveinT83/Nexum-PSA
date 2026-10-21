@@ -18,20 +18,6 @@ use OpenApi\Attributes as OA;
 )]
 class ConversationClassificationController extends Controller
 {
-    #[OA\Get(
-        path: '/api/v1/email/mailbox/conversations/{conversation}/classification',
-        operationId: 'getEmailConversationClassification',
-        summary: 'Read one account-scoped Mail conversation classification',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        parameters: [
-            new OA\Parameter(name: 'conversation', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Conversation classification or null'),
-            new OA\Response(response: 404, description: 'Conversation not found or inaccessible'),
-        ]
-    )]
     public function show(
         Request $request,
         EmailConversation $conversation,
@@ -45,22 +31,6 @@ class ConversationClassificationController extends Controller
         ]);
     }
 
-    #[OA\Put(
-        path: '/api/v1/email/mailbox/conversations/{conversation}/classification',
-        operationId: 'updateEmailConversationClassification',
-        summary: 'Update one account-scoped Mail conversation classification',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        parameters: [
-            new OA\Parameter(name: 'conversation', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Updated conversation classification'),
-            new OA\Response(response: 403, description: 'Mailbox Organize access required'),
-            new OA\Response(response: 404, description: 'Conversation not found or inaccessible'),
-            new OA\Response(response: 422, description: 'Invalid category, tags, or conversation placement'),
-        ]
-    )]
     public function update(
         Request $request,
         EmailConversation $conversation,
@@ -94,21 +64,6 @@ class ConversationClassificationController extends Controller
         ]);
     }
 
-    #[OA\Delete(
-        path: '/api/v1/email/mailbox/conversations/{conversation}/classification',
-        operationId: 'clearEmailConversationClassification',
-        summary: 'Clear one account-scoped Mail conversation classification',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        parameters: [
-            new OA\Parameter(name: 'conversation', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Cleared conversation classification'),
-            new OA\Response(response: 403, description: 'Mailbox Organize access required'),
-            new OA\Response(response: 404, description: 'Conversation not found or inaccessible'),
-        ]
-    )]
     public function destroy(
         Request $request,
         EmailConversation $conversation,

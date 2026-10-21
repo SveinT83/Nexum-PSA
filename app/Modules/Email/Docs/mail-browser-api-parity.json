@@ -1,0 +1,1117 @@
+{
+  "status": "Reviewed parity map for implemented browser outcomes; existing runtime gates preserved",
+  "browser_routes": [
+    {
+      "method": "GET",
+      "path": "/tech/admin/settings/email/accounts",
+      "name": "tech.admin.settings.email.accounts",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\AccountsController@index",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/admin/accounts",
+          "name": "api.v1.email.admin.accounts.index"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/accounts",
+      "name": "tech.admin.settings.email.accounts.store",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\AccountsController@store",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/accounts",
+          "name": "api.v1.email.admin.accounts.store"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/admin/settings/email/accounts/create",
+      "name": "tech.admin.settings.email.accounts.create",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\AccountsController@create",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/admin/accounts/context",
+          "name": "api.v1.email.admin.accounts.context"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/tech/admin/settings/email/accounts/{account}",
+      "name": "tech.admin.settings.email.accounts.update",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\AccountsController@update",
+      "api": [
+        {
+          "method": "PUT",
+          "path": "/api/v1/email/admin/accounts/{account}",
+          "name": "api.v1.email.admin.accounts.update"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/admin/settings/email/accounts/{account}/edit",
+      "name": "tech.admin.settings.email.accounts.edit",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\AccountsController@edit",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/admin/accounts/{account}",
+          "name": "api.v1.email.admin.accounts.show"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/accounts/{account}/folders/{folder}/cursor-rebaseline",
+      "name": "tech.admin.settings.email.accounts.cursor-rebaseline.apply",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\MailboxMaintenanceController@applyCursorRebaseline",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/accounts/{account}/folders/{folder}/cursor-rebaseline",
+          "name": "api.v1.email.maintenance.mailboxmaintenance.applyCursorRebaseline"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/accounts/{account}/folders/{folder}/cursor-rebaseline/preview",
+      "name": "tech.admin.settings.email.accounts.cursor-rebaseline.preview",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\MailboxMaintenanceController@previewCursorRebaseline",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/accounts/{account}/folders/{folder}/cursor-rebaseline/preview",
+          "name": "api.v1.email.maintenance.mailboxmaintenance.previewCursorRebaseline"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/accounts/{account}/historical-import",
+      "name": "tech.admin.settings.email.accounts.historical-import.start",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\MailboxMaintenanceController@startHistoricalImport",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/accounts/{account}/historical-import",
+          "name": "api.v1.email.maintenance.mailboxmaintenance.startHistoricalImport"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/accounts/{account}/historical-import/preview",
+      "name": "tech.admin.settings.email.accounts.historical-import.preview",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\MailboxMaintenanceController@previewHistoricalImport",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/accounts/{account}/historical-import/preview",
+          "name": "api.v1.email.maintenance.mailboxmaintenance.previewHistoricalImport"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/accounts/{account}/historical-import/{run}/cancel",
+      "name": "tech.admin.settings.email.accounts.historical-import.cancel",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\MailboxMaintenanceController@cancelHistoricalImport",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/accounts/{account}/historical-import/{run}/cancel",
+          "name": "api.v1.email.maintenance.mailboxmaintenance.cancelHistoricalImport"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/admin/settings/email/accounts/{account}/mailbox-maintenance",
+      "name": "tech.admin.settings.email.accounts.mailbox-maintenance",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\MailboxMaintenanceController@index",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/admin/accounts/{account}/maintenance",
+          "name": "api.v1.email.maintenance.mailboxmaintenance.index"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/accounts/{account}/provider-reconciliation",
+      "name": "tech.admin.settings.email.accounts.provider-reconciliation.start",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\MailboxMaintenanceController@startProviderReconciliation",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/accounts/{account}/provider-reconciliation",
+          "name": "api.v1.email.maintenance.mailboxmaintenance.startProviderReconciliation"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/accounts/{account}/provider-reconciliation/{run}/cancel",
+      "name": "tech.admin.settings.email.accounts.provider-reconciliation.cancel",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\MailboxMaintenanceController@cancelProviderReconciliation",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/accounts/{account}/provider-reconciliation/{run}/cancel",
+          "name": "api.v1.email.maintenance.mailboxmaintenance.cancelProviderReconciliation"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/accounts/{account}/test",
+      "name": "tech.admin.settings.email.accounts.test",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\AccountsController@test",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/accounts/{account}/test",
+          "name": "api.v1.email.admin.accounts.test"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/accounts/{account}/toggle",
+      "name": "tech.admin.settings.email.accounts.toggle",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\AccountsController@toggleActive",
+      "api": [
+        {
+          "method": "PUT",
+          "path": "/api/v1/email/admin/accounts/{account}/activation",
+          "name": "api.v1.email.admin.accounts.activation"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/admin/settings/email/canonical-cutover",
+      "name": "tech.admin.settings.email.canonical-cutover.index",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\CanonicalCutoverController@index",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/admin/canonical-cutover",
+          "name": "api.v1.email.maintenance.canonicalcutover.index"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/canonical-cutover/audit",
+      "name": "tech.admin.settings.email.canonical-cutover.audit",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\CanonicalCutoverController@audit",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/canonical-cutover/audit",
+          "name": "api.v1.email.maintenance.canonicalcutover.audit"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/canonical-cutover/backfill",
+      "name": "tech.admin.settings.email.canonical-cutover.backfill",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\CanonicalCutoverController@backfill",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/canonical-cutover/backfill",
+          "name": "api.v1.email.maintenance.canonicalcutover.backfill"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/canonical-cutover/merge",
+      "name": "tech.admin.settings.email.canonical-cutover.merge",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\CanonicalCutoverController@merge",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/canonical-cutover/merge",
+          "name": "api.v1.email.maintenance.canonicalcutover.merge"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/canonical-cutover/mode",
+      "name": "tech.admin.settings.email.canonical-cutover.mode",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\CanonicalCutoverController@mode",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/canonical-cutover/mode",
+          "name": "api.v1.email.maintenance.canonicalcutover.mode"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/admin/settings/email/canonical-cutover/{run}",
+      "name": "tech.admin.settings.email.canonical-cutover.show",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\CanonicalCutoverController@show",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/admin/canonical-cutover/{run}",
+          "name": "api.v1.email.maintenance.canonicalcutover.show"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/canonical-cutover/{run}/apply",
+      "name": "tech.admin.settings.email.canonical-cutover.apply",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\CanonicalCutoverController@apply",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/canonical-cutover/{run}/apply",
+          "name": "api.v1.email.maintenance.canonicalcutover.apply"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/canonical-cutover/{run}/rollback",
+      "name": "tech.admin.settings.email.canonical-cutover.rollback",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\CanonicalCutoverController@rollback",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/canonical-cutover/{run}/rollback",
+          "name": "api.v1.email.maintenance.canonicalcutover.rollback"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/admin/settings/email/config",
+      "name": "tech.admin.settings.email.config",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\ConfigController@index",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/settings",
+          "name": "api.v1.email.settings.show"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/config",
+      "name": "tech.admin.settings.email.config.update",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\ConfigController@update",
+      "api": [
+        {
+          "method": "PUT",
+          "path": "/api/v1/email/settings",
+          "name": "api.v1.email.settings.update"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/admin/settings/email/correlation",
+      "name": "tech.admin.settings.email.correlation.index",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\CanonicalCorrelationController@index",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/admin/correlation",
+          "name": "api.v1.email.maintenance.canonicalcorrelation.index"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/correlation",
+      "name": "tech.admin.settings.email.correlation.store",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\CanonicalCorrelationController@store",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/correlation",
+          "name": "api.v1.email.maintenance.canonicalcorrelation.store"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/admin/settings/email/correlation/candidates/{candidate}/inspect",
+      "name": "tech.admin.settings.email.correlation.candidates.inspect",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\CanonicalCorrelationController@inspect",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/correlation/candidates/{candidate}/inspect",
+          "name": "api.v1.email.maintenance.canonicalcorrelation.inspect"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/correlation/candidates/{candidate}/review",
+      "name": "tech.admin.settings.email.correlation.candidates.review",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\CanonicalCorrelationController@review",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/correlation/candidates/{candidate}/review",
+          "name": "api.v1.email.maintenance.canonicalcorrelation.review"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/admin/settings/email/correlation/{run}",
+      "name": "tech.admin.settings.email.correlation.show",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\CanonicalCorrelationController@show",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/admin/correlation/{run}",
+          "name": "api.v1.email.maintenance.canonicalcorrelation.show"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/correlation/{run}/cancel",
+      "name": "tech.admin.settings.email.correlation.cancel",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\CanonicalCorrelationController@cancel",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/correlation/{run}/cancel",
+          "name": "api.v1.email.maintenance.canonicalcorrelation.cancel"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/correlation/{run}/resume",
+      "name": "tech.admin.settings.email.correlation.resume",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\CanonicalCorrelationController@resume",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/correlation/{run}/resume",
+          "name": "api.v1.email.maintenance.canonicalcorrelation.resume"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/admin/settings/email/emergency-access",
+      "name": "tech.admin.settings.email.emergency-access.index",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\EmergencyMailboxAccessController@index",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/admin/emergency-access",
+          "name": "api.v1.email.admin.emergency.index"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/emergency-access",
+      "name": "tech.admin.settings.email.emergency-access.store",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\EmergencyMailboxAccessController@store",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/emergency-access",
+          "name": "api.v1.email.admin.emergency.store"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/emergency-access/{accessId}/revoke",
+      "name": "tech.admin.settings.email.emergency-access.revoke",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\EmergencyMailboxAccessController@revoke",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/mailbox/emergency-access/{emergency}/revoke",
+          "name": "api.v1.email.mailbox.emergency.revoke"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/admin/settings/email/rules",
+      "name": "tech.admin.settings.email.rules",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\RulesController@index",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/rules",
+          "name": "api.v1.email.rules.index"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/rules",
+      "name": "tech.admin.settings.email.rules.store",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\RulesController@store",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/rules/drafts",
+          "name": "api.v1.email.rules.drafts.create"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/admin/settings/email/rules/create",
+      "name": "tech.admin.settings.email.rules.create",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\RulesController@create",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/rules-context",
+          "name": "api.v1.email.rules.context"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/rules/reprocess-runs/{run}/apply",
+      "name": "tech.admin.settings.email.rules.reprocess-runs.apply",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\RulesController@applyReprocess",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/rule-reprocess-runs/{run}/apply",
+          "name": "api.v1.email.rules.runs.apply"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/rules/undo/{attempt}",
+      "name": "tech.admin.settings.email.rules.undo",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\RulesController@undoExecution",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/rules/executions/{attempt}/undo",
+          "name": "api.v1.email.rules.executions.undo.store"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/tech/admin/settings/email/rules/{rule}",
+      "name": "tech.admin.settings.email.rules.update",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\RulesController@update",
+      "api": [
+        {
+          "method": "PUT",
+          "path": "/api/v1/email/rules/{rule}/draft",
+          "name": "api.v1.email.rules.drafts.update"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/tech/admin/settings/email/rules/{rule}",
+      "name": "tech.admin.settings.email.rules.destroy",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\RulesController@destroy",
+      "api": [
+        {
+          "method": "DELETE",
+          "path": "/api/v1/email/rules/{rule}",
+          "name": "api.v1.email.rules.destroy"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/admin/settings/email/rules/{rule}/edit",
+      "name": "tech.admin.settings.email.rules.edit",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\RulesController@edit",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/rules/{rule}/draft",
+          "name": "api.v1.email.rules.drafts.show"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/rules/{rule}/reprocess-preview",
+      "name": "tech.admin.settings.email.rules.reprocess-preview",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\RulesController@reprocessPreview",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/rules/{rule}/reprocess-preview",
+          "name": "api.v1.email.rules.reprocess-preview"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/rules/{rule}/toggle",
+      "name": "tech.admin.settings.email.rules.toggle",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\RulesController@toggle",
+      "api": [
+        {
+          "method": "PUT",
+          "path": "/api/v1/email/rules/{rule}/draft",
+          "name": "api.v1.email.rules.drafts.update"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/email/rules/{rule}/publish",
+          "name": "api.v1.email.rules.publish"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/admin/settings/email/ticket-correlation-conflicts",
+      "name": "tech.admin.settings.email.ticket-correlation-conflicts.index",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\TicketCorrelationConflictController@index",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/admin/ticket-correlation-conflicts",
+          "name": "api.v1.email.maintenance.ticketcorrelationconflict.index"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/settings/email/ticket-correlation-conflicts/{conflict}/resolve",
+      "name": "tech.admin.settings.email.ticket-correlation-conflicts.resolve",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\TicketCorrelationConflictController@resolve",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/admin/ticket-correlation-conflicts/{conflict}/resolve",
+          "name": "api.v1.email.maintenance.ticketcorrelationconflict.resolve"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/admin/system/templatesManagement/email",
+      "name": "tech.admin.system.templatesManagement.email.index",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\Templates\\EmailTemplateController@index",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/templates",
+          "name": "api.v1.email.templates.index"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/system/templatesManagement/email",
+      "name": "tech.admin.system.templatesManagement.email.store",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\Templates\\EmailTemplateController@store",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/templates",
+          "name": "api.v1.email.templates.store"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/admin/system/templatesManagement/email/create",
+      "name": "tech.admin.system.templatesManagement.email.create",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\Templates\\EmailTemplateController@create",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/templates/context",
+          "name": "api.v1.email.templates.context"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/admin/system/templatesManagement/email/preview",
+      "name": "tech.admin.system.templatesManagement.email.preview",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\Templates\\EmailTemplateController@preview",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/templates/preview",
+          "name": "api.v1.email.templates.preview"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/tech/admin/system/templatesManagement/email/{template}",
+      "name": "tech.admin.system.templatesManagement.email.update",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\Templates\\EmailTemplateController@update",
+      "api": [
+        {
+          "method": "PUT",
+          "path": "/api/v1/email/templates/{template}",
+          "name": "api.v1.email.templates.update"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/admin/system/templatesManagement/email/{template}/edit",
+      "name": "tech.admin.system.templatesManagement.email.edit",
+      "action": "App\\Modules\\Email\\Controllers\\Admin\\Templates\\EmailTemplateController@edit",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/templates/{template}",
+          "name": "api.v1.email.templates.show"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/inbox",
+      "name": "tech.inbox.index",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\InboxController@index",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/inbox/messages",
+          "name": "api.v1.email.inbox.messages.index"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/inbox/attachments/{attachment}/download",
+      "name": "tech.inbox.download",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\InboxController@download",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/mailbox/placements/{placement}/attachments/{attachment}/download",
+          "name": "api.v1.email.mailbox.attachments.download"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/inbox/poll",
+      "name": "tech.inbox.poll",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\InboxController@poll",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/inbox/poll",
+          "name": "api.v1.email.inbox.poll"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/inbox/show/{message}",
+      "name": "tech.inbox.show",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\InboxController@show",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/inbox/messages/{message}",
+          "name": "api.v1.email.inbox.messages.show"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/tech/inbox/{message}",
+      "name": "tech.inbox.delete",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\InboxController@destroy",
+      "api": [
+        {
+          "method": "DELETE",
+          "path": "/api/v1/email/inbox/messages/{message}",
+          "name": "api.v1.email.inbox.messages.trash"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/inbox/{message}/spam",
+      "name": "tech.inbox.spam",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\InboxController@markSpam",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/inbox/messages/{message}/spam",
+          "name": "api.v1.email.inbox.messages.spam"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/mail",
+      "name": "tech.mail.index",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\MailController@index",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/mailbox/context",
+          "name": "api.v1.email.mailbox.context"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/email/mailbox/conversations",
+          "name": "api.v1.email.mailbox.conversations.index"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/mail/access",
+      "name": "tech.mail.access.index",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\MailboxAccessController@index",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/mailbox/access",
+          "name": "api.v1.email.mailbox.access.index"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/mail/access-history",
+      "name": "tech.mail.access.history",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\MailboxAccessHistoryController",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/mailbox/access-history",
+          "name": "api.v1.email.mailbox.access.history"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/mail/access/accounts/{accountId}/delegations",
+      "name": "tech.mail.access.store",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\MailboxAccessController@store",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/mailbox/accounts/{account}/delegations",
+          "name": "api.v1.email.mailbox.delegations.store"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/mail/access/accounts/{accountId}/delegations/{delegationId}/revoke",
+      "name": "tech.mail.access.delegations.revoke",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\MailboxAccessController@revokeDelegation",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/mailbox/accounts/{account}/delegations/{delegation}/revoke",
+          "name": "api.v1.email.mailbox.delegations.revoke"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/mail/access/emergency/{accessId}/revoke",
+      "name": "tech.mail.access.emergency.revoke",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\MailboxAccessController@revokeBreakGlass",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/mailbox/emergency-access/{emergency}/revoke",
+          "name": "api.v1.email.mailbox.emergency.revoke"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/mail/accounts/{account}/unread-handover",
+      "name": "tech.mail.unread-handover.index",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\UnreadHandoverController@index",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/mailbox/accounts/{account}/unread-handovers",
+          "name": "api.v1.email.mailbox.handovers.index"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/mail/accounts/{account}/unread-handover/preview",
+      "name": "tech.mail.unread-handover.preview",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\UnreadHandoverController@preview",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/mailbox/accounts/{account}/unread-handovers/preview",
+          "name": "api.v1.email.mailbox.handovers.preview"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/mail/accounts/{account}/unread-handover/{run}",
+      "name": "tech.mail.unread-handover.apply",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\UnreadHandoverController@apply",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/mailbox/accounts/{account}/unread-handovers/{run}/apply",
+          "name": "api.v1.email.mailbox.handovers.apply"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/tech/mail/broadcasting/auth",
+      "name": "tech.mail.broadcast.auth",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\EmailBroadcastingController",
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/email/mailbox/live/broadcast-auth",
+          "name": "api.v1.email.mailbox.live.broadcast-auth"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/mail/placements/{placement}/attachments/{attachment}/download",
+      "name": "tech.mail.attachments.download",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\MailAttachmentController@download",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/mailbox/placements/{placement}/attachments/{attachment}/download",
+          "name": "api.v1.email.mailbox.attachments.download"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/tech/mail/placements/{placement}/raw-source",
+      "name": "tech.mail.raw-source.show",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\MailRawSourceController@show",
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/email/mailbox/placements/{placement}/raw-source",
+          "name": "api.v1.email.mailbox.raw-source.show"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/tech/mail/signature",
+      "name": "tech.mail.signature.update",
+      "action": "App\\Modules\\Email\\Controllers\\Tech\\SignatureController@update",
+      "api": [
+        {
+          "method": "PATCH",
+          "path": "/api/v1/email/mailbox/signature",
+          "name": "api.v1.email.mailbox.signature.update"
+        }
+      ]
+    }
+  ],
+  "livewire_public_interfaces": {
+    "app/Modules/Email/Livewire/Tech/Concerns/ManagesSharedComposerDraft.php": [
+      "acquireComposerSharedLease",
+      "composerSharedEditable",
+      "releaseComposerSharedLease",
+      "renewComposerSharedLease",
+      "shareComposerDraft"
+    ],
+    "app/Modules/Email/Livewire/Tech/MailSidebar.php": [
+      "refreshAfterMailStateChanged",
+      "render",
+      "selectFolder",
+      "toggleFolderNavigationFolder"
+    ],
+    "app/Modules/Email/Livewire/Tech/MailWorkspace.php": [
+      "acknowledgeConversation",
+      "applyComposerAi",
+      "applyConversationAcknowledgement",
+      "applyFilters",
+      "applySmartInboxPersonalRulePrefill",
+      "archiveSelected",
+      "canCreateFolderForSelectedAccount",
+      "canCreatePersonalRuleForPlacement",
+      "canCreateTicketFromPlacement",
+      "canEditProviderDraftPlacement",
+      "canLinkTicketFromPlacement",
+      "canManageFoldersForSelectedAccount",
+      "canMarkSpamPlacement",
+      "canOpenAdminRulesForPlacement",
+      "canOpenTicketFromPlacement",
+      "canOrganizePlacement",
+      "canRefreshSelectedFolder",
+      "canReplyAllFromPlacement",
+      "canReplyToPlacement",
+      "canSendAndReceiveMail",
+      "canSendFromPlacement",
+      "canUseAiAction",
+      "canUseAiTicketCreateAction",
+      "canUseComposerAiAction",
+      "canUseComposerAiDraftReply",
+      "canUsePersonalUnreadForPlacement",
+      "canUseRuleAction",
+      "canUseTicketContextForPlacement",
+      "canViewRawSourceForPlacement",
+      "cancelComposer",
+      "cancelConversationAcknowledgement",
+      "cancelFolderDelete",
+      "cancelFolderMove",
+      "cancelFolderRename",
+      "cancelRemoteOperation",
+      "cancelReply",
+      "catchUpInvalidation",
+      "changeFolderManagerAccount",
+      "classificationForPlacement",
+      "clearClassification",
+      "clearMailAiSummary",
+      "clearSearch",
+      "closeConversationAcknowledgement",
+      "closeFolderManager",
+      "closePersonalRuleModal",
+      "composerDraftAttachmentSizeLabel",
+      "composerModeLabel",
+      "conversationAcknowledgementAvailable",
+      "conversationCountLabel",
+      "createPersonalRule",
+      "createProviderFolder",
+      "createTicketForSelected",
+      "createTicketFromAiReview",
+      "deleteProviderFolder",
+      "discardComposerDraft",
+      "editProviderDraft",
+      "folderLabel",
+      "folderManagerAccountLabel",
+      "folderManagerAccounts",
+      "folderManagerRows",
+      "folderMoveTargetsFor",
+      "folderParentTargetsFor",
+      "generateMailAiSummary",
+      "getListeners",
+      "handleEmailProjectionInvalidated",
+      "hasArchiveTarget",
+      "hasMoveTargets",
+      "hasTrashTarget",
+      "isProviderDraftPlacement",
+      "linkSelectedToTicket",
+      "loadMoreLegacyConversation",
+      "mailCountLabel",
+      "markSelectedRead",
+      "markSelectedReadForMe",
+      "markSelectedSpam",
+      "markSelectedUnread",
+      "messagePreview",
+      "mount",
+      "moveManagedFolderMail",
+      "moveProviderFolder",
+      "moveSelectedToFolder",
+      "moveTargetFolders",
+      "openConversationAcknowledgement",
+      "openFolderManager",
+      "openRuleAction",
+      "personalRuleActionOptions",
+      "personalRuleConditionOptions",
+      "previewConversationAcknowledgement",
+      "recipientSummary",
+      "refreshConversationAcknowledgement",
+      "refreshSelectedFolder",
+      "remoteOperationBadgeClass",
+      "remoteOperationLabel",
+      "removeComposerAttachment",
+      "removeComposerDraftAttachment",
+      "removeReplyAttachment",
+      "renameProviderFolder",
+      "render",
+      "retryRemoteOperation",
+      "ruleExecutionAttemptsForPlacement",
+      "saveClassification",
+      "saveComposerDraft",
+      "selectAccount",
+      "selectFolder",
+      "selectPlacement",
+      "sendAndReceiveMail",
+      "sendComposer",
+      "sendReply",
+      "senderInitial",
+      "senderLabel",
+      "sentReconciliationForPlacement",
+      "setProviderFlaggedForSelected",
+      "setProviderSeenForSelected",
+      "setSelectedUnreadForMe",
+      "setView",
+      "startCompose",
+      "startFolderDelete",
+      "startFolderMove",
+      "startFolderRename",
+      "startForward",
+      "startReply",
+      "startReplyAll",
+      "suppressSelectedTicketCorrelation",
+      "ticketConversationLinksForPlacement",
+      "toggleClassificationEditor",
+      "toggleFolderManagerFolder",
+      "toggleMovePanel",
+      "toggleNewFolderForm",
+      "toggleRemoteOperations",
+      "toggleTicketLinkPanel",
+      "trashSelected",
+      "undoRemoteOperation",
+      "updatedListFilter",
+      "updatedSearch",
+      "usesBreakGlassForPlacement"
+    ],
+    "app/Modules/Email/Livewire/Tech/SmartInboxReviewQueue.php": [
+      "alwaysDoThis",
+      "analyze",
+      "apply",
+      "applySelected",
+      "beginCorrection",
+      "cancelCorrection",
+      "closeReview",
+      "dismiss",
+      "render",
+      "saveCorrection",
+      "toggleReview"
+    ]
+  },
+  "livewire_note": "Local pane/selection/editor helpers need no standalone endpoint. Material reads, writes and persisted actions are covered by M01-M44 and the API contracts. Any new public interface or browser route requires a parity review."
+}

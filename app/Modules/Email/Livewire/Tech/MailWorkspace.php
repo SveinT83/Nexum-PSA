@@ -88,6 +88,7 @@ use RuntimeException;
 
 class MailWorkspace extends Component
 {
+    use \App\Modules\Email\Concerns\QueriesEmailMailboxPlacements;
     use ManagesSharedComposerDraft;
     use WithFileUploads;
     use WithPagination;
@@ -774,65 +775,24 @@ class MailWorkspace extends Component
     {
         $placement = $this->selectedPlacementForAction();
         $user = $this->user();
-
-        if (! $placement?->message || ! $placement->account || ! $user
-            || ! $this->canUsePersonalUnreadForPlacement($placement)) {
-            $this->mailActionStatus = [
-                'type' => 'warning',
-                'message' => 'Select an accessible message before changing its read status.',
-            ];
-
+        if (! $placement?->message || ! $user || ! $this->canUsePersonalUnreadForPlacement($placement)) {
+            $this->mailActionStatus = ['type' => 'warning', 'message' => 'Select an accessible message before changing its read status.'];
             return;
         }
-
         try {
-            app(SetEmailUnreadForMe::class)->handle($user, $placement->message, ! $read);
-            $this->unreadForMeByMessage[$placement->message->id] = ! $read;
+            $result = app(\App\Modules\Email\Actions\SetEmailSelectedReadState::class)->handle($user, $placement, $read);
         } catch (AuthorizationException) {
-            $this->mailActionStatus = [
-                'type' => 'warning',
-                'message' => 'You no longer have access to change this message.',
-            ];
-
+            $this->mailActionStatus = ['type' => 'warning', 'message' => 'You no longer have access to change this message.'];
             return;
         }
-
-        $actionLabel = $read ? 'read' : 'unread';
-        $this->mailActionStatus = [
-            'type' => 'success',
-            'message' => 'Marked as '.$actionLabel.'.',
-        ];
-
-        $mirrorsPersonalMailbox = $placement->account->isPersonal()
-            && (int) $placement->account->owner_id === (int) $user->id;
-
-        if ($mirrorsPersonalMailbox) {
-            try {
-                $remoteOperation = app(PerformEmailRemoteOperation::class)->handle(
-                    $placement,
-                    $read ? PerformEmailRemoteOperation::MARK_SEEN : PerformEmailRemoteOperation::MARK_UNSEEN,
-                    $user,
-                );
-
-                if ($remoteOperation->status === EmailRemoteOperation::STATUS_FAILED) {
-                    $this->mailActionStatus = [
-                        'type' => 'warning',
-                        'message' => 'Marked as '.$actionLabel.' for you, but the mail server update failed.',
-                    ];
-                } elseif ($remoteOperation->status !== EmailRemoteOperation::STATUS_SUCCEEDED) {
-                    $this->mailActionStatus = [
-                        'type' => 'info',
-                        'message' => 'Marked as '.$actionLabel.'. Mail server update is pending.',
-                    ];
-                }
-            } catch (ValidationException|RuntimeException) {
-                $this->mailActionStatus = [
-                    'type' => 'warning',
-                    'message' => 'Marked as '.$actionLabel.' for you, but the mail server could not be updated.',
-                ];
-            }
+        $this->unreadForMeByMessage[$placement->message->id] = ! $read;
+        $label = $read ? 'read' : 'unread';
+        $this->mailActionStatus = ['type' => 'success', 'message' => 'Marked as '.$label.'.'];
+        if ($result['provider_status'] === 'failed') {
+            $this->mailActionStatus = ['type' => 'warning', 'message' => 'Marked as '.$label.' for you, but the mail server update failed.'];
+        } elseif (! in_array($result['provider_status'], ['not_requested', 'succeeded'], true)) {
+            $this->mailActionStatus = ['type' => 'info', 'message' => 'Marked as '.$label.'. Mail server update is pending.'];
         }
-
         $this->dispatch('mail-state-changed');
     }
 
@@ -903,11 +863,15 @@ class MailWorkspace extends Component
             return;
         }
 
-        $rule = app(MarkEmailAsSpam::class)->handle($placement->message, $user);
+        $result = app(\App\Modules\Email\Actions\MarkMailPlacementAsSpam::class)->handle($placement, $user);
+        $rule = $result['rule'];
 
-        if ($this->hasArchiveTarget($placement)) {
+        if ($result['archive_status'] !== 'not_requested') {
             try {
-                $remoteOperation = app(PerformEmailRemoteOperation::class)->handle($placement, PerformEmailRemoteOperation::ARCHIVE, $user);
+                if (! $result['operation']) {
+                    throw ValidationException::withMessages(['archive' => $result['archive_error']]);
+                }
+                $remoteOperation = $result['operation'];
             } catch (ValidationException $exception) {
                 $this->mailActionStatus = [
                     'type' => 'warning',
@@ -999,48 +963,18 @@ class MailWorkspace extends Component
     {
         $placement = $this->selectedPlacementForAction();
         $user = $this->user();
-
         if (! $placement?->message || ! $user || ! $this->canCreateTicketFromPlacement($placement)) {
-            $this->mailActionStatus = [
-                'type' => 'warning',
-                'message' => 'You need Ticket create permission and mailbox Organize access before creating a Ticket from this email.',
-            ];
-
+            $this->mailActionStatus = ['type' => 'warning', 'message' => 'You need Ticket create permission and mailbox Organize access before creating a Ticket from this email.'];
             return;
         }
-
         try {
-            $ticket = app(CreateTicketFromInboundEmail::class)->handle($placement->message);
-        } catch (\Throwable $exception) {
-            $this->mailActionStatus = [
-                'type' => 'danger',
-                'message' => 'The Ticket action could not be completed: '.$exception->getMessage(),
-            ];
-
+            $result = app(\App\Modules\Email\Actions\CreateTicketFromMailPlacement::class)->handle($placement, $user);
+            $ticket = $result['ticket'];
+        } catch (\Throwable) {
+            $this->mailActionStatus = ['type' => 'danger', 'message' => 'The Ticket action could not be completed. No partial Ticket was retained.'];
             return;
         }
-
-        try {
-            app(LinkEmailConversationToTicket::class)->handle(
-                $placement->fresh(['message', 'account', 'folder']),
-                $ticket,
-                $user,
-                EmailTicketConversationLink::ROLE_PRIMARY,
-            );
-        } catch (\Throwable $exception) {
-            $this->mailActionStatus = [
-                'type' => 'warning',
-                'message' => 'Ticket '.$ticket->ticket_key.' was created, but the Mail conversation link audit could not be recorded: '.$exception->getMessage(),
-            ];
-
-            return;
-        }
-
-        $this->mailActionStatus = [
-            'type' => 'success',
-            'message' => 'Ticket '.$ticket->ticket_key.' was linked from the selected email.',
-        ];
-
+        $this->mailActionStatus = ['type' => 'success', 'message' => 'Ticket '.$ticket->ticket_key.' was linked from the selected email.'];
         $this->resetTicketLinkPanel();
         $this->dispatch('mail-state-changed');
     }
@@ -1116,12 +1050,7 @@ class MailWorkspace extends Component
         }
 
         try {
-            app(LinkEmailConversationToTicket::class)->handle(
-                $placement,
-                $ticket,
-                $user,
-                $placement->message->ticket_id ? EmailTicketConversationLink::ROLE_SECONDARY : EmailTicketConversationLink::ROLE_PRIMARY,
-            );
+            app(\App\Modules\Email\Actions\LinkMailPlacementToTicket::class)->handle($placement, $ticket, $user);
         } catch (ValidationException $exception) {
             foreach ($exception->errors() as $field => $messages) {
                 $this->addError($field, (string) collect($messages)->first());
@@ -2872,39 +2801,10 @@ class MailWorkspace extends Component
             return;
         }
 
-        $placements = EmailMailboxPlacement::query()
-            ->where('email_folder_id', $source->id)
-            ->where('local_state', EmailMailboxPlacement::LOCAL_ACTIVE)
-            ->orderBy('id')
-            ->limit(50)
-            ->get();
-
-        $moved = 0;
-        $failed = 0;
-
-        foreach ($placements as $placement) {
-            try {
-                $freshPlacement = $placement->fresh(['account', 'folder', 'message']);
-                if (! $freshPlacement) {
-                    $failed++;
-
-                    continue;
-                }
-
-                $operation = app(PerformEmailRemoteOperation::class)->handle(
-                    $freshPlacement,
-                    PerformEmailRemoteOperation::MOVE,
-                    $user,
-                    $target,
-                );
-
-                $operation->status === EmailRemoteOperation::STATUS_SUCCEEDED ? $moved++ : $failed++;
-            } catch (\Throwable) {
-                $failed++;
-            }
-        }
-
-        $remaining = app(ManageProviderEmailFolder::class)->activePlacementCount($source->fresh());
+        $result = app(\App\Modules\Email\Actions\MoveEmailFolderMessages::class)->handle($source, $target, $user);
+        $moved = $result['moved'];
+        $failed = $result['failed'];
+        $remaining = $result['remaining'];
         $this->folderMoveSourceFolderId = $remaining > 0 ? $source->id : '';
         $this->folderMoveTargetFolderId = $remaining > 0 ? $target->id : '';
         $this->mailActionStatus = [
@@ -3198,45 +3098,12 @@ class MailWorkspace extends Component
         return $body !== '' ? Str::limit($body, 160) : 'No preview text.';
     }
 
-    public function isUnreadForMe(EmailMessage $message): bool
-    {
-        $user = $this->user();
 
-        $message->loadMissing('account');
-
-        if (! $user || ! $this->hasOrdinaryViewAccess($message->account)) {
-            return false;
-        }
-
-        if (array_key_exists($message->id, $this->unreadForMeByMessage)) {
-            return $this->unreadForMeByMessage[$message->id];
-        }
-
-        return $this->unreadForMeByMessage[$message->id] = app(EmailUnreadForMeResolver::class)
-            ->resolve($message, $user) ?? false;
-    }
 
     /**
      * @return array<string, string>
      */
-    public function listFilterOptions(): array
-    {
-        $options = [
-            'all' => 'All',
-            'unread_for_me' => 'Unread for me',
-            'mailbox_unread' => 'Mailbox unread',
-            'flagged' => 'Flagged',
-            'provider_drafts' => 'Provider drafts',
-            'has_attachments' => 'Has attachments',
-            'ticket_linked' => 'Ticket linked',
-        ];
 
-        if (! $this->hasAnyOrdinaryMailboxAccess()) {
-            unset($options['unread_for_me'], $options['mailbox_unread'], $options['ticket_linked']);
-        }
-
-        return $options;
-    }
 
     public function usesBreakGlassForPlacement(?EmailMailboxPlacement $placement): bool
     {
@@ -3387,38 +3254,7 @@ class MailWorkspace extends Component
             return collect();
         }
 
-        $conversations = app(EmailConversationProjector::class);
-        $conversationKey = $conversations->conversationKey($placement->message);
-        $conversationId = $conversations->available()
-            ? $this->positiveId($placement->email_conversation_id)
-            : null;
-
-        return EmailTicketConversationLink::query()
-            ->with('ticket')
-            ->where(function (Builder $links) use ($conversationId, $conversationKey, $placement): void {
-                if ($conversationId) {
-                    $links->where('email_conversation_id', $conversationId);
-                }
-
-                $legacyScope = function (Builder $legacy) use ($conversationKey, $placement): void {
-                    $legacy
-                        ->where('conversation_key', $conversationKey)
-                        ->where(function (Builder $accountScope) use ($placement): void {
-                            $accountScope
-                                ->where('account_id', $placement->account_id)
-                                ->orWhereNull('account_id');
-                        });
-                };
-
-                $conversationId
-                    ? $links->orWhere($legacyScope)
-                    : $links->where($legacyScope);
-            })
-            ->where('status', EmailTicketConversationLink::STATUS_ACTIVE)
-            ->latest('linked_at')
-            ->latest('id')
-            ->limit(6)
-            ->get();
+        return app(\App\Modules\Email\Queries\EmailPlacementTicketLinks::class)->forPlacement($placement);
     }
 
     public function canUseRuleAction(?EmailMailboxPlacement $placement): bool
@@ -3672,24 +3508,7 @@ class MailWorkspace extends Component
         )->get();
     }
 
-    private function ordinaryAccessibleAccounts(MailboxAccess $mailboxAccess): Collection
-    {
-        $accounts = $mailboxAccess->scopeAccounts(
-            EmailAccount::query()
-                ->where('is_active', true)
-                ->orderBy('account_kind')
-                ->orderBy('address'),
-            $this->user(),
-            MailboxAccess::VIEW,
-        )->get();
 
-        $this->ordinaryAccountIdsCache = $accounts
-            ->pluck('id')
-            ->map(fn (int|string $id): int => (int) $id)
-            ->all();
-
-        return $accounts;
-    }
 
     /**
      * Reauthorize and audit every account before the subsequent list/search query can load mail.
@@ -3749,36 +3568,11 @@ class MailWorkspace extends Component
     }
 
     /** @return array<int> */
-    private function ordinaryAccountIds(): array
-    {
-        if ($this->ordinaryAccountIdsCache !== null) {
-            return $this->ordinaryAccountIdsCache;
-        }
 
-        $this->ordinaryAccessibleAccounts(app(MailboxAccess::class));
 
-        return $this->ordinaryAccountIdsCache ?? [];
-    }
 
-    private function hasAnyOrdinaryMailboxAccess(): bool
-    {
-        return $this->ordinaryAccountIds() !== [];
-    }
 
-    private function hasOrdinaryViewAccess(?EmailAccount $account): bool
-    {
-        $user = $this->user();
 
-        if (! $account || ! $user) {
-            return false;
-        }
-
-        $accountId = (int) $account->id;
-
-        return $this->ordinaryViewAccessByAccount[$accountId] ??= app(ResolveMailboxAccessDecision::class)
-            ->resolve($user, $account, MailboxAccess::VIEW)
-            ->allowed;
-    }
 
     /** @return Collection<int, EmailBreakGlassAccess> */
     private function activeBreakGlassAccesses(): Collection
@@ -4153,142 +3947,25 @@ class MailWorkspace extends Component
      * @param  array<int>  $accountIds
      * @return Builder<EmailMailboxPlacement>
      */
-    private function basePlacementQuery(array $accountIds): Builder
-    {
-        $userId = $this->user()?->id ?: 0;
 
-        return EmailMailboxPlacement::query()
-            ->with([
-                'account',
-                'conversation.classification.category',
-                'conversation.classification.tags',
-                'folder',
-                'message' => fn ($messages) => $messages->withCount('attachments'),
-                'message.account',
-                'message.attachments',
-                'message.classifications' => fn ($classifications) => $classifications
-                    ->whereIn('account_id', $accountIds)
-                    ->with(['category', 'tags']),
-                'message.tags',
-                'message.ticket',
-                'message.userStates' => fn ($states) => $states->where('user_id', $userId),
-                'sentReconciliations',
-            ])
-            ->whereIn('account_id', $accountIds)
-            ->where('local_state', EmailMailboxPlacement::LOCAL_ACTIVE)
-            ->whereHas('message');
-    }
 
     /**
      * @param  array<int>  $accountIds
      * @return Builder<EmailMailboxPlacement>
      */
-    private function filteredPlacementQuery(array $accountIds): Builder
-    {
-        $query = $this->basePlacementQuery($accountIds);
-        $accountId = $this->positiveId($this->accountId);
-        $folderId = $this->positiveId($this->folderId);
-        $term = trim($this->search);
 
-        if ($accountId) {
-            $query->where('account_id', $accountId);
-        }
-
-        if ($folderId) {
-            $query->where('email_folder_id', $folderId);
-        } elseif ($this->viewMode === 'unread') {
-            $this->scopeInboxPlacements($query);
-            $this->scopeUnreadForMe($query);
-        } elseif ($this->viewMode === 'inbox') {
-            $this->scopeInboxPlacements($query);
-        } elseif ($this->viewMode === 'drafts') {
-            $this->scopeDraftPlacements($query);
-        } else {
-            $this->scopeNonTrashPlacements($query);
-        }
-
-        if ($term !== '') {
-            $query->whereHas(
-                'message',
-                fn (Builder $messages): Builder => $messages->searchText($term),
-            );
-        }
-
-        $this->applyListFilter($query);
-
-        return $this->orderPlacements($query);
-    }
 
     /**
      * @param  array<int>  $accountIds
      * @return LengthAwarePaginator<int, EmailMailboxPlacement>
      */
-    private function conversationPlacementPaginator(array $accountIds): LengthAwarePaginator
-    {
-        $page = max(1, (int) $this->getPage());
-        $legacy = $this->legacyConversationListData($accountIds);
-        $this->legacyConversationListTruncated = $legacy['truncated'];
-        $durableLeaderIds = $this->durableConversationLeaderIds($accountIds);
 
-        // The durable branch stays entirely in SQL: the window identifies one
-        // exact, correctly sorted leader for each account-scoped conversation,
-        // and the outer query paginates only those leaders. Legacy null IDs are
-        // the sole bounded compatibility input to this query.
-        $leaders = $this->basePlacementQuery($accountIds)
-            ->where(function (Builder $query) use ($durableLeaderIds, $legacy): void {
-                $query->whereIn('email_mailbox_placements.id', $durableLeaderIds);
-
-                if ($legacy['leader_ids'] !== []) {
-                    $query->orWhereIn('email_mailbox_placements.id', $legacy['leader_ids']);
-                }
-            });
-
-        /** @var LengthAwarePaginator<int, EmailMailboxPlacement> $paginator */
-        $paginator = $this->orderPlacements($leaders)
-            ->paginate($this->perPage, ['*'], 'page', $page)
-            ->withQueryString();
-
-        $this->hydrateConversationListMetadata($paginator, $legacy['metadata'], $accountIds);
-
-        return $paginator;
-    }
 
     /**
      * Return a SQL subquery containing one placement ID per durable,
      * account-scoped conversation after all current list filters are applied.
      */
-    private function durableConversationLeaderIds(array $accountIds): QueryBuilder
-    {
-        $ranked = $this->filteredPlacementQuery($accountIds)
-            ->withoutEagerLoads()
-            ->reorder()
-            ->whereNotNull('email_mailbox_placements.email_conversation_id')
-            ->select('email_mailbox_placements.id')
-            ->selectRaw(<<<'SQL'
-                ROW_NUMBER() OVER (
-                    PARTITION BY email_mailbox_placements.account_id, email_mailbox_placements.email_conversation_id
-                    ORDER BY
-                        (
-                            SELECT email_messages.received_at
-                            FROM email_messages
-                            WHERE email_messages.id = email_mailbox_placements.email_message_id
-                            LIMIT 1
-                        ) DESC,
-                        (
-                            SELECT email_messages.created_at
-                            FROM email_messages
-                            WHERE email_messages.id = email_mailbox_placements.email_message_id
-                            LIMIT 1
-                        ) DESC,
-                        email_mailbox_placements.id DESC
-                ) AS mail_conversation_rank
-                SQL);
 
-        return DB::query()
-            ->fromSub($ranked, 'mail_durable_conversation_candidates')
-            ->where('mail_conversation_rank', 1)
-            ->select('id');
-    }
 
     /**
      * @param  array<int>  $accountIds
@@ -4298,47 +3975,7 @@ class MailWorkspace extends Component
      *     truncated: bool
      * }
      */
-    private function legacyConversationListData(array $accountIds): array
-    {
-        $conversations = app(EmailConversationProjector::class);
-        $placements = $this->filteredPlacementQuery($accountIds)
-            ->whereNull('email_mailbox_placements.email_conversation_id')
-            ->limit(self::LEGACY_CONVERSATION_LIST_LIMIT + 1)
-            ->get();
-        $truncated = $placements->count() > self::LEGACY_CONVERSATION_LIST_LIMIT;
 
-        $groups = $placements
-            ->take(self::LEGACY_CONVERSATION_LIST_LIMIT)
-            ->groupBy(fn (EmailMailboxPlacement $placement): string => $this->placementConversationGroupKey($placement, $conversations));
-        $metadata = [];
-
-        foreach ($groups as $groupKey => $group) {
-            /** @var EmailMailboxPlacement|null $leader */
-            $leader = $group->first();
-
-            if (! $leader) {
-                continue;
-            }
-
-            $metadata[(int) $leader->id] = [
-                'count' => $group->count(),
-                'placement_ids' => $group->pluck('id')->map(fn (int|string $id): int => (int) $id)->values()->all(),
-                'unread_for_me' => $group
-                    ->filter(fn (EmailMailboxPlacement $placement): bool => $placement->message !== null && $this->isUnreadForMe($placement->message))
-                    ->count(),
-                'mailbox_unread' => $group
-                    ->filter(fn (EmailMailboxPlacement $placement): bool => ! $placement->provider_seen)
-                    ->count(),
-                'group_key' => (string) $groupKey,
-            ];
-        }
-
-        return [
-            'leader_ids' => array_keys($metadata),
-            'metadata' => $metadata,
-            'truncated' => $truncated,
-        ];
-    }
 
     /**
      * Hydrate the list-only aggregate attributes without loading each durable
@@ -4348,161 +3985,20 @@ class MailWorkspace extends Component
      * @param  array<int, array{count: int, placement_ids: array<int, int>, unread_for_me: int, mailbox_unread: int, group_key: string}>  $legacyMetadata
      * @param  array<int>  $accountIds
      */
-    private function hydrateConversationListMetadata(
-        LengthAwarePaginator $paginator,
-        array $legacyMetadata,
-        array $accountIds,
-    ): void {
-        $durableLeaders = $paginator->getCollection()
-            ->filter(fn (EmailMailboxPlacement $placement): bool => $placement->email_conversation_id !== null);
-        $durableMetadata = $this->durableConversationListMetadata($durableLeaders, $accountIds);
 
-        $conversations = app(EmailConversationProjector::class);
-
-        $paginator->getCollection()->each(function (EmailMailboxPlacement $leader) use ($durableMetadata, $legacyMetadata, $conversations): void {
-            $metadata = $leader->email_conversation_id
-                ? ($durableMetadata[$this->durableConversationKey($leader)] ?? null)
-                : ($legacyMetadata[(int) $leader->id] ?? null);
-
-            if (! $metadata) {
-                $metadata = [
-                    'count' => 1,
-                    'placement_ids' => [(int) $leader->id],
-                    'unread_for_me' => $leader->message && $this->isUnreadForMe($leader->message) ? 1 : 0,
-                    'mailbox_unread' => $leader->provider_seen ? 0 : 1,
-                    'group_key' => $this->placementConversationGroupKey($leader, $conversations),
-                ];
-            }
-
-            $leader->setAttribute('mail_conversation_count', $metadata['count']);
-            $leader->setAttribute('mail_conversation_placement_ids', $metadata['placement_ids']);
-            $leader->setAttribute('mail_conversation_unread_for_me_count', $metadata['unread_for_me']);
-            $leader->setAttribute('mail_conversation_mailbox_unread_count', $metadata['mailbox_unread']);
-            $leader->setAttribute('mail_conversation_group_key', $metadata['group_key']);
-        });
-    }
 
     /**
      * @param  Collection<int, EmailMailboxPlacement>  $leaders
      * @param  array<int>  $accountIds
      * @return array<string, array{count: int, placement_ids: array<int, int>, unread_for_me: int, mailbox_unread: int, group_key: string}>
      */
-    private function durableConversationListMetadata(Collection $leaders, array $accountIds): array
-    {
-        if ($leaders->isEmpty()) {
-            return [];
-        }
 
-        $user = $this->user();
 
-        if (! $user) {
-            return [];
-        }
 
-        [$unreadSql, $unreadBindings] = app(EmailUnreadForMeResolver::class)->sqlExpression(
-            $user,
-            'email_mailbox_placements.email_message_id',
-            'email_mailbox_placements.account_id',
-        );
-        $query = $this->filteredPlacementQuery($accountIds)
-            ->withoutEagerLoads()
-            ->reorder()
-            ->whereNotNull('email_mailbox_placements.email_conversation_id')
-            ->where(function (Builder $pairs) use ($leaders): void {
-                foreach ($leaders as $leader) {
-                    $pairs->orWhere(function (Builder $pair) use ($leader): void {
-                        $pair
-                            ->where('email_mailbox_placements.account_id', $leader->account_id)
-                            ->where('email_mailbox_placements.email_conversation_id', $leader->email_conversation_id);
-                    });
-                }
-            })
-            ->select([
-                'email_mailbox_placements.account_id',
-                'email_mailbox_placements.email_conversation_id',
-            ])
-            ->selectRaw('COUNT(*) AS mail_conversation_count')
-            ->selectRaw(<<<SQL
-                SUM(
-                    CASE WHEN ({$unreadSql}) = 1 THEN 1 ELSE 0 END
-                ) AS mail_conversation_unread_for_me_count
-                SQL, $unreadBindings)
-            ->selectRaw(<<<'SQL'
-                SUM(
-                    CASE WHEN email_mailbox_placements.provider_seen = 0 THEN 1 ELSE 0 END
-                ) AS mail_conversation_mailbox_unread_count
-                SQL)
-            ->groupBy([
-                'email_mailbox_placements.account_id',
-                'email_mailbox_placements.email_conversation_id',
-            ]);
 
-        return $query
-            ->get()
-            ->mapWithKeys(function (EmailMailboxPlacement $aggregate): array {
-                $key = $aggregate->account_id.'|'.$aggregate->email_conversation_id;
-                $groupKey = $aggregate->account_id.'|conversation:'.$aggregate->email_conversation_id;
 
-                return [$key => [
-                    'count' => (int) $aggregate->getAttribute('mail_conversation_count'),
-                    // Durable selection highlighting compares the account and
-                    // conversation IDs, so no unbounded placement-ID list is needed.
-                    'placement_ids' => [],
-                    'unread_for_me' => (int) $aggregate->getAttribute('mail_conversation_unread_for_me_count'),
-                    'mailbox_unread' => (int) $aggregate->getAttribute('mail_conversation_mailbox_unread_count'),
-                    'group_key' => $groupKey,
-                ]];
-            })
-            ->all();
-    }
 
-    private function durableConversationKey(EmailMailboxPlacement $placement): string
-    {
-        return $placement->account_id.'|'.$placement->email_conversation_id;
-    }
 
-    private function placementConversationGroupKey(
-        EmailMailboxPlacement $placement,
-        EmailConversationProjector $conversations,
-    ): string {
-        if ($placement->email_conversation_id) {
-            return $placement->account_id.'|conversation:'.$placement->email_conversation_id;
-        }
-
-        if (! $placement->message) {
-            return 'placement:'.$placement->id;
-        }
-
-        return $placement->account_id.'|'.$conversations->conversationKey($placement->message);
-    }
-
-    private function applyListFilter(Builder $query): void
-    {
-        if (! array_key_exists($this->listFilter, $this->listFilterOptions())) {
-            $this->listFilter = 'all';
-        }
-
-        switch ($this->listFilter) {
-            case 'unread_for_me':
-                $this->scopeUnreadForMe($query);
-                break;
-            case 'mailbox_unread':
-                $query->where('provider_seen', false);
-                break;
-            case 'flagged':
-                $query->where('provider_flagged', true);
-                break;
-            case 'provider_drafts':
-                $this->scopeDraftPlacements($query);
-                break;
-            case 'has_attachments':
-                $query->whereHas('message.attachments');
-                break;
-            case 'ticket_linked':
-                $query->whereHas('message', fn (Builder $messages): Builder => $messages->whereNotNull('ticket_id'));
-                break;
-        }
-    }
 
     /**
      * @param  array<int>  $accountIds
@@ -4618,90 +4114,7 @@ class MailWorkspace extends Component
      *     can_load_more: bool
      * }
      */
-    private function conversationThread(EmailMailboxPlacement $selectedPlacement, array $accountIds): array
-    {
-        $message = $selectedPlacement->message;
 
-        if (! $message) {
-            return $this->emptyConversationThread();
-        }
-
-        if ($selectedPlacement->email_conversation_id) {
-            $placements = $this->orderPlacements(
-                $this->basePlacementQuery($accountIds)
-                    ->where('account_id', $selectedPlacement->account_id)
-                    ->where('email_conversation_id', $selectedPlacement->email_conversation_id),
-            )
-                ->get();
-
-            return [
-                'placements' => $placements,
-                'total' => $placements->count(),
-                'truncated' => false,
-                'can_load_more' => false,
-            ];
-        }
-
-        $identifiers = collect([$message->message_id, $message->in_reply_to])
-            ->merge(preg_split('/\s+/', (string) $message->references) ?: [])
-            ->map(fn (?string $id): string => trim((string) $id))
-            ->filter()
-            ->unique()
-            ->values();
-
-        // Header matching is compatibility-only. Keep it both account-scoped
-        // and null-conversation-scoped so identical headers in another granted
-        // mailbox, or a now-projected durable thread, can never bleed in.
-        $query = $this->basePlacementQuery($accountIds)
-            ->where('email_mailbox_placements.account_id', $selectedPlacement->account_id)
-            ->whereNull('email_mailbox_placements.email_conversation_id');
-
-        if ($identifiers->isEmpty()) {
-            $query->whereKey($selectedPlacement->id);
-        } else {
-            $query->whereHas('message', function (Builder $messages) use ($identifiers): void {
-                $messages
-                    ->whereIn('message_id', $identifiers)
-                    ->orWhereIn('in_reply_to', $identifiers)
-                    ->orWhere(function (Builder $referenceQuery) use ($identifiers): void {
-                        foreach ($identifiers as $identifier) {
-                            $referenceQuery->orWhere('references', 'like', '%'.$identifier.'%');
-                        }
-                    });
-            });
-        }
-
-        $total = (clone $query)->count();
-        $limit = min(
-            self::LEGACY_CONVERSATION_THREAD_LIMIT,
-            max(self::LEGACY_CONVERSATION_INITIAL_THREAD_LIMIT, $this->legacyConversationThreadLimit),
-        );
-        $placements = $this->orderPlacements($query)
-            ->limit($limit)
-            ->get();
-
-        // Direct links may select an older legacy placement outside the
-        // compatibility window. Keep the selected mail readable while still
-        // refusing an unbounded header scan.
-        if (! $placements->contains('id', $selectedPlacement->id)) {
-            $placements->push($selectedPlacement);
-            $placements = $placements
-                ->sortByDesc(fn (EmailMailboxPlacement $placement): string => sprintf(
-                    '%s|%s|%020d',
-                    $placement->message?->received_at?->format('Y-m-d H:i:s.u') ?? '',
-                    $placement->message?->created_at?->format('Y-m-d H:i:s.u') ?? '',
-                    (int) $placement->id,
-                ))
-                ->values();
-        }
-
-        return [
-            'placements' => $placements,
-            'total' => $total,
-            'truncated' => $placements->count() < $total,
-            'can_load_more' => $placements->count() < $total && $limit < self::LEGACY_CONVERSATION_THREAD_LIMIT,
-        ];
-    }
 
     /**
      * @return array{
@@ -4711,15 +4124,7 @@ class MailWorkspace extends Component
      *     can_load_more: bool
      * }
      */
-    private function emptyConversationThread(): array
-    {
-        return [
-            'placements' => collect(),
-            'total' => 0,
-            'truncated' => false,
-            'can_load_more' => false,
-        ];
-    }
+
 
     /**
      * @param  array<int>  $accountIds
@@ -4753,75 +4158,15 @@ class MailWorkspace extends Component
         ];
     }
 
-    private function scopeInboxPlacements(Builder $query): void
-    {
-        $query->where(function (Builder $placements): void {
-            $placements
-                ->whereHas('folder', fn (Builder $folders): Builder => $folders->where('role', EmailFolder::ROLE_INBOX))
-                ->orWhere(function (Builder $legacy): void {
-                    $legacy
-                        ->whereNull('email_folder_id')
-                        ->whereIn('folder_path', ['INBOX', 'Inbox', 'inbox']);
-                });
-        });
-    }
 
-    private function scopeNonTrashPlacements(Builder $query): void
-    {
-        $query->where(function (Builder $placements): void {
-            $placements
-                ->whereDoesntHave('folder')
-                ->orWhereHas('folder', function (Builder $folders): void {
-                    $folders->whereNotIn('role', [EmailFolder::ROLE_TRASH, EmailFolder::ROLE_JUNK]);
-                });
-        });
-    }
 
-    private function scopeDraftPlacements(Builder $query): void
-    {
-        $query->where(function (Builder $placements): void {
-            $placements
-                ->where('provider_draft', true)
-                ->orWhereHas('folder', fn (Builder $folders): Builder => $folders->where('role', EmailFolder::ROLE_DRAFTS));
-        });
-    }
 
-    private function scopeUnreadForMe(Builder $query): void
-    {
-        $user = $this->user();
-        $ordinaryAccountIds = $this->ordinaryAccountIds();
 
-        if (! $user || $ordinaryAccountIds === []) {
-            $query->whereRaw('1 = 0');
 
-            return;
-        }
 
-        $query->whereIn('email_mailbox_placements.account_id', $ordinaryAccountIds);
-        $query->whereHas(
-            'message',
-            fn (Builder $messages): Builder => app(EmailUnreadForMeResolver::class)
-                ->scopeUnreadMessages($messages, $user),
-        );
-    }
 
-    private function orderPlacements(Builder $query): Builder
-    {
-        return $query
-            ->orderByDesc(
-                EmailMessage::query()
-                    ->select('received_at')
-                    ->whereColumn('email_messages.id', 'email_mailbox_placements.email_message_id')
-                    ->limit(1)
-            )
-            ->orderByDesc(
-                EmailMessage::query()
-                    ->select('created_at')
-                    ->whereColumn('email_messages.id', 'email_mailbox_placements.email_message_id')
-                    ->limit(1)
-            )
-            ->orderByDesc('email_mailbox_placements.id');
-    }
+
+
 
     /**
      * @return array{visible: bool, stats: array<string, int>, items: array<int, array<string, mixed>>}
@@ -5331,14 +4676,7 @@ class MailWorkspace extends Component
             ->get();
     }
 
-    private function positiveId(mixed $value): ?int
-    {
-        if (is_numeric($value) && (int) $value > 0) {
-            return (int) $value;
-        }
 
-        return null;
-    }
 
     private function dispatchFilterChange(): void
     {
@@ -5786,11 +5124,5 @@ class MailWorkspace extends Component
         };
     }
 
-    private function user(): ?User
-    {
-        /** @var User|null $user */
-        $user = auth()->user();
 
-        return $user;
-    }
 }

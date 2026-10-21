@@ -10,7 +10,6 @@ use App\Modules\Email\Services\ResolveMailboxAccessDecision;
 use App\Modules\Email\Support\EmailProviderPath;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use Livewire\Attributes\On;
 
@@ -327,31 +326,9 @@ class MailSidebar extends MailWorkspace
      */
     private function persistFolderNavigationStates(Collection $folderIds, bool $isExpanded): void
     {
-        $userId = (int) auth()->id();
-        $ids = $folderIds
-            ->filter(fn (mixed $id): bool => is_numeric($id) && (int) $id > 0)
-            ->map(fn (mixed $id): int => (int) $id)
-            ->unique()
-            ->take(500)
-            ->values();
-
-        if ($userId < 1 || $ids->isEmpty()) {
-            return;
+        $actor = auth()->user();
+        if ($actor) {
+            app(\App\Modules\Email\Actions\SetEmailFolderNavigationStates::class)->handle($actor, $folderIds, $isExpanded);
         }
-
-        DB::transaction(function () use ($ids, $isExpanded, $userId): void {
-            $now = now();
-            EmailFolderNavigationPreference::query()->upsert(
-                $ids->map(fn (int $folderId): array => [
-                    'user_id' => $userId,
-                    'email_folder_id' => $folderId,
-                    'is_expanded' => $isExpanded,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ])->all(),
-                ['user_id', 'email_folder_id'],
-                ['is_expanded', 'updated_at'],
-            );
-        });
     }
 }

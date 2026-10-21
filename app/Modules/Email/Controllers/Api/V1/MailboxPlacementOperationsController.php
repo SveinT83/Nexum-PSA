@@ -18,22 +18,6 @@ use OpenApi\Attributes as OA;
 )]
 class MailboxPlacementOperationsController extends Controller
 {
-    #[OA\Post(
-        path: '/api/v1/email/mailbox/placements/{placement}/operations',
-        operationId: 'createMailboxPlacementOperation',
-        summary: 'Run a provider mailbox operation',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        parameters: [
-            new OA\Parameter(name: 'placement', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Operation executed or returned existing idempotent result'),
-            new OA\Response(response: 403, description: 'Missing email.update scope or mailbox organize grant'),
-            new OA\Response(response: 404, description: 'Mailbox placement not found'),
-            new OA\Response(response: 422, description: 'Unsupported operation or provider target folder missing'),
-        ]
-    )]
     public function store(
         Request $request,
         EmailMailboxPlacement $placement,
