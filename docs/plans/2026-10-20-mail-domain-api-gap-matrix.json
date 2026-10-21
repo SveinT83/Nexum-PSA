@@ -7,9 +7,9 @@
     "source_inventory": true,
     "runtime_route_inventory": true,
     "behavior_tests_run": true,
-    "authenticated_api_calls": false,
+    "authenticated_api_calls": true,
     "provider_calls": false,
-    "production_checked": false,
+    "production_checked": true,
     "https_swagger_smoke": true,
     "generated_schema_complete": true,
     "mail_provider_calls": false,
@@ -29,7 +29,11 @@
       "date": "2026-10-21",
       "approval": "Godkjenner",
       "individual_manual_results_reported": false
-    }
+    },
+    "production_scope": "Exact deployed code hashes, live generated Swagger, trusted HTTPS and authenticated read-only Mail context. No provider write or delivery test.",
+    "production_sha": "11cf40227e9dfa52747b96cdf58e5f64ae706f43",
+    "production_mail_operations": 175,
+    "production_mail_writes": 109
   },
   "counts": {
     "api_routes": 175,

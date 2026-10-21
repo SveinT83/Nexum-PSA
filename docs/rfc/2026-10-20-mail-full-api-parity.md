@@ -86,3 +86,11 @@ All six slices are Done On Dev. The domain has 175 documented HTTP operations, i
 write/action operations, with explicit token ceilings and shared browser actions. All 72 browser
 routes are mapped. See ../plans/2026-10-20-mail-api-verification.md for tests, handbook read-back,
 remaining human review and promotion gates. No provider runtime is enabled by this delivery.
+
+## Production Delivery (2026-10-21)
+
+Application release 11cf40227e9dfa52747b96cdf58e5f64ae706f43 was merged and deployed under Svein Tore's explicit request.
+All 175 Mail API contracts are published in production, including 109 write/actions. Trusted HTTPS,
+source hashes and an authenticated Mail context read were independently verified. Existing runtime
+flags remain false; no new migration, provider write, token widening or recipient delivery test.
+See docs/plans/2026-10-21-mail-api-production-deployment.md for backup and deployment evidence.

@@ -5,14 +5,14 @@ The Tech inbox is available at `/tech/inbox`.
 
 Admin email account settings are available under `/tech/admin/settings/email/accounts`.
 
-## Mail Browser And API Parity (Dev, 2026-10-20)
+## Mail Browser And API Parity (Production, 2026-10-21)
 
 All currently implemented browser Mail reads, writes, administrative changes and operational actions
 now have bearer API contracts, including drafts/send, source downloads, folders, rules,
 AI/signature, Ticket handoff, delegation, unread handover and maintenance.
 The full guide is [Mail API operations](mail-api-operations.md); Swagger is /api/documentation.
-This is Dev-only work. HR-2026-10-20-MAIL-API is Reviewed: Svein Tore approved the delivered scope
-on 2026-10-21. Main/production promotion remains pending.
+Main and production were updated on 2026-10-21. HR-2026-10-20-MAIL-API is Reviewed: Svein Tore
+approved the delivered scope. Production Swagger exposes 175 Mail operations, including 109 writes/actions.
 
 Ordinary Delete requests provider Trash in both older Inbox and API. It preserves the local source
 and never falls back to expunge. Personal read state reports local and optional provider outcomes

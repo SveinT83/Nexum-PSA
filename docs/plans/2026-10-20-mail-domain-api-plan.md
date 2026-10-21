@@ -290,3 +290,11 @@ Livewire declarations have a maintained parity register. See 2026-10-20-mail-api
 Ordinary Delete is provider Trash in both paths; the prior delete question is resolved.
 HR-2026-10-20-MAIL-API is Reviewed. Svein Tore approved the delivered Mail API scope on 2026-10-21 in chat: "Godkjenner".
 Main promotion/deployment/release remain separate actions; independent runtime gates remain.
+
+## Production Delivery (2026-10-21)
+
+Application release 11cf40227e9dfa52747b96cdf58e5f64ae706f43 was merged and deployed under Svein Tore's explicit request.
+All 175 Mail API contracts are published in production, including 109 write/actions. Trusted HTTPS,
+source hashes and an authenticated Mail context read were independently verified. Existing runtime
+flags remain false; no new migration, provider write, token widening or recipient delivery test.
+See docs/plans/2026-10-21-mail-api-production-deployment.md for backup and deployment evidence.

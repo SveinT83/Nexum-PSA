@@ -1,6 +1,6 @@
 # Mail API Main And Production Rollout - 2026-10-21
 
-Status: Main merged; first production attempt safely rolled back; production Swagger fix verified before retry.
+Status: deployed and independently verified in production; human review remains Reviewed.
 Operator: Codex, explicitly requested by Svein Tore on 2026-10-21.
 Human review: HR-2026-10-20-MAIL-API Reviewed by Svein Tore on 2026-10-21.
 Delivery source: /var/Projects/tdPSA; preserve the shared Dev branch and ordinary index.
@@ -78,7 +78,7 @@ then rebuild caches and restart workers. Retain database/audit/provider state. D
 rollback or restore a database merely to undo this code-only Mail change. No real IMAP/SMTP write
 or provider/runtime activation is part of release preparation.
 
-## Current State
+## First Attempt And Correction History
 
 Main PR #300 merged normally to a91331f71dd328b2d0db190b1dc5a46213ab3bc8.
 Its tree exactly matched the fully tested candidate. The first production attempt was rolled back
@@ -107,3 +107,42 @@ final 23-test / 1,487-assertion package passes afterward. There was no second fa
 Protected production preflight evidence:
  /var/www/vhosts/tronderdata.no/private/mail-api-preflight-20261021-final.json
 The release tree and logs remain outside the repository under /tmp/nexum-mail-main-20261021.
+
+## Successful Production Execution
+
+Deployed at 2026-10-21T10:14:04Z (12:14 Europe/Oslo).
+Application Main release: 11cf40227e9dfa52747b96cdf58e5f64ae706f43.
+Merged PRs: #300 (full Mail), #301 (test scan exclusion), #302 (optional local provider exclusion).
+The merged application tree equals the verified candidate plus the two tested scanning corrections.
+
+Retry backup: /var/www/vhosts/tronderdata.no/private/mail-api-release-20261021-11cf402/.
+Fresh code/environment backup: 581615 bytes;
+SHA-256 9c8aeae54ef241ed28afa9376999e096405b33e78c562cbd4100838bd3fb053e.
+The earlier consistent full database snapshot was independently rehashed and gzip-checked and linked
+into this protected retry directory: 191124405 bytes; SHA-256
+edf2b61cd0212fff624b66fd227a87aaeb508ef1a78bd3a2d13b5e0626041011.
+No schema/data transition occurred in the first attempt; it restored application files only.
+All backup directories are outside the webroot with private access. No restore rehearsal was run.
+
+Maintenance and graceful worker restart waited for zero reserved jobs. All 99 selected files were
+published; the 98 non-generated-file hashes match Main exactly. APP_COMMIT_SHA records this release.
+Config/view caches, route clearing, production Swagger generation and worker restart passed.
+The public generated Swagger has the same 175 Mail method/path contracts, including 109 writes.
+Maintenance was lifted. Independent normal-TLS /up, /login, /api/documentation and Swagger JSON
+returned 200. The new context endpoint returns 401 anonymously; an independent existing-token GET
+succeeded and returned three currently visible accounts, without reading message bodies or mutating mail.
+
+All five existing live/collaboration/acknowledgement configuration flags were read back equal and
+false. No migration, dependency install, frontend deployment, token grant, runtime activation,
+provider write, real send or recipient-delivery test was performed. No queue retry/purge occurred.
+Existing Workday/optional-Telescope production corrections were preserved; Plesk's older base Git
+metadata is not a claim that the entire dirty Dev checkout was deployed.
+
+Production application evidence is retained in before.json, after.json, backup-evidence.json,
+deployment.json and command logs in the protected retry directory. Employee OpenWebUI retrieval and
+real provider/delivery checks remain separate claims. BookStack pages 636, 495 and 449 were updated
+through the scoped partial-edit connector and independently read back published with rendered HTML.
+Page 636 retains its historical (Dev) title because name updates fail connector validation and the
+separate naming helper was rejected by automatic approval review (blocked by policy). Its body and
+the overview/API Management pages state the verified production availability. No employee access
+permissions were changed; the title-only follow-up is recorded in TODO.

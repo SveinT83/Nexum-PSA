@@ -1,6 +1,6 @@
 # Mail Domain API Coverage Matrix
 
-Status: Implemented and automated on Dev; HR-2026-10-20-MAIL-API Reviewed by Svein Tore on 2026-10-21; real-provider verification not demonstrated
+Status: Deployed and independently verified in production on 2026-10-21; HR-2026-10-20-MAIL-API Reviewed by Svein Tore; real-provider writes/delivery not tested
 Date: 2026-10-20
 Owner: Codex
 Plan: [full coverage plan](2026-10-20-mail-domain-api-plan.md)

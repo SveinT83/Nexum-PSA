@@ -2,7 +2,8 @@
 
 ## Mail full browser/API parity (2026-10-20)
 
-Status: Done On Dev; human review Reviewed on 2026-10-21. Owner: Codex; reviewer/promotion owner: Svein Tore.
+Status: Deployed and independently verified in production on 2026-10-21; human review Reviewed.
+Owner: Codex; named reviewer: Svein Tore.
 Approved RFC: rfc/2026-10-20-mail-full-api-parity.md; all six feature slices Done On Dev.
 Delivery: 102 added APIs, 175 total HTTP operations, 109 write/actions, complete Swagger coverage,
 72 browser routes explicitly mapped and 155 public Livewire declarations registered for parity review.
@@ -15,18 +16,24 @@ MariaDB contracts skipped; related Integration/delegation 64 / 734, overlapping 
 Ordinary Delete in browser and API is provider Trash; no permanent-delete fallback or runtime enablement.
 
 Human approval: Svein Tore approved the delivered Mail API scope on 2026-10-21 in chat: "Godkjenner".
-HR-2026-10-20-MAIL-API is Reviewed. Main promotion/deployment/release remain owned by Svein Tore.
+HR-2026-10-20-MAIL-API is Reviewed. Main and production were updated on Svein Tore's explicit request.
+Application release: 11cf40227e9dfa52747b96cdf58e5f64ae706f43; live Swagger has 175 operations / 109 writes.
+Production source hashes, normal-TLS health and authenticated Mail context read-back passed.
 Controlled real-provider Trash/send, recipient delivery and production availability were not
 verified by this approval; individual scenario results were not supplied.
 Existing gated collaboration/live/advanced-acknowledgement reviews remain independent.
 Deployment authorization update (2026-10-21): Svein Tore explicitly requested Main and production.
 Release preparation: plans/2026-10-21-mail-api-production-deployment.md. Use a normal GitHub PR
-merge under the repository's existing actor policy; production waits for the exact merged Main SHA.
+merge under the repository's existing actor policy; the exact merged Main release is now deployed.
 
 Handbook: BookStack Mail guide page 636 and Email overview page 495 are published, read back and
 inherit existing staff access. Dev's automatic BookStack Integration record remains absent; the
 approved personal BookStack path was used without installing credentials or broadening access.
 Employee OpenWebUI retrieval remains a separate verification claim and has not been demonstrated.
+Handbook title follow-up (owner Svein Tore / platform maintenance): BookStack page 636 retains
+its historical (Dev) suffix. Body status is production-current; the connector rejects non-empty
+name updates and automatic approval review blocked the separate naming helper. Rename through
+the normal BookStack UI when convenient; no access change or runtime action is needed.
 
 Legacy cleanup (owner Nexum maintenance): schema survey found two unused historical models,
 EmailMailDraftLock and EmailMailUserConversationAcknowledgement, with no installed tables.
