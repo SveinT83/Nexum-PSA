@@ -36,11 +36,11 @@ Attachment and raw-source downloads require their own token scopes and current e
 access. Raw source has separate permission. Downloads are private and preserve source-part identity.
 
 
-## Read A Whole Conversation (Dev Addition)
+## Read A Whole Conversation
 
-This addition is implemented on Dev only; HR-2026-10-21-MAIL-CONVERSATION-READ is Pending.
-It has not been promoted to Main or deployed to production. Existing advanced multi-account
-acknowledgement remains disabled unless separately approved.
+This addition was deployed to production on 2026-10-21 following Svein Tore's explicit request.
+HR-2026-10-21-MAIL-CONVERSATION-READ is In Review; real-mail checks remain open for production
+validation. Existing advanced multi-account acknowledgement remains disabled unless separately approved.
 
 GET /api/v1/email/mailbox/context with email.mailbox.read exposes conversation_read availability,
 scope_kind and preview_limit. This is capability discovery, never an account-access grant.

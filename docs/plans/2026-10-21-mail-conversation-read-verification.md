@@ -1,7 +1,7 @@
 # Mail Conversation Read Command: Dev Verification
 
 Date: 2026-10-21. Owner: Codex. Product approval: Svein Tore, "Godkjenner. Iverksett".
-Status: implemented and verified in the authoritative Dev working copy; human review In Review; controlled production rollout authorized.
+Status: implemented on Dev, merged to Main and deployed to production; human review In Review.
 RFC: ../rfc/2026-10-21-mail-conversation-read-command.md.
 ADR: ../adr/2026-10-21-ordinary-mail-conversation-read-boundary.md.
 Human-review checklist: HR-2026-10-21-MAIL-CONVERSATION-READ in ../human-review.md.
@@ -91,16 +91,17 @@ performed for this work. Existing overlapping dirty Dev work and the ordinary Gi
 ## Handbook And Access
 
 Authoritative Knowledge sources are email-inbox-overview.md and mail-api-operations.md under the
-Email module's Docs/knowledge. BookStack page 495 (Email Inbox Overview), revision 73, and page 636
-(Mail API Operations (Dev)), revision 5, were published and independently read back on 2026-10-21.
+Email module's Docs/knowledge. BookStack page 495 (Email Inbox Overview), revision 74, and page 636
+(Mail API Operations (Dev)), revision 6, were published and independently read back on 2026-10-21.
 They explain the exact menu, counted snapshot, later arrivals, provider separation, limits and
-Dev-only availability with this human review still Pending. Both pages and their chapter inherit
+production availability with this human review still In Review. Both pages and their chapter inherit
 permissions; the parent book retains its existing overrides. The existing internal staff Editor
 role has book/chapter/page view rights. No access scope or permission was changed. Employee
 OpenWebUI retrieval was not tested and is a separate verification claim.
 
 The public-safe website handoff describes the user benefit and Dev verification, with an explicit
-hold until human review, Main promotion, deployment, production verification and editorial approval.
+hold until the remaining real-mail human review and editorial approval; Main and production
+rollout are complete.
 It must not be published as production functionality from these Dev tests alone.
 
 ## Remaining Human Review And Deployment
@@ -112,10 +113,10 @@ mailbox for real provider Seen read-back and the intended worker for a larger co
 Check truthful partial/failure results and employee handbook availability. Passing automated tests
 and approval of the RFC do not complete that checklist. The broader August review stays independent.
 
-No migration, data backfill, package installation or new frontend build is needed. After approval
-and an authorized scoped promotion, clear normal application/view caches, regenerate Swagger and
-gracefully restart long-running workers. Required ledger tables and default queue worker must
-exist. The normal reviewed deployment commands are:
+No migration, data backfill, package installation or new frontend build is needed. The explicitly
+authorized production rollout completed normal cache/Swagger/worker actions, documented in the
+production report. No deploy command remains pending for this release. Future authorized deployments
+require the installed ledgers and default queue worker; normal maintenance commands include:
 
 ```sh
 php artisan optimize:clear
@@ -128,11 +129,13 @@ acknowledgement/live/collaboration runtime flags unchanged. The generated Swagge
 other already-dirty Dev API work: regenerate it from the reviewed promotion
 candidate rather than copying the whole Dev artifact into an unrelated release.
 
-No new commit, push, Main promotion or production deployment was performed for this addition.
+The initial Dev-only verification performed no commit, push or deployment. The subsequent explicit
+production request was fulfilled through PR #305 and application SHA
+71ce9ff10d2e04220b557e56dc206c2ddc1d883d; see the production deployment report.
 The earlier Trash correction in PR #304 is separate. Rollback removes ordinary command exposure
 while retaining action, audit, provider and completed personal read-state history.
 
-## Controlled Production Rollout (In Progress)
+## Controlled Production Rollout (Completed; Human Review In Review)
 
 Svein Tore explicitly requested production deployment on 2026-10-21 because Dev does not receive
 mail. This includes the scoped Main promotion needed for that deployment. No manual scenario is
@@ -147,5 +150,5 @@ through PR #304. This controlled code-only rollout includes that existing Main c
 Release assembly uses a separate Git index and an immutable Main export on the Dev host. Every
 existing application preimage equals Main, apart from the overview's prior Main-status wording;
 only the selected feature files and scoped documentation are included. Shared Dev HEAD/index
-and unrelated dirty paths remain unchanged. Final Main, deployment and verification evidence
-will be recorded here after execution.
+and unrelated dirty paths remain unchanged. Final Main, deployment and independent verification evidence is recorded in
+2026-10-21-mail-conversation-read-production-deployment.md.

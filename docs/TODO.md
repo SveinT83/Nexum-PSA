@@ -2,31 +2,29 @@
 
 ## Mail conversation Mark all as read command (2026-10-21)
 
-Status: Verified On Dev / Controlled Main And Production Rollout Authorized; Human Review In Review.
-Owner: Codex; review and promotion owner: Svein Tore.
+Status: Deployed To Production / Human Review In Review; RFC Approved.
+Owner: Codex; human verification owner: Svein Tore.
 RFC: rfc/2026-10-21-mail-conversation-read-command.md.
-Evidence: plans/2026-10-21-mail-conversation-read-verification.md.
-The split Mark as read/unread button preserves the selected-message command and adds a counted,
-explicit whole-conversation read action for the active mailbox, including context outside the
-current list filter. The immutable preview excludes later arrivals; other accounts and users are
-unchanged. Browser and official API share the same actions, authorization and separate provider
-outcomes. Legacy/incomplete identity and excessive scope are refused before changing read state.
-Verified on Dev: 105 affected tests / 2,263 assertions, PHP syntax, Pint and OpenAPI references.
-A real headless browser passed desktop/mobile, Enter/Escape and touch apply with an isolated
-synthetic mailbox; independent read-back confirmed all six messages read and zero provider work.
-BookStack employee guide 495 revision 73 and API guide 636 revision 5 were published and read back;
-existing inherited employee access was verified. Employee OpenWebUI retrieval is not certified.
-Svein Tore explicitly authorized Main promotion and production deployment because Dev receives no
-mail. HR-2026-10-21-MAIL-CONVERSATION-READ is In Review; remaining real-provider, intended-worker
-and personal workflow checks move to controlled production validation. Rollout is in progress. The older
-HR-2026-08-16-012 stays In Review and its broad advanced runtime remains disabled. No migration,
-actual provider write, commit, push, Main promotion or production deployment was performed.
-
-
+Evidence: plans/2026-10-21-mail-conversation-read-production-deployment.md and the Dev verification report.
+The split button preserves one-message read/unread and adds the counted complete active-account
+conversation read command, including context outside the filter. A frozen preview excludes later
+arrivals and other accounts/users. Incomplete legacy scope or more than the configured cap is refused.
+Verified: 105 affected tests / 2,263 assertions on both Dev and the immutable Main candidate, plus
+desktop/mobile/keyboard/touch synthetic browser checks, syntax/Pint and typed Swagger validation.
+Main PR #305 merged to 71ce9ff10d2e04220b557e56dc206c2ddc1d883d; production deployment completed
+2026-10-21 20:59:21 UTC. Fresh protected code/database backups, graceful job completion, caches,
+Swagger and independent source/HTTPS/authenticated-context read-back passed. Production context
+exposes ordinary availability with cap 100; all five broad runtime flags stay false. No migration,
+new package, frontend source build, real-mail acknowledgement or provider write was performed.
+Production's larger pre-existing TODO/human-review notes were preserved; the overview was updated
+additively. Knowledge publication/read-back is recorded in the deployment report.
+Next: Svein Tore completes HR-2026-10-21-MAIL-CONVERSATION-READ with real mail in production because
+Dev receives no mail. Test primary/count action, later arrivals, controlled provider Seen and larger
+continuation; do not infer approval from deployment. HR-2026-08-16-012 stays In Review and disabled.
 
 ## Mail Trash action availability regression (2026-10-21)
 
-Status: Implemented, tested and human-reviewed. Production unchanged.
+Status: Deployed To Production / Human Review Reviewed.
 Owner: Codex; review/promotion owner: Svein Tore. Level 1 correction within the approved Mail RFC.
 The reader offered Move to Trash for an already-trashed source because its capability query counted
 the current folder. The shared operation then excluded that same folder and incorrectly reported
@@ -38,21 +36,24 @@ verification: 81 passed / 715 assertions. Final post-format focused run: 3 passe
 Pint, PHP syntax and scoped whitespace checks pass.
 Human-review checklist: HR-2026-10-21-MAIL-TRASH-TARGET Reviewed by Svein Tore on 2026-10-21.
 Explicit chat approval: "Godkjent". Individual scenario execution was not reported.
-Main promotion was explicitly requested by Svein Tore on 2026-10-21: "Oppdater Main, så går vi videre".
-Only this scoped Main promotion is authorized; production deployment remains separate.
+Svein Tore explicitly requested Main promotion on 2026-10-21. PR #304 merged normally to
+1ad1b54cac4026465489e901d08a864ced52de31. An independent fetch verified the complete tree
+and all eight scoped file hashes equal the tested candidate. The ordinary Dev branch/HEAD/index
+and unrelated changes were preserved. The initial Main promotion performed no production write.
+The subsequent explicit production request was fulfilled at 2026-10-21 20:59:21 UTC through
+application SHA 71ce9ff10d2e04220b557e56dc206c2ddc1d883d; the Trash correction is included.
 Handbook: Knowledge source updated; BookStack page 495 revision 70 was published and independently
 read back with explicit Dev-only status; revision 71 records Svein Tore's approval and was
-independently read back. Page/chapter inherit; book inheritance and staff Editor
+independently read back. BookStack page 495 revision 72 records Main PR #304 and was independently read back;
+revision 74 now records verified production availability.
+Page/chapter inherit; book inheritance and staff Editor
 view permissions were verified without access changes. Employee OpenWebUI retrieval is not claimed.
-Main delivery: the scoped reviewed correction is carried by its promotion PR; the exact merged
-commit and target-branch read-back are recorded in GitHub. Next: production deployment remains a
-separate explicit request. This does not reopen the
+Main promotion and the explicitly requested production deployment are complete. This does not reopen the
 reviewed Mail API scope. Existing provider-reconciliation follow-up: earlier operation 11
 remains ambiguous. A read-only exact UID check confirmed its old Inbox source absent and the selected
 Trash occurrence present. Do not rewrite its evidence or resend a move; use the supported recovery
 path after reviewing immutable target evidence. Recovery owner: Svein / Mail maintenance.
 Evidence: plans/2026-10-21-mail-trash-target-fix.md.
-
 
 
 ## Mail full browser/API parity (2026-10-20)

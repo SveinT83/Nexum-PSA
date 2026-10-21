@@ -11897,8 +11897,11 @@ Detailed backup/rollback evidence: docs/plans/2026-10-21-mail-api-production-dep
 Status: Reviewed. Owner: Codex. Named reviewer: Svein Tore. Review date: 2026-10-21.
 Level 1 regression correction within the approved Mail RFC; original Mail API review stays Reviewed.
 Gate: the human-review gate for this correction is cleared by the explicit approval below.
-Main promotion was explicitly requested by Svein Tore on 2026-10-21. Production deployment
-remains a separate action requiring an explicit request.
+Main promotion was explicitly requested by Svein Tore and completed through PR #304 on 2026-10-21.
+Main commit: 1ad1b54cac4026465489e901d08a864ced52de31. Full tree and eight file hashes equal the
+candidate that passed 81 tests / 715 assertions. The subsequent explicit production request was
+fulfilled through application SHA 71ce9ff10d2e04220b557e56dc206c2ddc1d883d on 2026-10-21.
+Evidence: docs/plans/2026-10-21-mail-conversation-read-production-deployment.md.
 Human approval: Svein Tore approved this delivered correction in chat on 2026-10-21: "Godkjent".
 Individual scenario results were not supplied. The unchecked items below retain the original review
 scenarios; they do not claim that each provider action or employee retrieval was executed.
@@ -11916,13 +11919,13 @@ and restart long-running application workers through the normal deployment path.
   roles; exact provider SPECIAL-USE remains authoritative.
 - [ ] A stale repeated Trash action reports "This message is already in Trash.", preserves the
   selection/source and never creates another provider operation. API returns the same 422 reason.
-- [ ] Read the Dev-only correction in the handbook in its intended employee scope.
+- [ ] Read the deployed correction in the handbook in its intended employee scope.
 
 ## HR-2026-10-21-MAIL-CONVERSATION-READ - Read The Whole Selected Conversation
 
 Status: In Review. Owner: Codex. Named reviewer: Svein Tore.
 Controlled production rollout explicitly authorized by Svein Tore on 2026-10-21 because Dev does
-not receive mail: "Da må du pushe det til produksjon i tilleg, for det kommer ikke inn e-poster her i dev".
+not receive mail: "Da må du pushe det til produktsjon i tilleg, for det kommer ikke inn e-poster her i dev".
 This instruction authorizes scoped Main promotion and deployment before the remaining real-mail
 checks. It is not confirmation that the checklist passed; keep these checks open for production
 validation. The older HR-2026-08-16-012 remains independent and is not approved or activated.
@@ -11935,6 +11938,15 @@ whitespace checks passed. Headless desktop/mobile/keyboard/touch browser checks 
 synthetic SQLite mailbox; independent read-back confirmed six personal reads and zero provider
 operations. No shared Dev or production read state was changed. BookStack 495 revision 73 and 636
 revision 5 were independently read back with inherited employee access unchanged.
+
+Production deployment: Main PR #305, application SHA 71ce9ff10d2e04220b557e56dc206c2ddc1d883d,
+verified 2026-10-21 20:59:21 UTC / 22:59 Europe/Oslo. Immutable Main candidate: 105 tests /
+2,263 assertions. Independent source/permissions, trusted HTTPS, typed public Swagger and
+authenticated Mail context confirm the ordinary command is available. New class loads normally.
+All five advanced/live/collaboration flags remain false. External scheduler and the worker covering
+default,economy,email run every minute. Zero ordinary production runs existed at read-back: no real
+mail was acknowledged for this deployment. Actual provider/read-state and user workflow checks
+below remain open. Evidence: docs/plans/2026-10-21-mail-conversation-read-production-deployment.md.
 
 - [ ] Main Mark as read/unread affects one selected email. The adjacent arrow shows the exact
   mailbox and counted Mark all N messages in conversation as read action.
@@ -11953,7 +11965,7 @@ revision 5 were independently read back with inherited employee access unchanged
   A stale menu cannot retarget another selected conversation.
 - [ ] API context/preview/apply/status match the browser under current token and mailbox ceilings.
   Advanced multi-account runtime stays off.
-- [ ] BookStack guides show Dev-only availability and the intended employee access; employee
+- [ ] BookStack guides show production availability and the intended employee access; employee
   OpenWebUI retrieval remains its own verification claim.
 
 Deploy notes: no new migration, package or frontend build. Existing acknowledgement ledger tables

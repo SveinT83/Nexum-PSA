@@ -1,6 +1,6 @@
 # RFC Index
 
-- [Approved: Mark all messages in the selected Mail conversation read](2026-10-21-mail-conversation-read-command.md) (verified on Dev; controlled production rollout authorized; human review in progress)
+- [Approved: Mark all messages in the selected Mail conversation read](2026-10-21-mail-conversation-read-command.md) (deployed to production; human review in progress)
 
 - [Approved: Automatic Workday And Tripletex Time Synchronization](2026-10-05-workday-tripletex-automatic-time-sync.md) (setup/client tested on Dev; provider contract pending)
 - [Approved: Daily Workday Confirmation](2026-10-01-daily-workday-confirmation.md) (earlier workflow partly superseded; delivery history retained)
