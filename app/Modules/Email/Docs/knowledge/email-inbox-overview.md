@@ -469,6 +469,15 @@ flag/unflag it, archive it, or move it to another same-account selectable provid
 and can move it to mailbox Trash through the visible trash icon when the provider has exposed the
 target folder. These provider actions do not change another user's personal `Unread for me` state.
 
+Correction (2026-10-21; human-review checklist HR-2026-10-21-MAIL-TRASH-TARGET Reviewed
+by Svein Tore on 2026-10-21; production deployment remains separate): the reader uses the same target-folder checks as the
+mailbox operation. **Move to Trash** is unavailable when the selected message is already in Trash,
+or its target is disabled/non-selectable. A stale browser action or API request for a message
+already in Trash reports **This message is already in Trash.** and does not move it again.
+Archive uses the same target checks. To restore a message, select it in **Trash**, open **More**,
+choose **Move**, and select the intended same-account folder. Normal Delete does not permanently
+erase a message; permanent deletion remains a separate capability.
+
 The Spam icon updates the Email spam rule and tag through the existing Email action. When the account
 has a selectable Archive folder, it also archives the provider placement through the same remote
 operation path as the Archive action. The Ticket icon creates or links a Ticket from the selected

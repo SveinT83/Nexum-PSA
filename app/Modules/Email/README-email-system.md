@@ -399,7 +399,10 @@ Archive and Trash targets are resolved per account from provider SPECIAL-USE or 
 folder leaf, with explicit SPECIAL-USE and shallow folders preferred deterministically. A custom
 child below Archive or Trash is not treated as the special folder merely because its parent path
 contains that name. Normal folder discovery repairs old rows whose descendant role was inferred from
-an ancestor.
+an ancestor. The reader's Archive/Trash command visibility uses this same target resolver,
+including sync eligibility and source-folder exclusion. An already-trashed source rejects a repeated
+normal Delete with "This message is already in Trash." before recording an operation or connecting
+to the provider, even when a second Trash candidate exists. This is not permanent deletion.
 
 Each new successful supported operation captures an immutable metadata-only pre/post result snapshot
 covering placement, folder, sync version, UID, UIDVALIDITY, and provider flags. An Undo creates one

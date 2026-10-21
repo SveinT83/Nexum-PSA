@@ -1524,6 +1524,111 @@ class EmailRemoteOperationRecoveryTest extends TestCase
     }
 
     #[Test]
+    public function trash_from_the_trash_folder_has_no_move_button_and_reports_the_actual_state(): void
+    {
+        [, , $placement] = $this->mailboxContext();
+        $placement->folder->forceFill([
+            'path' => 'INBOX.Trash',
+            'name' => 'Trash',
+            'delimiter' => '.',
+            'role' => EmailFolder::ROLE_TRASH,
+        ])->save();
+        $placement->forceFill(['folder_path' => 'INBOX.Trash'])->save();
+        $this->app->bind(ImapClient::class, function (): never {
+            throw new RuntimeException('Already-trashed mail must not connect to the provider.');
+        });
+
+        \Livewire\Livewire::actingAs($this->actor)
+            ->test(\App\Modules\Email\Livewire\Tech\MailWorkspace::class)
+            ->set('accountId', $placement->account_id)
+            ->set('folderId', $placement->email_folder_id)
+            ->set('selectedPlacementId', $placement->id)
+            ->assertDontSeeHtml('wire:click="trashSelected"')
+            ->call('trashSelected')
+            ->assertSet('mailActionStatus.type', 'warning')
+            ->assertSet('mailActionStatus.message', 'This message is already in Trash.')
+            ->assertSet('selectedPlacementId', $placement->id);
+
+        $this->assertSame(0, EmailRemoteOperation::query()->count());
+        $this->assertSame(EmailMailboxPlacement::LOCAL_ACTIVE, $placement->fresh()->local_state);
+        $this->assertDatabaseHas('email_messages', ['id' => $placement->email_message_id]);
+    }
+
+    #[Test]
+    public function trash_api_reports_already_in_trash_even_when_another_trash_candidate_exists(): void
+    {
+        [$account, , $placement] = $this->mailboxContext();
+        $placement->folder->forceFill([
+            'path' => 'INBOX.Trash',
+            'delimiter' => '.',
+            'role' => EmailFolder::ROLE_TRASH,
+        ])->save();
+        $placement->forceFill(['folder_path' => 'INBOX.Trash'])->save();
+        EmailFolder::create([
+            'account_id' => $account->id,
+            'path' => 'Deleted Items',
+            'name' => 'Deleted Items',
+            'role' => EmailFolder::ROLE_TRASH,
+            'is_selectable' => true,
+            'sync_enabled' => true,
+        ]);
+        $this->app->bind(ImapClient::class, function (): never {
+            throw new RuntimeException('Already-trashed mail must not connect to the provider.');
+        });
+        Sanctum::actingAs($this->actor, ['email.read', 'email.update']);
+
+        $this->postJson(route('api.v1.email.mailbox.placements.operations.store', $placement), [
+            'operation' => PerformEmailRemoteOperation::TRASH,
+        ])->assertUnprocessable()
+            ->assertJsonPath('errors.target_folder.0', 'This message is already in Trash.');
+
+        $this->assertSame(0, EmailRemoteOperation::query()->count());
+        $this->assertSame(EmailMailboxPlacement::LOCAL_ACTIVE, $placement->fresh()->local_state);
+    }
+
+    #[Test]
+    public function workspace_archive_and_trash_buttons_use_the_same_target_rules_as_execution(): void
+    {
+        [$account, , $placement] = $this->mailboxContext();
+        $this->actingAs($this->actor);
+        $workspace = app(\App\Modules\Email\Livewire\Tech\MailWorkspace::class);
+        $target = new EmailFolder;
+        $cases = [
+            ['INBOX.Trash', null, EmailFolder::ROLE_CUSTOM, true, true, true, false],
+            ['INBOX.Archive', null, EmailFolder::ROLE_CUSTOM, true, true, false, true],
+            ['Deleted Items', null, EmailFolder::ROLE_TRASH, true, false, false, false],
+            ['Deleted Items', null, EmailFolder::ROLE_TRASH, false, true, false, false],
+            ['INBOX.Trash.Customer', null, EmailFolder::ROLE_TRASH, true, true, false, false],
+            ['INBOX.Archive.Customer', null, EmailFolder::ROLE_ARCHIVE, true, true, false, false],
+            ['Provider Bin', '\\Trash', EmailFolder::ROLE_CUSTOM, true, true, true, false],
+            ['Provider Store', '\\Archive', EmailFolder::ROLE_CUSTOM, true, true, false, true],
+        ];
+        foreach ($cases as [$path, $specialUse, $role, $selectable, $enabled, $trash, $archive]) {
+            $target->fill([
+                'account_id' => $account->id,
+                'path' => $path,
+                'name' => $path,
+                'delimiter' => '.',
+                'special_use' => $specialUse,
+                'role' => $role,
+                'is_selectable' => $selectable,
+                'sync_enabled' => $enabled,
+            ])->save();
+            $this->assertSame($trash, $workspace->hasTrashTarget($placement), $path);
+            $this->assertSame($archive, $workspace->hasArchiveTarget($placement), $path);
+            foreach ([PerformEmailRemoteOperation::TRASH => $trash, PerformEmailRemoteOperation::ARCHIVE => $archive] as $operation => $available) {
+                try {
+                    $resolved = app(PerformEmailRemoteOperation::class)->targetFolderFor($placement, $operation);
+                    $this->assertTrue($available, $path);
+                    $this->assertSame($target->id, $resolved?->id);
+                } catch (ValidationException) {
+                    $this->assertFalse($available, $path);
+                }
+            }
+        }
+    }
+
+    #[Test]
     public function folder_discovery_repairs_nested_special_roles_and_trash_uses_the_canonical_folder(): void
     {
         [$account, , $placement] = $this->mailboxContext();

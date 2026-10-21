@@ -11891,3 +11891,29 @@ artifact, while the other 98 hashes match Main. Published schema has 175 operati
 Normal-TLS health/login/Swagger and authenticated Mail context read passed. Runtime flags remain
 false. No migration, provider write, inbox-delivery or employee OpenWebUI claim is inferred.
 Detailed backup/rollback evidence: docs/plans/2026-10-21-mail-api-production-deployment.md.
+
+## HR-2026-10-21-MAIL-TRASH-TARGET - Correct Trash command availability
+
+Status: Reviewed. Owner: Codex. Named reviewer: Svein Tore. Review date: 2026-10-21.
+Level 1 regression correction within the approved Mail RFC; original Mail API review stays Reviewed.
+Gate: the human-review gate for this correction is cleared by the explicit approval below.
+Main promotion was explicitly requested by Svein Tore on 2026-10-21. Production deployment
+remains a separate action requiring an explicit request.
+Human approval: Svein Tore approved this delivered correction in chat on 2026-10-21: "Godkjent".
+Individual scenario results were not supplied. The unchecked items below retain the original review
+scenarios; they do not claim that each provider action or employee retrieval was executed.
+Scope: selected Trash message, shared Archive/Trash target resolution, stale browser/API actions.
+Evidence: docs/plans/2026-10-21-mail-trash-target-fix.md.
+No migration, new permission, provider mutation, permanent delete or runtime activation.
+Deployment after approval: promote only the scoped tested delta, clear normal application caches,
+and restart long-running application workers through the normal deployment path. No frontend build.
+
+- [ ] Open a message already in Trash, including a Trash message selected inside an Inbox conversation.
+  Expect no Move to Trash button; existing folder badge and message remain readable.
+- [ ] With Organize access, select an Inbox message whose account has an available Trash folder.
+  Expect the Move to Trash button; use an intended test message and verify provider Trash read-back.
+- [ ] Verify Archive/Trash controls are absent for disabled/non-selectable targets and stale descendant
+  roles; exact provider SPECIAL-USE remains authoritative.
+- [ ] A stale repeated Trash action reports "This message is already in Trash.", preserves the
+  selection/source and never creates another provider operation. API returns the same 422 reason.
+- [ ] Read the Dev-only correction in the handbook in its intended employee scope.

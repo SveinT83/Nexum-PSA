@@ -1,5 +1,36 @@
 # tdPSA Development TODO
 
+## Mail Trash action availability regression (2026-10-21)
+
+Status: Implemented, tested and human-reviewed. Production unchanged.
+Owner: Codex; review/promotion owner: Svein Tore. Level 1 correction within the approved Mail RFC.
+The reader offered Move to Trash for an already-trashed source because its capability query counted
+the current folder. The shared operation then excluded that same folder and incorrectly reported
+missing provider Trash. Use the shared target resolver for Archive/Trash command visibility and
+reject already-trashed sources with the exact state before provider connection/ledger creation.
+No permanent delete, new scope, migration or runtime activation is introduced.
+Focused regressions: 3 passed / 47 assertions; all three fail before the correction. Affected Mail
+verification: 81 passed / 715 assertions. Final post-format focused run: 3 passed / 47 assertions.
+Pint, PHP syntax and scoped whitespace checks pass.
+Human-review checklist: HR-2026-10-21-MAIL-TRASH-TARGET Reviewed by Svein Tore on 2026-10-21.
+Explicit chat approval: "Godkjent". Individual scenario execution was not reported.
+Main promotion was explicitly requested by Svein Tore on 2026-10-21: "Oppdater Main, så går vi videre".
+Only this scoped Main promotion is authorized; production deployment remains separate.
+Handbook: Knowledge source updated; BookStack page 495 revision 70 was published and independently
+read back with explicit Dev-only status; revision 71 records Svein Tore's approval and was
+independently read back. Page/chapter inherit; book inheritance and staff Editor
+view permissions were verified without access changes. Employee OpenWebUI retrieval is not claimed.
+Main delivery: the scoped reviewed correction is carried by its promotion PR; the exact merged
+commit and target-branch read-back are recorded in GitHub. Next: production deployment remains a
+separate explicit request. This does not reopen the
+reviewed Mail API scope. Existing provider-reconciliation follow-up: earlier operation 11
+remains ambiguous. A read-only exact UID check confirmed its old Inbox source absent and the selected
+Trash occurrence present. Do not rewrite its evidence or resend a move; use the supported recovery
+path after reviewing immutable target evidence. Recovery owner: Svein / Mail maintenance.
+Evidence: plans/2026-10-21-mail-trash-target-fix.md.
+
+
+
 ## Mail full browser/API parity (2026-10-20)
 
 Status: Deployed and independently verified in production on 2026-10-21; human review Reviewed.
