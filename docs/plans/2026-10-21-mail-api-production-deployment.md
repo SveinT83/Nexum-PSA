@@ -1,6 +1,6 @@
 # Mail API Main And Production Rollout - 2026-10-21
 
-Status: exact release candidate verified; Main and production are not yet updated.
+Status: Main merged; first production attempt safely rolled back; production Swagger fix verified before retry.
 Operator: Codex, explicitly requested by Svein Tore on 2026-10-21.
 Human review: HR-2026-10-20-MAIL-API Reviewed by Svein Tore on 2026-10-21.
 Delivery source: /var/Projects/tdPSA; preserve the shared Dev branch and ordinary index.
@@ -80,7 +80,25 @@ or provider/runtime activation is part of release preparation.
 
 ## Current State
 
-No Main merge or production application change has been performed.
+Main PR #300 merged normally to a91331f71dd328b2d0db190b1dc5a46213ab3bc8.
+Its tree exactly matched the fully tested candidate. The first production attempt was rolled back
+automatically when l5-swagger:generate tried to reflect AssetIndexFilterTest without the development-only
+Tests\TestCase parent. Code/environment were restored, maintenance was lifted, and trusted HTTPS /up
+returned 200. No migration, token grant or Mail runtime activation occurred.
+
+The correction excludes module Tests directories before OpenAPI reflection. Its child-process
+regression poisons the development-only parent: it fails before the fix and passes afterward
+(1 test / 2 assertions). The complete API/Swagger/production-scan regression package passes
+23 tests / 1,487 assertions. No development dependency is installed into production.
+
+Protected first-attempt backup:
+ /var/www/vhosts/tronderdata.no/private/mail-api-release-20261021-a91331f/
+- code-before.tar.gz: 578607 bytes; SHA-256 eb49521c9213f77e1c812f6fe2b8728e1efd8716924d5e87477d30a551efbfe7
+- database-before.sql.gz: 191124405 bytes; SHA-256 edf2b61cd0212fff624b66fd227a87aaeb508ef1a78bd3a2d13b5e0626041011
+The consistent full database dump and gzip integrity passed; the temporary database credential file
+was removed. A retry may reuse this verified protected database snapshot because the code-only
+attempt made no schema/data transition; take a fresh code/environment snapshot for the retry.
+No restore rehearsal or real provider write is claimed.
 Protected production preflight evidence:
  /var/www/vhosts/tronderdata.no/private/mail-api-preflight-20261021-final.json
 The release tree and logs remain outside the repository under /tmp/nexum-mail-main-20261021.

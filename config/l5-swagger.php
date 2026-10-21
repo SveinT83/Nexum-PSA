@@ -156,7 +156,9 @@ return [
              * @note This option overwrites `paths.excludes`
              * @see \OpenApi\scan
              */
-            'exclude' => [],
+            // Module test classes require development-only parents and are never API sources.
+            // Exclude them before reflection so production --no-dev autoloading is supported.
+            'exclude' => glob(base_path('app/Modules/*/Tests'), GLOB_ONLYDIR) ?: [],
 
             /*
              * Allows to generate specs either for OpenAPI 3.0.0 or OpenAPI 3.1.0.
