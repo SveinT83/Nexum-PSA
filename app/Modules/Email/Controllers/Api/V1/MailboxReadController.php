@@ -44,6 +44,13 @@ final class MailboxReadController extends Controller
             'views' => ['unread', 'inbox', 'all', 'drafts'],
             'filters' => (new EmailMailboxReadQuery($actor))->listFilterOptions(),
             'live_available' => app(EmailLiveRuntimeReadiness::class)->ready(),
+            'conversation_read' => [
+                'available' => \Illuminate\Support\Facades\Schema::hasTable('email_conversation_action_runs')
+                    && \Illuminate\Support\Facades\Schema::hasTable('email_conversation_action_items'),
+                'scope_kind' => \App\Modules\Email\Models\EmailConversationActionRun::SCOPE_ORDINARY_READ,
+                'preview_limit' => app(\App\Modules\Email\Services\EmailConversationAcknowledgementBoundary::class)->previewCap(),
+                'active_account_only' => true,
+            ],
             'navigation' => app(EmailLiveCurrentViewProjector::class)->project($actor, 'unread', null, null),
         ]]);
     }

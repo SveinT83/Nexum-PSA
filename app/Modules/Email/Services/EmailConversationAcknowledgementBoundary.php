@@ -5,6 +5,7 @@ namespace App\Modules\Email\Services;
 use App\Models\Core\User;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailAccountUserReadBaseline;
+use App\Modules\Email\Models\EmailConversationActionRun;
 use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailMessage;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -25,6 +26,33 @@ class EmailConversationAcknowledgementBoundary
             || ! Schema::hasTable('email_conversation_action_runs')
             || ! Schema::hasTable('email_conversation_action_items')) {
             throw new EmailConversationAcknowledgementUnavailable;
+        }
+    }
+
+    /** The ordinary read command is separate from the advanced multi-account runtime gate. */
+    public function assertOrdinaryReadAvailable(): void
+    {
+        if (! Schema::hasTable('email_conversation_action_runs')
+            || ! Schema::hasTable('email_conversation_action_items')) {
+            throw new EmailConversationAcknowledgementUnavailable;
+        }
+    }
+
+    public function assertRunAvailable(EmailConversationActionRun $run): void
+    {
+        if ($run->scope_kind !== EmailConversationActionRun::SCOPE_ORDINARY_READ) {
+            $this->assertAvailable();
+
+            return;
+        }
+
+        $this->assertOrdinaryReadAvailable();
+        if ($run->operation !== EmailConversationActionRun::OPERATION_ACKNOWLEDGE
+            || $run->target_personal_unread
+            || (int) $run->account_count !== 1
+            || (int) $run->active_email_account_id < 1
+            || (int) $run->active_email_conversation_id < 1) {
+            throw new AuthorizationException('This conversation read snapshot is not available.');
         }
     }
 

@@ -469,8 +469,32 @@ flag/unflag it, archive it, or move it to another same-account selectable provid
 and can move it to mailbox Trash through the visible trash icon when the provider has exposed the
 target folder. These provider actions do not change another user's personal `Unread for me` state.
 
+## Mark the entire conversation as read (Dev)
+
+Availability: implemented on Dev on 2026-10-21 under the approved conversation-read RFC.
+Human-review checklist HR-2026-10-21-MAIL-CONVERSATION-READ is Pending. This addition has not
+been promoted to Main or deployed to production.
+
+1. Open Mail and select the conversation in the intended mailbox.
+2. The main Mark as read / Mark as unread button still applies to the selected individual email.
+3. Open the small arrow beside that button. It prepares the complete conversation and shows the
+   mailbox address plus Mark all N messages in conversation as read. Opening or closing this menu
+   does not mark anything read; Escape closes it, and it also works by keyboard and touch.
+4. Check the mailbox and count, then select that counted action. It includes authorized Inbox,
+   Sent and other-folder context in that account, even when only one message matches the current
+   list/search filter. Other accounts and other users' personal read states are unaffected.
+5. Read the result. For a larger conversation, remaining work may be queued; Refresh status shows
+   progress. A partial result reports the actual number updated. New messages arriving after the
+   menu snapshot remain unread until you deliberately acknowledge them.
+
+For shared/delegated mail this changes your Nexum read state only. A personal owner also requests
+mail-server Seen through the normal ledger; pending or failed server updates are reported separately
+and never undo a successful personal acknowledgement. An incomplete legacy conversation or a scope
+over the configured limit is refused before any all action; use the individual-message command
+or wait for complete synchronization rather than treating a visible page as the whole thread.
+
 Correction (2026-10-21; human-review checklist HR-2026-10-21-MAIL-TRASH-TARGET Reviewed
-by Svein Tore on 2026-10-21; production deployment remains separate): the reader uses the same target-folder checks as the
+by Svein Tore on 2026-10-21; merged to Main through PR #304; not yet deployed to production): the reader uses the same target-folder checks as the
 mailbox operation. **Move to Trash** is unavailable when the selected message is already in Trash,
 or its target is disabled/non-selectable. A stale browser action or API request for a message
 already in Trash reports **This message is already in Trash.** and does not move it again.

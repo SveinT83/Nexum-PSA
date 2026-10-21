@@ -1969,3 +1969,16 @@ records method/path/scope/request contracts. See Docs/knowledge/mail-api-operati
 ../../../docs/plans/2026-10-20-mail-api-verification.md. Browser and API share queries/actions/services.
 Ordinary Delete is provider Trash. No new migrations or runtime enablements. Regenerate Swagger with
 php artisan l5-swagger:generate whenever the contract changes. Human review and promotion are separate.
+
+## Ordinary Conversation Read Command (2026-10-21, Dev)
+
+The reader split button preserves selected-message read/unread and prepares a counted whole-
+conversation read snapshot through the arrow. Its ordinary_conversation_read scope reuses the
+existing immutable run/item evidence and 25-item continuation, while the advanced acknowledgement
+gate remains false. The target is always personal read in one durable account conversation; provider
+Seen is derived for the personal owner and reported separately. No hover/open acknowledgement,
+cross-account expansion, new table or schema migration. Incomplete legacy groups and over-limit
+scope refuse all before mutation. Browser and API share preview/apply/result projection; API context
+discovers the capability without granting access. Typed Swagger and parity contracts are current.
+RFC 2026-10-21-mail-conversation-read-command is Approved; human review
+HR-2026-10-21-MAIL-CONVERSATION-READ is Pending. Main and production are unchanged for this addition.

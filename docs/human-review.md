@@ -11917,3 +11917,46 @@ and restart long-running application workers through the normal deployment path.
 - [ ] A stale repeated Trash action reports "This message is already in Trash.", preserves the
   selection/source and never creates another provider operation. API returns the same 422 reason.
 - [ ] Read the Dev-only correction in the handbook in its intended employee scope.
+
+## HR-2026-10-21-MAIL-CONVERSATION-READ - Read The Whole Selected Conversation
+
+Status: In Review. Owner: Codex. Named reviewer: Svein Tore.
+Controlled production rollout explicitly authorized by Svein Tore on 2026-10-21 because Dev does
+not receive mail: "Da må du pushe det til produksjon i tilleg, for det kommer ikke inn e-poster her i dev".
+This instruction authorizes scoped Main promotion and deployment before the remaining real-mail
+checks. It is not confirmation that the checklist passed; keep these checks open for production
+validation. The older HR-2026-08-16-012 remains independent and is not approved or activated.
+RFC: docs/rfc/2026-10-21-mail-conversation-read-command.md (Approved by Svein Tore, 2026-10-21).
+ADR: docs/adr/2026-10-21-ordinary-mail-conversation-read-boundary.md.
+Evidence: docs/plans/2026-10-21-mail-conversation-read-verification.md.
+Automated: affected package 105 tests / 2,263 assertions passed, including ordinary context discovery
+and synchronous continuation read-back. PHP syntax, Pint, OpenAPI references and changed-line
+whitespace checks passed. Headless desktop/mobile/keyboard/touch browser checks use an isolated
+synthetic SQLite mailbox; independent read-back confirmed six personal reads and zero provider
+operations. No shared Dev or production read state was changed. BookStack 495 revision 73 and 636
+revision 5 were independently read back with inherited employee access unchanged.
+
+- [ ] Main Mark as read/unread affects one selected email. The adjacent arrow shows the exact
+  mailbox and counted Mark all N messages in conversation as read action.
+- [ ] A six-message conversation with one message in the current list filter acknowledges all six
+  authorized account-conversation messages, including Sent context. Already-read selected mail
+  does not prevent acknowledging unread peers.
+- [ ] Opening/hovering, preparing, closing/Escape and cancelling do not acknowledge any message.
+  Mouse, touch, keyboard Enter/Tab/Escape work, and the menu fits narrow screens.
+- [ ] An arrival after the menu snapshot stays unread. Other users and other accounts are unchanged.
+- [ ] Shared/delegated mail changes personal state only. Use a controlled personal-owner mailbox to
+  verify separate pending/failed/succeeded provider Seen and actual provider read-back. No actual
+  provider write was performed by automated/browser checks.
+- [ ] A 27-message test conversation completes its bounded continuation on the intended default
+  worker. Queue receipt alone is not completion; stale/revoked/failed items show partial results.
+- [ ] Incomplete legacy identity or excessive scope reports the blocker before changing any state.
+  A stale menu cannot retarget another selected conversation.
+- [ ] API context/preview/apply/status match the browser under current token and mailbox ceilings.
+  Advanced multi-account runtime stays off.
+- [ ] BookStack guides show Dev-only availability and the intended employee access; employee
+  OpenWebUI retrieval remains its own verification claim.
+
+Deploy notes: no new migration, package or frontend build. Existing acknowledgement ledger tables
+are prerequisites. After reviewed deployment, clear normal application/view caches, regenerate
+Swagger and gracefully restart long-running workers. Do not enable broad acknowledgement/live or
+collaboration flags. Retain all action/provider evidence on rollback; never erase read-state history.

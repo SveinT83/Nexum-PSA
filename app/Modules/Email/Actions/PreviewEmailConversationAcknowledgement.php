@@ -32,13 +32,54 @@ class PreviewEmailConversationAcknowledgement
         ?int $itemCap = null,
     ): EmailConversationActionRun {
         $this->boundary->assertAvailable();
+
+        return $this->activeConversationPreview($actor, $account, $conversation, $idempotencyKey,
+            $targetPersonalUnread, $alsoMarkProviderSeen, $itemCap,
+            EmailConversationActionRun::SCOPE_ACTIVE_ACCOUNT_CONVERSATION);
+    }
+
+    /** Freeze only the complete, exact account conversation derived from the selected placement. */
+    public function ordinaryRead(
+        User $actor,
+        EmailMailboxPlacement $placement,
+        string $idempotencyKey,
+    ): EmailConversationActionRun {
+        $this->boundary->assertOrdinaryReadAvailable();
+        $placement->loadMissing(['account', 'conversation', 'message']);
+        if (! $placement->account
+            || ! $placement->message?->hasActiveProviderPlacement($placement)) {
+            throw new AuthorizationException('This conversation is not available.');
+        }
+        $this->authorizeAccount($actor, $placement->account, false);
+        if (! $placement->conversation) {
+            throw ValidationException::withMessages([
+                'scope' => 'This thread has no complete conversation identity yet. Mark individual messages as read.',
+            ]);
+        }
+        $providerSeen = $placement->account->isPersonal()
+            && (int) $placement->account->owner_id === (int) $actor->id;
+
+        return $this->activeConversationPreview($actor, $placement->account, $placement->conversation,
+            $idempotencyKey, false, $providerSeen, null, EmailConversationActionRun::SCOPE_ORDINARY_READ);
+    }
+
+    private function activeConversationPreview(
+        User $actor,
+        EmailAccount $account,
+        EmailConversation $conversation,
+        string $idempotencyKey,
+        bool $targetPersonalUnread,
+        bool $alsoMarkProviderSeen,
+        ?int $itemCap,
+        string $scopeKind,
+    ): EmailConversationActionRun {
         $cap = $this->boundary->previewCap($itemCap);
         $this->assertTargets($targetPersonalUnread, $alsoMarkProviderSeen);
         $this->assertIdempotencyKey($idempotencyKey);
 
         $requestFingerprint = $this->requestFingerprint([
             'actor_id' => (int) $actor->id,
-            'scope_kind' => EmailConversationActionRun::SCOPE_ACTIVE_ACCOUNT_CONVERSATION,
+            'scope_kind' => $scopeKind,
             'account_id' => (int) $account->id,
             'conversation_id' => (int) $conversation->id,
             'target_personal_unread' => $targetPersonalUnread,
@@ -55,7 +96,8 @@ class PreviewEmailConversationAcknowledgement
             throw new AuthorizationException('This mailbox action is not available.');
         }
 
-        $this->authorizeAccount($actor, $account, $alsoMarkProviderSeen);
+        $this->authorizeAccount($actor, $account,
+            $alsoMarkProviderSeen && $scopeKind !== EmailConversationActionRun::SCOPE_ORDINARY_READ);
 
         /** @var Collection<int, EmailMailboxPlacement> $placements */
         $placements = EmailMailboxPlacement::query()
@@ -77,7 +119,7 @@ class PreviewEmailConversationAcknowledgement
         return $this->storePreview(
             actor: $actor,
             placements: $placements,
-            scopeKind: EmailConversationActionRun::SCOPE_ACTIVE_ACCOUNT_CONVERSATION,
+            scopeKind: $scopeKind,
             idempotencyKey: $idempotencyKey,
             requestFingerprint: $requestFingerprint,
             targetPersonalUnread: $targetPersonalUnread,
@@ -342,7 +384,8 @@ class PreviewEmailConversationAcknowledgement
         }
 
         foreach ($accounts as $account) {
-            $this->authorizeAccount($actor, $account, (bool) $existing->provider_seen_requested);
+            $this->authorizeAccount($actor, $account, (bool) $existing->provider_seen_requested
+                && $existing->scope_kind !== EmailConversationActionRun::SCOPE_ORDINARY_READ);
         }
 
         return $existing->load('items');

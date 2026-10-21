@@ -1,5 +1,29 @@
 # tdPSA Development TODO
 
+## Mail conversation Mark all as read command (2026-10-21)
+
+Status: Verified On Dev / Controlled Main And Production Rollout Authorized; Human Review In Review.
+Owner: Codex; review and promotion owner: Svein Tore.
+RFC: rfc/2026-10-21-mail-conversation-read-command.md.
+Evidence: plans/2026-10-21-mail-conversation-read-verification.md.
+The split Mark as read/unread button preserves the selected-message command and adds a counted,
+explicit whole-conversation read action for the active mailbox, including context outside the
+current list filter. The immutable preview excludes later arrivals; other accounts and users are
+unchanged. Browser and official API share the same actions, authorization and separate provider
+outcomes. Legacy/incomplete identity and excessive scope are refused before changing read state.
+Verified on Dev: 105 affected tests / 2,263 assertions, PHP syntax, Pint and OpenAPI references.
+A real headless browser passed desktop/mobile, Enter/Escape and touch apply with an isolated
+synthetic mailbox; independent read-back confirmed all six messages read and zero provider work.
+BookStack employee guide 495 revision 73 and API guide 636 revision 5 were published and read back;
+existing inherited employee access was verified. Employee OpenWebUI retrieval is not certified.
+Svein Tore explicitly authorized Main promotion and production deployment because Dev receives no
+mail. HR-2026-10-21-MAIL-CONVERSATION-READ is In Review; remaining real-provider, intended-worker
+and personal workflow checks move to controlled production validation. Rollout is in progress. The older
+HR-2026-08-16-012 stays In Review and its broad advanced runtime remains disabled. No migration,
+actual provider write, commit, push, Main promotion or production deployment was performed.
+
+
+
 ## Mail Trash action availability regression (2026-10-21)
 
 Status: Implemented, tested and human-reviewed. Production unchanged.

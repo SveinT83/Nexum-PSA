@@ -2,12 +2,12 @@
 
 namespace App\Modules\Email\Services;
 
-use RuntimeException;
+use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 
-class EmailConversationAcknowledgementUnavailable extends RuntimeException
+class EmailConversationAcknowledgementUnavailable extends ServiceUnavailableHttpException
 {
     public function __construct()
     {
-        parent::__construct('Conversation acknowledgement is not available.');
+        parent::__construct(null, 'Conversation acknowledgement is not available.');
     }
 }
