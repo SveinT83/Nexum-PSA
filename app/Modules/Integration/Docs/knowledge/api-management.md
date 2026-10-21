@@ -1210,9 +1210,9 @@ The API foundation is intentionally incremental. Each domain must own its API co
 route registration, validation, and tests.
 
 
-## Mail operational API scope (Dev, 2026-10-20)
+## Mail operational API scope (Production, 2026-10-21)
 
-Mail has full supported browser read/write/action/admin API parity on Dev. New email.* abilities
+Mail has full supported browser read/write/action/admin API parity in production as of 2026-10-21. New email.* abilities
 are explicit token ceilings and never create mailbox content access or widen existing tokens.
 See the verified [Mail API guide](https://doc.tronderdata.no/books/nexum-psa/page/mail-api-operations-dev)
-and the installation Swagger. Human review HR-2026-10-20-MAIL-API is Reviewed: Svein Tore approved the delivered scope on 2026-10-21. Main/production promotion remains pending.
+and the installation Swagger. Human review HR-2026-10-20-MAIL-API is Reviewed: Svein Tore approved the delivered scope on 2026-10-21. Main and production were updated and independently verified on 2026-10-21.

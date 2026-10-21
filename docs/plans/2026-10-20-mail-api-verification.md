@@ -1,8 +1,11 @@
 # Mail Full API Parity: Dev Verification
 
-Status: Done On Dev. Human review: HR-2026-10-20-MAIL-API Reviewed by Svein Tore on 2026-10-21.
+Status: Deployed and independently verified in production on 2026-10-21.
+Human review: HR-2026-10-20-MAIL-API Reviewed by Svein Tore on 2026-10-21.
 Authoritative implementation: /var/Projects/tdPSA, branch Dev.
-No commit, push, Main promotion or production deployment was performed.
+The original Dev handoff performed no commit/promotion/deployment. Svein subsequently requested
+Main and production explicitly; application release 11cf40227e9dfa52747b96cdf58e5f64ae706f43 is now deployed.
+Operational evidence: 2026-10-21-mail-api-production-deployment.md.
 Approved scope: RFC 2026-10-20-mail-full-api-parity, all six feature slices.
 Architecture: docs/adr/2026-10-20-mail-browser-api-operational-parity.md.
 
@@ -124,7 +127,8 @@ reviews and Svein's ownership of Main promotion/deployment/release remain unchan
 Svein owns commit/promotion/deployment. No new migration, package, build, scheduler or runtime switch
 is introduced. After approved promotion, regenerate Swagger, refresh normal Laravel route/config/view
 caches and restart relevant long-running workers. Existing Mail schema/runtime reviews remain
-independent. Real provider behavior, delivery and production availability require their named checks.
+independent. Real provider behavior and delivery require their named checks; production application
+availability is independently verified in the linked 2026-10-21 deployment report.
 
 The working copy was already broadly dirty, including another Ticket/Task API stream.
 Existing work was preserved; the shared ability catalog was extended additively.
@@ -132,6 +136,11 @@ Transient audit/build/test scripts and rollback snapshots are outside the reposi
 
 
 Public website handoff: one public-safe Mail item added and read back in the fixed Content and
-Visibility queue. Status is klar for vurdering. Svein Tore approved the Mail API scope review on
-2026-10-21; production deployment and verified availability remain do-not-publish gates.
-No website or social publication was performed.
+Visibility queue. Status remains klar for vurdering. Svein Tore approved the Mail API scope review
+and production deployment/availability were verified on 2026-10-21. Website editorial publication
+still requires its own approval. No website or social publication was performed.
+
+Final production documentation: BookStack 636, 495 and 449 production-status updates were read back
+published with rendered HTML. The legacy Dev title on 636 remains a title-only follow-up in TODO;
+its body is production-current. The unpublished public website handoff is updated with verified
+production status. No employee OpenWebUI retrieval, real provider write or delivery claim is added.

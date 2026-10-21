@@ -11883,3 +11883,11 @@ Disabled collaboration/live/advanced-acknowledgement gates retain their independ
 Deployment authorization (2026-10-21): Svein Tore explicitly requested Main and production after
 approving this scope. GitHub's existing actor policy and independent runtime gates remain.
 Operational preparation: docs/plans/2026-10-21-mail-api-production-deployment.md.
+
+Production execution (2026-10-21): application release 11cf40227e9dfa52747b96cdf58e5f64ae706f43 deployed and
+independently verified. Main PRs #300/#301/#302 merged normally under existing repository actor policy.
+All 99 selected release files were checked; Swagger regeneration changes its environment-specific
+artifact, while the other 98 hashes match Main. Published schema has 175 operations / 109 writes.
+Normal-TLS health/login/Swagger and authenticated Mail context read passed. Runtime flags remain
+false. No migration, provider write, inbox-delivery or employee OpenWebUI claim is inferred.
+Detailed backup/rollback evidence: docs/plans/2026-10-21-mail-api-production-deployment.md.

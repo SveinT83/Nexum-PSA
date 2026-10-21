@@ -1,4 +1,6 @@
-Status: Implemented on Dev, 2026-10-20. Main and production have not been promoted by this work.
+Status: Deployed and independently verified in production on 2026-10-21.
+Production: https://portal.tronderdata.no; Swagger: https://portal.tronderdata.no/api/documentation.
+Application release: 11cf40227e9dfa52747b96cdf58e5f64ae706f43.
 Human-review checklist HR-2026-10-20-MAIL-API is Reviewed: Svein Tore approved the delivered scope on 2026-10-21. Existing default-off collaboration,
 acknowledgement and live-runtime switches keep their independent approval gates.
 
@@ -83,8 +85,10 @@ for the same logical action. Never repeat an unknown SMTP write as a fresh send.
 
 The Dev Mail suite passed 812 tests / 9,259 assertions; eight optional tests were skipped.
 Final adapter/Swagger evidence is in docs/plans/2026-10-20-mail-api-verification.md. Tests do not prove
-real IMAP/SMTP writes, inbox delivery, employee OpenWebUI retrieval or production rollout.
-HR-2026-10-20-MAIL-API was approved by Svein Tore on 2026-10-21. Main promotion, deployment and release remain separate actions owned by Svein Tore.
+real IMAP/SMTP writes, inbox delivery or employee OpenWebUI retrieval.
+Production source hashes, live Swagger, trusted HTTPS health and an authenticated Mail context read
+were independently verified on 2026-10-21.
+HR-2026-10-20-MAIL-API was approved by Svein Tore on 2026-10-21. Main promotion and production deployment completed on 2026-10-21 under Svein Tore's explicit request.
 
 Authoritative source: app/Modules/Email/Docs/knowledge/mail-api-operations.md.
 Contract inventory: app/Modules/Email/Docs/email-api-contracts.json.
