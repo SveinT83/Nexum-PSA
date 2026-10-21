@@ -3,8 +3,8 @@
 namespace App\Modules\Email\Controllers\Admin;
 
 use App\Modules\Email\Actions\ApplyEmailCursorRebaseline;
-use App\Modules\Email\Actions\CancelEmailProviderReconciliation;
 use App\Modules\Email\Actions\CancelEmailHistoricalImport;
+use App\Modules\Email\Actions\CancelEmailProviderReconciliation;
 use App\Modules\Email\Actions\PreviewEmailCursorRebaseline;
 use App\Modules\Email\Actions\PreviewEmailHistoricalImport;
 use App\Modules\Email\Actions\StartEmailHistoricalImport;
@@ -16,7 +16,6 @@ use App\Modules\Email\Models\EmailHistoricalImportRun;
 use App\Modules\Email\Models\EmailProviderReconciliationRun;
 use App\Modules\Email\Queries\EmailMailboxMaintenanceQuery;
 use App\Modules\Email\Services\EmailMailboxMaintenanceAuthorization;
-use App\Modules\Email\Services\EmailProviderReconciliationReadException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -29,7 +28,9 @@ class MailboxMaintenanceController extends Controller
         Request $request,
         EmailMailboxMaintenanceQuery $query,
     ): View {
-        return view('email::Admin.Accounts.mailbox-maintenance', $query->forAccount($account, $request->user()));
+        $data = app()->call([app(\App\Modules\Email\Services\EmailMailboxMaintenanceOperations::class), 'index'], ['request' => $request, 'account' => $account]);
+
+        return view('email::Admin.Accounts.mailbox-maintenance', $data);
     }
 
     public function previewHistoricalImport(
@@ -37,7 +38,8 @@ class MailboxMaintenanceController extends Controller
         Request $request,
         PreviewEmailHistoricalImport $preview,
     ): RedirectResponse {
-        $run = $preview->handle($account, $request->user(), $request->all());
+        $data = app()->call([app(\App\Modules\Email\Services\EmailMailboxMaintenanceOperations::class), 'previewHistoricalImport'], ['request' => $request, 'account' => $account]);
+        $run = $data['run'];
 
         return redirect()
             ->route('tech.admin.settings.email.accounts.mailbox-maintenance', $account)
@@ -49,15 +51,8 @@ class MailboxMaintenanceController extends Controller
         Request $request,
         StartEmailHistoricalImport $start,
     ): RedirectResponse {
-        $request->validate([
-            'historical_import_run_id' => ['required', 'integer'],
-            'preview_fingerprint' => ['required', 'string', 'size:64'],
-        ]);
-        $run = EmailHistoricalImportRun::query()
-            ->whereKey($request->integer('historical_import_run_id'))
-            ->where('account_id', $account->id)
-            ->firstOrFail();
-        $queued = $start->handle($account, $run, $request->user(), $request->string('preview_fingerprint')->toString());
+        $data = app()->call([app(\App\Modules\Email\Services\EmailMailboxMaintenanceOperations::class), 'startHistoricalImport'], ['request' => $request, 'account' => $account]);
+        $queued = $data['queued'];
 
         return redirect()
             ->route('tech.admin.settings.email.accounts.mailbox-maintenance', $account)
@@ -70,8 +65,8 @@ class MailboxMaintenanceController extends Controller
         Request $request,
         CancelEmailHistoricalImport $cancel,
     ): RedirectResponse {
-        abort_unless((int) $run->account_id === (int) $account->id, 404);
-        $cancelled = $cancel->handle($account, $run, $request->user());
+        $data = app()->call([app(\App\Modules\Email\Services\EmailMailboxMaintenanceOperations::class), 'cancelHistoricalImport'], ['request' => $request, 'account' => $account, 'run' => $run]);
+        $cancelled = $data['cancelled'];
 
         return redirect()
             ->route('tech.admin.settings.email.accounts.mailbox-maintenance', $account)
@@ -84,19 +79,8 @@ class MailboxMaintenanceController extends Controller
         EmailMailboxMaintenanceAuthorization $authorization,
         StartEmailProviderReconciliation $start,
     ): RedirectResponse {
-        $authorization->authorize($request->user(), $account);
-
-        try {
-            $run = $start->handle(
-                $account,
-                EmailProviderReconciliationRun::TRIGGER_MANUAL,
-                $request->user(),
-            );
-        } catch (EmailProviderReconciliationReadException $exception) {
-            return redirect()
-                ->route('tech.admin.settings.email.accounts.mailbox-maintenance', $account)
-                ->withErrors(['reconciliation' => $exception->safeCode]);
-        }
+        $data = app()->call([app(\App\Modules\Email\Services\EmailMailboxMaintenanceOperations::class), 'startProviderReconciliation'], ['request' => $request, 'account' => $account]);
+        $run = $data['run'];
 
         return redirect()
             ->route('tech.admin.settings.email.accounts.mailbox-maintenance', $account)
@@ -110,9 +94,8 @@ class MailboxMaintenanceController extends Controller
         EmailMailboxMaintenanceAuthorization $authorization,
         CancelEmailProviderReconciliation $cancel,
     ): RedirectResponse {
-        abort_unless((int) $run->account_id === (int) $account->id, 404);
-        $authorization->authorize($request->user(), $account);
-        $cancelled = $cancel->handle($account, $run, $request->user());
+        $data = app()->call([app(\App\Modules\Email\Services\EmailMailboxMaintenanceOperations::class), 'cancelProviderReconciliation'], ['request' => $request, 'account' => $account, 'run' => $run]);
+        $cancelled = $data['cancelled'];
 
         return redirect()
             ->route('tech.admin.settings.email.accounts.mailbox-maintenance', $account)
@@ -125,8 +108,8 @@ class MailboxMaintenanceController extends Controller
         Request $request,
         PreviewEmailCursorRebaseline $preview,
     ): RedirectResponse {
-        abort_unless((int) $folder->account_id === (int) $account->id, 404);
-        $run = $preview->handle($account, $folder, $request->user(), (string) $request->input('reason'));
+        $data = app()->call([app(\App\Modules\Email\Services\EmailMailboxMaintenanceOperations::class), 'previewCursorRebaseline'], ['request' => $request, 'account' => $account, 'folder' => $folder]);
+        $run = $data['run'];
 
         return redirect()
             ->route('tech.admin.settings.email.accounts.mailbox-maintenance', $account)
@@ -142,27 +125,8 @@ class MailboxMaintenanceController extends Controller
         Request $request,
         ApplyEmailCursorRebaseline $apply,
     ): RedirectResponse {
-        abort_unless((int) $folder->account_id === (int) $account->id, 404);
-        $request->validate([
-            'cursor_rebaseline_run_id' => ['required', 'integer'],
-            'preview_fingerprint' => ['required', 'string', 'size:64'],
-            'old_uid_validity' => ['required', 'integer', 'min:0'],
-            'observed_uid_validity' => ['required', 'integer', 'min:1'],
-            'observed_uid_next' => ['required', 'integer', 'min:1'],
-        ]);
-        $run = EmailCursorRebaselineRun::query()
-            ->whereKey($request->integer('cursor_rebaseline_run_id'))
-            ->where('account_id', $account->id)
-            ->where('email_folder_id', $folder->id)
-            ->firstOrFail();
-        $completed = $apply->handle(
-            $account,
-            $folder,
-            $run,
-            $request->user(),
-            $request->string('preview_fingerprint')->toString(),
-            $request->only(['old_uid_validity', 'observed_uid_validity', 'observed_uid_next']),
-        );
+        $data = app()->call([app(\App\Modules\Email\Services\EmailMailboxMaintenanceOperations::class), 'applyCursorRebaseline'], ['request' => $request, 'account' => $account, 'folder' => $folder]);
+        $completed = $data['completed'];
 
         return redirect()
             ->route('tech.admin.settings.email.accounts.mailbox-maintenance', $account)

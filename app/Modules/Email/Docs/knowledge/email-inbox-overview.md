@@ -5,6 +5,19 @@ The Tech inbox is available at `/tech/inbox`.
 
 Admin email account settings are available under `/tech/admin/settings/email/accounts`.
 
+## Mail Browser And API Parity (Dev, 2026-10-20)
+
+All currently implemented browser Mail reads, writes, administrative changes and operational actions
+now have bearer API contracts, including drafts/send, source downloads, folders, rules,
+AI/signature, Ticket handoff, delegation, unread handover and maintenance.
+The full guide is [Mail API operations](mail-api-operations.md); Swagger is /api/documentation.
+This is Dev-only work. HR-2026-10-20-MAIL-API is Reviewed: Svein Tore approved the delivered scope
+on 2026-10-21. Main/production promotion remains pending.
+
+Ordinary Delete requests provider Trash in both older Inbox and API. It preserves the local source
+and never falls back to expunge. Personal read state reports local and optional provider outcomes
+separately. Opening still does not mark read. New abilities do not widen tokens, grants or runtimes.
+
 ## Current Dev Rollout Status
 
 Mail completion migrations `2026_08_24_110000`, `120000`, `125000`, `130000`, and `140000` ran in

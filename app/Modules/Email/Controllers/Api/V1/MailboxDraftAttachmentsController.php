@@ -18,7 +18,6 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Email Mail drafts', description: 'Private, fenced Mail drafts and idempotent submission.')]
 class MailboxDraftAttachmentsController extends Controller
 {
-    #[OA\Post(path: '/api/v1/email/mailbox/drafts/{draft}/attachments', operationId: 'storeEmailMailboxDraftAttachments', summary: 'Upload bounded private attachments to an exact draft version', security: [['bearerAuth' => []]], tags: ['Email Mail drafts'], parameters: [new OA\Parameter(name: 'draft', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'Draft with safe attachment metadata'), new OA\Response(response: 409, description: 'Opaque draft version conflict'), new OA\Response(response: 422, description: 'Attachment validation failed')])]
     public function store(
         Request $request,
         string $draft,
@@ -46,7 +45,6 @@ class MailboxDraftAttachmentsController extends Controller
         return new EmailComposerDraftResource($saved);
     }
 
-    #[OA\Delete(path: '/api/v1/email/mailbox/drafts/{draft}/attachments/{attachment}', operationId: 'deleteEmailMailboxDraftAttachment', summary: 'Remove one exact-generation private draft attachment', security: [['bearerAuth' => []]], tags: ['Email Mail drafts'], parameters: [new OA\Parameter(name: 'draft', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')), new OA\Parameter(name: 'attachment', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'Draft after attachment removal'), new OA\Response(response: 404, description: 'Draft or attachment outside current scope'), new OA\Response(response: 409, description: 'Opaque draft version conflict')])]
     public function destroy(
         Request $request,
         string $draft,

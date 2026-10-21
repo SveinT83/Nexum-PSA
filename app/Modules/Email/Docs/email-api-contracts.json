@@ -1,0 +1,5554 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/v1/email/admin/accounts",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\EmailAdministrationController@accounts",
+    "abilities": [
+      "email.accounts.read"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/accounts",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\EmailAdministrationController@accountStore",
+    "abilities": [
+      "email.accounts.manage"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string",
+          "format": "email"
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "from_name": {
+          "type": "string",
+          "nullable": true
+        },
+        "account_kind": {
+          "type": "string",
+          "enum": [
+            "personal",
+            "shared",
+            "system"
+          ]
+        },
+        "owner_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "is_active": {
+          "type": "boolean"
+        },
+        "is_global_default": {
+          "type": "boolean"
+        },
+        "defaults_for": {
+          "type": "array",
+          "nullable": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "system",
+              "tickets",
+              "sales",
+              "marketing",
+              "alerts"
+            ]
+          }
+        },
+        "ticket_ingress_enabled": {
+          "type": "boolean"
+        },
+        "delete_policy": {
+          "type": "string",
+          "enum": [
+            "local_only",
+            "sync_delete",
+            "auto_delete",
+            "legacy_default"
+          ]
+        },
+        "imap_host": {
+          "type": "string",
+          "maxLength": 253
+        },
+        "imap_port": {
+          "type": "integer",
+          "enum": [
+            143,
+            993
+          ]
+        },
+        "imap_encryption": {
+          "type": "string",
+          "enum": [
+            "implicit_tls",
+            "starttls"
+          ]
+        },
+        "imap_username": {
+          "type": "string",
+          "maxLength": 320
+        },
+        "imap_secret": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 4096,
+          "writeOnly": true,
+          "format": "password",
+          "description": "Write-only credential. On update, blank preserves the existing account-owned value."
+        },
+        "smtp_host": {
+          "type": "string",
+          "maxLength": 253
+        },
+        "smtp_port": {
+          "type": "integer",
+          "enum": [
+            465,
+            587
+          ]
+        },
+        "smtp_encryption": {
+          "type": "string",
+          "enum": [
+            "implicit_tls",
+            "starttls"
+          ]
+        },
+        "smtp_username": {
+          "type": "string",
+          "maxLength": 320
+        },
+        "smtp_secret": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 4096,
+          "writeOnly": true,
+          "format": "password",
+          "description": "Write-only credential. On update, blank preserves the existing account-owned value."
+        },
+        "grants": {
+          "type": "array",
+          "nullable": true,
+          "items": {
+            "type": "object",
+            "properties": {
+              "user_id": {
+                "type": "integer"
+              },
+              "can_view": {
+                "type": "boolean",
+                "nullable": true
+              },
+              "can_organize": {
+                "type": "boolean",
+                "nullable": true
+              },
+              "can_send": {
+                "type": "boolean",
+                "nullable": true
+              }
+            },
+            "required": [
+              "user_id"
+            ]
+          }
+        }
+      },
+      "required": [
+        "address",
+        "account_kind",
+        "delete_policy",
+        "imap_host",
+        "imap_port",
+        "imap_encryption",
+        "imap_username",
+        "imap_secret",
+        "smtp_host",
+        "smtp_port",
+        "smtp_encryption",
+        "smtp_username",
+        "smtp_secret"
+      ]
+    },
+    "status": 201
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/admin/accounts/context",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\EmailAdministrationController@accountContext",
+    "abilities": [
+      "email.accounts.manage"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/admin/accounts/{account}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\EmailAdministrationController@accountShow",
+    "abilities": [
+      "email.accounts.manage"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/email/admin/accounts/{account}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\EmailAdministrationController@accountUpdate",
+    "abilities": [
+      "email.accounts.manage"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string",
+          "format": "email"
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "from_name": {
+          "type": "string",
+          "nullable": true
+        },
+        "account_kind": {
+          "type": "string",
+          "enum": [
+            "personal",
+            "shared",
+            "system"
+          ]
+        },
+        "owner_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "is_active": {
+          "type": "boolean"
+        },
+        "is_global_default": {
+          "type": "boolean"
+        },
+        "defaults_for": {
+          "type": "array",
+          "nullable": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "system",
+              "tickets",
+              "sales",
+              "marketing",
+              "alerts"
+            ]
+          }
+        },
+        "ticket_ingress_enabled": {
+          "type": "boolean"
+        },
+        "delete_policy": {
+          "type": "string",
+          "enum": [
+            "local_only",
+            "sync_delete",
+            "auto_delete",
+            "legacy_default"
+          ]
+        },
+        "imap_host": {
+          "type": "string",
+          "maxLength": 253
+        },
+        "imap_port": {
+          "type": "integer",
+          "enum": [
+            143,
+            993
+          ]
+        },
+        "imap_encryption": {
+          "type": "string",
+          "enum": [
+            "implicit_tls",
+            "starttls"
+          ]
+        },
+        "imap_username": {
+          "type": "string",
+          "maxLength": 320
+        },
+        "imap_secret": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 4096,
+          "writeOnly": true,
+          "format": "password",
+          "description": "Write-only credential. On update, blank preserves the existing account-owned value."
+        },
+        "smtp_host": {
+          "type": "string",
+          "maxLength": 253
+        },
+        "smtp_port": {
+          "type": "integer",
+          "enum": [
+            465,
+            587
+          ]
+        },
+        "smtp_encryption": {
+          "type": "string",
+          "enum": [
+            "implicit_tls",
+            "starttls"
+          ]
+        },
+        "smtp_username": {
+          "type": "string",
+          "maxLength": 320
+        },
+        "smtp_secret": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 4096,
+          "writeOnly": true,
+          "format": "password",
+          "description": "Write-only credential. On update, blank preserves the existing account-owned value."
+        },
+        "grants": {
+          "type": "array",
+          "nullable": true,
+          "items": {
+            "type": "object",
+            "properties": {
+              "user_id": {
+                "type": "integer"
+              },
+              "can_view": {
+                "type": "boolean",
+                "nullable": true
+              },
+              "can_organize": {
+                "type": "boolean",
+                "nullable": true
+              },
+              "can_send": {
+                "type": "boolean",
+                "nullable": true
+              }
+            },
+            "required": [
+              "user_id"
+            ]
+          }
+        }
+      },
+      "required": [
+        "address",
+        "account_kind",
+        "delete_policy",
+        "imap_host",
+        "imap_port",
+        "imap_encryption",
+        "imap_username",
+        "smtp_host",
+        "smtp_port",
+        "smtp_encryption",
+        "smtp_username"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/email/admin/accounts/{account}/activation",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\EmailAdministrationController@accountActivate",
+    "abilities": [
+      "email.accounts.manage"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "active"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/admin/accounts/{account}/cursor-rebaseline/{run}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxMaintenanceApiController@rebaselineStatus",
+    "abilities": [
+      "email.maintenance.read"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/accounts/{account}/folders/{folder}/cursor-rebaseline",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxMaintenanceApiController@applyCursorRebaseline",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "cursor_rebaseline_run_id": {
+          "type": "integer"
+        },
+        "preview_fingerprint": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64
+        },
+        "old_uid_validity": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "observed_uid_validity": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "observed_uid_next": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "cursor_rebaseline_run_id",
+        "preview_fingerprint",
+        "old_uid_validity",
+        "observed_uid_validity",
+        "observed_uid_next"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/accounts/{account}/folders/{folder}/cursor-rebaseline/preview",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxMaintenanceApiController@previewCursorRebaseline",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 2000
+        }
+      },
+      "required": [
+        "reason"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/accounts/{account}/historical-import",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxMaintenanceApiController@startHistoricalImport",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "historical_import_run_id": {
+          "type": "integer"
+        },
+        "preview_fingerprint": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "historical_import_run_id",
+        "preview_fingerprint"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/accounts/{account}/historical-import/preview",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxMaintenanceApiController@previewHistoricalImport",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "folder_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "date_from": {
+          "type": "string",
+          "format": "date"
+        },
+        "date_to": {
+          "type": "string",
+          "format": "date"
+        },
+        "uid_from": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        },
+        "uid_to": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        },
+        "cap": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1,
+          "maximum": 500
+        }
+      },
+      "required": [
+        "folder_ids",
+        "date_from",
+        "date_to"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/admin/accounts/{account}/historical-import/{run}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxMaintenanceApiController@historicalStatus",
+    "abilities": [
+      "email.maintenance.read"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/accounts/{account}/historical-import/{run}/cancel",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxMaintenanceApiController@cancelHistoricalImport",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/admin/accounts/{account}/maintenance",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxMaintenanceApiController@index",
+    "abilities": [
+      "email.maintenance.read"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/accounts/{account}/provider-reconciliation",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxMaintenanceApiController@startProviderReconciliation",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/admin/accounts/{account}/provider-reconciliation/{run}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxMaintenanceApiController@reconciliationStatus",
+    "abilities": [
+      "email.maintenance.read"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/accounts/{account}/provider-reconciliation/{run}/cancel",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxMaintenanceApiController@cancelProviderReconciliation",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/accounts/{account}/test",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\EmailAdministrationController@accountTest",
+    "abilities": [
+      "email.accounts.manage"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 202
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/admin/canonical-cutover",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\CanonicalCutoverApiController@index",
+    "abilities": [
+      "email.maintenance.read"
+    ],
+    "permissions": [
+      "email.canonical_cutover_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/canonical-cutover/audit",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\CanonicalCutoverApiController@audit",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.canonical_cutover_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "account_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 25,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "min_message_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        },
+        "max_message_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1,
+          "description": "gte:min_message_id"
+        },
+        "item_cap": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1,
+          "maximum": 500
+        }
+      },
+      "required": [
+        "account_ids"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/canonical-cutover/backfill",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\CanonicalCutoverApiController@backfill",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.canonical_cutover_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "account_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 25,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "min_message_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        },
+        "max_message_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1,
+          "description": "gte:min_message_id"
+        },
+        "item_cap": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1,
+          "maximum": 500
+        }
+      },
+      "required": [
+        "account_ids"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/canonical-cutover/merge",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\CanonicalCutoverApiController@merge",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.canonical_cutover_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "correlation_run_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "candidate_ids": {
+          "type": "array",
+          "maxItems": 8000,
+          "items": {
+            "type": "integer"
+          }
+        }
+      },
+      "required": [
+        "correlation_run_id",
+        "candidate_ids"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/canonical-cutover/mode",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\CanonicalCutoverApiController@mode",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.canonical_cutover_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        },
+        "attestation_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        },
+        "intent": {
+          "type": "string",
+          "nullable": true,
+          "enum": [
+            "mode",
+            "attest"
+          ]
+        },
+        "account_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 25,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "legacy",
+            "verify",
+            "canonical"
+          ]
+        }
+      },
+      "required": [],
+      "description": "intent=mode (default): account_ids and mode are required. intent=attest: provide account_id or attestation_id; this explicit action computes a read-parity attestation without changing the read mode."
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/admin/canonical-cutover/{run}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\CanonicalCutoverApiController@show",
+    "abilities": [
+      "email.maintenance.read"
+    ],
+    "permissions": [
+      "email.canonical_cutover_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/canonical-cutover/{run}/apply",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\CanonicalCutoverApiController@apply",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.canonical_cutover_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "confirmation": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "confirmation"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/canonical-cutover/{run}/rollback",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\CanonicalCutoverApiController@rollback",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.canonical_cutover_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "confirmation": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "confirmation"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/admin/correlation",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\CanonicalCorrelationApiController@index",
+    "abilities": [
+      "email.maintenance.read"
+    ],
+    "permissions": [
+      "email.mailbox_sync_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/correlation",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\CanonicalCorrelationApiController@store",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.mailbox_sync_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "account_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 25,
+          "items": {
+            "type": "integer"
+          }
+        },
+        "min_message_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        },
+        "max_message_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1,
+          "description": "gte:min_message_id"
+        },
+        "message_cap": {
+          "type": "integer",
+          "nullable": true
+        },
+        "group_cap": {
+          "type": "integer",
+          "nullable": true
+        },
+        "pair_cap": {
+          "type": "integer",
+          "nullable": true
+        },
+        "per_group_cap": {
+          "type": "integer",
+          "nullable": true
+        }
+      },
+      "required": [
+        "account_ids"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/correlation/candidates/{candidate}/inspect",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\CanonicalCorrelationApiController@inspect",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.mailbox_sync_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/correlation/candidates/{candidate}/review",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\CanonicalCorrelationApiController@review",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.mailbox_sync_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "review_state": {
+          "type": "string"
+        },
+        "reason_code": {
+          "type": "string",
+          "maxLength": 80
+        }
+      },
+      "required": [
+        "review_state",
+        "reason_code"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/admin/correlation/{run}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\CanonicalCorrelationApiController@show",
+    "abilities": [
+      "email.maintenance.read"
+    ],
+    "permissions": [
+      "email.mailbox_sync_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/correlation/{run}/cancel",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\CanonicalCorrelationApiController@cancel",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.mailbox_sync_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/correlation/{run}/resume",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\CanonicalCorrelationApiController@resume",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.mailbox_sync_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/admin/emergency-access",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxAccessApiController@emergencyContext",
+    "abilities": [
+      "email.access.read"
+    ],
+    "permissions": [
+      "email.break_glass_activate"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/emergency-access",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxAccessApiController@emergency",
+    "abilities": [
+      "email.emergency.activate"
+    ],
+    "permissions": [
+      "email.break_glass_activate"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "type": "integer"
+        },
+        "account_confirmation": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "duration_minutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120
+        },
+        "can_view_content": {
+          "type": "boolean",
+          "nullable": true
+        },
+        "can_search": {
+          "type": "boolean",
+          "nullable": true
+        },
+        "can_download_attachments": {
+          "type": "boolean",
+          "nullable": true
+        },
+        "can_view_raw_source": {
+          "type": "boolean",
+          "nullable": true
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 2000
+        }
+      },
+      "required": [
+        "account_id",
+        "account_confirmation",
+        "duration_minutes",
+        "reason"
+      ]
+    },
+    "status": 201
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/admin/ticket-correlation-conflicts",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\TicketCorrelationConflictApiController@index",
+    "abilities": [
+      "email.maintenance.read"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/admin/ticket-correlation-conflicts/{conflict}/resolve",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\TicketCorrelationConflictApiController@resolve",
+    "abilities": [
+      "email.maintenance.execute"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "ticket_id": {
+          "type": "integer"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 1000
+        }
+      },
+      "required": [
+        "ticket_id",
+        "reason"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/inbox/messages",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\InboxController@messages",
+    "abilities": [
+      "email.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "q": {
+          "type": "string",
+          "nullable": true
+        },
+        "account_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "state": {
+          "type": "string",
+          "nullable": true
+        },
+        "from_email": {
+          "type": "string",
+          "nullable": true
+        },
+        "per_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "page": {
+          "type": "integer",
+          "nullable": true
+        }
+      }
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/inbox/messages/{message}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\InboxController@show",
+    "abilities": [
+      "email.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "include_headers": {
+          "type": "boolean",
+          "nullable": true
+        },
+        "include_html": {
+          "type": "boolean",
+          "nullable": true
+        }
+      }
+    },
+    "status": 200
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/email/inbox/messages/{message}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxFoldersController@legacyTrash",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/inbox/messages/{message}/spam",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\InboxController@markSpam",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/inbox/poll",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\InboxController@poll",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 202
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/access",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxAccessApiController@context",
+    "abilities": [
+      "email.access.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/access-history",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxAccessApiController@history",
+    "abilities": [
+      "email.access.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        },
+        "per_page": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      }
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/accounts",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxReadController@accounts",
+    "abilities": [
+      "email.mailbox.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "per_page": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      }
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/accounts/{account}/composer-assist",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxAssistController@newComposerAssist",
+    "abilities": [
+      "email.ai.use"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "intent": {
+          "type": "string",
+          "enum": [
+            "improve",
+            "shorten",
+            "friendly",
+            "translate_norwegian"
+          ]
+        },
+        "subject": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 512
+        },
+        "current_body_html": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 120000
+        },
+        "user_instruction": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 5000
+        }
+      },
+      "required": [
+        "intent"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/accounts/{account}/delegations",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxAccessApiController@delegate",
+    "abilities": [
+      "email.access.manage"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "delegate_id": {
+          "type": "integer"
+        },
+        "can_view": {
+          "type": "boolean",
+          "nullable": true
+        },
+        "can_organize": {
+          "type": "boolean",
+          "nullable": true
+        },
+        "can_send": {
+          "type": "boolean",
+          "nullable": true
+        },
+        "can_view_raw_source": {
+          "type": "boolean",
+          "nullable": true
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "starts_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "delegate_id",
+        "reason",
+        "starts_at",
+        "expires_at"
+      ]
+    },
+    "status": 201
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/accounts/{account}/delegations/{delegation}/revoke",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxAccessApiController@revokeDelegate",
+    "abilities": [
+      "email.access.manage"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "maxLength": 2000
+        }
+      },
+      "required": [
+        "reason"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/accounts/{account}/folders",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxReadController@folders",
+    "abilities": [
+      "email.mailbox.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/accounts/{account}/folders",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxFoldersController@store",
+    "abilities": [
+      "email.folders.manage"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "maxLength": 180
+        }
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "status": 201
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/accounts/{account}/refresh",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxFoldersController@refresh",
+    "abilities": [
+      "email.sync.execute"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "folder_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        }
+      }
+    },
+    "status": 202
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/accounts/{account}/refresh",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxFoldersController@refreshStatus",
+    "abilities": [
+      "email.sync.execute"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/accounts/{account}/unread-handovers",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxAccessApiController@handoverContext",
+    "abilities": [
+      "email.handovers.manage"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/accounts/{account}/unread-handovers/preview",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxAccessApiController@handoverPreview",
+    "abilities": [
+      "email.handovers.manage"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "target_user_id": {
+          "type": "integer"
+        },
+        "folder_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 500,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "date_from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "date_to": {
+          "type": "string",
+          "format": "date-time",
+          "description": "after_or_equal:date_from"
+        },
+        "maximum": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 500
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 2000
+        },
+        "idempotency_key": {
+          "type": "string",
+          "maxLength": 191,
+          "description": "Stable client-generated key for this logical action; reuse after an uncertain response."
+        }
+      },
+      "required": [
+        "target_user_id",
+        "folder_ids",
+        "date_from",
+        "date_to",
+        "maximum",
+        "reason",
+        "idempotency_key"
+      ]
+    },
+    "status": 201
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/accounts/{account}/unread-handovers/{run}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxAccessApiController@handoverShow",
+    "abilities": [
+      "email.handovers.manage"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/accounts/{account}/unread-handovers/{run}/apply",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxAccessApiController@handoverApply",
+    "abilities": [
+      "email.handovers.manage"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/context",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxReadController@context",
+    "abilities": [
+      "email.mailbox.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/conversation-actions/preview",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\ConversationActionsController@preview",
+    "abilities": [
+      "email.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "scope_kind": {
+          "type": "string",
+          "enum": [
+            "active_account_conversation",
+            "explicit_multi_account"
+          ]
+        },
+        "target_personal_unread": {
+          "type": "boolean"
+        },
+        "provider_seen_requested": {
+          "type": "boolean"
+        },
+        "account_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "conversation_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "placement_ids": {
+          "type": "array",
+          "nullable": true,
+          "minItems": 1,
+          "maxItems": 500,
+          "items": {
+            "type": "integer"
+          }
+        },
+        "item_cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 500
+        },
+        "idempotency_key": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 160,
+          "description": "Stable client-generated key for this logical action; reuse after an uncertain response."
+        }
+      },
+      "required": [
+        "scope_kind",
+        "target_personal_unread",
+        "idempotency_key"
+      ]
+    },
+    "status": 201
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/conversation-actions/{run}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\ConversationActionsController@show",
+    "abilities": [
+      "email.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/conversation-actions/{run}/apply",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\ConversationActionsController@apply",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/conversation-actions/{run}/cancel",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\ConversationActionsController@cancel",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/conversation-actions/{run}/retry",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\ConversationActionsController@retry",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/conversations",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxReadController@index",
+    "abilities": [
+      "email.mailbox.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "view": {
+          "type": "string",
+          "enum": [
+            "unread",
+            "inbox",
+            "all",
+            "drafts"
+          ]
+        },
+        "filter": {
+          "type": "string",
+          "enum": [
+            "all",
+            "unread_for_me",
+            "mailbox_unread",
+            "flagged",
+            "provider_drafts",
+            "has_attachments",
+            "ticket_linked"
+          ]
+        },
+        "account_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        },
+        "folder_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        },
+        "q": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 500
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "per_page": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "legacy_limit": {
+          "type": "integer",
+          "minimum": 50,
+          "maximum": 200
+        }
+      }
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/conversations/{conversation}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxReadController@conversation",
+    "abilities": [
+      "email.mailbox.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "view": {
+          "type": "string",
+          "enum": [
+            "unread",
+            "inbox",
+            "all",
+            "drafts"
+          ]
+        },
+        "filter": {
+          "type": "string",
+          "enum": [
+            "all",
+            "unread_for_me",
+            "mailbox_unread",
+            "flagged",
+            "provider_drafts",
+            "has_attachments",
+            "ticket_linked"
+          ]
+        },
+        "account_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        },
+        "folder_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        },
+        "q": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 500
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "per_page": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "legacy_limit": {
+          "type": "integer",
+          "minimum": 50,
+          "maximum": 200
+        }
+      }
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/conversations/{conversation}/classification",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\ConversationClassificationController@show",
+    "abilities": [
+      "email.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/email/mailbox/conversations/{conversation}/classification",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\ConversationClassificationController@update",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "tags": {
+          "type": "array",
+          "maxItems": 15,
+          "items": {
+            "type": "string",
+            "maxLength": 255
+          }
+        },
+        "category_id": {
+          "type": "integer",
+          "nullable": true
+        }
+      }
+    },
+    "status": 200
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/email/mailbox/conversations/{conversation}/classification",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\ConversationClassificationController@destroy",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/conversations/{conversation}/presence",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxPresenceController@show",
+    "abilities": [
+      "email.drafts.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "source_placement_id": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "source_placement_id"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/conversations/{conversation}/presence",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxPresenceController@heartbeat",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "source_placement_id": {
+          "type": "integer"
+        },
+        "activity": {
+          "type": "string",
+          "enum": [
+            "reading",
+            "typing"
+          ]
+        },
+        "tab_token": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 160
+        }
+      },
+      "required": [
+        "source_placement_id",
+        "activity",
+        "tab_token"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/email/mailbox/conversations/{conversation}/presence",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxPresenceController@leave",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "source_placement_id": {
+          "type": "integer"
+        },
+        "activity": {
+          "type": "string",
+          "enum": [
+            "reading",
+            "typing"
+          ]
+        },
+        "tab_token": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 160
+        }
+      },
+      "required": [
+        "source_placement_id",
+        "activity",
+        "tab_token"
+      ]
+    },
+    "status": 204
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/conversations/{conversation}/smart-inbox/analyze",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SmartInboxSuggestionsController@analyze",
+    "abilities": [
+      "email.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "placement_id": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "placement_id"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/drafts",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxDraftsController@index",
+    "abilities": [
+      "email.drafts.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "per_page": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1,
+          "maximum": 100
+        }
+      }
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/drafts",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxDraftsController@store",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "to": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 2000
+        },
+        "cc": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 2000
+        },
+        "subject": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 512
+        },
+        "body_html": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 120000
+        },
+        "scope": {
+          "type": "string",
+          "nullable": true,
+          "enum": [
+            "private"
+          ]
+        },
+        "account_id": {
+          "type": "integer"
+        },
+        "source_placement_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "compose",
+            "reply",
+            "reply_all",
+            "forward",
+            "provider_draft"
+          ]
+        }
+      },
+      "required": [
+        "account_id",
+        "mode"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/drafts/{draft}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxDraftsController@show",
+    "abilities": [
+      "email.drafts.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/email/mailbox/drafts/{draft}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxDraftsController@update",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "to": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 2000
+        },
+        "cc": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 2000
+        },
+        "subject": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 512
+        },
+        "body_html": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 120000
+        }
+      },
+      "required": [
+        "version"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/email/mailbox/drafts/{draft}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxDraftsController@discard",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        }
+      },
+      "required": [
+        "version"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/drafts/{draft}/attachments",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxDraftAttachmentsController@store",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "attachments": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {
+            "type": "string",
+            "format": "binary"
+          }
+        }
+      },
+      "required": [
+        "version",
+        "attachments"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/email/mailbox/drafts/{draft}/attachments/{attachment}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxDraftAttachmentsController@destroy",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        }
+      },
+      "required": [
+        "version"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/drafts/{draft}/preview",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxDraftsController@preview",
+    "abilities": [
+      "email.send"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        }
+      },
+      "required": [
+        "version"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/drafts/{draft}/provider-sync",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxDraftsController@syncProvider",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        }
+      },
+      "required": [
+        "version"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/drafts/{draft}/send",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxDraftsController@send",
+    "abilities": [
+      "email.send"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "idempotency_key": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Stable client-generated key for this logical action; reuse after an uncertain response."
+        }
+      },
+      "required": [
+        "version",
+        "idempotency_key"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/drafts/{draft}/share",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SharedMailboxDraftsController@share",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "idempotency_key": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Stable client-generated key for this logical action; reuse after an uncertain response."
+        }
+      },
+      "required": [
+        "version",
+        "idempotency_key"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/emergency-access/{emergency}/revoke",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxAccessApiController@revokeEmergency",
+    "abilities": [
+      "email.access.manage"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "maxLength": 2000
+        }
+      },
+      "required": [
+        "reason"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/email/mailbox/folders/{folder}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxFoldersController@destroy",
+    "abilities": [
+      "email.folders.manage"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "confirm": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "confirm"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/folders/{folder}/context",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxFoldersController@context",
+    "abilities": [
+      "email.folders.manage"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/folders/{folder}/empty-into",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxFoldersController@emptyInto",
+    "abilities": [
+      "email.folders.manage"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "target_folder_id": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "target_folder_id"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/folders/{folder}/move",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxFoldersController@move",
+    "abilities": [
+      "email.folders.manage"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "parent_folder_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        }
+      },
+      "required": [
+        "parent_folder_id"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/folders/{folder}/rename",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxFoldersController@rename",
+    "abilities": [
+      "email.folders.manage"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 180
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/live",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxLiveApiController@catchUp",
+    "abilities": [
+      "email.mailbox.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "authorization_epoch": {
+          "type": "string"
+        },
+        "global_authorization_generation": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "authorization_epoch",
+        "global_authorization_generation"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/live/acknowledge",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxLiveApiController@acknowledge",
+    "abilities": [
+      "email.personal-state.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "authorization_epoch": {
+          "type": "string"
+        },
+        "global_authorization_generation": {
+          "type": "string"
+        },
+        "receipt": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "version",
+        "authorization_epoch",
+        "global_authorization_generation",
+        "receipt"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/live/broadcast-auth",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxLiveApiController@broadcast",
+    "abilities": [
+      "email.mailbox.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "socket_id": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "channel_name": {
+          "type": "string",
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "socket_id",
+        "channel_name"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/placements/{placement}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxReadController@show",
+    "abilities": [
+      "email.mailbox.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/email/mailbox/placements/{placement}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxFoldersController@trash",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/placements/{placement}/attachments/{attachment}/download",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxReadController@attachment",
+    "abilities": [
+      "email.attachments.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/placements/{placement}/awareness",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxReadController@awareness",
+    "abilities": [
+      "email.mailbox.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/placements/{placement}/composer-assist",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxAssistController@composerAssist",
+    "abilities": [
+      "email.ai.use"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "intent": {
+          "type": "string",
+          "enum": [
+            "draft_reply",
+            "improve",
+            "shorten",
+            "friendly",
+            "translate_norwegian"
+          ]
+        },
+        "composer_mode": {
+          "type": "string",
+          "enum": [
+            "reply",
+            "reply_all",
+            "forward"
+          ]
+        },
+        "subject": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 512
+        },
+        "current_body_html": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 120000
+        },
+        "user_instruction": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 5000
+        }
+      },
+      "required": [
+        "intent",
+        "composer_mode"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/placements/{placement}/conversation",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxReadController@thread",
+    "abilities": [
+      "email.mailbox.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "view": {
+          "type": "string",
+          "enum": [
+            "unread",
+            "inbox",
+            "all",
+            "drafts"
+          ]
+        },
+        "filter": {
+          "type": "string",
+          "enum": [
+            "all",
+            "unread_for_me",
+            "mailbox_unread",
+            "flagged",
+            "provider_drafts",
+            "has_attachments",
+            "ticket_linked"
+          ]
+        },
+        "account_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        },
+        "folder_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        },
+        "q": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 500
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "per_page": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "legacy_limit": {
+          "type": "integer",
+          "minimum": 50,
+          "maximum": 200
+        }
+      }
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/placements/{placement}/opened",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxReadController@opened",
+    "abilities": [
+      "email.personal-state.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/placements/{placement}/operations",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxPlacementOperationsController@store",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "type": "string",
+          "enum": [
+            "mark_seen",
+            "mark_unseen",
+            "flag",
+            "unflag",
+            "archive",
+            "move",
+            "trash"
+          ]
+        },
+        "target_folder_id": {
+          "type": "integer",
+          "nullable": true,
+          "description": "required_if:operation,"
+        }
+      },
+      "required": [
+        "operation"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/placements/{placement}/personal-rule",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxAssistController@personalRule",
+    "abilities": [
+      "email.personal-rules.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 255
+        },
+        "condition_field": {
+          "type": "string",
+          "enum": [
+            "from",
+            "from_domain",
+            "subject",
+            "to",
+            "cc"
+          ]
+        },
+        "condition_value": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "action_type": {
+          "type": "string",
+          "enum": [
+            "move_to_folder",
+            "archive"
+          ]
+        },
+        "target_folder_id": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1,
+          "description": "required_if:action_type,move_to_folder"
+        }
+      },
+      "required": [
+        "condition_field",
+        "condition_value",
+        "action_type"
+      ]
+    },
+    "status": 201
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/placements/{placement}/raw-source",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxReadController@raw",
+    "abilities": [
+      "email.raw.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/placements/{placement}/read-state",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxReadController@readState",
+    "abilities": [
+      "email.personal-state.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "read": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "read"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/placements/{placement}/rule-context",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxRulesCompletionController@placementContext",
+    "abilities": [
+      "email.mailbox.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/placements/{placement}/rule-executions",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxRulesCompletionController@executions",
+    "abilities": [
+      "email.mailbox.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/placements/{placement}/spam",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxFoldersController@spam",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/placements/{placement}/summary",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxAssistController@summary",
+    "abilities": [
+      "email.ai.use"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/placements/{placement}/ticket-links",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxTicketApiController@link",
+    "abilities": [
+      "email.tickets.write",
+      "tickets.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "ticket_id": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "ticket_id"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/placements/{placement}/ticket-suppression",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxTicketApiController@suppress",
+    "abilities": [
+      "email.tickets.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/placements/{placement}/tickets",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxTicketApiController@context",
+    "abilities": [
+      "email.mailbox.read",
+      "tickets.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/placements/{placement}/tickets",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxTicketApiController@create",
+    "abilities": [
+      "email.tickets.write",
+      "tickets.create"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 201
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/preferences",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxFoldersController@preferences",
+    "abilities": [
+      "email.mailbox.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/email/mailbox/preferences",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxFoldersController@updatePreferences",
+    "abilities": [
+      "email.personal-state.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "folder_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 500,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "expanded": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "folder_ids",
+        "expanded"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/remote-operations",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RemoteOperationsController@index",
+    "abilities": [
+      "email.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "status": {
+          "type": "string",
+          "nullable": true,
+          "enum": [
+            "pending",
+            "running",
+            "succeeded",
+            "failed",
+            "cancelled",
+            "superseded"
+          ]
+        },
+        "per_page": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1,
+          "maximum": 100
+        }
+      }
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/remote-operations/{operation}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RemoteOperationsController@show",
+    "abilities": [
+      "email.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/remote-operations/{operation}/cancel",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RemoteOperationsController@cancel",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/remote-operations/{operation}/retry",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RemoteOperationsController@retry",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/remote-operations/{operation}/undo",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RemoteOperationsController@undoEligibility",
+    "abilities": [
+      "email.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/remote-operations/{operation}/undo",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RemoteOperationsController@undo",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/senders",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxReadController@senders",
+    "abilities": [
+      "email.drafts.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "per_page": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      }
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/shared-drafts/{draft}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SharedMailboxDraftsController@show",
+    "abilities": [
+      "email.drafts.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/email/mailbox/shared-drafts/{draft}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SharedMailboxDraftsController@update",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "lease_token": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 256,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "fencing_token": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "content_version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "source_version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "idempotency_key": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Stable client-generated key for this logical action; reuse after an uncertain response."
+        },
+        "to": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 2000
+        },
+        "cc": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 2000
+        },
+        "subject": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 512
+        },
+        "body_html": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 120000
+        }
+      },
+      "required": [
+        "lease_token",
+        "fencing_token",
+        "content_version",
+        "source_version",
+        "version",
+        "idempotency_key"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/email/mailbox/shared-drafts/{draft}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SharedMailboxDraftsController@discard",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "lease_token": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 256,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "fencing_token": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "content_version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "source_version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "idempotency_key": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Stable client-generated key for this logical action; reuse after an uncertain response."
+        }
+      },
+      "required": [
+        "lease_token",
+        "fencing_token",
+        "content_version",
+        "source_version",
+        "version",
+        "idempotency_key"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/shared-drafts/{draft}/attachments",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SharedMailboxDraftsController@storeAttachments",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "lease_token": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 256,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "fencing_token": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "content_version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "source_version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "idempotency_key": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Stable client-generated key for this logical action; reuse after an uncertain response."
+        },
+        "attachments": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {
+            "type": "string",
+            "format": "binary"
+          }
+        }
+      },
+      "required": [
+        "lease_token",
+        "fencing_token",
+        "content_version",
+        "source_version",
+        "version",
+        "idempotency_key",
+        "attachments"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/email/mailbox/shared-drafts/{draft}/attachments/{attachment}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SharedMailboxDraftsController@removeAttachment",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "lease_token": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 256,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "fencing_token": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "content_version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "source_version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "idempotency_key": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Stable client-generated key for this logical action; reuse after an uncertain response."
+        }
+      },
+      "required": [
+        "lease_token",
+        "fencing_token",
+        "content_version",
+        "source_version",
+        "version",
+        "idempotency_key"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/shared-drafts/{draft}/lease",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SharedMailboxDraftsController@acquire",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "content_version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "source_version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "idempotency_key": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Stable client-generated key for this logical action; reuse after an uncertain response."
+        }
+      },
+      "required": [
+        "content_version",
+        "version",
+        "source_version",
+        "idempotency_key"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/email/mailbox/shared-drafts/{draft}/lease",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SharedMailboxDraftsController@renew",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "lease_token": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 256,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "fencing_token": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "content_version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "source_version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "idempotency_key": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 120,
+          "description": "Stable client-generated key for this logical action; reuse after an uncertain response."
+        }
+      },
+      "required": [
+        "lease_token",
+        "fencing_token",
+        "content_version",
+        "source_version",
+        "version",
+        "idempotency_key"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/email/mailbox/shared-drafts/{draft}/lease",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SharedMailboxDraftsController@release",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "lease_token": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 256,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "fencing_token": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "content_version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "source_version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "idempotency_key": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 120,
+          "description": "Stable client-generated key for this logical action; reuse after an uncertain response."
+        }
+      },
+      "required": [
+        "lease_token",
+        "fencing_token",
+        "content_version",
+        "source_version",
+        "version",
+        "idempotency_key"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/shared-drafts/{draft}/preview",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SharedMailboxDraftsController@preview",
+    "abilities": [
+      "email.send"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "lease_token": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 256,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "fencing_token": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "content_version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "source_version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "idempotency_key": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 120,
+          "description": "Stable client-generated key for this logical action; reuse after an uncertain response."
+        }
+      },
+      "required": [
+        "lease_token",
+        "fencing_token",
+        "content_version",
+        "source_version",
+        "version",
+        "idempotency_key"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/shared-drafts/{draft}/rebase",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SharedMailboxDraftsController@rebase",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "lease_token": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 256,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "fencing_token": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "content_version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "source_version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "idempotency_key": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Stable client-generated key for this logical action; reuse after an uncertain response."
+        },
+        "rebase_token": {
+          "type": "string",
+          "maxLength": 512
+        }
+      },
+      "required": [
+        "lease_token",
+        "fencing_token",
+        "content_version",
+        "source_version",
+        "version",
+        "idempotency_key",
+        "rebase_token"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/shared-drafts/{draft}/rebase-preview",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SharedMailboxDraftsController@rebasePreview",
+    "abilities": [
+      "email.drafts.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "lease_token": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 256,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "fencing_token": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "content_version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "source_version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "idempotency_key": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 120,
+          "description": "Stable client-generated key for this logical action; reuse after an uncertain response."
+        }
+      },
+      "required": [
+        "lease_token",
+        "fencing_token",
+        "content_version",
+        "source_version",
+        "version",
+        "idempotency_key"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/mailbox/shared-drafts/{draft}/send",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SharedMailboxDraftsController@send",
+    "abilities": [
+      "email.send"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "lease_token": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 256,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "fencing_token": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "content_version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "source_version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Use the current value returned by the draft/lease response; stale values are rejected."
+        },
+        "idempotency_key": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Stable client-generated key for this logical action; reuse after an uncertain response."
+        }
+      },
+      "required": [
+        "lease_token",
+        "fencing_token",
+        "content_version",
+        "source_version",
+        "version",
+        "idempotency_key"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/signature",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxAssistController@signature",
+    "abilities": [
+      "email.signature.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/email/mailbox/signature",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxAssistController@updateSignature",
+    "abilities": [
+      "email.signature.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 120
+        },
+        "body_html": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 20000
+        },
+        "use_on_compose": {
+          "type": "boolean"
+        },
+        "use_on_reply": {
+          "type": "boolean"
+        },
+        "use_on_reply_all": {
+          "type": "boolean"
+        },
+        "use_on_forward": {
+          "type": "boolean"
+        },
+        "use_default_template": {
+          "type": "boolean"
+        }
+      }
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/submissions/{submission}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\OutboundSubmissionsController@show",
+    "abilities": [
+      "email.send"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/mailbox/submissions/{submission}/sent-reconciliation",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\OutboundSubmissionsController@sentReconciliation",
+    "abilities": [
+      "email.send"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/rule-reprocess-runs",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxRulesCompletionController@runs",
+    "abilities": [
+      "email.rules.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/rule-reprocess-runs/{run}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@run",
+    "abilities": [
+      "email.rules.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/rule-reprocess-runs/{run}/apply",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@applyRun",
+    "abilities": [
+      "email.rules.execute"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 202
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/rule-reprocess-runs/{run}/cancel",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@cancelRun",
+    "abilities": [
+      "email.rules.execute"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/rule-reprocess-runs/{run}/full-rerun",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@fullRerun",
+    "abilities": [
+      "email.rules.execute"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "confirmation": {
+          "type": "string",
+          "enum": [
+            "FULL RERUN"
+          ]
+        }
+      },
+      "required": [
+        "confirmation"
+      ]
+    },
+    "status": 202
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/rule-reprocess-runs/{run}/retry",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@retryRun",
+    "abilities": [
+      "email.rules.execute"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 202
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/rules",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@index",
+    "abilities": [
+      "email.rules.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/rules-context",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxRulesCompletionController@context",
+    "abilities": [
+      "email.rules.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/rules/drafts",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@createDraft",
+    "abilities": [
+      "email.rules.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "weight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "routing_phase": {
+          "type": "string",
+          "enum": [
+            "normal",
+            "preclassification"
+          ]
+        },
+        "is_active": {
+          "type": "boolean"
+        },
+        "stop_processing": {
+          "type": "boolean"
+        },
+        "conditions_json": {
+          "type": "object",
+          "properties": {
+            "match": {
+              "type": "string",
+              "enum": [
+                "all",
+                "any"
+              ]
+            },
+            "groups": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "match": {
+                    "type": "string",
+                    "enum": [
+                      "all",
+                      "any"
+                    ]
+                  },
+                  "conditions": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "field": {
+                          "type": "string",
+                          "enum": [
+                            "from",
+                            "from_domain",
+                            "to",
+                            "cc",
+                            "subject",
+                            "body",
+                            "message_id",
+                            "is_reply",
+                            "has_ticket_key"
+                          ]
+                        },
+                        "operator": {
+                          "type": "string",
+                          "enum": [
+                            "contains",
+                            "equals",
+                            "not_equals",
+                            "starts_with",
+                            "ends_with",
+                            "regex",
+                            "present"
+                          ]
+                        },
+                        "value": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "boolean"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "conditions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "enum": [
+                      "from",
+                      "from_domain",
+                      "to",
+                      "cc",
+                      "subject",
+                      "body",
+                      "message_id",
+                      "is_reply",
+                      "has_ticket_key"
+                    ]
+                  },
+                  "operator": {
+                    "type": "string",
+                    "enum": [
+                      "contains",
+                      "equals",
+                      "not_equals",
+                      "starts_with",
+                      "ends_with",
+                      "regex",
+                      "present"
+                    ]
+                  },
+                  "value": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "actions_json": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "link_ticket_by_subject_token",
+                  "create_ticket",
+                  "archive",
+                  "tag",
+                  "tag_message",
+                  "tag_conversation",
+                  "set_conversation_category",
+                  "emit_signal",
+                  "provider_archive",
+                  "provider_move"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "nullable": true,
+                "maxLength": 1000
+              },
+              "target_folder_id": {
+                "type": "integer",
+                "nullable": true
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        },
+        "account_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "integer"
+          }
+        },
+        "lock_version": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        }
+      },
+      "required": [
+        "name",
+        "weight",
+        "routing_phase",
+        "is_active",
+        "stop_processing",
+        "conditions_json",
+        "actions_json",
+        "account_ids"
+      ]
+    },
+    "status": 201
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/rules/executions/{attempt}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@execution",
+    "abilities": [
+      "email.rules.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/rules/executions/{attempt}/undo",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@undoEligibility",
+    "abilities": [
+      "email.rules.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/rules/executions/{attempt}/undo",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@undo",
+    "abilities": [
+      "email.rules.execute"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/rules/{rule}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@show",
+    "abilities": [
+      "email.rules.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/email/rules/{rule}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxRulesCompletionController@destroy",
+    "abilities": [
+      "email.rules.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/rules/{rule}/draft",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@draft",
+    "abilities": [
+      "email.rules.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/email/rules/{rule}/draft",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@saveDraft",
+    "abilities": [
+      "email.rules.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "weight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "routing_phase": {
+          "type": "string",
+          "enum": [
+            "normal",
+            "preclassification"
+          ]
+        },
+        "is_active": {
+          "type": "boolean"
+        },
+        "stop_processing": {
+          "type": "boolean"
+        },
+        "conditions_json": {
+          "type": "object",
+          "properties": {
+            "match": {
+              "type": "string",
+              "enum": [
+                "all",
+                "any"
+              ]
+            },
+            "groups": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "match": {
+                    "type": "string",
+                    "enum": [
+                      "all",
+                      "any"
+                    ]
+                  },
+                  "conditions": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "field": {
+                          "type": "string",
+                          "enum": [
+                            "from",
+                            "from_domain",
+                            "to",
+                            "cc",
+                            "subject",
+                            "body",
+                            "message_id",
+                            "is_reply",
+                            "has_ticket_key"
+                          ]
+                        },
+                        "operator": {
+                          "type": "string",
+                          "enum": [
+                            "contains",
+                            "equals",
+                            "not_equals",
+                            "starts_with",
+                            "ends_with",
+                            "regex",
+                            "present"
+                          ]
+                        },
+                        "value": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "boolean"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "conditions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "enum": [
+                      "from",
+                      "from_domain",
+                      "to",
+                      "cc",
+                      "subject",
+                      "body",
+                      "message_id",
+                      "is_reply",
+                      "has_ticket_key"
+                    ]
+                  },
+                  "operator": {
+                    "type": "string",
+                    "enum": [
+                      "contains",
+                      "equals",
+                      "not_equals",
+                      "starts_with",
+                      "ends_with",
+                      "regex",
+                      "present"
+                    ]
+                  },
+                  "value": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "actions_json": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "link_ticket_by_subject_token",
+                  "create_ticket",
+                  "archive",
+                  "tag",
+                  "tag_message",
+                  "tag_conversation",
+                  "set_conversation_category",
+                  "emit_signal",
+                  "provider_archive",
+                  "provider_move"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "nullable": true,
+                "maxLength": 1000
+              },
+              "target_folder_id": {
+                "type": "integer",
+                "nullable": true
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        },
+        "account_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "integer"
+          }
+        },
+        "lock_version": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        }
+      },
+      "required": [
+        "name",
+        "weight",
+        "routing_phase",
+        "is_active",
+        "stop_processing",
+        "conditions_json",
+        "actions_json",
+        "account_ids"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/email/rules/{rule}/draft",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxRulesCompletionController@discardDraft",
+    "abilities": [
+      "email.rules.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "lock_version": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "lock_version"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/rules/{rule}/draft/validate",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@validateDraft",
+    "abilities": [
+      "email.rules.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "weight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "routing_phase": {
+          "type": "string",
+          "enum": [
+            "normal",
+            "preclassification"
+          ]
+        },
+        "is_active": {
+          "type": "boolean"
+        },
+        "stop_processing": {
+          "type": "boolean"
+        },
+        "conditions_json": {
+          "type": "object",
+          "properties": {
+            "match": {
+              "type": "string",
+              "enum": [
+                "all",
+                "any"
+              ]
+            },
+            "groups": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "match": {
+                    "type": "string",
+                    "enum": [
+                      "all",
+                      "any"
+                    ]
+                  },
+                  "conditions": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "field": {
+                          "type": "string",
+                          "enum": [
+                            "from",
+                            "from_domain",
+                            "to",
+                            "cc",
+                            "subject",
+                            "body",
+                            "message_id",
+                            "is_reply",
+                            "has_ticket_key"
+                          ]
+                        },
+                        "operator": {
+                          "type": "string",
+                          "enum": [
+                            "contains",
+                            "equals",
+                            "not_equals",
+                            "starts_with",
+                            "ends_with",
+                            "regex",
+                            "present"
+                          ]
+                        },
+                        "value": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "boolean"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "conditions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "enum": [
+                      "from",
+                      "from_domain",
+                      "to",
+                      "cc",
+                      "subject",
+                      "body",
+                      "message_id",
+                      "is_reply",
+                      "has_ticket_key"
+                    ]
+                  },
+                  "operator": {
+                    "type": "string",
+                    "enum": [
+                      "contains",
+                      "equals",
+                      "not_equals",
+                      "starts_with",
+                      "ends_with",
+                      "regex",
+                      "present"
+                    ]
+                  },
+                  "value": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "actions_json": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "link_ticket_by_subject_token",
+                  "create_ticket",
+                  "archive",
+                  "tag",
+                  "tag_message",
+                  "tag_conversation",
+                  "set_conversation_category",
+                  "emit_signal",
+                  "provider_archive",
+                  "provider_move"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "nullable": true,
+                "maxLength": 1000
+              },
+              "target_folder_id": {
+                "type": "integer",
+                "nullable": true
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        },
+        "account_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "integer"
+          }
+        },
+        "lock_version": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1
+        }
+      },
+      "required": [
+        "name",
+        "weight",
+        "routing_phase",
+        "is_active",
+        "stop_processing",
+        "conditions_json",
+        "actions_json",
+        "account_ids"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/rules/{rule}/preview",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@preview",
+    "abilities": [
+      "email.rules.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "email_message_id": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "email_message_id"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/rules/{rule}/publish",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@publish",
+    "abilities": [
+      "email.rules.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "draft_checksum": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "draft_checksum"
+      ]
+    },
+    "status": 201
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/rules/{rule}/publish-preview",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@publishPreview",
+    "abilities": [
+      "email.rules.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/rules/{rule}/reprocess-preview",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@reprocessPreview",
+    "abilities": [
+      "email.rules.execute"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "type": "integer"
+        },
+        "message_ids": {
+          "type": "array",
+          "nullable": true,
+          "minItems": 1,
+          "maxItems": 500,
+          "items": {
+            "type": "integer"
+          }
+        },
+        "folder_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "search": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 120
+        },
+        "utc_date": {
+          "type": "string",
+          "nullable": true,
+          "format": "date"
+        },
+        "cap": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1,
+          "maximum": 500
+        }
+      },
+      "required": [
+        "account_id"
+      ]
+    },
+    "status": 201
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/rules/{rule}/versions",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\RulesController@versions",
+    "abilities": [
+      "email.rules.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/settings",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\EmailAdministrationController@settings",
+    "abilities": [
+      "email.settings.read"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/email/settings",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\EmailAdministrationController@updateSettings",
+    "abilities": [
+      "email.settings.manage"
+    ],
+    "permissions": [
+      "email.account_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "poll_interval": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "concurrency": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "batch_size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "delete_on_success": {
+          "type": "boolean"
+        },
+        "size_limit_mb": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "retention_months": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "provider_deletion_reconciliation_enabled": {
+          "type": "boolean"
+        },
+        "pause_ingest": {
+          "type": "boolean"
+        },
+        "attachment_max_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "attachment_max_size_mb": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1024
+        },
+        "attachment_allowed_mime_types": {
+          "type": "string",
+          "maxLength": 5000
+        },
+        "trusted_authserv_ids": {
+          "type": "array",
+          "maxItems": 5000,
+          "items": {
+            "type": "integer"
+          }
+        },
+        "trusted_receiving_hops": {
+          "type": "string",
+          "maxLength": 5000
+        },
+        "max_failures": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "mail_ai_default_agent_id": {
+          "type": "integer",
+          "nullable": true
+        }
+      },
+      "required": [
+        "poll_interval",
+        "concurrency",
+        "batch_size",
+        "size_limit_mb",
+        "retention_months",
+        "max_failures"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/smart-inbox/batch-apply",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxRulesCompletionController@applyBatch",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "suggestion_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "required": [
+        "suggestion_ids"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/smart-inbox/suggestions",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SmartInboxSuggestionsController@index",
+    "abilities": [
+      "email.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "conversation_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "status": {
+          "type": "string",
+          "nullable": true,
+          "enum": [
+            "pending",
+            "dismissed",
+            "applied",
+            "stale"
+          ]
+        },
+        "effect_type": {
+          "type": "string",
+          "nullable": true,
+          "enum": [
+            "review_summary",
+            "apply_category",
+            "apply_tag",
+            "create_task",
+            "archive_mail",
+            "move_to_folder"
+          ]
+        },
+        "per_page": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1,
+          "maximum": 100
+        }
+      }
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/smart-inbox/suggestions/count",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SmartInboxSuggestionsController@count",
+    "abilities": [
+      "email.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/smart-inbox/suggestions/{suggestion}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SmartInboxSuggestionsController@show",
+    "abilities": [
+      "email.read"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/email/smart-inbox/suggestions/{suggestion}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SmartInboxSuggestionsController@correct",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "proposal": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Effect-specific proposal fields returned by the suggestion; correction is validated by the Smart Inbox policy."
+        },
+        "explanation": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 2000
+        },
+        "confidence": {
+          "type": "number",
+          "nullable": true,
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "proposal"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/smart-inbox/suggestions/{suggestion}/apply",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SmartInboxSuggestionsController@apply",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/smart-inbox/suggestions/{suggestion}/dismiss",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\SmartInboxSuggestionsController@dismiss",
+    "abilities": [
+      "email.update"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/smart-inbox/suggestions/{suggestion}/rule-prefill",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\MailboxRulesCompletionController@rulePrefill",
+    "abilities": [
+      "email.personal-rules.write"
+    ],
+    "permissions": [],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/templates",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\EmailAdministrationController@templates",
+    "abilities": [
+      "email.templates.read"
+    ],
+    "permissions": [
+      "email.template_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "scope": {
+          "type": "string",
+          "nullable": true,
+          "enum": [
+            "tickets",
+            "system",
+            "sales",
+            "marketing",
+            "alerts"
+          ]
+        },
+        "q": {
+          "type": "string",
+          "nullable": true
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/templates",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\EmailAdministrationController@templateStore",
+    "abilities": [
+      "email.templates.manage"
+    ],
+    "permissions": [
+      "email.template_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "scope": {
+          "type": "string",
+          "enum": [
+            "tickets",
+            "system",
+            "sales",
+            "marketing",
+            "alerts"
+          ]
+        },
+        "key": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "subject": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "body_html": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 250000
+        },
+        "body_text": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 250000
+        },
+        "layout_mode": {
+          "type": "string",
+          "enum": [
+            "branding",
+            "custom"
+          ]
+        },
+        "layout_html": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 500000
+        },
+        "variables": {
+          "type": "string",
+          "nullable": true
+        },
+        "is_default": {
+          "type": "boolean"
+        },
+        "is_active": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "scope",
+        "key",
+        "name",
+        "subject"
+      ]
+    },
+    "status": 201
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/templates/context",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\EmailAdministrationController@templateContext",
+    "abilities": [
+      "email.templates.read"
+    ],
+    "permissions": [
+      "email.template_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/templates/defaults",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\EmailAdministrationController@templateDefaults",
+    "abilities": [
+      "email.templates.manage"
+    ],
+    "permissions": [
+      "email.template_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/email/templates/preview",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\EmailAdministrationController@templatePreview",
+    "abilities": [
+      "email.templates.read"
+    ],
+    "permissions": [
+      "email.template_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "subject": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 255
+        },
+        "body_html": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 250000
+        },
+        "body_text": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 250000
+        },
+        "layout_mode": {
+          "type": "string",
+          "enum": [
+            "branding",
+            "custom"
+          ]
+        },
+        "layout_html": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 500000
+        },
+        "variables": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 20000
+        }
+      },
+      "required": [
+        "layout_mode"
+      ]
+    },
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/email/templates/{template}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\EmailAdministrationController@templateShow",
+    "abilities": [
+      "email.templates.read"
+    ],
+    "permissions": [
+      "email.template_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {}
+    },
+    "status": 200
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/email/templates/{template}",
+    "action": "App\\Modules\\Email\\Controllers\\Api\\V1\\EmailAdministrationController@templateUpdate",
+    "abilities": [
+      "email.templates.manage"
+    ],
+    "permissions": [
+      "email.template_manage"
+    ],
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "scope": {
+          "type": "string",
+          "enum": [
+            "tickets",
+            "system",
+            "sales",
+            "marketing",
+            "alerts"
+          ]
+        },
+        "key": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "subject": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "body_html": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 250000
+        },
+        "body_text": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 250000
+        },
+        "layout_mode": {
+          "type": "string",
+          "enum": [
+            "branding",
+            "custom"
+          ]
+        },
+        "layout_html": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 500000
+        },
+        "variables": {
+          "type": "string",
+          "nullable": true
+        },
+        "is_default": {
+          "type": "boolean"
+        },
+        "is_active": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "scope",
+        "key",
+        "name",
+        "subject"
+      ]
+    },
+    "status": 200
+  }
+]

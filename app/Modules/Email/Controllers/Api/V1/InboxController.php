@@ -25,25 +25,6 @@ use OpenApi\Attributes as OA;
 )]
 class InboxController extends Controller
 {
-    #[OA\Get(
-        path: '/api/v1/email/inbox/messages',
-        operationId: 'getInboxMessageList',
-        description: 'Returns paginated unrouted inbox messages. Messages already linked to tickets are excluded.',
-        summary: 'Get inbox messages',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        parameters: [
-            new OA\Parameter(name: 'q', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
-            new OA\Parameter(name: 'state', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
-            new OA\Parameter(name: 'account_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
-            new OA\Parameter(name: 'from_email', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
-            new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Successful operation'),
-            new OA\Response(response: 403, description: 'Missing email.read scope'),
-        ]
-    )]
     public function messages(
         Request $request,
         MailboxAccess $mailboxAccess,
@@ -112,21 +93,6 @@ class InboxController extends Controller
         return EmailMessageResource::collection($paginator);
     }
 
-    #[OA\Get(
-        path: '/api/v1/email/inbox/messages/{message}',
-        operationId: 'getInboxMessageById',
-        summary: 'Get inbox message',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        parameters: [
-            new OA\Parameter(name: 'message', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Successful operation'),
-            new OA\Response(response: 403, description: 'Missing email.read scope'),
-            new OA\Response(response: 404, description: 'Inbox message not found'),
-        ]
-    )]
     public function show(
         EmailMessage $message,
         MailboxAccess $mailboxAccess,
@@ -164,21 +130,6 @@ class InboxController extends Controller
         return new EmailMessageResource($this->loadMessage($message, $canonicalContent));
     }
 
-    #[OA\Post(
-        path: '/api/v1/email/inbox/messages/{message}/spam',
-        operationId: 'markInboxMessageSpam',
-        summary: 'Mark inbox message as spam',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        parameters: [
-            new OA\Parameter(name: 'message', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Message marked as spam'),
-            new OA\Response(response: 403, description: 'Missing email.update scope'),
-            new OA\Response(response: 404, description: 'Inbox message not found'),
-        ]
-    )]
     public function markSpam(
         Request $request,
         EmailMessage $message,
@@ -203,17 +154,6 @@ class InboxController extends Controller
         ]);
     }
 
-    #[OA\Post(
-        path: '/api/v1/email/inbox/poll',
-        operationId: 'queueInboxPoll',
-        summary: 'Queue inbox polling',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        responses: [
-            new OA\Response(response: 202, description: 'Inbox polling queued'),
-            new OA\Response(response: 403, description: 'Missing email.update scope'),
-        ]
-    )]
     public function poll(Request $request, MailboxAccess $mailboxAccess)
     {
         $settings = CommonSetting::where('type', 'emailhub')

@@ -7,13 +7,10 @@ use App\Modules\Email\Jobs\FetchImapAccount;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailAttachment;
 use App\Modules\Email\Models\EmailMessage;
-use App\Modules\Email\Services\EmailAccountProviderRuntimeResolver;
-use App\Modules\Email\Services\ImapClient;
 use App\Modules\Email\Services\MailboxAccess;
 use App\Modules\Email\Services\MailboxAccessDecision;
 use App\Modules\Email\Services\MailboxAccessUseGuard;
 use App\Modules\Email\Services\ResolveMailboxAccessDecision;
-use App\Modules\Email\Support\EmailAccountProviderLock;
 use App\Modules\Notification\Actions\MarkNotificationsReadBySource;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
@@ -176,69 +173,17 @@ class InboxController extends Controller
             ->with('status', 'Email marked as spam and rule "'.$rule->name.'" updated.');
     }
 
-    /**
-     * Delete the email message.
-     * Respects account delete_policy:
-     * - local_only: SoftDelete only (hides from view, keeps on server)
-     * - sync_delete: SoftDelete AND delete from IMAP server
-     * - legacy_default/auto_delete: manual Inbox delete remains local-only; import cleanup is separate
-     */
+    /** Ordinary Delete keeps the source and uses the idempotent provider Trash operation. */
     public function destroy(EmailMessage $message, MailboxAccess $mailboxAccess): RedirectResponse
     {
-        if (! $this->isInboxMessage($message) || $message->ticket_id !== null || ! $mailboxAccess->canOrganizeMessage(request()->user(), $message)) {
-            abort(404);
-        }
+        abort_unless($this->isInboxMessage($message) && $message->ticket_id === null, 404);
+        $operation = app(\App\Modules\Email\Actions\TrashInboxEmail::class)->handle(request()->user(), $message);
 
-        $account = $message->account;
-        $policy = $account->delete_policy ?? 'local_only';
-        $providerDeleted = false;
-        $providerDeleteAttempted = false;
-
-        // 1. If sync_delete, try to delete from IMAP first
-        if ($policy === 'sync_delete' && $message->imap_uid) {
-            $providerLock = EmailAccountProviderLock::acquire((int) $account->id, 180);
-            $client = null;
-
-            try {
-                if (! $providerLock) {
-                    throw new \RuntimeException('provider_work_locked');
-                }
-
-                $expectedBindingVersion = app(EmailAccountProviderRuntimeResolver::class)
-                    ->captureBindingVersion($account);
-                $client = new ImapClient($account, $expectedBindingVersion);
-                $client->connect();
-                $providerDeleteAttempted = true;
-                $providerDeleted = $client->deleteByUid($message->imap_uid, $message->mailbox);
-            } catch (\Throwable $exception) {
-                Log::warning('Manual provider Email deletion failed safely.', [
-                    'account_id' => $account->id,
-                    'email_message_id' => $message->id,
-                    'reason' => 'provider_delete_failed',
-                    'exception' => $exception::class,
-                ]);
-            } finally {
-                try {
-                    $client?->disconnect();
-                } catch (\Throwable) {
-                    // Cleanup cannot change the already-observed provider result.
-                }
-                $providerLock?->release();
-            }
-        }
-
-        // 2. Perform local SoftDelete
-        $message->delete();
-
-        $statusMsg = match (true) {
-            $policy !== 'sync_delete' => 'Email hidden (Soft Deleted). It will not be re-imported.',
-            $providerDeleted => 'Email deleted locally and from server.',
-            $providerDeleteAttempted => 'Email hidden locally, but the provider did not confirm deletion.',
-            default => 'Email hidden locally. Provider deletion could not be started.',
-        };
-
-        return redirect()->route('tech.inbox.index')
-            ->with('status', $statusMsg);
+        return redirect()->route('tech.inbox.index')->with('status', match ($operation->status) {
+            \App\Modules\Email\Models\EmailRemoteOperation::STATUS_SUCCEEDED => 'Email moved to Trash.',
+            \App\Modules\Email\Models\EmailRemoteOperation::STATUS_FAILED => 'The mail server did not confirm moving this email to Trash.',
+            default => 'Move to Trash is pending. Check Mailbox operations.',
+        });
     }
 
     /**

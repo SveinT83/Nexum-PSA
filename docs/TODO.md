@@ -1,5 +1,40 @@
 # tdPSA Development TODO
 
+## Mail full browser/API parity (2026-10-20)
+
+Status: Done On Dev; human review Reviewed on 2026-10-21. Owner: Codex; reviewer/promotion owner: Svein Tore.
+Approved RFC: rfc/2026-10-20-mail-full-api-parity.md; all six feature slices Done On Dev.
+Delivery: 102 added APIs, 175 total HTTP operations, 109 write/actions, complete Swagger coverage,
+72 browser routes explicitly mapped and 155 public Livewire declarations registered for parity review.
+Evidence: plans/2026-10-20-mail-api-verification.md; maintained contracts/manifests in Email/Docs.
+Final Mail suite: 812 passed / 9,259 assertions; eight isolated MariaDB opt-in contracts skipped.
+Affected Integration/Ticket package: 231 passed / 3,256 assertions (overlaps Mail coverage).
+Latest API/Swagger/projection/interface checks: 22 passed / 1,485 assertions.
+Main release candidate verification (2026-10-21): 815 Mail tests / 9,567 assertions; eight optional
+MariaDB contracts skipped; related Integration/delegation 64 / 734, overlapping Mail coverage.
+Ordinary Delete in browser and API is provider Trash; no permanent-delete fallback or runtime enablement.
+
+Human approval: Svein Tore approved the delivered Mail API scope on 2026-10-21 in chat: "Godkjenner".
+HR-2026-10-20-MAIL-API is Reviewed. Main promotion/deployment/release remain owned by Svein Tore.
+Controlled real-provider Trash/send, recipient delivery and production availability were not
+verified by this approval; individual scenario results were not supplied.
+Existing gated collaboration/live/advanced-acknowledgement reviews remain independent.
+Deployment authorization update (2026-10-21): Svein Tore explicitly requested Main and production.
+Release preparation: plans/2026-10-21-mail-api-production-deployment.md. Use a normal GitHub PR
+merge under the repository's existing actor policy; production waits for the exact merged Main SHA.
+
+Handbook: BookStack Mail guide page 636 and Email overview page 495 are published, read back and
+inherit existing staff access. Dev's automatic BookStack Integration record remains absent; the
+approved personal BookStack path was used without installing credentials or broadening access.
+Employee OpenWebUI retrieval remains a separate verification claim and has not been demonstrated.
+
+Legacy cleanup (owner Nexum maintenance): schema survey found two unused historical models,
+EmailMailDraftLock and EmailMailUserConversationAcknowledgement, with no installed tables.
+Only the also-unreferenced EmailPresenceService refers to the first; no registered Mail route or
+current service consumes either model. Current shared drafts/presence/acknowledgement use different
+installed models. Remove/reconcile these stale foundations in a separate cleanup; do not create
+replacement tables or expose APIs for them. The other 79 surveyed models have their fillable fields.
+
 ## Tripletex billing and Site address sync (2026-10-08)
 
 Status: Done / Reviewed by Svein Tore. Git delivery: scoped customer-feature PR to main.

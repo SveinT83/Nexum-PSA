@@ -19,17 +19,6 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Email', description: 'API endpoints for inbox messages and email operations.')]
 class RemoteOperationsController extends Controller
 {
-    #[OA\Get(
-        path: '/api/v1/email/mailbox/remote-operations',
-        operationId: 'listEmailRemoteOperations',
-        summary: 'List authorized mailbox provider operations',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        responses: [
-            new OA\Response(response: 200, description: 'Account-scoped operation list'),
-            new OA\Response(response: 404, description: 'Requested mailbox is outside the caller scope'),
-        ],
-    )]
     public function index(Request $request, MailboxAccess $mailboxAccess)
     {
         $validated = $request->validate([
@@ -66,18 +55,6 @@ class RemoteOperationsController extends Controller
         return EmailRemoteOperationResource::collection($operations);
     }
 
-    #[OA\Get(
-        path: '/api/v1/email/mailbox/remote-operations/{operation}',
-        operationId: 'showEmailRemoteOperation',
-        summary: 'Show one authorized mailbox provider operation and its attempts',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        parameters: [new OA\Parameter(name: 'operation', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
-        responses: [
-            new OA\Response(response: 200, description: 'Operation detail'),
-            new OA\Response(response: 404, description: 'Operation not found in caller mailbox scope'),
-        ],
-    )]
     public function show(
         Request $request,
         EmailRemoteOperation $operation,
@@ -93,20 +70,6 @@ class RemoteOperationsController extends Controller
         ]));
     }
 
-    #[OA\Post(
-        path: '/api/v1/email/mailbox/remote-operations/{operation}/retry',
-        operationId: 'retryEmailRemoteOperation',
-        summary: 'Safely retry an eligible mailbox provider operation',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        parameters: [new OA\Parameter(name: 'operation', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
-        responses: [
-            new OA\Response(response: 200, description: 'Retry outcome'),
-            new OA\Response(response: 403, description: 'Mailbox Organize access required'),
-            new OA\Response(response: 404, description: 'Operation not found in caller mailbox scope'),
-            new OA\Response(response: 422, description: 'Operation is not safely retryable'),
-        ],
-    )]
     public function retry(
         Request $request,
         EmailRemoteOperation $operation,
@@ -120,20 +83,6 @@ class RemoteOperationsController extends Controller
         );
     }
 
-    #[OA\Post(
-        path: '/api/v1/email/mailbox/remote-operations/{operation}/cancel',
-        operationId: 'cancelEmailRemoteOperation',
-        summary: 'Cancel an eligible mailbox provider operation',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        parameters: [new OA\Parameter(name: 'operation', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
-        responses: [
-            new OA\Response(response: 200, description: 'Cancellation outcome'),
-            new OA\Response(response: 403, description: 'Mailbox Organize access required'),
-            new OA\Response(response: 404, description: 'Operation not found in caller mailbox scope'),
-            new OA\Response(response: 422, description: 'Operation is already running or terminal'),
-        ],
-    )]
     public function cancel(
         Request $request,
         EmailRemoteOperation $operation,
@@ -147,18 +96,6 @@ class RemoteOperationsController extends Controller
         );
     }
 
-    #[OA\Get(
-        path: '/api/v1/email/mailbox/remote-operations/{operation}/undo',
-        operationId: 'showEmailRemoteOperationUndoEligibility',
-        summary: 'Show verified Undo eligibility for one mailbox provider operation',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        parameters: [new OA\Parameter(name: 'operation', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
-        responses: [
-            new OA\Response(response: 200, description: 'Current local Undo eligibility and reason'),
-            new OA\Response(response: 404, description: 'Operation not found in caller mailbox scope'),
-        ],
-    )]
     public function undoEligibility(
         Request $request,
         EmailRemoteOperation $operation,
@@ -175,20 +112,6 @@ class RemoteOperationsController extends Controller
         ]]);
     }
 
-    #[OA\Post(
-        path: '/api/v1/email/mailbox/remote-operations/{operation}/undo',
-        operationId: 'applyEmailRemoteOperationUndo',
-        summary: 'Create or return the verified inverse mailbox provider operation',
-        security: [['bearerAuth' => []]],
-        tags: ['Email'],
-        parameters: [new OA\Parameter(name: 'operation', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
-        responses: [
-            new OA\Response(response: 200, description: 'Existing or newly executed inverse operation'),
-            new OA\Response(response: 403, description: 'Mailbox Organize access required'),
-            new OA\Response(response: 404, description: 'Operation not found in caller mailbox scope'),
-            new OA\Response(response: 422, description: 'Source result is no longer safely reversible'),
-        ],
-    )]
     public function undo(
         Request $request,
         EmailRemoteOperation $operation,

@@ -452,6 +452,13 @@ class EnforceTechRoutePermission
         'tech.storage.*' => 'storage.view',
     ];
 
+    /** Reuse the browser permission decision from typed domain APIs without a session bridge. */
+    public function allowsPermission(Request $request, string $permission): bool
+    {
+        return Permission::query()->where('name', $permission)->where('guard_name', 'web')->exists()
+            && ($this->hasPrivilegedFallbackAccess($request) || (bool) $request->user()?->can($permission));
+    }
+
     public function handle(Request $request, Closure $next)
     {
         $routeName = $request->route()?->getName();

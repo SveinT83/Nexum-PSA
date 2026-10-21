@@ -4,7 +4,6 @@ namespace App\Modules\Email\Controllers\Admin;
 
 use App\Modules\Email\Actions\ResolveEmailTicketCorrelationConflict;
 use App\Modules\Email\Models\EmailTicketCorrelationConflict;
-use App\Modules\Ticket\Models\Ticket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -14,22 +13,9 @@ class TicketCorrelationConflictController extends Controller
 {
     public function index(): View
     {
-        $conflicts = EmailTicketCorrelationConflict::query()
-            ->where('status', EmailTicketCorrelationConflict::STATUS_PENDING)
-            ->with(['message.account'])
-            ->oldest('detected_at')
-            ->paginate(50);
-        $ticketIds = $conflicts->getCollection()
-            ->flatMap(fn (EmailTicketCorrelationConflict $conflict): array => $conflict->candidate_ticket_ids ?? [])
-            ->map(fn ($id): int => (int) $id)
-            ->unique()
-            ->all();
-        $tickets = Ticket::query()
-            ->whereIn('id', $ticketIds)
-            ->get()
-            ->keyBy('id');
+        $data = app()->call([app(\App\Modules\Email\Services\EmailTicketConflictOperations::class), 'index'], []);
 
-        return view('email::Admin.TicketCorrelationConflicts.index', compact('conflicts', 'tickets'));
+        return view('email::Admin.TicketCorrelationConflicts.index', $data);
     }
 
     public function resolve(
@@ -37,17 +23,8 @@ class TicketCorrelationConflictController extends Controller
         Request $request,
         ResolveEmailTicketCorrelationConflict $resolve,
     ): RedirectResponse {
-        $data = $request->validate([
-            'ticket_id' => ['required', 'integer', 'exists:tickets,id'],
-            'reason' => ['required', 'string', 'min:3', 'max:1000'],
-        ]);
-
-        $resolve->handle(
-            $conflict,
-            Ticket::query()->findOrFail($data['ticket_id']),
-            $request->user(),
-            $data['reason'],
-        );
+        $data = app()->call([app(\App\Modules\Email\Services\EmailTicketConflictOperations::class), 'resolve'], ['request' => $request, 'conflict' => $conflict]);
+        $conflict = $data['conflict'];
 
         return redirect()
             ->route('tech.admin.settings.email.ticket-correlation-conflicts.index')

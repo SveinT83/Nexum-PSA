@@ -25,7 +25,6 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Email Mail drafts', description: 'Private, fenced Mail drafts and idempotent submission.')]
 class MailboxDraftsController extends Controller
 {
-    #[OA\Get(path: '/api/v1/email/mailbox/drafts', operationId: 'listEmailMailboxDrafts', summary: 'List current private Mail drafts', security: [['bearerAuth' => []]], tags: ['Email Mail drafts'], responses: [new OA\Response(response: 200, description: 'Authorized private drafts'), new OA\Response(response: 403, description: 'Missing email.drafts.read ability')])]
     public function index(Request $request, MailboxAccess $mailboxAccess): AnonymousResourceCollection
     {
         $actor = $this->humanActor($request);
@@ -78,7 +77,6 @@ class MailboxDraftsController extends Controller
         return EmailComposerDraftResource::collection($drafts);
     }
 
-    #[OA\Post(path: '/api/v1/email/mailbox/drafts', operationId: 'createEmailMailboxDraft', summary: 'Create one private fenced Mail draft', security: [['bearerAuth' => []]], tags: ['Email Mail drafts'], responses: [new OA\Response(response: 201, description: 'Private draft created'), new OA\Response(response: 404, description: 'Mailbox or source placement outside current scope'), new OA\Response(response: 422, description: 'Validation error or unsupported shared scope')])]
     public function store(
         Request $request,
         EmailComposerDraftService $drafts,
@@ -147,7 +145,6 @@ class MailboxDraftsController extends Controller
             ->setStatusCode(201);
     }
 
-    #[OA\Get(path: '/api/v1/email/mailbox/drafts/{draft}', operationId: 'showEmailMailboxDraft', summary: 'Show one authorized private Mail draft', security: [['bearerAuth' => []]], tags: ['Email Mail drafts'], parameters: [new OA\Parameter(name: 'draft', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'Private draft'), new OA\Response(response: 404, description: 'Draft outside current scope')])]
     public function show(Request $request, string $draft): EmailComposerDraftResource
     {
         return new EmailComposerDraftResource(
@@ -155,7 +152,6 @@ class MailboxDraftsController extends Controller
         );
     }
 
-    #[OA\Patch(path: '/api/v1/email/mailbox/drafts/{draft}', operationId: 'updateEmailMailboxDraft', summary: 'Update an exact fenced private draft version', security: [['bearerAuth' => []]], tags: ['Email Mail drafts'], parameters: [new OA\Parameter(name: 'draft', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'Draft updated'), new OA\Response(response: 409, description: 'Opaque draft version conflict'), new OA\Response(response: 422, description: 'Validation error')])]
     public function update(
         Request $request,
         string $draft,
@@ -195,7 +191,6 @@ class MailboxDraftsController extends Controller
         return new EmailComposerDraftResource($saved->load('attachments'));
     }
 
-    #[OA\Delete(path: '/api/v1/email/mailbox/drafts/{draft}', operationId: 'discardEmailMailboxDraft', summary: 'Discard an exact fenced private draft version', security: [['bearerAuth' => []]], tags: ['Email Mail drafts'], parameters: [new OA\Parameter(name: 'draft', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'Draft discarded'), new OA\Response(response: 409, description: 'Opaque draft version conflict')])]
     public function discard(
         Request $request,
         string $draft,
@@ -218,7 +213,6 @@ class MailboxDraftsController extends Controller
         return new EmailComposerDraftResource($discarded->load('attachments'));
     }
 
-    #[OA\Post(path: '/api/v1/email/mailbox/drafts/{draft}/provider-sync', operationId: 'syncEmailMailboxProviderDraft', summary: 'Explicitly synchronize an exact private draft to provider Drafts', security: [['bearerAuth' => []]], tags: ['Email Mail drafts'], parameters: [new OA\Parameter(name: 'draft', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'Current provider Drafts status'), new OA\Response(response: 409, description: 'Version or provider evidence conflict')])]
     public function syncProvider(
         Request $request,
         string $draft,
@@ -241,7 +235,6 @@ class MailboxDraftsController extends Controller
         return new EmailComposerDraftResource($synced->load('attachments'));
     }
 
-    #[OA\Post(path: '/api/v1/email/mailbox/drafts/{draft}/preview', operationId: 'previewEmailMailboxDraftSubmission', summary: 'Preview the exact sanitized and signed outbound snapshot', security: [['bearerAuth' => []]], tags: ['Email Mail drafts'], parameters: [new OA\Parameter(name: 'draft', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'Safe outbound preview without provider write'), new OA\Response(response: 409, description: 'Opaque draft version conflict'), new OA\Response(response: 422, description: 'Outbound validation failed')])]
     public function preview(
         Request $request,
         string $draft,
@@ -282,7 +275,6 @@ class MailboxDraftsController extends Controller
         ]]);
     }
 
-    #[OA\Post(path: '/api/v1/email/mailbox/drafts/{draft}/send', operationId: 'submitEmailMailboxDraft', summary: 'Reserve and send one exact private draft snapshot', description: 'A timeout or conflict is not permission to resend. Accepted repeats return the same submission; unresolved outcomes forbid another provider write.', security: [['bearerAuth' => []]], tags: ['Email Mail drafts'], parameters: [new OA\Parameter(name: 'draft', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 201, description: 'Outbound submission created and accepted'), new OA\Response(response: 200, description: 'Existing accepted submission returned idempotently'), new OA\Response(response: 409, description: 'Version, idempotency, or provider outcome conflict'), new OA\Response(response: 422, description: 'Outbound validation failed')])]
     public function send(
         Request $request,
         string $draft,

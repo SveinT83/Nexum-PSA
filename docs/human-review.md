@@ -11838,3 +11838,48 @@ not explicitly left open above. Full confirmation is not yet provided.
   9 collaboration UI remains default-off until its separate two-user review passes.
 - **Status:** Pending
 - **Reviewer:** Not assigned
+
+## HR-2026-10-20-MAIL-API - Complete Mail browser/API parity
+
+Status: Reviewed. Owner: Codex. Named reviewer: Svein Tore. Review date: 2026-10-21.
+Scope: RFC 2026-10-20-mail-full-api-parity, all six slices and full read/write/action/admin Swagger.
+Ordinary Delete-to-Trash explicitly approved by Svein in chat.
+Gate: this Mail API scope review is cleared by Svein Tore's explicit approval. Main promotion,
+deployment and release remain separate actions; independent Mail runtime reviews still apply.
+Human approval: Svein Tore approved the delivered Mail API scope on 2026-10-21 in chat: "Godkjenner".
+Individual manual scenario results were not supplied. The unchecked items below retain the original
+review scenarios; they do not claim that provider writes, inbox delivery or employee OpenWebUI
+retrieval were executed. Approval does not authorize commit, push, Main or production actions.
+Evidence: docs/plans/2026-10-20-mail-api-verification.md. Tests never complete human review.
+Automated: 812 Mail tests / 9,259 assertions; latest 22 checks / 1,485 assertions; 175 Swagger
+operations. BookStack guide 636 and overview 495 published and read back in existing staff scope.
+No new migration, provider write, token widening or runtime activation is part of this implementation.
+
+- [ ] Compare browser and own-token Mail lists, folders, search, conversations and exact downloads.
+- [ ] Shared/delegated Mark read is personal only; personal owner reports provider outcome separately.
+  Opening does not mark read. Cross-user and revoked mailbox access is denied.
+- [ ] Browser Inbox Delete and API DELETE move to Trash on an intended test mailbox. Verify provider
+  read-back and retained source; no permanent-delete fallback.
+- [ ] Compose/reply/reply-all/forward, attachments, fenced preview/send and Sent reconciliation.
+  Unknown SMTP results are not duplicated; verify actual inbox delivery separately.
+- [ ] Folder create/rename/move/empty/delete, refresh status and navigation preferences.
+- [ ] Personal/admin rules, draft conflicts, publish checksum, execution/reprocess/undo, Smart Inbox
+  batch/prefill, advisory AI and signature omitted-field behavior.
+- [ ] Ticket create/link/suppression preserves source, Ticket context and TD-number correlation.
+- [ ] Account create/full update/grants/test/activation, settings and template preview/update.
+  Both token ceilings and browser permissions apply; credentials are write-only.
+- [ ] Owner delegation/revoke, emergency powers/expiry and exact unread handover.
+- [ ] Operator preview/start/cancel/status, rebaseline and canonical review/apply/rollback preserve
+  frozen evidence, explicit confirmation and existing runtime gates.
+- [ ] Swagger renders every Mail method/path, payload/result/error and binary/multipart contract.
+- [ ] Handbook has intended employee access and clear Dev/production status. Verify employee
+  OpenWebUI retrieval independently.
+
+After reviewed promotion: regenerate Swagger, clear/rebuild normal Laravel caches and restart
+long-running workers. This change adds no migration. Existing schema prerequisites require their
+own deployment review. Provider effects and SMTP delivery need controlled real-provider review.
+Disabled collaboration/live/advanced-acknowledgement gates retain their independent pending reviews.
+
+Deployment authorization (2026-10-21): Svein Tore explicitly requested Main and production after
+approving this scope. GitHub's existing actor policy and independent runtime gates remain.
+Operational preparation: docs/plans/2026-10-21-mail-api-production-deployment.md.

@@ -1956,3 +1956,13 @@ Common issues:
 ---
 
 If you ask for a change later, refer to the component above; this map shows where to edit behavior and how changes flow through the system.
+
+
+## Complete Mail API parity (2026-10-20)
+
+All Mail routes, including the legacy APIs, belong to routes.php; api.php is only a compatibility
+loader. The full bearer contract is Support/EmailApiDocumentation.php. Docs/email-api-contracts.json
+records method/path/scope/request contracts. See Docs/knowledge/mail-api-operations.md and
+../../../docs/plans/2026-10-20-mail-api-verification.md. Browser and API share queries/actions/services.
+Ordinary Delete is provider Trash. No new migrations or runtime enablements. Regenerate Swagger with
+php artisan l5-swagger:generate whenever the contract changes. Human review and promotion are separate.

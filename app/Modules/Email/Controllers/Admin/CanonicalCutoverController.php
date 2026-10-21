@@ -10,10 +10,8 @@ use App\Modules\Email\Actions\ProcessEmailCanonicalParityAttestation;
 use App\Modules\Email\Actions\RollbackEmailCanonicalCutover;
 use App\Modules\Email\Actions\StartEmailCanonicalParityAttestation;
 use App\Modules\Email\Models\EmailAccount;
-use App\Modules\Email\Models\EmailCanonicalCorrelationRun;
 use App\Modules\Email\Models\EmailCanonicalCutoverRun;
 use App\Modules\Email\Models\EmailCanonicalParityAttestation;
-use App\Modules\Email\Models\EmailCanonicalReadMode;
 use App\Modules\Email\Services\MailboxAccess;
 use App\Modules\Email\Services\ResolveMailboxAccessDecision;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -21,7 +19,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -39,63 +36,17 @@ class CanonicalCutoverController extends Controller
 
     public function index(Request $request): View
     {
-        $actor = $this->operator($request);
-        $schemaReady = $this->schemaReady();
-        $accounts = $this->viewableAccounts($actor);
-        $allowedIds = $accounts->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
-        $runs = collect();
-        $correlationRuns = collect();
-        $attestations = collect();
+        $data = app()->call([app(\App\Modules\Email\Services\EmailCanonicalCutoverOperations::class), 'index'], ['request' => $request]);
 
-        if ($schemaReady) {
-            $runs = EmailCanonicalCutoverRun::query()
-                ->latest('id')
-                ->limit(250)
-                ->get()
-                ->filter(fn (EmailCanonicalCutoverRun $run): bool => $this->scopeIsAllowed(
-                    $run->account_scope_json,
-                    $allowedIds,
-                ))
-                ->take(50);
-            $correlationRuns = EmailCanonicalCorrelationRun::query()
-                ->where('status', EmailCanonicalCorrelationRun::STATUS_COMPLETED)
-                ->latest('id')
-                ->limit(250)
-                ->get()
-                ->filter(fn (EmailCanonicalCorrelationRun $run): bool => $this->scopeIsAllowed(
-                    $run->account_scope_json,
-                    $allowedIds,
-                ))
-                ->take(50);
-            $attestations = EmailCanonicalParityAttestation::query()
-                ->whereIn('email_account_id', $allowedIds)
-                ->latest('id')
-                ->limit(50)
-                ->get();
-        }
-
-        return view('email::Admin.Cutover.index', compact(
-            'accounts',
-            'attestations',
-            'correlationRuns',
-            'runs',
-            'schemaReady',
-        ));
+        return view('email::Admin.Cutover.index', $data);
     }
 
     public function backfill(
         Request $request,
         PreviewEmailCanonicalCutover $preview,
     ): RedirectResponse {
-        $actor = $this->operatorForMutation($request);
-        $data = $this->boundedSourceScope($request);
-        $run = $preview->backfill(
-            $actor,
-            $data['account_ids'],
-            $data['min_message_id'] ?? null,
-            $data['max_message_id'] ?? null,
-            $data['item_cap'] ?? PreviewEmailCanonicalCutover::DEFAULT_ITEM_CAP,
-        );
+        $data = app()->call([app(\App\Modules\Email\Services\EmailCanonicalCutoverOperations::class), 'backfill'], ['request' => $request]);
+        $run = $data['run'];
 
         return $this->previewRedirect($run, 'Self-map/backfill preview created.');
     }
@@ -104,15 +55,8 @@ class CanonicalCutoverController extends Controller
         Request $request,
         PreviewEmailCanonicalCutover $preview,
     ): RedirectResponse {
-        $actor = $this->operatorForMutation($request);
-        $data = $this->boundedSourceScope($request);
-        $run = $preview->audit(
-            $actor,
-            $data['account_ids'],
-            $data['min_message_id'] ?? null,
-            $data['max_message_id'] ?? null,
-            $data['item_cap'] ?? PreviewEmailCanonicalCutover::DEFAULT_ITEM_CAP,
-        );
+        $data = app()->call([app(\App\Modules\Email\Services\EmailCanonicalCutoverOperations::class), 'audit'], ['request' => $request]);
+        $run = $data['run'];
 
         return $this->previewRedirect($run, 'Parity/drift audit preview created.');
     }
@@ -121,17 +65,8 @@ class CanonicalCutoverController extends Controller
         Request $request,
         PreviewEmailCanonicalCutover $preview,
     ): RedirectResponse {
-        $actor = $this->operatorForMutation($request);
-        $data = $request->validate([
-            'correlation_run_id' => ['required', 'integer', 'min:1'],
-            'candidate_ids' => ['required', 'string', 'max:8000'],
-        ]);
-        $correlationRun = EmailCanonicalCorrelationRun::query()
-            ->where('status', EmailCanonicalCorrelationRun::STATUS_COMPLETED)
-            ->findOrFail((int) $data['correlation_run_id']);
-        $this->authorizeAccountScope($correlationRun->account_scope_json, $actor);
-        $candidateIds = $this->candidateIds((string) $data['candidate_ids']);
-        $run = $preview->merge($actor, $correlationRun, $candidateIds);
+        $data = app()->call([app(\App\Modules\Email\Services\EmailCanonicalCutoverOperations::class), 'merge'], ['request' => $request]);
+        $run = $data['run'];
 
         return $this->previewRedirect($run, 'Exact reviewed-component merge preview created.');
     }
@@ -142,28 +77,9 @@ class CanonicalCutoverController extends Controller
         StartEmailCanonicalParityAttestation $startAttestation,
         ProcessEmailCanonicalParityAttestation $processAttestation,
     ): RedirectResponse {
-        $actor = $this->operatorForMutation($request);
-        if ($request->input('intent') === 'attest') {
-            $data = $request->validate([
-                'account_id' => ['nullable', 'integer', 'min:1', 'required_without:attestation_id'],
-                'attestation_id' => ['nullable', 'integer', 'min:1', 'required_without:account_id'],
-            ]);
-            $allowedIds = $this->viewableAccounts($actor)
-                ->pluck('id')
-                ->map(fn (mixed $id): int => (int) $id)
-                ->all();
-            if (! empty($data['attestation_id'])) {
-                $attestation = EmailCanonicalParityAttestation::query()
-                    ->whereIn('email_account_id', $allowedIds)
-                    ->findOrFail((int) $data['attestation_id']);
-            } else {
-                $accountId = (int) $data['account_id'];
-                abort_unless(in_array($accountId, $allowedIds, true), 404);
-                $attestation = $startAttestation->handle($actor, $accountId, strictEvidence: true);
-            }
-            if ($attestation->status !== EmailCanonicalParityAttestation::STATUS_COMPLETED) {
-                $attestation = $processAttestation->handle($attestation, $actor);
-            }
+        $data = app()->call([app(\App\Modules\Email\Services\EmailCanonicalCutoverOperations::class), 'mode'], ['request' => $request]);
+        if (isset($data['attestation'])) {
+            $attestation = $data['attestation'];
 
             return redirect()
                 ->route('tech.admin.settings.email.canonical-cutover.index')
@@ -174,42 +90,16 @@ class CanonicalCutoverController extends Controller
                         : 'One bounded parity page was recorded. Continue until the frozen account is complete.',
                 );
         }
-
-        $data = $request->validate([
-            'intent' => ['nullable', 'string', Rule::in(['mode'])],
-            'account_ids' => ['required', 'array', 'min:1', 'max:'.self::MAX_ACCOUNT_SCOPE],
-            'account_ids.*' => ['required', 'integer', 'distinct', 'min:1'],
-            'mode' => ['required', 'string', Rule::in(EmailCanonicalReadMode::MODES)],
-        ]);
-        $run = $preview->mode($actor, $data['account_ids'], $data['mode']);
+        $run = $data['run'];
 
         return $this->previewRedirect($run, 'Read-mode preview created.');
     }
 
     public function show(Request $request, string $run): View
     {
-        $actor = $this->operatorForMutation($request);
-        $run = $this->runForActor($run, $actor);
-        $accounts = $this->authorizeAccountScope($run->account_scope_json, $actor);
-        $items = $run->items()
-            ->select([
-                'id',
-                'email_canonical_cutover_run_id',
-                'item_key',
-                'item_kind',
-                'component_key',
-                'email_account_id',
-                'source_email_message_id',
-                'evidence_complete',
-                'previous_read_mode',
-                'proposed_read_mode',
-                'status',
-                'error_code',
-            ])
-            ->orderBy('item_key')
-            ->paginate(100);
+        $data = app()->call([app(\App\Modules\Email\Services\EmailCanonicalCutoverOperations::class), 'show'], ['request' => $request, 'run' => $run]);
 
-        return view('email::Admin.Cutover.show', compact('accounts', 'items', 'run'));
+        return view('email::Admin.Cutover.show', $data);
     }
 
     public function apply(
@@ -217,12 +107,8 @@ class CanonicalCutoverController extends Controller
         string $run,
         ApplyEmailCanonicalCutover $apply,
     ): RedirectResponse {
-        $actor = $this->operatorForMutation($request);
-        $run = $this->runForActor($run, $actor);
-        $request->validate([
-            'confirmation' => ['required', 'string', Rule::in(['APPLY RUN #'.$run->id])],
-        ]);
-        $apply->handle($run, $actor);
+        $data = app()->call([app(\App\Modules\Email\Services\EmailCanonicalCutoverOperations::class), 'apply'], ['request' => $request, 'run' => $run]);
+        $run = $data['run'];
 
         return back()->with('success', 'The exact durable cutover preview was applied locally.');
     }
@@ -232,12 +118,8 @@ class CanonicalCutoverController extends Controller
         string $run,
         RollbackEmailCanonicalCutover $rollback,
     ): RedirectResponse {
-        $actor = $this->operatorForMutation($request);
-        $run = $this->runForActor($run, $actor);
-        $request->validate([
-            'confirmation' => ['required', 'string', Rule::in(['ROLLBACK RUN #'.$run->id])],
-        ]);
-        $rollback->handle($run, $actor);
+        $data = app()->call([app(\App\Modules\Email\Services\EmailCanonicalCutoverOperations::class), 'rollback'], ['request' => $request, 'run' => $run]);
+        $run = $data['run'];
 
         return back()->with('success', 'The exact durable cutover run was rolled back locally.');
     }

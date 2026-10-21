@@ -27,7 +27,6 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Email Mail collaboration', description: 'Default-off shared Mail coordination without content-bearing events.')]
 class SharedMailboxDraftsController extends Controller
 {
-    #[OA\Post(path: '/api/v1/email/mailbox/drafts/{draft}/share', operationId: 'shareEmailMailboxDraft', summary: 'Explicitly share one exact private reply draft', security: [['bearerAuth' => []]], tags: ['Email Mail collaboration'], responses: [new OA\Response(response: 201, description: 'Shared draft created'), new OA\Response(response: 404, description: 'Draft/source outside ordinary shared scope'), new OA\Response(response: 409, description: 'Draft version conflict'), new OA\Response(response: 503, description: 'Collaboration remains disabled')])]
     public function share(
         Request $request,
         string $draft,
@@ -75,7 +74,6 @@ class SharedMailboxDraftsController extends Controller
         return (new EmailComposerDraftResource($shared))->response()->setStatusCode(201);
     }
 
-    #[OA\Get(path: '/api/v1/email/mailbox/shared-drafts/{draft}', operationId: 'showEmailSharedMailboxDraft', summary: 'Read one explicitly shared draft with current ordinary mailbox View', security: [['bearerAuth' => []]], tags: ['Email Mail collaboration'], responses: [new OA\Response(response: 200, description: 'Shared draft and safe lease state'), new OA\Response(response: 404, description: 'Shared draft outside current scope'), new OA\Response(response: 503, description: 'Collaboration remains disabled')])]
     public function show(
         Request $request,
         string $draft,
@@ -93,7 +91,6 @@ class SharedMailboxDraftsController extends Controller
         }
     }
 
-    #[OA\Post(path: '/api/v1/email/mailbox/shared-drafts/{draft}/lease', operationId: 'acquireEmailSharedDraftLease', summary: 'Acquire or explicitly take over an expired shared-draft lease', security: [['bearerAuth' => []]], tags: ['Email Mail collaboration'], responses: [new OA\Response(response: 200, description: 'Opaque lease token issued once'), new OA\Response(response: 409, description: 'Source context stale'), new OA\Response(response: 423, description: 'Another current editor holds the lease')])]
     public function acquire(
         Request $request,
         string $draft,
@@ -136,7 +133,6 @@ class SharedMailboxDraftsController extends Controller
         ]]);
     }
 
-    #[OA\Patch(path: '/api/v1/email/mailbox/shared-drafts/{draft}/lease', operationId: 'renewEmailSharedDraftLease', summary: 'Renew the exact current lease no faster than the bounded floor', security: [['bearerAuth' => []]], tags: ['Email Mail collaboration'], responses: [new OA\Response(response: 200, description: 'Current lease state'), new OA\Response(response: 409, description: 'Source context stale'), new OA\Response(response: 423, description: 'Lease token/fence/version is no longer current')])]
     public function renew(
         Request $request,
         string $draft,
@@ -165,7 +161,6 @@ class SharedMailboxDraftsController extends Controller
         ]]);
     }
 
-    #[OA\Delete(path: '/api/v1/email/mailbox/shared-drafts/{draft}/lease', operationId: 'releaseEmailSharedDraftLease', summary: 'Release only the exact current lease', security: [['bearerAuth' => []]], tags: ['Email Mail collaboration'], responses: [new OA\Response(response: 200, description: 'Lease released'), new OA\Response(response: 423, description: 'Lease token/fence/version is no longer current')])]
     public function release(
         Request $request,
         string $draft,
@@ -192,7 +187,6 @@ class SharedMailboxDraftsController extends Controller
         return response()->json(['data' => $this->lockData($lock)]);
     }
 
-    #[OA\Patch(path: '/api/v1/email/mailbox/shared-drafts/{draft}', operationId: 'updateEmailSharedDraft', summary: 'Update shared content under exact lease/fence/content/source versions', security: [['bearerAuth' => []]], tags: ['Email Mail collaboration'], responses: [new OA\Response(response: 200, description: 'Updated shared draft'), new OA\Response(response: 409, description: 'Source context stale'), new OA\Response(response: 423, description: 'Lease token/fence/version is no longer current')])]
     public function update(
         Request $request,
         string $draft,
@@ -288,7 +282,6 @@ class SharedMailboxDraftsController extends Controller
         }
     }
 
-    #[OA\Post(path: '/api/v1/email/mailbox/shared-drafts/{draft}/rebase-preview', operationId: 'previewEmailSharedDraftRebase', summary: 'Preview current sender/audience/thread source without changing authored content', security: [['bearerAuth' => []]], tags: ['Email Mail collaboration'], responses: [new OA\Response(response: 200, description: 'Bounded rebase proposal'), new OA\Response(response: 423, description: 'Lease token/fence/version is no longer current')])]
     public function rebasePreview(
         Request $request,
         string $draft,
@@ -316,7 +309,6 @@ class SharedMailboxDraftsController extends Controller
         ]]);
     }
 
-    #[OA\Post(path: '/api/v1/email/mailbox/shared-drafts/{draft}/rebase', operationId: 'rebaseEmailSharedDraft', summary: 'Confirm one exact rebase while preserving authored body and attachments', security: [['bearerAuth' => []]], tags: ['Email Mail collaboration'], responses: [new OA\Response(response: 200, description: 'Rebased shared draft'), new OA\Response(response: 409, description: 'Rebase preview changed'), new OA\Response(response: 423, description: 'Lease token/fence/version is no longer current')])]
     public function rebase(
         Request $request,
         string $draft,
@@ -345,7 +337,6 @@ class SharedMailboxDraftsController extends Controller
         }
     }
 
-    #[OA\Post(path: '/api/v1/email/mailbox/shared-drafts/{draft}/preview', operationId: 'previewEmailSharedDraftSend', summary: 'Preview the exact Order 11 outbound snapshot under the current lease', security: [['bearerAuth' => []]], tags: ['Email Mail collaboration'], responses: [new OA\Response(response: 200, description: 'Safe exact outbound preview'), new OA\Response(response: 409, description: 'Source context stale'), new OA\Response(response: 423, description: 'Lease token/fence/version is no longer current')])]
     public function preview(
         Request $request,
         string $draft,
@@ -389,7 +380,6 @@ class SharedMailboxDraftsController extends Controller
         ]]);
     }
 
-    #[OA\Post(path: '/api/v1/email/mailbox/shared-drafts/{draft}/send', operationId: 'sendEmailSharedDraft', summary: 'Reauthorize, fence and submit the shared snapshot through Order 11 once', security: [['bearerAuth' => []]], tags: ['Email Mail collaboration'], responses: [new OA\Response(response: 200, description: 'Accepted or reconciled submission'), new OA\Response(response: 409, description: 'Stale or submission conflict; never permission to resend'), new OA\Response(response: 423, description: 'Lease token/fence/version is no longer current')])]
     public function send(
         Request $request,
         string $draft,
