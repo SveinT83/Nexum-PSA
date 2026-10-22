@@ -1,5 +1,29 @@
 # tdPSA Development TODO
 
+## Automatic Nextcloud calendar sync repair (2026-10-22)
+
+Status: Done On Dev / Main Merge Blocked By Required GitHub Review; automatic activation off.
+Owner: Codex. Product, pilot/privacy and release owner: Svein Tore.
+RFC: rfc/2026-10-22-nextcloud-calendar-automatic-sync.md (Approved in chat, 2026-10-22).
+ADR: adr/2026-10-22-nextcloud-calendar-claims-and-conditional-reconciliation.md (Accepted).
+Human-review checklist: HR-2026-10-22-NEXTCLOUD-CALENDAR-SYNC (In Review for live pilot).
+Svein explicitly authorized implementation and Main merge: Godkjenner. Fix og merge til main.
+The first scope is Svein Tore only; Personlig is excluded from automatic activation.
+Calendar-owned mutation, durable cross-connection/manual/queued leases, due dispatch, reviewed
+activation fingerprints, conditional provider paths/writes, read-back and conservative duplicate/
+recurrence/conflict handling are implemented. Existing dirty Calendar/Nextcloud work is preserved.
+Evidence: plans/2026-10-22-nextcloud-calendar-sync-diagnosis.md and
+plans/2026-10-22-nextcloud-calendar-sync-verification.md.
+Final affected verification: 94 tests / 510 assertions on Dev and the isolated Main candidate.
+BookStack pages 420/455 revision 4 independently read back; inherited staff access verified.
+PR #309: https://github.com/SveinT83/Nexum-PSA/pull/309. Tested code commit: 0cbdb1bc0976110f6f6af8f19dba71b7278c4fee.
+Main ruleset requires one approving PR review from another reviewer. Normal merge was refused;
+auto-merge is disabled in this repository. No administrator bypass or rules change attempted.
+Next: authorized independent reviewer approves PR #309, then perform the requested normal merge.
+Resume owner: Svein Tore / repository reviewer. Production pilot remains separately pending.
+Production deployment, approved activation, duplicate reconciliation, actual bilateral automatic
+cycles and named human review remain separate; no production code/configuration/event write.
+
 ## SSO provider-owned MFA (2026-10-08)
 
 Status: Deployed To Production / Human Review In Review.

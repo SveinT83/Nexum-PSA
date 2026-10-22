@@ -57,3 +57,53 @@ timestamps as provider-specific metadata.
 Calendar sync is conservative. If only one side changed since the last sync, Nexum can sync the
 change. If both sides changed, a conflict record is created. Conflict UI is planned separately.
 
+## Automatic calendar synchronization update (2026-10-22)
+
+Implementation is verified on Dev. Production deployment and automatic activation have not been
+performed for this update. Existing installations remain paused until an administrator explicitly
+activates the reviewed calendar targets. The approved first scope is the work calendar only; other
+personal or shared calendars require their own mapping decision.
+
+The calendar-only job follows Sync interval and requires an active global connection, Calendar sync
+enabled, active owned calendar mappings and explicit automatic activation. It does not synchronize
+users, groups, roles or files. An ordinary connection save preserves activation. Changing the server,
+service username or mapping target invalidates automatic activation until an operator reviews it again.
+
+### Check a calendar connection
+
+1. Open Admin > System > Nextcloud and open the connection's settings.
+2. Check connection activity, Calendar sync, Sync interval and the mapped calendar/owner.
+3. Inspect the latest sync log. Automatic runs use scheduled_calendar_sync; success, partial, failed,
+   queued and cancelled are distinct states. A queued job or old health check is not completed sync.
+4. In Calendar, open the expected date and compare the event time and privacy with Nextcloud.
+5. For partial or failed runs, contact the administrator with the connection and affected date.
+   Avoid creating duplicate appointments or repeatedly clicking Sync now.
+
+### Safety and limitations
+
+Manual Sync now retains its existing identity/file preview work, while its calendar step shares the
+same lease and reconciliation rules as automatic jobs. Several remote calendars may be viewed
+together, but unbound outbound events require a single reviewed destination. Events already bound to
+one remote calendar are never exported to a different calendar through batch ordering.
+
+Unlinked matching copies require explicit reconciliation; matching title/time alone is insufficient.
+Edits on both sides, deleted/moved resources, unsafe scope changes and unknown write outcomes are
+retained for review. Existing remote resources use their original path and an ETag precondition.
+A provider write is acknowledged only after its identity and content are read back.
+
+Recurring resources and exceptions are retained in Nextcloud and reported for review rather than
+flattened. Nonrecurring resources with unsupported fields can be imported as read-only projections;
+provider-only data is never overwritten. Private and confidential classes, UTC times, supported
+durations and all-day date boundaries are preserved. No new sharing or invitation delivery occurs.
+
+### Administrator activation
+
+Activation is an operator action after backup, approved mapping scope and deployment verification.
+Use the installed PHP runtime and nextcloud:sync-calendars --enable --connection=ID --mapping=ID
+for each explicitly reviewed target. This saves activation without starting a sync. Pause with
+nextcloud:sync-calendars --disable --connection=ID. Do not enable the whole scheduler as a repair:
+the existing minutely scheduler and queue worker must be verified independently.
+
+There is no conflict-resolution UI in this update. An operator must inspect source/target identity
+and immutable delivery evidence before reconciling a conflict. Never delete historical records,
+clear a pending write blindly or broaden calendar sharing to make synchronization succeed.

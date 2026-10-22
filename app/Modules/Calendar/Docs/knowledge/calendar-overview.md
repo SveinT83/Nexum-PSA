@@ -185,3 +185,25 @@ archiving is refused while retained absence blocks exist. Cancellation releases 
 while preserving history. Existing calendar-only events are untouched. Nextcloud skips these
 blocks; no external calendar or phone-provider operation is performed. See the Workday absence
 Knowledge guide and docs/plans/2026-10-02-workday-slice-03-verification.md for scope and evidence.
+
+## Nextcloud calendar synchronization update (2026-10-22)
+
+Implementation is verified on Dev. Production deployment and automatic activation have not been
+performed for this update. Do not assume that a saved sync interval means automatic sync is active.
+
+After approved deployment and activation, selected owned calendars synchronize at the connection's
+configured interval. Events retain their remote calendar identity; selecting several calendars in
+Calendar does not authorize copying events between them. Existing Calendar access and private-detail
+masking continue to apply. No calendar sharing or invitation delivery is added.
+
+1. Open Calendar and select the intended calendar and date.
+2. Check the appointment time, owner and privacy in both Nexum and Nextcloud.
+3. If an appointment is missing, ask an administrator to check Nextcloud connection status and the
+   latest calendar sync log. Do not create another copy just to force synchronization.
+4. If both copies were edited or an older unlinked copy exists, an administrator must reconcile the
+   identities. Automatic sync retains the records and reports a conflict instead of merging them.
+
+Recurring provider series and exceptions are retained in Nextcloud without flattening them into a
+single appointment. Nonrecurring appointments with provider-only fields, such as attendees or alarms,
+may appear in Nexum as read-only sync projections; edits to those projections are not exported.
+Deleting a copy does not automatically delete or recreate the other copy. No new invitation is sent.

@@ -464,3 +464,9 @@ Schedule::command('tripletex:sync-time')->everyFiveMinutes()->withoutOverlapping
 
 // Linked Billing Email/Site fields only; Contacts remain local after creation.
 Schedule::command('tripletex:sync-customers')->everyFiveMinutes()->withoutOverlapping(10);
+
+// Calendar-only dispatch checks the persisted activation, reviewed mappings and due interval.
+Schedule::command('nextcloud:sync-calendars')
+    ->everyMinute()
+    ->name('nextcloud.calendars.dispatch_due')
+    ->withoutOverlapping(5);
