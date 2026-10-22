@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Core\User;
+use App\Modules\UserManagement\Sso\SsoSessions;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -12,8 +13,8 @@ use Symfony\Component\HttpFoundation\Response;
  * whose roles are listed in the enforce_two_factor_roles setting.
  *
  * If the user has a role that requires 2FA but hasn't confirmed their
- * 2FA setup yet, they are redirected to the security settings page
- * with a prompt to enable it.
+ * 2FA setup yet, they are redirected to the security settings page unless
+ * their current, validated SSO session delegates login MFA to the provider.
  */
 class RequireTwoFactor
 {
@@ -40,6 +41,13 @@ class RequireTwoFactor
 
         // User already has confirmed 2FA? All good
         if ($user->hasConfirmedTwoFactor()) {
+            return $next($request);
+        }
+
+        // Only a live grant for this user qualifies; a linked account or request flag
+        // must not exempt later local-password sessions from enrollment.
+        $grant = $request->hasSession() ? $request->session()->get('sso.grant') : null;
+        if (is_string($grant) && app(SsoSessions::class)->valid($grant, $user->fresh())) {
             return $next($request);
         }
 

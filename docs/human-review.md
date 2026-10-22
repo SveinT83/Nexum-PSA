@@ -1,5 +1,42 @@
 # Human Review Register
 
+## HR-2026-10-08-SSO-MFA - SSO without duplicate local 2FA
+
+Status: In Review. Owner: Codex. Reviewer: Svein Tore (manual checks not yet confirmed).
+Scope: RFC/ADR 2026-10-08-sso-provider-owned-mfa; SSO login, role gate, local fallback.
+Rollout authorization: Svein Tore explicitly requested push and production update on
+2026-10-22. This authorizes the scoped Main/production rollout and moves remaining
+manual acceptance to production; it does not mark any unchecked scenario Reviewed.
+Approval to implement on Dev is recorded in the RFC; it is not human acceptance.
+
+- [ ] Verify the configured identity provider requires MFA for all Nexum SSO users,
+  including a fresh sign-in with no prior provider session.
+- [ ] An already linked employee with local Nexum 2FA completes provider sign-in and
+  reaches Nexum without a second local code prompt. Roles and permissions are unchanged.
+- [ ] A valid SSO session satisfies the configured role requirement without redirecting
+  to local 2FA enrollment. Local password login still enforces required enrollment.
+- [ ] For the same linked employee with local 2FA enabled, log out and use the Nexum
+  password: local TOTP is still required; verify recovery fallback with a suitable test account.
+- [ ] Profile > Work Account (SSO) accurately explains the two login methods; sensitive
+  linking/unlinking/provider changes still require the configured local credentials.
+- [ ] Expiry, provider disablement/back-channel logout, unlinking and local security changes
+  end the SSO session. Password confirmation and Vault step-up are not granted by SSO.
+
+Automated verification: 62 tests / 525 assertions pass on Dev; two new regressions
+failed before the patch. Scoped Pint and whitespace checks pass. Evidence:
+docs/plans/2026-10-08-sso-provider-owned-mfa-verification.md.
+Protocol fixtures do not prove provider MFA enforcement or complete human review.
+Deploy: normal PHP/view deployment; clear compiled views if cached. No migration, build,
+queue, scheduler or provider-setting change. No Main/production deployment performed.
+Risk: SSO now trusts the provider to enforce MFA; Nexum does not assert token-proven MFA.
+Keep local 2FA and recovery codes. Rollback the scoped amendment to restore the extra prompt.
+Original remaining SSO checks stay open in HR-2026-10-05-SSO.
+Rechecked 2026-10-22 on authoritative Dev: 62 tests / 525 assertions pass (73.15s),
+scoped Pint and whitespace checks pass. No runtime edit, commit, push or production
+deployment was performed. All unchecked manual checks above remain Pending.
+BookStack employee/admin guides (pages 612/613, revision 2) were published and
+independently read back with Dev-only status and existing staff access inheritance.
+
 ## HR-2026-10-08-TRIPLETEX-PROFILES - Billing Email and Site address
 
 Status: Reviewed. Owner: Codex. Reviewer: Svein Tore.

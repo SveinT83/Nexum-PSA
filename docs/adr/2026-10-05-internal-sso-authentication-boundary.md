@@ -1,8 +1,14 @@
 # ADR: Internal SSO Authentication Boundary
 
-Status: Accepted
+Status: Partly Superseded (login MFA policy only; 2026-10-08)
 Date: 2026-10-05
 Decision Makers: Codex, implementing Svein Tore's approved SSO RFC
+
+## Supersession
+The local challenge and required enrollment policy for SSO sessions is superseded by
+[provider-owned MFA](2026-10-08-sso-provider-owned-mfa.md).
+The identity, authorization, cryptography, session and sensitive-action boundaries remain.
+The decision below is retained as history.
 
 ## Context
 Keycloak login must preserve local access, Fortify MFA and ongoing Vault UserSecurity work.

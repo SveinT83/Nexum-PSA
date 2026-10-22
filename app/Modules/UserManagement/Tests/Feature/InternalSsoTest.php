@@ -192,15 +192,109 @@ class InternalSsoTest extends TestCase
         $this->assertDatabaseCount('user_sso_sessions', 1);
     }
 
-    public function test_local_two_factor_is_required_after_oidc(): void
+    private function requireTechTwoFactor(): void
+    {
+        DB::table('common_settings')->updateOrInsert(
+            ['name' => 'enforce_two_factor'],
+            ['type' => 'security', 'value' => '1', 'json' => null],
+        );
+        DB::table('common_settings')->updateOrInsert(
+            ['name' => 'enforce_two_factor_roles'],
+            ['type' => 'security', 'value' => null, 'json' => '["Tech"]'],
+        );
+    }
+
+    public function test_sso_skips_local_challenge_without_removing_local_factors(): void
+    {
+        $this->requireTechTwoFactor();
+        $user = $this->employee();
+        app(EnableTwoFactorAuthentication::class)($user);
+        $user->forceFill(['two_factor_confirmed_at' => now()])->save();
+        $fields = array_flip(['password', 'two_factor_secret', 'two_factor_confirmed_at', 'two_factor_recovery_codes']);
+        $before = hash('sha256', json_encode(array_intersect_key($user->fresh()->getAttributes(), $fields)));
+        $p = $this->begin($user);
+        $this->finish($p)->assertRedirect(route('tech.dashboard'))
+            ->assertSessionHas('sso.grant')->assertSessionMissing('login.id')
+            ->assertSessionMissing('sso.pending')->assertSessionMissing('auth.password_confirmed_at');
+        $this->assertAuthenticatedAs($user);
+        $this->assertSame($before, hash('sha256', json_encode(array_intersect_key($user->fresh()->getAttributes(), $fields))));
+        $this->get(route('tech.profile.sso'))->assertOk();
+
+        // The same linked user still needs a local factor after choosing password login.
+        $this->post('/logout')->assertRedirect();
+        $this->post('/login', ['email' => $user->email, 'password' => 'local-password'])
+            ->assertRedirect(route('two-factor.login'))->assertSessionMissing('sso.grant');
+        $this->assertGuest();
+    }
+
+    public function test_sso_satisfies_role_gate_without_local_enrollment(): void
+    {
+        $this->requireTechTwoFactor();
+        $user = $this->employee();
+        $p = $this->begin($user);
+        $this->finish($p)->assertRedirect(route('tech.dashboard'));
+        $this->get(route('tech.profile.sso'))->assertOk();
+        $this->assertNull($user->fresh()->two_factor_secret);
+
+        // No permanent exemption attaches to the user or external identity.
+        $this->post('/logout')->assertRedirect();
+        $this->post('/login', ['email' => $user->email, 'password' => 'local-password'])->assertRedirect();
+        $this->get(route('tech.profile.sso'))->assertRedirect(route('tech.profile.security'));
+    }
+
+    public function test_link_or_request_flag_alone_cannot_satisfy_local_role_gate(): void
+    {
+        $this->requireTechTwoFactor();
+        $user = $this->employee();
+        $this->actingAs($user)->get(route('tech.profile.sso', ['sso' => ['grant' => 'fake'], 'mfa' => true]))
+            ->assertRedirect(route('tech.profile.security'));
+        $this->assertNull(session('sso.grant'));
+    }
+
+    public function test_invalid_grant_cannot_satisfy_role_gate(): void
+    {
+        $this->requireTechTwoFactor();
+        $user = $this->employee();
+        $this->actingAs($user)->withSession(['sso.grant' => 'nonexistent'])
+            ->get(route('tech.profile.sso'))->assertRedirect(route('login'));
+        $this->assertGuest();
+    }
+
+    public function test_other_users_grant_cannot_satisfy_role_gate(): void
+    {
+        $this->requireTechTwoFactor();
+        $owner = $this->employee();
+        $other = $this->employee();
+        $grant = app(\App\Modules\UserManagement\Sso\SsoSessions::class)->create(
+            $owner, $this->provider, (object) ['sub' => 'employee-'.$owner->id],
+        );
+        $this->actingAs($other)->withSession(['sso.grant' => $grant])
+            ->get(route('tech.profile.sso'))->assertRedirect(route('login'));
+        $this->assertGuest();
+    }
+
+    public function test_revoked_and_expired_grants_cannot_satisfy_role_gate(): void
+    {
+        $this->requireTechTwoFactor();
+        $user = $this->employee();
+        foreach (['revoked_at' => now(), 'expires_at' => now()->subMinute()] as $field => $value) {
+            $p = $this->begin($user);
+            $this->finish($p)->assertRedirect(route('tech.dashboard'));
+            DB::table('user_sso_sessions')->where('id', session('sso.grant'))->update([$field => $value]);
+            $this->get(route('tech.profile.sso'))->assertRedirect(route('login'));
+            $this->assertGuest();
+        }
+    }
+
+    public function test_local_password_login_still_requires_totp_for_a_linked_user(): void
     {
         $user = $this->employee();
         app(EnableTwoFactorAuthentication::class)($user);
         $user->forceFill(['two_factor_confirmed_at' => now()])->save();
-        $p = $this->begin($user);
-        $this->finish($p)->assertRedirect(route('two-factor.login'));
+        $this->post('/login', ['email' => $user->email, 'password' => 'local-password'])
+            ->assertRedirect(route('two-factor.login'));
         $this->assertGuest();
-        $this->assertNotNull(session('sso.pending'));
+        $this->assertNull(session('sso.pending'));
         $this->post(route('two-factor.login.store'), ['code' => 'wrong'])->assertRedirect();
         $this->assertGuest();
         $this->mock(TwoFactorAuthenticationProvider::class, function ($mock) {
@@ -208,7 +302,7 @@ class InternalSsoTest extends TestCase
         });
         $this->post(route('two-factor.login.store'), ['code' => '123456'])->assertRedirect(route('tech.dashboard'));
         $this->assertAuthenticatedAs($user);
-        $this->assertNotNull(session('sso.grant'));
+        $this->assertNull(session('sso.grant'));
     }
 
     public function test_password_and_provider_changes_revoke_ss_o_sessions(): void
@@ -231,18 +325,64 @@ class InternalSsoTest extends TestCase
         $user = $this->employee();
         app(EnableTwoFactorAuthentication::class)($user);
         $user->forceFill(['two_factor_confirmed_at' => now()])->save();
-        $p = $this->begin($user);
-        $this->finish($p);
-        $this->withSession(['sso.pending_until' => time() - 1])
+        $grant = app(\App\Modules\UserManagement\Sso\SsoSessions::class)->create(
+            $user, $this->provider, (object) ['sub' => 'employee-'.$user->id],
+        );
+        $this->withSession(['sso.pending' => $grant, 'sso.pending_until' => time() - 1, 'login.id' => $user->id])
             ->post(route('two-factor.login.store'), ['code' => '123456'])->assertRedirect(route('login'));
         $this->assertGuest();
+    }
+
+    public function test_link_password_failure_returns_safe_actionable_feedback(): void
+    {
+        $user = $this->employee(false);
+        $before = $user->getAuthPassword();
+        $this->actingAs($user)->post(route('tech.profile.sso.link'), [
+            'current_password' => 'synthetic-wrong-password', 'code' => '987654',
+        ])->assertRedirect(route('tech.profile.sso'))->assertSessionHasErrors('sso_reauthentication');
+        $this->assertStringContainsString('Nexum password was not accepted', session('errors')->first('sso_reauthentication'));
+        $this->assertFalse(session()->has('_old_input.current_password'));
+        $this->assertFalse(session()->has('_old_input.code'));
+        $this->get(route('tech.profile.sso'))->assertOk()
+            ->assertSee('Nexum password was not accepted')
+            ->assertDontSee('synthetic-wrong-password')->assertDontSee('987654');
+        $this->assertSame($before, $user->fresh()->getAuthPassword());
+        $this->assertDatabaseCount('user_sso_attempts', 0);
+        $this->assertDatabaseCount('user_external_identities', 0);
+        Http::assertNothingSent();
+    }
+
+    public function test_link_factor_failure_is_distinct_and_preserves_local_credentials(): void
+    {
+        $user = $this->employee(false);
+        app(EnableTwoFactorAuthentication::class)($user);
+        $user->forceFill(['two_factor_confirmed_at' => now()])->save();
+        $before = $user->fresh()->getRawOriginal();
+        $this->mock(TwoFactorAuthenticationProvider::class, function ($mock) {
+            $mock->shouldReceive('verify')->once()->andReturnFalse();
+        });
+        $this->actingAs($user)->post(route('tech.profile.sso.link'), [
+            'current_password' => 'local-password', 'code' => '987654',
+        ])->assertRedirect(route('tech.profile.sso'))->assertSessionHasErrors('sso_reauthentication');
+        $this->assertStringContainsString('Nexum authenticator code was not accepted', session('errors')->first('sso_reauthentication'));
+        $this->assertFalse(session()->has('_old_input.current_password'));
+        $this->assertFalse(session()->has('_old_input.code'));
+        $this->get(route('tech.profile.sso'))->assertOk()
+            ->assertSee('Nexum authenticator code was not accepted')
+            ->assertDontSee('local-password')->assertDontSee('987654');
+        foreach (['password', 'two_factor_secret', 'two_factor_confirmed_at', 'two_factor_recovery_codes'] as $field) {
+            $this->assertSame($before[$field], $user->fresh()->getRawOriginal($field));
+        }
+        $this->assertDatabaseCount('user_sso_attempts', 0);
+        $this->assertDatabaseCount('user_external_identities', 0);
+        Http::assertNothingSent();
     }
 
     public function test_linking_requires_local_password_then_verified_subject_and_duplicate_is_rejected(): void
     {
         $user = $this->employee(false);
         $this->actingAs($user)->post(route('tech.profile.sso.link'), ['current_password' => 'wrong'])
-            ->assertForbidden();
+            ->assertRedirect(route('tech.profile.sso'))->assertSessionHasErrors('sso_reauthentication');
         $this->assertDatabaseCount('user_external_identities', 0);
         $response = $this->actingAs($user)->post(route('tech.profile.sso.link'), ['current_password' => 'local-password'])->assertRedirect();
         parse_str(parse_url($response->headers->get('Location'), PHP_URL_QUERY), $p);
@@ -430,12 +570,13 @@ class InternalSsoTest extends TestCase
         app(EnableTwoFactorAuthentication::class)($user);
         $user->forceFill(['two_factor_confirmed_at' => now()])->save();
         $recovery = $user->recoveryCodes()[0];
-        $p = $this->begin($user);
-        $this->finish($p)->assertRedirect(route('two-factor.login'));
+        $this->post('/login', ['email' => $user->email, 'password' => 'local-password'])
+            ->assertRedirect(route('two-factor.login'));
         $this->post(route('two-factor.login.store'), ['recovery_code' => $recovery])
             ->assertRedirect(route('tech.dashboard'));
         $this->assertAuthenticatedAs($user);
-        $this->assertNotNull(session('sso.grant'));
+        $this->assertNull(session('sso.grant'));
+        $this->assertNotContains($recovery, $user->fresh()->recoveryCodes());
     }
 
     public function test_unknown_authentication_cutover_configuration_fails_closed(): void
@@ -470,4 +611,56 @@ class InternalSsoTest extends TestCase
         $this->assertDatabaseCount('user_sso_attempts', 1);
     }
 
+    public function test_enforced_user_security_sso_preserves_factors_and_revokes_on_epoch_change(): void
+    {
+        // The protected provider is a separate optional rollout; keep this check on Dev
+        // without importing unpublished Vault/UserSecurity into a legacy Main release.
+        if (! class_exists(\App\Modules\UserManagement\Security\Auth\NexumUserSecurityProvider::class)) {
+            $this->markTestSkipped('Protected UserSecurity provider is not installed in this release.');
+        }
+
+        $user = $this->employee();
+        app(EnableTwoFactorAuthentication::class)($user);
+        $user->forceFill(['two_factor_confirmed_at' => now()])->save();
+        if (! \Illuminate\Support\Facades\Schema::hasColumn('user_management', 'auth_security_epoch')) {
+            \Illuminate\Support\Facades\Schema::table('user_management', function ($table) {
+                $table->unsignedBigInteger('auth_security_epoch')->default(1);
+                $table->string('two_factor_generation_id')->nullable();
+            });
+        }
+        if (! \Illuminate\Support\Facades\Schema::hasTable('user_two_factor_generations')) {
+            \Illuminate\Support\Facades\Schema::create('user_two_factor_generations', function ($table) {
+                $table->string('id')->primary();
+                $table->unsignedBigInteger('user_id');
+                $table->string('state');
+                $table->timestamp('confirmed_at')->nullable();
+                $table->timestamp('terminal_at')->nullable();
+                $table->string('terminal_reason')->nullable();
+            });
+        }
+        $generation = (string) \Illuminate\Support\Str::uuid7();
+        DB::table('user_two_factor_generations')->insert([
+            'id' => $generation, 'user_id' => $user->id, 'state' => 'confirmed',
+            'source' => 'migration_backfill', 'created_at' => now()->format('Y-m-d H:i:s.u'), 'confirmed_at' => now()->format('Y-m-d H:i:s.u'),
+        ]);
+        DB::table('user_management')->where('id', $user->id)->update([
+            'auth_security_epoch' => 1, 'two_factor_generation_id' => $generation,
+        ]);
+        // Release only this isolated SQLite fixture transaction so the real fence owns its transaction.
+        DB::connection()->commit();
+        config(['auth.providers.user_management.driver' => 'nexum-user-security']);
+        $this->app['auth']->forgetGuards();
+        $p = $this->begin($user);
+        $this->finish($p)->assertRedirect(route('tech.dashboard'))
+            ->assertSessionMissing('login.auth_security_epoch')
+            ->assertSessionMissing('login.two_factor_generation_id');
+        $this->assertAuthenticatedAs($user);
+        $this->assertNotNull(session('sso.grant'));
+        $this->assertSame($generation, $user->fresh()->two_factor_generation_id);
+        $this->assertSame(1, (int) $user->fresh()->auth_security_epoch);
+        $this->assertNotNull($user->fresh()->two_factor_secret);
+        DB::table('user_management')->where('id', $user->id)->increment('auth_security_epoch');
+        $this->get(route('tech.profile.sso'))->assertRedirect(route('login'));
+        $this->assertGuest();
+    }
 }

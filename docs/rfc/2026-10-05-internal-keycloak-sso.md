@@ -5,6 +5,14 @@ Date: 2026-10-05
 Owner: Codex / Svein Tore
 Change level: 3 - Authentication, integration, and identity persistence
 
+## MFA policy amendment (2026-10-08)
+
+The local challenge/enrollment statements below describe the original delivery.
+They are superseded for SSO login by the approved
+[provider-owned MFA amendment](2026-10-08-sso-provider-owned-mfa.md).
+Local password MFA and sensitive-action checks remain. Current delivery/review status is
+tracked in TODO and HR-2026-10-08-SSO-MFA; this amendment does not approve production rollout.
+
 ## Context
 
 Svein requested SSO for Nexum PSA now that Keycloak is in use internally.

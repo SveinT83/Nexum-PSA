@@ -1,5 +1,33 @@
 # tdPSA Development TODO
 
+## SSO provider-owned MFA (2026-10-08)
+
+Status: Main/Production Rollout Authorized / Human Review In Review.
+Owner: Codex; human acceptance owner: Svein Tore.
+Explicit 2026-10-22 request: push and update production; preserve unchecked review items.
+Approved by Svein Tore in chat. RFC: rfc/2026-10-08-sso-provider-owned-mfa.md;
+ADR: adr/2026-10-08-sso-provider-owned-mfa.md.
+Validated SSO sign-in no longer asks for local TOTP. Only a currently valid SSO grant
+satisfies the role MFA gate. Local password 2FA, recovery, sensitive-action reauthentication,
+local credentials and Vault boundaries remain. Provider MFA is an operator responsibility.
+Verification: two new regressions failed before the patch; final Dev run passes 62 tests /
+525 assertions across SSO, local 2FA, guarded factor entry and Customer Portal. Scoped Pint
+and whitespace checks pass. Evidence: plans/2026-10-08-sso-provider-owned-mfa-verification.md.
+No migration, build, queue, scheduler or provider-setting change. Uncommitted; no Main push
+or production deployment. Normal PHP/view promotion only; clear compiled views if cached.
+Next: execute the explicitly requested scoped Main/production rollout, then Svein
+verifies provider MFA enforcement, both login methods and revocation under
+HR-2026-10-08-SSO-MFA (In Review). No manual scenario is inferred passed.
+Existing HR-2026-10-05-SSO remains In Review.
+Rechecked 2026-10-22 on authoritative Dev: all 62 tests / 525 assertions pass (73.15s);
+scoped Pint and whitespace checks pass. Existing runtime implementation retained.
+Handbook: BookStack pages 612/613 revision 2 were published and independently read
+back on 2026-10-22 with explicit Dev-only status. Page/chapter inheritance, book
+overrides and the staff Editor role view permissions were checked without access
+changes. Employee OpenWebUI retrieval remains a separate, unperformed check.
+The existing public website handoff item was refreshed; no new item or publication.
+No production rollout or provider/browser acceptance is implied by the Dev rerun.
+
 ## Mail conversation Mark all as read command (2026-10-21)
 
 Status: Deployed To Production / Human Review In Review; RFC Approved.

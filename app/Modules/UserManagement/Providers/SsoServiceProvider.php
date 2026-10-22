@@ -3,6 +3,7 @@
 namespace App\Modules\UserManagement\Providers;
 
 use App\Modules\UserManagement\Sso\SsoMiddleware;
+use App\Modules\UserManagement\Sso\SsoReauthenticationFailed;
 use App\Modules\UserManagement\Sso\SsoSessions;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
@@ -31,6 +32,14 @@ class SsoServiceProvider extends ServiceProvider
         $handler->renderable(function (\Throwable $error, \Illuminate\Http\Request $request) use ($sensitive) {
             if (! $sensitive($request)) {
                 return null;
+            }
+            // Only the authenticated personal form receives fixed, actionable local-factor feedback.
+            // Never flash submitted input or disclose upstream exception messages.
+            if ($error instanceof SsoReauthenticationFailed && $request->user()
+                && $request->routeIs('tech.profile.sso.link', 'tech.profile.sso.unlink')) {
+                return redirect()->route('tech.profile.sso')
+                    ->withErrors(['sso_reauthentication' => $error->getMessage()])
+                    ->header('Cache-Control', 'no-store');
             }
             if ($error instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface && $error->getStatusCode() === 403) {
                 return response('Access denied.', 403)->header('Cache-Control', 'no-store');

@@ -3,14 +3,12 @@
 namespace App\Modules\UserManagement\Sso;
 
 use App\Models\Core\User;
-use App\Modules\UserManagement\Security\Services\DatabaseTwoFactorChallenge;
 use App\Modules\UserManagement\Security\Support\UserSecurityAuthCutover;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Laravel\Fortify\Events\TwoFactorAuthenticationChallenged;
 
 /** Owns one-use login/link correlation; no account provisioning or upstream role writes. */
 class SsoFlow
@@ -116,17 +114,8 @@ class SsoFlow
         [$user, $grant] = $result;
         $request->session()->forget(['login', 'auth.password_confirmed_at']);
         $request->session()->put(['sso.pending' => $grant, 'sso.pending_until' => time() + 300]);
-        // UserSecurity owns its own non-nestable fence transaction. Finish our provider/link
-        // transaction first, then revalidate the grant against current state at login.
-        if ($user->hasConfirmedTwoFactor()) {
-            if (app(UserSecurityAuthCutover::class)->isEnforced()) {
-                app(DatabaseTwoFactorChallenge::class)->capture($request, $user);
-            }
-            $request->session()->put(['login.id' => $user->id, 'login.remember' => false]);
-            event(new TwoFactorAuthenticationChallenged($user));
-
-            return redirect()->route('two-factor.login');
-        }
+        // The trusted provider owns SSO authentication/MFA. The Login listener validates
+        // this server-side grant again; local password login retains Fortify's challenge.
         Auth::guard('web')->login($user, false);
         $request->session()->regenerate();
 
