@@ -354,7 +354,7 @@ Implemented now:
 Not implemented yet:
 
 - Full file browser for selecting files outside connection setup.
-- Real background sync worker.
+- Automatic synchronization beyond the explicitly activated calendar-only scope.
 - Conflict resolution UI.
 - Ticket file picker.
 - Managed folder/group writes.
@@ -444,3 +444,17 @@ and UserManagement do not need to know the protocol details.
 - Enterprise/multi-server customer setups may need connection grouping later.
 - Identity provider support should coordinate with future LDAP/OIDC work instead of becoming
   Nextcloud-specific auth code.
+
+
+## Automatic Calendar Runtime (2026-10-22)
+
+Implemented and tested on Dev; production activation remains off until reviewed deployment.
+The nextcloud:sync-calendars minutely command claims due active connections, and a dedicated
+calendar-only queue job shares Calendar leases with manual sync. Durable connection and Calendar
+leases prevent duplicate queue/manual or cross-connection work. Activation binds to reviewed
+server/principal/mapping identities. The Calendar-owned ApplyExternalCalendarEvent action owns
+local mutations. Conditional ETag writes retain provider resource paths and require GET read-back.
+Unsupported recurrence is retained/skipped; provider-only single-event projections are read-only.
+No delete propagation, sharing changes, user/group imports or file reads occur in scheduled runs.
+Migration: 2026_10_22_180000_create_nextcloud_calendar_sync_states.php (two additive lease tables).
+See docs/rfc/2026-10-22-nextcloud-calendar-automatic-sync.md and the verification report.

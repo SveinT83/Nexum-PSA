@@ -38,11 +38,11 @@ class StoreNextcloudConnection
             'service_username' => ($data['service_username'] ?? '') !== '' ? $data['service_username'] : null,
             'allow_user_credentials' => (bool) ($data['allow_user_credentials'] ?? false),
             'supports_managed_writes' => $mode === NextcloudConnection::MODE_MANAGED,
-            'settings' => [
+            'settings' => array_replace($existing?->settings ?? [], [
                 'calendar_sync_enabled' => (bool) ($data['calendar_sync_enabled'] ?? false),
                 'file_browser_enabled' => (bool) ($data['file_browser_enabled'] ?? true),
                 'users_groups_read_enabled' => (bool) ($data['users_groups_read_enabled'] ?? true),
-            ],
+            ]),
         ];
 
         if (! empty($data['service_password'])) {

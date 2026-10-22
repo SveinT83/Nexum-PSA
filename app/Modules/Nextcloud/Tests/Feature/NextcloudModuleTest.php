@@ -14,9 +14,9 @@ use App\Modules\Nextcloud\Controllers\Admin\NextcloudConnectionController;
 use App\Modules\Nextcloud\Models\NextcloudConnection;
 use App\Modules\Nextcloud\Models\NextcloudSyncLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -838,7 +838,8 @@ XML, 207);
     #[Test]
     public function sync_now_pushes_local_calendar_events_to_nextcloud_for_writable_connections(): void
     {
-        Http::fake(function ($request) {
+        $writtenBodies = [];
+        Http::fake(function ($request) use (&$writtenBodies) {
             $url = (string) $request->url();
 
             if (str_contains($url, '/ocs/v2.php/cloud/capabilities')) {
@@ -862,7 +863,13 @@ XML, 207);
             }
 
             if (str_contains($url, '/remote.php/dav/calendars/ada/personal/') && $request->method() === 'PUT') {
+                $writtenBodies[$url] = $request->body();
+
                 return Http::response('', 201, ['ETag' => '"local-etag"']);
+            }
+
+            if ($request->method() === 'GET' && isset($writtenBodies[$url])) {
+                return Http::response($writtenBodies[$url], 200, ['ETag' => '"local-etag"']);
             }
 
             if (str_contains($url, '/remote.php/dav/files/')) {

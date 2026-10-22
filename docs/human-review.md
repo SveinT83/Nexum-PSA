@@ -1,5 +1,35 @@
 # Human Review Register
 
+## HR-2026-10-22-NEXTCLOUD-CALENDAR-SYNC - Safe automatic calendar sync
+
+Status: In Review. Owner: Codex. Human reviewer and mapping/privacy owner: Svein Tore.
+Scope: approved RFC rfc/2026-10-22-nextcloud-calendar-automatic-sync.md; implementation on Dev.
+Evidence: plans/2026-10-22-nextcloud-calendar-sync-diagnosis.md.
+Gate: Svein explicitly approved the RFC and Main merge in chat on 2026-10-22. Main merge may
+proceed after automated verification; the unchecked live scenarios still block production automatic
+activation. Production deployment requires a separate request. No completed human execution is inferred.
+Migration: 2026_10_22_180000_create_nextcloud_calendar_sync_states.php (two additive lease tables).
+Do not enable automatic targets or run a live manual sync before target/duplicate preflight.
+Known risks: two remotes share calendar 2, five unlinked duplicate candidates and unsupported
+provider recurrence. Conditional writes/duration handling are implemented; real pilot remains.
+No production mapping/event/configuration changes.
+Automated: 94 affected tests / 510 assertions pass on Dev and the isolated Main candidate;
+7 transport regressions fail before the fix. Dev additive migration and HTTPS 200 verified.
+BookStack pages 420/455 revision 4 read back with inherited staff access. Runtime remains off.
+Verification: plans/2026-10-22-nextcloud-calendar-sync-verification.md.
+
+- [x] Svein Tore approved RFC and initial work-calendar-only scope, 2026-10-22 in chat.
+- [ ] Confirm Personlig's intended treatment before expanding the approved pilot.
+- [ ] Verify Nextcloud-origin event, including Overhalla 23 October 12:00-13:00 Europe/Oslo, appears
+  once in the intended Nexum calendar with correct time, owner, privacy and identity.
+- [ ] Verify controlled outbound edit/read-back and a second actual automatic cycle without new
+  duplicates or identity drift; confirm scheduled execution and successful worker evidence.
+- [ ] Confirm Personlig, other users, absence blocks and unapproved calendars receive no writes.
+- [ ] Review duplicate candidates explicitly; ambiguous records remain blocked without deletion.
+- [ ] Verify concurrency conflicts, private/all-day/recurring events and failure recovery preserve
+  provider data; unsupported events remain visible as retained/skipped rather than flattened.
+- [ ] Read employee BookStack documentation and verify intended employee access after publication.
+
 ## HR-2026-10-08-SSO-MFA - SSO without duplicate local 2FA
 
 Status: In Review. Owner: Codex. Reviewer: Svein Tore (manual checks not yet confirmed).

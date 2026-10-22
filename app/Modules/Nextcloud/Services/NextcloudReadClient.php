@@ -2,13 +2,13 @@
 
 namespace App\Modules\Nextcloud\Services;
 
-use App\Modules\Nextcloud\Models\NextcloudConnection;
 use App\Modules\Calendar\Models\CalendarEvent;
+use App\Modules\Nextcloud\Models\NextcloudConnection;
 use DOMDocument;
 use DOMElement;
 use DOMXPath;
-use Illuminate\Support\Carbon;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -132,26 +132,70 @@ class NextcloudReadClient
         $this->throwUnlessSuccessful($response, 'calendar events');
 
         return collect($this->parseCalendarMultiStatus($response->body()))
-            ->map(fn (array $entry) => array_merge($entry, [
-                'event' => $this->parseVevent($entry['calendar_data'] ?? ''),
-            ]))
-            ->filter(fn (array $entry) => ! empty($entry['event']['uid']))
+            ->map(function (array $entry) {
+                try {
+                    $entry['event'] = $this->parseVevent($entry['calendar_data'] ?? '');
+                } catch (\Throwable) {
+                    $entry['event'] = ['__invalid' => true];
+                }
+
+                return $entry;
+            })
             ->values()
             ->all();
     }
 
     public function putCalendarEvent(NextcloudConnection $connection, string $calendarHref, CalendarEvent $event): ?string
     {
-        \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::assertCalendarEditable($event);
+        if (! $connection->is_active || ! $connection->canWrite()) {
+            throw new RuntimeException('Connection does not permit calendar writes.');
+        }
+        // Retain the existing workflow guard when that domain is installed.
+        if ($event->source === 'workday_absence' || $event->series_id) {
+            throw new RuntimeException('This event cannot be exported to Nextcloud.');
+        }
         $uid = $event->external_uid ?: $event->uuid;
-        $href = rtrim($this->normalizeHref($calendarHref), '/').'/'.rawurlencode($uid).'.ics';
-        $response = $this->dav($connection)
-            ->withBody($this->calendarEventBody($event, $uid), 'text/calendar; charset=utf-8')
-            ->put($connection->base_url.$href);
-
+        $href = $event->external_event_id ?: rtrim($this->normalizeHref($calendarHref), '/').'/'.rawurlencode($uid).'.ics';
+        $href = $this->calendarResourceHref($calendarHref, $href);
+        $request = $this->dav($connection)->withBody($this->calendarEventBody($event, $uid), 'text/calendar; charset=utf-8');
+        if ($event->external_event_id) {
+            if (! $event->external_etag) {
+                throw new RuntimeException('Conditional provider write requires the current ETag.');
+            }
+            $request = $request->withHeaders(['If-Match' => '"'.trim($event->external_etag, '"').'"']);
+        } else {
+            $request = $request->withHeaders(['If-None-Match' => '*']);
+        }
+        $response = $request->put($connection->base_url.$href);
         $this->throwUnlessSuccessful($response, 'calendar event write');
 
         return trim((string) $response->header('ETag'), '"') ?: null;
+    }
+
+    public function calendarEvent(NextcloudConnection $connection, string $calendarHref, string $href): array
+    {
+        $href = $this->calendarResourceHref($calendarHref, $href);
+        $response = $this->dav($connection)->get($connection->base_url.$href);
+        $this->throwUnlessSuccessful($response, 'calendar event read-back');
+
+        return [
+            'href' => $href, 'etag' => trim((string) $response->header('ETag'), '"') ?: null,
+            'event' => $this->parseVevent($response->body()),
+        ];
+    }
+
+    private function calendarResourceHref(string $calendarHref, string $href): string
+    {
+        $href = $this->normalizeHref($href);
+        $prefix = rtrim($this->normalizeHref($calendarHref), '/').'/';
+        $decoded = rawurldecode($href);
+        if (! str_starts_with($href, $prefix) || str_contains($decoded, '/../')
+            || str_contains($decoded, '/./') || str_contains($decoded, '?') || str_contains($decoded, '#')
+            || str_contains($decoded, '\\') || preg_match('/[\x00-\x1F]/', $decoded)) {
+            throw new RuntimeException('Calendar resource is outside its mapped collection.');
+        }
+
+        return $href;
     }
 
     private function ocs(NextcloudConnection $connection)
@@ -313,13 +357,13 @@ XML;
             'SUMMARY:'.$this->escapeIcs($event->title),
             $event->all_day
                 ? 'DTSTART;VALUE=DATE:'.$startsAt->format('Ymd')
-                : 'DTSTART;TZID='.$this->escapeIcs($timezone).':'.$startsAt->format('Ymd\THis'),
+                : 'DTSTART:'.$startsAt->copy()->utc()->format('Ymd\THis\Z'),
             $event->all_day
                 ? 'DTEND;VALUE=DATE:'.$endsAt->format('Ymd')
-                : 'DTEND;TZID='.$this->escapeIcs($timezone).':'.$endsAt->format('Ymd\THis'),
+                : 'DTEND:'.$endsAt->copy()->utc()->format('Ymd\THis\Z'),
             'STATUS:'.strtoupper($event->status ?: 'confirmed'),
             'TRANSP:'.($event->transparency === 'free' ? 'TRANSPARENT' : 'OPAQUE'),
-            'CLASS:'.($event->isPrivate() ? 'PRIVATE' : 'PUBLIC'),
+            'CLASS:'.($event->visibility === 'confidential' ? 'CONFIDENTIAL' : ($event->isPrivate() ? 'PRIVATE' : 'PUBLIC')),
         ];
 
         foreach (['description' => 'DESCRIPTION', 'location' => 'LOCATION', 'meeting_url' => 'URL'] as $field => $name) {
@@ -331,13 +375,27 @@ XML;
         $lines[] = 'END:VEVENT';
         $lines[] = 'END:VCALENDAR';
 
-        return implode("\r\n", $lines)."\r\n";
+        $folded = [];
+        foreach ($lines as $line) {
+            $first = true;
+            while (strlen($line) > ($first ? 75 : 74)) {
+                $piece = mb_strcut($line, 0, $first ? 75 : 74, 'UTF-8');
+                $folded[] = ($first ? '' : ' ').$piece;
+                $line = substr($line, strlen($piece));
+                $first = false;
+            }
+            $folded[] = ($first ? '' : ' ').$line;
+        }
+
+        return implode("\r\n", $folded)."\r\n";
     }
 
     private function parseCalendarMultiStatus(string $xml): array
     {
-        $document = new DOMDocument();
-        $document->loadXML($xml);
+        $document = new DOMDocument;
+        if (! @$document->loadXML($xml, LIBXML_NONET) || $document->documentElement?->localName !== 'multistatus') {
+            throw new RuntimeException('Invalid calendar inventory response.');
+        }
         $xpath = new DOMXPath($document);
         $items = [];
 
@@ -365,6 +423,7 @@ XML;
         foreach ($lines as $line) {
             if ($line === 'BEGIN:VEVENT') {
                 $insideEvent = true;
+
                 continue;
             }
 
@@ -386,6 +445,23 @@ XML;
                 'CLASS', 'STATUS', 'TRANSP', 'UID' => $value,
                 default => $event[$key] ?? $value,
             };
+        }
+
+        $event['__series'] = substr_count(strtoupper($ics), 'BEGIN:VEVENT') !== 1
+            || preg_match('/^(RRULE|RDATE|EXDATE|RECURRENCE-ID)[;:]/mi', $ics) === 1;
+        $allowed = ['uid', 'dtstamp', 'created', 'last_modified', 'summary', 'description',
+            'location', 'url', 'dtstart', 'dtend', 'duration', 'status', 'transp', 'class'];
+        $event['__write_safe'] = ! $event['__series']
+            && ! str_contains(strtoupper($ics), 'BEGIN:VALARM')
+            && array_diff(array_keys($event), [...$allowed, '__series']) === [];
+        if (isset($event['dtstart']) && ! isset($event['dtend'])) {
+            if (isset($event['duration']) && ! str_starts_with($event['duration'], '-')) {
+                $event['dtend'] = $event['dtstart'];
+                $event['dtend']['value'] = $event['dtstart']['value']->copy()->add(new \DateInterval($event['duration']));
+            } elseif ($event['dtstart']['all_day']) {
+                $event['dtend'] = $event['dtstart'];
+                $event['dtend']['value'] = $event['dtstart']['value']->copy()->addDay();
+            }
         }
 
         return $event;
@@ -416,7 +492,11 @@ XML;
 
     private function parseIcsDate(string $value, array $params): array
     {
-        $timezone = $this->normalizeTimezone($params['TZID'] ?? 'UTC');
+        $rawTimezone = trim($params['TZID'] ?? 'UTC', '"');
+        $timezone = $this->normalizeTimezone($rawTimezone);
+        if ($timezone === 'UTC' && ! in_array($rawTimezone, ['UTC', 'Coordinated Universal Time'], true)) {
+            throw new RuntimeException('Unsupported calendar timezone.');
+        }
         $allDay = ($params['VALUE'] ?? null) === 'DATE' || preg_match('/^\d{8}$/', $value);
         $date = $allDay
             ? Carbon::createFromFormat('Ymd', $value, $timezone)->startOfDay()
@@ -470,7 +550,7 @@ XML;
 
     private function escapeIcs(?string $value): string
     {
-        return str_replace(["\\", "\n", "\r", ';', ','], ['\\\\', '\\n', '', '\\;', '\\,'], (string) $value);
+        return str_replace(['\\', "\n", "\r", ';', ','], ['\\\\', '\\n', '', '\\;', '\\,'], (string) $value);
     }
 
     private function unescapeIcs(string $value): string
@@ -480,7 +560,7 @@ XML;
 
     private function parseMultiStatus(string $xml): array
     {
-        $document = new DOMDocument();
+        $document = new DOMDocument;
         $document->loadXML($xml);
         $xpath = new DOMXPath($document);
         $responses = $xpath->query('//*[local-name()="response"]');

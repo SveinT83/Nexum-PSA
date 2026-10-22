@@ -1,5 +1,25 @@
 # tdPSA Development TODO
 
+## Automatic Nextcloud calendar sync repair (2026-10-22)
+
+Status: Done On Dev / Main Candidate Verified; automatic activation off.
+Owner: Codex. Product, pilot/privacy and release owner: Svein Tore.
+RFC: rfc/2026-10-22-nextcloud-calendar-automatic-sync.md (Approved in chat, 2026-10-22).
+ADR: adr/2026-10-22-nextcloud-calendar-claims-and-conditional-reconciliation.md (Accepted).
+Human-review checklist: HR-2026-10-22-NEXTCLOUD-CALENDAR-SYNC (In Review for live pilot).
+Svein explicitly authorized implementation and Main merge: Godkjenner. Fix og merge til main.
+The first scope is Svein Tore only; Personlig is excluded from automatic activation.
+Calendar-owned mutation, durable cross-connection/manual/queued leases, due dispatch, reviewed
+activation fingerprints, conditional provider paths/writes, read-back and conservative duplicate/
+recurrence/conflict handling are implemented. Existing dirty Calendar/Nextcloud work is preserved.
+Evidence: plans/2026-10-22-nextcloud-calendar-sync-diagnosis.md and
+plans/2026-10-22-nextcloud-calendar-sync-verification.md.
+Final affected verification: 94 tests / 510 assertions on Dev and the isolated Main candidate.
+BookStack pages 420/455 revision 4 independently read back; inherited staff access verified.
+Next: scoped PR/Main merge authorized by Svein; live production pilot remains separate.
+Production deployment, approved activation, duplicate reconciliation, actual bilateral automatic
+cycles and named human review remain separate; no production code/configuration/event write.
+
 ## SSO provider-owned MFA (2026-10-08)
 
 Status: Deployed To Production / Human Review In Review.

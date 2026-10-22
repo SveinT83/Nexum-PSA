@@ -5,24 +5,17 @@ namespace App\Modules\Nextcloud\Actions;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
-use App\Modules\Calendar\Models\CalendarEvent;
-use App\Modules\Nextcloud\Models\NextcloudCalendarMapping;
 use App\Modules\Nextcloud\Models\NextcloudConnection;
-use App\Modules\Nextcloud\Models\NextcloudSyncConflict;
 use App\Modules\Nextcloud\Models\NextcloudSyncLog;
 use App\Modules\Nextcloud\Models\NextcloudUserMapping;
 use App\Modules\Nextcloud\Services\NextcloudReadClient;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
 use Throwable;
 
 class RequestNextcloudSync
 {
     private const PREVIEW_LIMIT = 500;
 
-    public function __construct(private readonly NextcloudReadClient $client)
-    {
-    }
+    public function __construct(private readonly NextcloudReadClient $client) {}
 
     public function handle(NextcloudConnection $connection, ?User $requestedBy = null, string $operation = 'manual_sync'): NextcloudSyncLog
     {
@@ -97,22 +90,23 @@ class RequestNextcloudSync
             ];
 
             $log->forceFill([
-                'status' => 'success',
+                'status' => ($eventSummary['failed'] + $eventSummary['conflicts'] + ($eventSummary['skipped'] ?? 0)) > 0 ? 'partial' : 'success',
                 'records_seen' => count($users) + count($groups) + count($calendars) + count($files) + $eventSummary['seen'] + $identitySummary['seen'],
                 'records_changed' => $eventSummary['changed'] + $identitySummary['changed'],
                 'records_failed' => $eventSummary['failed'] + $identitySummary['failed'],
                 'finished_at' => now(),
-                'message' => 'Read sync completed.',
+                'message' => $log->status === 'success' ? 'Read sync completed.' : 'Read sync completed with calendar resources requiring review.',
                 'context' => $context,
             ])->save();
 
+            $connection->refresh();
             $settings = $connection->settings ?? [];
             $settings['last_read_summary'] = $context['summary'];
 
             $connection->forceFill([
-                'health_status' => 'healthy',
+                'health_status' => $log->status === 'success' ? 'healthy' : 'warning',
                 'last_error' => null,
-                'last_successful_sync_at' => now(),
+                'last_successful_sync_at' => $log->status === 'success' ? now() : $connection->last_successful_sync_at,
                 'capabilities' => $capabilities,
                 'settings' => $settings,
             ])->save();
@@ -190,6 +184,7 @@ class RequestNextcloudSync
 
             if (($existingMapping?->metadata['mapping_action'] ?? null) === 'skip') {
                 $summary['skipped']++;
+
                 continue;
             }
 
@@ -246,181 +241,10 @@ class RequestNextcloudSync
 
     private function syncMappedCalendars(NextcloudConnection $connection): array
     {
-        $summary = ['seen' => 0, 'changed' => 0, 'failed' => 0, 'imported' => 0, 'pushed' => 0, 'conflicts' => 0];
-        $from = now()->subYear();
-        $to = now()->addYears(2);
-
-        $mappings = $connection->calendarMappings()
-            ->where('is_active', true)
-            ->whereNotNull('calendar_id')
-            ->with('calendar')
-            ->get();
-
-        foreach ($mappings as $mapping) {
-            if (! $mapping instanceof NextcloudCalendarMapping || ! $mapping->calendar) {
-                continue;
-            }
-
-            if (in_array($mapping->sync_direction, ['two_way', 'pull_only'], true)) {
-                foreach ($this->client->calendarEvents($connection, $mapping->remote_calendar_id, $from, $to) as $remote) {
-                    $summary['seen']++;
-                    $result = $this->importRemoteEvent($connection, $mapping, $remote);
-                    $summary[$result]++;
-                    if (in_array($result, ['imported', 'pushed'], true)) {
-                        $summary['changed']++;
-                    }
-                }
-            }
-
-            if ($connection->canWrite() && in_array($mapping->sync_direction, ['two_way', 'push_only'], true)) {
-                $events = CalendarEvent::query()
-                    ->where('calendar_id', $mapping->calendar_id)
-                    ->whereBetween('starts_at', [$from->copy()->utc(), $to->copy()->utc()])
-                    ->where(fn ($query) => $query
-                        ->whereNull('external_source')
-                        ->orWhere('external_source', 'nextcloud'))
-                    ->get();
-
-                foreach ($events as $event) {
-                    // Absence projection has no external calendar contract in this rollout.
-                    if ($event->source === \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::SOURCE) {
-                        continue;
-                    }
-                    if ($event->last_synced_at && ! $event->updated_at->greaterThan($event->last_synced_at)) {
-                        continue;
-                    }
-
-                    $etag = $this->client->putCalendarEvent($connection, $mapping->remote_calendar_id, $event);
-                    $event->forceFill([
-                        'source' => $event->source ?: 'local',
-                        'external_source' => 'nextcloud',
-                        'external_calendar_id' => $mapping->remote_calendar_id,
-                        'external_event_id' => rtrim($mapping->remote_calendar_id, '/').'/'.($event->external_uid ?: $event->uuid).'.ics',
-                        'external_uid' => $event->external_uid ?: $event->uuid,
-                        'external_etag' => $etag,
-                        'sync_status' => 'synced',
-                        'last_synced_at' => now(),
-                        'sync_hash' => $this->localHash($event),
-                    ])->save();
-
-                    $summary['seen']++;
-                    $summary['changed']++;
-                    $summary['pushed']++;
-                }
-            }
-
-            $mapping->forceFill(['last_synced_at' => now()])->save();
+        if (! $connection->calendarMappings()->where('is_active', true)->whereNotNull('calendar_id')->exists()) {
+            return ['seen' => 0, 'changed' => 0, 'failed' => 0, 'imported' => 0, 'pushed' => 0, 'conflicts' => 0, 'skipped' => 0];
         }
 
-        return $summary;
-    }
-
-    private function importRemoteEvent(NextcloudConnection $connection, NextcloudCalendarMapping $mapping, array $remote): string
-    {
-        $event = $remote['event'] ?? [];
-        $remoteHash = $this->remoteHash($event);
-        $local = CalendarEvent::query()
-            ->where('external_source', 'nextcloud')
-            ->where('external_calendar_id', $mapping->remote_calendar_id)
-            ->where(fn ($query) => $query
-                ->where('external_event_id', $remote['href'])
-                ->orWhere('external_uid', $event['uid']))
-            ->first();
-
-        if ($local && $local->source === \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::SOURCE) {
-            return 'seen';
-        }
-
-        if ($local && $local->last_synced_at && $local->updated_at->greaterThan($local->last_synced_at) && $local->sync_hash !== $remoteHash) {
-            NextcloudSyncConflict::query()->firstOrCreate(
-                [
-                    'connection_id' => $connection->id,
-                    'conflictable_type' => CalendarEvent::class,
-                    'conflictable_id' => $local->id,
-                    'remote_object_type' => 'calendar_event',
-                    'remote_object_id' => $remote['href'],
-                    'status' => 'open',
-                ],
-                [
-                    'local_snapshot' => $local->only(['title', 'starts_at', 'ends_at', 'updated_at', 'sync_hash']),
-                    'remote_snapshot' => $event,
-                    'message' => 'Calendar event changed in both Nexum and Nextcloud since last sync.',
-                    'assigned_user_id' => $mapping->user_id,
-                ]
-            );
-
-            return 'conflicts';
-        }
-
-        $startsAt = $event['dtstart']['value'] ?? now();
-        $endsAt = $event['dtend']['value'] ?? ($startsAt instanceof Carbon ? $startsAt->copy()->addHour() : now()->addHour());
-        $timezone = $event['dtstart']['timezone'] ?? $mapping->calendar?->timezone ?? 'Europe/Oslo';
-
-        $payload = [
-            'uuid' => $local?->uuid ?: (string) Str::uuid(),
-            'calendar_id' => $mapping->calendar_id,
-            'title' => $event['summary'] ?? 'Untitled Nextcloud event',
-            'description' => $event['description'] ?? null,
-            'location' => $event['location'] ?? null,
-            'meeting_url' => $event['url'] ?? null,
-            'starts_at' => $startsAt->copy()->utc(),
-            'ends_at' => $endsAt->copy()->utc(),
-            'timezone' => $timezone,
-            'all_day' => (bool) ($event['dtstart']['all_day'] ?? false),
-            'status' => strtolower($event['status'] ?? 'confirmed'),
-            'transparency' => ($event['transp'] ?? null) === 'TRANSPARENT' ? 'free' : 'busy',
-            'visibility' => in_array(strtolower($event['class'] ?? ''), ['private', 'confidential'], true) ? strtolower($event['class']) : 'default',
-            'created_by' => $local?->created_by ?: $mapping->user_id,
-            'updated_by' => $mapping->user_id,
-            'source' => 'external',
-            'external_source' => 'nextcloud',
-            'external_calendar_id' => $mapping->remote_calendar_id,
-            'external_event_id' => $remote['href'],
-            'external_uid' => $event['uid'],
-            'external_etag' => $remote['etag'],
-            'sync_status' => 'synced',
-            'last_synced_at' => now(),
-            'sync_hash' => $remoteHash,
-            'metadata' => array_filter([
-                'nextcloud_connection_id' => $connection->id,
-                'nextcloud_calendar_mapping_id' => $mapping->id,
-            ]),
-        ];
-
-        if ($local) {
-            if ($local->external_etag === $remote['etag'] && $local->sync_hash === $remoteHash) {
-                return 'seen';
-            }
-
-            $local->forceFill($payload)->save();
-
-            return 'imported';
-        }
-
-        CalendarEvent::query()->create($payload);
-
-        return 'imported';
-    }
-
-    private function localHash(CalendarEvent $event): string
-    {
-        return sha1(json_encode([
-            $event->title,
-            $event->description,
-            $event->location,
-            $event->meeting_url,
-            $event->starts_at?->toIso8601String(),
-            $event->ends_at?->toIso8601String(),
-            $event->timezone,
-            $event->all_day,
-            $event->status,
-            $event->transparency,
-            $event->visibility,
-        ]));
-    }
-
-    private function remoteHash(array $event): string
-    {
-        return sha1(json_encode($event));
+        return app(RunNextcloudCalendarSync::class)->manual($connection);
     }
 }
