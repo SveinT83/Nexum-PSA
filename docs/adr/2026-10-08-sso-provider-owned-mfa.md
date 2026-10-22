@@ -37,3 +37,10 @@ Per-provider assurance-claim mapping is outside this explicitly approved policy.
 ## Follow-Up
 HR-2026-10-08-SSO-MFA must verify provider enforcement and real SSO/password behavior
 before Main/production promotion. Preserve the remaining original SSO human checks.
+
+## Production rollout - 2026-10-22
+
+Svein Tore explicitly requested Main and production rollout, superseding the earlier
+deployment hold while preserving all unchecked human acceptance. Main PR #307 is
+deployed and independently verified; HR-2026-10-08-SSO-MFA stays In Review. Provider MFA
+policy and actual user flows remain manual checks; no claim-proven upstream MFA is asserted.

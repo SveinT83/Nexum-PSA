@@ -4,7 +4,7 @@ Status: Approved
 Date: 2026-10-08
 Owner: Codex / Svein Tore
 Change level: 3 - Authentication policy
-Implementation: Dev Verified / Scoped Main and Production Rollout Authorized 2026-10-22
+Implementation: Deployed To Production 2026-10-22 / Human Review In Review
 
 ## Context
 Internal SSO currently challenges for local Nexum 2FA after the configured provider
@@ -84,3 +84,9 @@ Svein Tore requested "Push og oppdater produktsjonen" after the verified Dev han
 This authorizes the scoped Main promotion and production rollout. Earlier rollout-hold
 wording is historical; remaining provider/browser checks move to production under
 HR-2026-10-08-SSO-MFA (In Review). No manual check is marked Reviewed by this request.
+
+## Production evidence - 2026-10-22
+
+Main PR #307 was deployed and independently verified at 09:56:16 UTC. The explicit
+rollout authorization above supersedes earlier promotion holds for this deployment.
+Manual acceptance remains In Review. See the 2026-10-22 production deployment report.

@@ -1,6 +1,6 @@
 # SSO provider-owned MFA verification - 2026-10-08
 
-Status: Done On Dev / Human Review Pending
+Status: Dev Verification Complete / Deployed To Production 2026-10-22 / Human Review In Review
 Owner: Codex. Reviewer: Svein Tore (not yet reviewed).
 Authority: explicit chat request; RFC/ADR 2026-10-08-sso-provider-owned-mfa.
 Working copy: authoritative Dev branch; existing unrelated changes preserved.
@@ -89,3 +89,7 @@ Svein Tore explicitly requested push and production update. The scoped rollout i
 authorized and the remaining human checks move to production; historical rollout-hold
 statements above are superseded for this requested deployment. Review stays In Review.
 See 2026-10-22-sso-provider-owned-mfa-production-deployment.md for actual rollout evidence.
+
+Current delivery status: Main PR #307 is deployed and independently verified in production.
+The 2026-10-22 deployment report supersedes historical rollout-hold wording above;
+manual acceptance remains In Review. BookStack 612/613 revision 3 is published/read back.
