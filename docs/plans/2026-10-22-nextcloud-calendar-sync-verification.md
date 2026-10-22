@@ -1,6 +1,6 @@
 # Automatic Nextcloud calendar synchronization verification - 2026-10-22
 
-Status: Done On Dev; tested Main candidate ready for explicitly authorized merge.
+Status: Done On Dev; Main merge blocked by required independent GitHub PR approval.
 Owner: Codex. RFC and Main merge approved by Svein Tore in chat: Godkjenner. Fix og merge til main.
 RFC: ../rfc/2026-10-22-nextcloud-calendar-automatic-sync.md.
 ADR: ../adr/2026-10-22-nextcloud-calendar-claims-and-conditional-reconciliation.md.
@@ -89,3 +89,17 @@ No ordinary Dev commit, index staging, branch switch or production application/c
 
 No Main merge implies production deployment or completed real-provider acceptance. Live pilot,
 duplicate decisions, production automatic activation and Svein's manual checklist remain pending.
+
+## GitHub publication and exact merge blocker
+
+PR #309: https://github.com/SveinT83/Nexum-PSA/pull/309.
+Tested implementation commit: 0cbdb1bc0976110f6f6af8f19dba71b7278c4fee.
+The PR is open and mergeable as a diff; reviewDecision is REVIEW_REQUIRED. Main's ruleset requires
+one approving pull-request review. Normal gh pr merge --merge with the pinned head was refused by
+the base branch policy. A normal --auto request was also refused because auto-merge is disabled.
+No administrator override, synthetic approval, alternate reviewer credential or policy change
+was used to bypass the required independent review. Svein's chat authorization is preserved but
+does not satisfy GitHub's separate signed PR-review requirement. Main remains unchanged by this task.
+Next owner/action: independent authorized repository reviewer approves PR #309, then normal merge.
+Production deployment/activation and real-calendar acceptance remain separate and unperformed.
+The candidate worktree is retained for continuation; ordinary Dev HEAD/index remain preserved.

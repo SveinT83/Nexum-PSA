@@ -8,6 +8,8 @@ Evidence: plans/2026-10-22-nextcloud-calendar-sync-diagnosis.md.
 Gate: Svein explicitly approved the RFC and Main merge in chat on 2026-10-22. Main merge may
 proceed after automated verification; the unchecked live scenarios still block production automatic
 activation. Production deployment requires a separate request. No completed human execution is inferred.
+Main merge is now externally blocked by PR #309 requiring one independent GitHub approval;
+auto-merge is disabled. This is separate from the live production checklist below.
 Migration: 2026_10_22_180000_create_nextcloud_calendar_sync_states.php (two additive lease tables).
 Do not enable automatic targets or run a live manual sync before target/duplicate preflight.
 Known risks: two remotes share calendar 2, five unlinked duplicate candidates and unsupported

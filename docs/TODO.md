@@ -2,7 +2,7 @@
 
 ## Automatic Nextcloud calendar sync repair (2026-10-22)
 
-Status: Done On Dev / Main Candidate Verified; automatic activation off.
+Status: Done On Dev / Main Merge Blocked By Required GitHub Review; automatic activation off.
 Owner: Codex. Product, pilot/privacy and release owner: Svein Tore.
 RFC: rfc/2026-10-22-nextcloud-calendar-automatic-sync.md (Approved in chat, 2026-10-22).
 ADR: adr/2026-10-22-nextcloud-calendar-claims-and-conditional-reconciliation.md (Accepted).
@@ -16,7 +16,11 @@ Evidence: plans/2026-10-22-nextcloud-calendar-sync-diagnosis.md and
 plans/2026-10-22-nextcloud-calendar-sync-verification.md.
 Final affected verification: 94 tests / 510 assertions on Dev and the isolated Main candidate.
 BookStack pages 420/455 revision 4 independently read back; inherited staff access verified.
-Next: scoped PR/Main merge authorized by Svein; live production pilot remains separate.
+PR #309: https://github.com/SveinT83/Nexum-PSA/pull/309. Tested code commit: 0cbdb1bc0976110f6f6af8f19dba71b7278c4fee.
+Main ruleset requires one approving PR review from another reviewer. Normal merge was refused;
+auto-merge is disabled in this repository. No administrator bypass or rules change attempted.
+Next: authorized independent reviewer approves PR #309, then perform the requested normal merge.
+Resume owner: Svein Tore / repository reviewer. Production pilot remains separately pending.
 Production deployment, approved activation, duplicate reconciliation, actual bilateral automatic
 cycles and named human review remain separate; no production code/configuration/event write.
 
