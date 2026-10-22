@@ -27,8 +27,9 @@
         <div class="mb-3"><label for="current-password" class="form-label">Current Nexum password</label>
             <input id="current-password" type="password" name="current_password" class="form-control" autocomplete="current-password" required></div>
         @if(auth()->user()->hasConfirmedTwoFactor())
-        <div class="mb-3"><label for="sso-code" class="form-label">Nexum authenticator code</label>
-            <input id="sso-code" name="code" class="form-control" inputmode="numeric" autocomplete="one-time-code" required></div>
+        <div class="mb-3"><label for="sso-code" class="form-label">2FA code for Nexum</label>
+            <input id="sso-code" name="code" class="form-control" inputmode="numeric" autocomplete="one-time-code" aria-describedby="sso-code-help" required>
+            <div id="sso-code-help" class="form-text">Enter the current two-factor code for Nexum from your authenticator app.</div></div>
         @endif
         <p class="text-body-secondary">Saving verifies provider discovery and ends existing SSO sessions. Complete a real login test before relying on SSO. Local password login remains available.</p>
         <button type="submit" class="btn btn-primary">Save and verify provider</button>

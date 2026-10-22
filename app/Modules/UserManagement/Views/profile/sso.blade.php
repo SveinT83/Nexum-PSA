@@ -1,13 +1,33 @@
 @extends('layouts.default_tech')
-@section('title', 'Work Account')
-@section('pageHeader')<h1 class="h5 mb-0">Work Account</h1>@endsection
+@section('title', 'Work Account (SSO)')
+@section('pageHeader')<h1 class="h5 mb-0">Work Account (SSO)</h1>@endsection
 @section('sidebar')@include('usermanagement::profile.partials.sidebar')@endsection
 @section('content')
 {{-- Work identity and explicit account linking --}}
 <div class="card"><div class="card-body">
     @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
-    <p>Your work account signs you in to your existing Nexum account. Your Nexum permissions and two-factor requirements still apply.</p>
-    @if($identity)<p>Linked provider: <strong>{{ $identity->issuer }}</strong></p>@endif
+    {{-- Keep failed local verification on this form without retaining secrets. --}}
+    @error('sso_reauthentication')
+        <div class="alert alert-danger" role="alert">{{ $message }}</div>
+    @enderror
+    <p>Single sign-on (SSO) lets you use your organisation's work account to sign in to your existing Nexum account. Link it once here before using work account sign-in.</p>
+    <p>Your organisation manages MFA for work account sign-in. Nexum does not ask for an extra local 2FA code when you sign in with SSO. Your Nexum permissions stay the same.</p>
+    <p>Keep your Nexum authenticator and recovery codes: local 2FA still protects password sign-in and is required for sensitive account changes when enabled.</p>
+    {{-- Show setup steps only while an account still needs to be linked. --}}
+    @if($identity)
+        <p>Linked provider: <strong>{{ $identity->issuer }}</strong></p>
+        <p>Your work account is linked. Next time you sign in, choose <strong>Sign in with work account</strong> on the Nexum login page and complete any authentication requested by your organisation.</p>
+        <p class="text-body-secondary">To disconnect SSO, confirm your Nexum credentials below and choose <strong>Unlink work account</strong>. This ends your SSO sessions. You can still sign in with your Nexum password.</p>
+    @elseif($available)
+        <h2 class="h6">How to connect your work account</h2>
+        <ol>
+            <li>Enter your current <strong>Nexum password</strong> below.</li>
+            <li>If shown, enter the current code for <strong>Nexum</strong> from your authenticator app.</li>
+            <li>Choose <strong>Link work account</strong>. You will be taken to your organisation's sign-in service. Sign in with the work account you want to connect and complete any requested MFA.</li>
+            <li>You will return to this page. Check that <strong>Work account linked.</strong> and the linked provider are displayed.</li>
+        </ol>
+        <p>After linking, choose <strong>Sign in with work account</strong> on the Nexum login page. Your Nexum password remains available for local sign-in.</p>
+    @endif
     @if($available || $identity)
         <form method="POST" action="{{ route($identity ? 'tech.profile.sso.unlink' : 'tech.profile.sso.link') }}">
             @csrf
@@ -17,14 +37,15 @@
             </div>
             @if(auth()->user()->hasConfirmedTwoFactor())
             <div class="mb-3">
-                <label for="sso-code" class="form-label">Nexum authenticator code</label>
-                <input id="sso-code" class="form-control" name="code" inputmode="numeric" autocomplete="one-time-code" required>
+                <label for="sso-code" class="form-label">2FA code for Nexum</label>
+                <input id="sso-code" class="form-control" name="code" inputmode="numeric" autocomplete="one-time-code" aria-describedby="sso-code-help" required>
+                <div id="sso-code-help" class="form-text">Enter the current two-factor code for Nexum from your authenticator app.</div>
             </div>
             @endif
             <button class="btn {{ $identity ? 'btn-outline-danger' : 'btn-primary' }}" type="submit">{{ $identity ? 'Unlink work account' : 'Link work account' }}</button>
         </form>
     @else
-        <p class="text-body-secondary mb-0">Work account sign-in is not enabled. Continue using your Nexum password.</p>
+        <p class="text-body-secondary mb-0">Work account sign-in is not enabled. Ask your Nexum administrator to enable SSO before linking your account. Continue using your Nexum password in the meantime.</p>
     @endif
 </div></div>
 {{-- Explicit provider logout, distinct from ordinary Nexum logout --}}

@@ -32,13 +32,16 @@ class SsoAccess
         $password = $request->input('current_password');
         $code = $request->input('code');
         try {
-            abort_unless($this->allowed($user) && is_string($password)
-                && Hash::check($password, $user->getAuthPassword()), 403, 'Account verification failed.');
+            abort_unless($this->allowed($user), 403, 'Account verification failed.');
+            if (! is_string($password) || ! Hash::check($password, $user->getAuthPassword())) {
+                throw new SsoReauthenticationFailed(true);
+            }
             if ($user->hasConfirmedTwoFactor()) {
                 $secret = Fortify::currentEncrypter()->decrypt($user->two_factor_secret);
                 try {
-                    abort_unless(is_string($code) && app(TwoFactorAuthenticationProvider::class)
-                        ->verify($secret, $code), 403, 'Account verification failed.');
+                    if (! is_string($code) || ! app(TwoFactorAuthenticationProvider::class)->verify($secret, $code)) {
+                        throw new SsoReauthenticationFailed(false);
+                    }
                 } finally {
                     sodium_memzero($secret);
                 }

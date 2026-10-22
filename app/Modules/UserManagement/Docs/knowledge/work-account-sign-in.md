@@ -17,23 +17,35 @@ actual employee access or provider MFA policy.
 
 The operational SSO_ENABLED setting defaults to false. A configured provider and the operational
 gate must both be enabled to offer work-account login. Keep this off until the separate client is configured for the controlled Dev pilot.
-HR-2026-10-05-SSO must be completed before production or general rollout. Retain a tested emergency local administrator.
+Complete the remaining checks in HR-2026-10-05-SSO and HR-2026-10-08-SSO-MFA before promoting the updated login policy. Retain a tested emergency local administrator.
 
 ## Link an employee
 
-Sign in normally, open Profile > Work Account, enter the current Nexum password and the current
+Sign in normally, open Profile > Work Account (SSO), enter the current Nexum password and the current
 Nexum authenticator code when enabled, then choose Link work account. Authenticate the intended
-Keycloak account. Nexum binds its verified issuer and stable subject to the current local user.
+Keycloak account and complete any requested MFA. On returning to Nexum, check for the
+Work account linked confirmation and the linked provider. The profile page shows setup steps
+until linked, then explains future sign-in and how to disconnect. Nexum binds its verified issuer and stable subject to the current local user.
 Matching email addresses do not link accounts automatically. A subject cannot replace another
 user's link, and one local user cannot receive two links.
 
 ## Sign in and sign out
 
 Choose Sign in with work account. The account must already be linked, active and have internal
-access. Nexum's existing local two-factor challenge still applies; upstream MFA does not replace
-it. Roles, permissions and customer memberships are unchanged.
+access. Complete the authentication required by your organisation. A validated SSO login does
+not ask for an additional local Nexum 2FA code. A current valid SSO session also satisfies the
+role-based login MFA requirement. Roles, permissions and customer memberships are unchanged.
 
-Normal logout ends the local Nexum session. Profile > Work Account offers explicit work-account
+Your organisation must enforce MFA for the Nexum client/users at the identity provider.
+Nexum validates the provider's OIDC login; it does not independently verify a second factor
+through an assurance claim. Administrators must verify the provider policy before rollout.
+
+Keep local Nexum 2FA enabled for password fallback and retain recovery codes. Choosing local
+password login still requires local 2FA when configured, or local enrollment if your role
+requires it. Linking, unlinking and sensitive provider changes still ask for your local
+password and configured 2FA. SSO does not satisfy Vault step-up or password confirmation.
+
+Normal logout ends the local Nexum session. Profile > Work Account (SSO) offers explicit work-account
 logout and explains that other applications can also be signed out. Keycloak may show its own
 logout confirmation because Nexum does not retain an ID token.
 
@@ -59,5 +71,9 @@ on /sso/callback because the incoming authorization code is carried there by OID
 
 Implementation and automated validation are complete on Dev. The separate Keycloak client,
 explicit account linking, real employee sign-in, signed back-channel logout and work-account
-logout were verified on 2026-10-06. Dev is enabled for the controlled pilot. Local Nexum MFA
-and the remaining human checks are still required before general rollout; production is not activated.
+logout were verified on 2026-10-06. Dev is enabled for the controlled pilot. The original production link/login was subsequently confirmed by Svein Tore on 2026-10-08,
+as recorded in HR-2026-10-05-SSO. The 2026-10-08 provider-owned MFA amendment is implemented
+on Dev only. HR-2026-10-08-SSO-MFA remains Pending for real provider enforcement and
+SSO/password acceptance before Main/production promotion. Existing human checks remain open.
+The SSO and local-password behavior was rechecked on Dev on 2026-10-22. This recheck
+does not confirm production rollout or replace the required human checks.
