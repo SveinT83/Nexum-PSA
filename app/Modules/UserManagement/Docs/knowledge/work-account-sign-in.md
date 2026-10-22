@@ -17,7 +17,7 @@ actual employee access or provider MFA policy.
 
 The operational SSO_ENABLED setting defaults to false. A configured provider and the operational
 gate must both be enabled to offer work-account login. Keep this off until the separate client is configured for the controlled Dev pilot.
-Complete the remaining checks in HR-2026-10-05-SSO and HR-2026-10-08-SSO-MFA before promoting the updated login policy. Retain a tested emergency local administrator.
+The provider-owned MFA policy was deployed on 2026-10-22 at Svein Tore's explicit request. Complete the remaining production acceptance checks in HR-2026-10-05-SSO and HR-2026-10-08-SSO-MFA. Retain a tested emergency local administrator.
 
 ## Link an employee
 
@@ -69,11 +69,14 @@ on /sso/callback because the incoming authorization code is carried there by OID
 
 ## Rollout status
 
-Implementation and automated validation are complete on Dev. The separate Keycloak client,
-explicit account linking, real employee sign-in, signed back-channel logout and work-account
-logout were verified on 2026-10-06. Dev is enabled for the controlled pilot. The original production link/login was subsequently confirmed by Svein Tore on 2026-10-08,
-as recorded in HR-2026-10-05-SSO. The 2026-10-08 provider-owned MFA amendment is implemented
-on Dev only. HR-2026-10-08-SSO-MFA remains Pending for real provider enforcement and
-SSO/password acceptance before Main/production promotion. Existing human checks remain open.
-The SSO and local-password behavior was rechecked on Dev on 2026-10-22. This recheck
-does not confirm production rollout or replace the required human checks.
+The provider-owned MFA amendment is available in production at portal.tronderdata.no
+from 2026-10-22 through Main PR #307. The SSO menu and page are Work Account (SSO).
+The production files, trusted HTTPS and unchanged credentials/provider/identity state
+were independently verified. Provider settings and local factors were preserved.
+
+The explicit rollout request authorizes deployment; it does not confirm the remaining
+human checks. HR-2026-10-08-SSO-MFA is In Review for fresh provider MFA, SSO without a
+second Nexum code, local password MFA/recovery, sensitive operations and revocation.
+The original HR-2026-10-05-SSO retains its remaining checks. Employee assistant retrieval
+is a separate verification claim. Contact the administrator if a fresh work-account
+login still asks for an extra local login code; retain local 2FA for password fallback.

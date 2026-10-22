@@ -22,20 +22,24 @@ Approval to implement on Dev is recorded in the RFC; it is not human acceptance.
 - [ ] Expiry, provider disablement/back-channel logout, unlinking and local security changes
   end the SSO session. Password confirmation and Vault step-up are not granted by SSO.
 
-Automated verification: 62 tests / 525 assertions pass on Dev; two new regressions
-failed before the patch. Scoped Pint and whitespace checks pass. Evidence:
-docs/plans/2026-10-08-sso-provider-owned-mfa-verification.md.
-Protocol fixtures do not prove provider MFA enforcement or complete human review.
-Deploy: normal PHP/view deployment; clear compiled views if cached. No migration, build,
-queue, scheduler or provider-setting change. No Main/production deployment performed.
-Risk: SSO now trusts the provider to enforce MFA; Nexum does not assert token-proven MFA.
-Keep local 2FA and recovery codes. Rollback the scoped amendment to restore the extra prompt.
-Original remaining SSO checks stay open in HR-2026-10-05-SSO.
-Rechecked 2026-10-22 on authoritative Dev: 62 tests / 525 assertions pass (73.15s),
-scoped Pint and whitespace checks pass. No runtime edit, commit, push or production
-deployment was performed. All unchecked manual checks above remain Pending.
-BookStack employee/admin guides (pages 612/613, revision 2) were published and
-independently read back with Dev-only status and existing staff access inheritance.
+Automated verification: authoritative Dev passes 62 tests / 525 assertions (71.55s).
+The immutable Main candidate passes 55 tests / 453 assertions (36.88s); the separate
+protected-provider check is explicitly skipped when that provider is absent on Main,
+and passes on Dev. Scoped Pint, PHP syntax and whitespace checks pass.
+
+Production: Main PR #307, application SHA 0e5a6956f0779ea57f7c84b3a8ac9364e5cc2dd8,
+deployed 2026-10-22 09:56:16 UTC at Svein Tore's explicit request. The exact 16 deployed
+files, existing provider/identity/local-factor fingerprints, file permissions and trusted
+HTTPS were independently verified. Protected code/environment and consistent database
+backups are retained. Config/view caches and graceful worker restart passed; maintenance
+is off. No schema, provider settings or credential changes occurred. No restore rehearsal.
+Evidence: docs/plans/2026-10-22-sso-provider-owned-mfa-production-deployment.md.
+
+All unchecked manual checks above remain In Review for Svein Tore in production.
+The original HR-2026-10-05-SSO and HR-2026-10-06-RELEASE remain open for their remaining
+scope. This rollout does not approve or activate Vault/UserSecurity. BookStack guides
+612/613 revision 3 were published and independently read back with production status
+and unchanged inherited staff access. Employee OpenWebUI retrieval is a separate check.
 
 ## HR-2026-10-08-TRIPLETEX-PROFILES - Billing Email and Site address
 

@@ -2,31 +2,29 @@
 
 ## SSO provider-owned MFA (2026-10-08)
 
-Status: Main/Production Rollout Authorized / Human Review In Review.
-Owner: Codex; human acceptance owner: Svein Tore.
-Explicit 2026-10-22 request: push and update production; preserve unchecked review items.
-Approved by Svein Tore in chat. RFC: rfc/2026-10-08-sso-provider-owned-mfa.md;
-ADR: adr/2026-10-08-sso-provider-owned-mfa.md.
-Validated SSO sign-in no longer asks for local TOTP. Only a currently valid SSO grant
-satisfies the role MFA gate. Local password 2FA, recovery, sensitive-action reauthentication,
-local credentials and Vault boundaries remain. Provider MFA is an operator responsibility.
-Verification: two new regressions failed before the patch; final Dev run passes 62 tests /
-525 assertions across SSO, local 2FA, guarded factor entry and Customer Portal. Scoped Pint
-and whitespace checks pass. Evidence: plans/2026-10-08-sso-provider-owned-mfa-verification.md.
-No migration, build, queue, scheduler or provider-setting change. Uncommitted; no Main push
-or production deployment. Normal PHP/view promotion only; clear compiled views if cached.
-Next: execute the explicitly requested scoped Main/production rollout, then Svein
-verifies provider MFA enforcement, both login methods and revocation under
-HR-2026-10-08-SSO-MFA (In Review). No manual scenario is inferred passed.
-Existing HR-2026-10-05-SSO remains In Review.
-Rechecked 2026-10-22 on authoritative Dev: all 62 tests / 525 assertions pass (73.15s);
-scoped Pint and whitespace checks pass. Existing runtime implementation retained.
-Handbook: BookStack pages 612/613 revision 2 were published and independently read
-back on 2026-10-22 with explicit Dev-only status. Page/chapter inheritance, book
-overrides and the staff Editor role view permissions were checked without access
-changes. Employee OpenWebUI retrieval remains a separate, unperformed check.
-The existing public website handoff item was refreshed; no new item or publication.
-No production rollout or provider/browser acceptance is implied by the Dev rerun.
+Status: Deployed To Production / Human Review In Review.
+Owner: Codex; human acceptance owner: Svein Tore. Explicit rollout request: 2026-10-22.
+RFC: rfc/2026-10-08-sso-provider-owned-mfa.md; ADR: adr/2026-10-08-sso-provider-owned-mfa.md.
+Validated SSO no longer asks for local TOTP; only a current valid server-side SSO grant
+satisfies the role gate. Local password MFA/recovery, sensitive actions and Vault step-up
+remain. Related SSO menu/help and safe personal-form verification feedback are included.
+Main PR #307 merged to 0e5a6956f0779ea57f7c84b3a8ac9364e5cc2dd8. Production deployment
+completed 2026-10-22 09:56:16 UTC / 11:56 Europe/Oslo. All 16 deployed files match the
+exact tested Main release. Protected code/environment and consistent database backups,
+cache rebuild, graceful worker restart and independent source/HTTPS read-back passed.
+Credentials, local factors, identities, provider revision/settings and unrelated runtime
+flags were independently verified unchanged. No schema, package or frontend change.
+Dev: 62 tests / 525 assertions pass. Immutable Main candidate: 55 tests / 453 assertions
+pass; one optional protected-provider check is skipped because that separate unpublished
+provider is absent from Main, and it passes on Dev. No Vault runtime is promoted.
+Evidence: plans/2026-10-22-sso-provider-owned-mfa-production-deployment.md.
+Next: Svein completes HR-2026-10-08-SSO-MFA (In Review) in production: fresh provider MFA,
+SSO without duplicate code, password/recovery fallback, sensitive operations and revocation.
+HR-2026-10-05-SSO and HR-2026-10-06-RELEASE retain their remaining open checks. Deployment
+is authorized but no unchecked scenario is marked Reviewed. Source Knowledge is current;
+BookStack pages 612/613 revision 3 were published and independently read back with
+production status and unchanged inherited staff access. Employee OpenWebUI retrieval
+remains separate. The existing website handoff retains its do-not-publish gates.
 
 ## Mail conversation Mark all as read command (2026-10-21)
 
