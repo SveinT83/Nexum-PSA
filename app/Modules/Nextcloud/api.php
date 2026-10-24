@@ -14,3 +14,7 @@ if (($tdpsaLoadingPublicApiRoutes ?? false) === true) {
 
 // Protected Nextcloud API routes belong below. This file is also loaded inside
 // the auth:sanctum API group by routes/api.php.
+
+$tdpsaLoadingNextcloudCalendarApiRoutes = true;
+require __DIR__.'/routes.php';
+unset($tdpsaLoadingNextcloudCalendarApiRoutes);

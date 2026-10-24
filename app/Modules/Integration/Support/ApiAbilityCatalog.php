@@ -14,6 +14,17 @@ class ApiAbilityCatalog
      * Access mode is deliberately explicit so progressive read scopes do not depend on their name.
      */
     private const ACCESS_MODES = [
+        'nextcloud.calendar.reconcile' => self::ACCESS_WRITE,
+        'nextcloud.calendar.health' => self::ACCESS_WRITE,
+        'nextcloud.calendar.sync' => self::ACCESS_WRITE,
+        'nextcloud.calendar.activate' => self::ACCESS_WRITE,
+        'nextcloud.calendar.mapping' => self::ACCESS_WRITE,
+        'nextcloud.calendar.preview' => self::ACCESS_READ,
+        'nextcloud.calendar.read' => self::ACCESS_READ,
+        'users.calendar-preferences.update' => self::ACCESS_WRITE,
+        'users.calendar-preferences.read' => self::ACCESS_READ,
+        'calendar.free-busy.read' => self::ACCESS_READ,
+        'calendar.manage' => self::ACCESS_WRITE,
         'email.tickets.write' => self::ACCESS_WRITE,
         'email.maintenance.execute' => self::ACCESS_WRITE,
         'email.maintenance.read' => self::ACCESS_READ,
@@ -149,6 +160,17 @@ class ApiAbilityCatalog
     ];
 
     private const ABILITIES = [
+        'nextcloud.calendar.reconcile' => ['label' => 'Reconcile Nextcloud Calendar conflicts', 'description' => 'Preview/apply exact supported identities with conditional writes and read-back.', 'domain' => 'Nextcloud'],
+        'nextcloud.calendar.health' => ['label' => 'Check Nextcloud Calendar connection health', 'description' => 'Explicit sanitized health command with connection management permission.', 'domain' => 'Nextcloud'],
+        'nextcloud.calendar.sync' => ['label' => 'Request calendar-only Nextcloud sync', 'description' => 'Queue only the explicitly reviewed calendar targets.', 'domain' => 'Nextcloud'],
+        'nextcloud.calendar.activate' => ['label' => 'Activate reviewed Nextcloud Calendar targets', 'description' => 'Apply explicit pause/resume consent for selected owned mappings.', 'domain' => 'Nextcloud'],
+        'nextcloud.calendar.mapping' => ['label' => 'Manage Nextcloud Calendar mappings', 'description' => 'Apply reviewed mapping changes and invalidate automatic activation.', 'domain' => 'Nextcloud'],
+        'nextcloud.calendar.preview' => ['label' => 'Preview Nextcloud Calendar commands', 'description' => 'Explicit provider read preflight; no activation or synchronization.', 'domain' => 'Nextcloud'],
+        'nextcloud.calendar.read' => ['label' => 'Read Nextcloud Calendar status', 'description' => 'Sanitized calendar connections, mappings, attempts and conflicts.', 'domain' => 'Nextcloud'],
+        'users.calendar-preferences.update' => ['label' => 'Update own Calendar preferences', 'description' => 'Update own display preferences with revision checks; preserve weekly plans.', 'domain' => 'UserManagement'],
+        'users.calendar-preferences.read' => ['label' => 'Read own Calendar preferences', 'description' => 'Read own calendar display preferences without creating defaults.', 'domain' => 'UserManagement'],
+        'calendar.free-busy.read' => ['label' => 'Read Calendar free slots', 'description' => 'Authorized employee slots without private busy details.', 'domain' => 'Calendar'],
+        'calendar.manage' => ['label' => 'Manage Calendar administration', 'description' => 'Calendar settings, initialization, containers and reviewed access commands.', 'domain' => 'Calendar'],
         'email.tickets.write' => ['label' => 'Link Mail and Tickets', 'description' => 'Create/link Tickets or suppress Mail routing with current Mail and target Ticket authority.', 'domain' => 'Email'],
         'email.maintenance.execute' => ['label' => 'Execute bounded approved Mail operator actions', 'description' => 'Execute bounded approved Mail operator actions with independent domain permission, account scope and confirmation gates.', 'domain' => 'Email'],
         'email.maintenance.read' => ['label' => 'Read permitted Mail operator previews and status', 'description' => 'Read permitted Mail operator previews and status with independent domain permission, account scope and confirmation gates.', 'domain' => 'Email'],

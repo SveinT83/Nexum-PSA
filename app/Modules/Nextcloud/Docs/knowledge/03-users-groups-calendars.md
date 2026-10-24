@@ -107,3 +107,42 @@ the existing minutely scheduler and queue worker must be verified independently.
 There is no conflict-resolution UI in this update. An operator must inspect source/target identity
 and immutable delivery evidence before reconciling a conflict. Never delete historical records,
 clear a pending write blindly or broaden calendar sharing to make synchronization succeed.
+
+## Calendar operations API (2026-10-24)
+
+The calendar-specific API is verified on Dev and approved for Main promotion by Svein Tore on
+2026-10-24. HR-2026-10-23-CALENDAR-API is Reviewed for API delivery. Production deployment and
+actual provider acceptance remain separate. Existing production connections and the previously
+approved work-calendar-only pilot are unchanged.
+
+An approved administrator can read sanitized connection/mapping status, inspect calendar-only
+attempts and conflicts, check health, and explicitly preview/apply mapping changes, automatic
+activation or a calendar-only sync request. These operations do not run the user/group/file
+synchronization performed by the existing broader Sync now workflow.
+
+### Review and run a calendar-only operation
+
+1. Open Admin > System > Nextcloud and confirm the intended connection, local calendar owner,
+   remote calendar and direction. An approved integration must read the matching API context.
+2. Obtain a preview for the exact mapping IDs and action. Review the remote resource count,
+   unsupported resources and duplicate candidates. Only reviewed targets may be applied.
+3. Apply with a stable request key and the unchanged preview. Saving/removing a calendar
+   mapping pauses automatic activation until the targets are explicitly reviewed again.
+4. For a sync or reconciliation request, read the returned attempt status. queued/running means
+   work is pending; success, partial and failed are separate outcomes. A 202 response is not a
+   completed synchronization. Refresh the exact attempt URL for the result.
+5. Compare the saved appointment in Calendar and Nextcloud before reporting the issue resolved.
+
+### Resolve a supported conflict
+
+The new operator API can preview/apply bind_existing, keep_local or keep_remote for an exact
+supported nonrecurring event. The preview checks the actual local record, remote UID/path/ETag
+and current ownership. Changed content or permissions invalidate the preview. Provider writes
+use the current ETag and must be read back before the conflict is marked resolved.
+
+Unknown delivery remains recorded. Repeating its request key returns the existing attempt; it
+does not blindly write again. When the intended content is observed remotely, an authorized
+operator can preview binding that identity without a second PUT. Recurring resources, ambiguous
+UIDs, participant-bearing events and unsupported provider fields remain blocked and retained.
+No conflict-resolution button has been added to the browser in this update. Contact the
+administrator with the connection and attempt ID; never delete copies or widen sharing as a repair.

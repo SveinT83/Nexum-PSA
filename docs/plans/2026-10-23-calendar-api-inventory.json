@@ -1,0 +1,430 @@
+{
+  "date": "2026-10-23",
+  "scope": "Calendar browser/API parity and calendar-specific Nextcloud operations",
+  "status": "read-only baseline; no API implementation started",
+  "dev_head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "main_ref": "7caa07b376b268e5a928ec683b88b9ba18335d10",
+  "route_sources": {
+    "app/Modules/Calendar/routes.php": [
+      {
+        "method": "GET",
+        "path": "calendar/work-plan/blocks",
+        "line": 10
+      },
+      {
+        "method": "POST",
+        "path": "calendar/work-plan/blocks",
+        "line": 12
+      },
+      {
+        "method": "PATCH",
+        "path": "calendar/work-plan/blocks/{event}",
+        "line": 14
+      },
+      {
+        "method": "DELETE",
+        "path": "calendar/work-plan/blocks/{event}",
+        "line": 16
+      },
+      {
+        "method": "POST",
+        "path": "/profile/work-plan/blocks",
+        "line": 23
+      },
+      {
+        "method": "PATCH",
+        "path": "/profile/work-plan/blocks/{event}",
+        "line": 24
+      },
+      {
+        "method": "DELETE",
+        "path": "/profile/work-plan/blocks/{event}",
+        "line": 25
+      },
+      {
+        "method": "GET",
+        "path": "/calendar",
+        "line": 28
+      },
+      {
+        "method": "POST",
+        "path": "/calendar/events",
+        "line": 31
+      },
+      {
+        "method": "PATCH",
+        "path": "/calendar/events/{event}",
+        "line": 34
+      },
+      {
+        "method": "DELETE",
+        "path": "/calendar/events/{event}",
+        "line": 37
+      },
+      {
+        "method": "GET",
+        "path": "/admin/settings/calendar",
+        "line": 41
+      },
+      {
+        "method": "PATCH",
+        "path": "/admin/settings/calendar",
+        "line": 44
+      },
+      {
+        "method": "POST",
+        "path": "/admin/settings/calendar/calendars",
+        "line": 47
+      },
+      {
+        "method": "DELETE",
+        "path": "/admin/settings/calendar/calendars/{calendar}",
+        "line": 50
+      },
+      {
+        "method": "POST",
+        "path": "/admin/settings/calendar/calendars/{calendar}/access",
+        "line": 53
+      },
+      {
+        "method": "DELETE",
+        "path": "/admin/settings/calendar/access/{access}",
+        "line": 56
+      }
+    ],
+    "app/Modules/Calendar/api.php": [
+      {
+        "method": "GET",
+        "path": "calendars",
+        "line": 7
+      },
+      {
+        "method": "GET",
+        "path": "calendar/events",
+        "line": 11
+      },
+      {
+        "method": "POST",
+        "path": "calendar/events",
+        "line": 15
+      },
+      {
+        "method": "GET",
+        "path": "calendar/events/{event}",
+        "line": 19
+      },
+      {
+        "method": "DELETE",
+        "path": "calendar/events/{event}",
+        "line": 27
+      },
+      {
+        "method": "PUT",
+        "path": "calendar/events/{event}",
+        "line": 23
+      },
+      {
+        "method": "PATCH",
+        "path": "calendar/events/{event}",
+        "line": 23
+      }
+    ],
+    "app/Modules/Nextcloud/routes.php": [
+      {
+        "method": "GET",
+        "path": "/admin/system/nextcloud",
+        "line": 17
+      },
+      {
+        "method": "GET",
+        "path": "/admin/system/nextcloud/connections/{connection}",
+        "line": 20
+      },
+      {
+        "method": "POST",
+        "path": "/admin/system/nextcloud/connections",
+        "line": 23
+      },
+      {
+        "method": "PATCH",
+        "path": "/admin/system/nextcloud/connections/{connection}",
+        "line": 26
+      },
+      {
+        "method": "DELETE",
+        "path": "/admin/system/nextcloud/connections/{connection}",
+        "line": 29
+      },
+      {
+        "method": "POST",
+        "path": "/admin/system/nextcloud/connections/{connection}/check",
+        "line": 32
+      },
+      {
+        "method": "POST",
+        "path": "/admin/system/nextcloud/connections/{connection}/sync",
+        "line": 35
+      },
+      {
+        "method": "POST",
+        "path": "/admin/system/nextcloud/connections/{connection}/test-talk-bot",
+        "line": 38
+      },
+      {
+        "method": "PATCH",
+        "path": "/admin/system/nextcloud/connections/{connection}/talk-bot",
+        "line": 41
+      },
+      {
+        "method": "POST",
+        "path": "/admin/system/nextcloud/connections/{connection}/users",
+        "line": 44
+      },
+      {
+        "method": "POST",
+        "path": "/admin/system/nextcloud/connections/{connection}/groups",
+        "line": 47
+      },
+      {
+        "method": "POST",
+        "path": "/admin/system/nextcloud/connections/{connection}/calendars",
+        "line": 50
+      },
+      {
+        "method": "POST",
+        "path": "/admin/system/nextcloud/connections/{connection}/folders",
+        "line": 53
+      },
+      {
+        "method": "POST",
+        "path": "/admin/system/nextcloud/connections/{connection}/folders/auto-match",
+        "line": 56
+      },
+      {
+        "method": "PATCH",
+        "path": "/admin/system/nextcloud/connections/{connection}/folders",
+        "line": 59
+      },
+      {
+        "method": "DELETE",
+        "path": "/admin/system/nextcloud/user-mappings/{mapping}",
+        "line": 62
+      },
+      {
+        "method": "DELETE",
+        "path": "/admin/system/nextcloud/group-mappings/{mapping}",
+        "line": 65
+      },
+      {
+        "method": "DELETE",
+        "path": "/admin/system/nextcloud/calendar-mappings/{mapping}",
+        "line": 68
+      },
+      {
+        "method": "DELETE",
+        "path": "/admin/system/nextcloud/folder-mappings/{mapping}",
+        "line": 71
+      }
+    ],
+    "app/Modules/Nextcloud/api.php": [
+      {
+        "method": "POST",
+        "path": "nextcloud/talk/webhook",
+        "line": 9
+      }
+    ]
+  },
+  "controller_methods": {
+    "app/Modules/Calendar/Controllers/Tech/CalendarController.php": [
+      {
+        "method": "index",
+        "line": 27
+      },
+      {
+        "method": "store",
+        "line": 130
+      },
+      {
+        "method": "update",
+        "line": 144
+      },
+      {
+        "method": "destroy",
+        "line": 161
+      }
+    ],
+    "app/Modules/Calendar/Controllers/Admin/CalendarSettingsController.php": [
+      {
+        "method": "index",
+        "line": 20
+      },
+      {
+        "method": "update",
+        "line": 37
+      },
+      {
+        "method": "storeCalendar",
+        "line": 62
+      },
+      {
+        "method": "destroyCalendar",
+        "line": 91
+      },
+      {
+        "method": "storeAccess",
+        "line": 98
+      },
+      {
+        "method": "destroyAccess",
+        "line": 133
+      }
+    ],
+    "app/Modules/Calendar/Controllers/Api/V1/CalendarController.php": [
+      {
+        "method": "calendars",
+        "line": 38
+      },
+      {
+        "method": "events",
+        "line": 61
+      },
+      {
+        "method": "showEvent",
+        "line": 102
+      },
+      {
+        "method": "storeEvent",
+        "line": 121
+      },
+      {
+        "method": "updateEvent",
+        "line": 157
+      },
+      {
+        "method": "destroyEvent",
+        "line": 189
+      }
+    ],
+    "app/Modules/Calendar/Controllers/WorkPlanBlockController.php": [
+      {
+        "method": "index",
+        "line": 17
+      },
+      {
+        "method": "store",
+        "line": 31
+      },
+      {
+        "method": "update",
+        "line": 41
+      },
+      {
+        "method": "destroy",
+        "line": 51
+      }
+    ],
+    "app/Modules/Nextcloud/Controllers/Admin/NextcloudConnectionController.php": [
+      {
+        "method": "index",
+        "line": 32
+      },
+      {
+        "method": "show",
+        "line": 45
+      },
+      {
+        "method": "store",
+        "line": 108
+      },
+      {
+        "method": "update",
+        "line": 117
+      },
+      {
+        "method": "destroy",
+        "line": 126
+      },
+      {
+        "method": "check",
+        "line": 135
+      },
+      {
+        "method": "updateTalkBot",
+        "line": 147
+      },
+      {
+        "method": "testTalkBot",
+        "line": 179
+      },
+      {
+        "method": "sync",
+        "line": 206
+      },
+      {
+        "method": "storeUserMapping",
+        "line": 223
+      },
+      {
+        "method": "storeGroupMapping",
+        "line": 269
+      },
+      {
+        "method": "storeCalendarMapping",
+        "line": 407
+      },
+      {
+        "method": "updateFolders",
+        "line": 431
+      },
+      {
+        "method": "storeFolderMapping",
+        "line": 446
+      },
+      {
+        "method": "autoMatchClientFolders",
+        "line": 477
+      },
+      {
+        "method": "destroyUserMapping",
+        "line": 486
+      },
+      {
+        "method": "destroyGroupMapping",
+        "line": 493
+      },
+      {
+        "method": "destroyCalendarMapping",
+        "line": 500
+      },
+      {
+        "method": "destroyFolderMapping",
+        "line": 507
+      }
+    ],
+    "app/Modules/UserManagement/Controllers/ProfilePreferencesController.php": [
+      {
+        "method": "show",
+        "line": 15
+      },
+      {
+        "method": "update",
+        "line": 34
+      }
+    ],
+    "app/Modules/UserManagement/Controllers/WorkPlanController.php": [
+      {
+        "method": "show",
+        "line": 17
+      },
+      {
+        "method": "update",
+        "line": 42
+      }
+    ]
+  },
+  "notes": [
+    "Static route declarations; conditional registration and role/token/object authorization must also be tested.",
+    "Nextcloud non-calendar operations are inventoried for exclusion, not silently counted as Calendar parity.",
+    "No local or production event, account, mapping or credential material is included."
+  ]
+}

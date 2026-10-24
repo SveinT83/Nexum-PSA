@@ -10,7 +10,6 @@ use App\Modules\Calendar\Actions\StoreCalendarEvent;
 use App\Modules\Calendar\Actions\UpdateCalendarEvent;
 use App\Modules\Calendar\Models\Calendar;
 use App\Modules\Calendar\Models\CalendarEvent;
-use App\Modules\Calendar\Models\CalendarEventException;
 use App\Modules\Calendar\Models\CalendarSetting;
 use App\Modules\Calendar\Queries\CalendarOverlayQuery;
 use App\Modules\Calendar\Services\CalendarOwnershipMetadata;
@@ -164,24 +163,9 @@ class CalendarController extends Controller
         abort_if($event->source === 'work_plan', 422, 'Edit this block from Profile > Work plan.');
         \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::assertCalendarEditable($event);
 
-        if ($event->series_id && $request->input('scope') === 'event') {
-            $timezone = $event->timezone ?: $event->series?->timezone ?: 'Europe/Oslo';
-            $originalStartsAt = Carbon::parse($request->input('original_starts_at', $event->starts_at), $timezone)->utc();
-            CalendarEventException::query()->updateOrCreate(
-                [
-                    'series_id' => $event->series_id,
-                    'original_starts_at' => $originalStartsAt,
-                ],
-                [
-                    'exception_type' => 'cancelled',
-                ]
-            );
-        } elseif ($request->input('scope') === 'series' && $event->series_id) {
-            $event->series?->events()->delete();
-            $event->series?->delete();
-        } else {
-            $event->delete();
-        }
+        app(\App\Modules\Calendar\Actions\DeleteCalendarEvent::class)->handle(
+            $request->user(), $event, $request->input('scope', 'record'), $request->input('original_starts_at')
+        );
 
         return back()->with('success', 'Calendar event deleted.');
     }

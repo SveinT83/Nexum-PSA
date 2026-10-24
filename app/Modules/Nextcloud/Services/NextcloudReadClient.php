@@ -121,10 +121,10 @@ class NextcloudReadClient
             ->all();
     }
 
-    public function calendarEvents(NextcloudConnection $connection, string $calendarHref, ?Carbon $from = null, ?Carbon $to = null): array
+    public function calendarEvents(NextcloudConnection $connection, string $calendarHref, ?Carbon $from = null, ?Carbon $to = null, bool $complete = false): array
     {
         $response = $this->dav($connection)
-            ->withBody($this->calendarQueryBody($from, $to), 'application/xml')
+            ->withBody($this->calendarQueryBody($from, $to, $complete), 'application/xml')
             ->send('REPORT', $connection->base_url.$this->normalizeHref($calendarHref), [
                 'headers' => ['Depth' => '1'],
             ]);
@@ -147,6 +147,8 @@ class NextcloudReadClient
 
     public function putCalendarEvent(NextcloudConnection $connection, string $calendarHref, CalendarEvent $event): ?string
     {
+        \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::assertCalendarEditable($event);
+        abort_if($event->source === 'work_plan', 422, 'Edit this block from Profile > Work plan.');
         if (! $connection->is_active || ! $connection->canWrite()) {
             throw new RuntimeException('Connection does not permit calendar writes.');
         }
@@ -323,8 +325,11 @@ XML;
 XML;
     }
 
-    private function calendarQueryBody(?Carbon $from = null, ?Carbon $to = null): string
+    private function calendarQueryBody(?Carbon $from = null, ?Carbon $to = null, bool $complete = false): string
     {
+        if ($complete) {
+            return '<?xml version="1.0" encoding="UTF-8"?><c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav"><d:prop><d:getetag/><c:calendar-data/></d:prop><c:filter><c:comp-filter name="VCALENDAR"><c:comp-filter name="VEVENT"/></c:comp-filter></c:filter></c:calendar-query>';
+        }
         $from ??= now()->subYear();
         $to ??= now()->addYears(2);
 

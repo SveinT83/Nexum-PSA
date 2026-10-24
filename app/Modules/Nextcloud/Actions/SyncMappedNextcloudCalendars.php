@@ -23,10 +23,16 @@ class SyncMappedNextcloudCalendars
 
     private string $token;
 
+    private bool $automatic = true;
+
+    private $authorizationGuard;
+
     public function __construct(private readonly NextcloudReadClient $client) {}
 
-    public function handle(NextcloudConnection $connection, ?array $mappingIds, string $token): array
+    public function handle(NextcloudConnection $connection, ?array $mappingIds, string $token, bool $automatic = true, ?callable $authorizationGuard = null): array
     {
+        $this->automatic = $automatic;
+        $this->authorizationGuard = $authorizationGuard;
         $this->summary = ['seen' => 0, 'changed' => 0, 'imported' => 0, 'pushed' => 0, 'conflicts' => 0, 'skipped' => 0, 'failed' => 0];
         $this->deadline = microtime(true) + 240;
         $this->mappingIds = $mappingIds;
@@ -203,13 +209,16 @@ class SyncMappedNextcloudCalendars
 
     private function guard(NextcloudConnection $connection, string $token): void
     {
+        if ($this->authorizationGuard) {
+            ($this->authorizationGuard)();
+        }
         if (microtime(true) > $this->deadline) {
             throw new RuntimeException('Calendar sync execution budget exceeded.');
         }
         app(NextcloudCalendarLease::class)->assertOwned($connection->id, $token);
         $connection->refresh();
         if (! $connection->is_active || ! ($connection->settings['calendar_sync_enabled'] ?? false)
-            || ($this->mappingIds !== null && (! DispatchDueNextcloudCalendars::enabled($connection)
+            || ($this->automatic && $this->mappingIds !== null && (! DispatchDueNextcloudCalendars::enabled($connection)
                 || DispatchDueNextcloudCalendars::mappingIds($connection) !== $this->mappingIds))) {
             throw new RuntimeException('Calendar sync paused during execution.');
         }
@@ -228,7 +237,7 @@ class SyncMappedNextcloudCalendars
         }
     }
 
-    private function normalizeResource(array $resource, NextcloudCalendarMapping $mapping): array
+    public function normalizeResource(array $resource, NextcloudCalendarMapping $mapping): array
     {
         if ($resource['event']['dtstart']['all_day'] ?? false) {
             foreach (['dtstart', 'dtend'] as $key) {
@@ -319,7 +328,7 @@ class SyncMappedNextcloudCalendars
         $this->summary['pushed']++;
     }
 
-    private function binding(NextcloudConnection $connection, NextcloudCalendarMapping $mapping, array $resource, string $hash, bool $safe): array
+    public function binding(NextcloudConnection $connection, NextcloudCalendarMapping $mapping, array $resource, string $hash, bool $safe): array
     {
         return [
             'external_source' => 'nextcloud', 'external_calendar_id' => $mapping->remote_calendar_id,
@@ -331,7 +340,7 @@ class SyncMappedNextcloudCalendars
         ];
     }
 
-    private function fields(array $event, NextcloudCalendarMapping $mapping): array
+    public function fields(array $event, NextcloudCalendarMapping $mapping): array
     {
         $visibility = strtolower($event['class'] ?? 'public');
 
@@ -347,7 +356,7 @@ class SyncMappedNextcloudCalendars
         ];
     }
 
-    private function localHash(CalendarEvent $event): string
+    public function localHash(CalendarEvent $event): string
     {
         return $this->hash([
             $event->title, $event->description, $event->location, $event->meeting_url,
@@ -356,7 +365,7 @@ class SyncMappedNextcloudCalendars
         ]);
     }
 
-    private function remoteHash(array $event): string
+    public function remoteHash(array $event): string
     {
         return $this->hash([
             $event['summary'] ?? 'Untitled Nextcloud event', $event['description'] ?? null,

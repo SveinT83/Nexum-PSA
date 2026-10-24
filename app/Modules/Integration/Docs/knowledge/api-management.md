@@ -1216,3 +1216,7 @@ Mail has full supported browser read/write/action/admin API parity in production
 are explicit token ceilings and never create mailbox content access or widen existing tokens.
 See the verified [Mail API guide](https://doc.tronderdata.no/books/nexum-psa/page/mail-api-operations-dev)
 and the installation Swagger. Human review HR-2026-10-20-MAIL-API is Reviewed: Svein Tore approved the delivered scope on 2026-10-21. Main and production were updated and independently verified on 2026-10-21.
+
+## Calendar API extension (2026-10-24)
+
+The approved Calendar API adds calendar.manage, calendar.free-busy.read, own users.calendar-preferences read/update and explicit nextcloud.calendar read/preview/mapping/activate/sync/health/reconcile scopes. Select only the required scopes. Existing tokens are not widened. Active actor, domain/object permissions, provider runtime and reviewed previews still apply. See the Calendar and Nextcloud handbook articles for availability and operating steps. HR-2026-10-23-CALENDAR-API is Reviewed: Svein Tore approved the delivered API scope and Main merge on 2026-10-24. Production rollout and provider activation remain separate.

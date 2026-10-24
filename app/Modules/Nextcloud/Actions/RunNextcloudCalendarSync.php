@@ -22,7 +22,7 @@ class RunNextcloudCalendarSync
         return $this->handle($connection->id, $claim['token'], $claim['log_id'], false);
     }
 
-    public function handle(int $connectionId, string $token, int $logId, bool $scheduled): array
+    public function handle(int $connectionId, string $token, int $logId, bool $scheduled, ?array $requestedMappingIds = null, ?callable $authorizationGuard = null): array
     {
         $summary = ['seen' => 0, 'changed' => 0, 'imported' => 0, 'pushed' => 0, 'conflicts' => 0, 'skipped' => 0, 'failed' => 0];
         $connection = NextcloudConnection::find($connectionId);
@@ -49,8 +49,8 @@ class RunNextcloudCalendarSync
                 return $summary;
             }
             $connection->forceFill(['last_sync_requested_at' => now()])->save();
-            $ids = $scheduled ? DispatchDueNextcloudCalendars::mappingIds($connection) : null;
-            $summary = app(SyncMappedNextcloudCalendars::class)->handle($connection, $ids, $token);
+            $ids = $scheduled ? DispatchDueNextcloudCalendars::mappingIds($connection) : $requestedMappingIds;
+            $summary = app(SyncMappedNextcloudCalendars::class)->handle($connection, $ids, $token, $scheduled, $authorizationGuard);
             $success = $summary['failed'] === 0 && $summary['conflicts'] === 0 && $summary['skipped'] === 0;
             NextcloudSyncLog::whereKey($logId)->update([
                 'status' => $success ? 'success' : 'partial', 'finished_at' => now(),

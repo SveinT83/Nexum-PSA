@@ -83,6 +83,13 @@ class CalendarVisibility
             && app(\App\Modules\Workday\Support\WorkdaySettings::class)->enabled()
             ? route('tech.absences.index') : null;
 
+        $ownedWorkPlan = $event->source === 'work_plan';
+        if ($ownedWorkPlan && (int) $event->created_by === (int) $viewer->id && $viewer->isActive()
+            && ! $viewer->isSystemActor() && $viewer->roles()->exists() && $viewer->can('calendar.update')
+            && app(\App\Modules\Workday\Support\WorkdaySettings::class)->enabled()) {
+            $sourceEditUrl = route('tech.profile.work-plan');
+        }
+
         return [
             'id' => $event->id,
             'uuid' => $event->uuid,
@@ -101,8 +108,8 @@ class CalendarVisibility
             'ownership_badge' => $ownership['owner_badge'],
             'ownership_group' => $ownership['ownership_group'],
             'is_owned_by_viewer' => $ownership['is_owned_by_viewer'],
-            'work_context_id' => $event->work_context_id,
-            'work_context_type' => $event->workContext?->type,
+            'work_context_id' => $canViewDetails ? $event->work_context_id : null,
+            'work_context_type' => $canViewDetails ? $event->workContext?->type : null,
             'title' => $canViewDetails ? $event->title : 'Busy',
             'description' => $canViewDetails ? $event->description : null,
             'location' => $canViewDetails ? $event->location : null,
@@ -118,7 +125,7 @@ class CalendarVisibility
             'details_visible' => $canViewDetails,
             'participants' => $canViewDetails ? $event->participants : collect(),
             'links' => $canViewDetails && ! $ownedAbsence ? $event->links : collect(),
-            'source_owned' => $ownedAbsence,
+            'source_owned' => $ownedAbsence || $ownedWorkPlan,
             'source_edit_url' => $sourceEditUrl,
         ];
     }

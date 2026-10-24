@@ -1,5 +1,32 @@
 # tdPSA Development TODO
 
+## Full Calendar browser/API coverage (2026-10-23; approved 2026-10-24)
+
+Status: Included In This Main Promotion / Human Reviewed. Owner: Codex. Reviewer/release owner: Svein Tore.
+RFC: rfc/2026-10-23-calendar-full-api-parity.md (Approved / Done On Dev).
+ADR: adr/2026-10-24-calendar-api-commands-and-read-boundary.md (Accepted).
+Matrix: plans/2026-10-23-calendar-api-gap-matrix.md; contract: plans/2026-10-24-calendar-api-contract.json.
+Verification: plans/2026-10-24-calendar-api-verification.md.
+All six 2026-10-24-calendar-api slices completed: 43 methods cover all 25 approved current workflows.
+Pure reads/context, strict fields, token plus active actor/object rights, private-safe queries,
+event/participant/revision/replay and occurrence/series deletion, shared admin/access, own
+preferences/work plans, availability and calendar-only Nextcloud commands/reconciliation implemented.
+Additive receipt migration 2026_10_24_120000 applied/read back on Dev; zero receipt rows, automatic
+connections and live leases. Replay identity survives audit cleanup. Existing lease migration remains required.
+262 affected tests / 2519 assertions pass; final hardening rerun 68 tests / 681 assertions and non-exhaustive availability 1 test / 20 assertions pass.
+Swagger generated and all 43 methods independently read back through trusted Dev HTTPS.
+BookStack pages 420/455 revision 5 and API Management 449 revision 120 independently read back;
+full new sections match source and inherited Editor employee view access verified, without permission changes.
+No production deployment, provider writes, activation, token widening, commit, push or Main merge.
+Human-review checklist HR-2026-10-23-CALENDAR-API is Reviewed: Svein Tore approved "Godkjent. Merge"
+on 2026-10-24. This clears the API merge gate; it does not authorize production rollout/activation.
+Isolated Main candidate: 248 tests / 2160 assertions pass; 39 PHP files pass Pint.
+Next: separately authorized production deployment and controlled provider acceptance. Retain command receipts and delivery evidence on rollback.
+Invitation/RSVP/OOO remains under its queued Mail slice/ADR and HR-2026-08-16-029; future
+dispatch/holds/crews and arbitrary/provider recurrence are not claimed. MCP publication unverified.
+Website: one public-safe editorial handoff added; do not publish until human/release/production gates clear.
+
+
 ## Automatic Nextcloud calendar sync repair (2026-10-22)
 
 Status: Done On Dev / Main Merge Blocked By Required GitHub Review; automatic activation off.

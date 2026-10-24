@@ -10,14 +10,24 @@ use Illuminate\Support\Carbon;
 
 class UpdateCalendarEvent
 {
-    public function __construct(private readonly ResolveWorkContext $workContexts)
-    {
-    }
+    public function __construct(private readonly ResolveWorkContext $workContexts) {}
 
     public function handle(CalendarEvent $event, array $data, User $actor): CalendarEvent
     {
         \App\Modules\Calendar\Actions\ProjectWorkdayAbsence::assertCalendarEditable($event);
         $timezone = $data['timezone'] ?? $event->timezone;
+        // Ordinary edits cannot pretend to update a recurrence definition that expansion owns.
+        $frequency = $event->series ? data_get($event->series->metadata, 'frequency', 'none') : 'none';
+        abort_if(array_key_exists('recurrence_frequency', $data) && ($data['recurrence_frequency'] ?: 'none') !== $frequency, 422, 'Recurrence-definition editing is not supported.');
+        if ($event->series) {
+            abort_if((int) ($data['calendar_id'] ?? $event->calendar_id) !== (int) $event->series->calendar_id
+                || $timezone !== $event->series->timezone
+                || (isset($data['starts_at']) && ! Carbon::parse($data['starts_at'], $timezone)->equalTo($event->series->starts_at))
+                || (isset($data['ends_at']) && ! Carbon::parse($data['ends_at'], $timezone)->equalTo($event->series->ends_at)), 422, 'Series timing and calendar changes require a supported series editor.');
+            abort_if(! empty($data['recurrence_ends_at']) && Carbon::parse($data['recurrence_ends_at'], $timezone)->toDateString() !== $event->series->recurrence_ends_at?->timezone($timezone)->toDateString(), 422, 'Recurrence-definition editing is not supported.');
+        } elseif (! empty($data['recurrence_ends_at'])) {
+            abort(422, 'Recurrence-definition editing is not supported.');
+        }
 
         $event->forceFill([
             'calendar_id' => $data['calendar_id'] ?? $event->calendar_id,

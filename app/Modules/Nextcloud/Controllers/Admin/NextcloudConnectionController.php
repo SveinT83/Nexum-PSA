@@ -406,24 +406,7 @@ class NextcloudConnectionController extends Controller
 
     public function storeCalendarMapping(Request $request, NextcloudConnection $connection): RedirectResponse
     {
-        $data = $request->validate([
-            'remote_calendar_id' => ['required', 'string', 'max:500'],
-            'remote_display_name' => ['nullable', 'string', 'max:255'],
-            'calendar_id' => ['nullable', 'integer', 'exists:calendars,id'],
-            'user_id' => ['nullable', 'integer', 'exists:'.(new User)->getTable().',id'],
-            'sync_direction' => ['required', Rule::in(['two_way', 'pull_only', 'push_only'])],
-        ]);
-
-        NextcloudCalendarMapping::query()->updateOrCreate(
-            ['connection_id' => $connection->id, 'remote_calendar_id' => $data['remote_calendar_id']],
-            [
-                'calendar_id' => $data['calendar_id'] ?? null,
-                'user_id' => $data['user_id'] ?? null,
-                'remote_display_name' => $data['remote_display_name'] ?? null,
-                'sync_direction' => $data['sync_direction'],
-                'is_active' => true,
-            ]
-        );
+        app(\App\Modules\Nextcloud\Actions\ManageNextcloudCalendarMapping::class)->upsert($request, $connection);
 
         return back()->with('success', 'Nextcloud calendar mapping saved.');
     }
@@ -499,7 +482,7 @@ class NextcloudConnectionController extends Controller
 
     public function destroyCalendarMapping(NextcloudCalendarMapping $mapping): RedirectResponse
     {
-        $mapping->delete();
+        app(\App\Modules\Nextcloud\Actions\ManageNextcloudCalendarMapping::class)->remove($mapping);
 
         return back()->with('success', 'Nextcloud calendar mapping removed.');
     }
