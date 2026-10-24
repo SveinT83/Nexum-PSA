@@ -1,0 +1,906 @@
+{
+  "date": "2026-10-24",
+  "rfc": "2026-10-23-calendar-full-api-parity",
+  "human_review": "HR-2026-10-23-CALENDAR-API",
+  "operations": [
+    {
+      "verb": "post",
+      "path": "/api/v1/calendar/admin/calendars",
+      "scope": "calendar.manage",
+      "input": "CalendarApiContainerCreate",
+      "output": "CalendarApiContainerRead",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarAdministrationController@createCalendar",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "201",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "delete",
+      "path": "/api/v1/calendar/admin/calendars/{calendar}",
+      "scope": "calendar.manage",
+      "input": "CalendarApiPreviewProof",
+      "output": "CalendarApiArchiveResult",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarAdministrationController@archive",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/calendar/admin/calendars/{calendar}/access",
+      "scope": "calendar.manage",
+      "input": null,
+      "output": "CalendarApiAccessList",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarAdministrationController@access",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "post",
+      "path": "/api/v1/calendar/admin/calendars/{calendar}/access",
+      "scope": "calendar.manage",
+      "input": "CalendarApiAccessCommand",
+      "output": "CalendarApiAccess",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarAdministrationController@upsertAccess",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "delete",
+      "path": "/api/v1/calendar/admin/calendars/{calendar}/access/{access}",
+      "scope": "calendar.manage",
+      "input": "CalendarApiPreviewProof",
+      "output": "CalendarApiRevokeResult",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarAdministrationController@revokeAccess",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "post",
+      "path": "/api/v1/calendar/admin/calendars/{calendar}/preview",
+      "scope": "calendar.manage",
+      "input": "CalendarApiAdminPreviewInput",
+      "output": "CalendarApiAdminPreview",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarAdministrationController@preview",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/calendar/admin/references",
+      "scope": "calendar.manage",
+      "input": null,
+      "output": "CalendarApiOption",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarAdministrationController@references",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/calendar/admin/settings",
+      "scope": "calendar.manage",
+      "input": null,
+      "output": "CalendarApiAdmin",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarAdministrationController@index",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "patch",
+      "path": "/api/v1/calendar/admin/settings",
+      "scope": "calendar.manage",
+      "input": "CalendarApiSettingsWrite",
+      "output": "CalendarApiAdmin",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarAdministrationController@updateSettings",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/calendar/availability",
+      "scope": "calendar.free-busy.read",
+      "input": null,
+      "output": null,
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarAvailabilityController@index",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "403",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/calendar/availability/users",
+      "scope": "calendar.free-busy.read",
+      "input": null,
+      "output": "CalendarApiOption",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarAvailabilityController@users",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/calendar/context",
+      "scope": "calendar.read",
+      "input": null,
+      "output": "CalendarApiContext",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarController@context",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "403"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/calendar/events",
+      "scope": "calendar.read",
+      "input": null,
+      "output": "CalendarApiEventList",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarController@events",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "403"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "post",
+      "path": "/api/v1/calendar/events",
+      "scope": "calendar.create",
+      "input": "CalendarApiEventCreate",
+      "output": "CalendarApiEventDetail",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarController@storeEvent",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "201",
+        "403",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "delete",
+      "path": "/api/v1/calendar/events/{event}",
+      "scope": "calendar.delete",
+      "input": "CalendarApiDelete",
+      "output": null,
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarController@destroyEvent",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "204",
+        "403",
+        "404"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/calendar/events/{event}",
+      "scope": "calendar.read",
+      "input": null,
+      "output": "CalendarApiEventDetail",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarController@showEvent",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "403",
+        "404"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "patch",
+      "path": "/api/v1/calendar/events/{event}",
+      "scope": "calendar.update",
+      "input": "CalendarApiEventWrite",
+      "output": "CalendarApiEventDetail",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarController@updateEvent",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "403",
+        "404",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "put",
+      "path": "/api/v1/calendar/events/{event}",
+      "scope": "calendar.update",
+      "input": "CalendarApiEventWrite",
+      "output": "CalendarApiEventDetail",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarController@updateEvent",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "409"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "post",
+      "path": "/api/v1/calendar/events/{event}/delete-preview",
+      "scope": "calendar.delete",
+      "input": "CalendarApiDeletePreviewInput",
+      "output": "CalendarApiDeletePreview",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarController@deletePreview",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "403",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "post",
+      "path": "/api/v1/calendar/initialize",
+      "scope": "calendar.manage",
+      "input": null,
+      "output": "CalendarApiContext",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarController@initialize",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "403"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/calendar/work-plan/blocks",
+      "scope": "calendar.work-plan.read",
+      "input": null,
+      "output": null,
+      "action": "App\\Modules\\Calendar\\Controllers\\WorkPlanBlockController@index",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "Existing owning WorkPlan error contract",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "post",
+      "path": "/api/v1/calendar/work-plan/blocks",
+      "scope": "calendar.work-plan.write",
+      "input": null,
+      "output": null,
+      "action": "App\\Modules\\Calendar\\Controllers\\WorkPlanBlockController@store",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "Existing owning WorkPlan error contract",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "delete",
+      "path": "/api/v1/calendar/work-plan/blocks/{event}",
+      "scope": "calendar.work-plan.write",
+      "input": null,
+      "output": null,
+      "action": "App\\Modules\\Calendar\\Controllers\\WorkPlanBlockController@destroy",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "Existing owning WorkPlan error contract",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "patch",
+      "path": "/api/v1/calendar/work-plan/blocks/{event}",
+      "scope": "calendar.work-plan.write",
+      "input": null,
+      "output": null,
+      "action": "App\\Modules\\Calendar\\Controllers\\WorkPlanBlockController@update",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "Existing owning WorkPlan error contract",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/calendars",
+      "scope": "calendar.read",
+      "input": null,
+      "output": "CalendarApiContainer",
+      "action": "App\\Modules\\Calendar\\Controllers\\Api\\V1\\CalendarController@calendars",
+      "owner_module": "Calendar",
+      "response_codes": [
+        "200",
+        "403"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/nextcloud/calendar/connections",
+      "scope": "nextcloud.calendar.read",
+      "input": null,
+      "output": "NextcloudCalendarConnection",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@connections",
+      "owner_module": "Nextcloud",
+      "response_codes": [
+        "200",
+        "503",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/nextcloud/calendar/connections/{connection}",
+      "scope": "nextcloud.calendar.read",
+      "input": null,
+      "output": "NextcloudCalendarConnection",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@show",
+      "owner_module": "Nextcloud",
+      "response_codes": [
+        "200",
+        "503",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "post",
+      "path": "/api/v1/nextcloud/calendar/connections/{connection}/activation",
+      "scope": "nextcloud.calendar.activate",
+      "input": "NextcloudCalendarActivation",
+      "output": "NextcloudCalendarConnection",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@activation",
+      "owner_module": "Nextcloud",
+      "response_codes": [
+        "200",
+        "503",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/nextcloud/calendar/connections/{connection}/attempts",
+      "scope": "nextcloud.calendar.read",
+      "input": null,
+      "output": "NextcloudCalendarAttempt",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@attempts",
+      "owner_module": "Nextcloud",
+      "response_codes": [
+        "200",
+        "503",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/nextcloud/calendar/connections/{connection}/attempts/{attempt}",
+      "scope": "nextcloud.calendar.read",
+      "input": null,
+      "output": "NextcloudCalendarAttempt",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@attempt",
+      "owner_module": "Nextcloud",
+      "response_codes": [
+        "200",
+        "503",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/nextcloud/calendar/connections/{connection}/conflicts",
+      "scope": "nextcloud.calendar.read",
+      "input": null,
+      "output": "NextcloudCalendarConflict",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@conflicts",
+      "owner_module": "Nextcloud",
+      "response_codes": [
+        "200",
+        "503",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "post",
+      "path": "/api/v1/nextcloud/calendar/connections/{connection}/conflicts/{conflict}/apply",
+      "scope": "nextcloud.calendar.reconcile",
+      "input": "NextcloudCalendarResolution",
+      "output": "NextcloudCalendarAttempt",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarConflictController@apply",
+      "owner_module": "Nextcloud",
+      "response_codes": [
+        "202",
+        "503",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "post",
+      "path": "/api/v1/nextcloud/calendar/connections/{connection}/conflicts/{conflict}/preview",
+      "scope": "nextcloud.calendar.reconcile",
+      "input": "NextcloudCalendarResolutionInput",
+      "output": "NextcloudCalendarResolutionPreview",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarConflictController@preview",
+      "owner_module": "Nextcloud",
+      "response_codes": [
+        "200",
+        "503",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "post",
+      "path": "/api/v1/nextcloud/calendar/connections/{connection}/health",
+      "scope": "nextcloud.calendar.health",
+      "input": null,
+      "output": "NextcloudCalendarConnection",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@health",
+      "owner_module": "Nextcloud",
+      "response_codes": [
+        "200",
+        "503",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/nextcloud/calendar/connections/{connection}/mappings",
+      "scope": "nextcloud.calendar.read",
+      "input": null,
+      "output": "NextcloudCalendarMapping",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@mappings",
+      "owner_module": "Nextcloud",
+      "response_codes": [
+        "200",
+        "503",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "post",
+      "path": "/api/v1/nextcloud/calendar/connections/{connection}/mappings",
+      "scope": "nextcloud.calendar.mapping",
+      "input": "NextcloudCalendarMappingCommand",
+      "output": "NextcloudCalendarMapping",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@upsertMapping",
+      "owner_module": "Nextcloud",
+      "response_codes": [
+        "200",
+        "503",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "delete",
+      "path": "/api/v1/nextcloud/calendar/connections/{connection}/mappings/{mapping}",
+      "scope": "nextcloud.calendar.mapping",
+      "input": "NextcloudCalendarProof",
+      "output": "NextcloudCalendarMappingRemoval",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@removeMapping",
+      "owner_module": "Nextcloud",
+      "response_codes": [
+        "200",
+        "503",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "post",
+      "path": "/api/v1/nextcloud/calendar/connections/{connection}/preview",
+      "scope": "nextcloud.calendar.preview",
+      "input": "NextcloudCalendarPreviewInput",
+      "output": "NextcloudCalendarPreview",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@preview",
+      "owner_module": "Nextcloud",
+      "response_codes": [
+        "200",
+        "503",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "post",
+      "path": "/api/v1/nextcloud/calendar/connections/{connection}/sync",
+      "scope": "nextcloud.calendar.sync",
+      "input": "NextcloudCalendarSync",
+      "output": "NextcloudCalendarAttempt",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@sync",
+      "owner_module": "Nextcloud",
+      "response_codes": [
+        "202",
+        "503",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/users/me/calendar-preferences",
+      "scope": "users.calendar-preferences.read",
+      "input": null,
+      "output": "CalendarApiPreferences",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Api\\V1\\CalendarPreferencesController@show",
+      "owner_module": "UserManagement",
+      "response_codes": [
+        "200",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "patch",
+      "path": "/api/v1/users/me/calendar-preferences",
+      "scope": "users.calendar-preferences.update",
+      "input": "CalendarApiPreferencesWrite",
+      "output": "CalendarApiPreferences",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Api\\V1\\CalendarPreferencesController@update",
+      "owner_module": "UserManagement",
+      "response_codes": [
+        "200",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "CalendarApiError",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    },
+    {
+      "verb": "get",
+      "path": "/api/v1/users/me/work-plan",
+      "scope": "users.work-plan.read",
+      "input": null,
+      "output": "WorkPlanRead",
+      "action": "App\\Modules\\UserManagement\\Controllers\\WorkPlanController@show",
+      "owner_module": "UserManagement",
+      "response_codes": [
+        "200",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "Existing owning WorkPlan error contract",
+      "replay": "Pure query; no initialization"
+    },
+    {
+      "verb": "patch",
+      "path": "/api/v1/users/me/work-plan",
+      "scope": "users.work-plan.update",
+      "input": "WorkPlanWrite",
+      "output": "WorkPlanRead",
+      "action": "App\\Modules\\UserManagement\\Controllers\\WorkPlanController@update",
+      "owner_module": "UserManagement",
+      "response_codes": [
+        "200",
+        "401",
+        "403",
+        "404",
+        "409",
+        "422"
+      ],
+      "error_schema": "Existing owning WorkPlan error contract",
+      "replay": "Required Idempotency-Key for new commands; original event CRUD optional compatibility"
+    }
+  ],
+  "rows": {
+    "CAL-01": [
+      "get /api/v1/calendar/context",
+      "get /api/v1/calendars"
+    ],
+    "CAL-02": [
+      "get /api/v1/calendar/events"
+    ],
+    "CAL-03": [
+      "get /api/v1/calendar/events/{event}"
+    ],
+    "CAL-04": [
+      "post /api/v1/calendar/events"
+    ],
+    "CAL-05": [
+      "put /api/v1/calendar/events/{event}",
+      "patch /api/v1/calendar/events/{event}"
+    ],
+    "CAL-06": [
+      "post /api/v1/calendar/events/{event}/delete-preview",
+      "delete /api/v1/calendar/events/{event}"
+    ],
+    "CAL-07": [
+      "post /api/v1/calendar/events/{event}/delete-preview",
+      "delete /api/v1/calendar/events/{event}"
+    ],
+    "CAL-08": [
+      "post /api/v1/calendar/events",
+      "get /api/v1/calendar/events"
+    ],
+    "CAL-09": [
+      "get /api/v1/calendar/availability"
+    ],
+    "CAL-10": [
+      "get /api/v1/calendar/admin/settings",
+      "patch /api/v1/calendar/admin/settings"
+    ],
+    "CAL-11": [
+      "post /api/v1/calendar/admin/calendars",
+      "delete /api/v1/calendar/admin/calendars/{calendar}"
+    ],
+    "CAL-12": [
+      "get /api/v1/calendar/admin/calendars/{calendar}/access",
+      "post /api/v1/calendar/admin/calendars/{calendar}/preview",
+      "post /api/v1/calendar/admin/calendars/{calendar}/access",
+      "delete /api/v1/calendar/admin/calendars/{calendar}/access/{access}"
+    ],
+    "CAL-13": [
+      "get /api/v1/users/me/calendar-preferences",
+      "patch /api/v1/users/me/calendar-preferences"
+    ],
+    "CAL-14": [
+      "get /api/v1/users/me/work-plan",
+      "patch /api/v1/users/me/work-plan"
+    ],
+    "CAL-15": [
+      "get /api/v1/calendar/work-plan/blocks",
+      "post /api/v1/calendar/work-plan/blocks",
+      "patch /api/v1/calendar/work-plan/blocks/{event}",
+      "delete /api/v1/calendar/work-plan/blocks/{event}"
+    ],
+    "CAL-16": [
+      "get /api/v1/calendar/events/{event}",
+      "patch /api/v1/calendar/events/{event}",
+      "delete /api/v1/calendar/events/{event}"
+    ],
+    "CAL-17": [
+      "get /api/v1/calendar/context",
+      "post /api/v1/calendar/initialize"
+    ],
+    "CAL-18": [
+      "put /api/v1/calendar/events/{event}",
+      "patch /api/v1/calendar/events/{event}"
+    ],
+    "NC-01": [
+      "get /api/v1/nextcloud/calendar/connections",
+      "get /api/v1/nextcloud/calendar/connections/{connection}",
+      "get /api/v1/nextcloud/calendar/connections/{connection}/conflicts"
+    ],
+    "NC-02": [
+      "post /api/v1/nextcloud/calendar/connections/{connection}/preview",
+      "get /api/v1/nextcloud/calendar/connections/{connection}/mappings",
+      "post /api/v1/nextcloud/calendar/connections/{connection}/mappings",
+      "delete /api/v1/nextcloud/calendar/connections/{connection}/mappings/{mapping}"
+    ],
+    "NC-03": [
+      "post /api/v1/nextcloud/calendar/connections/{connection}/health"
+    ],
+    "NC-04": [
+      "post /api/v1/nextcloud/calendar/connections/{connection}/sync",
+      "get /api/v1/nextcloud/calendar/connections/{connection}/attempts",
+      "get /api/v1/nextcloud/calendar/connections/{connection}/attempts/{attempt}"
+    ],
+    "NC-05": [
+      "post /api/v1/nextcloud/calendar/connections/{connection}/preview",
+      "post /api/v1/nextcloud/calendar/connections/{connection}/activation"
+    ],
+    "NC-06": [
+      "post /api/v1/nextcloud/calendar/connections/{connection}/conflicts/{conflict}/preview",
+      "post /api/v1/nextcloud/calendar/connections/{connection}/conflicts/{conflict}/apply"
+    ],
+    "NC-07": [
+      "get /api/v1/nextcloud/calendar/connections/{connection}"
+    ]
+  }
+}

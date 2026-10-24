@@ -1,5 +1,25 @@
 <?php
 
+// Official calendar-only API is loaded explicitly by the legacy api.php entry.
+if (($tdpsaLoadingNextcloudCalendarApiRoutes ?? false) === true) {
+    \Illuminate\Support\Facades\Route::get('nextcloud/calendar/connections', [\App\Modules\Nextcloud\Controllers\Api\V1\CalendarOperationsController::class, 'connections'])->name('nextcloud.calendar.connections')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':nextcloud.calendar.read');
+    \Illuminate\Support\Facades\Route::get('nextcloud/calendar/connections/{connection}', [\App\Modules\Nextcloud\Controllers\Api\V1\CalendarOperationsController::class, 'show'])->name('nextcloud.calendar.show')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':nextcloud.calendar.read');
+    \Illuminate\Support\Facades\Route::get('nextcloud/calendar/connections/{connection}/mappings', [\App\Modules\Nextcloud\Controllers\Api\V1\CalendarOperationsController::class, 'mappings'])->name('nextcloud.calendar.mappings')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':nextcloud.calendar.read');
+    \Illuminate\Support\Facades\Route::get('nextcloud/calendar/connections/{connection}/attempts', [\App\Modules\Nextcloud\Controllers\Api\V1\CalendarOperationsController::class, 'attempts'])->name('nextcloud.calendar.attempts')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':nextcloud.calendar.read');
+    \Illuminate\Support\Facades\Route::get('nextcloud/calendar/connections/{connection}/attempts/{attempt}', [\App\Modules\Nextcloud\Controllers\Api\V1\CalendarOperationsController::class, 'attempt'])->name('nextcloud.calendar.attempt')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':nextcloud.calendar.read');
+    \Illuminate\Support\Facades\Route::get('nextcloud/calendar/connections/{connection}/conflicts', [\App\Modules\Nextcloud\Controllers\Api\V1\CalendarOperationsController::class, 'conflicts'])->name('nextcloud.calendar.conflicts')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':nextcloud.calendar.read');
+    \Illuminate\Support\Facades\Route::post('nextcloud/calendar/connections/{connection}/preview', [\App\Modules\Nextcloud\Controllers\Api\V1\CalendarOperationsController::class, 'preview'])->name('nextcloud.calendar.preview')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':nextcloud.calendar.preview');
+    \Illuminate\Support\Facades\Route::post('nextcloud/calendar/connections/{connection}/mappings', [\App\Modules\Nextcloud\Controllers\Api\V1\CalendarOperationsController::class, 'upsertMapping'])->name('nextcloud.calendar.upsertMapping')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':nextcloud.calendar.mapping');
+    \Illuminate\Support\Facades\Route::delete('nextcloud/calendar/connections/{connection}/mappings/{mapping}', [\App\Modules\Nextcloud\Controllers\Api\V1\CalendarOperationsController::class, 'removeMapping'])->name('nextcloud.calendar.removeMapping')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':nextcloud.calendar.mapping');
+    \Illuminate\Support\Facades\Route::post('nextcloud/calendar/connections/{connection}/activation', [\App\Modules\Nextcloud\Controllers\Api\V1\CalendarOperationsController::class, 'activation'])->name('nextcloud.calendar.activation')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':nextcloud.calendar.activate');
+    \Illuminate\Support\Facades\Route::post('nextcloud/calendar/connections/{connection}/sync', [\App\Modules\Nextcloud\Controllers\Api\V1\CalendarOperationsController::class, 'sync'])->name('nextcloud.calendar.sync')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':nextcloud.calendar.sync');
+    \Illuminate\Support\Facades\Route::post('nextcloud/calendar/connections/{connection}/health', [\App\Modules\Nextcloud\Controllers\Api\V1\CalendarOperationsController::class, 'health'])->name('nextcloud.calendar.health')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':nextcloud.calendar.health');
+    \Illuminate\Support\Facades\Route::post('nextcloud/calendar/connections/{connection}/conflicts/{conflict}/preview', [\App\Modules\Nextcloud\Controllers\Api\V1\CalendarConflictController::class, 'preview'])->name('nextcloud.calendar.conflict.preview')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':nextcloud.calendar.reconcile');
+    \Illuminate\Support\Facades\Route::post('nextcloud/calendar/connections/{connection}/conflicts/{conflict}/apply', [\App\Modules\Nextcloud\Controllers\Api\V1\CalendarConflictController::class, 'apply'])->name('nextcloud.calendar.conflict.apply')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':nextcloud.calendar.reconcile');
+
+    return;
+}
+
 use App\Modules\Nextcloud\Controllers\Admin\NextcloudConnectionController;
 use Illuminate\Support\Facades\Route;
 

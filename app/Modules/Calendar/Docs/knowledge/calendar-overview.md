@@ -207,3 +207,39 @@ Recurring provider series and exceptions are retained in Nextcloud without flatt
 single appointment. Nonrecurring appointments with provider-only fields, such as attendees or alarms,
 may appear in Nexum as read-only sync projections; edits to those projections are not exported.
 Deleting a copy does not automatically delete or recreate the other copy. No new invitation is sent.
+
+## Calendar API update (2026-10-24)
+
+This extension is verified on Dev and approved for Main promotion by Svein Tore on 2026-10-24.
+HR-2026-10-23-CALENDAR-API is Reviewed for the API delivery. Production deployment and actual
+provider acceptance remain separate; do not assume these operations are available in production
+until that installation has been released and verified.
+
+The official API now covers Calendar context, day/week/month/list filters, private-safe search,
+available slots, event creation/editing, occurrence/series deletion, admin settings, calendars and
+sharing. Own display preferences and work plans remain owned by UserManagement. Read requests
+never create calendars, settings or permissions. Context reports setup_required when an
+administrator must explicitly initialize the installation.
+
+### Use Calendar with an approved integration
+
+1. An administrator opens Admin > Integrations > API and selects only the required scopes.
+   A token cannot grant Calendar permissions or access to another calendar by itself.
+2. The integration reads Calendar context and the current event before changing it. Work-plan
+   and absence blocks point to their owning profile or absence workflow and cannot be overwritten
+   through the ordinary event editor.
+3. The integration sends a stable request key for a change and uses the latest revision. New
+   administration/provider commands require a request key. A stale revision or preview returns
+   a conflict; read the current state and review the intended change before trying again.
+4. For one recurring occurrence or a whole series, obtain the deletion preview first and submit
+   the exact chosen scope. A cancelled occurrence leaves the other occurrences in place.
+5. Read the saved event or operation status back. A participant email or notify flag is a local
+   record; it does not prove that an invitation was sent, accepted or delivered.
+
+Private details are masked before search, sorting and counts. Available-slot results contain
+only times and authorized calendar references. List responses expose pagination. If
+recurrence_limited is true, the inherited recurrence expansion limit was reached and the range
+must not be treated as complete. The future invitation/RSVP/OOO workflow remains unavailable.
+
+Own display defaults are still edited under Profile > Preferences; normal weekly hours belong
+to Profile > Work plan. Changing display defaults does not rewrite availability rules.

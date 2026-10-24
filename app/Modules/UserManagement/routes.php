@@ -18,6 +18,9 @@ if (($tdpsaLoadingApiRoutes ?? false) === true) {
             ->name('users.work-plan.update')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':users.work-plan.update');
     });
 
+    Route::get('users/me/calendar-preferences', [\App\Modules\UserManagement\Controllers\Api\V1\CalendarPreferencesController::class, 'show'])->name('users.calendar-preferences.show')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':users.calendar-preferences.read');
+    Route::patch('users/me/calendar-preferences', [\App\Modules\UserManagement\Controllers\Api\V1\CalendarPreferencesController::class, 'update'])->name('users.calendar-preferences.update')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':users.calendar-preferences.update');
+
     return;
 }
 
@@ -51,6 +54,7 @@ if (isset($userManagementPublicRoutes) && $userManagementPublicRoutes === true) 
     Route::get('/sso/login', [\App\Modules\UserManagement\Controllers\SsoController::class, 'start'])->name('sso.login')->middleware('throttle:10,1');
     Route::get('/sso/callback', [\App\Modules\UserManagement\Controllers\SsoController::class, 'callback'])->name('sso.callback')->middleware('throttle:20,1');
     Route::post('/sso/backchannel', [\App\Modules\UserManagement\Controllers\SsoController::class, 'backchannel'])->name('sso.backchannel')->middleware('throttle:60,1')->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]);
+
     return;
 }
 

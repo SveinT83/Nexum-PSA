@@ -1,5 +1,34 @@
 # Human Review Register
 
+## HR-2026-10-23-CALENDAR-API - Full Calendar API coverage
+
+Status: Reviewed. Owner: Codex. Human reviewer: Svein Tore.
+Human approval: Svein Tore, 2026-10-24 in chat: "Godkjent. Merge".
+The delivered API scope and Main promotion are approved. Unchecked original scenarios below are
+retained as the review checklist; no individual scenario execution or live provider write is inferred.
+Scope: Approved RFC rfc/2026-10-23-calendar-full-api-parity.md; Dev implementation only.
+Design approved by Svein Tore on 2026-10-24 in chat ("Ja"); scenario review remains pending.
+Gate: API merge acceptance cleared by the explicit human approval. Production deployment and
+real provider activation/acceptance remain separate and are not authorized by this merge request.
+Migration: 2026_10_24_120000_create_calendar_api_command_receipts.php (additive metadata only).
+Applied and read back on Dev after isolated migration/replay verification; production migration is not authorized.
+Evidence: plans/2026-10-24-calendar-api-verification.md. All 25 current workflows / 43 methods implemented.
+Automated: 262 tests / 2519 assertions, final 68 tests / 681 assertions and availability envelope 1/20 pass.
+BookStack 420/455 revision 5 and 449 revision 120 independently read back with inherited staff access.
+Native Dev receipt rows, enabled automatic connections and active leases all zero; trusted Swagger 200 verified.
+Retain command receipts on operational rollback; activity-log cleanup must not remove replay identity.
+Known risks: privacy, delegated object rights, replay/stale writes and remote identity reconciliation.
+
+- [x] Svein Tore approved the full target RFC for Dev implementation.
+- [ ] Exercise read-only context and filtered calendar queries with own/shared/private events.
+- [ ] Create, edit and cancel ordinary/recurring events with replay and stale-revision handling.
+- [ ] Review admin settings/calendar/access previews and own preferences/work-plan behavior.
+- [ ] Verify available slots and source-owned absence/work-plan protections.
+- [ ] Review calendar-only Nextcloud mapping/status, explicit activation and conflict previews.
+- [ ] Perform a separately authorized controlled provider reconciliation and exact read-back.
+- [ ] Read the published employee handbook and verify intended staff access.
+
+
 ## HR-2026-10-22-NEXTCLOUD-CALENDAR-SYNC - Safe automatic calendar sync
 
 Status: In Review. Owner: Codex. Human reviewer and mapping/privacy owner: Svein Tore.

@@ -13,13 +13,13 @@ class NextcloudCalendarLease
     // Workers time out in 300 seconds; their lease cannot expire during an active worker.
     public const LEASE_SECONDS = 600;
 
-    public function claim(NextcloudConnection $connection, bool $scheduled): ?array
+    public function claim(NextcloudConnection $connection, bool $scheduled, ?array $requestedMappingIds = null): ?array
     {
         DB::table('nextcloud_calendar_sync_states')->insertOrIgnore([
             'connection_id' => $connection->id, 'created_at' => now(), 'updated_at' => now(),
         ]);
 
-        return DB::transaction(function () use ($connection, $scheduled) {
+        return DB::transaction(function () use ($connection, $scheduled, $requestedMappingIds) {
             $state = DB::table('nextcloud_calendar_sync_states')->where('connection_id', $connection->id)->lockForUpdate()->first();
             if ($state->lease_until && now()->lt($state->lease_until)) {
                 return null;
@@ -28,7 +28,7 @@ class NextcloudCalendarLease
                 return null;
             }
             $calendarIds = $connection->calendarMappings()->where('is_active', true)->whereNotNull('calendar_id')
-                ->when($scheduled, fn ($q) => $q->whereIn('id', DispatchDueNextcloudCalendars::mappingIds($connection)))
+                ->when($scheduled || $requestedMappingIds !== null, fn ($q) => $q->whereIn('id', $scheduled ? DispatchDueNextcloudCalendars::mappingIds($connection) : $requestedMappingIds))
                 ->orderBy('calendar_id')->pluck('calendar_id')->unique()->values()->all();
             foreach ($calendarIds as $calendarId) {
                 DB::table('nextcloud_calendar_sync_locks')->insertOrIgnore(['calendar_id' => $calendarId]);

@@ -20,10 +20,14 @@ class CalendarEventResource extends JsonResource
         $ownership = app(CalendarOwnershipMetadata::class)->forCalendar($this->calendar, $viewer);
 
         return [
+            'revision' => $detailsVisible ? \App\Modules\Calendar\Support\CalendarApiContract::revision($this->resource) : null,
+            'recurrence' => $this->series ? ['frequency' => data_get($this->series->metadata, 'frequency'), 'ends_at' => $this->series->recurrence_ends_at] : null,
+            'source_owned' => in_array($this->source, ['work_plan', 'workday_absence'], true),
+            'source_edit_url' => app(CalendarVisibility::class)->maskEvent($this->resource, $viewer)['source_edit_url'],
             'id' => $this->id,
             'uuid' => $this->uuid,
             'calendar_id' => $this->calendar_id,
-            'work_context_id' => $this->work_context_id,
+            'work_context_id' => $detailsVisible ? $this->work_context_id : null,
             'series_id' => $this->series_id,
             'title' => $detailsVisible ? $this->title : 'Busy',
             'description' => $detailsVisible ? $this->description : null,
@@ -69,8 +73,8 @@ class CalendarEventResource extends JsonResource
                 'is_owned_by_viewer' => $ownership['is_owned_by_viewer'],
             ]),
             'work_context' => $this->whenLoaded('workContext', fn () => [
-                'id' => $this->workContext?->id,
-                'type' => $this->workContext?->type,
+                'id' => $detailsVisible ? $this->workContext?->id : null,
+                'type' => $detailsVisible ? $this->workContext?->type : null,
                 'name' => $detailsVisible ? $this->workContext?->name : null,
             ]),
             'participants' => $this->whenLoaded('participants', fn () => $detailsVisible
