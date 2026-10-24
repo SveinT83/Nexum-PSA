@@ -1,5 +1,53 @@
 # Human Review Register
 
+## HR-2026-10-24-SALES-API - Full Sales API coverage
+
+Status: Reviewed. Human reviewer: Svein Tore.
+Owner: Codex. Named human reviewer/release owner: Svein Tore.
+Human acceptance: Svein Tore, 2026-10-25 in chat: "Godkjent. Merg til main".
+The delivered Sales API scope and Main promotion are approved. Original unchecked
+scenarios are retained below; no individual scenario execution is inferred.
+RFC design approved 2026-10-24 in chat: "Godkjenner".
+Scope: current Sales staff/admin/public-token/portal workflows, all 53 browser routes,
+75 API operations and 95 schemas. Related pages: Tech Sales/leads/opportunity/quote,
+Admin Sales templates/rules, public quote and Customer Portal quotes.
+Evidence: plans/2026-10-24-sales-api-verification.md and sales-api-gap-matrix.md.
+Gate: named human approval clears the Sales API Main merge gate. Production
+deployment and controlled provider/real-message activation require separate scope.
+Automated: final Sales 50 tests / 2025 assertions; broad affected 433 tests / 5407
+assertions (overlapping coverage). Full evidence and scope in the verification report.
+49 scoped PHP files pass syntax/Pint. Swagger exact HTTPS bytes/methods verified.
+Migration: 2026_10_24_170000_create_sales_api_command_and_delivery_records.php,
+additive, applied/read back only on Dev as batch 22. Native receipt/attempt rows zero.
+Rollout commands: exact-path migration, l5-swagger:generate, route:clear, queue:restart;
+no frontend build or new scheduler recovery job. Retain receipt/delivery evidence on
+rollback and retain the app key needed to decrypt attempts. Native Dev commands done.
+Handbook: BookStack 508/428 revision 8, 449 revision 122, historical 507 revision 2;
+source/read-back and inherited staff access verified. OpenWebUI retrieval not claimed.
+Risks: customer/parent scope, immutable CPQ, stale approval/recipient, duplicate or
+unknown delivery, Client/Contact/Ticket/Storage/Calendar boundaries. No real native
+customer send, acceptance, stock or provider operation was used for verification.
+Expected results for checks below: correct current actor scope and exact authorized
+read-back, stable immutable history, explicit stale/replay failures, matching safe
+customer projections and truthful delivery states. Use controlled Dev fixtures; a
+real send/provider pilot requires explicit recipient/operation scope first.
+
+- [x] Svein Tore approved the full target RFC on 2026-10-24, separately from final human acceptance.
+- [ ] Verify staff/role/token/admin/approver and denied cross-customer/parent cases.
+- [ ] Exercise leads/classification/start, guarded client/contact creation, opportunities/stakeholders,
+      activities/internal notification and one/all read acknowledgement with exact read-back.
+- [ ] Build/revise CPQ quotes with source/custom lines, groups/options, quantities/acknowledgements,
+      templates, cadence/customer text and approval invalidation.
+- [ ] Verify frozen recipient/content/provider preview, approval, replay/stale writes, explicit resend
+      and truthful queued/failed/unknown/SMTP-accepted state; real sending needs separate scope.
+- [ ] Check public-token/portal JSON/PDF/question/decline/accept and immutable snapshot: no private
+      fields, cross-client access or staff impersonation; expired/superseded rules hold.
+- [ ] Confirm existing Ticket fulfilment/void, Storage delivery and Calendar ownership boundaries.
+- [ ] Review settings/template maintenance/reporting and complete generated Swagger.
+- [ ] Confirm API GET/context/PDF do not seed data/permissions or record lifecycle mutations.
+- [ ] Read published employee handbook and verify environment status and intended staff access.
+
+
 ## HR-2026-10-23-CALENDAR-API - Full Calendar API coverage
 
 Status: Reviewed. Owner: Codex. Human reviewer: Svein Tore.

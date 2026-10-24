@@ -2,10 +2,10 @@
 
 namespace App\Modules\Sales\Actions;
 
-use App\Modules\Sales\Models\SalesSetting;
 use App\Modules\Sales\Models\SalesQuoteTemplate;
 use App\Modules\Sales\Models\SalesQuoteTemplateAcknowledgement;
 use App\Modules\Sales\Models\SalesQuoteTemplateLine;
+use App\Modules\Sales\Models\SalesSetting;
 use Illuminate\Support\Facades\Schema;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -71,7 +71,6 @@ class EnsureSalesDefaults
         return self::NEXT_ACTIONS[$value] ?? $value;
     }
 
-
     public const PERMISSIONS = [
         'sales.view',
         'sales.manage',
@@ -83,7 +82,7 @@ class EnsureSalesDefaults
         'sales.admin',
     ];
 
-    public function handle(): void
+    public function handle(bool $grantPermissions = true): void
     {
         $this->setting('quote_expiry_days', 30);
         $this->setting('create_calendar_followups', true);
@@ -93,7 +92,9 @@ class EnsureSalesDefaults
         $this->setting('require_seller_instructions_for_onboarding', true);
         $this->setting('cpq_approval_policy', EvaluateSalesQuoteApproval::DEFAULT_POLICY);
         $this->ensureDefaultQuoteTemplate();
-        $this->ensurePermissions();
+        if ($grantPermissions) {
+            $this->ensurePermissions();
+        }
     }
 
     private function setting(string $key, mixed $value): void

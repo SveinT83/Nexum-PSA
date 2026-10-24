@@ -27,7 +27,7 @@ class SendSalesActivityEmail implements ShouldQueue
 
     public ?int $providerBindingVersion = null;
 
-    public function __construct(public int $salesActivityId)
+    public function __construct(public int $salesActivityId, public ?string $deliveryAttemptId = null)
     {
         $snapshot = app(EmailProviderBindingSnapshot::class)->captureScope('sales');
         $this->emailAccountId = $snapshot['account_id'];
@@ -39,6 +39,12 @@ class SendSalesActivityEmail implements ShouldQueue
         EmailTemplateRenderer $renderer,
         SmtpAccountMailer $mailer,
     ): void {
+        if ($this->deliveryAttemptId) {
+            app(\App\Modules\Sales\Services\SalesCommunications::class)->deliver($this->deliveryAttemptId);
+
+            return;
+        }
+
         $activity = SalesActivity::with(['opportunity.client', 'opportunity.currentQuoteVersion.quote', 'actor'])->find($this->salesActivityId);
 
         if (! $activity || $activity->type !== 'email_out') {
@@ -50,6 +56,7 @@ class SendSalesActivityEmail implements ShouldQueue
 
         if (! $toEmail || ! filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
             $this->log(null, $activity->id, 'error', 'SALES_EMAIL_NO_RECIPIENT', 'Sales email has no valid recipient.');
+
             return;
         }
 
@@ -57,6 +64,7 @@ class SendSalesActivityEmail implements ShouldQueue
 
         if (! $account) {
             $this->log(null, $activity->id, 'error', 'SALES_EMAIL_NO_ACCOUNT', 'No active sales outbound email account is configured.');
+
             return;
         }
 
@@ -80,6 +88,7 @@ class SendSalesActivityEmail implements ShouldQueue
 
         if (! $template) {
             $this->log($account->id, $activity->id, 'error', 'SALES_EMAIL_NO_TEMPLATE', 'No active sales_activity_email template exists.');
+
             return;
         }
 

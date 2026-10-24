@@ -1,0 +1,408 @@
+{
+  "scope": "Sales API delta from session preflight; shared pre-existing work preserved",
+  "files": [
+    {
+      "path": "app/Modules/Integration/Docs/knowledge/api-management.md",
+      "status": "modified",
+      "baseline_sha256": "f0a62664fbca9b0312c49fb6691ab883da06e928a893d91b644b070c7237b219",
+      "sha256": "d48562e21d6b388e7549b6a68d9c2a1436bbdc85a2260d4d11dde816e63b5fed"
+    },
+    {
+      "path": "app/Modules/Integration/Support/ApiAbilityCatalog.php",
+      "status": "modified",
+      "sha256": "0193ee61ce35491b01e05c347a23e6987cbe19e376d0cb02c9c2f1ea547f2dea",
+      "baseline_sha256": "926d80bafc04274dc7b2308167be27e9deca8d41a7639b340de266e2c5c34890"
+    },
+    {
+      "path": "app/Modules/Sales/Actions/EnsureSalesDefaults.php",
+      "status": "modified",
+      "sha256": "3ac5d2ba3d6954fe64aaaa05f22e9ea1b2cb91c7294cbf2336688cc72e4258a2",
+      "baseline_sha256": "19fd236a15213cabc1408ea0fb2fef7e8ad974ad0b170293cb1d0dd53219d8bc"
+    },
+    {
+      "path": "app/Modules/Sales/Actions/ExecuteSalesApiCommand.php",
+      "status": "added",
+      "sha256": "fcec4569da6cb9a5cf85d34d8a7ffc923406b7029da3518c93a3a04b7305cdce",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Actions/RecordSalesQuoteView.php",
+      "status": "added",
+      "sha256": "4a504181001c81e8a4b988e440793bd46aab94e8d95be46fdbb2ed1ea2b03158",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Actions/SalesApprovalPolicy.php",
+      "status": "added",
+      "sha256": "4f0d99c504fe6ea1c6d4e28bd358ebfadfe6ffd69b3241768ec6ff5a0b4c4680",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Actions/SalesLeadWorkflow.php",
+      "status": "added",
+      "sha256": "bf9a1f8b4ac9415f1731bdf62fb04b3937bf38bd289d2b23131a67c688d76144",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Actions/SalesOpportunityWorkflow.php",
+      "status": "added",
+      "sha256": "598ed764981e3e39e33ac4583cc30a789edb52d5df7d91ac0cd222ee02a0bbff",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Actions/SalesPortalWorkflow.php",
+      "status": "added",
+      "sha256": "8f9b9934e1c624b9f704bbd2ee1fc4c16377359313b67a16c1adf4d4dffa5700",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Actions/SalesPublicWorkflow.php",
+      "status": "added",
+      "sha256": "7617aa77ecad1938ab601d7dd4e802866d10a026f715fabaa856a5c4484c7f9d",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Actions/SalesQuickCreate.php",
+      "status": "added",
+      "sha256": "57e046405b105d61a0c355e2fda92dcab07dfa8b4bd3193e052329c673d589e7",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Actions/SalesWorkflow.php",
+      "status": "added",
+      "sha256": "709d84b770cc91128fe04912bc0d086786fbcc507d8a81d2ab172399055981bc",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Actions/ValidateSalesQuoteSelection.php",
+      "status": "added",
+      "sha256": "783e7dbdaec483a43e646d310edb0081d0eefb4c3f9924a3f4f9380e0de6649c",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Controllers/Admin/SalesSettingsController.php",
+      "status": "modified",
+      "sha256": "3efd1438f55bc8f4c90c22942a99a24653810bd6f1c4a543a9f3248de6b9c891",
+      "baseline_sha256": "024f0bf7949d04d84bc9c1d9082398a2e70066cd88712047b335430eb1911372"
+    },
+    {
+      "path": "app/Modules/Sales/Controllers/Api/V1/SalesAdministrationController.php",
+      "status": "added",
+      "sha256": "7bab15835d2dc720c36fb8a4f39bbaafb6d28c70458eb7ce828c78182f7da64c",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Controllers/Api/V1/SalesApiController.php",
+      "status": "added",
+      "sha256": "43ca32644f797fe4aed0d9459840f461329afab610ad3ad4b9574c232be09305",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Controllers/Api/V1/SalesCommunicationController.php",
+      "status": "added",
+      "sha256": "5bf54b6c56557e3c3a2e42aa26291985fc697ff51d6851a86d835b38ceeb04ca",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Controllers/Api/V1/SalesCustomerQuoteController.php",
+      "status": "added",
+      "sha256": "ac27ba34e84e64e7bbf55ce66ba72166bf88c4a896652b092f1729e7dfd1957c",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Controllers/Api/V1/SalesLeadController.php",
+      "status": "added",
+      "sha256": "52a898860027fcd7ad8f80b80dc160a8f312b1d763469c2263fa09dbc8988a1b",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Controllers/Api/V1/SalesOpportunityController.php",
+      "status": "modified",
+      "sha256": "85c9c88d96f6157f949e72689628cae78c9282726f0876cd156f616974eb5391",
+      "baseline_sha256": "c75e9d8efefdb63c130099c569f1b6655226d6aa395fa0604938625ae50a1285"
+    },
+    {
+      "path": "app/Modules/Sales/Controllers/Api/V1/SalesQuickCreateController.php",
+      "status": "added",
+      "sha256": "88c8882269f063b0584f91b2dd1d1fc565c216ae2bd1121fa22db87f69dab6ec",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Controllers/Api/V1/SalesQuoteController.php",
+      "status": "added",
+      "sha256": "f2dcd538269373f5d987a5598e31d9c6970cbe74cafcdcdd600784191f02ed56",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Controllers/Api/V1/SalesQuoteTemplateWorkflowController.php",
+      "status": "modified",
+      "sha256": "437a1c8fef490a4ccea0ad630a3170cdecd16de911f04e2eebb00f8bfb8b4661",
+      "baseline_sha256": "1e0a3cdb9f23b72a3e05a7561baa8dab18eb1a581566752e70d46c8bff0adf18"
+    },
+    {
+      "path": "app/Modules/Sales/Controllers/Portal/PortalSalesQuoteController.php",
+      "status": "modified",
+      "sha256": "047888be06d673313eaf33bfdbd4a3f0c9c987b41a30ff7c771fb988d2923b1c",
+      "baseline_sha256": "0f5e7159570c1d84026530d3568563bc8672d9c380fa7a5c93b9192f9a0b94d0"
+    },
+    {
+      "path": "app/Modules/Sales/Controllers/PublicQuoteController.php",
+      "status": "modified",
+      "sha256": "6e6e424bf3367c061f5f7b7fdfbd5717e5c0b85d717da288764db421e53e0dd3",
+      "baseline_sha256": "0708e2302497190354e0f9bb2b8900cba7952198fb800b6f8559ed9afa65f4f8"
+    },
+    {
+      "path": "app/Modules/Sales/Controllers/Tech/LeadsController.php",
+      "status": "modified",
+      "sha256": "3115d051b0923aec5b73c3b3728000647b1b1daa5f4036f9aacd9877b0afa9e6",
+      "baseline_sha256": "7af8b3739902296ece256087c5d91a1d65c7d7fd3eb6d0b27c2219ff62d2bb93"
+    },
+    {
+      "path": "app/Modules/Sales/Controllers/Tech/SalesController.php",
+      "status": "modified",
+      "sha256": "64b4ebef5d0a3768d41ed7e4084104a20a718c3d411ed04265d8b24d1c5f77e6",
+      "baseline_sha256": "c15db51bdebdc0716a4da61fd2a19e89e494420a3723ff104bd13136d8d99d8c"
+    },
+    {
+      "path": "app/Modules/Sales/DTOs/SalesWorkflowResult.php",
+      "status": "added",
+      "sha256": "94798c28c078011d025d96ace83db7b53fa8b3693a64d90657819813b2019892",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Docs/api-contract.json",
+      "status": "added",
+      "sha256": "56648f977805ef84207401c167f5f85a15c60d2b23ad5179e63111d7d23ec910",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Docs/api-schemas.json",
+      "status": "added",
+      "sha256": "56f17d53081b2d8e2f3d398d9771b50b900a9fbda6ca77186a98cac446a30780",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Docs/knowledge/sales-api.md",
+      "status": "modified",
+      "sha256": "37da6feb77262da6505ef220d0877821a173b473f65cd0736a7d48ee6d5d8ac2",
+      "baseline_sha256": "b47f52f1dd8e7d3ab6b806adca828d38ca47396b1cabf167da50ab793e32a7b1"
+    },
+    {
+      "path": "app/Modules/Sales/Docs/knowledge/sales-overview.md",
+      "status": "modified",
+      "sha256": "e30f71c0abfa6a14a99276380fcbc7ffb87a1caa1f4eee8c6786f46ef379a2bb",
+      "baseline_sha256": "d0b46668f65c82e3f3f86065579e1ec93c0ed0ee2b9fbe27355ae115f75f6752"
+    },
+    {
+      "path": "app/Modules/Sales/Http/Middleware/SalesApiFields.php",
+      "status": "added",
+      "sha256": "b3606fa2e54898d9a55a14e7a29418395ebd4b520c5ac499156e6e8ff0d92858",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Http/Middleware/SalesApiGuard.php",
+      "status": "added",
+      "sha256": "7808f1f884e4fb370cb87d30d83234c5d3c2f5a5da5c71f990e30351956763b7",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Jobs/SendSalesActivityEmail.php",
+      "status": "modified",
+      "sha256": "9ede93061cd0dd36816affc36ec2308611185539aa923c65ffd49811e95db13d",
+      "baseline_sha256": "ce447166e2625d0859457bed6f65a66622afd490934285322cfdfdd496c9d92c"
+    },
+    {
+      "path": "app/Modules/Sales/Jobs/SendSalesInternalNotificationEmail.php",
+      "status": "modified",
+      "sha256": "fd9fb2dcd9ffc890466b8f3047a25300ff5a93237806648cd989d0c1cbbef415",
+      "baseline_sha256": "adede025ba65f728b541aaaa76174ff504c8598d90d4269d639babe0582d2d57"
+    },
+    {
+      "path": "app/Modules/Sales/Jobs/SendSalesQuoteEmail.php",
+      "status": "modified",
+      "sha256": "f5d654b141077199fca7890f8a8d407c5576daadba1fabe4831b7f01ed3a4234",
+      "baseline_sha256": "e5e9ab9a2a75a0289a731bde60b58f2cbd65e767fb2b0276c7d8b1266b7489f5"
+    },
+    {
+      "path": "app/Modules/Sales/Models/SalesApiCommandReceipt.php",
+      "status": "added",
+      "sha256": "55ff1fb0de0f65f87be47dda57afb16e2e8509337c83d1b8184bd726d32df288",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Models/SalesDeliveryAttempt.php",
+      "status": "added",
+      "sha256": "dbd3d73d2e20b5b1b66000e9db12e247119001378331f35d690785bdc92c330f",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Queries/SalesApiWorkspace.php",
+      "status": "added",
+      "sha256": "aa7529a2f603f92d0966ca025418f530a1e4c9ccc8782fb138cf676a909e684c",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Queries/SalesQuotePdf.php",
+      "status": "added",
+      "sha256": "59fb214e4c96055be4978ae603a5c83e67de629c2e88ba9eedd7ab8ddfb40457",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Resources/Api/V1/SalesApiOpenApi.php",
+      "status": "added",
+      "sha256": "7a245a4fc6644e0908627f3e5f4da6e401714c58808f463f85411c568036cab5",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Resources/Api/V1/SalesProjection.php",
+      "status": "added",
+      "sha256": "4caf81f40f157e4feaf303ada4a952b42fa0aa65f527946db83348f7b6185ee4",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Services/SalesCommunications.php",
+      "status": "added",
+      "sha256": "09f3a6c6c543d4186856ccc7faf3faad4428462346c6830b955b707ee4277bd5",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Services/SalesEmailContent.php",
+      "status": "added",
+      "sha256": "6b9720fecaa4de6c9df6edcbc41892d53ba27698b62ee1c5b93f9b8c241f19b8",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Support/SalesApiAccess.php",
+      "status": "added",
+      "sha256": "ca6291e37b54db19939fce670c7e693b7df45b03b0be6a5580d5c80c8b78affc",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Support/SalesRevision.php",
+      "status": "added",
+      "sha256": "06fa0b079320f1050bf998af5a61a2dd2458107964a08f7776d2e1bbcf94d1a9",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Tests/Feature/SalesApiContractTest.php",
+      "status": "added",
+      "sha256": "1ede2d2c79aba75cdc88dd41b47e983f5a48c70da91d7248dcd0a3331704123c",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Tests/Feature/SalesApiParityTest.php",
+      "status": "added",
+      "sha256": "f6a4daa0188c13fb410b64b716ffcc9071a47d812a91a993c276195535b2c03a",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/Tests/Feature/SalesPortalApiTest.php",
+      "status": "added",
+      "sha256": "7a1b2d7ca493d04d88b4fc5efcf35fefdb5f437e6ddb6ce4d0a1f6b9cb28d1a8",
+      "baseline_sha256": null
+    },
+    {
+      "path": "app/Modules/Sales/api.php",
+      "status": "modified",
+      "sha256": "364fcf6b970e2f6371d762f0757c3e22a971e8bd521c84522dcec02d3f577633",
+      "baseline_sha256": "cb369fe705e4ba8c3c27277bf83ccdcdd4e9eeb98efa18209f7a34caa8cb6688"
+    },
+    {
+      "path": "app/Modules/Sales/routes.php",
+      "status": "modified",
+      "sha256": "b94b813b16a82f0cdb4b4e137e06e4740b8c62b2d88ae6575404ac3bb1361285",
+      "baseline_sha256": "70fe493f83345e7b0ff4d80aa60969f9d39690d873e978720f562f9dd4c76f06"
+    },
+    {
+      "path": "database/migrations/2026_10_24_170000_create_sales_api_command_and_delivery_records.php",
+      "status": "added",
+      "sha256": "6e0a027fbda3aa125b47940da09298a29b084b10c4bb62725f9f8d3be25f5529",
+      "baseline_sha256": null
+    },
+    {
+      "path": "docs/TODO.md",
+      "status": "modified",
+      "sha256": "9cecff136925fbd885bf038baf1a991204da17c912d43a45ef588649cbdf75d1",
+      "baseline_sha256": "eaaed9c687f61ca7b2a9e2a7d20086cdd097cf109cf537fae0b482bee0053972"
+    },
+    {
+      "path": "docs/adr/2026-10-24-sales-api-commands-and-delivery.md",
+      "status": "coordination/documentation update",
+      "baseline_sha256": null,
+      "sha256": "2b4a4721508f2c06ecbe2bbff5b3823799082dfb2639f63f31a2270c4d200761"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-24-sales-api-01-foundation.md",
+      "status": "coordination/documentation update",
+      "baseline_sha256": null,
+      "sha256": "4761bfd87ebccd194c494f3912b324145582da12f27fd625815f2dc65d7bb9f5"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-24-sales-api-02-opportunities.md",
+      "status": "coordination/documentation update",
+      "baseline_sha256": null,
+      "sha256": "59a868156c40c48f9eed964f0a1ca0f604fbe60250c9f22e9fd179b51ea30ff1"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-24-sales-api-03-quotes.md",
+      "status": "coordination/documentation update",
+      "baseline_sha256": null,
+      "sha256": "048e896f865ab6a87db34ecb890e600706c6d766e08fc487f87925651428abd1"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-24-sales-api-04-delivery.md",
+      "status": "coordination/documentation update",
+      "baseline_sha256": null,
+      "sha256": "f603e3c797fb116fae24b6a7edb6d11aa30366508cd85097ef8613dbeb4aa7ea"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-24-sales-api-05-customers.md",
+      "status": "coordination/documentation update",
+      "baseline_sha256": null,
+      "sha256": "b3cbd8d641e412f6c2d6cf09e19df2d65c5f06cab3b017a8c626756507b825a6"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-24-sales-api-06-contract-handbook.md",
+      "status": "coordination/documentation update",
+      "baseline_sha256": null,
+      "sha256": "cc975d9781a893dc7e74a7151c925f25af4d0a75be3f4f3443283bfa92a083cc"
+    },
+    {
+      "path": "docs/human-review.md",
+      "status": "modified",
+      "sha256": "81d8e134dd30c0e98fcad91d32725dd59664c935a28bcfd942125ca8b9e1657d",
+      "baseline_sha256": "d41e9005d079e4ddcbe01b49f6d65964b45f361e66c2d0c2be65bedcf7b96e1e"
+    },
+    {
+      "path": "docs/plans/2026-10-24-sales-api-gap-matrix.md",
+      "status": "coordination/documentation update",
+      "baseline_sha256": null,
+      "sha256": "57d3dfab2ef17a756b8189e112d2d6eeeb4402ee0cded79c32cfd997366e5993"
+    },
+    {
+      "path": "docs/plans/2026-10-24-sales-api-verification.md",
+      "status": "coordination/documentation update",
+      "baseline_sha256": null,
+      "sha256": "6dc391078dde15e7970df8cf74f1f175c01dafaf550dea7e8d39a8ad987f443a"
+    },
+    {
+      "path": "docs/rfc/2026-10-24-sales-full-api-parity.md",
+      "status": "modified",
+      "sha256": "13bb1ef1ea33087f292adda4cde7e020910ae555bd9053151fd4dc9bc07d419c",
+      "baseline_sha256": "28d50cfc74050b6113cb7832d3242af5fe893ec32b9a49540cca3596be9621b5"
+    },
+    {
+      "path": "docs/rfc/README.md",
+      "status": "modified",
+      "sha256": "f12a172ca7758420d368deebdffbbcc96e2dd4de9c67d517da67ac353557c4be",
+      "baseline_sha256": "c7d3aa915717c59401d832efc08a94590b526ec82885ce012c422189d828d3b2"
+    },
+    {
+      "path": "routes/api.php",
+      "status": "modified",
+      "sha256": "c3b13eb7fd6e18f73d120cf0c255f63f6c8aeacc47dafb12af8ff3deb9393683",
+      "baseline_sha256": "81bcc9b06e865924d950463e56d9708ea40dc665a083d0b93d659d3cf4d02639"
+    }
+  ],
+  "note": "Shared files include pre-existing changes; use session baseline, not git HEAD, to isolate this delivery."
+}

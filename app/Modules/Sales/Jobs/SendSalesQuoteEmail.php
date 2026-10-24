@@ -35,7 +35,7 @@ class SendSalesQuoteEmail implements ShouldQueue
 
     public ?int $providerBindingVersion = null;
 
-    public function __construct(public int $salesQuoteVersionId)
+    public function __construct(public int $salesQuoteVersionId, public ?string $deliveryAttemptId = null)
     {
         $snapshot = app(EmailProviderBindingSnapshot::class)->captureScope('sales');
         $this->emailAccountId = $snapshot['account_id'];
@@ -48,6 +48,12 @@ class SendSalesQuoteEmail implements ShouldQueue
         SmtpAccountMailer $mailer,
         SalesQuotePresentation $quotePresentation,
     ): void {
+        if ($this->deliveryAttemptId) {
+            app(\App\Modules\Sales\Services\SalesCommunications::class)->deliver($this->deliveryAttemptId);
+
+            return;
+        }
+
         $version = SalesQuoteVersion::query()
             ->with(['quote.opportunity.client', 'quote.opportunity.primaryContact', 'quote.opportunity.owner', 'lines'])
             ->find($this->salesQuoteVersionId);

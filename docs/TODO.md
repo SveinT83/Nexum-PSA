@@ -1,5 +1,32 @@
 # tdPSA Development TODO
 
+## Full Sales browser/API coverage (2026-10-24)
+
+Status: Done On Dev / Human Reviewed; Main promotion in progress. Design approved by Svein Tore: "Godkjenner".
+Owner: Codex. Human reviewer/release owner: Svein Tore.
+RFC: rfc/2026-10-24-sales-full-api-parity.md; all six approved Feature Slices completed.
+ADR: adr/2026-10-24-sales-api-commands-and-delivery.md (Accepted).
+Evidence: plans/2026-10-24-sales-api-verification.md and sales-api-gap-matrix.md.
+75 HTTP operations / 95 typed schemas cover all 53 current browser routes, including
+staff/admin/public-token/portal reads, writes and actions. Shared workflows, current
+actor/token/parent rights, pure API reads, strict fields, revisions/durable replay and
+encrypted frozen delivery evidence are implemented. No unsupported deletion or future
+conversion engine. Client/Contact/Ticket/Storage/Calendar ownership is preserved.
+Final Sales suite passes 50 tests / 2025 assertions; broad affected suite passes
+433 tests / 5407 assertions (overlapping coverage). Scoped PHP syntax/Pint and exact trusted Swagger read-back pass.
+Additive receipt/delivery migration 2026_10_24_170000 applied/read back on Dev batch 22;
+zero native receipts/attempts. BookStack 508/428 revision 8 and 449 revision 122 read
+back; historical 507 revision 2 points to 508. Inherited staff access verified.
+Native internal Knowledge articles match source; their existing pending_push metadata
+is not external publication evidence (the BookStack pages were verified independently).
+HR-2026-10-24-SALES-API is Reviewed: Svein Tore approved "Godkjent. Merg til main"
+on 2026-10-25. The Main merge gate is cleared; production requires separate scope.
+Next (Codex): verify and merge the isolated Sales Main candidate. Controlled real sends/provider operations and
+employee OpenWebUI retrieval remain separate checks; no such success is claimed.
+No commit/push/Main promotion/production deployment or native customer write performed.
+Shared dirty work preserved. Website editorial handoff says do not publish yet.
+
+
 ## Full Calendar browser/API coverage (2026-10-23; approved 2026-10-24)
 
 Status: Included In This Main Promotion / Human Reviewed. Owner: Codex. Reviewer/release owner: Svein Tore.

@@ -1,5 +1,7 @@
 # RFC Index
 
+- [Approved: Full Sales browser/API coverage](2026-10-24-sales-full-api-parity.md) (Done on Dev; Reviewed; Main promotion approved)
+
 - [Approved: Mark all messages in the selected Mail conversation read](2026-10-21-mail-conversation-read-command.md) (deployed to production; human review in progress)
 
 - [Approved: Automatic Workday And Tripletex Time Synchronization](2026-10-05-workday-tripletex-automatic-time-sync.md) (setup/client tested on Dev; provider contract pending)

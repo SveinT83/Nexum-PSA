@@ -1,0 +1,4516 @@
+{
+  "SalesObject": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": true
+  },
+  "SalesIdName": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "name": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "id"
+    ]
+  },
+  "SalesClient": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "name": {
+        "type": "string",
+        "nullable": true
+      },
+      "client_number": {
+        "type": "string",
+        "nullable": true
+      },
+      "website": {
+        "type": "string",
+        "nullable": true
+      },
+      "sales_category_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "lead_temperature": {
+        "type": "integer",
+        "nullable": true
+      },
+      "contacts_count": {
+        "type": "integer",
+        "nullable": true
+      },
+      "assets_count": {
+        "type": "integer",
+        "nullable": true
+      },
+      "tags": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesTag"
+        }
+      },
+      "marketing_engagement_summary": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "integer"
+          },
+          "interest_events": {
+            "type": "integer"
+          },
+          "opens": {
+            "type": "integer"
+          },
+          "clicks": {
+            "type": "integer"
+          },
+          "unsubscribes": {
+            "type": "integer"
+          },
+          "last_seen_at": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesTag": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "name": {
+        "type": "string",
+        "nullable": true
+      },
+      "color": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesContact": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "contact_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "client_site_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "name": {
+        "type": "string",
+        "nullable": true
+      },
+      "email": {
+        "type": "string",
+        "nullable": true
+      },
+      "phone": {
+        "type": "string",
+        "nullable": true
+      },
+      "role": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesStakeholder": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "client_user_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "role": {
+        "type": "string",
+        "nullable": true
+      },
+      "is_primary": {
+        "type": "boolean"
+      },
+      "notes": {
+        "type": "string",
+        "nullable": true
+      },
+      "contact": {
+        "$ref": "#/components/schemas/SalesContact"
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesOpportunity": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "opportunity_key": {
+        "type": "string",
+        "nullable": true
+      },
+      "client_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "primary_contact_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "owner_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "title": {
+        "type": "string",
+        "nullable": true
+      },
+      "type": {
+        "type": "string",
+        "nullable": true
+      },
+      "status": {
+        "type": "string",
+        "nullable": true
+      },
+      "summary": {
+        "type": "string",
+        "nullable": true
+      },
+      "needs": {
+        "type": "string",
+        "nullable": true
+      },
+      "employee_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "user_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "workstation_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "server_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "site_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "estimated_value_ex_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "probability_percent": {
+        "type": "integer",
+        "nullable": true
+      },
+      "weighted_value_ex_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "expected_close_date": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "next_follow_up_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "next_follow_up_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_follow_up_note": {
+        "type": "string",
+        "nullable": true
+      },
+      "is_unread": {
+        "type": "boolean"
+      },
+      "won_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "lost_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "lost_reason": {
+        "type": "string",
+        "nullable": true
+      },
+      "current_quote_version_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "created_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "updated_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "revision": {
+        "type": "string",
+        "nullable": true
+      },
+      "client": {
+        "$ref": "#/components/schemas/SalesClient"
+      },
+      "owner": {
+        "$ref": "#/components/schemas/SalesContact"
+      },
+      "primary_contact": {
+        "$ref": "#/components/schemas/SalesContact"
+      },
+      "stakeholders": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesStakeholder"
+        }
+      },
+      "quotes": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesQuote"
+        }
+      },
+      "links": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": {
+          "type": "string"
+        }
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "opportunity_key",
+      "revision"
+    ]
+  },
+  "SalesQuote": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "quote_key": {
+        "type": "string",
+        "nullable": true
+      },
+      "status": {
+        "type": "string",
+        "nullable": true
+      },
+      "current_version_id": {
+        "type": "integer",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesActivity": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "opportunity_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "actor_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "type": {
+        "type": "string",
+        "nullable": true
+      },
+      "direction": {
+        "type": "string",
+        "nullable": true
+      },
+      "subject": {
+        "type": "string",
+        "nullable": true
+      },
+      "body": {
+        "type": "string",
+        "nullable": true
+      },
+      "is_unread": {
+        "type": "boolean"
+      },
+      "read_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "created_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "actor": {
+        "$ref": "#/components/schemas/SalesIdName"
+      },
+      "metadata": {
+        "type": "object",
+        "properties": {
+          "quote_version_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "previous_quote_version_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "approval_status": {
+            "type": "string",
+            "nullable": true
+          },
+          "conversion_plan_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "target_reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "recipient_contact_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "to_email": {
+            "type": "string",
+            "nullable": true
+          },
+          "to_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "notify_user_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "delivery_attempt_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "cc": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "delivery": {
+        "$ref": "#/components/schemas/SalesDelivery"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "type"
+    ]
+  },
+  "SalesQuoteLine": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "option_group_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "section": {
+        "type": "string",
+        "nullable": true
+      },
+      "sort_order": {
+        "type": "integer",
+        "nullable": true
+      },
+      "billing_cadence": {
+        "type": "string",
+        "nullable": true
+      },
+      "sku": {
+        "type": "string",
+        "nullable": true
+      },
+      "name": {
+        "type": "string",
+        "nullable": true
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "quantity": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "unit": {
+        "type": "string",
+        "nullable": true
+      },
+      "unit_price_ex_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "discount_value": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "discount_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "vat_rate": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "line_total_ex_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "vat_amount": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "line_total_inc_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "is_required": {
+        "type": "boolean"
+      },
+      "is_optional": {
+        "type": "boolean"
+      },
+      "is_recommended": {
+        "type": "boolean"
+      },
+      "customer_selected_by_default": {
+        "type": "boolean"
+      },
+      "customer_quantity_editable": {
+        "type": "boolean"
+      },
+      "min_customer_quantity": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "max_customer_quantity": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "customer_label": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesStaffQuoteLine": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "option_group_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "section": {
+        "type": "string",
+        "nullable": true
+      },
+      "sort_order": {
+        "type": "integer",
+        "nullable": true
+      },
+      "billing_cadence": {
+        "type": "string",
+        "nullable": true
+      },
+      "sku": {
+        "type": "string",
+        "nullable": true
+      },
+      "name": {
+        "type": "string",
+        "nullable": true
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "quantity": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "unit": {
+        "type": "string",
+        "nullable": true
+      },
+      "unit_price_ex_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "discount_value": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "discount_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "vat_rate": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "line_total_ex_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "vat_amount": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "line_total_inc_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "is_required": {
+        "type": "boolean"
+      },
+      "is_optional": {
+        "type": "boolean"
+      },
+      "is_recommended": {
+        "type": "boolean"
+      },
+      "customer_selected_by_default": {
+        "type": "boolean"
+      },
+      "customer_quantity_editable": {
+        "type": "boolean"
+      },
+      "min_customer_quantity": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "max_customer_quantity": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "customer_label": {
+        "type": "string",
+        "nullable": true
+      },
+      "source_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "source_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "downstream_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "unit_cost_ex_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "margin_amount": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "margin_percent": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesOptionGroup": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "name": {
+        "type": "string",
+        "nullable": true
+      },
+      "type": {
+        "type": "string",
+        "nullable": true
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "min_select": {
+        "type": "integer",
+        "nullable": true
+      },
+      "max_select": {
+        "type": "integer",
+        "nullable": true
+      },
+      "sort_order": {
+        "type": "integer",
+        "nullable": true
+      },
+      "lines_count": {
+        "type": "integer"
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesAcknowledgement": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "quote_line_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "template_line_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "template_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "line_name": {
+        "type": "string",
+        "nullable": true
+      },
+      "title": {
+        "type": "string",
+        "nullable": true
+      },
+      "body": {
+        "type": "string",
+        "nullable": true
+      },
+      "is_required": {
+        "type": "boolean"
+      },
+      "sort_order": {
+        "type": "integer",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesTotals": {
+    "type": "object",
+    "properties": {
+      "subtotal_ex_vat": {
+        "type": "number"
+      },
+      "discount_total_ex_vat": {
+        "type": "number"
+      },
+      "vat_total": {
+        "type": "number"
+      },
+      "total_ex_vat": {
+        "type": "number"
+      },
+      "total_inc_vat": {
+        "type": "number"
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesPresentation": {
+    "type": "object",
+    "properties": {
+      "summary_text": {
+        "type": "string"
+      },
+      "summary_html": {
+        "type": "string"
+      },
+      "customer_copy_text": {
+        "type": "string"
+      },
+      "customer_copy_html": {
+        "type": "string"
+      },
+      "selected_line_ids": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "quantities": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": {
+          "type": "number"
+        }
+      },
+      "groups": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "nullable": true
+            },
+            "label": {
+              "type": "string",
+              "nullable": true
+            },
+            "summary_label": {
+              "type": "string",
+              "nullable": true
+            },
+            "unit": {
+              "type": "string",
+              "nullable": true
+            },
+            "total_ex_vat": {
+              "type": "number"
+            },
+            "vat_total": {
+              "type": "number"
+            },
+            "total_inc_vat": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesAcceptance": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "quote_version_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "accepted_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "accepted_by_name": {
+        "type": "string",
+        "nullable": true
+      },
+      "accepted_by_email": {
+        "type": "string",
+        "nullable": true
+      },
+      "source_method": {
+        "type": "string",
+        "nullable": true
+      },
+      "source_user_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "selected_line_ids": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "declined_line_ids": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "selected_lines": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesQuoteLine"
+        }
+      },
+      "declined_lines": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesQuoteLine"
+        }
+      },
+      "acknowledgements": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesAcknowledgement"
+        }
+      },
+      "totals": {
+        "$ref": "#/components/schemas/SalesTotals"
+      },
+      "public_text_snapshot": {
+        "type": "object",
+        "properties": {
+          "quote_key": {
+            "type": "string",
+            "nullable": true
+          },
+          "version_number": {
+            "type": "integer",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "expires_at": {
+            "type": "string",
+            "nullable": true,
+            "format": "date"
+          },
+          "summary_text": {
+            "type": "string",
+            "nullable": true
+          },
+          "before_copy": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "text": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "html": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "position": {
+                  "type": "string",
+                  "nullable": true
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "after_copy": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "text": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "html": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "position": {
+                  "type": "string",
+                  "nullable": true
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesConversionPlan": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "quote_version_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "quote_line_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "target_domain": {
+        "type": "string",
+        "nullable": true
+      },
+      "target_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "status": {
+        "type": "string",
+        "nullable": true
+      },
+      "created_record_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "created_record_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "target_reference": {
+        "type": "string",
+        "nullable": true
+      },
+      "operator_note": {
+        "type": "string",
+        "nullable": true
+      },
+      "processed_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "processed_by": {
+        "type": "integer",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesCustomerVersion": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "quote_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "version_number": {
+        "type": "integer",
+        "nullable": true
+      },
+      "status": {
+        "type": "string",
+        "nullable": true
+      },
+      "effective_status": {
+        "type": "string",
+        "nullable": true
+      },
+      "title": {
+        "type": "string",
+        "nullable": true
+      },
+      "intro_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "scope_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "assumptions_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "exclusions_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_steps_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "expires_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date"
+      },
+      "subtotal_ex_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "discount_total_ex_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "vat_total": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "total_ex_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "total_inc_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "sent_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "viewed_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "accepted_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "declined_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "quote_key": {
+        "type": "string",
+        "nullable": true
+      },
+      "can_respond": {
+        "type": "boolean"
+      },
+      "customer": {
+        "$ref": "#/components/schemas/SalesIdName"
+      },
+      "lines": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesQuoteLine"
+        }
+      },
+      "option_groups": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesOptionGroup"
+        }
+      },
+      "acknowledgements": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesAcknowledgement"
+        }
+      },
+      "acceptance": {
+        "$ref": "#/components/schemas/SalesAcceptance"
+      },
+      "presentation": {
+        "$ref": "#/components/schemas/SalesPresentation"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "version_number",
+      "status",
+      "effective_status",
+      "lines"
+    ]
+  },
+  "SalesStaffVersion": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "quote_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "version_number": {
+        "type": "integer",
+        "nullable": true
+      },
+      "status": {
+        "type": "string",
+        "nullable": true
+      },
+      "effective_status": {
+        "type": "string",
+        "nullable": true
+      },
+      "title": {
+        "type": "string",
+        "nullable": true
+      },
+      "intro_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "scope_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "assumptions_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "exclusions_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_steps_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "expires_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date"
+      },
+      "subtotal_ex_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "discount_total_ex_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "vat_total": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "total_ex_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "total_inc_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "sent_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "viewed_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "accepted_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "declined_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "quote_key": {
+        "type": "string",
+        "nullable": true
+      },
+      "can_respond": {
+        "type": "boolean"
+      },
+      "customer": {
+        "$ref": "#/components/schemas/SalesIdName"
+      },
+      "lines": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesStaffQuoteLine"
+        }
+      },
+      "option_groups": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesOptionGroup"
+        }
+      },
+      "acknowledgements": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesAcknowledgement"
+        }
+      },
+      "acceptance": {
+        "$ref": "#/components/schemas/SalesAcceptance"
+      },
+      "presentation": {
+        "$ref": "#/components/schemas/SalesPresentation"
+      },
+      "approval_status": {
+        "type": "string",
+        "nullable": true
+      },
+      "approval_requested_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "approval_requested_by": {
+        "type": "integer",
+        "nullable": true
+      },
+      "approval_decided_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "approval_decided_by": {
+        "type": "integer",
+        "nullable": true
+      },
+      "approval_decision_note": {
+        "type": "string",
+        "nullable": true
+      },
+      "margin_amount": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "margin_percent": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "source_template_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "revision": {
+        "type": "string",
+        "nullable": true
+      },
+      "approval_required_reasons": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "approval_policy_snapshot": {
+        "$ref": "#/components/schemas/SalesApprovalPolicy"
+      },
+      "conversion_plans": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesConversionPlan"
+        }
+      },
+      "created_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "updated_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "version_number",
+      "status",
+      "revision",
+      "lines"
+    ]
+  },
+  "SalesApprovalPolicy": {
+    "type": "object",
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      },
+      "discount_percent_threshold": {
+        "type": "number"
+      },
+      "minimum_margin_percent": {
+        "type": "number"
+      },
+      "quote_total_ex_vat_threshold": {
+        "type": "number"
+      },
+      "manual_line_ex_vat_threshold": {
+        "type": "number"
+      },
+      "revision": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesDashboard": {
+    "type": "object",
+    "properties": {
+      "open": {
+        "type": "integer"
+      },
+      "won": {
+        "type": "integer"
+      },
+      "unread": {
+        "type": "integer"
+      },
+      "due": {
+        "type": "integer"
+      },
+      "weighted": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesQuoteReport": {
+    "type": "object",
+    "properties": {
+      "templates": {
+        "type": "integer"
+      },
+      "active_templates": {
+        "type": "integer"
+      },
+      "accepted_snapshots": {
+        "type": "integer"
+      },
+      "pending_conversion_plans": {
+        "type": "integer"
+      },
+      "declined_quotes": {
+        "type": "integer"
+      },
+      "expired_sent_quotes": {
+        "type": "integer"
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesSetup": {
+    "type": "object",
+    "properties": {
+      "initialized": {
+        "type": "boolean"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "initialized"
+    ]
+  },
+  "SalesChoiceMap": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": {
+      "type": "string"
+    }
+  },
+  "SalesTemplateCatalog": {
+    "type": "object",
+    "properties": {
+      "target_types": {
+        "$ref": "#/components/schemas/SalesChoiceMap"
+      },
+      "customer_segments": {
+        "$ref": "#/components/schemas/SalesChoiceMap"
+      },
+      "source_types": {
+        "$ref": "#/components/schemas/SalesChoiceMap"
+      },
+      "sections": {
+        "$ref": "#/components/schemas/SalesChoiceMap"
+      },
+      "downstream_types": {
+        "$ref": "#/components/schemas/SalesChoiceMap"
+      },
+      "billing_cadences": {
+        "$ref": "#/components/schemas/SalesChoiceMap"
+      },
+      "option_group_types": {
+        "$ref": "#/components/schemas/SalesChoiceMap"
+      },
+      "line_catalogs": {
+        "type": "object",
+        "properties": {
+          "service": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "label": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "name": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "description": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "price": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "nullable": true,
+                  "description": "Persisted exact decimal string or existing calculated presentation number."
+                },
+                "cost": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "nullable": true,
+                  "description": "Persisted exact decimal string or existing calculated presentation number."
+                },
+                "vat": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "nullable": true,
+                  "description": "Persisted exact decimal string or existing calculated presentation number."
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "package": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "label": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "name": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "description": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "price": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "nullable": true,
+                  "description": "Persisted exact decimal string or existing calculated presentation number."
+                },
+                "cost": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "nullable": true,
+                  "description": "Persisted exact decimal string or existing calculated presentation number."
+                },
+                "vat": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "nullable": true,
+                  "description": "Persisted exact decimal string or existing calculated presentation number."
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "time_rate": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "label": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "name": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "description": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "price": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "nullable": true,
+                  "description": "Persisted exact decimal string or existing calculated presentation number."
+                },
+                "cost": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "nullable": true,
+                  "description": "Persisted exact decimal string or existing calculated presentation number."
+                },
+                "vat": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "nullable": true,
+                  "description": "Persisted exact decimal string or existing calculated presentation number."
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "storage_item": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "label": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "name": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "description": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "price": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "nullable": true,
+                  "description": "Persisted exact decimal string or existing calculated presentation number."
+                },
+                "cost": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "nullable": true,
+                  "description": "Persisted exact decimal string or existing calculated presentation number."
+                },
+                "vat": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "nullable": true,
+                  "description": "Persisted exact decimal string or existing calculated presentation number."
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesContext": {
+    "type": "object",
+    "properties": {
+      "types": {
+        "$ref": "#/components/schemas/SalesChoiceMap"
+      },
+      "statuses": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "probability": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "next_actions": {
+        "$ref": "#/components/schemas/SalesChoiceMap"
+      },
+      "owners": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesIdName"
+        }
+      },
+      "clients": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesClient"
+        }
+      },
+      "clients_total": {
+        "type": "integer"
+      },
+      "clients_complete": {
+        "type": "boolean"
+      },
+      "sites": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesIdName"
+        }
+      },
+      "contacts": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesContact"
+        }
+      },
+      "setup_required": {
+        "type": "boolean"
+      },
+      "defaults": {
+        "type": "object",
+        "properties": {
+          "quote_expiry_days": {
+            "type": "integer"
+          },
+          "create_calendar_followups": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "quote_templates": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesTemplate"
+        }
+      },
+      "catalog": {
+        "$ref": "#/components/schemas/SalesTemplateCatalog"
+      },
+      "opportunity_revision": {
+        "type": "string",
+        "nullable": true
+      },
+      "clients_page": {
+        "type": "integer",
+        "nullable": false
+      },
+      "clients_next_page": {
+        "type": "integer",
+        "nullable": true
+      },
+      "owners_total": {
+        "type": "integer",
+        "nullable": false
+      },
+      "sites_total": {
+        "type": "integer",
+        "nullable": false
+      },
+      "contacts_total": {
+        "type": "integer",
+        "nullable": false
+      },
+      "quote_templates_total": {
+        "type": "integer",
+        "nullable": false
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesLead": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "name": {
+        "type": "string",
+        "nullable": true
+      },
+      "client_number": {
+        "type": "string",
+        "nullable": true
+      },
+      "website": {
+        "type": "string",
+        "nullable": true
+      },
+      "sales_category_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "lead_temperature": {
+        "type": "integer",
+        "nullable": true
+      },
+      "contacts_count": {
+        "type": "integer",
+        "nullable": true
+      },
+      "assets_count": {
+        "type": "integer",
+        "nullable": true
+      },
+      "tags": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesTag"
+        }
+      },
+      "marketing_engagement_summary": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "integer"
+          },
+          "interest_events": {
+            "type": "integer"
+          },
+          "opens": {
+            "type": "integer"
+          },
+          "clicks": {
+            "type": "integer"
+          },
+          "unsubscribes": {
+            "type": "integer"
+          },
+          "last_seen_at": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "revision": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesLeadContext": {
+    "type": "object",
+    "properties": {
+      "groupBy": {
+        "type": "string"
+      },
+      "categories": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesIdName"
+        }
+      },
+      "tags": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesTag"
+        }
+      },
+      "classifyCategories": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesIdName"
+        }
+      },
+      "classifyTags": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesTag"
+        }
+      },
+      "owners": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesIdName"
+        }
+      },
+      "types": {
+        "$ref": "#/components/schemas/SalesChoiceMap"
+      },
+      "statuses": {
+        "$ref": "#/components/schemas/SalesObject"
+      },
+      "nextActions": {
+        "$ref": "#/components/schemas/SalesChoiceMap"
+      },
+      "filters": {
+        "$ref": "#/components/schemas/SalesObject"
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesTemplateLine": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "option_group_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "section": {
+        "type": "string",
+        "nullable": true
+      },
+      "sort_order": {
+        "type": "integer",
+        "nullable": true
+      },
+      "billing_cadence": {
+        "type": "string",
+        "nullable": true
+      },
+      "sku": {
+        "type": "string",
+        "nullable": true
+      },
+      "name": {
+        "type": "string",
+        "nullable": true
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "quantity": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "unit": {
+        "type": "string",
+        "nullable": true
+      },
+      "unit_price_ex_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "discount_value": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "discount_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "vat_rate": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "line_total_ex_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "vat_amount": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "line_total_inc_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "is_required": {
+        "type": "boolean"
+      },
+      "is_optional": {
+        "type": "boolean"
+      },
+      "is_recommended": {
+        "type": "boolean"
+      },
+      "customer_selected_by_default": {
+        "type": "boolean"
+      },
+      "customer_quantity_editable": {
+        "type": "boolean"
+      },
+      "min_customer_quantity": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "max_customer_quantity": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "customer_label": {
+        "type": "string",
+        "nullable": true
+      },
+      "source_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "source_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "downstream_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "unit_cost_ex_vat": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "margin_amount": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "margin_percent": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "nullable": true,
+        "description": "Persisted exact decimal string or existing calculated presentation number."
+      },
+      "template_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "option_group_name": {
+        "type": "string",
+        "nullable": true
+      },
+      "source_label": {
+        "type": "string",
+        "nullable": true
+      },
+      "template_option_group_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "source_reference": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesTemplate": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "template_key": {
+        "type": "string",
+        "nullable": true
+      },
+      "name": {
+        "type": "string",
+        "nullable": true
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "is_active": {
+        "type": "boolean"
+      },
+      "target_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "customer_segment": {
+        "type": "string",
+        "nullable": true
+      },
+      "intro_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "scope_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "assumptions_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "exclusions_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_steps_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "revision": {
+        "type": "string",
+        "nullable": true
+      },
+      "lines_count": {
+        "type": "integer",
+        "nullable": true
+      },
+      "option_groups_count": {
+        "type": "integer",
+        "nullable": true
+      },
+      "acknowledgements_count": {
+        "type": "integer",
+        "nullable": true
+      },
+      "updated_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "seller_checklist": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "approval_policy_hints": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "option_groups": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesOptionGroup"
+        }
+      },
+      "lines": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesTemplateLine"
+        }
+      },
+      "acknowledgements": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesAcknowledgement"
+        }
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesDelivery": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "kind": {
+        "type": "string",
+        "nullable": true
+      },
+      "opportunity_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "quote_version_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "activity_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "state": {
+        "type": "string",
+        "nullable": true
+      },
+      "preview_hash": {
+        "type": "string",
+        "nullable": true
+      },
+      "expires_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date"
+      },
+      "started_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "finished_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "message_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "error_code": {
+        "type": "string",
+        "nullable": true
+      },
+      "inbox_receipt_verified": {
+        "type": "boolean"
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesDeliveryPreview": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "kind": {
+        "type": "string",
+        "nullable": true
+      },
+      "opportunity_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "quote_version_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "activity_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "state": {
+        "type": "string",
+        "nullable": true
+      },
+      "preview_hash": {
+        "type": "string",
+        "nullable": true
+      },
+      "expires_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date"
+      },
+      "started_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "finished_at": {
+        "type": "string",
+        "nullable": true,
+        "format": "date-time"
+      },
+      "message_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "error_code": {
+        "type": "string",
+        "nullable": true
+      },
+      "inbox_receipt_verified": {
+        "type": "boolean"
+      },
+      "ready": {
+        "type": "boolean"
+      },
+      "preview": {
+        "type": "object",
+        "properties": {
+          "to_email": {
+            "type": "string",
+            "nullable": true
+          },
+          "to_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "subject": {
+            "type": "string",
+            "nullable": true
+          },
+          "html": {
+            "type": "string",
+            "nullable": true
+          },
+          "text": {
+            "type": "string",
+            "nullable": true
+          },
+          "error_code": {
+            "type": "string",
+            "nullable": true
+          },
+          "cc": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesQuoteSend": {
+    "type": "object",
+    "properties": {
+      "quote": {
+        "$ref": "#/components/schemas/SalesStaffVersion"
+      },
+      "delivery": {
+        "$ref": "#/components/schemas/SalesDelivery"
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesActivitySend": {
+    "type": "object",
+    "properties": {
+      "activity": {
+        "$ref": "#/components/schemas/SalesActivity"
+      },
+      "delivery": {
+        "$ref": "#/components/schemas/SalesDelivery"
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesClientCreation": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "name": {
+        "type": "string",
+        "nullable": true
+      },
+      "client_number": {
+        "type": "string",
+        "nullable": true
+      },
+      "website": {
+        "type": "string",
+        "nullable": true
+      },
+      "sales_category_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "lead_temperature": {
+        "type": "integer",
+        "nullable": true
+      },
+      "contacts_count": {
+        "type": "integer",
+        "nullable": true
+      },
+      "assets_count": {
+        "type": "integer",
+        "nullable": true
+      },
+      "tags": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesTag"
+        }
+      },
+      "marketing_engagement_summary": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "integer"
+          },
+          "interest_events": {
+            "type": "integer"
+          },
+          "opens": {
+            "type": "integer"
+          },
+          "clicks": {
+            "type": "integer"
+          },
+          "unsubscribes": {
+            "type": "integer"
+          },
+          "last_seen_at": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "sites": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesIdName"
+        }
+      },
+      "contacts": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SalesContact"
+        }
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesContactCreation": {
+    "type": "object",
+    "properties": {
+      "contact": {
+        "$ref": "#/components/schemas/SalesContact"
+      },
+      "site": {
+        "$ref": "#/components/schemas/SalesIdName"
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesOperation": {
+    "type": "object",
+    "properties": {
+      "operation_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "type": {
+        "type": "string",
+        "nullable": true
+      },
+      "id": {
+        "oneOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "version_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "activity_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "deleted": {
+        "type": "boolean"
+      },
+      "replayed": {
+        "type": "boolean"
+      },
+      "initialized": {
+        "type": "boolean"
+      },
+      "notice": {
+        "type": "string",
+        "nullable": true
+      },
+      "message": {
+        "type": "string",
+        "nullable": true
+      },
+      "key": {
+        "type": "string",
+        "nullable": true
+      },
+      "affected": {
+        "type": "object",
+        "properties": {
+          "activity_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "line_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "version_id": {
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "delivery": {
+        "$ref": "#/components/schemas/SalesDeliveryPreview"
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesError": {
+    "type": "object",
+    "properties": {
+      "message": {
+        "type": "string"
+      },
+      "errors": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "message"
+    ]
+  },
+  "SalesPagination": {
+    "type": "object",
+    "properties": {
+      "current_page": {
+        "type": "integer"
+      },
+      "last_page": {
+        "type": "integer"
+      },
+      "per_page": {
+        "type": "integer"
+      },
+      "total": {
+        "type": "integer"
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesOpportunityList": {
+    "type": "array",
+    "items": {
+      "$ref": "#/components/schemas/SalesOpportunity"
+    }
+  },
+  "SalesActivityList": {
+    "type": "array",
+    "items": {
+      "$ref": "#/components/schemas/SalesActivity"
+    }
+  },
+  "SalesStakeholderList": {
+    "type": "array",
+    "items": {
+      "$ref": "#/components/schemas/SalesStakeholder"
+    }
+  },
+  "SalesLeadList": {
+    "type": "array",
+    "items": {
+      "$ref": "#/components/schemas/SalesLead"
+    }
+  },
+  "SalesQuoteList": {
+    "type": "array",
+    "items": {
+      "$ref": "#/components/schemas/SalesQuote"
+    }
+  },
+  "SalesVersionList": {
+    "type": "array",
+    "items": {
+      "$ref": "#/components/schemas/SalesStaffVersion"
+    }
+  },
+  "SalesCustomerVersionList": {
+    "type": "array",
+    "items": {
+      "$ref": "#/components/schemas/SalesCustomerVersion"
+    }
+  },
+  "SalesConversionList": {
+    "type": "array",
+    "items": {
+      "$ref": "#/components/schemas/SalesConversionPlan"
+    }
+  },
+  "SalesTemplateList": {
+    "type": "array",
+    "items": {
+      "$ref": "#/components/schemas/SalesTemplate"
+    }
+  },
+  "SalesInputSalesOpportunitiesStorePost": {
+    "type": "object",
+    "properties": {
+      "client_id": {
+        "type": "integer"
+      },
+      "primary_contact_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "owner_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "title": {
+        "type": "string"
+      },
+      "type": {
+        "type": "string"
+      },
+      "status": {
+        "type": "string",
+        "nullable": true
+      },
+      "summary": {
+        "type": "string",
+        "nullable": true
+      },
+      "needs": {
+        "type": "string",
+        "nullable": true
+      },
+      "employee_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "user_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "workstation_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "server_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "site_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "estimated_value_ex_vat": {
+        "type": "number"
+      },
+      "probability_percent": {
+        "type": "number"
+      },
+      "expected_close_date": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_follow_up_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_follow_up_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_follow_up_note": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "client_id",
+      "title",
+      "type"
+    ]
+  },
+  "SalesInputSalesOpportunitiesReplacePut": {
+    "type": "object",
+    "properties": {
+      "client_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "primary_contact_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "owner_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "title": {
+        "type": "string",
+        "nullable": true
+      },
+      "type": {
+        "type": "string",
+        "nullable": true
+      },
+      "status": {
+        "type": "string",
+        "nullable": true
+      },
+      "summary": {
+        "type": "string",
+        "nullable": true
+      },
+      "needs": {
+        "type": "string",
+        "nullable": true
+      },
+      "employee_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "user_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "workstation_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "server_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "site_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "estimated_value_ex_vat": {
+        "type": "number"
+      },
+      "probability_percent": {
+        "type": "number"
+      },
+      "expected_close_date": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_follow_up_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_follow_up_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_follow_up_note": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesInputSalesOpportunitiesUpdatePatch": {
+    "type": "object",
+    "properties": {
+      "client_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "primary_contact_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "owner_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "title": {
+        "type": "string",
+        "nullable": true
+      },
+      "type": {
+        "type": "string",
+        "nullable": true
+      },
+      "status": {
+        "type": "string",
+        "nullable": true
+      },
+      "summary": {
+        "type": "string",
+        "nullable": true
+      },
+      "needs": {
+        "type": "string",
+        "nullable": true
+      },
+      "employee_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "user_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "workstation_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "server_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "site_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "estimated_value_ex_vat": {
+        "type": "number"
+      },
+      "probability_percent": {
+        "type": "number"
+      },
+      "expected_close_date": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_follow_up_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_follow_up_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_follow_up_note": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesInputSalesOpportunitiesLostPost": {
+    "type": "object",
+    "properties": {
+      "lost_reason": {
+        "type": "string"
+      },
+      "internal_note": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "lost_reason"
+    ]
+  },
+  "SalesInputSalesOpportunitiesReopenPost": {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "status"
+    ]
+  },
+  "SalesInputSalesOpportunitiesActivitiesStorePost": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "nullable": true
+      },
+      "subject": {
+        "type": "string",
+        "nullable": true
+      },
+      "body": {
+        "type": "string",
+        "nullable": true
+      },
+      "recipient_contact_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "to_email": {
+        "type": "string",
+        "nullable": true
+      },
+      "cc": {
+        "type": "string",
+        "nullable": true
+      },
+      "notify_user_id": {
+        "type": "integer",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesInputSalesOpportunitiesReadPost": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "SalesInputSalesOpportunitiesActivitiesReadPost": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "SalesInputSalesOpportunitiesStakeholdersStorePost": {
+    "type": "object",
+    "properties": {
+      "client_user_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "role": {
+        "type": "string",
+        "nullable": true
+      },
+      "is_primary": {
+        "type": "boolean"
+      },
+      "notes": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesInputSalesLeadsClassificationPatch": {
+    "type": "object",
+    "properties": {
+      "sales_category_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "lead_temperature": {
+        "type": "integer"
+      },
+      "website": {
+        "type": "string",
+        "nullable": true
+      },
+      "tag_names": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "lead_temperature"
+    ]
+  },
+  "SalesInputSalesLeadsStartPost": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string"
+      },
+      "type": {
+        "type": "string"
+      },
+      "owner_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "status": {
+        "type": "string",
+        "nullable": true
+      },
+      "summary": {
+        "type": "string",
+        "nullable": true
+      },
+      "needs": {
+        "type": "string",
+        "nullable": true
+      },
+      "employee_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "user_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "workstation_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "server_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "site_count_estimate": {
+        "type": "integer",
+        "nullable": true
+      },
+      "expected_close_date": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_follow_up_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_follow_up_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_follow_up_note": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "title",
+      "type"
+    ]
+  },
+  "SalesInputSalesClientsQuickCreatePost": {
+    "type": "object",
+    "properties": {
+      "tripletex_number_mode": {
+        "type": "boolean"
+      },
+      "tripletex_request_key": {
+        "type": "string",
+        "nullable": true
+      },
+      "tripletex_customer_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "name": {
+        "type": "string"
+      },
+      "client_number": {
+        "type": "string",
+        "nullable": true
+      },
+      "org_no": {
+        "type": "string",
+        "nullable": true
+      },
+      "client_format_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "website": {
+        "type": "string",
+        "nullable": true
+      },
+      "billing_email": {
+        "type": "string",
+        "nullable": true
+      },
+      "notes": {
+        "type": "string",
+        "nullable": true
+      },
+      "active": {
+        "type": "boolean"
+      },
+      "site_name": {
+        "type": "string"
+      },
+      "user_name": {
+        "type": "string"
+      },
+      "user_email": {
+        "type": "string"
+      },
+      "user_phone": {
+        "type": "string",
+        "nullable": true
+      },
+      "user_role": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "name",
+      "site_name",
+      "user_name",
+      "user_email"
+    ]
+  },
+  "SalesInputSalesContactsQuickCreatePost": {
+    "type": "object",
+    "properties": {
+      "client_site_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "name": {
+        "type": "string"
+      },
+      "email": {
+        "type": "string"
+      },
+      "phone": {
+        "type": "string",
+        "nullable": true
+      },
+      "role": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "name",
+      "email"
+    ]
+  },
+  "SalesInputSalesQuoteDraftPost": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "SalesInputSalesQuoteVersionsDetailsPatch": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string"
+      },
+      "expires_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "intro_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "scope_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "assumptions_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "exclusions_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_steps_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "acknowledgement_title": {
+        "type": "string",
+        "nullable": true
+      },
+      "acknowledgement_body": {
+        "type": "string",
+        "nullable": true
+      },
+      "acknowledgement_required": {
+        "type": "boolean"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "title"
+    ]
+  },
+  "SalesInputSalesQuoteVersionsAddlinePost": {
+    "type": "object",
+    "properties": {
+      "source_type": {
+        "type": "string"
+      },
+      "source_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "section": {
+        "type": "string"
+      },
+      "downstream_type": {
+        "type": "string"
+      },
+      "billing_cadence": {
+        "type": "string",
+        "nullable": true
+      },
+      "name": {
+        "type": "string",
+        "nullable": true
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "quantity": {
+        "type": "number"
+      },
+      "unit_price_ex_vat": {
+        "type": "number"
+      },
+      "unit_cost_ex_vat": {
+        "type": "number"
+      },
+      "discount_value": {
+        "type": "number"
+      },
+      "discount_type": {
+        "type": "string"
+      },
+      "vat_rate": {
+        "type": "number"
+      },
+      "is_optional": {
+        "type": "boolean"
+      },
+      "is_required": {
+        "type": "boolean"
+      },
+      "is_recommended": {
+        "type": "boolean"
+      },
+      "customer_selected_by_default": {
+        "type": "boolean"
+      },
+      "customer_quantity_editable": {
+        "type": "boolean"
+      },
+      "min_customer_quantity": {
+        "type": "number"
+      },
+      "max_customer_quantity": {
+        "type": "number"
+      },
+      "customer_label": {
+        "type": "string",
+        "nullable": true
+      },
+      "option_group_name": {
+        "type": "string",
+        "nullable": true
+      },
+      "option_group_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "option_group_description": {
+        "type": "string",
+        "nullable": true
+      },
+      "option_group_min_select": {
+        "type": "integer",
+        "nullable": true
+      },
+      "option_group_max_select": {
+        "type": "integer",
+        "nullable": true
+      },
+      "line_acknowledgement_title": {
+        "type": "string",
+        "nullable": true
+      },
+      "line_acknowledgement_body": {
+        "type": "string",
+        "nullable": true
+      },
+      "line_acknowledgement_required": {
+        "type": "boolean"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "source_type",
+      "section",
+      "downstream_type",
+      "quantity",
+      "discount_type"
+    ]
+  },
+  "SalesInputSalesQuoteVersionsUpdatelinePatch": {
+    "type": "object",
+    "properties": {
+      "section": {
+        "type": "string"
+      },
+      "downstream_type": {
+        "type": "string"
+      },
+      "billing_cadence": {
+        "type": "string",
+        "nullable": true
+      },
+      "name": {
+        "type": "string"
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "quantity": {
+        "type": "number"
+      },
+      "unit_price_ex_vat": {
+        "type": "number"
+      },
+      "unit_cost_ex_vat": {
+        "type": "number"
+      },
+      "discount_value": {
+        "type": "number"
+      },
+      "discount_type": {
+        "type": "string"
+      },
+      "vat_rate": {
+        "type": "number"
+      },
+      "is_optional": {
+        "type": "boolean"
+      },
+      "is_required": {
+        "type": "boolean"
+      },
+      "is_recommended": {
+        "type": "boolean"
+      },
+      "customer_selected_by_default": {
+        "type": "boolean"
+      },
+      "customer_quantity_editable": {
+        "type": "boolean"
+      },
+      "min_customer_quantity": {
+        "type": "number"
+      },
+      "max_customer_quantity": {
+        "type": "number"
+      },
+      "customer_label": {
+        "type": "string",
+        "nullable": true
+      },
+      "option_group_name": {
+        "type": "string",
+        "nullable": true
+      },
+      "option_group_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "option_group_description": {
+        "type": "string",
+        "nullable": true
+      },
+      "option_group_min_select": {
+        "type": "integer",
+        "nullable": true
+      },
+      "option_group_max_select": {
+        "type": "integer",
+        "nullable": true
+      },
+      "line_acknowledgement_title": {
+        "type": "string",
+        "nullable": true
+      },
+      "line_acknowledgement_body": {
+        "type": "string",
+        "nullable": true
+      },
+      "line_acknowledgement_required": {
+        "type": "boolean"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "section",
+      "downstream_type",
+      "name",
+      "quantity",
+      "unit_price_ex_vat",
+      "discount_type"
+    ]
+  },
+  "SalesInputSalesQuoteVersionsDeletelineDelete": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "SalesInputSalesQuoteVersionsRevisePost": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "SalesInputSalesQuoteVersionsTemplatePost": {
+    "type": "object",
+    "properties": {
+      "template_id": {
+        "type": "integer"
+      },
+      "replace_existing": {
+        "type": "boolean"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "template_id"
+    ]
+  },
+  "SalesInputSalesQuoteVersionsApprovalRequestPost": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "SalesInputSalesQuoteVersionsApprovalApprovePost": {
+    "type": "object",
+    "properties": {
+      "note": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesInputSalesQuoteVersionsApprovalRejectPost": {
+    "type": "object",
+    "properties": {
+      "note": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesInputSalesQuoteVersionsApprovalChangesPost": {
+    "type": "object",
+    "properties": {
+      "note": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false
+  },
+  "SalesInputSalesQuoteVersionsConversionPlansUpdatePatch": {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string"
+      },
+      "target_reference": {
+        "type": "string",
+        "nullable": true
+      },
+      "operator_note": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "status"
+    ]
+  },
+  "SalesInputSalesQuoteVersionsSendPreviewPost": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "SalesInputSalesQuoteVersionsSendPost": {
+    "type": "object",
+    "properties": {
+      "preview_id": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "preview_hash": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "preview_id",
+      "preview_hash"
+    ]
+  },
+  "SalesInputSalesOpportunitiesEmailsEmailpreviewPost": {
+    "type": "object",
+    "properties": {
+      "subject": {
+        "type": "string",
+        "nullable": true
+      },
+      "body": {
+        "type": "string"
+      },
+      "recipient_contact_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "to_email": {
+        "type": "string",
+        "nullable": true
+      },
+      "cc": {
+        "type": "string",
+        "nullable": true
+      },
+      "notify_user_id": {
+        "type": "integer",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "body"
+    ]
+  },
+  "SalesInputSalesOpportunitiesEmailsEmailsendPost": {
+    "type": "object",
+    "properties": {
+      "preview_id": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "preview_hash": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "preview_id",
+      "preview_hash"
+    ]
+  },
+  "SalesInputSalesOperationsDispatchPost": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "SalesInputSalesSettingsApprovalPolicyUpdatePatch": {
+    "type": "object",
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      },
+      "discount_percent_threshold": {
+        "type": "number"
+      },
+      "minimum_margin_percent": {
+        "type": "number"
+      },
+      "quote_total_ex_vat_threshold": {
+        "type": "number"
+      },
+      "manual_line_ex_vat_threshold": {
+        "type": "number"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "discount_percent_threshold",
+      "minimum_margin_percent",
+      "quote_total_ex_vat_threshold",
+      "manual_line_ex_vat_threshold"
+    ]
+  },
+  "SalesInputSalesInitializePost": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "SalesInputSalesQuoteTemplatesStorePost": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "is_active": {
+        "type": "boolean"
+      },
+      "target_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "customer_segment": {
+        "type": "string",
+        "nullable": true
+      },
+      "intro_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "scope_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "assumptions_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "exclusions_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_steps_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "seller_checklist": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "seller_checklist_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "approval_policy_hints": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "approval_policy_hints_text": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "name"
+    ]
+  },
+  "SalesInputSalesQuoteTemplatesUpdatePut": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "is_active": {
+        "type": "boolean"
+      },
+      "target_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "customer_segment": {
+        "type": "string",
+        "nullable": true
+      },
+      "intro_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "scope_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "assumptions_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "exclusions_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_steps_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "seller_checklist": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "seller_checklist_text": {
+        "type": "string",
+        "nullable": true
+      },
+      "approval_policy_hints": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "approval_policy_hints_text": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "name"
+    ]
+  },
+  "SalesInputSalesQuoteTemplatesDestroyDelete": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "SalesInputSalesQuoteTemplatesLinesStorePost": {
+    "type": "object",
+    "properties": {
+      "source_reference": {
+        "type": "string",
+        "nullable": true
+      },
+      "option_group_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "option_group_name": {
+        "type": "string",
+        "nullable": true
+      },
+      "option_group_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "option_group_description": {
+        "type": "string",
+        "nullable": true
+      },
+      "option_group_min_select": {
+        "type": "integer",
+        "nullable": true
+      },
+      "option_group_max_select": {
+        "type": "integer",
+        "nullable": true
+      },
+      "section": {
+        "type": "string"
+      },
+      "sort_order": {
+        "type": "integer",
+        "nullable": true
+      },
+      "source_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "source_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "downstream_type": {
+        "type": "string"
+      },
+      "billing_cadence": {
+        "type": "string"
+      },
+      "is_required": {
+        "type": "boolean"
+      },
+      "is_recommended": {
+        "type": "boolean"
+      },
+      "customer_selected_by_default": {
+        "type": "boolean"
+      },
+      "customer_quantity_editable": {
+        "type": "boolean"
+      },
+      "min_customer_quantity": {
+        "type": "number"
+      },
+      "max_customer_quantity": {
+        "type": "number"
+      },
+      "customer_label": {
+        "type": "string",
+        "nullable": true
+      },
+      "sku": {
+        "type": "string",
+        "nullable": true
+      },
+      "name": {
+        "type": "string",
+        "nullable": true
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "quantity": {
+        "type": "number"
+      },
+      "unit": {
+        "type": "string",
+        "nullable": true
+      },
+      "unit_cost_ex_vat": {
+        "type": "number"
+      },
+      "unit_price_ex_vat": {
+        "type": "number"
+      },
+      "discount_value": {
+        "type": "number"
+      },
+      "discount_type": {
+        "type": "string"
+      },
+      "vat_rate": {
+        "type": "number"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "section",
+      "downstream_type",
+      "billing_cadence",
+      "quantity",
+      "discount_type"
+    ]
+  },
+  "SalesInputSalesQuoteTemplatesLinesDestroyDelete": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "SalesInputSalesQuoteTemplatesAcknowledgementsStorePost": {
+    "type": "object",
+    "properties": {
+      "template_line_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "title": {
+        "type": "string"
+      },
+      "body": {
+        "type": "string"
+      },
+      "is_required": {
+        "type": "boolean"
+      },
+      "sort_order": {
+        "type": "integer",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "title",
+      "body"
+    ]
+  },
+  "SalesInputSalesQuoteTemplatesAcknowledgementsDestroyDelete": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "SalesInputSalesPublicQuotesViewedPost": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "SalesInputSalesPublicQuotesAcceptPost": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "confirm": {
+        "type": "boolean"
+      },
+      "selected_line_ids": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "quantities": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": {
+          "type": "number",
+          "minimum": 0.01,
+          "maximum": 100000
+        }
+      },
+      "acknowledgement_ids": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "email": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "name",
+      "confirm"
+    ]
+  },
+  "SalesInputSalesPublicQuotesDeclinePost": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "reason": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "name"
+    ]
+  },
+  "SalesInputSalesPublicQuotesQuestionPost": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "email": {
+        "type": "string",
+        "nullable": true
+      },
+      "message": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "name",
+      "message"
+    ]
+  },
+  "SalesInputSalesPortalQuotesViewedPost": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "SalesInputSalesPortalQuotesAcceptPost": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "confirm": {
+        "type": "boolean"
+      },
+      "selected_line_ids": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "quantities": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": {
+          "type": "number",
+          "minimum": 0.01,
+          "maximum": 100000
+        }
+      },
+      "acknowledgement_ids": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "name",
+      "confirm"
+    ]
+  },
+  "SalesInputSalesPortalQuotesDeclinePost": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "reason": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "name"
+    ]
+  },
+  "SalesInputSalesPortalQuotesQuestionPost": {
+    "type": "object",
+    "properties": {
+      "message": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "message"
+    ]
+  }
+}

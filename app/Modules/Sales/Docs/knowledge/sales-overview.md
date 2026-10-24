@@ -144,3 +144,21 @@ CustomerPortal audit event.
 Portal quote pages do not expose internal notes, cost price, margin, source IDs, downstream conversion
 controls, or internal workflow settings. Site-scoped portal memberships do not see Sales quotes because
 Sales opportunities and quote versions are currently client-level records.
+
+## Complete Sales API on Dev (2026-10-24)
+
+The existing Sales workflows now have a complete typed API implementation on Dev: lead classification/
+start; opportunities and stakeholders; activity email/internal notes and read actions; draft/version/
+CPQ lines, selections and acknowledgements; approval, send and revision; templates, settings/reporting;
+customer-safe public/portal JSON/PDF/questions/responses; immutable acceptance and conversion read-back.
+The interface contains 75 documented HTTP operations. See **Sales API** for the exact endpoint index,
+current user permissions, keys/revisions, customer identity boundaries and delivery/retry procedure.
+
+For employees, the menu and workflow remain **Sales -> opportunity -> Quote** and the existing
+**Admin -> Sales settings -> Rules / Quote Templates**. API availability does not grant new rights
+or replace required internal approval. Preview the exact quote/recipient before sending. Queued,
+failed/unknown and SMTP-accepted delivery states are distinct from verified customer inbox receipt.
+
+Svein Tore approved the delivered API scope and Main promotion on 2026-10-25.
+**HR-2026-10-24-SALES-API** is Reviewed; production deployment remains separate. Check installation Swagger before relying on a new
+operation. No actual customer email/acceptance/provider write is claimed by automated verification.

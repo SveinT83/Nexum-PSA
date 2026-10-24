@@ -22,6 +22,11 @@ unset($tdpsaLoadingCloudFactoryPublicRoutes);
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
 
+    // Sales owns its exact public quote capability and existing portal-session API branches.
+    $salesPublicApiRoutes = true;
+    require app_path('Modules/Sales/routes.php');
+    unset($salesPublicApiRoutes);
+
     // ------------------------------------------------------------------------------------------
     // Protected routes
     // ------------------------------------------------------------------------------------------
