@@ -47,10 +47,15 @@ real send/provider pilot requires explicit recipient/operation scope first.
 - [ ] Confirm API GET/context/PDF do not seed data/permissions or record lifecycle mutations.
 - [ ] Read published employee handbook and verify environment status and intended staff access.
 
-
 Main promotion: PR #311 (https://github.com/SveinT83/Nexum-PSA/pull/311).
 Isolated Main candidate passes 361 tests / 4810 assertions; source 9a7d779.
 See plans/2026-10-25-sales-api-main-promotion.md. Production is not deployed.
+
+Main implementation merge independently verified on 2026-10-25: [PR #311](https://github.com/SveinT83/Nexum-PSA/pull/311),
+commit `81812c5b8989dcb3522245b87e69390fb57a2141`. GitHub and origin/main agree; the complete merge tree
+equals the tested final candidate e5d4c989abc8bf64a39235d83672bcce696f0f17.
+Dev HEAD/index and unrelated work are preserved. Production deployment and activation
+were not performed.
 
 ## HR-2026-10-23-CALENDAR-API - Full Calendar API coverage
 

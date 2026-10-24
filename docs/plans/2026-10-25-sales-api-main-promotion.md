@@ -1,6 +1,6 @@
 # Sales API Main promotion (2026-10-25)
 
-Status: Human Reviewed / Verified Main promotion candidate; PR #311.
+Status: Merged To Main / Human Reviewed; production not deployed.
 Human reviewer: Svein Tore. Explicit acceptance: "Godkjent. Merg til main".
 Review record: HR-2026-10-24-SALES-API (Reviewed).
 
@@ -47,3 +47,9 @@ BookStack approval status independently read back: pages 508/428 revision 9,
 Sales Knowledge articles were synchronized; no global unrelated documentation push.
 Production rollout is still outside this request. GitHub PR #311 is the authoritative
 merge-state and merge-commit record; no production availability is implied by merge.
+
+Main implementation merge independently verified on 2026-10-25: [PR #311](https://github.com/SveinT83/Nexum-PSA/pull/311),
+commit `81812c5b8989dcb3522245b87e69390fb57a2141`. GitHub and origin/main agree; the complete merge tree
+equals the tested final candidate e5d4c989abc8bf64a39235d83672bcce696f0f17.
+Dev HEAD/index and unrelated work are preserved. Production deployment and activation
+were not performed.
