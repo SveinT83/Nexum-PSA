@@ -27,6 +27,10 @@ No commit/push/Main promotion/production deployment or native customer write per
 Shared dirty work preserved. Website editorial handoff says do not publish yet.
 
 
+Main promotion: PR #311 (https://github.com/SveinT83/Nexum-PSA/pull/311).
+Isolated Main candidate passes 361 tests / 4810 assertions; source 9a7d779.
+See plans/2026-10-25-sales-api-main-promotion.md. Production is not deployed.
+
 ## Full Calendar browser/API coverage (2026-10-23; approved 2026-10-24)
 
 Status: Included In This Main Promotion / Human Reviewed. Owner: Codex. Reviewer/release owner: Svein Tore.

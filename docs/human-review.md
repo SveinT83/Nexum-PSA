@@ -48,6 +48,10 @@ real send/provider pilot requires explicit recipient/operation scope first.
 - [ ] Read published employee handbook and verify environment status and intended staff access.
 
 
+Main promotion: PR #311 (https://github.com/SveinT83/Nexum-PSA/pull/311).
+Isolated Main candidate passes 361 tests / 4810 assertions; source 9a7d779.
+See plans/2026-10-25-sales-api-main-promotion.md. Production is not deployed.
+
 ## HR-2026-10-23-CALENDAR-API - Full Calendar API coverage
 
 Status: Reviewed. Owner: Codex. Human reviewer: Svein Tore.
