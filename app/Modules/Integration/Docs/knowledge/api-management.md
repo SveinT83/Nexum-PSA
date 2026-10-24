@@ -1240,3 +1240,7 @@ The complete interface is implemented on Dev. Svein Tore approved the delivered 
 Main promotion on 2026-10-25; **HR-2026-10-24-SALES-API** is Reviewed. Production deployment
 requires separate authorization. Durable command/delivery metadata requires its
 additive migration and current worker code; queue or SMTP acceptance does not prove inbox receipt.
+
+Main merge confirmed on 2026-10-25: [Sales API PR #311](https://github.com/SveinT83/Nexum-PSA/pull/311).
+The reviewed source is in Main. Production deployment, migrations and provider activation
+have not been performed by this update.

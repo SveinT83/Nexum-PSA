@@ -162,3 +162,7 @@ failed/unknown and SMTP-accepted delivery states are distinct from verified cust
 Svein Tore approved the delivered API scope and Main promotion on 2026-10-25.
 **HR-2026-10-24-SALES-API** is Reviewed; production deployment remains separate. Check installation Swagger before relying on a new
 operation. No actual customer email/acceptance/provider write is claimed by automated verification.
+
+Main merge confirmed on 2026-10-25: [Sales API PR #311](https://github.com/SveinT83/Nexum-PSA/pull/311).
+The reviewed source is in Main. Production deployment, migrations and provider activation
+have not been performed by this update.

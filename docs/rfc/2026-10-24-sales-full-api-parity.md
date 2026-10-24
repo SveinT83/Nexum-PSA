@@ -1,6 +1,6 @@
 # RFC: Full Sales Browser And API Coverage
 
-Status: Approved / Done On Dev / Human Reviewed; Main promotion approved.
+Status: Approved / Merged To Main / Human Reviewed; production pending.
 Date: 2026-10-24
 Owner: Codex. Product/design/human-review/release owner: Svein Tore.
 Change level: Level 3 - API, authorization, delivery/idempotency and cross-module contracts.
@@ -252,3 +252,9 @@ Svein Tore approved the delivered scope and Main merge in chat: "Godkjent. Merg 
 HR-2026-10-24-SALES-API is Reviewed. The earlier pending-review wording records the
 2026-10-24 implementation handoff; this acceptance clears the Main merge gate.
 Production deployment, provider activation and real message delivery remain separate.
+
+Main implementation merge independently verified on 2026-10-25: [PR #311](https://github.com/SveinT83/Nexum-PSA/pull/311),
+commit `81812c5b8989dcb3522245b87e69390fb57a2141`. GitHub and origin/main agree; the complete merge tree
+equals the tested final candidate e5d4c989abc8bf64a39235d83672bcce696f0f17.
+Dev HEAD/index and unrelated work are preserved. Production deployment and activation
+were not performed.

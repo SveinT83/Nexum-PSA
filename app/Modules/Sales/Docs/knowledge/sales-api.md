@@ -239,3 +239,7 @@ read-back apply throughout. The table lists every supported HTTP operation, excl
 Dev requires the additive Sales command/delivery migration and current worker code. Production
 rollout, named human acceptance and controlled real-provider/customer validation are separate gates.
 No release, real mail, customer acceptance or production capability activation is claimed here.
+
+Main merge confirmed on 2026-10-25: [Sales API PR #311](https://github.com/SveinT83/Nexum-PSA/pull/311).
+The reviewed source is in Main. Production deployment, migrations and provider activation
+have not been performed by this update.

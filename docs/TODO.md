@@ -2,7 +2,7 @@
 
 ## Full Sales browser/API coverage (2026-10-24)
 
-Status: Done On Dev / Human Reviewed; Main promotion in progress. Design approved by Svein Tore: "Godkjenner".
+Status: Merged To Main / Human Reviewed; production rollout not performed. Design approved by Svein Tore: "Godkjenner".
 Owner: Codex. Human reviewer/release owner: Svein Tore.
 RFC: rfc/2026-10-24-sales-full-api-parity.md; all six approved Feature Slices completed.
 ADR: adr/2026-10-24-sales-api-commands-and-delivery.md (Accepted).
@@ -21,15 +21,20 @@ Native internal Knowledge articles match source; their existing pending_push met
 is not external publication evidence (the BookStack pages were verified independently).
 HR-2026-10-24-SALES-API is Reviewed: Svein Tore approved "Godkjent. Merg til main"
 on 2026-10-25. The Main merge gate is cleared; production requires separate scope.
-Next (Codex): verify and merge the isolated Sales Main candidate. Controlled real sends/provider operations and
+Next (Svein Tore): separately authorize production rollout and controlled provider/message verification. Controlled real sends/provider operations and
 employee OpenWebUI retrieval remain separate checks; no such success is claimed.
-No commit/push/Main promotion/production deployment or native customer write performed.
+Scoped Main promotion is complete; no production deployment or native customer write performed.
 Shared dirty work preserved. Website editorial handoff says do not publish yet.
-
 
 Main promotion: PR #311 (https://github.com/SveinT83/Nexum-PSA/pull/311).
 Isolated Main candidate passes 361 tests / 4810 assertions; source 9a7d779.
 See plans/2026-10-25-sales-api-main-promotion.md. Production is not deployed.
+
+Main implementation merge independently verified on 2026-10-25: [PR #311](https://github.com/SveinT83/Nexum-PSA/pull/311),
+commit `81812c5b8989dcb3522245b87e69390fb57a2141`. GitHub and origin/main agree; the complete merge tree
+equals the tested final candidate e5d4c989abc8bf64a39235d83672bcce696f0f17.
+Dev HEAD/index and unrelated work are preserved. Production deployment and activation
+were not performed.
 
 ## Full Calendar browser/API coverage (2026-10-23; approved 2026-10-24)
 
