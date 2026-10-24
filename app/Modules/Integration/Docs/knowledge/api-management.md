@@ -1220,3 +1220,23 @@ and the installation Swagger. Human review HR-2026-10-20-MAIL-API is Reviewed: S
 ## Calendar API extension (2026-10-24)
 
 The approved Calendar API adds calendar.manage, calendar.free-busy.read, own users.calendar-preferences read/update and explicit nextcloud.calendar read/preview/mapping/activate/sync/health/reconcile scopes. Select only the required scopes. Existing tokens are not widened. Active actor, domain/object permissions, provider runtime and reviewed previews still apply. See the Calendar and Nextcloud handbook articles for availability and operating steps. HR-2026-10-23-CALENDAR-API is Reviewed: Svein Tore approved the delivered API scope and Main merge on 2026-10-24. Production rollout and provider activation remain separate.
+
+## Full Sales API coverage on Dev (2026-10-24)
+
+Sales has 75 typed HTTP operations covering its existing staff/admin, public quote capability and
+Customer Portal workflows. Read **Sales API** for prerequisites, complete endpoint index, permissions,
+strict fields, revisions/replay, frozen outbound previews, truthful delivery state and recovery.
+New scope families include sales.leads.read/manage, sales.clients.create, sales.contacts.create,
+sales.quotes.read/manage/send/approve, sales.email.send, sales.operations.read, sales.delivery.dispatch,
+sales.settings.read/manage and sales.reports.read. Existing Sales scopes are retained. Token ability
+is only a ceiling; current user/parent/field and administrative/approver rights are also required.
+
+Open **Admin -> Integrations -> API**, choose only the necessary scopes and inspect the target
+installation's Swagger. Keep one explicit intent key and original revision for retries. Re-read and
+review after 409 or 428. Staff tokens cannot impersonate a public/portal customer. New API availability
+does not enable a provider, widen existing keys or authorize sending to a real customer.
+
+The complete interface is implemented on Dev. Svein Tore approved the delivered API scope and
+Main promotion on 2026-10-25; **HR-2026-10-24-SALES-API** is Reviewed. Production deployment
+requires separate authorization. Durable command/delivery metadata requires its
+additive migration and current worker code; queue or SMTP acceptance does not prove inbox receipt.

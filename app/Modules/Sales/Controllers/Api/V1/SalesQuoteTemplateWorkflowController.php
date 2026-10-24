@@ -2,107 +2,121 @@
 
 namespace App\Modules\Sales\Controllers\Api\V1;
 
-use App\Http\Controllers\Controller;
-use App\Modules\Sales\Actions\EnsureSalesDefaults;
+use App\Modules\Integration\Support\DomainApiInput;
+use App\Modules\Sales\Actions\ExecuteSalesApiCommand;
 use App\Modules\Sales\Models\SalesQuoteTemplate;
-use App\Modules\Sales\Models\SalesQuoteTemplateAcknowledgement;
-use App\Modules\Sales\Models\SalesQuoteTemplateLine;
 use App\Modules\Sales\Services\SalesQuoteTemplateWorkflowService;
+use App\Modules\Sales\Support\SalesApiAccess;
+use App\Modules\Sales\Support\SalesRevision;
 use Illuminate\Http\Request;
 
-class SalesQuoteTemplateWorkflowController extends Controller
+/** Existing template contracts retain paths/statuses; actor rights and durable result identity are added. */
+class SalesQuoteTemplateWorkflowController extends SalesApiController
 {
-    public function catalog(EnsureSalesDefaults $defaults, SalesQuoteTemplateWorkflowService $workflow)
+    public function catalog(SalesQuoteTemplateWorkflowService $workflow)
     {
-        $defaults->handle();
-
         return response()->json(['data' => $workflow->catalog()]);
     }
 
-    public function index(EnsureSalesDefaults $defaults)
+    public function index(Request $request)
     {
-        $defaults->handle();
+        $query = SalesQuoteTemplate::query()->withCount(['optionGroups', 'lines', 'acknowledgements'])->orderByDesc('is_active')->orderBy('name');
 
-        return response()->json(['data' => SalesQuoteTemplate::query()
-            ->withCount(['optionGroups', 'lines', 'acknowledgements'])
-            ->orderByDesc('is_active')
-            ->orderBy('name')
-            ->get()
-            ->map(fn (SalesQuoteTemplate $template): array => [
-                'id' => $template->id,
-                'template_key' => $template->template_key,
-                'name' => $template->name,
-                'description' => $template->description,
-                'is_active' => $template->is_active,
-                'target_type' => $template->target_type,
-                'customer_segment' => $template->customer_segment,
-                'lines_count' => $template->lines_count,
-                'option_groups_count' => $template->option_groups_count,
-                'acknowledgements_count' => $template->acknowledgements_count,
-                'updated_at' => $template->updated_at?->toISOString(),
-            ])
-            ->values()]);
+        return response()->json(\App\Modules\Sales\Resources\Api\V1\SalesProjection::page($query->paginate($request->integer('per_page') ?: 50), fn ($t) => $t->only(['id', 'template_key', 'name', 'description', 'is_active', 'target_type', 'customer_segment', 'lines_count', 'option_groups_count', 'acknowledgements_count', 'updated_at']) + ['revision' => SalesRevision::of($t)]));
     }
 
     public function show(SalesQuoteTemplate $template, SalesQuoteTemplateWorkflowService $workflow)
     {
-        return response()->json(['data' => $workflow->templateResource($template)]);
+        return response()->json(['data' => $workflow->templateResource($template) + ['revision' => SalesRevision::of($template)]]);
     }
 
-    public function store(Request $request, EnsureSalesDefaults $defaults, SalesQuoteTemplateWorkflowService $workflow)
+    public function store(Request $request, SalesQuoteTemplateWorkflowService $workflow)
     {
-        $defaults->handle();
+        $data = DomainApiInput::validate($request, $workflow->templateRules());
+        $receipt = $this->mutation($request, null, fn () => ['type' => 'template', 'id' => $workflow->createTemplate($data, $request->user())->id]);
 
-        $template = $workflow->createTemplate($request->validate($workflow->templateRules()), $request->user());
-
-        return response()->json(['data' => $workflow->templateResource($template)], 201);
+        return response()->json(['data' => $workflow->templateResource(SalesQuoteTemplate::findOrFail($receipt['id'])), 'operation' => $receipt], 201);
     }
 
     public function update(Request $request, SalesQuoteTemplate $template, SalesQuoteTemplateWorkflowService $workflow)
     {
-        $template = $workflow->updateTemplate($template, $request->validate($workflow->templateRules()), $request->user());
+        $data = DomainApiInput::validate($request, $workflow->templateRules());
+        $receipt = $this->mutation($request, $template->id, fn ($root) => ['type' => 'template', 'id' => $workflow->updateTemplate($root, $data, $request->user())->id]);
 
-        return response()->json(['data' => $workflow->templateResource($template)]);
+        return response()->json(['data' => $workflow->templateResource($template->refresh()) + ['revision' => SalesRevision::of($template)], 'operation' => $receipt]);
     }
 
-    public function destroy(SalesQuoteTemplate $template)
+    public function destroy(Request $request, int $template)
     {
-        $template->delete();
+        DomainApiInput::validate($request, []);
+        $this->mutation($request, $template, function ($root) {
+            $root->delete();
+
+            return ['type' => 'template', 'id' => $root->id, 'deleted' => true];
+        });
 
         return response()->noContent();
     }
 
     public function storeLine(Request $request, SalesQuoteTemplate $template, SalesQuoteTemplateWorkflowService $workflow)
     {
-        $line = $workflow->createLine($template, $request->validate($workflow->lineRules($template)));
-        $line->load('optionGroup');
+        $data = DomainApiInput::validate($request, $workflow->lineRules($template));
+        $receipt = $this->mutation($request, $template->id, fn ($root) => ['type' => 'template_line', 'id' => $workflow->createLine($root, $data)->id]);
 
-        return response()->json(['data' => $workflow->lineResource($line)], 201);
+        return response()->json(['data' => $workflow->lineResource($template->lines()->findOrFail($receipt['id'])->load('optionGroup')), 'operation' => $receipt], 201);
     }
 
-    public function destroyLine(SalesQuoteTemplate $template, SalesQuoteTemplateLine $line)
+    public function destroyLine(Request $request, int $template, int $line)
     {
-        abort_unless((int) $line->template_id === (int) $template->id, 404);
+        DomainApiInput::validate($request, []);
+        $this->mutation($request, $template, function ($root) use ($line) {
+            $record = $root->lines()->findOrFail($line);
+            $record->delete();
 
-        $line->delete();
+            return ['type' => 'template_line', 'id' => $line, 'deleted' => true];
+        });
 
         return response()->noContent();
     }
 
     public function storeAcknowledgement(Request $request, SalesQuoteTemplate $template, SalesQuoteTemplateWorkflowService $workflow)
     {
-        $acknowledgement = $workflow->createAcknowledgement($template, $request->validate($workflow->acknowledgementRules($template)));
-        $acknowledgement->load('line');
+        $data = DomainApiInput::validate($request, $workflow->acknowledgementRules($template));
+        $receipt = $this->mutation($request, $template->id, fn ($root) => ['type' => 'template_acknowledgement', 'id' => $workflow->createAcknowledgement($root, $data)->id]);
 
-        return response()->json(['data' => $workflow->acknowledgementResource($acknowledgement)], 201);
+        return response()->json(['data' => $workflow->acknowledgementResource($template->acknowledgements()->findOrFail($receipt['id'])), 'operation' => $receipt], 201);
     }
 
-    public function destroyAcknowledgement(SalesQuoteTemplate $template, SalesQuoteTemplateAcknowledgement $acknowledgement)
+    public function destroyAcknowledgement(Request $request, int $template, int $acknowledgement)
     {
-        abort_unless((int) $acknowledgement->template_id === (int) $template->id, 404);
+        DomainApiInput::validate($request, []);
+        $this->mutation($request, $template, function ($root) use ($acknowledgement) {
+            $record = $root->acknowledgements()->findOrFail($acknowledgement);
+            $record->delete();
 
-        $acknowledgement->delete();
+            return ['type' => 'template_acknowledgement', 'id' => $acknowledgement, 'deleted' => true];
+        });
 
         return response()->noContent();
+    }
+
+    private function mutation(Request $request, ?int $id, callable $apply): array
+    {
+        $root = null;
+
+        return app(ExecuteSalesApiCommand::class)->handle($request, $request->route()->getName().':'.($id ?? 'new'), $request->all(),
+            function () use ($request, $id, &$root) {
+                SalesApiAccess::authorize($request, 'sales.manage_settings', true);
+                if ($id) {
+                    $root = SalesQuoteTemplate::withTrashed()->whereKey($id)->lockForUpdate()->firstOrFail();
+                }
+            }, function () use ($request, &$root, $apply) {
+                abort_if($root?->trashed(), 404);
+                if ($root) {
+                    SalesRevision::check($request, $root, false);
+                }
+
+                return $apply($root);
+            }, false);
     }
 }

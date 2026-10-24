@@ -14,6 +14,20 @@ class ApiAbilityCatalog
      * Access mode is deliberately explicit so progressive read scopes do not depend on their name.
      */
     private const ACCESS_MODES = [
+        'sales.reports.read' => self::ACCESS_READ,
+        'sales.settings.manage' => self::ACCESS_WRITE,
+        'sales.settings.read' => self::ACCESS_READ,
+        'sales.delivery.dispatch' => self::ACCESS_WRITE,
+        'sales.operations.read' => self::ACCESS_READ,
+        'sales.email.send' => self::ACCESS_WRITE,
+        'sales.quotes.send' => self::ACCESS_WRITE,
+        'sales.quotes.approve' => self::ACCESS_WRITE,
+        'sales.quotes.manage' => self::ACCESS_WRITE,
+        'sales.quotes.read' => self::ACCESS_READ,
+        'sales.contacts.create' => self::ACCESS_WRITE,
+        'sales.clients.create' => self::ACCESS_WRITE,
+        'sales.leads.manage' => self::ACCESS_WRITE,
+        'sales.leads.read' => self::ACCESS_READ,
         'nextcloud.calendar.reconcile' => self::ACCESS_WRITE,
         'nextcloud.calendar.health' => self::ACCESS_WRITE,
         'nextcloud.calendar.sync' => self::ACCESS_WRITE,
@@ -513,6 +527,76 @@ class ApiAbilityCatalog
             'label' => 'Update notifications',
             'description' => 'Mark the authenticated user notifications as read.',
             'domain' => 'Notifications',
+        ],
+        'sales.leads.read' => [
+            'label' => 'Sales leads read',
+            'description' => 'Explicit read Sales domain access; current actor and object rights also apply.',
+            'domain' => 'Sales',
+        ],
+        'sales.leads.manage' => [
+            'label' => 'Sales leads manage',
+            'description' => 'Explicit operational Sales domain access; current actor and object rights also apply.',
+            'domain' => 'Sales',
+        ],
+        'sales.clients.create' => [
+            'label' => 'Sales clients create',
+            'description' => 'Explicit operational Sales domain access; current actor and object rights also apply.',
+            'domain' => 'Sales',
+        ],
+        'sales.contacts.create' => [
+            'label' => 'Sales contacts create',
+            'description' => 'Explicit operational Sales domain access; current actor and object rights also apply.',
+            'domain' => 'Sales',
+        ],
+        'sales.quotes.read' => [
+            'label' => 'Sales quotes read',
+            'description' => 'Explicit read Sales domain access; current actor and object rights also apply.',
+            'domain' => 'Sales',
+        ],
+        'sales.quotes.manage' => [
+            'label' => 'Sales quotes manage',
+            'description' => 'Explicit operational Sales domain access; current actor and object rights also apply.',
+            'domain' => 'Sales',
+        ],
+        'sales.quotes.approve' => [
+            'label' => 'Sales quotes approve',
+            'description' => 'Explicit operational Sales domain access; current actor and object rights also apply.',
+            'domain' => 'Sales',
+        ],
+        'sales.quotes.send' => [
+            'label' => 'Sales quotes send',
+            'description' => 'Explicit operational Sales domain access; current actor and object rights also apply.',
+            'domain' => 'Sales',
+        ],
+        'sales.email.send' => [
+            'label' => 'Sales email send',
+            'description' => 'Explicit operational Sales domain access; current actor and object rights also apply.',
+            'domain' => 'Sales',
+        ],
+        'sales.operations.read' => [
+            'label' => 'Sales operations read',
+            'description' => 'Explicit read Sales domain access; current actor and object rights also apply.',
+            'domain' => 'Sales',
+        ],
+        'sales.delivery.dispatch' => [
+            'label' => 'Sales delivery dispatch',
+            'description' => 'Explicit operational Sales domain access; current actor and object rights also apply.',
+            'domain' => 'Sales',
+        ],
+        'sales.settings.read' => [
+            'label' => 'Sales settings read',
+            'description' => 'Explicit read Sales domain access; current actor and object rights also apply.',
+            'domain' => 'Sales',
+        ],
+        'sales.settings.manage' => [
+            'label' => 'Sales settings manage',
+            'description' => 'Explicit operational Sales domain access; current actor and object rights also apply.',
+            'domain' => 'Sales',
+        ],
+        'sales.reports.read' => [
+            'label' => 'Sales reports read',
+            'description' => 'Explicit read Sales domain access; current actor and object rights also apply.',
+            'domain' => 'Sales',
         ],
         'sales.read' => [
             'label' => 'Read sales',

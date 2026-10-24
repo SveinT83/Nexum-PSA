@@ -24,7 +24,7 @@ class SendSalesInternalNotificationEmail implements ShouldQueue
 
     public ?int $providerBindingVersion = null;
 
-    public function __construct(public int $salesActivityId)
+    public function __construct(public int $salesActivityId, public ?string $deliveryAttemptId = null)
     {
         $snapshot = app(EmailProviderBindingSnapshot::class)->captureScope('sales');
         $this->emailAccountId = $snapshot['account_id'];
@@ -36,6 +36,12 @@ class SendSalesInternalNotificationEmail implements ShouldQueue
         EmailTemplateRenderer $renderer,
         SmtpAccountMailer $mailer,
     ): void {
+        if ($this->deliveryAttemptId) {
+            app(\App\Modules\Sales\Services\SalesCommunications::class)->deliver($this->deliveryAttemptId);
+
+            return;
+        }
+
         $activity = SalesActivity::with(['opportunity', 'actor'])->find($this->salesActivityId);
         $notifyUserId = $activity?->metadata['notify_user_id'] ?? null;
         $recipient = $notifyUserId ? User::query()->whereKey($notifyUserId)->where('status', User::STATUS_ACTIVE)->first() : null;
@@ -48,6 +54,7 @@ class SendSalesInternalNotificationEmail implements ShouldQueue
 
         if (! $account) {
             $this->log(null, $activity->id, 'error', 'SALES_INTERNAL_NOTIFY_NO_ACCOUNT', 'No active sales outbound email account is configured.');
+
             return;
         }
 
@@ -71,6 +78,7 @@ class SendSalesInternalNotificationEmail implements ShouldQueue
 
         if (! $template) {
             $this->log($account->id, $activity->id, 'error', 'SALES_INTERNAL_NOTIFY_NO_TEMPLATE', 'No active sales_internal_note template exists.');
+
             return;
         }
 

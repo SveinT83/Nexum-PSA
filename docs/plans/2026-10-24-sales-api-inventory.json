@@ -1,0 +1,1758 @@
+{
+  "date": "2026-10-24",
+  "environment": "Authoritative Dev /var/Projects/tdPSA; not Main/production",
+  "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "status": "Draft target; implementation requires RFC approval",
+  "counts": {
+    "browser_routes_including_redirect": 53,
+    "browser_controller_routes": 52,
+    "api_route_rows": 18,
+    "api_http_operations_excluding_HEAD": 19,
+    "sales_source_openapi_operations": 8,
+    "unmatched_sales_source_operations": 11,
+    "generated_openapi_sales_operations": 8
+  },
+  "api_routes": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/sales/opportunities",
+      "name": "api.v1.sales.opportunities.index",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesOpportunityController@index",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/sales/opportunities",
+      "name": "api.v1.sales.opportunities.store",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesOpportunityController@store",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.create"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/sales/opportunities/{opportunity}",
+      "name": "api.v1.sales.opportunities.show",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesOpportunityController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT|PATCH",
+      "uri": "api/v1/sales/opportunities/{opportunity}",
+      "name": "api.v1.sales.opportunities.update",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesOpportunityController@update",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/sales/opportunities/{opportunity}/activities",
+      "name": "api.v1.sales.opportunities.activities.store",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesOpportunityController@storeActivity",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/sales/opportunities/{opportunity}/lost",
+      "name": "api.v1.sales.opportunities.lost",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesOpportunityController@markLost",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/sales/opportunities/{opportunity}/read",
+      "name": "api.v1.sales.opportunities.read",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesOpportunityController@markRead",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/sales/opportunities/{opportunity}/reopen",
+      "name": "api.v1.sales.opportunities.reopen",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesOpportunityController@reopen",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/sales/quote-template-catalog",
+      "name": "api.v1.sales.quote-templates.catalog",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@catalog",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.quote_templates.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/sales/quote-templates",
+      "name": "api.v1.sales.quote-templates.index",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@index",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.quote_templates.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/sales/quote-templates",
+      "name": "api.v1.sales.quote-templates.store",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@store",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.quote_templates.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/sales/quote-templates/{template}",
+      "name": "api.v1.sales.quote-templates.show",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.quote_templates.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "api/v1/sales/quote-templates/{template}",
+      "name": "api.v1.sales.quote-templates.update",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@update",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.quote_templates.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "api/v1/sales/quote-templates/{template}",
+      "name": "api.v1.sales.quote-templates.destroy",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@destroy",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.quote_templates.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/sales/quote-templates/{template}/acknowledgements",
+      "name": "api.v1.sales.quote-templates.acknowledgements.store",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@storeAcknowledgement",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.quote_templates.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "api/v1/sales/quote-templates/{template}/acknowledgements/{acknowledgement}",
+      "name": "api.v1.sales.quote-templates.acknowledgements.destroy",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@destroyAcknowledgement",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.quote_templates.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/sales/quote-templates/{template}/lines",
+      "name": "api.v1.sales.quote-templates.lines.store",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@storeLine",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.quote_templates.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "api/v1/sales/quote-templates/{template}/lines/{line}",
+      "name": "api.v1.sales.quote-templates.lines.destroy",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@destroyLine",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.quote_templates.manage"
+      ],
+      "path": null
+    }
+  ],
+  "api_operations": [
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/opportunities",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesOpportunityController@index"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/opportunities",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesOpportunityController@store"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/opportunities/{opportunity}",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesOpportunityController@show"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/sales/opportunities/{opportunity}",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesOpportunityController@update"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/sales/opportunities/{opportunity}",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesOpportunityController@update"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/opportunities/{opportunity}/activities",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesOpportunityController@storeActivity"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/opportunities/{opportunity}/lost",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesOpportunityController@markLost"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/opportunities/{opportunity}/read",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesOpportunityController@markRead"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/opportunities/{opportunity}/reopen",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesOpportunityController@reopen"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/quote-template-catalog",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@catalog"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/quote-templates",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@index"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/quote-templates",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@store"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/quote-templates/{template}",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@show"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/sales/quote-templates/{template}",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@update"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/sales/quote-templates/{template}",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@destroy"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/quote-templates/{template}/acknowledgements",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@storeAcknowledgement"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/sales/quote-templates/{template}/acknowledgements/{acknowledgement}",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@destroyAcknowledgement"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/quote-templates/{template}/lines",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@storeLine"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/sales/quote-templates/{template}/lines/{line}",
+      "action": "App\\Modules\\Sales\\Controllers\\Api\\V1\\SalesQuoteTemplateWorkflowController@destroyLine"
+    }
+  ],
+  "browser_routes": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "portal/quotes",
+      "name": "customer-portal.quotes.index",
+      "action": "App\\Modules\\Sales\\Controllers\\Portal\\PortalSalesQuoteController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "portal/quotes/{quote}",
+      "name": "customer-portal.quotes.show",
+      "action": "App\\Modules\\Sales\\Controllers\\Portal\\PortalSalesQuoteController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "portal/quotes/{quote}/accept",
+      "name": "customer-portal.quotes.accept",
+      "action": "App\\Modules\\Sales\\Controllers\\Portal\\PortalSalesQuoteController@accept",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "portal/quotes/{quote}/decline",
+      "name": "customer-portal.quotes.decline",
+      "action": "App\\Modules\\Sales\\Controllers\\Portal\\PortalSalesQuoteController@decline",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "portal/quotes/{quote}/question",
+      "name": "customer-portal.quotes.question",
+      "action": "App\\Modules\\Sales\\Controllers\\Portal\\PortalSalesQuoteController@question",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "quote/accept/{token}",
+      "name": "sales.quotes.public.accept",
+      "action": "App\\Modules\\Sales\\Controllers\\PublicQuoteController@accept",
+      "middleware": [
+        "web"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "quote/decline/{token}",
+      "name": "sales.quotes.public.decline",
+      "action": "App\\Modules\\Sales\\Controllers\\PublicQuoteController@decline",
+      "middleware": [
+        "web"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "quote/pdf/{token}",
+      "name": "sales.quotes.public.pdf",
+      "action": "App\\Modules\\Sales\\Controllers\\PublicQuoteController@pdf",
+      "middleware": [
+        "web"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "quote/question/{token}",
+      "name": "sales.quotes.public.question",
+      "action": "App\\Modules\\Sales\\Controllers\\PublicQuoteController@question",
+      "middleware": [
+        "web"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "quote/view/{token}",
+      "name": "sales.quotes.public.view",
+      "action": "App\\Modules\\Sales\\Controllers\\PublicQuoteController@view",
+      "middleware": [
+        "web"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/sales/quote-templates",
+      "name": "tech.admin.settings.sales.quote-templates.index",
+      "action": "App\\Modules\\Sales\\Controllers\\Admin\\SalesSettingsController@workflows",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/settings/sales/quote-templates",
+      "name": "tech.admin.settings.sales.quote-templates.store",
+      "action": "App\\Modules\\Sales\\Controllers\\Admin\\SalesSettingsController@storeTemplate",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/sales/quote-templates/create",
+      "name": "tech.admin.settings.sales.quote-templates.create",
+      "action": "App\\Modules\\Sales\\Controllers\\Admin\\SalesSettingsController@createTemplate",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/admin/settings/sales/quote-templates/{template}",
+      "name": "tech.admin.settings.sales.quote-templates.update",
+      "action": "App\\Modules\\Sales\\Controllers\\Admin\\SalesSettingsController@updateTemplate",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/admin/settings/sales/quote-templates/{template}",
+      "name": "tech.admin.settings.sales.quote-templates.destroy",
+      "action": "App\\Modules\\Sales\\Controllers\\Admin\\SalesSettingsController@destroyTemplate",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/settings/sales/quote-templates/{template}/acknowledgements",
+      "name": "tech.admin.settings.sales.quote-templates.acknowledgements.store",
+      "action": "App\\Modules\\Sales\\Controllers\\Admin\\SalesSettingsController@storeTemplateAcknowledgement",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/admin/settings/sales/quote-templates/{template}/acknowledgements/{acknowledgement}",
+      "name": "tech.admin.settings.sales.quote-templates.acknowledgements.destroy",
+      "action": "App\\Modules\\Sales\\Controllers\\Admin\\SalesSettingsController@destroyTemplateAcknowledgement",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/sales/quote-templates/{template}/edit",
+      "name": "tech.admin.settings.sales.quote-templates.edit",
+      "action": "App\\Modules\\Sales\\Controllers\\Admin\\SalesSettingsController@editTemplate",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/settings/sales/quote-templates/{template}/lines",
+      "name": "tech.admin.settings.sales.quote-templates.lines.store",
+      "action": "App\\Modules\\Sales\\Controllers\\Admin\\SalesSettingsController@storeTemplateLine",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/admin/settings/sales/quote-templates/{template}/lines/{line}",
+      "name": "tech.admin.settings.sales.quote-templates.lines.destroy",
+      "action": "App\\Modules\\Sales\\Controllers\\Admin\\SalesSettingsController@destroyTemplateLine",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/sales/rules",
+      "name": "tech.admin.settings.sales.rules",
+      "action": "App\\Modules\\Sales\\Controllers\\Admin\\SalesSettingsController@rules",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/settings/sales/rules",
+      "name": "tech.admin.settings.sales.rules.update",
+      "action": "App\\Modules\\Sales\\Controllers\\Admin\\SalesSettingsController@updateRules",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/sales/workflows",
+      "name": "tech.admin.settings.sales.workflows",
+      "action": "Closure",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": "app/Modules/Sales/routes.php:141"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/sales",
+      "name": "tech.sales.index",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales",
+      "name": "tech.sales.store",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/clients/quick-store",
+      "name": "tech.sales.clients.quick-store",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@quickStoreClient",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/clients/{client}/contacts/quick-store",
+      "name": "tech.sales.clients.contacts.quick-store",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@quickStoreContact",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/sales/create",
+      "name": "tech.sales.create",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@create",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/sales/leads",
+      "name": "tech.sales.leads.index",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\LeadsController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/sales/leads/{lead}",
+      "name": "tech.sales.leads.show",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\LeadsController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "tech/sales/leads/{lead}/classification",
+      "name": "tech.sales.leads.classification.update",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\LeadsController@updateClassification",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/leads/{lead}/start",
+      "name": "tech.sales.leads.start",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\LeadsController@start",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/sales/{sale}",
+      "name": "tech.sales.show",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "tech/sales/{sale}",
+      "name": "tech.sales.update",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/{sale}/activities",
+      "name": "tech.sales.activities.store",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@storeActivity",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/{sale}/activities/{activity}/read",
+      "name": "tech.sales.activities.read",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@markActivityRead",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/{sale}/lost",
+      "name": "tech.sales.lost",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@markLost",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/{sale}/quote",
+      "name": "tech.sales.quote.ensure",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@ensureQuote",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/{sale}/quote/approval/approve",
+      "name": "tech.sales.quote.approval.approve",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@approveQuote",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/{sale}/quote/approval/changes",
+      "name": "tech.sales.quote.approval.changes",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@requestQuoteChanges",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/{sale}/quote/approval/reject",
+      "name": "tech.sales.quote.approval.reject",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@rejectQuote",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/{sale}/quote/approval/request",
+      "name": "tech.sales.quote.approval.request",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@requestQuoteApproval",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/{sale}/quote/conversion-plans/{plan}",
+      "name": "tech.sales.quote.conversion-plans.update",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@updateConversionPlan",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "tech/sales/{sale}/quote/details",
+      "name": "tech.sales.quote.details.update",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@updateQuoteDetails",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/{sale}/quote/lines",
+      "name": "tech.sales.quote.lines.store",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@addQuoteLine",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "tech/sales/{sale}/quote/lines/{line}",
+      "name": "tech.sales.quote.lines.update",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@updateQuoteLine",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/sales/{sale}/quote/lines/{line}",
+      "name": "tech.sales.quote.lines.destroy",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@deleteQuoteLine",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/{sale}/quote/revise",
+      "name": "tech.sales.quote.revise",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@reviseQuote",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/{sale}/quote/send",
+      "name": "tech.sales.quote.send",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@sendQuote",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/{sale}/quote/template",
+      "name": "tech.sales.quote.templates.apply",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@applyQuoteTemplate",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/{sale}/read",
+      "name": "tech.sales.read",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@markRead",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/{sale}/reopen",
+      "name": "tech.sales.reopen",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@reopen",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sales/{sale}/stakeholders",
+      "name": "tech.sales.stakeholders.store",
+      "action": "App\\Modules\\Sales\\Controllers\\Tech\\SalesController@storeStakeholder",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    }
+  ],
+  "browser_mapping": [
+    {
+      "browser_method": "GET",
+      "browser_path": "/portal/quotes",
+      "action": "PortalSalesQuoteController@index",
+      "baseline": "Missing",
+      "target_api": "GET /api/v1/sales/portal/quotes",
+      "gap": "Existing portal identity/membership; company scope and site restrictions."
+    },
+    {
+      "browser_method": "GET",
+      "browser_path": "/portal/quotes/{quote}",
+      "action": "PortalSalesQuoteController@show",
+      "baseline": "Missing",
+      "target_api": "GET /api/v1/sales/portal/quotes/{version}; POST /api/v1/sales/portal/quotes/{version}/viewed",
+      "gap": "Customer-safe JSON/receipt/history; effective expiry; explicit lifecycle command and pure GET."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/portal/quotes/{quote}/accept",
+      "action": "PortalSalesQuoteController@accept",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/portal/quotes/{version}/accept",
+      "gap": "Same confirm/selections/quantities/acknowledgements and immutable snapshot; verified identity, audit and owner side effects."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/portal/quotes/{quote}/decline",
+      "action": "PortalSalesQuoteController@decline",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/portal/quotes/{version}/decline",
+      "gap": "Same reason/terminal-state/lifecycle behavior and exact scoped receipt."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/portal/quotes/{quote}/question",
+      "action": "PortalSalesQuoteController@question",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/portal/quotes/{version}/questions",
+      "gap": "Exact quote-bound activity/unread state; identity/audit from current customer context."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/quote/accept/{token}",
+      "action": "PublicQuoteController@accept",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/public/quotes/{token}/accept",
+      "gap": "Same confirm/selections/quantities/acknowledgements and immutable snapshot; verified identity, audit and owner side effects."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/quote/decline/{token}",
+      "action": "PublicQuoteController@decline",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/public/quotes/{token}/decline",
+      "gap": "Same reason/terminal-state/lifecycle behavior and exact scoped receipt."
+    },
+    {
+      "browser_method": "GET",
+      "browser_path": "/quote/pdf/{token}",
+      "action": "PublicQuoteController@pdf",
+      "baseline": "Missing",
+      "target_api": "GET /api/v1/sales/public/quotes/{token}/pdf",
+      "gap": "Same customer PDF/snapshot/ETag; no staff-only fields."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/quote/question/{token}",
+      "action": "PublicQuoteController@question",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/public/quotes/{token}/questions",
+      "gap": "Exact quote-bound activity/unread state; identity/audit from current customer context."
+    },
+    {
+      "browser_method": "GET",
+      "browser_path": "/quote/view/{token}",
+      "action": "PublicQuoteController@view",
+      "baseline": "Missing",
+      "target_api": "GET /api/v1/sales/public/quotes/{token}; POST /api/v1/sales/public/quotes/{token}/viewed",
+      "gap": "Customer-safe JSON/receipt/history; effective expiry; explicit lifecycle command and pure GET."
+    },
+    {
+      "browser_method": "GET",
+      "browser_path": "/tech/admin/settings/sales/quote-templates",
+      "action": "SalesSettingsController@workflows",
+      "baseline": "Partial",
+      "target_api": "GET /api/v1/sales/quote-templates; GET /api/v1/sales/reports/quotes",
+      "gap": "Existing template list; reporting counts missing."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/admin/settings/sales/quote-templates",
+      "action": "SalesSettingsController@storeTemplate",
+      "baseline": "Partial",
+      "target_api": "POST /api/v1/sales/quote-templates",
+      "gap": "Existing shared workflow; actor/admin, strict fields and durable replay."
+    },
+    {
+      "browser_method": "GET",
+      "browser_path": "/tech/admin/settings/sales/quote-templates/create",
+      "action": "SalesSettingsController@createTemplate",
+      "baseline": "Partial",
+      "target_api": "GET /api/v1/sales/quote-template-catalog",
+      "gap": "Existing catalog; current actor/admin, pure reads and typed schemas needed."
+    },
+    {
+      "browser_method": "PUT",
+      "browser_path": "/tech/admin/settings/sales/quote-templates/{template}",
+      "action": "SalesSettingsController@updateTemplate",
+      "baseline": "Partial",
+      "target_api": "PUT /api/v1/sales/quote-templates/{template}",
+      "gap": "Existing workflow; field/schema/stale-edit contracts."
+    },
+    {
+      "browser_method": "DELETE",
+      "browser_path": "/tech/admin/settings/sales/quote-templates/{template}",
+      "action": "SalesSettingsController@destroyTemplate",
+      "baseline": "Partial",
+      "target_api": "DELETE /api/v1/sales/quote-templates/{template}",
+      "gap": "Preserve soft deletion; avoid read reseeding; exact receipt."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/admin/settings/sales/quote-templates/{template}/acknowledgements",
+      "action": "SalesSettingsController@storeTemplateAcknowledgement",
+      "baseline": "Partial",
+      "target_api": "POST /api/v1/sales/quote-templates/{template}/acknowledgements",
+      "gap": "Existing workflow; field/parent rights and exact persisted result."
+    },
+    {
+      "browser_method": "DELETE",
+      "browser_path": "/tech/admin/settings/sales/quote-templates/{template}/acknowledgements/{acknowledgement}",
+      "action": "SalesSettingsController@destroyTemplateAcknowledgement",
+      "baseline": "Partial",
+      "target_api": "DELETE /api/v1/sales/quote-templates/{template}/acknowledgements/{acknowledgement}",
+      "gap": "Existing parent guard; complete actor/schema/replay coverage."
+    },
+    {
+      "browser_method": "GET",
+      "browser_path": "/tech/admin/settings/sales/quote-templates/{template}/edit",
+      "action": "SalesSettingsController@editTemplate",
+      "baseline": "Partial",
+      "target_api": "GET /api/v1/sales/quote-templates/{template}; GET /api/v1/sales/quote-template-catalog",
+      "gap": "Existing detail/catalog; complete rights/revision/schema coverage."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/admin/settings/sales/quote-templates/{template}/lines",
+      "action": "SalesSettingsController@storeTemplateLine",
+      "baseline": "Partial",
+      "target_api": "POST /api/v1/sales/quote-templates/{template}/lines",
+      "gap": "Existing line/group workflow; catalog rights, nested input and typed read-back."
+    },
+    {
+      "browser_method": "DELETE",
+      "browser_path": "/tech/admin/settings/sales/quote-templates/{template}/lines/{line}",
+      "action": "SalesSettingsController@destroyTemplateLine",
+      "baseline": "Partial",
+      "target_api": "DELETE /api/v1/sales/quote-templates/{template}/lines/{line}",
+      "gap": "Parent guard exists; actor/schema/replay/read-back needed."
+    },
+    {
+      "browser_method": "GET",
+      "browser_path": "/tech/admin/settings/sales/rules",
+      "action": "SalesSettingsController@rules",
+      "baseline": "Missing",
+      "target_api": "GET /api/v1/sales/settings/approval-policy",
+      "gap": "Admin plus sales.manage_settings; no initialization during query."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/admin/settings/sales/rules",
+      "action": "SalesSettingsController@updateRules",
+      "baseline": "Missing",
+      "target_api": "PATCH /api/v1/sales/settings/approval-policy",
+      "gap": "Enabled/discount/margin/total/manual-line thresholds and read-back."
+    },
+    {
+      "browser_method": "GET",
+      "browser_path": "/tech/admin/settings/sales/workflows",
+      "action": "Closure",
+      "baseline": "Compatibility redirect",
+      "target_api": "GET /api/v1/sales/quote-templates",
+      "gap": "Old URL redirects to template page; no independent business action."
+    },
+    {
+      "browser_method": "GET",
+      "browser_path": "/tech/sales",
+      "action": "SalesController@index",
+      "baseline": "Partial",
+      "target_api": "GET /api/v1/sales/opportunities; GET /api/v1/sales/dashboard",
+      "gap": "Lost defaults, unread/overdue ordering, stats and bounded filters differ."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales",
+      "action": "SalesController@store",
+      "baseline": "Partial",
+      "target_api": "POST /api/v1/sales/opportunities",
+      "gap": "Current actor rights, strict fields, durable replay and full read-back."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/clients/quick-store",
+      "action": "SalesController@quickStoreClient",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/clients/quick-create",
+      "gap": "Client-owned creation; provider-authoritative numbering and unknown-outcome reconciliation."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/clients/{client}/contacts/quick-store",
+      "action": "SalesController@quickStoreContact",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/clients/{client}/contacts/quick-create",
+      "gap": "Canonical Contact owner/legacy Sales bridge; no portal identity creation."
+    },
+    {
+      "browser_method": "GET",
+      "browser_path": "/tech/sales/create",
+      "action": "SalesController@create",
+      "baseline": "Missing",
+      "target_api": "GET /api/v1/sales/context",
+      "gap": "Permitted clients/sites/contacts/owners/types/statuses/next actions; pure query."
+    },
+    {
+      "browser_method": "GET",
+      "browser_path": "/tech/sales/leads",
+      "action": "LeadsController@index",
+      "baseline": "Missing",
+      "target_api": "GET /api/v1/sales/leads; GET /api/v1/sales/leads/context",
+      "gap": "Contract exclusion, marketing summary, filters, grouping and sorting."
+    },
+    {
+      "browser_method": "GET",
+      "browser_path": "/tech/sales/leads/{lead}",
+      "action": "LeadsController@show",
+      "baseline": "Missing",
+      "target_api": "GET /api/v1/sales/leads/{lead}",
+      "gap": "Same Client-backed lead semantics with safe relationships."
+    },
+    {
+      "browser_method": "PATCH",
+      "browser_path": "/tech/sales/leads/{lead}/classification",
+      "action": "LeadsController@updateClassification",
+      "baseline": "Missing",
+      "target_api": "PATCH /api/v1/sales/leads/{lead}/classification",
+      "gap": "Category/temperature/website and Sales-module tag behavior."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/leads/{lead}/start",
+      "action": "LeadsController@start",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/leads/{lead}/start",
+      "gap": "Same StoreSalesOpportunity and follow-up engine."
+    },
+    {
+      "browser_method": "GET",
+      "browser_path": "/tech/sales/{sale}",
+      "action": "SalesController@show",
+      "baseline": "Partial",
+      "target_api": "GET /api/v1/sales/opportunities/{opportunity}; GET /api/v1/sales/opportunities/{opportunity}/context",
+      "gap": "Current resource lacks quote/version, stakeholder, approval and conversion detail."
+    },
+    {
+      "browser_method": "PATCH",
+      "browser_path": "/tech/sales/{sale}",
+      "action": "SalesController@update",
+      "baseline": "Partial",
+      "target_api": "PUT/PATCH /api/v1/sales/opportunities/{opportunity}",
+      "gap": "Strict omitted/null fields, stale writes, contact ownership and follow-up parity."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/{sale}/activities",
+      "action": "SalesController@storeActivity",
+      "baseline": "Partial",
+      "target_api": "POST /api/v1/sales/opportunities/{opportunity}/activities; POST /api/v1/sales/opportunities/{opportunity}/emails/preview; POST /api/v1/sales/opportunities/{opportunity}/emails",
+      "gap": "email_out and internal-note notify_user_id are missing; freeze recipients and content."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/{sale}/activities/{activity}/read",
+      "action": "SalesController@markActivityRead",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/opportunities/{opportunity}/activities/{activity}/read",
+      "gap": "Parent guard and opportunity unread recomputation."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/{sale}/lost",
+      "action": "SalesController@markLost",
+      "baseline": "Partial",
+      "target_api": "POST /api/v1/sales/opportunities/{opportunity}/lost",
+      "gap": "Existing shared action; add complete actor/replay/stale-state contract."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/{sale}/quote",
+      "action": "SalesController@ensureQuote",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/opportunities/{opportunity}/quote/draft",
+      "gap": "Use existing draft/revision/additional-quote owner action."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/{sale}/quote/approval/approve",
+      "action": "SalesController@approveQuote",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/opportunities/{opportunity}/quote/versions/{version}/approval/approve",
+      "gap": "Current sales.quote.approve plus explicit token ability."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/{sale}/quote/approval/changes",
+      "action": "SalesController@requestQuoteChanges",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/opportunities/{opportunity}/quote/versions/{version}/approval/changes",
+      "gap": "Same approver authority; changes_requested and reason."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/{sale}/quote/approval/reject",
+      "action": "SalesController@rejectQuote",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/opportunities/{opportunity}/quote/versions/{version}/approval/reject",
+      "gap": "Same approver authority, audited note/state and safe replay."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/{sale}/quote/approval/request",
+      "action": "SalesController@requestQuoteApproval",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/opportunities/{opportunity}/quote/versions/{version}/approval/request",
+      "gap": "Recalculate/evaluate policy; return audited pending/not_required."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/{sale}/quote/conversion-plans/{plan}",
+      "action": "SalesController@updateConversionPlan",
+      "baseline": "Missing",
+      "target_api": "GET /api/v1/sales/opportunities/{opportunity}/quote/versions/{version}/conversion-plans; PATCH /api/v1/sales/opportunities/{opportunity}/quote/versions/{version}/conversion-plans/{plan}",
+      "gap": "Status/reference/operator note only; no fabricated downstream delivery."
+    },
+    {
+      "browser_method": "PATCH",
+      "browser_path": "/tech/sales/{sale}/quote/details",
+      "action": "SalesController@updateQuoteDetails",
+      "baseline": "Missing",
+      "target_api": "PATCH /api/v1/sales/opportunities/{opportunity}/quote/versions/{version}/details",
+      "gap": "Customer text/expiry/acknowledgement; draft-only and approval reset."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/{sale}/quote/lines",
+      "action": "SalesController@addQuoteLine",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/opportunities/{opportunity}/quote/versions/{version}/lines",
+      "gap": "Catalog/custom sources, group/options, quantity bounds, acknowledgement and recalculation."
+    },
+    {
+      "browser_method": "PATCH",
+      "browser_path": "/tech/sales/{sale}/quote/lines/{line}",
+      "action": "SalesController@updateQuoteLine",
+      "baseline": "Missing",
+      "target_api": "PATCH /api/v1/sales/opportunities/{opportunity}/quote/versions/{version}/lines/{line}",
+      "gap": "Exact version/parent, CPQ fields, omitted/null semantics and approval reset."
+    },
+    {
+      "browser_method": "DELETE",
+      "browser_path": "/tech/sales/{sale}/quote/lines/{line}",
+      "action": "SalesController@deleteQuoteLine",
+      "baseline": "Missing",
+      "target_api": "DELETE /api/v1/sales/opportunities/{opportunity}/quote/versions/{version}/lines/{line}",
+      "gap": "Draft-only guarded delete, recalculation and exact receipt."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/{sale}/quote/revise",
+      "action": "SalesController@reviseQuote",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/opportunities/{opportunity}/quote/versions/{version}/revise",
+      "gap": "Same negotiation/sent rule; old version immutable and superseded."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/{sale}/quote/send",
+      "action": "SalesController@sendQuote",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/opportunities/{opportunity}/quote/versions/{version}/send-preview; POST /api/v1/sales/opportunities/{opportunity}/quote/versions/{version}/send; GET /api/v1/sales/operations/{operation}",
+      "gap": "Approval gate; freeze version/content/recipient/provider; business and delivery state separate."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/{sale}/quote/template",
+      "action": "SalesController@applyQuoteTemplate",
+      "baseline": "Missing",
+      "target_api": "POST /api/v1/sales/opportunities/{opportunity}/quote/versions/{version}/template",
+      "gap": "Active template snapshot; replace_existing; immutable sent/accepted history."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/{sale}/read",
+      "action": "SalesController@markRead",
+      "baseline": "Partial",
+      "target_api": "POST /api/v1/sales/opportunities/{opportunity}/read",
+      "gap": "Existing all-activity read; add actor/strict-input/exact-result checks."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/{sale}/reopen",
+      "action": "SalesController@reopen",
+      "baseline": "Partial",
+      "target_api": "POST /api/v1/sales/opportunities/{opportunity}/reopen",
+      "gap": "Existing shared action; preserve reason/history/calendar semantics."
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/sales/{sale}/stakeholders",
+      "action": "SalesController@storeStakeholder",
+      "baseline": "Missing",
+      "target_api": "GET/POST /api/v1/sales/opportunities/{opportunity}/stakeholders",
+      "gap": "Client-bound contact, primary change, role and notes."
+    }
+  ],
+  "source_openapi_operations": [
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/opportunities",
+      "source": "app/Modules/Sales/Controllers/Api/V1/SalesOpportunityController.php"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/opportunities",
+      "source": "app/Modules/Sales/Controllers/Api/V1/SalesOpportunityController.php"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/opportunities/{opportunity}",
+      "source": "app/Modules/Sales/Controllers/Api/V1/SalesOpportunityController.php"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/sales/opportunities/{opportunity}",
+      "source": "app/Modules/Sales/Controllers/Api/V1/SalesOpportunityController.php"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/opportunities/{opportunity}/lost",
+      "source": "app/Modules/Sales/Controllers/Api/V1/SalesOpportunityController.php"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/opportunities/{opportunity}/reopen",
+      "source": "app/Modules/Sales/Controllers/Api/V1/SalesOpportunityController.php"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/opportunities/{opportunity}/activities",
+      "source": "app/Modules/Sales/Controllers/Api/V1/SalesOpportunityController.php"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/opportunities/{opportunity}/read",
+      "source": "app/Modules/Sales/Controllers/Api/V1/SalesOpportunityController.php"
+    }
+  ],
+  "source_openapi_unmatched": [
+    {
+      "method": "PUT",
+      "path": "/api/v1/sales/opportunities/{opportunity}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/quote-template-catalog"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/quote-templates"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/quote-templates"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/quote-templates/{template}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/sales/quote-templates/{template}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/sales/quote-templates/{template}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/quote-templates/{template}/acknowledgements"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/sales/quote-templates/{template}/acknowledgements/{acknowledgement}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/quote-templates/{template}/lines"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/sales/quote-templates/{template}/lines/{line}"
+    }
+  ],
+  "generated_openapi_operations": [
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/opportunities"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/opportunities"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/sales/opportunities/{opportunity}"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/sales/opportunities/{opportunity}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/opportunities/{opportunity}/lost"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/opportunities/{opportunity}/reopen"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/opportunities/{opportunity}/activities"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/sales/opportunities/{opportunity}/read"
+    }
+  ],
+  "source_sha256": {
+    "app/Modules/Sales/routes.php": "70fe493f83345e7b0ff4d80aa60969f9d39690d873e978720f562f9dd4c76f06",
+    "app/Modules/Sales/api.php": "cb369fe705e4ba8c3c27277bf83ccdcdd4e9eeb98efa18209f7a34caa8cb6688",
+    "app/Modules/Sales/Models/SalesQuoteTemplate.php": "ca995871d93c4c973c15a287474cdfac59530be86d9e2ec0c69a3b3f9399133a",
+    "app/Modules/Sales/Models/SalesQuoteTemplateOptionGroup.php": "c7ac4faf181ae8b7c3e0ba00b7661e4b0cc30da0f1f90ec412d8b4fd8bd2bc21",
+    "app/Modules/Sales/Models/SalesQuote.php": "010b232764e3706ba84329b1f2474411be564afa54e953307eb0928eeea638e6",
+    "app/Modules/Sales/Models/SalesQuoteTemplateAcknowledgement.php": "708cdc31e544e58e7a4cabb75f80cf8d347c87c9359884c84cda633d24f9600e",
+    "app/Modules/Sales/Models/SalesQuoteTemplateLine.php": "81c92ee9fa617acbf5758f265181dcf134852c85eda4267e3f32f09ac0147dcb",
+    "app/Modules/Sales/Models/SalesActivity.php": "487201092620a9b714a5a01ca0a06816f6e99cce9abeaa7b668ac1fdff9a266e",
+    "app/Modules/Sales/Models/SalesQuoteConversionPlan.php": "e596d7543f846d7fda06ef4079511c861c5f6eb6eeee9d2f06c74cd00c1bf507",
+    "app/Modules/Sales/Models/SalesQuoteLine.php": "a108b3feb4cda010568a45be2da375a0bfab0a22e95bc22ac9f0eeae39c2de6f",
+    "app/Modules/Sales/Models/SalesSetting.php": "18bd42fad27272036d37e7adf75995ecfcfc053599df6bb3a352660beaeb75b0",
+    "app/Modules/Sales/Models/SalesQuoteOptionGroup.php": "5c7751946eeb272e022785b18b73fc6f44be2a0c498d78af7e3f402408d78aea",
+    "app/Modules/Sales/Models/SalesOpportunityStakeholder.php": "77add17b8418026a45ce2027879c29d2baa3d53f4eb35dfd27ceda0bf7be8228",
+    "app/Modules/Sales/Models/SalesOpportunity.php": "5eef77342f94ce5bd70d767e0d3e4193c6743bc28e909113620ea662f73a56ab",
+    "app/Modules/Sales/Models/SalesQuoteAcceptanceSnapshot.php": "e82f81e5290e7a593febb8510b9621968584e37ef6c23540748b712d9d99d0c2",
+    "app/Modules/Sales/Models/SalesQuoteVersion.php": "76e7db3dc0e7a15ea5916ea9aac236fde783bba3f1e69b562d347aa1ac59eece",
+    "app/Modules/Sales/Models/SalesQuoteAcknowledgement.php": "101813f94603b7a1c19d76dc230d60ef0f6305ab78676a0b934e3efc8137443e",
+    "app/Modules/Sales/Services/SalesQuoteTemplateWorkflowService.php": "24da7e701a1b8c716bb791a39df216e140614751ca95095d3ff5bfd6b026102b",
+    "app/Modules/Sales/Jobs/SendSalesQuoteEmail.php": "e5e9ab9a2a75a0289a731bde60b58f2cbd65e767fb2b0276c7d8b1266b7489f5",
+    "app/Modules/Sales/Jobs/SendSalesActivityEmail.php": "ce447166e2625d0859457bed6f65a66622afd490934285322cfdfdd496c9d92c",
+    "app/Modules/Sales/Jobs/SendSalesInternalNotificationEmail.php": "adede025ba65f728b541aaaa76174ff504c8598d90d4269d639babe0582d2d57",
+    "app/Modules/Sales/Actions/SyncOpportunityFollowUpCalendar.php": "74ea03a655fda2962905c5208a6a3f75f8edd2434c4ccc3a9879653c3148e3ea",
+    "app/Modules/Sales/Actions/EnsureSalesQuoteDraft.php": "cb980470252bf139c9f08a84ba55184ae40243179e9878d70748a2f490947412",
+    "app/Modules/Sales/Actions/AcceptSalesQuote.php": "5dacbb4d7fb993e12696cc7d1d21df65e04ce6ce7e1db99eef42f8f127866d09",
+    "app/Modules/Sales/Actions/EnsureSalesDefaults.php": "19fd236a15213cabc1408ea0fb2fef7e8ad974ad0b170293cb1d0dd53219d8bc",
+    "app/Modules/Sales/Actions/MarkSalesOpportunityLost.php": "8089c45e0c15bc634cedb7c988c177ae58924981e3e7729e8bae29cad5b66aff",
+    "app/Modules/Sales/Actions/ExpireSalesQuote.php": "550a778810c5ebe8a160297cada186088f6e1307c72f7f5c52d0e581de4cdcd3",
+    "app/Modules/Sales/Actions/ReopenSalesOpportunity.php": "2c383a7d177bb54854547ccdd88c0a41f556872a426c82f6e604b25ed6518f00",
+    "app/Modules/Sales/Actions/ApplySalesQuoteTemplate.php": "eaaedca7168fff47d0277d00ea09f596fa804c65e9c471d2cb9b78a8daa06749",
+    "app/Modules/Sales/Actions/RecalculateSalesQuoteVersion.php": "4b1738037d75a14aac57dd1d546d21581c7c910f2d0c9a5665595a30469ecd0f",
+    "app/Modules/Sales/Actions/DeclineSalesQuote.php": "7f91cecbf901899643245175958fabe05ff40755ec199dd09ed2a168c1eb9e70",
+    "app/Modules/Sales/Actions/BuildSalesQuoteAcceptanceSnapshot.php": "261eae467cf96e62ceaa9cbaeeaf174ece358ec7c0b8f07c74e69c9d0eb18619",
+    "app/Modules/Sales/Actions/StoreSalesOpportunity.php": "c00287d5da701b5d0659eb628a7db432de650851d8c70031b6b11c52794a48d6",
+    "app/Modules/Sales/Actions/EvaluateSalesQuoteApproval.php": "3781eb75237d1506934be7a421dd0824b18f250a902adc6d95f031f2111956a1",
+    "app/Modules/Sales/Views/Tech/Sales/show.blade.php": "f0472b14942b700b06b071aa032c1e72d9853889bc4c534787a41b87c528ce04",
+    "app/Modules/Sales/Views/Tech/Sales/index.blade.php": "1f41cd8ee60c22c7e2984f39149b79fdbac407b1b878788ca09e578036ed07d6",
+    "app/Modules/Sales/Views/Tech/Sales/create.blade.php": "e511bf8b6a79d9ecbf063f5886d791ed08cb11d1e5d9c344c8bb43abc8198f5d",
+    "app/Modules/Sales/Views/Tech/Sales/leads/show.blade.php": "9eb0247bdc86906cb1df07fb3c84f53e7b743b4d165566767b1a9908b98c6f15",
+    "app/Modules/Sales/Views/Tech/Sales/leads/index.blade.php": "0f282762806afbd603dced770bea42bcdf20445f3ee0e96f97f7eb1838fda0b9",
+    "app/Modules/Sales/Views/Portal/quotes/show.blade.php": "5b757eea261db22bd64996f56906307a6dc7071cc8572bdbf6eae6131cbcc101",
+    "app/Modules/Sales/Views/Portal/quotes/index.blade.php": "26087b1ad81ebc46f4fb37892100ff987ec6fb64db7c5a6569257f29a2fe04f5",
+    "app/Modules/Sales/Views/Admin/Settings/workflows/form.blade.php": "b79e7e2fe61675d91353522e0400e506c164866114589a23588e63405e34f569",
+    "app/Modules/Sales/Views/Admin/Settings/workflows/index.blade.php": "9b983e4f771194b61de99011814c666ac8e1270c261d934ef067e9d1e316a37e",
+    "app/Modules/Sales/Views/Admin/Settings/rules/index.blade.php": "d16d6d6e0f555580acfba39e532368106f61bfc6c5583caeff9a429cb42ba7f3",
+    "app/Modules/Sales/Views/Public/quote.blade.php": "06679d28afb4d8a0e7155756145038d577eeeba5ca88be992b83e6a759001d26",
+    "app/Modules/Sales/Views/Public/quote-pdf.blade.php": "e14021a286d2d57c141d9d9c86f3f3d544f17ecbc706c4fff9e15ad4e011839d",
+    "app/Modules/Sales/Views/Partials/quote-groups.blade.php": "8ad3095a2612c85ead08ecef4f0b5a7d3a15aefcf67b15616d7429334497a97f",
+    "app/Modules/Sales/Resources/Api/V1/SalesActivityResource.php": "85f8c3a9c25b7d3eb8275266e763f726c2dbf495d44066ed5757d178a1d4dc84",
+    "app/Modules/Sales/Resources/Api/V1/SalesOpportunityResource.php": "1018a32a363d7bf812a3b0a1474610011ba255b510d56d385819d16651968669",
+    "app/Modules/Sales/Tests/Feature/SalesModuleTest.php": "09b42d28357bc9192559500408386844c18bcac37fad3b37f9365bdfef252199",
+    "app/Modules/Sales/Controllers/PublicQuoteController.php": "0708e2302497190354e0f9bb2b8900cba7952198fb800b6f8559ed9afa65f4f8",
+    "app/Modules/Sales/Controllers/Tech/LeadsController.php": "7af8b3739902296ece256087c5d91a1d65c7d7fd3eb6d0b27c2219ff62d2bb93",
+    "app/Modules/Sales/Controllers/Tech/SalesController.php": "c15db51bdebdc0716a4da61fd2a19e89e494420a3723ff104bd13136d8d99d8c",
+    "app/Modules/Sales/Controllers/Portal/PortalSalesQuoteController.php": "0f5e7159570c1d84026530d3568563bc8672d9c380fa7a5c93b9192f9a0b94d0",
+    "app/Modules/Sales/Controllers/Admin/SalesSettingsController.php": "024f0bf7949d04d84bc9c1d9082398a2e70066cd88712047b335430eb1911372",
+    "app/Modules/Sales/Controllers/Api/V1/SalesOpportunityController.php": "c75e9d8efefdb63c130099c569f1b6655226d6aa395fa0604938625ae50a1285",
+    "app/Modules/Sales/Controllers/Api/V1/SalesQuoteTemplateWorkflowController.php": "1e0a3cdb9f23b72a3e05a7561baa8dab18eb1a581566752e70d46c8bff0adf18",
+    "app/Modules/Sales/Support/SalesQuotePresentation.php": "9e98589a4c559689371dab5f8d1f7e9a26ba3e082de1b7c3776a6de441be673f",
+    "app/Modules/Sales/Support/SalesWorkflowFacts.php": "89148a0e5cd9d24047ec1d442d554a797fcdc794bc61361a381b68539821976d",
+    "app/Modules/Sales/Support/PortalSalesQuoteAccess.php": "6d2e2aed35ed2c64d7ed1faa15203bb8b6c74f3c4212d4f15894d41ac0b363c2",
+    "routes/api.php": "81bcc9b06e865924d950463e56d9708ea40dc665a083d0b93d659d3cf4d02639",
+    "app/Http/Middleware/EnforceTechRoutePermission.php": "a0fa55b503b777bcc382db8ac259a1c19623cc771e5fb3f1e753cbf3e10bca42",
+    "app/Modules/Integration/Support/ApiAbilityCatalog.php": "926d80bafc04274dc7b2308167be27e9deca8d41a7639b340de266e2c5c34890"
+  },
+  "baseline_tests": {
+    "command": "HOME=/tmp php artisan test app/Modules/Sales/Tests/Feature/SalesModuleTest.php",
+    "passed": 29,
+    "assertions": 453,
+    "duration_seconds": 45.37,
+    "claim": "Existing behavior only; not full API acceptance."
+  },
+  "github_reconciliation": {
+    "open_issue_queries": [
+      "repo:SveinT83/Nexum-PSA is:open sales",
+      "repo:SveinT83/Nexum-PSA is:open quote"
+    ],
+    "matching_open_issues": 0,
+    "discussions_listed": 54,
+    "related_discussion": 170,
+    "discussion_170_comments": 0
+  }
+}

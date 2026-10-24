@@ -40,16 +40,7 @@ class SalesSettingsController extends Controller
             'manual_line_ex_vat_threshold' => 'required|numeric|min:0',
         ]);
 
-        SalesSetting::query()->updateOrCreate(
-            ['key' => 'cpq_approval_policy'],
-            ['value' => [
-                'enabled' => (bool) ($data['enabled'] ?? false),
-                'discount_percent_threshold' => (float) $data['discount_percent_threshold'],
-                'minimum_margin_percent' => (float) $data['minimum_margin_percent'],
-                'quote_total_ex_vat_threshold' => (float) $data['quote_total_ex_vat_threshold'],
-                'manual_line_ex_vat_threshold' => (float) $data['manual_line_ex_vat_threshold'],
-            ]],
-        );
+        app(\App\Modules\Sales\Actions\SalesApprovalPolicy::class)->handle($data);
 
         return back()->with('success', 'Sales CPQ approval policy updated.');
     }
