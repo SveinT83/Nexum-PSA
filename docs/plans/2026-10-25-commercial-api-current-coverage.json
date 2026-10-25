@@ -1,5 +1,5 @@
 {
-  "status": "Implemented and verified on Dev; human review Reviewed by Svein Tore on 2026-10-25",
+  "status": "Merged to Main / Human Reviewed",
   "workflows": {
     "C18": [
       "GET /api/v1/commercial/worklog/time-consumptions",
@@ -143,5 +143,11 @@
   },
   "api_operation_count": 103,
   "schema_count": 47,
-  "human_review": "HR-2026-10-25-COMMERCIAL-API Reviewed by Svein Tore on 2026-10-25"
+  "human_review": "HR-2026-10-25-COMMERCIAL-API Reviewed by Svein Tore on 2026-10-25",
+  "main_promotion": {
+    "pr": "https://github.com/SveinT83/Nexum-PSA/pull/313",
+    "merge_sha": "d1e688a2ff6e794dd15629db89d720405548dce1",
+    "date": "2026-10-25",
+    "production_deployed": false
+  }
 }

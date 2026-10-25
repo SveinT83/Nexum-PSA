@@ -1,6 +1,6 @@
 # Commercial Browser/API Gap Matrix
 
-Status: Implemented and verified on Dev; Reviewed by Svein Tore. Date: 2026-10-25.
+Status: Merged to Main via PR #313; Reviewed by Svein Tore. Date: 2026-10-25.
 Source: authoritative Dev `/var/Projects/tdPSA`, branch `Dev`, HEAD `36918edbcaae1ce7b1208ba34f84a3a1719f0e98`.
 Parent: [RFC](../rfc/2026-10-25-commercial-full-api-parity.md). Machine-readable evidence: [inventory](2026-10-25-commercial-api-inventory.json).
 

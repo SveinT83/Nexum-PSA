@@ -1247,7 +1247,7 @@ have not been performed by this update.
 
 ## Full Commercial API - 25 October 2026
 
-The full Commercial implementation is verified on Dev and was accepted by Svein Tore on 25 October 2026; HR-2026-10-25-COMMERCIAL-API is Reviewed. It includes catalogue composition, Contract lines/terms/pricing/PDF/approval/legacy attestation, frozen communication preview/submit/read-back, separate public/portal acceptance, Unit administration and operational Client timebank. See [Commercial API](https://doc.tronderdata.no/link/457) for exact steps and boundaries.
+The full Commercial implementation is verified on Dev and was accepted by Svein Tore on 25 October 2026; HR-2026-10-25-COMMERCIAL-API is Reviewed. Main source promotion was independently verified on 25 October 2026: [PR #313](https://github.com/SveinT83/Nexum-PSA/pull/313). Production deployment and controlled delivery activation remain separate actions. It includes catalogue composition, Contract lines/terms/pricing/PDF/approval/legacy attestation, frozen communication preview/submit/read-back, separate public/portal acceptance, Unit administration and operational Client timebank. See [Commercial API](https://doc.tronderdata.no/link/457) for exact steps and boundaries.
 
 New token abilities are commercial.delete, commercial.send, commercial.approve, commercial.operations.read, commercial.settings.read/update and commercial.timebank.read/consume. Existing read/create/update compatibility remains; current active user/domain rights are independently required. No existing token is automatically widened.
 

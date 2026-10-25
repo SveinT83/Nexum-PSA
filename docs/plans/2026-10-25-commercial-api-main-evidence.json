@@ -102,5 +102,11 @@
     "routes/api.php": "688fa7b7755b3bb7269bdac1a2e9ea54728c12523c14f00ca2c5c475a6bfeb67"
   },
   "production_deployed": false,
-  "delivery_activated": false
+  "delivery_activated": false,
+  "main_promotion": {
+    "pr": "https://github.com/SveinT83/Nexum-PSA/pull/313",
+    "merge_sha": "d1e688a2ff6e794dd15629db89d720405548dce1",
+    "tested_tree": "a21965de761aa85f883aea8005af92399dc3ada1",
+    "readback_verified": true
+  }
 }

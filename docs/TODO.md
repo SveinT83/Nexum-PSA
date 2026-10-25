@@ -2,7 +2,7 @@
 
 ## Full Commercial browser/API coverage (2026-10-25)
 
-Status: Implemented and verified on Dev; Reviewed by Svein Tore on 2026-10-25.
+Status: Merged to Main / Human Reviewed (Svein Tore, 2026-10-25).
 Owner: Codex. Human reviewer/release owner: Svein Tore.
 Approved RFC: rfc/2026-10-25-commercial-full-api-parity.md. Accepted ADR:
 adr/2026-10-25-commercial-api-commands-and-delivery.md. All six Feature Slices complete on Dev.
@@ -33,7 +33,10 @@ Integration's larger pre-existing unpublished source differences were preserved;
 Employee OpenWebUI retrieval is not claimed. Editorial handoff added with explicit do-not-publish gate.
 
 HR-2026-10-25-COMMERCIAL-API is Reviewed: Svein Tore accepted the completed delivery with "Godkjent".
-Next (Svein Tore): separately authorize promotion/deployment and controlled activation as needed.
+Main promotion explicitly authorized ("Merge") and verified: [PR #313](https://github.com/SveinT83/Nexum-PSA/pull/313),
+commit d1e688a2ff6e794dd15629db89d720405548dce1. The merge tree equals the tested candidate.
+Fresh candidate: 145 Commercial/Portal tests / 2040 assertions plus 356 affected tests / 4880 assertions pass.
+Next (Svein Tore): separately authorize production deployment and controlled activation as needed.
 COMMERCIAL_API_DELIVERY_ENABLED and COMMERCIAL_DURABLE_DELIVERY_ENABLED stay false by default.
 Verify controlled worker/provider/message behavior before deliberately enabling delivery.
 Main/production, real customer/provider messages, commit/push and activation were not performed.

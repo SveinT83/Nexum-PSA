@@ -1,6 +1,8 @@
 # Feature Slice: Public, Portal and timebank workflows
 
 Status: Complete on Dev; human review Reviewed (Svein Tore, 2026-10-25)
+Main promotion: [PR #313](https://github.com/SveinT83/Nexum-PSA/pull/313), d1e688a2ff6e794dd15629db89d720405548dce1; verified 2026-10-25.
+Production deployment and controlled delivery activation remain separate.
 Date: 2026-10-25
 Parent: ../rfc/2026-10-25-commercial-full-api-parity.md (Approved by Svein Tore).
 Owner: Codex

@@ -3,71 +3,71 @@
   "pages": [
     {
       "id": 457,
-      "revision": 12,
-      "updated_at": "2026-10-25T13:45:11.000000Z",
+      "revision": 13,
+      "updated_at": "2026-10-25T14:05:58.000000Z",
       "book_id": 339,
       "chapter_id": 372,
       "exact_source_match": true,
-      "native_status": "Verified on Dev; Reviewed by Svein Tore on 2026-10-25"
+      "native_status": "Merged to Main via PR #313; Human Reviewed"
     },
     {
       "id": 380,
-      "revision": 13,
-      "updated_at": "2026-10-25T13:45:17.000000Z",
+      "revision": 14,
+      "updated_at": "2026-10-25T14:06:03.000000Z",
       "book_id": 339,
       "chapter_id": 372,
       "exact_source_match": true,
-      "native_status": "Verified on Dev; Reviewed by Svein Tore on 2026-10-25"
+      "native_status": "Merged to Main via PR #313; Human Reviewed"
     },
     {
       "id": 389,
-      "revision": 13,
-      "updated_at": "2026-10-25T13:45:24.000000Z",
+      "revision": 14,
+      "updated_at": "2026-10-25T14:06:10.000000Z",
       "book_id": 339,
       "chapter_id": 372,
       "exact_source_match": true,
-      "native_status": "Verified on Dev; Reviewed by Svein Tore on 2026-10-25"
+      "native_status": "Merged to Main via PR #313; Human Reviewed"
     },
     {
       "id": 396,
-      "revision": 13,
-      "updated_at": "2026-10-25T13:45:30.000000Z",
+      "revision": 14,
+      "updated_at": "2026-10-25T14:06:16.000000Z",
       "book_id": 339,
       "chapter_id": 372,
       "exact_source_match": true,
-      "native_status": "Verified on Dev; Reviewed by Svein Tore on 2026-10-25"
+      "native_status": "Merged to Main via PR #313; Human Reviewed"
     },
     {
       "id": 401,
-      "revision": 14,
-      "updated_at": "2026-10-25T13:45:42.000000Z",
+      "revision": 15,
+      "updated_at": "2026-10-25T14:06:27.000000Z",
       "book_id": 339,
       "chapter_id": 372,
       "exact_source_match": true,
-      "native_status": "Verified on Dev; Reviewed by Svein Tore on 2026-10-25"
+      "native_status": "Merged to Main via PR #313; Human Reviewed"
     },
     {
       "id": 406,
-      "revision": 14,
-      "updated_at": "2026-10-25T13:45:48.000000Z",
+      "revision": 15,
+      "updated_at": "2026-10-25T14:06:34.000000Z",
       "book_id": 339,
       "chapter_id": 372,
       "exact_source_match": true,
-      "native_status": "Verified on Dev; Reviewed by Svein Tore on 2026-10-25"
+      "native_status": "Merged to Main via PR #313; Human Reviewed"
     },
     {
       "id": 410,
-      "revision": 14,
-      "updated_at": "2026-10-25T13:45:54.000000Z",
+      "revision": 15,
+      "updated_at": "2026-10-25T14:06:39.000000Z",
       "book_id": 339,
       "chapter_id": 372,
       "exact_source_match": true,
-      "native_status": "Verified on Dev; Reviewed by Svein Tore on 2026-10-25"
+      "native_status": "Merged to Main via PR #313; Human Reviewed"
     },
     {
       "id": 449,
-      "revision": 127,
-      "updated_at": "2026-10-25T13:46:00.000000Z",
+      "revision": 128,
+      "updated_at": "2026-10-25T14:06:45.000000Z",
       "book_id": 339,
       "chapter_id": 374,
       "exact_appended_section_readback": true
@@ -77,5 +77,6 @@
   "native_knowledge_sync": "Commercial-only sync: eight articles read back, exact trimmed source, visibility internal, status published. Pending_push metadata is not external publication evidence; BookStack verified separately.",
   "integration_scope": "Only the Commercial section of BookStack 449 changed. Pre-existing differences between the larger repository Integration document and BookStack were preserved; no blanket Integration sync/push.",
   "employee_assistant_retrieval": "Not verified.",
-  "human_review": "HR-2026-10-25-COMMERCIAL-API Reviewed by Svein Tore on 2026-10-25"
+  "human_review": "HR-2026-10-25-COMMERCIAL-API Reviewed by Svein Tore on 2026-10-25",
+  "main_promotion": "PR #313, d1e688a2ff6e794dd15629db89d720405548dce1 independently verified; no production deployment"
 }
