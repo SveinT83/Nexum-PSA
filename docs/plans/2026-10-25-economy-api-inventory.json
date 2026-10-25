@@ -1,0 +1,428 @@
+{
+  "date": "2026-10-25",
+  "source": "/var/Projects/tdPSA",
+  "branch": "Dev",
+  "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "economy_browser_routes": 14,
+  "economy_api_routes": 7,
+  "browser": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "portal/orders",
+      "name": "customer-portal.orders.index",
+      "action": "App\\Modules\\Economy\\Controllers\\Portal\\PortalEconomyOrderController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "portal/orders/{order}",
+      "name": "customer-portal.orders.show",
+      "action": "App\\Modules\\Economy\\Controllers\\Portal\\PortalEconomyOrderController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/economy",
+      "name": "tech.admin.settings.economy",
+      "action": "App\\Modules\\Economy\\Controllers\\Admin\\EconomySettingsController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "tech/admin/settings/economy",
+      "name": "tech.admin.settings.economy.update",
+      "action": "App\\Modules\\Economy\\Controllers\\Admin\\EconomySettingsController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/economy",
+      "name": "tech.economy.orders.index",
+      "action": "App\\Modules\\Economy\\Controllers\\Tech\\EconomyController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/economy/export",
+      "name": "tech.economy.orders.export",
+      "action": "App\\Modules\\Economy\\Controllers\\Tech\\EconomyController@export",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/economy/generate",
+      "name": "tech.economy.orders.generate",
+      "action": "App\\Modules\\Economy\\Controllers\\Tech\\EconomyController@generate",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/economy/orders/{order}",
+      "name": "tech.economy.orders.show",
+      "action": "App\\Modules\\Economy\\Controllers\\Tech\\EconomyController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/economy/orders/{order}",
+      "name": "tech.economy.orders.destroy",
+      "action": "App\\Modules\\Economy\\Controllers\\Tech\\EconomyController@destroyOrder",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/economy/orders/{order}/draft",
+      "name": "tech.economy.orders.draft",
+      "action": "App\\Modules\\Economy\\Controllers\\Tech\\EconomyController@markDraft",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/economy/orders/{order}/invoiced",
+      "name": "tech.economy.orders.invoiced",
+      "action": "App\\Modules\\Economy\\Controllers\\Tech\\EconomyController@markInvoiced",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/economy/orders/{order}/lines/{line}",
+      "name": "tech.economy.orders.lines.destroy",
+      "action": "App\\Modules\\Economy\\Controllers\\Tech\\EconomyController@destroyLine",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/economy/orders/{order}/portal-visibility",
+      "name": "tech.economy.orders.portal-visibility.update",
+      "action": "App\\Modules\\Economy\\Controllers\\Tech\\EconomyController@updatePortalVisibility",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/economy/orders/{order}/ready",
+      "name": "tech.economy.orders.ready",
+      "action": "App\\Modules\\Economy\\Controllers\\Tech\\EconomyController@markReady",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    }
+  ],
+  "api": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/economy/orders",
+      "name": "api.v1.economy.orders.index",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@index",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/economy/orders/generate",
+      "name": "api.v1.economy.orders.generate",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@generate",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.create"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/economy/orders/{order}",
+      "name": "api.v1.economy.orders.show",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "api/v1/economy/orders/{order}",
+      "name": "api.v1.economy.orders.destroy",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@destroyOrder",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.delete"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/economy/orders/{order}/draft",
+      "name": "api.v1.economy.orders.draft",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@markDraft",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "api/v1/economy/orders/{order}/lines/{line}",
+      "name": "api.v1.economy.orders.lines.destroy",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@destroyLine",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.delete"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/economy/orders/{order}/ready",
+      "name": "api.v1.economy.orders.ready",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@markReady",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.update"
+      ],
+      "path": null
+    }
+  ],
+  "related_other_owner_routes": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/economy/rates",
+      "name": "tech.admin.settings.economy.rates",
+      "action": "App\\Modules\\Commercial\\Controllers\\Admin\\TimeRateController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/settings/economy/rates",
+      "name": "tech.admin.settings.economy.rates.store",
+      "action": "App\\Modules\\Commercial\\Controllers\\Admin\\TimeRateController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/admin/settings/economy/rates/{rate}",
+      "name": "tech.admin.settings.economy.rates.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Admin\\TimeRateController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/economy/units",
+      "name": "tech.admin.settings.economy.units",
+      "action": "App\\Modules\\Commercial\\Controllers\\Admin\\UnitsController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/settings/economy/units",
+      "name": "tech.admin.settings.economy.units.store",
+      "action": "App\\Modules\\Commercial\\Controllers\\Admin\\UnitsController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/settings/economy/units/update/{unit}",
+      "name": "tech.admin.settings.economy.units.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Admin\\UnitsController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    }
+  ],
+  "file_sha256": {
+    "app/Modules/Economy/routes.php": "17981b55686b1a4e7eb6938cca0e478ec1bb229ad550577fe793a65ead2876ab",
+    "app/Modules/Economy/api.php": "734abd07419b3239777062f152cf8b30966f96590f9dcd7b3c9a8d07731cfc39",
+    "app/Modules/Economy/Controllers/Tech/EconomyController.php": "5d38b83d857acbc0adbfd5eb88432c4566cf2d01e35fa3f01f044c29e7f04343",
+    "app/Modules/Economy/Controllers/Api/V1/EconomyController.php": "3b7940abb83e8788f59b8c03c976b3da257e58cd34188aa344695b2ca7e04818",
+    "app/Modules/Economy/Controllers/Admin/EconomySettingsController.php": "4e95f623b21259037f724021287cc0b2b5bba31be6edac353308384ace1e668f",
+    "app/Modules/Economy/Controllers/Portal/PortalEconomyOrderController.php": "4c24d6dd2811e671cda0d61ea200f6be296b72bfad58bc45fd6c7743a6bc9333",
+    "app/Modules/Economy/Actions/GenerateOrders.php": "250ef45d4d826c3bb4d42ef495eb176d495ca39d3d0c9a0357e7338f1e9804f7",
+    "app/Modules/Economy/Actions/DeleteOrderLine.php": "b5034bd7c62fed0f8b3ab3b926a4e2844252a1d0b8e2095c6b7a3cf65ea0867d",
+    "app/Modules/Economy/Actions/CalculateOrderTotals.php": "b025ee458c74c2492d12e01b6742b6370d539b42ab74b5caf95685477661d990",
+    "app/Modules/Economy/Support/PortalEconomyAccess.php": "1be1bd81f47fa0bb3dab2b71279d4945a33198aa0d0808f2136172b3d39fbd4e"
+  },
+  "baseline": {
+    "command": "umask 0002; HOME=/tmp php artisan test app/Modules/Economy/Tests/Feature/EconomyModuleTest.php",
+    "tests_passed": 17,
+    "assertions": 105,
+    "scope": "Existing regression baseline only; no new parity implementation."
+  },
+  "github_open_search": "Economy matched Knowledge #265 only; no Economy-owned Issue found. No external write."
+}

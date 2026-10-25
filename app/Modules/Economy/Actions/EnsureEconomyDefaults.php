@@ -44,6 +44,27 @@ class EnsureEconomyDefaults
         ]);
     }
 
+    /** Resolve current effective defaults without inserting or repairing a database row. */
+    public function effective(): EconomySetting
+    {
+        $stored = EconomySetting::query()->first();
+        $settings = $stored ? clone $stored : new EconomySetting([
+            'create_orders_from_resolved_ticket_time' => false,
+            'create_orders_from_closed_ticket_time' => true,
+            'include_unresolved_ticket_time_in_period_close' => false,
+            'create_orders_from_picked_ticket_costs' => true,
+            'auto_pick_ticket_costs_on_resolved_or_closed_ticket' => false,
+            'time_order_line_grouping' => 'per_entry',
+            'order_line_text_format' => 'ticket_date_text',
+            'order_prefix' => 'ORD-',
+        ]);
+        if ($settings->default_vat_rate === null) {
+            $settings->default_vat_rate = $this->defaultVatRate();
+        }
+
+        return $settings;
+    }
+
     private function defaultVatRate(): float
     {
         $vat = CommonSetting::query()

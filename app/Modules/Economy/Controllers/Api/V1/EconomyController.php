@@ -3,164 +3,222 @@
 namespace App\Modules\Economy\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Economy\Actions\DeleteOrderLine;
+use App\Modules\Economy\Actions\CalculateOrderTotals;
+use App\Modules\Economy\Actions\DeleteEconomyOrder;
+use App\Modules\Economy\Actions\EconomyOrderWorkflow;
 use App\Modules\Economy\Actions\EnsureEconomyDefaults;
+use App\Modules\Economy\Actions\ExecuteEconomyCommand;
 use App\Modules\Economy\Actions\GenerateOrders;
+use App\Modules\Economy\Actions\UpdateEconomySettings;
+use App\Modules\Economy\Models\EconomyCommandReceipt;
+use App\Modules\Economy\Models\EconomyNotificationIntent;
 use App\Modules\Economy\Models\EconomyOrder;
-use App\Modules\Economy\Models\EconomyOrderLine;
-use App\Modules\Economy\Resources\Api\V1\EconomyOrderResource;
+use App\Modules\Economy\Queries\EconomyOrderQuery;
+use App\Modules\Economy\Queries\PreviewEconomyGeneration;
+use App\Modules\Economy\Support\EconomyInput;
+use App\Modules\Economy\Support\EconomyProjection;
+use App\Modules\Economy\Support\EconomyRevision;
+use App\Modules\Integration\Support\DomainApiAuthorization;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Http\Response;
-use Illuminate\Support\Carbon;
-use OpenApi\Attributes as OA;
 
-#[OA\Tag(
-    name: 'Economy',
-    description: 'API endpoints for internal economy order preparation.'
-)]
+/** Staff transport only: shared queries/actions own financial behavior and authoritative effects. */
 class EconomyController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Economy order API
-    |--------------------------------------------------------------------------
-    |
-    | This API exposes the order preparation surface used by technicians. It does
-    | not create invoices or exports; it prepares and manages internal order
-    | records generated from ticket time and ticket cost data.
-    |
-    */
-
-    #[OA\Get(path: '/api/v1/economy/orders', operationId: 'getEconomyOrders', summary: 'List economy orders', security: [['bearerAuth' => []]], tags: ['Economy'], parameters: [
-        new OA\Parameter(name: 'q', in: 'query', schema: new OA\Schema(type: 'string')),
-        new OA\Parameter(name: 'status', in: 'query', schema: new OA\Schema(type: 'string')),
-        new OA\Parameter(name: 'client_id', in: 'query', schema: new OA\Schema(type: 'integer')),
-        new OA\Parameter(name: 'period_start', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
-        new OA\Parameter(name: 'period_end', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
-    ], responses: [new OA\Response(response: 200, description: 'Paginated order list')])]
-    public function index(Request $request, EnsureEconomyDefaults $defaults): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
-        $defaults->handle();
+        $filters = EconomyOrderQuery::filters($request);
+        $query = EconomyOrderQuery::make($filters);
+        $stats = EconomyOrderQuery::stats($query);
+        $orders = $query->with(['client', 'lines.ticket', 'updatedBy'])->orderBy($filters['sort'] ?? 'id', $filters['direction'] ?? 'desc')->orderBy('id')->paginate($filters['per_page'] ?? 25)->withQueryString();
 
-        $validated = $request->validate([
-            'q' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', 'string', 'max:50'],
-            'client_id' => ['nullable', 'integer', 'exists:clients,id'],
-            'period_start' => ['nullable', 'date'],
-            'period_end' => ['nullable', 'date'],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
-        ]);
-
-        $orders = EconomyOrder::query()
-            ->with('client')
-            ->withCount('lines')
-            ->when($validated['status'] ?? null, fn ($query, string $status) => $query->where('status', $status))
-            ->when($validated['client_id'] ?? null, fn ($query, int $clientId) => $query->where('client_id', $clientId))
-            ->when($validated['period_start'] ?? null, fn ($query, string $date) => $query->whereDate('period_end', '>=', $date))
-            ->when($validated['period_end'] ?? null, fn ($query, string $date) => $query->whereDate('period_start', '<=', $date))
-            ->when($validated['q'] ?? null, function ($query, string $search): void {
-                $query->where(function ($query) use ($search): void {
-                    $query->where('order_number', 'like', "%{$search}%")
-                        ->orWhereHas('client', fn ($clientQuery) => $clientQuery->where('name', 'like', "%{$search}%"));
-                });
-            })
-            ->latest('id')
-            ->paginate((int) ($validated['per_page'] ?? 25))
-            ->withQueryString();
-
-        return EconomyOrderResource::collection($orders);
+        return response()->json(['data' => $orders->getCollection()->map(fn ($o) => EconomyProjection::order($o, $request, false)), 'meta' => ['current_page' => $orders->currentPage(), 'last_page' => $orders->lastPage(), 'per_page' => $orders->perPage(), 'total' => $orders->total(), 'stats' => $stats], 'links' => ['next' => $orders->nextPageUrl(), 'prev' => $orders->previousPageUrl()]]);
     }
 
-    #[OA\Post(path: '/api/v1/economy/orders/generate', operationId: 'generateEconomyOrders', summary: 'Generate economy orders from billable ticket data', security: [['bearerAuth' => []]], tags: ['Economy'], requestBody: new OA\RequestBody(content: new OA\JsonContent(properties: [
-        new OA\Property(property: 'period_start', type: 'string', format: 'date'),
-        new OA\Property(property: 'period_end', type: 'string', format: 'date'),
-    ])), responses: [new OA\Response(response: 201, description: 'Generation summary'), new OA\Response(response: 422, description: 'Validation error')])]
-    public function generate(Request $request, GenerateOrders $generateOrders): JsonResponse
+    public function context(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'period_start' => ['nullable', 'date'],
-            'period_end' => ['nullable', 'date', 'after_or_equal:period_start'],
-        ]);
+        EconomyInput::validate($request, []);
 
-        $summary = $generateOrders->handle(
-            isset($validated['period_start']) ? Carbon::parse($validated['period_start']) : null,
-            isset($validated['period_end']) ? Carbon::parse($validated['period_end']) : null,
-            $request->user()
-        );
-
-        return response()->json(['data' => ['summary' => $summary]], 201);
+        return response()->json(['data' => [
+            'statuses' => ['draft', 'ready', 'approved', 'exported', 'manual_invoiced', 'cancelled'],
+            'sort_fields' => ['id', 'order_number', 'period_start', 'period_end', 'status', 'created_at'],
+            'period_defaults' => ['period_start' => now()->startOfMonth()->toDateString(), 'period_end' => now()->endOfMonth()->toDateString()],
+            'generation_scope' => 'installation', 'is_invoice_provider' => false, 'currency_conversion' => false,
+            'capabilities' => ['manual_invoiced' => true, 'portal_visibility' => true, 'settings' => true, 'data_exchange_export' => true, 'arbitrary_order_or_line_create' => false, 'invoice_send' => false],
+            'owner_apis' => ['rates' => '/api/v1/commercial/time-rates', 'units' => '/api/v1/commercial/units', 'source_time_and_cost' => '/api/v1/tickets', 'export_files' => '/api/v1/data-exchange'],
+            'new_mutation_headers' => ['Idempotency-Key', 'If-Match'],
+        ]]);
     }
 
-    #[OA\Get(path: '/api/v1/economy/orders/{order}', operationId: 'getEconomyOrder', summary: 'View an economy order', security: [['bearerAuth' => []]], tags: ['Economy'], parameters: [new OA\Parameter(name: 'order', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'Order')])]
-    public function show(EconomyOrder $order): EconomyOrderResource
+    public function show(Request $request, int $order): JsonResponse
     {
-        return EconomyOrderResource::make($order->load(['client', 'lines.ticket']));
+        EconomyInput::validate($request, []);
+        $data = EconomyProjection::order(EconomyOrder::query()->findOrFail($order), $request);
+
+        return response()->json(['data' => $data])->header('ETag', '"'.$data['revision'].'"');
     }
 
-    #[OA\Post(path: '/api/v1/economy/orders/{order}/ready', operationId: 'markEconomyOrderReady', summary: 'Mark an economy order ready', security: [['bearerAuth' => []]], tags: ['Economy'], parameters: [new OA\Parameter(name: 'order', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'Updated order'), new OA\Response(response: 422, description: 'Invalid order state')])]
-    public function markReady(Request $request, EconomyOrder $order): EconomyOrderResource
+    public function lines(Request $request, int $order): JsonResponse
     {
-        abort_unless($order->status === 'draft', 422);
+        $input = EconomyInput::validate($request, ['page' => 'sometimes|integer|min:1', 'per_page' => 'sometimes|integer|min:1|max:100']);
+        $record = EconomyOrder::query()->with('lines.ticket')->findOrFail($order);
+        $totals = app(CalculateOrderTotals::class)->forOrder($record);
+        $lines = $record->lines()->with('ticket')->orderBy('id')->paginate($input['per_page'] ?? 50)->withQueryString();
 
-        $order->forceFill([
-            'status' => 'ready',
-            'ready_at' => now(),
-            'updated_by' => $request->user()?->id,
-        ])->save();
-
-        return EconomyOrderResource::make($order->refresh()->load(['client', 'lines.ticket']));
+        return response()->json(['data' => $lines->getCollection()->map(fn ($line) => EconomyProjection::line($line, $totals['lines'][$line->id] ?? null)), 'meta' => ['total' => $lines->total(), 'current_page' => $lines->currentPage(), 'last_page' => $lines->lastPage(), 'revision' => EconomyRevision::order($record)], 'links' => ['next' => $lines->nextPageUrl(), 'prev' => $lines->previousPageUrl()]]);
     }
 
-    #[OA\Post(path: '/api/v1/economy/orders/{order}/draft', operationId: 'markEconomyOrderDraft', summary: 'Move a ready economy order back to draft', security: [['bearerAuth' => []]], tags: ['Economy'], parameters: [new OA\Parameter(name: 'order', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'Updated order'), new OA\Response(response: 422, description: 'Invalid order state')])]
-    public function markDraft(Request $request, EconomyOrder $order): EconomyOrderResource
+    public static function periodRules(): array
     {
-        abort_unless($order->status === 'ready', 422);
-
-        $order->forceFill([
-            'status' => 'draft',
-            'ready_at' => null,
-            'updated_by' => $request->user()?->id,
-        ])->save();
-
-        return EconomyOrderResource::make($order->refresh()->load(['client', 'lines.ticket']));
+        return ['period_start' => 'sometimes|nullable|date_format:Y-m-d', 'period_end' => 'sometimes|nullable|date_format:Y-m-d|after_or_equal:period_start'];
     }
 
-    #[OA\Delete(path: '/api/v1/economy/orders/{order}', operationId: 'deleteEconomyOrder', summary: 'Delete an empty draft or ready economy order', security: [['bearerAuth' => []]], tags: ['Economy'], parameters: [new OA\Parameter(name: 'order', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 204, description: 'Deleted'), new OA\Response(response: 422, description: 'Invalid order state')])]
-    public function destroyOrder(EconomyOrder $order): Response
+    public function generationPreview(Request $request): JsonResponse
     {
-        abort_unless(in_array($order->status, ['draft', 'ready'], true), 422);
-        abort_unless($order->lines()->count() === 0, 422);
+        $input = EconomyInput::validate($request, self::periodRules());
 
-        $order->delete();
-
-        return response()->noContent();
+        return response()->json(['data' => app(PreviewEconomyGeneration::class)->handle($input)]);
     }
 
-    #[OA\Delete(path: '/api/v1/economy/orders/{order}/lines/{line}', operationId: 'deleteEconomyOrderLine', summary: 'Delete an economy order line and unlock the source record', security: [['bearerAuth' => []]], tags: ['Economy'], parameters: [
-        new OA\Parameter(name: 'order', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        new OA\Parameter(name: 'line', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-    ], responses: [new OA\Response(response: 200, description: 'Updated order or order deletion result'), new OA\Response(response: 422, description: 'Invalid order state')])]
-    public function destroyLine(EconomyOrder $order, EconomyOrderLine $line, DeleteOrderLine $deleteOrderLine): JsonResponse|EconomyOrderResource
+    public function generate(Request $request): JsonResponse
     {
-        $orderId = $order->id;
+        $input = EconomyInput::validate($request, self::periodRules() + ['preview_hash' => 'sometimes|string|size:64']);
+        $result = app(ExecuteEconomyCommand::class)->handle($request, $input, function () use ($request, $input) {
+            if (isset($input['preview_hash']) || $request->header('If-Match')) {
+                $preview = app(PreviewEconomyGeneration::class)->handle($input);
+                EconomyRevision::check($request, $preview['preview_hash'], false);
+                if (isset($input['preview_hash'])) {
+                    abort_unless(hash_equals($preview['preview_hash'], $input['preview_hash']), 409, 'Generation inputs changed; preview again.');
+                }
+            }
+            [$start, $end] = PreviewEconomyGeneration::dates($input);
 
-        $deleteOrderLine->handle($order, $line);
+            return ['data' => ['summary' => app(GenerateOrders::class)->handle($start, $end, $request->user())]];
+        }, false);
 
-        $order->refresh();
+        return response()->json($result, 201);
+    }
 
-        if ($order->lines()->count() === 0) {
-            $order->delete();
+    public function markReady(Request $request, int $order): JsonResponse
+    {
+        return $this->transition($request, $order, 'ready', false);
+    }
 
-            return response()->json([
-                'data' => [
-                    'deleted_order' => true,
-                    'order_id' => $orderId,
-                ],
-            ]);
+    public function markDraft(Request $request, int $order): JsonResponse
+    {
+        return $this->transition($request, $order, 'draft', false);
+    }
+
+    public function markInvoiced(Request $request, int $order): JsonResponse
+    {
+        return $this->transition($request, $order, 'manual_invoiced', true);
+    }
+
+    public function visibilityPreview(Request $request, int $order): JsonResponse
+    {
+        $input = EconomyInput::validate($request, ['portal_visible' => 'required|boolean']);
+        $record = EconomyOrder::query()->findOrFail($order);
+        $revision = EconomyRevision::order($record);
+
+        return response()->json(['data' => ['order_id' => $order, 'portal_visible' => $record->isPortalVisible(), 'requested_visible' => (bool) $input['portal_visible'], 'client_id' => $record->client_id, 'notification_type' => ! $record->isPortalVisible() && $input['portal_visible'] ? 'portal_order_published' : null, 'audience' => 'current_active_client_wide_portal_members_with_notification_preferences', 'revision' => $revision, 'preview_hash' => EconomyRevision::hash([$revision, (bool) $input['portal_visible']])]]);
+    }
+
+    public function visibility(Request $request, int $order): JsonResponse
+    {
+        $input = EconomyInput::validate($request, ['portal_visible' => 'required|boolean', 'preview_hash' => 'required|string|size:64']);
+        $result = app(ExecuteEconomyCommand::class)->handle($request, $input, function () use ($request, $order, $input) {
+            $record = EconomyOrder::query()->lockForUpdate()->findOrFail($order);
+            $revision = EconomyRevision::order($record);
+            EconomyRevision::check($request, $revision);
+            abort_unless(hash_equals(EconomyRevision::hash([$revision, (bool) $input['portal_visible']]), $input['preview_hash']), 409, 'Visibility inputs changed; preview again.');
+            $effect = app(EconomyOrderWorkflow::class)->handle($order, 'visibility', $request->user(), (bool) $input['portal_visible'], $request);
+
+            return ['data' => EconomyProjection::order($record->refresh(), $request), 'notification_intents' => $effect['notification_intents']];
+        });
+
+        return response()->json($result);
+    }
+
+    private function transition(Request $request, int $order, string $action, bool $required): JsonResponse
+    {
+        $input = EconomyInput::validate($request, []);
+        $result = app(ExecuteEconomyCommand::class)->handle($request, $input, function () use ($request, $order, $action, $required) {
+            $record = EconomyOrder::query()->lockForUpdate()->findOrFail($order);
+            EconomyRevision::check($request, EconomyRevision::order($record), $required);
+            $effect = app(EconomyOrderWorkflow::class)->handle($order, $action, $request->user(), request: $request);
+
+            return ['data' => EconomyProjection::order($record->refresh(), $request), 'notification_intents' => $effect['notification_intents']];
+        }, $required);
+
+        return response()->json($result);
+    }
+
+    public function destroyOrder(Request $request, int $order): JsonResponse|\Illuminate\Http\Response
+    {
+        $result = $this->deletion($request, $order);
+
+        return $request->header('Idempotency-Key') ? response()->json($result) : response()->noContent();
+    }
+
+    public function destroyLine(Request $request, int $order, int $line): JsonResponse
+    {
+        return response()->json($this->deletion($request, $order, $line));
+    }
+
+    private function deletion(Request $request, int $order, ?int $line = null): array
+    {
+        $input = EconomyInput::validate($request, []);
+
+        return app(ExecuteEconomyCommand::class)->handle($request, $input, function () use ($request, $order, $line) {
+            $record = EconomyOrder::query()->lockForUpdate()->findOrFail($order);
+            EconomyRevision::check($request, EconomyRevision::order($record), false);
+            $result = app(DeleteEconomyOrder::class)->handle($order, $line);
+
+            return ['data' => $result['deleted_order'] ? $result : EconomyProjection::order($record->refresh(), $request) + $result];
+        }, false);
+    }
+
+    public function settings(Request $request): JsonResponse
+    {
+        EconomyInput::validate($request, []);
+        $settings = app(EnsureEconomyDefaults::class)->effective();
+        $data = array_intersect_key($settings->toArray(), UpdateEconomySettings::rules());
+
+        return response()->json(['data' => $data + ['revision' => EconomyRevision::settings(), 'persisted' => $settings->exists, 'enums' => ['time_order_line_grouping' => ['per_entry'], 'order_line_text_format' => ['ticket_date_text']], 'null_vat_behavior' => 'current_common_economy_vat_or_25_fallback']]);
+    }
+
+    public function updateSettings(Request $request): JsonResponse
+    {
+        $input = EconomyInput::validate($request, UpdateEconomySettings::rules());
+        $result = app(ExecuteEconomyCommand::class)->handle($request, $input, function () use ($request, $input) {
+            EconomyRevision::check($request, EconomyRevision::settings());
+            app(UpdateEconomySettings::class)->handle($input);
+            $settings = app(EnsureEconomyDefaults::class)->effective();
+
+            return ['data' => array_intersect_key($settings->toArray(), UpdateEconomySettings::rules()) + ['revision' => EconomyRevision::settings(), 'persisted' => true]];
+        });
+
+        return response()->json($result);
+    }
+
+    public function operation(Request $request, int $operation): JsonResponse
+    {
+        EconomyInput::validate($request, []);
+        $receipt = EconomyCommandReceipt::query()->where('actor_id', $request->user()->id)->findOrFail($operation);
+        $permission = match (true) {
+            str_contains($receipt->operation, 'generate') => 'economy.generate_orders',
+            str_contains($receipt->operation, 'settings') => 'economy.manage_settings',
+            str_contains($receipt->operation, 'exports') || str_contains($receipt->operation, 'data-exchange') => 'data_exchange.run',
+            str_contains($receipt->operation, 'destroy') => 'economy.delete_orders',
+            default => 'economy.order_manage',
+        };
+        app(DomainApiAuthorization::class)->authorize($request, $permission);
+        if ($permission === 'data_exchange.run') {
+            app(DomainApiAuthorization::class)->authorize($request, 'economy.view');
         }
+        $result = $receipt->result;
+        $effects = EconomyNotificationIntent::query()->whereIn('id', $result['notification_intents'] ?? [])->get()->map(fn ($i) => ['id' => $i->id, 'state' => $i->state, 'recipients' => $i->recipients, 'error_code' => $i->error_code]);
 
-        return EconomyOrderResource::make($order->load(['client', 'lines.ticket']));
+        return response()->json(['data' => ['id' => $receipt->id, 'operation' => $receipt->operation, 'result' => $result, 'notification_status' => $effects, 'inbox_delivery_verified' => false, 'created_at' => $receipt->created_at?->toIso8601String()]]);
     }
 }

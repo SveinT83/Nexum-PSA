@@ -1,0 +1,1713 @@
+{
+  "operations": [
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/orders",
+      "operation_id": "economyFull1",
+      "request_schema": null,
+      "response_schema": "EconomyOrder",
+      "ability": "economy.read",
+      "actor_permission": "economy.order_manage",
+      "mode": "list"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/orders/context",
+      "operation_id": "economyFull2",
+      "request_schema": null,
+      "response_schema": "EconomyContext",
+      "ability": "economy.read",
+      "actor_permission": "economy.order_manage",
+      "mode": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/orders/generate/preview",
+      "operation_id": "economyFull3",
+      "request_schema": null,
+      "response_schema": "EconomyGenerationPreview",
+      "ability": "economy.create",
+      "actor_permission": "economy.generate_orders",
+      "mode": "period"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/economy/orders/generate",
+      "operation_id": "economyFull4",
+      "request_schema": "EconomyGenerationInput",
+      "response_schema": "EconomyGenerationCommand",
+      "ability": "economy.create",
+      "actor_permission": "economy.generate_orders",
+      "mode": "legacy"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/orders/{order}",
+      "operation_id": "economyFull5",
+      "request_schema": null,
+      "response_schema": "EconomyOrder",
+      "ability": "economy.read",
+      "actor_permission": "economy.order_manage",
+      "mode": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/orders/{order}/lines",
+      "operation_id": "economyFull6",
+      "request_schema": null,
+      "response_schema": "EconomyLine",
+      "ability": "economy.read",
+      "actor_permission": "economy.order_manage",
+      "mode": "page"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/economy/orders/{order}/ready",
+      "operation_id": "economyFull7",
+      "request_schema": "EconomyEmptyInput",
+      "response_schema": "EconomyOrderCommand",
+      "ability": "economy.update",
+      "actor_permission": "economy.order_manage",
+      "mode": "legacy"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/economy/orders/{order}/draft",
+      "operation_id": "economyFull8",
+      "request_schema": "EconomyEmptyInput",
+      "response_schema": "EconomyOrderCommand",
+      "ability": "economy.update",
+      "actor_permission": "economy.order_manage",
+      "mode": "legacy"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/economy/orders/{order}/invoiced",
+      "operation_id": "economyFull9",
+      "request_schema": "EconomyEmptyInput",
+      "response_schema": "EconomyOrderCommand",
+      "ability": "economy.update",
+      "actor_permission": "economy.order_manage",
+      "mode": "required"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/economy/orders/{order}/portal-visibility/preview",
+      "operation_id": "economyFull10",
+      "request_schema": "EconomyVisibilityPreviewInput",
+      "response_schema": "EconomyVisibilityPreview",
+      "ability": "economy.update",
+      "actor_permission": "economy.order_manage",
+      "mode": "read"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/economy/orders/{order}/portal-visibility",
+      "operation_id": "economyFull11",
+      "request_schema": "EconomyVisibilityInput",
+      "response_schema": "EconomyOrderCommand",
+      "ability": "economy.update",
+      "actor_permission": "economy.order_manage",
+      "mode": "required"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/economy/orders/{order}",
+      "operation_id": "economyFull12",
+      "request_schema": "EconomyEmptyInput",
+      "response_schema": "EconomyDeletionCommand",
+      "ability": "economy.delete",
+      "actor_permission": "economy.delete_orders",
+      "mode": "legacy"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/economy/orders/{order}/lines/{line}",
+      "operation_id": "economyFull13",
+      "request_schema": "EconomyEmptyInput",
+      "response_schema": "EconomyDeletionCommand",
+      "ability": "economy.delete",
+      "actor_permission": "economy.delete_orders",
+      "mode": "legacy"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/settings",
+      "operation_id": "economyFull14",
+      "request_schema": null,
+      "response_schema": "EconomySettings",
+      "ability": "economy.settings.read",
+      "actor_permission": "economy.manage_settings (current delegated Admin-page policy)",
+      "mode": "read"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/economy/settings",
+      "operation_id": "economyFull15",
+      "request_schema": "EconomySettingsInput",
+      "response_schema": "EconomySettingsCommand",
+      "ability": "economy.settings.update",
+      "actor_permission": "economy.manage_settings (current delegated Admin-page policy)",
+      "mode": "required"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/operations/{operation}",
+      "operation_id": "economyFull16",
+      "request_schema": null,
+      "response_schema": "EconomyOperation",
+      "ability": "economy.operations.read",
+      "actor_permission": "original operation permission; same actor only",
+      "mode": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/exports/preview",
+      "operation_id": "economyFull17",
+      "request_schema": null,
+      "response_schema": "EconomyExportPreview",
+      "ability": "economy.export AND data_exchange.run",
+      "actor_permission": "economy.view AND data_exchange.run",
+      "mode": "read"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/economy/exports",
+      "operation_id": "economyFull18",
+      "request_schema": "EconomyExportInput",
+      "response_schema": "EconomyExportCommand",
+      "ability": "economy.export AND data_exchange.run",
+      "actor_permission": "economy.view AND data_exchange.run",
+      "mode": "key"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/exports/{run}",
+      "operation_id": "economyFull19",
+      "request_schema": null,
+      "response_schema": "EconomyExportRun",
+      "ability": "economy.read AND data_exchange.read",
+      "actor_permission": "economy.view AND data_exchange.view",
+      "mode": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/portal/orders",
+      "operation_id": "economyFull20",
+      "request_schema": null,
+      "response_schema": "EconomyCustomerOrder",
+      "ability": "existing portal session",
+      "actor_permission": "current active membership/contact/client; explicitly published; site excluded",
+      "mode": "page"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/portal/orders/context",
+      "operation_id": "economyFull21",
+      "request_schema": null,
+      "response_schema": "EconomyPortalContext",
+      "ability": "existing portal session",
+      "actor_permission": "current active membership/contact/client",
+      "mode": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/portal/orders/{order}",
+      "operation_id": "economyFull22",
+      "request_schema": null,
+      "response_schema": "EconomyCustomerOrder",
+      "ability": "existing portal session",
+      "actor_permission": "current active membership/contact/client; published; site excluded",
+      "mode": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/portal/orders/{order}/lines",
+      "operation_id": "economyFull23",
+      "request_schema": null,
+      "response_schema": "EconomyCustomerLine",
+      "ability": "existing portal session",
+      "actor_permission": "current active membership/contact/client; published; site excluded",
+      "mode": "page"
+    }
+  ],
+  "schemas": {
+    "EconomyError": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "errors": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyTotals": {
+      "type": "object",
+      "properties": {
+        "subtotal_ex_vat": {
+          "type": "number"
+        },
+        "vat_amount": {
+          "type": "number"
+        },
+        "total_inc_vat": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyLineTotals": {
+      "type": "object",
+      "properties": {
+        "line_total_ex_vat": {
+          "type": "number"
+        },
+        "vat_rate": {
+          "type": "number",
+          "nullable": true
+        },
+        "vat_amount": {
+          "type": "number",
+          "nullable": true
+        },
+        "total_inc_vat": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyStoredTotals": {
+      "type": "object",
+      "properties": {
+        "subtotal_ex_vat": {
+          "type": "string"
+        },
+        "vat_amount": {
+          "type": "string"
+        },
+        "total_inc_vat": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyCustomerLine": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "work_date": {
+          "type": "string",
+          "nullable": true,
+          "format": "date"
+        },
+        "line_type": {
+          "type": "string"
+        },
+        "reference": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "unit_price_ex_vat": {
+          "type": "number",
+          "nullable": true
+        },
+        "line_total_ex_vat": {
+          "type": "number"
+        },
+        "vat_rate": {
+          "type": "number",
+          "nullable": true
+        },
+        "vat_amount": {
+          "type": "number",
+          "nullable": true
+        },
+        "total_inc_vat": {
+          "type": "number"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "effective_totals": {
+          "$ref": "#/components/schemas/EconomyLineTotals",
+          "nullable": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyFinancialMetadata": {
+      "type": "object",
+      "properties": {
+        "covered_minutes": {
+          "type": "integer",
+          "nullable": true
+        },
+        "included_minutes": {
+          "type": "integer",
+          "nullable": true
+        },
+        "contract_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "contract_item_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "included_minutes_snapshot": {
+          "type": "integer",
+          "nullable": true
+        },
+        "used_before_minutes_snapshot": {
+          "type": "integer",
+          "nullable": true
+        },
+        "registered_minutes": {
+          "type": "integer",
+          "nullable": true
+        },
+        "overused_minutes": {
+          "type": "integer",
+          "nullable": true
+        },
+        "ticket_key": {
+          "type": "string",
+          "nullable": true
+        },
+        "rate_name": {
+          "type": "string",
+          "nullable": true
+        },
+        "contract_item_name": {
+          "type": "string",
+          "nullable": true
+        },
+        "provider_family": {
+          "type": "string",
+          "nullable": true
+        },
+        "item_name": {
+          "type": "string",
+          "nullable": true
+        },
+        "item_sku": {
+          "type": "string",
+          "nullable": true
+        },
+        "rate_amount_ex_vat_per_hour": {
+          "type": "number",
+          "nullable": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyLine": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "work_date": {
+          "type": "string",
+          "nullable": true,
+          "format": "date"
+        },
+        "line_type": {
+          "type": "string"
+        },
+        "reference": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "unit_price_ex_vat": {
+          "type": "number",
+          "nullable": true
+        },
+        "line_total_ex_vat": {
+          "type": "number"
+        },
+        "vat_rate": {
+          "type": "number",
+          "nullable": true
+        },
+        "vat_amount": {
+          "type": "number",
+          "nullable": true
+        },
+        "total_inc_vat": {
+          "type": "number"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "effective_totals": {
+          "$ref": "#/components/schemas/EconomyLineTotals",
+          "nullable": true
+        },
+        "economy_order_id": {
+          "type": "integer"
+        },
+        "client_id": {
+          "type": "integer"
+        },
+        "source_type": {
+          "type": "string",
+          "nullable": true
+        },
+        "source_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "ticket_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "ticket": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "ticket_key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "nullable": true
+        },
+        "status": {
+          "type": "string"
+        },
+        "metadata": {
+          "$ref": "#/components/schemas/EconomyFinancialMetadata"
+        },
+        "decimals": {
+          "type": "object",
+          "properties": {
+            "quantity": {
+              "type": "string"
+            },
+            "unit_price_ex_vat": {
+              "type": "string",
+              "nullable": true
+            },
+            "line_total_ex_vat": {
+              "type": "string"
+            },
+            "vat_rate": {
+              "type": "string",
+              "nullable": true
+            },
+            "vat_amount": {
+              "type": "string",
+              "nullable": true
+            },
+            "total_inc_vat": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "created_at": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyCustomerOrder": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "order_number": {
+          "type": "string",
+          "nullable": true
+        },
+        "client_id": {
+          "type": "integer"
+        },
+        "client": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "period_start": {
+          "type": "string",
+          "format": "date"
+        },
+        "period_end": {
+          "type": "string",
+          "format": "date"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "ready",
+            "approved",
+            "exported",
+            "manual_invoiced",
+            "cancelled"
+          ]
+        },
+        "status_label": {
+          "type": "string"
+        },
+        "subtotal_ex_vat": {
+          "type": "number"
+        },
+        "vat_amount": {
+          "type": "number"
+        },
+        "total_inc_vat": {
+          "type": "number"
+        },
+        "effective_totals": {
+          "$ref": "#/components/schemas/EconomyTotals"
+        },
+        "currencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "currency_conversion": {
+          "type": "boolean"
+        },
+        "lines_count": {
+          "type": "integer"
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/EconomyCustomerLine"
+          }
+        },
+        "lines_truncated": {
+          "type": "boolean"
+        },
+        "lines_url": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyOrder": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "order_number": {
+          "type": "string",
+          "nullable": true
+        },
+        "client_id": {
+          "type": "integer"
+        },
+        "client": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "period_start": {
+          "type": "string",
+          "format": "date"
+        },
+        "period_end": {
+          "type": "string",
+          "format": "date"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "ready",
+            "approved",
+            "exported",
+            "manual_invoiced",
+            "cancelled"
+          ]
+        },
+        "status_label": {
+          "type": "string"
+        },
+        "subtotal_ex_vat": {
+          "type": "number"
+        },
+        "vat_amount": {
+          "type": "number"
+        },
+        "total_inc_vat": {
+          "type": "number"
+        },
+        "effective_totals": {
+          "$ref": "#/components/schemas/EconomyTotals"
+        },
+        "currencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "currency_conversion": {
+          "type": "boolean"
+        },
+        "lines_count": {
+          "type": "integer"
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/EconomyLine"
+          }
+        },
+        "lines_truncated": {
+          "type": "boolean"
+        },
+        "lines_url": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64
+        },
+        "portal_visible": {
+          "type": "boolean"
+        },
+        "portal_visible_at": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        },
+        "portal_visible_by": {
+          "type": "integer",
+          "nullable": true
+        },
+        "created_by": {
+          "type": "integer",
+          "nullable": true
+        },
+        "updated_by": {
+          "type": "integer",
+          "nullable": true
+        },
+        "updated_by_name": {
+          "type": "string",
+          "nullable": true
+        },
+        "stored_totals": {
+          "$ref": "#/components/schemas/EconomyStoredTotals"
+        },
+        "links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "type": "string"
+            },
+            "mark_ready": {
+              "type": "string",
+              "nullable": true
+            },
+            "mark_draft": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "available_actions": {
+          "type": "object",
+          "properties": {
+            "mark_ready": {
+              "type": "boolean"
+            },
+            "mark_draft": {
+              "type": "boolean"
+            },
+            "mark_invoiced": {
+              "type": "boolean"
+            },
+            "portal_visibility": {
+              "type": "boolean"
+            },
+            "delete_order": {
+              "type": "boolean"
+            },
+            "delete_lines": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "generated_at": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        },
+        "ready_at": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        },
+        "approved_at": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        },
+        "exported_at": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        },
+        "cancelled_at": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        },
+        "created_at": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyPageMeta": {
+      "type": "object",
+      "properties": {
+        "current_page": {
+          "type": "integer"
+        },
+        "last_page": {
+          "type": "integer"
+        },
+        "per_page": {
+          "type": "integer"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "draft": {
+              "type": "integer"
+            },
+            "ready": {
+              "type": "integer"
+            },
+            "approved": {
+              "type": "integer"
+            },
+            "exported": {
+              "type": "integer"
+            },
+            "manual_invoiced": {
+              "type": "integer"
+            },
+            "cancelled": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyPageLinks": {
+      "type": "object",
+      "properties": {
+        "next": {
+          "type": "string",
+          "nullable": true
+        },
+        "prev": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomySettingsInput": {
+      "type": "object",
+      "properties": {
+        "create_orders_from_resolved_ticket_time": {
+          "type": "boolean"
+        },
+        "create_orders_from_closed_ticket_time": {
+          "type": "boolean"
+        },
+        "include_unresolved_ticket_time_in_period_close": {
+          "type": "boolean"
+        },
+        "create_orders_from_picked_ticket_costs": {
+          "type": "boolean"
+        },
+        "auto_pick_ticket_costs_on_resolved_or_closed_ticket": {
+          "type": "boolean"
+        },
+        "time_order_line_grouping": {
+          "type": "string",
+          "enum": [
+            "per_entry"
+          ]
+        },
+        "order_line_text_format": {
+          "type": "string",
+          "enum": [
+            "ticket_date_text"
+          ]
+        },
+        "order_prefix": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "default_vat_rate": {
+          "type": "number",
+          "nullable": true,
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomySettings": {
+      "type": "object",
+      "properties": {
+        "create_orders_from_resolved_ticket_time": {
+          "type": "boolean"
+        },
+        "create_orders_from_closed_ticket_time": {
+          "type": "boolean"
+        },
+        "include_unresolved_ticket_time_in_period_close": {
+          "type": "boolean"
+        },
+        "create_orders_from_picked_ticket_costs": {
+          "type": "boolean"
+        },
+        "auto_pick_ticket_costs_on_resolved_or_closed_ticket": {
+          "type": "boolean"
+        },
+        "time_order_line_grouping": {
+          "type": "string",
+          "enum": [
+            "per_entry"
+          ]
+        },
+        "order_line_text_format": {
+          "type": "string",
+          "enum": [
+            "ticket_date_text"
+          ]
+        },
+        "order_prefix": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "default_vat_rate": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "persisted": {
+          "type": "boolean"
+        },
+        "enums": {
+          "type": "object",
+          "properties": {
+            "time_order_line_grouping": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "order_line_text_format": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "null_vat_behavior": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyEmptyInput": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "EconomyGenerationInput": {
+      "type": "object",
+      "properties": {
+        "period_start": {
+          "type": "string",
+          "nullable": true,
+          "format": "date"
+        },
+        "period_end": {
+          "type": "string",
+          "nullable": true,
+          "format": "date"
+        },
+        "preview_hash": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyVisibilityPreviewInput": {
+      "type": "object",
+      "properties": {
+        "portal_visible": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "portal_visible"
+      ]
+    },
+    "EconomyVisibilityInput": {
+      "type": "object",
+      "properties": {
+        "portal_visible": {
+          "type": "boolean"
+        },
+        "preview_hash": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "portal_visible",
+        "preview_hash"
+      ]
+    },
+    "EconomyExportInput": {
+      "type": "object",
+      "properties": {
+        "preview_hash": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "preview_hash"
+      ]
+    },
+    "EconomyGenerationPreview": {
+      "type": "object",
+      "properties": {
+        "period_start": {
+          "type": "string",
+          "format": "date"
+        },
+        "period_end": {
+          "type": "string",
+          "format": "date"
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "installation"
+          ]
+        },
+        "candidate_counts": {
+          "type": "object",
+          "properties": {
+            "ticket_time": {
+              "type": "integer"
+            },
+            "ticket_costs": {
+              "type": "integer"
+            },
+            "quick_timebank_overuse": {
+              "type": "integer"
+            },
+            "confirmed_billing_periods": {
+              "type": "integer"
+            },
+            "confirmed_subscriptions": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        },
+        "candidate_client_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "candidate_clients_count": {
+          "type": "integer"
+        },
+        "clients_truncated": {
+          "type": "boolean"
+        },
+        "counts_are": {
+          "type": "string"
+        },
+        "preview_hash": {
+          "type": "string"
+        },
+        "settings_revision": {
+          "type": "string"
+        },
+        "external_invoice_or_stock_action": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyGenerationSummary": {
+      "type": "object",
+      "properties": {
+        "orders_touched": {
+          "type": "integer"
+        },
+        "sources_reused": {
+          "type": "integer"
+        },
+        "lines_created": {
+          "type": "integer"
+        },
+        "lines_updated": {
+          "type": "integer"
+        },
+        "time_entries_seen": {
+          "type": "integer"
+        },
+        "time_entries_ordered": {
+          "type": "integer"
+        },
+        "time_entries_waiting_for_contract": {
+          "type": "integer"
+        },
+        "cost_entries_seen": {
+          "type": "integer"
+        },
+        "cost_entries_ordered": {
+          "type": "integer"
+        },
+        "quick_timebank_entries_seen": {
+          "type": "integer"
+        },
+        "quick_timebank_entries_ordered": {
+          "type": "integer"
+        },
+        "cloudfactory_periods_seen": {
+          "type": "integer"
+        },
+        "cloudfactory_periods_ordered": {
+          "type": "integer"
+        },
+        "affected_order_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "created_line_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "affected_line_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyVisibilityPreview": {
+      "type": "object",
+      "properties": {
+        "order_id": {
+          "type": "integer"
+        },
+        "portal_visible": {
+          "type": "boolean"
+        },
+        "requested_visible": {
+          "type": "boolean"
+        },
+        "client_id": {
+          "type": "integer"
+        },
+        "notification_type": {
+          "type": "string",
+          "nullable": true
+        },
+        "audience": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "preview_hash": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyDeletion": {
+      "type": "object",
+      "properties": {
+        "deleted_order": {
+          "type": "boolean"
+        },
+        "order_id": {
+          "type": "integer"
+        },
+        "deleted_line_id": {
+          "type": "integer",
+          "nullable": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyNotificationStatus": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "processing",
+            "submitted",
+            "superseded",
+            "unknown"
+          ]
+        },
+        "recipients": {
+          "type": "integer",
+          "nullable": true
+        },
+        "error_code": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyExportPreview": {
+      "type": "object",
+      "properties": {
+        "profile_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "profile_key": {
+          "type": "string"
+        },
+        "profile_exists": {
+          "type": "boolean"
+        },
+        "format": {
+          "type": "string"
+        },
+        "row_count": {
+          "type": "integer"
+        },
+        "preview_hash": {
+          "type": "string"
+        },
+        "default_statuses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "uses_configured_filters": {
+          "type": "boolean"
+        },
+        "configured_delivery_targets": {
+          "type": "integer"
+        },
+        "delivery_will_be_dispatched": {
+          "type": "boolean"
+        },
+        "order_state_will_change": {
+          "type": "boolean"
+        },
+        "result_is": {
+          "type": "string"
+        },
+        "profile_initialization": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyExportFile": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "size_bytes": {
+          "type": "integer"
+        },
+        "checksum": {
+          "type": "string"
+        },
+        "retention_until": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        },
+        "download_url": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyExportRun": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "profile": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "key": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "status": {
+          "type": "string"
+        },
+        "trigger_type": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "object",
+          "properties": {
+            "rows": {
+              "type": "integer"
+            },
+            "format": {
+              "type": "string"
+            },
+            "file_id": {
+              "type": "integer"
+            },
+            "filename": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "error_code": {
+          "type": "string",
+          "nullable": true
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/EconomyExportFile"
+          }
+        },
+        "order_state_changed": {
+          "type": "boolean"
+        },
+        "provider_invoice_created": {
+          "type": "boolean"
+        },
+        "delivery_dispatched": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyContext": {
+      "type": "object",
+      "properties": {
+        "statuses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sort_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "period_defaults": {
+          "type": "object",
+          "properties": {
+            "period_start": {
+              "type": "string",
+              "nullable": true,
+              "format": "date"
+            },
+            "period_end": {
+              "type": "string",
+              "nullable": true,
+              "format": "date"
+            }
+          },
+          "additionalProperties": false
+        },
+        "generation_scope": {
+          "type": "string"
+        },
+        "is_invoice_provider": {
+          "type": "boolean"
+        },
+        "currency_conversion": {
+          "type": "boolean"
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "manual_invoiced": {
+              "type": "boolean"
+            },
+            "portal_visibility": {
+              "type": "boolean"
+            },
+            "settings": {
+              "type": "boolean"
+            },
+            "data_exchange_export": {
+              "type": "boolean"
+            },
+            "arbitrary_order_or_line_create": {
+              "type": "boolean"
+            },
+            "invoice_send": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "owner_apis": {
+          "type": "object",
+          "properties": {
+            "rates": {
+              "type": "string"
+            },
+            "units": {
+              "type": "string"
+            },
+            "source_time_and_cost": {
+              "type": "string"
+            },
+            "export_files": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "new_mutation_headers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyPortalContext": {
+      "type": "object",
+      "properties": {
+        "client": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "client_level_orders_available": {
+          "type": "boolean"
+        },
+        "explicit_publication_required": {
+          "type": "boolean"
+        },
+        "can_edit": {
+          "type": "boolean"
+        },
+        "is_invoice_or_payment_request": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyOrderCommand": {
+      "type": "object",
+      "properties": {
+        "operation_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "notification_intents": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "data": {
+          "$ref": "#/components/schemas/EconomyOrder"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomySettingsCommand": {
+      "type": "object",
+      "properties": {
+        "operation_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "notification_intents": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "data": {
+          "$ref": "#/components/schemas/EconomySettings"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyGenerationCommand": {
+      "type": "object",
+      "properties": {
+        "operation_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "notification_intents": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "summary": {
+              "$ref": "#/components/schemas/EconomyGenerationSummary"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyDeletionCommand": {
+      "type": "object",
+      "properties": {
+        "operation_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "notification_intents": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "data": {
+          "oneOf": [
+            {
+              "$ref": "#/components/schemas/EconomyDeletion"
+            },
+            {
+              "$ref": "#/components/schemas/EconomyOrder"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyExportCommand": {
+      "type": "object",
+      "properties": {
+        "operation_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "notification_intents": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "data": {
+          "$ref": "#/components/schemas/EconomyExportRun"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EconomyOperation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "operation": {
+          "type": "string"
+        },
+        "result": {
+          "oneOf": [
+            {
+              "$ref": "#/components/schemas/EconomyOrderCommand"
+            },
+            {
+              "$ref": "#/components/schemas/EconomySettingsCommand"
+            },
+            {
+              "$ref": "#/components/schemas/EconomyGenerationCommand"
+            },
+            {
+              "$ref": "#/components/schemas/EconomyDeletionCommand"
+            },
+            {
+              "$ref": "#/components/schemas/EconomyExportCommand"
+            }
+          ]
+        },
+        "notification_status": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/EconomyNotificationStatus"
+          }
+        },
+        "inbox_delivery_verified": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

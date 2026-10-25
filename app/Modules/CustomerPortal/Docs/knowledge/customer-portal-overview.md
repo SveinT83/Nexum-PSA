@@ -59,3 +59,20 @@ Portal notifications are generated only for records that the recipient's active 
 see. Client-wide portal members receive client-level events. Site-scoped members receive matching
 site events, and they also receive client-wide documentation or Knowledge notifications when those
 records are visible across the client. Notifications never link to technician routes.
+
+## Economy API summaries on Dev (25 October 2026)
+
+The existing Orders experience now has customer-safe JSON equivalents on Dev under
+HR-2026-10-25-ECONOMY-API (review pending); Main/production rollout is separate.
+
+1. Sign in to the existing Customer Portal with an active account/contact/membership.
+2. Open Orders. Only orders explicitly published by staff for the current client are available.
+   Client-level orders are not visible through a site-scoped membership.
+3. Open an order to inspect its period/status, active line quantities/prices and effective VAT
+   totals. These are billing summaries, not a provider invoice or payment request.
+
+The session-authenticated read APIs are /api/v1/economy/portal/orders, /context, /{order} and
+/{order}/lines under that prefix. List/detail/line paging follows the same current publication
+and client/site rules. A staff bearer token cannot establish Portal identity. There is no customer
+edit, publication, payment action or new customer API-token issuance. Internal source metadata,
+staff identities and generation diagnostics are excluded. No permission expansion is required.

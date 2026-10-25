@@ -1,43 +1,31 @@
-Economy owns internal order generation and later billing orchestration.
+Economy owns internal order generation and billing handoff, not provider invoices/payments.
 
-Current implementation:
+Current full browser/API parity is implemented on Dev under the approved 2026-10-25 Economy API RFC.
+Human-review checklist HR-2026-10-25-ECONOMY-API is Pending. Main and production are separate.
+The exact 23 HTTP operations and 34 schemas are in Docs/api-contract.json and generated Swagger.
+All domain routes live in routes.php; api.php is the compatible loader. Portal uses auth:web.
 
-- `economy_settings` stores when ticket time and picked ticket costs become order candidates.
-- `economy_orders` stores one draft order per client and period when at least one billable line exists.
-- `economy_order_lines` stores idempotent source-backed lines for ticket time and ticket costs.
-- `GenerateOrders` is the shared generation action used by the UI and ticket storage picking.
-- `ticket_time_entry_allocations` stores the timebank calculation per ticket time entry.
-- `/tech/economy` lists orders and exposes manual `Generate orders` for catch-up.
-- `/tech/admin/settings/economy` controls trigger defaults, line text, order prefix, and default VAT.
-- Ready orders can be moved back to draft before approval/export.
-- Ready or approved orders can be marked `manual_invoiced` as a temporary invoiced workflow. This does not mark an external export.
-- Empty draft or ready orders can be deleted. Draft orders are automatically removed when their last line is deleted.
+Shared operations cover staff order list/detail/context/lines/effective totals, settings, all-source
+generation, supported draft-line/empty-order deletion, ready/draft/manual-invoiced, publication and
+customer-safe Portal reads, plus the canonical Data Exchange profile/run/file handoff. Current actor
+permissions and token scopes both apply. New mutation keys/revisions/previews and durable receipts
+are required as documented in Docs/knowledge/economy-api.md; old writes enforce supplied headers.
 
-Important ownership boundaries:
+Ticket owns time/cost registration; Storage owns picking/stock; Commercial owns rate/timebank
+consumption; Integration owns provider subscriptions/confirmed billing periods; Data Exchange owns
+profile/run/files/delivery. No approval/cancel/exported/provider-invoice engine is invented.
+Generation handles Ticket time/cost, quick overuse and confirmed local licence periods, preserving
+chronological/annual timebank allocation, no-billing outcomes and recorded financial customer.
+Unique source-owner evidence survives line correction and Ticket moves. Deletion never reverses
+stock or deletes consumption/subscription records. API/read-only web pages do not persist defaults.
 
-- Ticket owns work and cost registration.
-- Storage owns stock and picking.
-- Commercial owns contract rates, SLA, and service timebank definitions.
-- Economy owns orders and order lines, not invoices.
+Every Economy writer shares a transaction mutex/revision; source deduplication and exact counters
+prevent double charge and spurious drafts. Durable command evidence supports authorized replay
+and deletion read-back independently of generic audit retention. After-commit notification intents
+are claimed once with current audience/preferences and report unknown outcomes without blind retry.
 
-Time handling:
-
-- Without-contract ticket time can become an order line when the ticket is closed by default.
-- Contract-backed ticket time is calculated against the service timebank on the linked contract item.
-- Covered contract/timebank time does not appear on orders; it gets a covered allocation.
-- If a contract time entry is only partly covered, Economy creates an order line for the billable remainder.
-- Economy processes ticket time chronologically so the first registered work consumes the timebank first.
-- Yearly service timebanks use the contract anniversary period, not the selected order month.
-- Closing a ticket queues Economy order generation for that billing period.
-- A daily scheduled Economy generation job catches up pending entries.
-
-Cost handling:
-
-- Reserving a Storage item on a ticket does not create an order line.
-- Picking the reservation consumes stock, creates a `storage_movements` record, marks the ticket cost as picked, and runs Economy generation for the current period.
-- Picked ticket costs become order lines when `create_orders_from_picked_ticket_costs` is enabled.
-
-Pending work:
-
-- Billing runs and accounting integration handoff.
-- Richer contract period logic for yearly and one-time timebanks and renewal boundaries.
+Apply only database/migrations/2026_10_25_160000_create_economy_command_records.php for this change.
+It adds mutex, receipts, source-owner and notification-intent tables; historical amounts are not
+rewritten. Retain evidence during rollback. Generate Swagger and clear relevant route cache;
+no frontend build or scheduler activation is needed. See the verification plan for exact evidence.
+Future invoice/payment/accounting capabilities remain separate approved product work.

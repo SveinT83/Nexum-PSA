@@ -39,3 +39,25 @@ Operational notes:
   or SFTP disk. Do not paste secrets into Data Exchange fields.
 - Import previews with invalid rows cannot be committed. Upload a corrected file and run a new
   preview first.
+
+## Economy operational API on Dev (25 October 2026)
+
+Economy adds a scoped preview/command/run facade over this existing file-export runtime on Dev,
+pending HR-2026-10-25-ECONOMY-API, Main promotion and production rollout.
+
+1. GET /api/v1/economy/exports/preview with economy.export and data_exchange.run scopes and current
+   economy.view/data_exchange.run permissions. Inspect the canonical Economy Orders profile,
+   format, row count and preview_hash. Preview does not create or repair profiles.
+2. POST /api/v1/economy/exports with that preview_hash and a fresh Idempotency-Key. An existing
+   configured profile/filter is preserved. If missing, the existing default template is created
+   only by this explicit command. Default statuses are ready/approved.
+3. Read the actual run/file/checksum. A failed run remains a failed result and an identical retry
+   replays it. Download the returned canonical Data Exchange file URL with current download and
+   Economy read/view authority. Revoked Economy access also blocks direct owner run/file calls.
+4. Treat the output as a file for billing handoff. It creates no provider invoice, changes no
+   Economy order to exported and dispatches no external delivery. Configured delivery targets are
+   disclosed but not activated by this command.
+
+The canonical Economy profile POST /api/v1/data-exchange/profiles/{profile}/runs shares the same
+preview/key/replay contract. Other Data Exchange sources retain their owner workflows. Generic
+profile discovery hides Economy profiles from users without current Economy visibility.

@@ -7,9 +7,7 @@ use App\Modules\Economy\Models\EconomyOrderLine;
 
 class CalculateOrderTotals
 {
-    public function __construct(private readonly EnsureEconomyDefaults $defaults)
-    {
-    }
+    public function __construct(private readonly EnsureEconomyDefaults $defaults) {}
 
     /**
      * Calculate display totals from active lines, including the current default VAT fallback.
@@ -66,7 +64,7 @@ class CalculateOrderTotals
 
     private function defaultVatRate(): ?float
     {
-        $rate = $this->defaults->handle()->default_vat_rate;
+        $rate = $this->defaults->effective()->default_vat_rate;
 
         return $rate === null ? null : (float) $rate;
     }
