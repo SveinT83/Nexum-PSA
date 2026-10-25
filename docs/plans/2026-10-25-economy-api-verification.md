@@ -1,8 +1,8 @@
 # Economy Full API Coverage - Verification And Handoff
 
-Status: Done On Dev. Human-review checklist HR-2026-10-25-ECONOMY-API: Reviewed by Svein Tore, 2026-10-25.
+Status: Merged to Main; production not deployed. Human-review checklist HR-2026-10-25-ECONOMY-API: Reviewed by Svein Tore, 2026-10-25.
 Date: 2026-10-25. Implementation: Codex. Reviewer/release owner: Svein Tore.
-Authoritative implementation: /var/Projects/tdPSA, branch Dev. Original Dev verification preceded commits/Main promotion. Main promotion is now explicitly authorized; production is not deployed.
+Authoritative implementation: /var/Projects/tdPSA, branch Dev. Original Dev verification preceded commits/Main promotion. Main promotion is verified in PR #315; production is not deployed.
 Design approved by Svein Tore in chat: "Godkjent. Kjør på".
 
 ## Delivered behavior and scope
@@ -145,3 +145,5 @@ an explicit do-not-publish gate until human review, Main/release and production 
 
 Fresh isolated Main candidate: 428 tests / 4904 assertions pass on 2026-10-25. See
 2026-10-25-economy-api-main-promotion.md and main-candidate-tests.json for exact scoped evidence.
+
+Main implementation merge: [PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315), 33eac1a3cba47ffe57f2253847dbaaf8f9b6d4e9; tested tree verified.

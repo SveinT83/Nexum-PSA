@@ -25,8 +25,9 @@ The scheduled Economy catch-up job runs daily. This is intentionally slower than
 
 ## Administration and API on Dev (25 October 2026)
 
-The complete settings API is available on Dev under HR-2026-10-25-ECONOMY-API (human review pending).
-Main/production availability is separate. Open Admin -> Settings -> Economy using an active account
+The complete settings API is verified on Dev under HR-2026-10-25-ECONOMY-API, Reviewed by
+Svein Tore (25 October 2026), and merged to Main in [PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315).
+Production deployment is not verified. Open Admin -> Settings -> Economy using an active account
 with the current economy.manage_settings permission; the installation may delegate that permission.
 
 1. Review the five source/auto-pick switches and the order text/prefix/VAT fields.

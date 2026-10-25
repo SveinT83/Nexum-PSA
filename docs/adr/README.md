@@ -10,4 +10,4 @@ Use `docs/processes/adr-process.md` for the required process and template.
 ADRs document important decisions and why they were made. They should be treated as decision
 history, not as living task lists.
 
-- [Accepted: Economy API commands and source locking](2026-10-25-economy-api-commands-and-source-locking.md) - implemented on Dev; HR-2026-10-25-ECONOMY-API Reviewed.
+- [Accepted: Economy API commands and source locking](2026-10-25-economy-api-commands-and-source-locking.md) - Merged to Main; HR-2026-10-25-ECONOMY-API Reviewed.

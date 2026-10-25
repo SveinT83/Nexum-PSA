@@ -1,6 +1,6 @@
 # RFC: Full Economy Browser And API Coverage
 
-Status: Approved / Done On Dev; HR-2026-10-25-ECONOMY-API Reviewed by Svein Tore, 2026-10-25.
+Status: Approved / Merged to Main; HR-2026-10-25-ECONOMY-API Reviewed by Svein Tore, 2026-10-25.
 Date: 2026-10-25
 Owner: Codex. Product, human-review and release owner: Svein Tore.
 Level: 3 - API, financial workflow, authorization and cross-module behavior.
@@ -241,3 +241,7 @@ production Swagger/Economy pass. Forty PHP syntax/Pint pass; migration batch 24,
 uniqueness, trusted HTTP and six BookStack content/employee-scope read-backs pass.
 See ../plans/2026-10-25-economy-api-verification.md for exact boundaries, release commands and risks.
 HR-2026-10-25-ECONOMY-API stays Pending. No commit/push/Main/production or real customer operation.
+
+Main implementation merge verified 2026-10-25: [PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315),
+commit 33eac1a3cba47ffe57f2253847dbaaf8f9b6d4e9. Tested candidate tree matches Main. See
+../plans/2026-10-25-economy-api-main-promotion.md for evidence. Production is not deployed.

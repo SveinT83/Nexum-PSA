@@ -1,0 +1,38 @@
+[
+  {
+    "id": 494,
+    "path": "app/Modules/Economy/Docs/knowledge/economy-api.md",
+    "old_string": "`HR-2026-10-25-ECONOMY-API` (human review pending). Main promotion and production deployment are\nseparate; do not assume these additions exist in production. Swagger is the exact HTTP contract.",
+    "new_string": "`HR-2026-10-25-ECONOMY-API` (Reviewed by Svein Tore, 25 October 2026). Merged to Main in\n[PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315). Production deployment is not verified;\ndo not assume these additions exist in production. Swagger is the exact HTTP contract."
+  },
+  {
+    "id": 390,
+    "path": "app/Modules/Economy/Docs/knowledge/economy-orders.md",
+    "old_string": "Portal reads. This addition is Dev-only pending HR-2026-10-25-ECONOMY-API, Main promotion and\nproduction deployment. See the Economy API article for exact paths, scopes and request headers.",
+    "new_string": "Portal reads. HR-2026-10-25-ECONOMY-API is Reviewed by Svein Tore (25 October 2026), and the\nimplementation is merged to Main in [PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315).\nProduction deployment is not verified. See the Economy API article for exact paths, scopes and request headers."
+  },
+  {
+    "id": 395,
+    "path": "app/Modules/Economy/Docs/knowledge/economy-settings.md",
+    "old_string": "The complete settings API is available on Dev under HR-2026-10-25-ECONOMY-API (human review pending).\nMain/production availability is separate.",
+    "new_string": "The complete settings API is verified on Dev under HR-2026-10-25-ECONOMY-API, Reviewed by\nSvein Tore (25 October 2026), and merged to Main in [PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315).\nProduction deployment is not verified."
+  },
+  {
+    "id": 514,
+    "path": "app/Modules/CustomerPortal/Docs/knowledge/customer-portal-overview.md",
+    "old_string": "HR-2026-10-25-ECONOMY-API (review pending); Main/production rollout is separate.",
+    "new_string": "HR-2026-10-25-ECONOMY-API (Reviewed by Svein Tore, 25 October 2026). Merged to Main in\n[PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315); production deployment is not verified."
+  },
+  {
+    "id": 515,
+    "path": "app/Modules/DataExchange/Docs/knowledge/data-exchange-overview.md",
+    "old_string": "pending HR-2026-10-25-ECONOMY-API, Main promotion and production rollout.",
+    "new_string": "under HR-2026-10-25-ECONOMY-API (Reviewed by Svein Tore, 25 October 2026), merged to Main\nin [PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315). Production deployment is not verified."
+  },
+  {
+    "id": 449,
+    "path": "app/Modules/Integration/Docs/knowledge/api-management.md",
+    "old_string": "HR-2026-10-25-ECONOMY-API (human review pending). Main promotion and production deployment remain\nseparate.",
+    "new_string": "HR-2026-10-25-ECONOMY-API (Reviewed by Svein Tore, 25 October 2026). Merged to Main in\n[PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315). Production deployment is not verified."
+  }
+]

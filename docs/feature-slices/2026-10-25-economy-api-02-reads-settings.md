@@ -1,6 +1,6 @@
 # Feature Slice: Complete pure staff reads and Economy settings
 
-Status: Done On Dev
+Status: Done / Merged to Main; Human Reviewed
 Date: 2026-10-25
 Parent: ../rfc/2026-10-25-economy-full-api-parity.md (Approved)
 Owner: Codex. Reviewer: Svein Tore. Review: HR-2026-10-25-ECONOMY-API (Reviewed).
@@ -44,5 +44,8 @@ Implemented directly on Dev, relevant tests pass, exact result and ownership che
 ## Verification
 
 Completed under the approved full target. See ../plans/2026-10-25-economy-api-verification.md and
-its exact test/native/HTTP/BookStack evidence. HR-2026-10-25-ECONOMY-API is Reviewed; Main and
-production are separate. All relevant E01-E14 rows are reconciled in the gap matrix.
+its exact test/native/HTTP/BookStack evidence. HR-2026-10-25-ECONOMY-API is Reviewed; Main merge is verified in PR #315; production deployment remains separate. All relevant E01-E14 rows are reconciled in the gap matrix.
+
+Main implementation merge verified 2026-10-25: [PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315),
+commit 33eac1a3cba47ffe57f2253847dbaaf8f9b6d4e9. Tested candidate tree matches Main. See
+../plans/2026-10-25-economy-api-main-promotion.md for evidence. Production is not deployed.

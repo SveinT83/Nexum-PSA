@@ -53,3 +53,7 @@ calling browser controllers from API and automatic unknown-attempt retry were re
 
 Six approved slices, full matrix acceptance, native lock/unique/HTTP verification, Knowledge/BookStack
 and HR-2026-10-25-ECONOMY-API. Main/production remain separate gates.
+
+Main implementation merge verified 2026-10-25: [PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315),
+commit 33eac1a3cba47ffe57f2253847dbaaf8f9b6d4e9. Tested candidate tree matches Main. See
+../plans/2026-10-25-economy-api-main-promotion.md for evidence. Production is not deployed.

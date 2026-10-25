@@ -1,7 +1,8 @@
 The Economy API covers the implemented order-preparation workspace, its administration and
 customer-safe Portal reads. The current full surface is available on Dev under
-`HR-2026-10-25-ECONOMY-API` (human review pending). Main promotion and production deployment are
-separate; do not assume these additions exist in production. Swagger is the exact HTTP contract.
+`HR-2026-10-25-ECONOMY-API` (Reviewed by Svein Tore, 25 October 2026). Merged to Main in
+[PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315). Production deployment is not verified;
+do not assume these additions exist in production. Swagger is the exact HTTP contract.
 
 Economy prepares billing orders and Data Exchange files. It does not issue provider invoices,
 send invoices, register payments or convert currencies.

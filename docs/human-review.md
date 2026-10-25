@@ -29,8 +29,12 @@ Implementation and exact evidence are complete in plans/2026-10-25-economy-api-v
 Final 60 / 640 Economy/DataExchange, 5 / 313 API admin, 384 / 4324 broad affected and 47 / 558
 Economy/production Swagger pass; 40 PHP syntax/Pint pass. Native additive migration batch 24,
 actual lock/unique probes, trusted HTTP and six BookStack page/access read-backs pass.
-Main candidate verification is in progress under the explicit authorization. Production is not authorized. Preserve financial,
+Main promotion verified: PR #315 (https://github.com/SveinT83/Nexum-PSA/pull/315), commit
+33eac1a3cba47ffe57f2253847dbaaf8f9b6d4e9; merge tree equals tested candidate. Fresh candidate: 428 tests / 4904 assertions.
+Production deployment/activation were not performed and require separate authorization. Preserve financial,
 source, audit, command and notification evidence on rollback. No scheduler activation.
+
+
 
 ## HR-2026-10-25-COMMERCIAL-API - Full Commercial Browser/API Parity
 

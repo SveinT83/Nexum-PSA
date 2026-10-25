@@ -43,7 +43,8 @@ Operational notes:
 ## Economy operational API on Dev (25 October 2026)
 
 Economy adds a scoped preview/command/run facade over this existing file-export runtime on Dev,
-pending HR-2026-10-25-ECONOMY-API, Main promotion and production rollout.
+under HR-2026-10-25-ECONOMY-API (Reviewed by Svein Tore, 25 October 2026), merged to Main
+in [PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315). Production deployment is not verified.
 
 1. GET /api/v1/economy/exports/preview with economy.export and data_exchange.run scopes and current
    economy.view/data_exchange.run permissions. Inspect the canonical Economy Orders profile,

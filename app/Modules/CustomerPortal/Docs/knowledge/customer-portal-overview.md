@@ -63,7 +63,8 @@ records are visible across the client. Notifications never link to technician ro
 ## Economy API summaries on Dev (25 October 2026)
 
 The existing Orders experience now has customer-safe JSON equivalents on Dev under
-HR-2026-10-25-ECONOMY-API (review pending); Main/production rollout is separate.
+HR-2026-10-25-ECONOMY-API (Reviewed by Svein Tore, 25 October 2026). Merged to Main in
+[PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315); production deployment is not verified.
 
 1. Sign in to the existing Customer Portal with an active account/contact/membership.
 2. Open Orders. Only orders explicitly published by staff for the current client are available.

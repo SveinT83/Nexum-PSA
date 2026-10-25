@@ -1,6 +1,6 @@
 # Economy Browser/API Gap Matrix
 
-Status: All E01-E14 Done On Dev; HR-2026-10-25-ECONOMY-API Reviewed by Svein Tore, 2026-10-25.
+Status: All E01-E14 Merged to Main; HR-2026-10-25-ECONOMY-API Reviewed by Svein Tore, 2026-10-25.
 Date: 2026-10-25
 Owner: Codex. Product/release owner: Svein Tore.
 RFC: ../rfc/2026-10-25-economy-full-api-parity.md
@@ -79,7 +79,7 @@ Dirty GenerateOrders changes from another workstream are preserved and fingerpri
 GitHub search found no Economy-owned open Issue. No external update or application change occurred.
 
 All rows are Done On Dev with evidence below. BookStack content/employee scope is verified.
-Named human review is complete; the Main merge is authorized, production remains separate.
+Named human review is complete; Main merge PR #315 is verified; production remains separate.
 
 ## Completed Acceptance Evidence
 
@@ -107,4 +107,6 @@ Final scoped suite 60 tests / 640 assertions, API administration 5 / 313 and bro
 pass. Production-mode Swagger scan passes; exact route/contract and all schemas are asserted.
 Native mutex 1205, receipt/source uniqueness 1062, trusted HTTPS and exact Swagger bytes pass.
 BookStack six actual pages and inherited staff scope are verified. No real customer operation or
-production state is inferred. The HR checklist is retained for named human acceptance before Main/release.
+production state is inferred. The HR checklist records named human acceptance. Main PR #315 is verified; production remains separate.
+
+Main implementation merge: [PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315), 33eac1a3cba47ffe57f2253847dbaaf8f9b6d4e9; tested tree verified.

@@ -1,0 +1,137 @@
+{
+  "date": "2026-10-25",
+  "implementation_pr": 315,
+  "implementation_merge": "33eac1a3cba47ffe57f2253847dbaaf8f9b6d4e9",
+  "tested_tree": "531f5e7e43fcd1c65ab2d95c15d850e3ac898d94",
+  "merge_tree_matches_tested_candidate": true,
+  "tests": 428,
+  "assertions": 4904,
+  "pages": [
+    {
+      "id": 494,
+      "revision": 9,
+      "book_id": 339,
+      "chapter_id": 373,
+      "updated_at": "2026-10-25T18:20:04.000000Z",
+      "exact_fragment_read_back": true
+    },
+    {
+      "id": 390,
+      "revision": 12,
+      "book_id": 339,
+      "chapter_id": 373,
+      "updated_at": "2026-10-25T18:20:08.000000Z",
+      "exact_fragment_read_back": true
+    },
+    {
+      "id": 395,
+      "revision": 12,
+      "book_id": 339,
+      "chapter_id": 373,
+      "updated_at": "2026-10-25T18:20:11.000000Z",
+      "exact_fragment_read_back": true
+    },
+    {
+      "id": 514,
+      "revision": 4,
+      "book_id": 339,
+      "chapter_id": 512,
+      "updated_at": "2026-10-25T18:20:15.000000Z",
+      "exact_fragment_read_back": true
+    },
+    {
+      "id": 515,
+      "revision": 4,
+      "book_id": 339,
+      "chapter_id": 513,
+      "updated_at": "2026-10-25T18:20:19.000000Z",
+      "exact_fragment_read_back": true
+    },
+    {
+      "id": 449,
+      "revision": 130,
+      "book_id": 339,
+      "chapter_id": 374,
+      "updated_at": "2026-10-25T18:20:24.000000Z",
+      "exact_fragment_read_back": true
+    }
+  ],
+  "permissions": [
+    {
+      "type": "book",
+      "id": 339,
+      "inheriting": true,
+      "role_overrides": 2
+    },
+    {
+      "type": "chapter",
+      "id": 373,
+      "inheriting": true,
+      "role_overrides": 0
+    },
+    {
+      "type": "chapter",
+      "id": 374,
+      "inheriting": true,
+      "role_overrides": 0
+    },
+    {
+      "type": "chapter",
+      "id": 512,
+      "inheriting": true,
+      "role_overrides": 0
+    },
+    {
+      "type": "chapter",
+      "id": 513,
+      "inheriting": true,
+      "role_overrides": 0
+    },
+    {
+      "type": "page",
+      "id": 494,
+      "inheriting": true,
+      "role_overrides": 0
+    },
+    {
+      "type": "page",
+      "id": 390,
+      "inheriting": true,
+      "role_overrides": 0
+    },
+    {
+      "type": "page",
+      "id": 395,
+      "inheriting": true,
+      "role_overrides": 0
+    },
+    {
+      "type": "page",
+      "id": 514,
+      "inheriting": true,
+      "role_overrides": 0
+    },
+    {
+      "type": "page",
+      "id": 515,
+      "inheriting": true,
+      "role_overrides": 0
+    },
+    {
+      "type": "page",
+      "id": 449,
+      "inheriting": true,
+      "role_overrides": 0
+    }
+  ],
+  "employee_role": {
+    "id": 2,
+    "name": "Editor",
+    "external_auth_id": "/staff-internal",
+    "view_all_books_chapters_pages": true
+  },
+  "employee_openwebui_retrieval": "Not tested",
+  "native_knowledge": "Six exact source articles internal/published; scoped Integration section preserved. External BookStack readbacks are independent of native pending_push.",
+  "website_handoff": "One existing item updated and UTF-8 read back; production/publication gates retained",
+  "production_deployed": false
+}
