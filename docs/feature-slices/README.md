@@ -2,12 +2,12 @@
 
 ## Full DataExchange API - 25 October 2026
 
-- [2026-10-25-data-exchange-api-01-foundation](2026-10-25-data-exchange-api-01-foundation.md) - Done On Dev; Reviewed by Svein Tore.
-- [2026-10-25-data-exchange-api-02-profiles](2026-10-25-data-exchange-api-02-profiles.md) - Done On Dev; Reviewed by Svein Tore.
-- [2026-10-25-data-exchange-api-03-runs-files](2026-10-25-data-exchange-api-03-runs-files.md) - Done On Dev; Reviewed by Svein Tore.
-- [2026-10-25-data-exchange-api-04-imports](2026-10-25-data-exchange-api-04-imports.md) - Done On Dev; Reviewed by Svein Tore.
-- [2026-10-25-data-exchange-api-05-operations](2026-10-25-data-exchange-api-05-operations.md) - Done On Dev; Reviewed by Svein Tore.
-- [2026-10-25-data-exchange-api-06-acceptance](2026-10-25-data-exchange-api-06-acceptance.md) - Done On Dev; Reviewed by Svein Tore.
+- [2026-10-25-data-exchange-api-01-foundation](2026-10-25-data-exchange-api-01-foundation.md) - Merged to Main (PR #317); Reviewed by Svein Tore.
+- [2026-10-25-data-exchange-api-02-profiles](2026-10-25-data-exchange-api-02-profiles.md) - Merged to Main (PR #317); Reviewed by Svein Tore.
+- [2026-10-25-data-exchange-api-03-runs-files](2026-10-25-data-exchange-api-03-runs-files.md) - Merged to Main (PR #317); Reviewed by Svein Tore.
+- [2026-10-25-data-exchange-api-04-imports](2026-10-25-data-exchange-api-04-imports.md) - Merged to Main (PR #317); Reviewed by Svein Tore.
+- [2026-10-25-data-exchange-api-05-operations](2026-10-25-data-exchange-api-05-operations.md) - Merged to Main (PR #317); Reviewed by Svein Tore.
+- [2026-10-25-data-exchange-api-06-acceptance](2026-10-25-data-exchange-api-06-acceptance.md) - Merged to Main (PR #317); Reviewed by Svein Tore.
 
 ## Workday And Tripletex Automatic Sync - Planned
 

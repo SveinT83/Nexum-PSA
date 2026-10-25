@@ -34,3 +34,8 @@ plans/2026-10-25-data-exchange-api-verification.md. Final 82 / 1011 and broad 31
 API delivery remains off. Before activation, Svein Tore / Dev runtime operator must assess the
 pre-existing shared queue backlog, deliberately refresh workers and verify the external scheduler.
 Main promotion is authorized; production deployment, real customer/provider operations and permission expansion remain outside this action.
+
+Main merge verified: [PR #317](https://github.com/SveinT83/Nexum-PSA/pull/317), commit
+9090026f2172da0dfacc188132a5195156e8df45. The merged tree equals tested candidate
+8eda27d3567eef5f62dc4eaadcc5e87064f92473 (tree e8962d18d6eee887783970363148060c305ecd14).
+Production deployment and runtime activation were not performed.

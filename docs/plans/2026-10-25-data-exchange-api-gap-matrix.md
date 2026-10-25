@@ -1,7 +1,7 @@
 # Data Exchange API Coverage Matrix
 
 Date: 2026-10-25
-Status: Done On Dev; DX01-DX12 implemented; human review Reviewed (Svein Tore, 2026-10-25)
+Status: Merged to Main (PR #317); DX01-DX12 complete; human review Reviewed
 Owner: Codex
 Parent: [full API RFC](../rfc/2026-10-25-data-exchange-full-api-parity.md)
 
