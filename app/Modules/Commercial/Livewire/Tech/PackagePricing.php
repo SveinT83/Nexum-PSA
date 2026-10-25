@@ -84,40 +84,7 @@ class PackagePricing extends Component
     #[Computed]
     public function pricingByUnit(): array
     {
-        $data = [];
-
-        // Fetch services fresh to ensure we're not using stale cached data
-        $services = Services::with(['costRelations.cost.unit', 'unit'])
-            ->whereIn('id', $this->selectedServiceIds)
-            ->get();
-
-        foreach ($services as $service) {
-            // 1. Attribute EVERYTHING (Service Price AND all its Costs) to the service's own unit
-            $unit = $service->unit;
-            $unitId = $unit ? $unit->id : 0; // 0 for 'No Unit'
-            $unitName = $unit ? ($unit->name) : '-';
-
-            if (! isset($data[$unitId])) {
-                $data[$unitId] = [
-                    'unit_name' => $unitName,
-                    'cost' => 0.0,
-                    'suggested_sales_price' => 0.0,
-                    'has_services' => false,
-                ];
-            }
-
-            $data[$unitId]['suggested_sales_price'] += (float) $service->price_ex_vat;
-            $data[$unitId]['has_services'] = true;
-
-            // Attribute all related costs to THIS service's unit, NOT the cost's unit
-            foreach ($service->costRelations as $relation) {
-                if ($relation->cost) {
-                    $data[$unitId]['cost'] += (float) $relation->cost->cost;
-                }
-            }
-        }
-
-        return $data;
+        return (new \App\Modules\Commercial\Support\PackagePricingCalculator($this->selectedServiceIds))->pricingByUnit();
     }
 
     #[Computed]

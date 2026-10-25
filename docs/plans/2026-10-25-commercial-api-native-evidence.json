@@ -1,0 +1,81 @@
+{
+    "checked_at": "2026-10-25T12:24:11+00:00",
+    "migration": {
+        "migration": "2026_10_25_120000_create_commercial_command_and_delivery_records",
+        "batch": 23
+    },
+    "tables": {
+        "commercial_command_receipts": {
+            "columns": 7,
+            "rows": 0
+        },
+        "commercial_delivery_attempts": {
+            "columns": 15,
+            "rows": 0
+        }
+    },
+    "receipt_unique_indexes": [
+        {
+            "name": "commercial_command_replay_unique",
+            "columns": [
+                "actor_key",
+                "operation",
+                "key_hash"
+            ],
+            "type": "btree",
+            "unique": true,
+            "primary": false
+        },
+        {
+            "name": "primary",
+            "columns": [
+                "id"
+            ],
+            "type": "btree",
+            "unique": true,
+            "primary": true
+        }
+    ],
+    "native_lock_code": 1205,
+    "native_unique_code": 1062,
+    "native_probe_rows": 1,
+    "native_probe_removed": true,
+    "http": {
+        "\/commercial\/services\/context": {
+            "status": 200,
+            "has_data": true
+        },
+        "\/commercial\/services?per_page=1": {
+            "status": 200,
+            "has_data": true
+        },
+        "\/commercial\/contracts\/context": {
+            "status": 200,
+            "has_data": true
+        },
+        "\/commercial\/contracts\/context\/technicians": {
+            "status": 200,
+            "has_data": true
+        },
+        "\/commercial\/contracts?per_page=1": {
+            "status": 200,
+            "has_data": true
+        },
+        "\/commercial\/units\/context": {
+            "status": 200,
+            "has_data": true
+        },
+        "\/commercial\/settings\/timebank-policy": {
+            "status": 200,
+            "has_data": true
+        }
+    },
+    "pdf": {
+        "skipped": "No eligible existing immutable snapshot among bounded candidate rows; isolated PDF test passes."
+    },
+    "temporary_token_count_restored": true,
+    "rollout_flags": {
+        "api_delivery_enabled": false,
+        "durable_delivery_enabled": false
+    }
+}

@@ -455,8 +455,23 @@ class EnforceTechRoutePermission
     /** Reuse the browser permission decision from typed domain APIs without a session bridge. */
     public function allowsPermission(Request $request, string $permission): bool
     {
-        return Permission::query()->where('name', $permission)->where('guard_name', 'web')->exists()
-            && ($this->hasPrivilegedFallbackAccess($request) || (bool) $request->user()?->can($permission));
+        $actor = $request->user();
+
+        return $actor instanceof \App\Models\Core\User && $this->allowsActor($actor, $permission);
+    }
+
+    /** Jobs use the same current actor policy without fabricating an HTTP request. */
+    public function allowsActor(\App\Models\Core\User $actor, string $permission): bool
+    {
+        if (! Permission::query()->where('name', $permission)->where('guard_name', 'web')->exists()) {
+            return false;
+        }
+        if ($actor->hasRole('Superuser')) {
+            return true;
+        }
+        $admin = $actor->roles()->where('name', 'Admin')->first();
+
+        return ($admin && ! $admin->permissions()->exists()) || $actor->can($permission);
     }
 
     public function handle(Request $request, Closure $next)

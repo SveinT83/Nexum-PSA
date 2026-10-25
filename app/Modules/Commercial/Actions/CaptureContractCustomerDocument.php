@@ -84,4 +84,29 @@ final class CaptureContractCustomerDocument
     {
         return $this->handle($contract, $statusOverride, true);
     }
+
+    /** Explicit reviewed delivery freezes exactly the document already shown in its command preview. */
+    public function captureReviewed(Contracts $contract, array $snapshot, string $status): array
+    {
+        return DB::transaction(function () use ($contract, $snapshot, $status) {
+            $locked = Contracts::query()->lockForUpdate()->findOrFail($contract->id);
+            if (! $locked->isEditable() || ! $locked->isReady()) {
+                throw new DomainException('Only a ready editable contract may capture a reviewed delivery.');
+            }
+            $profile = $this->companyProfile->get();
+            $this->readiness->assertReadyForCapture($locked, $profile);
+            $this->termReadiness->assertCurrent($locked);
+            $this->legacyReadiness->assertSafeProjection($locked);
+            $this->documents->assertSupportedSnapshot($snapshot);
+            $capturedAt = \Carbon\Carbon::createFromFormat('d.m.Y H:i', $snapshot['document']['generated_at']);
+            $current = $this->documents->build($locked, $profile, $status, $capturedAt);
+            if (! hash_equals($this->documents->fingerprint($snapshot), $this->documents->fingerprint($current))) {
+                throw new DomainException('The reviewed customer document changed.');
+            }
+            $locked->forceFill(['customer_document_snapshot' => $snapshot])->saveQuietly();
+            $contract->setAttribute('customer_document_snapshot', $snapshot);
+
+            return $snapshot;
+        });
+    }
 }

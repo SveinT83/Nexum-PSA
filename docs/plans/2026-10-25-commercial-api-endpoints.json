@@ -1,0 +1,1104 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/services",
+    "name": "api.v1.commercial.services.index",
+    "controller": "CommercialCatalogueController",
+    "action": "index",
+    "scope": "commercial.read",
+    "permission": "commercial.service_manage",
+    "defaults": {
+      "commercial_kind": "services",
+      "commercial_parameter": "service",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/services/context",
+    "name": "api.v1.commercial.services.context",
+    "controller": "CommercialCatalogueController",
+    "action": "context",
+    "scope": "commercial.read",
+    "permission": "commercial.service_manage",
+    "defaults": {
+      "commercial_kind": "services",
+      "commercial_parameter": "service",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/services/context/{lookup}",
+    "name": "api.v1.commercial.services.lookup",
+    "controller": "CommercialCatalogueController",
+    "action": "lookup",
+    "scope": "commercial.read",
+    "permission": "commercial.service_manage",
+    "defaults": {
+      "commercial_kind": "services",
+      "commercial_parameter": "service",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/services",
+    "name": "api.v1.commercial.services.store",
+    "controller": "CommercialCatalogueController",
+    "action": "store",
+    "scope": "commercial.create",
+    "permission": "commercial.service_manage",
+    "defaults": {
+      "commercial_kind": "services",
+      "commercial_parameter": "service",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/services/pricing-preview",
+    "name": "api.v1.commercial.services.pricing-preview",
+    "controller": "CommercialCatalogueController",
+    "action": "previewPricing",
+    "scope": "commercial.read",
+    "permission": "commercial.service_manage",
+    "defaults": {
+      "commercial_kind": "services",
+      "commercial_parameter": "service",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/services/{service}",
+    "name": "api.v1.commercial.services.show",
+    "controller": "CommercialCatalogueController",
+    "action": "show",
+    "scope": "commercial.read",
+    "permission": "commercial.service_manage",
+    "defaults": {
+      "commercial_kind": "services",
+      "commercial_parameter": "service",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "PUT|PATCH",
+    "path": "/api/v1/commercial/services/{service}",
+    "name": "api.v1.commercial.services.update",
+    "controller": "CommercialCatalogueController",
+    "action": "update",
+    "scope": "commercial.update",
+    "permission": "commercial.service_manage",
+    "defaults": {
+      "commercial_kind": "services",
+      "commercial_parameter": "service",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/commercial/services/{service}",
+    "name": "api.v1.commercial.services.destroy",
+    "controller": "CommercialCatalogueController",
+    "action": "destroy",
+    "scope": "commercial.delete",
+    "permission": "commercial.service_manage",
+    "defaults": {
+      "commercial_kind": "services",
+      "commercial_parameter": "service",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/packages",
+    "name": "api.v1.commercial.packages.index",
+    "controller": "CommercialCatalogueController",
+    "action": "index",
+    "scope": "commercial.read",
+    "permission": "commercial.package_manage",
+    "defaults": {
+      "commercial_kind": "packages",
+      "commercial_parameter": "package",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/packages/context",
+    "name": "api.v1.commercial.packages.context",
+    "controller": "CommercialCatalogueController",
+    "action": "context",
+    "scope": "commercial.read",
+    "permission": "commercial.package_manage",
+    "defaults": {
+      "commercial_kind": "packages",
+      "commercial_parameter": "package",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/packages/context/{lookup}",
+    "name": "api.v1.commercial.packages.lookup",
+    "controller": "CommercialCatalogueController",
+    "action": "lookup",
+    "scope": "commercial.read",
+    "permission": "commercial.package_manage",
+    "defaults": {
+      "commercial_kind": "packages",
+      "commercial_parameter": "package",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/packages",
+    "name": "api.v1.commercial.packages.store",
+    "controller": "CommercialCatalogueController",
+    "action": "store",
+    "scope": "commercial.create",
+    "permission": "commercial.package_manage",
+    "defaults": {
+      "commercial_kind": "packages",
+      "commercial_parameter": "package",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/packages/pricing-preview",
+    "name": "api.v1.commercial.packages.pricing-preview",
+    "controller": "CommercialCatalogueController",
+    "action": "previewPricing",
+    "scope": "commercial.read",
+    "permission": "commercial.package_manage",
+    "defaults": {
+      "commercial_kind": "packages",
+      "commercial_parameter": "package",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/packages/{package}",
+    "name": "api.v1.commercial.packages.show",
+    "controller": "CommercialCatalogueController",
+    "action": "show",
+    "scope": "commercial.read",
+    "permission": "commercial.package_manage",
+    "defaults": {
+      "commercial_kind": "packages",
+      "commercial_parameter": "package",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "PUT|PATCH",
+    "path": "/api/v1/commercial/packages/{package}",
+    "name": "api.v1.commercial.packages.update",
+    "controller": "CommercialCatalogueController",
+    "action": "update",
+    "scope": "commercial.update",
+    "permission": "commercial.package_manage",
+    "defaults": {
+      "commercial_kind": "packages",
+      "commercial_parameter": "package",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/commercial/packages/{package}",
+    "name": "api.v1.commercial.packages.destroy",
+    "controller": "CommercialCatalogueController",
+    "action": "destroy",
+    "scope": "commercial.delete",
+    "permission": "commercial.package_manage",
+    "defaults": {
+      "commercial_kind": "packages",
+      "commercial_parameter": "package",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/costs",
+    "name": "api.v1.commercial.costs.index",
+    "controller": "CommercialCatalogueController",
+    "action": "index",
+    "scope": "commercial.read",
+    "permission": "commercial.cost_manage",
+    "defaults": {
+      "commercial_kind": "costs",
+      "commercial_parameter": "cost",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/costs/context",
+    "name": "api.v1.commercial.costs.context",
+    "controller": "CommercialCatalogueController",
+    "action": "context",
+    "scope": "commercial.read",
+    "permission": "commercial.cost_manage",
+    "defaults": {
+      "commercial_kind": "costs",
+      "commercial_parameter": "cost",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/costs/context/{lookup}",
+    "name": "api.v1.commercial.costs.lookup",
+    "controller": "CommercialCatalogueController",
+    "action": "lookup",
+    "scope": "commercial.read",
+    "permission": "commercial.cost_manage",
+    "defaults": {
+      "commercial_kind": "costs",
+      "commercial_parameter": "cost",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/costs",
+    "name": "api.v1.commercial.costs.store",
+    "controller": "CommercialCatalogueController",
+    "action": "store",
+    "scope": "commercial.create",
+    "permission": "commercial.cost_manage",
+    "defaults": {
+      "commercial_kind": "costs",
+      "commercial_parameter": "cost",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/costs/{cost}",
+    "name": "api.v1.commercial.costs.show",
+    "controller": "CommercialCatalogueController",
+    "action": "show",
+    "scope": "commercial.read",
+    "permission": "commercial.cost_manage",
+    "defaults": {
+      "commercial_kind": "costs",
+      "commercial_parameter": "cost",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "PUT|PATCH",
+    "path": "/api/v1/commercial/costs/{cost}",
+    "name": "api.v1.commercial.costs.update",
+    "controller": "CommercialCatalogueController",
+    "action": "update",
+    "scope": "commercial.update",
+    "permission": "commercial.cost_manage",
+    "defaults": {
+      "commercial_kind": "costs",
+      "commercial_parameter": "cost",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/commercial/costs/{cost}",
+    "name": "api.v1.commercial.costs.destroy",
+    "controller": "CommercialCatalogueController",
+    "action": "destroy",
+    "scope": "commercial.delete",
+    "permission": "commercial.cost_manage",
+    "defaults": {
+      "commercial_kind": "costs",
+      "commercial_parameter": "cost",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/terms",
+    "name": "api.v1.commercial.terms.index",
+    "controller": "CommercialCatalogueController",
+    "action": "index",
+    "scope": "commercial.read",
+    "permission": "commercial.contract_manage",
+    "defaults": {
+      "commercial_kind": "terms",
+      "commercial_parameter": "term",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/terms/context",
+    "name": "api.v1.commercial.terms.context",
+    "controller": "CommercialCatalogueController",
+    "action": "context",
+    "scope": "commercial.read",
+    "permission": "commercial.contract_manage",
+    "defaults": {
+      "commercial_kind": "terms",
+      "commercial_parameter": "term",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/terms/context/{lookup}",
+    "name": "api.v1.commercial.terms.lookup",
+    "controller": "CommercialCatalogueController",
+    "action": "lookup",
+    "scope": "commercial.read",
+    "permission": "commercial.contract_manage",
+    "defaults": {
+      "commercial_kind": "terms",
+      "commercial_parameter": "term",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/terms",
+    "name": "api.v1.commercial.terms.store",
+    "controller": "CommercialCatalogueController",
+    "action": "store",
+    "scope": "commercial.create",
+    "permission": "commercial.contract_manage",
+    "defaults": {
+      "commercial_kind": "terms",
+      "commercial_parameter": "term",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/terms/{term}",
+    "name": "api.v1.commercial.terms.show",
+    "controller": "CommercialCatalogueController",
+    "action": "show",
+    "scope": "commercial.read",
+    "permission": "commercial.contract_manage",
+    "defaults": {
+      "commercial_kind": "terms",
+      "commercial_parameter": "term",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "PUT|PATCH",
+    "path": "/api/v1/commercial/terms/{term}",
+    "name": "api.v1.commercial.terms.update",
+    "controller": "CommercialCatalogueController",
+    "action": "update",
+    "scope": "commercial.update",
+    "permission": "commercial.contract_manage",
+    "defaults": {
+      "commercial_kind": "terms",
+      "commercial_parameter": "term",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/commercial/terms/{term}",
+    "name": "api.v1.commercial.terms.destroy",
+    "controller": "CommercialCatalogueController",
+    "action": "destroy",
+    "scope": "commercial.delete",
+    "permission": "commercial.contract_manage",
+    "defaults": {
+      "commercial_kind": "terms",
+      "commercial_parameter": "term",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/slas",
+    "name": "api.v1.commercial.slas.index",
+    "controller": "CommercialCatalogueController",
+    "action": "index",
+    "scope": "commercial.read",
+    "permission": "commercial.sla_manage",
+    "defaults": {
+      "commercial_kind": "slas",
+      "commercial_parameter": "sla",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/slas/context",
+    "name": "api.v1.commercial.slas.context",
+    "controller": "CommercialCatalogueController",
+    "action": "context",
+    "scope": "commercial.read",
+    "permission": "commercial.sla_manage",
+    "defaults": {
+      "commercial_kind": "slas",
+      "commercial_parameter": "sla",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/slas/context/{lookup}",
+    "name": "api.v1.commercial.slas.lookup",
+    "controller": "CommercialCatalogueController",
+    "action": "lookup",
+    "scope": "commercial.read",
+    "permission": "commercial.sla_manage",
+    "defaults": {
+      "commercial_kind": "slas",
+      "commercial_parameter": "sla",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/slas",
+    "name": "api.v1.commercial.slas.store",
+    "controller": "CommercialCatalogueController",
+    "action": "store",
+    "scope": "commercial.create",
+    "permission": "commercial.sla_manage",
+    "defaults": {
+      "commercial_kind": "slas",
+      "commercial_parameter": "sla",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/slas/{sla}",
+    "name": "api.v1.commercial.slas.show",
+    "controller": "CommercialCatalogueController",
+    "action": "show",
+    "scope": "commercial.read",
+    "permission": "commercial.sla_manage",
+    "defaults": {
+      "commercial_kind": "slas",
+      "commercial_parameter": "sla",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "PUT|PATCH",
+    "path": "/api/v1/commercial/slas/{sla}",
+    "name": "api.v1.commercial.slas.update",
+    "controller": "CommercialCatalogueController",
+    "action": "update",
+    "scope": "commercial.update",
+    "permission": "commercial.sla_manage",
+    "defaults": {
+      "commercial_kind": "slas",
+      "commercial_parameter": "sla",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/time-rates",
+    "name": "api.v1.commercial.time-rates.index",
+    "controller": "CommercialCatalogueController",
+    "action": "index",
+    "scope": "commercial.read",
+    "permission": "commercial.rate_manage",
+    "defaults": {
+      "commercial_kind": "time-rates",
+      "commercial_parameter": "rate",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/time-rates/context",
+    "name": "api.v1.commercial.time-rates.context",
+    "controller": "CommercialCatalogueController",
+    "action": "context",
+    "scope": "commercial.read",
+    "permission": "commercial.rate_manage",
+    "defaults": {
+      "commercial_kind": "time-rates",
+      "commercial_parameter": "rate",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/time-rates/context/{lookup}",
+    "name": "api.v1.commercial.time-rates.lookup",
+    "controller": "CommercialCatalogueController",
+    "action": "lookup",
+    "scope": "commercial.read",
+    "permission": "commercial.rate_manage",
+    "defaults": {
+      "commercial_kind": "time-rates",
+      "commercial_parameter": "rate",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/time-rates",
+    "name": "api.v1.commercial.time-rates.store",
+    "controller": "CommercialCatalogueController",
+    "action": "store",
+    "scope": "commercial.create",
+    "permission": "commercial.rate_manage",
+    "defaults": {
+      "commercial_kind": "time-rates",
+      "commercial_parameter": "rate",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/time-rates/{rate}",
+    "name": "api.v1.commercial.time-rates.show",
+    "controller": "CommercialCatalogueController",
+    "action": "show",
+    "scope": "commercial.read",
+    "permission": "commercial.rate_manage",
+    "defaults": {
+      "commercial_kind": "time-rates",
+      "commercial_parameter": "rate",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "PUT|PATCH",
+    "path": "/api/v1/commercial/time-rates/{rate}",
+    "name": "api.v1.commercial.time-rates.update",
+    "controller": "CommercialCatalogueController",
+    "action": "update",
+    "scope": "commercial.update",
+    "permission": "commercial.rate_manage",
+    "defaults": {
+      "commercial_kind": "time-rates",
+      "commercial_parameter": "rate",
+      "commercial_new": false
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/units",
+    "name": "api.v1.commercial.units.index",
+    "controller": "CommercialCatalogueController",
+    "action": "index",
+    "scope": "commercial.read",
+    "permission": "economy.manage_settings",
+    "defaults": {
+      "commercial_kind": "units",
+      "commercial_parameter": "unit",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/units/context",
+    "name": "api.v1.commercial.units.context",
+    "controller": "CommercialCatalogueController",
+    "action": "context",
+    "scope": "commercial.read",
+    "permission": "economy.manage_settings",
+    "defaults": {
+      "commercial_kind": "units",
+      "commercial_parameter": "unit",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/units/context/{lookup}",
+    "name": "api.v1.commercial.units.lookup",
+    "controller": "CommercialCatalogueController",
+    "action": "lookup",
+    "scope": "commercial.read",
+    "permission": "economy.manage_settings",
+    "defaults": {
+      "commercial_kind": "units",
+      "commercial_parameter": "unit",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/units",
+    "name": "api.v1.commercial.units.store",
+    "controller": "CommercialCatalogueController",
+    "action": "store",
+    "scope": "commercial.create",
+    "permission": "economy.manage_settings",
+    "defaults": {
+      "commercial_kind": "units",
+      "commercial_parameter": "unit",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/units/{unit}",
+    "name": "api.v1.commercial.units.show",
+    "controller": "CommercialCatalogueController",
+    "action": "show",
+    "scope": "commercial.read",
+    "permission": "economy.manage_settings",
+    "defaults": {
+      "commercial_kind": "units",
+      "commercial_parameter": "unit",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "PUT|PATCH",
+    "path": "/api/v1/commercial/units/{unit}",
+    "name": "api.v1.commercial.units.update",
+    "controller": "CommercialCatalogueController",
+    "action": "update",
+    "scope": "commercial.update",
+    "permission": "economy.manage_settings",
+    "defaults": {
+      "commercial_kind": "units",
+      "commercial_parameter": "unit",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/commercial/units/{unit}",
+    "name": "api.v1.commercial.units.destroy",
+    "controller": "CommercialCatalogueController",
+    "action": "destroy",
+    "scope": "commercial.delete",
+    "permission": "economy.manage_settings",
+    "defaults": {
+      "commercial_kind": "units",
+      "commercial_parameter": "unit",
+      "commercial_new": true
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/contracts",
+    "name": "api.v1.commercial.contracts.index",
+    "controller": "CommercialContractController",
+    "action": "index",
+    "scope": "commercial.read",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/contracts/context",
+    "name": "api.v1.commercial.contracts.context",
+    "controller": "CommercialContractController",
+    "action": "context",
+    "scope": "commercial.read",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/contracts/context/{lookup}",
+    "name": "api.v1.commercial.contracts.lookup",
+    "controller": "CommercialContractController",
+    "action": "lookup",
+    "scope": "commercial.read",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/contracts",
+    "name": "api.v1.commercial.contracts.store",
+    "controller": "CommercialContractController",
+    "action": "store",
+    "scope": "commercial.create",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/contracts/{contract}",
+    "name": "api.v1.commercial.contracts.show",
+    "controller": "CommercialContractController",
+    "action": "show",
+    "scope": "commercial.read",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "PUT|PATCH",
+    "path": "/api/v1/commercial/contracts/{contract}",
+    "name": "api.v1.commercial.contracts.update",
+    "controller": "CommercialContractController",
+    "action": "update",
+    "scope": "commercial.update",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/commercial/contracts/{contract}",
+    "name": "api.v1.commercial.contracts.destroy",
+    "controller": "CommercialContractController",
+    "action": "destroy",
+    "scope": "commercial.delete",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/contracts/{contract}/items",
+    "name": "api.v1.commercial.contracts.items",
+    "controller": "CommercialContractController",
+    "action": "items",
+    "scope": "commercial.read",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/contracts/{contract}/item-defaults",
+    "name": "api.v1.commercial.contracts.item-defaults",
+    "controller": "CommercialContractController",
+    "action": "defaults",
+    "scope": "commercial.read",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/contracts/{contract}/items",
+    "name": "api.v1.commercial.contracts.items.store",
+    "controller": "CommercialContractController",
+    "action": "saveItem",
+    "scope": "commercial.update",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "PUT|PATCH",
+    "path": "/api/v1/commercial/contracts/{contract}/items/{item}",
+    "name": "api.v1.commercial.contracts.items.update",
+    "controller": "CommercialContractController",
+    "action": "saveItem",
+    "scope": "commercial.update",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/commercial/contracts/{contract}/items/{item}",
+    "name": "api.v1.commercial.contracts.items.destroy",
+    "controller": "CommercialContractController",
+    "action": "removeItem",
+    "scope": "commercial.delete",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/contracts/{contract}/items/{item}/sync-cadence",
+    "name": "api.v1.commercial.contracts.items.sync-cadence",
+    "controller": "CommercialContractController",
+    "action": "syncCadence",
+    "scope": "commercial.update",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/contracts/{contract}/pricing",
+    "name": "api.v1.commercial.contracts.pricing",
+    "controller": "CommercialContractController",
+    "action": "pricing",
+    "scope": "commercial.read",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/contracts/{contract}/terms",
+    "name": "api.v1.commercial.contracts.terms",
+    "controller": "CommercialContractController",
+    "action": "terms",
+    "scope": "commercial.read",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "PUT|PATCH",
+    "path": "/api/v1/commercial/contracts/{contract}/terms",
+    "name": "api.v1.commercial.contracts.terms.update",
+    "controller": "CommercialContractController",
+    "action": "saveTerms",
+    "scope": "commercial.update",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/contracts/{contract}/terms/refresh",
+    "name": "api.v1.commercial.contracts.terms.refresh",
+    "controller": "CommercialContractController",
+    "action": "refreshTerms",
+    "scope": "commercial.update",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/contracts/{contract}/approve-manual",
+    "name": "api.v1.commercial.contracts.approve-manual",
+    "controller": "CommercialContractController",
+    "action": "approve",
+    "scope": "commercial.approve",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/contracts/{contract}/customer-document/attestation-preview",
+    "name": "api.v1.commercial.contracts.customer-document.attestation-preview",
+    "controller": "CommercialContractController",
+    "action": "attestationPreview",
+    "scope": "commercial.approve",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/contracts/{contract}/customer-document/attest-legacy",
+    "name": "api.v1.commercial.contracts.customer-document.attest-legacy",
+    "controller": "CommercialContractController",
+    "action": "attest",
+    "scope": "commercial.approve",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/contracts/{contract}/pdf",
+    "name": "api.v1.commercial.contracts.pdf",
+    "controller": "CommercialContractController",
+    "action": "pdf",
+    "scope": "commercial.read",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/contracts/{contract}/communication-preview",
+    "name": "api.v1.commercial.contracts.communication-preview",
+    "controller": "CommercialCommunicationController",
+    "action": "preview",
+    "scope": "commercial.send",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/contracts/{contract}/send-quote",
+    "name": "api.v1.commercial.contracts.send-quote",
+    "controller": "CommercialCommunicationController",
+    "action": "submit",
+    "scope": "commercial.send",
+    "permission": "commercial.contract_manage",
+    "defaults": {
+      "commercial_delivery_kind": "quote"
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/contracts/{contract}/send-contract",
+    "name": "api.v1.commercial.contracts.send-contract",
+    "controller": "CommercialCommunicationController",
+    "action": "submit",
+    "scope": "commercial.send",
+    "permission": "commercial.contract_manage",
+    "defaults": {
+      "commercial_delivery_kind": "contract"
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/contracts/{contract}/resend",
+    "name": "api.v1.commercial.contracts.resend",
+    "controller": "CommercialCommunicationController",
+    "action": "submit",
+    "scope": "commercial.send",
+    "permission": "commercial.contract_manage",
+    "defaults": {
+      "commercial_delivery_kind": "resend"
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/contracts/{contract}/deliveries/{delivery}",
+    "name": "api.v1.commercial.contracts.deliveries.show",
+    "controller": "CommercialCommunicationController",
+    "action": "show",
+    "scope": "commercial.send",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/contracts/{contract}/deliveries/{delivery}/recover",
+    "name": "api.v1.commercial.contracts.deliveries.recover",
+    "controller": "CommercialCommunicationController",
+    "action": "recover",
+    "scope": "commercial.send",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/operations/{operation}",
+    "name": "api.v1.commercial.operations.show",
+    "controller": "CommercialCommunicationController",
+    "action": "operation",
+    "scope": "commercial.operations.read",
+    "permission": "commercial.view|commercial.contract_manage|commercial.service_manage|commercial.package_manage|commercial.cost_manage|commercial.sla_manage|commercial.rate_manage|economy.manage_settings|client.view|commercial.timebank.quick-consume",
+    "defaults": {}
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/clients/{client}/timebank",
+    "name": "api.v1.commercial.clients.timebank",
+    "controller": "CommercialTimebankController",
+    "action": "context",
+    "scope": "commercial.timebank.read",
+    "permission": "client.view",
+    "defaults": {}
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/clients/{client}/timebank/consumptions/{consumption}",
+    "name": "api.v1.commercial.clients.timebank.consumptions.show",
+    "controller": "CommercialTimebankController",
+    "action": "show",
+    "scope": "commercial.timebank.read",
+    "permission": "client.view",
+    "defaults": {}
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/clients/{client}/timebank/consumptions",
+    "name": "api.v1.commercial.clients.timebank.consumptions.store",
+    "controller": "CommercialTimebankController",
+    "action": "store",
+    "scope": "commercial.timebank.consume",
+    "permission": "commercial.timebank.quick-consume",
+    "defaults": {}
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/settings",
+    "name": "api.v1.commercial.settings",
+    "controller": "CommercialTimebankController",
+    "action": "settings",
+    "scope": "commercial.settings.read",
+    "permission": "commercial.view",
+    "defaults": {}
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/settings/timebank-policy",
+    "name": "api.v1.commercial.settings.timebank-policy",
+    "controller": "CommercialTimebankController",
+    "action": "policy",
+    "scope": "commercial.settings.read",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "PUT|PATCH",
+    "path": "/api/v1/commercial/settings/timebank-policy",
+    "name": "api.v1.commercial.settings.timebank-policy.update",
+    "controller": "CommercialTimebankController",
+    "action": "updatePolicy",
+    "scope": "commercial.settings.update",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/contracts/{contract}/pricing-preview",
+    "name": "api.v1.commercial.contracts.pricing-preview",
+    "controller": "CommercialContractController",
+    "action": "previewPricing",
+    "scope": "commercial.read",
+    "permission": "commercial.contract_manage",
+    "defaults": {}
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/public/contracts/{token}",
+    "name": "api.v1.commercial.public.contracts.show",
+    "controller": "CommercialCustomerContractController",
+    "action": "show",
+    "scope": null,
+    "permission": null,
+    "defaults": {}
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/public/contracts/{token}/accept",
+    "name": "api.v1.commercial.public.contracts.accept",
+    "controller": "CommercialCustomerContractController",
+    "action": "accept",
+    "scope": null,
+    "permission": null,
+    "defaults": {}
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/public/contracts/{token}/viewed",
+    "name": "api.v1.commercial.public.contracts.viewed",
+    "controller": "CommercialCustomerContractController",
+    "action": "viewed",
+    "scope": null,
+    "permission": null,
+    "defaults": {}
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/portal/contracts",
+    "name": "api.v1.commercial.portal.contracts.index",
+    "controller": "CommercialCustomerContractController",
+    "action": "index",
+    "scope": null,
+    "permission": null,
+    "defaults": {}
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/portal/contracts/{contract}",
+    "name": "api.v1.commercial.portal.contracts.show",
+    "controller": "CommercialCustomerContractController",
+    "action": "show",
+    "scope": null,
+    "permission": null,
+    "defaults": {}
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/portal/contracts/{contract}/accept",
+    "name": "api.v1.commercial.portal.contracts.accept",
+    "controller": "CommercialCustomerContractController",
+    "action": "accept",
+    "scope": null,
+    "permission": null,
+    "defaults": {}
+  }
+]

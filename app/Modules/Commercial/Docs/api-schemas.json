@@ -1,0 +1,3142 @@
+{
+  "CommercialInputServices": {
+    "required": [
+      "name",
+      "sku",
+      "unitId",
+      "price_ex_vat",
+      "billing_cycle"
+    ],
+    "properties": {
+      "name": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 255
+      },
+      "sku": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 255
+      },
+      "unitId": {
+        "type": "integer",
+        "nullable": false
+      },
+      "customer_unit_singular": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 255
+      },
+      "customer_unit_plural": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 255
+      },
+      "sla_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "category_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "status": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "draft",
+          "published",
+          "archived",
+          "Active",
+          "Inactive"
+        ]
+      },
+      "icon": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 255
+      },
+      "availability_addon_of_service_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "availability_audience": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "all",
+          "business",
+          "private"
+        ]
+      },
+      "orderable": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "taxable": {
+        "type": "number",
+        "nullable": true,
+        "maximum": 100,
+        "minimum": 0
+      },
+      "setup_fee": {
+        "type": "number",
+        "nullable": true,
+        "minimum": 0
+      },
+      "price_ex_vat": {
+        "type": "number",
+        "nullable": false,
+        "minimum": 0
+      },
+      "price_including_tax": {
+        "type": "number",
+        "nullable": true,
+        "minimum": 0
+      },
+      "costs": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "nullable": false
+        }
+      },
+      "billing_cycle": {
+        "type": "string",
+        "nullable": false,
+        "enum": [
+          "monthly",
+          "yearly",
+          "one_time"
+        ]
+      },
+      "one_time_fee": {
+        "type": "number",
+        "nullable": true,
+        "minimum": 0
+      },
+      "one_time_fee_recurrence": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "none",
+          "yearly",
+          "every_x_years",
+          "every_x_months"
+        ]
+      },
+      "recurrence_value_x": {
+        "type": "integer",
+        "nullable": true,
+        "minimum": 1
+      },
+      "default_discount_value": {
+        "type": "number",
+        "nullable": true,
+        "minimum": 0
+      },
+      "default_discount_type": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "amount",
+          "percent"
+        ]
+      },
+      "timebank_enabled": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "timebank_minutes": {
+        "type": "integer",
+        "nullable": true,
+        "minimum": 0
+      },
+      "timebank_interval": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "monthly",
+          "yearly",
+          "one_time"
+        ]
+      },
+      "short_description": {
+        "type": "string",
+        "nullable": true
+      },
+      "long_description": {
+        "type": "string",
+        "nullable": true
+      },
+      "terms": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "nullable": false
+        }
+      },
+      "time_rates": {
+        "description": "Map keyed by existing Time Rate ID.",
+        "type": "object",
+        "nullable": true,
+        "additionalProperties": {
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "amount_ex_vat": {
+              "type": "number",
+              "nullable": true,
+              "minimum": 0
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
+        }
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialInputPackages": {
+    "required": [
+      "name"
+    ],
+    "properties": {
+      "name": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 255
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "sales_price_user": {
+        "type": "number",
+        "nullable": true
+      },
+      "sales_price_asset": {
+        "type": "number",
+        "nullable": true
+      },
+      "sales_price_site": {
+        "type": "number",
+        "nullable": true
+      },
+      "sales_price_client": {
+        "type": "number",
+        "nullable": true
+      },
+      "sales_price_other": {
+        "type": "number",
+        "nullable": true
+      },
+      "services": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "nullable": false
+        }
+      },
+      "terms": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "nullable": false
+        }
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialInputCosts": {
+    "required": [
+      "name",
+      "cost",
+      "unitId",
+      "recurrence",
+      "vendor_id"
+    ],
+    "properties": {
+      "name": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 255
+      },
+      "cost": {
+        "type": "number",
+        "nullable": false,
+        "minimum": 0
+      },
+      "unitId": {
+        "type": "number",
+        "nullable": false
+      },
+      "recurrence": {
+        "type": "string",
+        "nullable": false,
+        "enum": [
+          "month",
+          "year",
+          "quarter",
+          "none"
+        ]
+      },
+      "note": {
+        "type": "string",
+        "nullable": true
+      },
+      "vendor_id": {
+        "type": "integer",
+        "nullable": false
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialInputSlas": {
+    "required": [
+      "name",
+      "description",
+      "low_firstResponse",
+      "low_firstResponse_type",
+      "low_onsite",
+      "low_onsite_type",
+      "medium_firstResponse",
+      "medium_firstResponse_type",
+      "medium_onsite",
+      "medium_onsite_type",
+      "high_firstResponse",
+      "high_firstResponse_type",
+      "high_onsite",
+      "high_onsite_type"
+    ],
+    "properties": {
+      "name": {
+        "type": "string",
+        "nullable": false
+      },
+      "description": {
+        "type": "string",
+        "nullable": false
+      },
+      "is_default": {
+        "type": "boolean",
+        "nullable": true
+      },
+      "low_firstResponse": {
+        "type": "integer",
+        "nullable": false
+      },
+      "low_firstResponse_type": {
+        "type": "string",
+        "nullable": false
+      },
+      "low_onsite": {
+        "type": "integer",
+        "nullable": false
+      },
+      "low_onsite_type": {
+        "type": "string",
+        "nullable": false
+      },
+      "medium_firstResponse": {
+        "type": "integer",
+        "nullable": false
+      },
+      "medium_firstResponse_type": {
+        "type": "string",
+        "nullable": false
+      },
+      "medium_onsite": {
+        "type": "integer",
+        "nullable": false
+      },
+      "medium_onsite_type": {
+        "type": "string",
+        "nullable": false
+      },
+      "high_firstResponse": {
+        "type": "integer",
+        "nullable": false
+      },
+      "high_firstResponse_type": {
+        "type": "string",
+        "nullable": false
+      },
+      "high_onsite": {
+        "type": "integer",
+        "nullable": false
+      },
+      "high_onsite_type": {
+        "type": "string",
+        "nullable": false
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialInputContracts": {
+    "required": [
+      "client_id",
+      "created_by",
+      "start_date"
+    ],
+    "properties": {
+      "client_id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "sla_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "created_by": {
+        "description": "Existing web Technician assignment; approval/attestation actor remains server-owned.",
+        "type": "integer",
+        "nullable": false
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "start_date": {
+        "type": "string",
+        "format": "date",
+        "nullable": false
+      },
+      "end_date": {
+        "type": "string",
+        "format": "date",
+        "nullable": true
+      },
+      "binding_end_date": {
+        "type": "string",
+        "format": "date",
+        "nullable": true
+      },
+      "auto_renew": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "renewal_months": {
+        "type": "integer",
+        "nullable": true,
+        "minimum": 1
+      },
+      "allow_indexing_during_binding": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "allow_decrease_during_binding": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "allow_license_additions": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "allow_license_increases": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "allow_license_decreases": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "allow_license_price_updates": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "max_index_pct_binding": {
+        "type": "number",
+        "nullable": true
+      },
+      "post_binding_index_pct": {
+        "type": "number",
+        "nullable": true
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialInputItems": {
+    "required": [
+      "service_id",
+      "name",
+      "unit_price",
+      "price_currency",
+      "quantity",
+      "billing_interval"
+    ],
+    "properties": {
+      "service_id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "cloudfactory_offer_id": {
+        "type": "string",
+        "format": "uuid",
+        "nullable": true
+      },
+      "name": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 255
+      },
+      "sku": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 255
+      },
+      "customer_description": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 2000
+      },
+      "customer_unit_singular": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 255
+      },
+      "customer_unit_plural": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 255
+      },
+      "unit_price": {
+        "type": "number",
+        "nullable": false,
+        "minimum": 0
+      },
+      "price_currency": {
+        "type": "string",
+        "nullable": false,
+        "enum": [
+          "NOK"
+        ]
+      },
+      "quantity": {
+        "type": "integer",
+        "nullable": false,
+        "minimum": 1
+      },
+      "unit": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 255
+      },
+      "billing_interval": {
+        "type": "string",
+        "nullable": false,
+        "enum": [
+          "monthly",
+          "quarterly",
+          "yearly",
+          "one_time"
+        ]
+      },
+      "discount_value": {
+        "type": "number",
+        "nullable": true,
+        "minimum": 0
+      },
+      "discount_type": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "percent",
+          "amount"
+        ]
+      },
+      "setup_fee": {
+        "type": "number",
+        "nullable": true,
+        "minimum": 0
+      },
+      "sla_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "uses_contract_default_sla": {
+        "type": "boolean",
+        "nullable": true
+      },
+      "time_rates": {
+        "type": "array",
+        "items": {
+          "properties": {
+            "id": {
+              "type": "integer",
+              "nullable": true
+            },
+            "time_rate_id": {
+              "type": "integer",
+              "nullable": true
+            },
+            "service_time_rate_id": {
+              "type": "integer",
+              "nullable": true
+            },
+            "name": {
+              "type": "string",
+              "nullable": false,
+              "maxLength": 255
+            },
+            "code": {
+              "type": "string",
+              "nullable": true,
+              "maxLength": 255
+            },
+            "unit": {
+              "type": "string",
+              "nullable": false,
+              "maxLength": 255
+            },
+            "rate_type": {
+              "type": "string",
+              "nullable": false,
+              "maxLength": 255
+            },
+            "amount_ex_vat": {
+              "type": "number",
+              "nullable": true,
+              "minimum": 0
+            },
+            "currency": {
+              "type": "string",
+              "nullable": false
+            },
+            "is_active": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "is_customer_visible": {
+              "type": "boolean",
+              "nullable": true
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
+        }
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialInputTerms": {
+    "required": [
+      "name",
+      "type",
+      "content"
+    ],
+    "properties": {
+      "name": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 255
+      },
+      "type": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 100
+      },
+      "content": {
+        "type": "string",
+        "nullable": false
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialInputUnits": {
+    "properties": {
+      "name": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 255
+      },
+      "short": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 50
+      },
+      "common_code": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 50
+      },
+      "action": {
+        "type": "string",
+        "nullable": false,
+        "enum": [
+          "update",
+          "save",
+          "delete"
+        ]
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialInputTimeRates": {
+    "required": [
+      "name",
+      "code",
+      "rate_type",
+      "unit",
+      "amount_ex_vat",
+      "currency"
+    ],
+    "properties": {
+      "name": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 255
+      },
+      "code": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 80
+      },
+      "rate_type": {
+        "type": "string",
+        "nullable": false,
+        "enum": [
+          "labor",
+          "driving",
+          "travel",
+          "other"
+        ]
+      },
+      "unit": {
+        "type": "string",
+        "nullable": false,
+        "enum": [
+          "hour",
+          "km",
+          "fixed"
+        ]
+      },
+      "amount_ex_vat": {
+        "type": "number",
+        "nullable": false,
+        "minimum": 0
+      },
+      "currency": {
+        "type": "string",
+        "nullable": false
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "sort_order": {
+        "type": "integer",
+        "nullable": true,
+        "minimum": 0
+      },
+      "applies_without_contract": {
+        "type": "boolean",
+        "nullable": true
+      },
+      "applies_with_contract": {
+        "type": "boolean",
+        "nullable": true
+      },
+      "is_active": {
+        "type": "boolean",
+        "nullable": true
+      },
+      "is_customer_visible": {
+        "type": "boolean",
+        "nullable": true
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialDecimalString": {
+    "description": "Exact persisted decimal, without binary floating-point reconstruction.",
+    "type": "string"
+  },
+  "CommercialError": {
+    "properties": {
+      "message": {
+        "type": "string"
+      },
+      "errors": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialIdName": {
+    "properties": {
+      "id": {
+        "type": "integer"
+      },
+      "name": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialMoney": {
+    "properties": {
+      "minor": {
+        "type": "integer"
+      },
+      "decimal": {
+        "type": "string"
+      },
+      "display": {
+        "type": "string"
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialTotals": {
+    "properties": {
+      "monthly": {
+        "$ref": "#/components/schemas/CommercialMoney"
+      },
+      "quarterly": {
+        "$ref": "#/components/schemas/CommercialMoney"
+      },
+      "yearly": {
+        "$ref": "#/components/schemas/CommercialMoney"
+      },
+      "one_time": {
+        "$ref": "#/components/schemas/CommercialMoney"
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialContext": {
+    "properties": {
+      "defaults": {
+        "properties": {
+          "start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "binding_end_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "sla_id": {
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "kind": {
+        "type": "string",
+        "nullable": true
+      },
+      "lookups": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "revision_header": {
+        "type": "string",
+        "nullable": true
+      },
+      "idempotency_header": {
+        "type": "string",
+        "nullable": true
+      },
+      "rate_types": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "rate_units": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "billing_cycles": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "audiences": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "recurrences": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "states": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "sale_currencies": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "billing_intervals": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "discount_types": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialDocument": {
+    "properties": {
+      "schema_version": {
+        "type": "integer",
+        "enum": [
+          1
+        ]
+      },
+      "document": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "Tilbud",
+              "Avtaleutkast",
+              "Avtale"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "contract_number": {
+            "type": "string"
+          },
+          "generated_at": {
+            "type": "string"
+          },
+          "generated_date": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "description": {
+        "type": "string"
+      },
+      "dates": {
+        "properties": {
+          "start": {
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "type": "object",
+            "additionalProperties": false
+          },
+          "end": {
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "type": "object",
+            "additionalProperties": false
+          },
+          "binding_end": {
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "type": "object",
+            "additionalProperties": false
+          },
+          "auto_renew": {
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "parties": {
+        "properties": {
+          "supplier": {
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "organization_number": {
+                "type": "string"
+              }
+            },
+            "type": "object",
+            "additionalProperties": false
+          },
+          "customer": {
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "organization_number": {
+                "type": "string"
+              }
+            },
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "approval": {
+        "properties": {
+          "accepted": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "nullable": true
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "columns": {
+        "properties": {
+          "service": {
+            "type": "string"
+          },
+          "short_description": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "unit_price": {
+            "type": "string"
+          },
+          "billing": {
+            "type": "string"
+          },
+          "total": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "lines": {
+        "type": "array",
+        "items": {
+          "properties": {
+            "service": {
+              "type": "string"
+            },
+            "short_description": {
+              "type": "string"
+            },
+            "scope": {
+              "type": "string"
+            },
+            "unit_price": {
+              "$ref": "#/components/schemas/CommercialMoney"
+            },
+            "billing": {
+              "properties": {
+                "cadence": {
+                  "type": "string",
+                  "enum": [
+                    "monthly",
+                    "quarterly",
+                    "yearly",
+                    "one_time"
+                  ]
+                },
+                "label": {
+                  "type": "string"
+                },
+                "setup_fee": {
+                  "$ref": "#/components/schemas/CommercialMoney"
+                }
+              },
+              "type": "object",
+              "additionalProperties": false
+            },
+            "total": {
+              "properties": {
+                "minor": {
+                  "type": "integer"
+                },
+                "decimal": {
+                  "type": "string"
+                },
+                "display": {
+                  "type": "string"
+                },
+                "included": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object",
+              "additionalProperties": false
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "totals": {
+        "$ref": "#/components/schemas/CommercialTotals"
+      },
+      "rates": {
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "amount": {
+                  "$ref": "#/components/schemas/CommercialMoney"
+                },
+                "currency": {
+                  "type": "string"
+                },
+                "unit": {
+                  "type": "string"
+                },
+                "unit_label": {
+                  "type": "string"
+                },
+                "display": {
+                  "type": "string"
+                }
+              },
+              "type": "object",
+              "additionalProperties": false
+            }
+          }
+        },
+        "type": "object",
+        "nullable": true,
+        "additionalProperties": false
+      },
+      "support": {
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "nullable": true,
+        "additionalProperties": false
+      },
+      "appendices": {
+        "type": "array",
+        "items": {
+          "properties": {
+            "number": {
+              "type": "integer"
+            },
+            "title": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
+            "date": {
+              "type": "string"
+            },
+            "content": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
+        }
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialServices": {
+    "properties": {
+      "name": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 255
+      },
+      "sku": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 255
+      },
+      "unitId": {
+        "type": "integer",
+        "nullable": false
+      },
+      "customer_unit_singular": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 255
+      },
+      "customer_unit_plural": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 255
+      },
+      "sla_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "category_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "status": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "draft",
+          "published",
+          "archived",
+          "Active",
+          "Inactive"
+        ]
+      },
+      "icon": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 255
+      },
+      "availability_addon_of_service_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "availability_audience": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "all",
+          "business",
+          "private"
+        ]
+      },
+      "orderable": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "taxable": {
+        "type": "number",
+        "nullable": true,
+        "maximum": 100,
+        "minimum": 0
+      },
+      "setup_fee": {
+        "type": "number",
+        "nullable": true,
+        "minimum": 0
+      },
+      "price_ex_vat": {
+        "type": "number",
+        "nullable": false,
+        "minimum": 0
+      },
+      "price_including_tax": {
+        "type": "number",
+        "nullable": true,
+        "minimum": 0
+      },
+      "costs": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/CommercialCosts"
+        }
+      },
+      "billing_cycle": {
+        "type": "string",
+        "nullable": false,
+        "enum": [
+          "monthly",
+          "yearly",
+          "one_time"
+        ]
+      },
+      "one_time_fee": {
+        "type": "number",
+        "nullable": true,
+        "minimum": 0
+      },
+      "one_time_fee_recurrence": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "none",
+          "yearly",
+          "every_x_years",
+          "every_x_months"
+        ]
+      },
+      "recurrence_value_x": {
+        "type": "integer",
+        "nullable": true,
+        "minimum": 1
+      },
+      "default_discount_value": {
+        "type": "number",
+        "nullable": true,
+        "minimum": 0
+      },
+      "default_discount_type": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "amount",
+          "percent"
+        ]
+      },
+      "timebank_enabled": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "timebank_minutes": {
+        "type": "integer",
+        "nullable": true,
+        "minimum": 0
+      },
+      "timebank_interval": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "monthly",
+          "yearly",
+          "one_time"
+        ]
+      },
+      "short_description": {
+        "type": "string",
+        "nullable": true
+      },
+      "long_description": {
+        "type": "string",
+        "nullable": true
+      },
+      "terms": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/CommercialTerms"
+        }
+      },
+      "time_rates": {
+        "type": "array",
+        "items": {
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "time_rate_id": {
+              "type": "integer"
+            },
+            "amount_ex_vat": {
+              "type": "string",
+              "nullable": true
+            },
+            "is_active": {
+              "type": "boolean"
+            },
+            "rate": {
+              "$ref": "#/components/schemas/CommercialTimeRates"
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "id": {
+        "type": "integer"
+      },
+      "revision": {
+        "type": "string",
+        "maxLength": 64,
+        "minLength": 64
+      },
+      "created_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "updated_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "unit_id": {
+        "type": "integer"
+      },
+      "unit": {
+        "$ref": "#/components/schemas/CommercialIdName"
+      },
+      "sla": {
+        "$ref": "#/components/schemas/CommercialIdName"
+      },
+      "integration_managed": {
+        "type": "boolean"
+      },
+      "is_integration_managed": {
+        "type": "boolean"
+      },
+      "vendor_id": {
+        "type": "integer"
+      },
+      "source": {
+        "type": "string",
+        "nullable": true
+      },
+      "source_integration_id": {
+        "type": "integer"
+      },
+      "managed_externally": {
+        "type": "boolean"
+      },
+      "source_integration": {
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialPackages": {
+    "properties": {
+      "name": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 255
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "sales_price_user": {
+        "type": "number",
+        "nullable": true
+      },
+      "sales_price_asset": {
+        "type": "number",
+        "nullable": true
+      },
+      "sales_price_site": {
+        "type": "number",
+        "nullable": true
+      },
+      "sales_price_client": {
+        "type": "number",
+        "nullable": true
+      },
+      "sales_price_other": {
+        "type": "number",
+        "nullable": true
+      },
+      "services": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/CommercialIdName"
+        }
+      },
+      "terms": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/CommercialTerms"
+        }
+      },
+      "id": {
+        "type": "integer"
+      },
+      "revision": {
+        "type": "string",
+        "maxLength": 64,
+        "minLength": 64
+      },
+      "created_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "updated_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "inherited_terms": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/CommercialTerms"
+        }
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialCosts": {
+    "properties": {
+      "name": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 255
+      },
+      "cost": {
+        "type": "number",
+        "nullable": false,
+        "minimum": 0
+      },
+      "unitId": {
+        "type": "number",
+        "nullable": false
+      },
+      "recurrence": {
+        "type": "string",
+        "nullable": false,
+        "enum": [
+          "month",
+          "year",
+          "quarter",
+          "none"
+        ]
+      },
+      "note": {
+        "type": "string",
+        "nullable": true
+      },
+      "vendor_id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "id": {
+        "type": "integer"
+      },
+      "revision": {
+        "type": "string",
+        "maxLength": 64,
+        "minLength": 64
+      },
+      "created_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "updated_at": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialTerms": {
+    "properties": {
+      "name": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 255
+      },
+      "type": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 100
+      },
+      "content": {
+        "type": "string",
+        "nullable": false
+      },
+      "id": {
+        "type": "integer"
+      },
+      "revision": {
+        "type": "string",
+        "maxLength": 64,
+        "minLength": 64
+      },
+      "created_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "updated_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "versions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "is_in_use": {
+        "type": "boolean"
+      },
+      "origin": {
+        "type": "string",
+        "nullable": true
+      },
+      "issuer": {
+        "type": "string",
+        "nullable": true
+      },
+      "source_url": {
+        "type": "string",
+        "nullable": true
+      },
+      "current_version_id": {
+        "type": "integer"
+      },
+      "managed_externally": {
+        "type": "boolean"
+      },
+      "sync_status": {
+        "type": "string",
+        "nullable": true
+      },
+      "last_checked_at": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialSlas": {
+    "properties": {
+      "name": {
+        "type": "string",
+        "nullable": false
+      },
+      "description": {
+        "type": "string",
+        "nullable": false
+      },
+      "is_default": {
+        "type": "boolean",
+        "nullable": true
+      },
+      "low_firstResponse": {
+        "type": "integer",
+        "nullable": false
+      },
+      "low_firstResponse_type": {
+        "type": "string",
+        "nullable": false
+      },
+      "low_onsite": {
+        "type": "integer",
+        "nullable": false
+      },
+      "low_onsite_type": {
+        "type": "string",
+        "nullable": false
+      },
+      "medium_firstResponse": {
+        "type": "integer",
+        "nullable": false
+      },
+      "medium_firstResponse_type": {
+        "type": "string",
+        "nullable": false
+      },
+      "medium_onsite": {
+        "type": "integer",
+        "nullable": false
+      },
+      "medium_onsite_type": {
+        "type": "string",
+        "nullable": false
+      },
+      "high_firstResponse": {
+        "type": "integer",
+        "nullable": false
+      },
+      "high_firstResponse_type": {
+        "type": "string",
+        "nullable": false
+      },
+      "high_onsite": {
+        "type": "integer",
+        "nullable": false
+      },
+      "high_onsite_type": {
+        "type": "string",
+        "nullable": false
+      },
+      "id": {
+        "type": "integer"
+      },
+      "revision": {
+        "type": "string",
+        "maxLength": 64,
+        "minLength": 64
+      },
+      "created_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "updated_at": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialTimeRates": {
+    "properties": {
+      "name": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 255
+      },
+      "code": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 80
+      },
+      "rate_type": {
+        "type": "string",
+        "nullable": false,
+        "enum": [
+          "labor",
+          "driving",
+          "travel",
+          "other"
+        ]
+      },
+      "unit": {
+        "type": "string",
+        "nullable": false,
+        "enum": [
+          "hour",
+          "km",
+          "fixed"
+        ]
+      },
+      "amount_ex_vat": {
+        "type": "number",
+        "nullable": false,
+        "minimum": 0
+      },
+      "currency": {
+        "type": "string",
+        "nullable": false
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "sort_order": {
+        "type": "integer",
+        "nullable": true,
+        "minimum": 0
+      },
+      "applies_without_contract": {
+        "type": "boolean",
+        "nullable": true
+      },
+      "applies_with_contract": {
+        "type": "boolean",
+        "nullable": true
+      },
+      "is_active": {
+        "type": "boolean",
+        "nullable": true
+      },
+      "is_customer_visible": {
+        "type": "boolean",
+        "nullable": true
+      },
+      "id": {
+        "type": "integer"
+      },
+      "revision": {
+        "type": "string",
+        "maxLength": 64,
+        "minLength": 64
+      },
+      "created_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "updated_at": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialUnits": {
+    "properties": {
+      "name": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 255
+      },
+      "short": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 50
+      },
+      "common_code": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 50
+      },
+      "action": {
+        "type": "string",
+        "nullable": false,
+        "enum": [
+          "update",
+          "save",
+          "delete"
+        ]
+      },
+      "id": {
+        "type": "integer"
+      },
+      "revision": {
+        "type": "string",
+        "maxLength": 64,
+        "minLength": 64
+      },
+      "created_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "updated_at": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialContracts": {
+    "properties": {
+      "client_id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "sla_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "created_by": {
+        "description": "Existing web Technician assignment; approval/attestation actor remains server-owned.",
+        "type": "integer",
+        "nullable": false
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "start_date": {
+        "type": "string",
+        "format": "date",
+        "nullable": false
+      },
+      "end_date": {
+        "type": "string",
+        "format": "date",
+        "nullable": true
+      },
+      "binding_end_date": {
+        "type": "string",
+        "format": "date",
+        "nullable": true
+      },
+      "auto_renew": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "renewal_months": {
+        "type": "integer",
+        "nullable": true,
+        "minimum": 1
+      },
+      "allow_indexing_during_binding": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "allow_decrease_during_binding": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "allow_license_additions": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "allow_license_increases": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "allow_license_decreases": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "allow_license_price_updates": {
+        "type": "boolean",
+        "nullable": false
+      },
+      "max_index_pct_binding": {
+        "type": "number",
+        "nullable": true
+      },
+      "post_binding_index_pct": {
+        "type": "number",
+        "nullable": true
+      },
+      "id": {
+        "type": "integer"
+      },
+      "revision": {
+        "type": "string",
+        "maxLength": 64,
+        "minLength": 64
+      },
+      "created_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "updated_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "approval_status": {
+        "type": "string",
+        "nullable": true
+      },
+      "customer_document": {
+        "$ref": "#/components/schemas/CommercialDocument"
+      },
+      "customer_document_readiness": {
+        "properties": {
+          "ready": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "client": {
+        "$ref": "#/components/schemas/CommercialIdName"
+      },
+      "sla": {
+        "$ref": "#/components/schemas/CommercialIdName"
+      },
+      "items": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/CommercialItem"
+        }
+      },
+      "items_count": {
+        "type": "integer"
+      },
+      "pricing": {
+        "$ref": "#/components/schemas/CommercialTotals"
+      },
+      "total_monthly_amount": {
+        "type": "string",
+        "nullable": true
+      },
+      "editable": {
+        "type": "boolean"
+      },
+      "ready": {
+        "type": "boolean"
+      },
+      "terms_current": {
+        "type": "boolean"
+      },
+      "term_versions": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/CommercialTerms"
+        }
+      },
+      "terms_snapshot": {
+        "type": "string",
+        "nullable": true
+      },
+      "dpa_snapshot": {
+        "type": "string",
+        "nullable": true
+      },
+      "legal_snapshot": {
+        "type": "string",
+        "nullable": true
+      },
+      "sla_snapshot": {
+        "type": "string",
+        "nullable": true
+      },
+      "general_snapshot": {
+        "type": "string",
+        "nullable": true
+      },
+      "sent_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "accepted_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "accepted_by_name": {
+        "type": "string",
+        "nullable": true
+      },
+      "viewed_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "cc_email": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialItem": {
+    "properties": {
+      "service_id": {
+        "type": "integer",
+        "nullable": false
+      },
+      "cloudfactory_offer_id": {
+        "type": "string",
+        "format": "uuid",
+        "nullable": true
+      },
+      "name": {
+        "type": "string",
+        "nullable": false,
+        "maxLength": 255
+      },
+      "sku": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 255
+      },
+      "customer_description": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 2000
+      },
+      "customer_unit_singular": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 255
+      },
+      "customer_unit_plural": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 255
+      },
+      "unit_price": {
+        "type": "number",
+        "nullable": false,
+        "minimum": 0
+      },
+      "price_currency": {
+        "type": "string",
+        "nullable": false,
+        "enum": [
+          "NOK"
+        ]
+      },
+      "quantity": {
+        "type": "integer",
+        "nullable": false,
+        "minimum": 1
+      },
+      "unit": {
+        "type": "string",
+        "nullable": true,
+        "maxLength": 255
+      },
+      "billing_interval": {
+        "type": "string",
+        "nullable": false,
+        "enum": [
+          "monthly",
+          "quarterly",
+          "yearly",
+          "one_time"
+        ]
+      },
+      "discount_value": {
+        "type": "number",
+        "nullable": true,
+        "minimum": 0
+      },
+      "discount_type": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "percent",
+          "amount"
+        ]
+      },
+      "setup_fee": {
+        "type": "number",
+        "nullable": true,
+        "minimum": 0
+      },
+      "sla_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "uses_contract_default_sla": {
+        "type": "boolean",
+        "nullable": true
+      },
+      "time_rates": {
+        "type": "array",
+        "items": {
+          "properties": {
+            "id": {
+              "type": "integer",
+              "nullable": true
+            },
+            "time_rate_id": {
+              "type": "integer",
+              "nullable": true
+            },
+            "service_time_rate_id": {
+              "type": "integer",
+              "nullable": true
+            },
+            "name": {
+              "type": "string",
+              "nullable": false,
+              "maxLength": 255
+            },
+            "code": {
+              "type": "string",
+              "nullable": true,
+              "maxLength": 255
+            },
+            "unit": {
+              "type": "string",
+              "nullable": false,
+              "maxLength": 255
+            },
+            "rate_type": {
+              "type": "string",
+              "nullable": false,
+              "maxLength": 255
+            },
+            "amount_ex_vat": {
+              "type": "number",
+              "nullable": true,
+              "minimum": 0
+            },
+            "currency": {
+              "type": "string",
+              "nullable": false
+            },
+            "is_active": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "is_customer_visible": {
+              "type": "boolean",
+              "nullable": true
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "id": {
+        "type": "integer"
+      },
+      "contract_id": {
+        "type": "integer"
+      },
+      "cost_unit_price": {
+        "type": "string",
+        "nullable": true
+      },
+      "cost_currency": {
+        "type": "string",
+        "nullable": true
+      },
+      "source": {
+        "type": "string",
+        "nullable": true
+      },
+      "sla_snapshot": {
+        "type": "object",
+        "nullable": true,
+        "additionalProperties": true
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialCustomerContract": {
+    "properties": {
+      "id": {
+        "type": "integer"
+      },
+      "description": {
+        "type": "string",
+        "nullable": true
+      },
+      "approval_status": {
+        "type": "string",
+        "nullable": true
+      },
+      "customer_document": {
+        "$ref": "#/components/schemas/CommercialDocument"
+      },
+      "document_ready": {
+        "type": "boolean"
+      },
+      "can_accept": {
+        "type": "boolean"
+      },
+      "accepted_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "accepted_by_name": {
+        "type": "string",
+        "nullable": true
+      },
+      "revision": {
+        "type": "string"
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialDelivery": {
+    "properties": {
+      "id": {
+        "type": "string",
+        "nullable": true
+      },
+      "kind": {
+        "type": "string",
+        "nullable": true
+      },
+      "state": {
+        "type": "string",
+        "nullable": true
+      },
+      "revision": {
+        "type": "string",
+        "nullable": true
+      },
+      "preview_hash": {
+        "type": "string",
+        "nullable": true
+      },
+      "expires_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "started_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "finished_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "message_id": {
+        "type": "string",
+        "nullable": true
+      },
+      "error_code": {
+        "type": "string",
+        "nullable": true
+      },
+      "created_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "updated_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "contract_id": {
+        "type": "integer"
+      },
+      "inbox_delivery_confirmed": {
+        "type": "boolean"
+      },
+      "provider_submission_confirmed": {
+        "type": "boolean"
+      },
+      "recovery_allowed": {
+        "type": "boolean"
+      },
+      "needs_reconciliation": {
+        "type": "boolean"
+      },
+      "review": {
+        "properties": {
+          "to": {
+            "type": "string",
+            "nullable": true
+          },
+          "cc": {
+            "type": "string",
+            "nullable": true
+          },
+          "subject": {
+            "type": "string",
+            "nullable": true
+          },
+          "html": {
+            "type": "string",
+            "nullable": true
+          },
+          "customer_document": {
+            "$ref": "#/components/schemas/CommercialDocument"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialDeleted": {
+    "properties": {
+      "id": {
+        "type": "integer"
+      },
+      "deleted": {
+        "type": "boolean"
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialPagination": {
+    "properties": {
+      "total": {
+        "type": "integer"
+      },
+      "current_page": {
+        "type": "integer"
+      },
+      "last_page": {
+        "type": "integer"
+      },
+      "per_page": {
+        "type": "integer"
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialPolicy": {
+    "properties": {
+      "quick_timebank_enabled": {
+        "type": "boolean"
+      },
+      "quick_timebank_require_remaining": {
+        "type": "boolean"
+      },
+      "quick_timebank_allow_overuse": {
+        "type": "boolean"
+      },
+      "quick_timebank_require_note": {
+        "type": "boolean"
+      },
+      "quick_timebank_max_minutes": {
+        "type": "integer"
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialConsumption": {
+    "properties": {
+      "id": {
+        "type": "integer"
+      },
+      "client_id": {
+        "type": "integer"
+      },
+      "contract_id": {
+        "type": "integer"
+      },
+      "contract_item_id": {
+        "type": "integer"
+      },
+      "contract_item_time_rate_id": {
+        "type": "integer"
+      },
+      "time_rate_id": {
+        "type": "integer"
+      },
+      "user_id": {
+        "type": "integer"
+      },
+      "minutes": {
+        "type": "integer"
+      },
+      "included_minutes_snapshot": {
+        "type": "integer"
+      },
+      "used_before_minutes_snapshot": {
+        "type": "integer"
+      },
+      "overused_minutes": {
+        "type": "integer"
+      },
+      "work_date": {
+        "type": "string",
+        "nullable": true
+      },
+      "note": {
+        "type": "string",
+        "nullable": true
+      },
+      "source": {
+        "type": "string",
+        "nullable": true
+      },
+      "rate_name": {
+        "type": "string",
+        "nullable": true
+      },
+      "rate_code": {
+        "type": "string",
+        "nullable": true
+      },
+      "rate_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "rate_unit": {
+        "type": "string",
+        "nullable": true
+      },
+      "rate_amount_ex_vat": {
+        "type": "string",
+        "nullable": true
+      },
+      "rate_currency": {
+        "type": "string",
+        "nullable": true
+      },
+      "period_start": {
+        "type": "string",
+        "nullable": true
+      },
+      "period_end": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialTimebank": {
+    "properties": {
+      "client_id": {
+        "type": "integer"
+      },
+      "work_date": {
+        "type": "string",
+        "nullable": true
+      },
+      "policy": {
+        "$ref": "#/components/schemas/CommercialPolicy"
+      },
+      "balances": {
+        "type": "array",
+        "items": {
+          "properties": {
+            "contract_id": {
+              "type": "integer"
+            },
+            "contract_item_id": {
+              "type": "integer"
+            },
+            "service_id": {
+              "type": "integer"
+            },
+            "included_minutes": {
+              "type": "integer"
+            },
+            "used_minutes": {
+              "type": "integer"
+            },
+            "remaining_minutes": {
+              "type": "integer"
+            },
+            "overused_minutes": {
+              "type": "integer"
+            },
+            "allocated_ticket_minutes": {
+              "type": "integer"
+            },
+            "pending_ticket_minutes": {
+              "type": "integer"
+            },
+            "quick_minutes": {
+              "type": "integer"
+            },
+            "period_start": {
+              "type": "string",
+              "nullable": true
+            },
+            "period_end": {
+              "type": "string",
+              "nullable": true
+            },
+            "revision": {
+              "type": "string",
+              "nullable": true
+            },
+            "time_rate_options": {
+              "type": "array",
+              "items": {
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "label": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "source": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "id": {
+                    "type": "integer"
+                  }
+                },
+                "type": "object",
+                "additionalProperties": false
+              }
+            },
+            "recent_consumptions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CommercialConsumption"
+              }
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
+        }
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialOperation": {
+    "properties": {
+      "id": {
+        "type": "integer"
+      },
+      "operation": {
+        "type": "string",
+        "nullable": true
+      },
+      "created_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "completed": {
+        "type": "boolean"
+      },
+      "result": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialLookup": {
+    "description": "Bounded context-specific selection DTO with explicit allowed columns; clients, vendors, offers, services, costs, legal terms, rates, SLA policies or units.",
+    "type": "object",
+    "additionalProperties": true
+  },
+  "CommercialPricingPreview": {
+    "description": "Exact Contract line/cadence amounts or the existing Service/Package unit/cost/margin calculation; no persistence.",
+    "type": "object",
+    "additionalProperties": true
+  },
+  "CommercialEditorPricing": {
+    "properties": {
+      "total_cost_display": {
+        "type": "string"
+      },
+      "total_discount_display": {
+        "type": "string"
+      },
+      "annual_profit_display": {
+        "type": "string"
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialContractPricing": {
+    "properties": {
+      "pricing": {
+        "$ref": "#/components/schemas/CommercialTotals"
+      },
+      "editor": {
+        "$ref": "#/components/schemas/CommercialEditorPricing"
+      },
+      "revision": {
+        "type": "string"
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialContractPricingPreview": {
+    "properties": {
+      "pricing": {
+        "$ref": "#/components/schemas/CommercialTotals"
+      },
+      "editor": {
+        "$ref": "#/components/schemas/CommercialEditorPricing"
+      },
+      "revision": {
+        "type": "string"
+      },
+      "lines": {
+        "type": "array",
+        "items": {
+          "properties": {
+            "cadence": {
+              "type": "string"
+            },
+            "included": {
+              "type": "boolean"
+            },
+            "quantity": {
+              "type": "integer"
+            },
+            "unit_price": {
+              "$ref": "#/components/schemas/CommercialMoney"
+            },
+            "subtotal": {
+              "$ref": "#/components/schemas/CommercialMoney"
+            },
+            "discount": {
+              "$ref": "#/components/schemas/CommercialMoney"
+            },
+            "line_total": {
+              "$ref": "#/components/schemas/CommercialMoney"
+            },
+            "setup_fee": {
+              "$ref": "#/components/schemas/CommercialMoney"
+            },
+            "cadence_totals": {
+              "$ref": "#/components/schemas/CommercialTotals"
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
+        }
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialContractTerms": {
+    "properties": {
+      "snapshots": {
+        "properties": {
+          "terms_snapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "dpa_snapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "legal_snapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "sla_snapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "general_snapshot": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "generated": {
+        "properties": {
+          "terms_snapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "dpa_snapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "legal_snapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "sla_snapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "general_snapshot": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "type": "object",
+        "nullable": true,
+        "additionalProperties": false
+      },
+      "current": {
+        "type": "boolean"
+      },
+      "revision": {
+        "type": "string"
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialAttestation": {
+    "properties": {
+      "internal_reconstruction": {
+        "$ref": "#/components/schemas/CommercialDocument"
+      },
+      "fingerprint": {
+        "type": "string"
+      },
+      "document_type": {
+        "type": "string"
+      },
+      "revision": {
+        "type": "string"
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialTermVersion": {
+    "properties": {
+      "id": {
+        "type": "integer"
+      },
+      "term_id": {
+        "type": "integer"
+      },
+      "name": {
+        "type": "string"
+      },
+      "type": {
+        "type": "string"
+      },
+      "version_label": {
+        "type": "string",
+        "nullable": true
+      },
+      "issuer": {
+        "type": "string",
+        "nullable": true
+      },
+      "content": {
+        "type": "string"
+      },
+      "source_url": {
+        "type": "string",
+        "nullable": true
+      },
+      "effective_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "checksum": {
+        "type": "string"
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "CommercialWorklogContract": {
+    "required": [
+      "link_status",
+      "contract_alias",
+      "contract_item_alias",
+      "start_date",
+      "end_date",
+      "approval_status"
+    ],
+    "properties": {
+      "link_status": {
+        "description": "Only explicitly allowed facts and opaque joins are documented for coordinator disclosure.",
+        "type": "string",
+        "enum": [
+          "linked",
+          "unlinked",
+          "inconsistent"
+        ]
+      },
+      "contract_alias": {
+        "type": "string",
+        "nullable": true
+      },
+      "contract_item_alias": {
+        "type": "string",
+        "nullable": true
+      },
+      "start_date": {
+        "type": "string",
+        "format": "date",
+        "nullable": true
+      },
+      "end_date": {
+        "type": "string",
+        "format": "date",
+        "nullable": true
+      },
+      "approval_status": {
+        "description": "Current contract state, not historical approval or a customer document.",
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "type": "object"
+  },
+  "CommercialWorklogAllocation": {
+    "required": [
+      "link_status",
+      "allocation_alias",
+      "status",
+      "covered_minutes",
+      "billable_minutes",
+      "contract"
+    ],
+    "properties": {
+      "link_status": {
+        "type": "string",
+        "enum": [
+          "linked",
+          "inconsistent"
+        ]
+      },
+      "allocation_alias": {
+        "type": "string",
+        "nullable": true
+      },
+      "status": {
+        "type": "string",
+        "nullable": true
+      },
+      "covered_minutes": {
+        "type": "integer",
+        "nullable": true
+      },
+      "billable_minutes": {
+        "type": "integer",
+        "nullable": true
+      },
+      "contract": {
+        "type": "object",
+        "nullable": true,
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CommercialWorklogContract"
+          }
+        ]
+      }
+    },
+    "type": "object"
+  },
+  "CommercialConsumptionFact": {
+    "required": [
+      "entry_alias",
+      "client_alias",
+      "technician_alias",
+      "fact_type",
+      "source",
+      "work_date",
+      "minutes",
+      "contract"
+    ],
+    "properties": {
+      "entry_alias": {
+        "type": "string"
+      },
+      "client_alias": {
+        "type": "string"
+      },
+      "technician_alias": {
+        "type": "string",
+        "nullable": true
+      },
+      "fact_type": {
+        "type": "string",
+        "enum": [
+          "direct_timebank_consumption"
+        ]
+      },
+      "source": {
+        "type": "string",
+        "enum": [
+          "quick_client"
+        ]
+      },
+      "work_date": {
+        "type": "string",
+        "format": "date"
+      },
+      "minutes": {
+        "description": "Direct registered consumption, separate from Ticket/Task actual minutes.",
+        "type": "integer"
+      },
+      "contract": {
+        "$ref": "#/components/schemas/CommercialWorklogContract"
+      }
+    },
+    "type": "object"
+  },
+  "CommercialContractLinkFact": {
+    "required": [
+      "entry_alias",
+      "record_alias",
+      "record_link_status",
+      "client_alias",
+      "fact_type",
+      "source",
+      "work_date",
+      "basis_minutes",
+      "billable",
+      "contract",
+      "allocation"
+    ],
+    "properties": {
+      "entry_alias": {
+        "description": "Same alias as Report for direct Ticket rows; Task billing projection has no actual-time entry match.",
+        "type": "string"
+      },
+      "record_alias": {
+        "description": "Ticket alias for direct entries; Task alias for consistent authorized Task billing groups. Do not allocate rounded deltas to individual Task entries.",
+        "type": "string",
+        "nullable": true
+      },
+      "record_link_status": {
+        "type": "string",
+        "enum": [
+          "linked",
+          "inconsistent"
+        ]
+      },
+      "client_alias": {
+        "type": "string",
+        "nullable": true
+      },
+      "fact_type": {
+        "type": "string",
+        "enum": [
+          "ticket_billing_basis"
+        ]
+      },
+      "source": {
+        "type": "string",
+        "enum": [
+          "ticket",
+          "task_billing_projection"
+        ]
+      },
+      "work_date": {
+        "type": "string",
+        "format": "date"
+      },
+      "basis_minutes": {
+        "description": "Billing basis; do not add to actual work or direct consumption totals.",
+        "type": "integer"
+      },
+      "billable": {
+        "type": "boolean"
+      },
+      "contract": {
+        "$ref": "#/components/schemas/CommercialWorklogContract"
+      },
+      "allocation": {
+        "type": "object",
+        "nullable": true,
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CommercialWorklogAllocation"
+          }
+        ]
+      }
+    },
+    "type": "object"
+  },
+  "CommercialConsumptionResponse": {
+    "required": [
+      "data",
+      "meta"
+    ],
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/CommercialConsumptionFact"
+        }
+      },
+      "meta": {
+        "$ref": "#/components/schemas/WorklogPageMeta"
+      }
+    },
+    "type": "object"
+  },
+  "CommercialContractLinksResponse": {
+    "required": [
+      "data",
+      "meta"
+    ],
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/CommercialContractLinkFact"
+        }
+      },
+      "meta": {
+        "$ref": "#/components/schemas/WorklogPageMeta"
+      }
+    },
+    "type": "object"
+  }
+}

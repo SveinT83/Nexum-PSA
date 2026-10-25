@@ -3,8 +3,8 @@
 namespace App\Modules\Commercial\Controllers\Tech\Sla;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Commercial\Requests\SlaRequest;
 use App\Modules\Commercial\Models\Sla\Sla;
+use App\Modules\Commercial\Requests\SlaRequest;
 
 class SlaController extends Controller
 {
@@ -57,34 +57,7 @@ class SlaController extends Controller
     // -----------------------------------------
     public function store(SlaRequest $request)
     {
-        // Validate request via FormRequest
-        $data = $request->validated();
-
-        $sla = Sla::create([
-            'name' => $data['name'],
-            'description' => $data['description'],
-            'is_default' => (bool) ($data['is_default'] ?? false),
-
-            'low_firstResponse' => $data['low_firstResponse'],
-            'low_firstResponse_type' => $data['low_firstResponse_type'],
-            'low_onsite' => $data['low_onsite'],
-            'low_onsite_type' => $data['low_onsite_type'],
-
-            'medium_firstResponse' => $data['medium_firstResponse'],
-            'medium_firstResponse_type' => $data['medium_firstResponse_type'],
-            'medium_onsite' => $data['medium_onsite'],
-            'medium_onsite_type' => $data['medium_onsite_type'],
-
-            'high_firstResponse' => $data['high_firstResponse'],
-            'high_firstResponse_type' => $data['high_firstResponse_type'],
-            'high_onsite' => $data['high_onsite'],
-            'high_onsite_type' => $data['high_onsite_type'],
-
-            'created_by_user_id' => auth()->id(),
-            'updated_by_user_id' => auth()->id(),
-        ]);
-
-        $this->ensureSingleDefault($sla);
+        $sla = app(\App\Modules\Commercial\Actions\SlaCatalogueWorkflow::class)->store($request);
 
         return redirect()->route('tech.sla.index')->with('success', 'Sla created successfully');
     }
@@ -94,32 +67,7 @@ class SlaController extends Controller
     // -----------------------------------------
     public function update(SlaRequest $request, Sla $sla)
     {
-        $data = $request->validated();
-
-        $sla->update([
-            'name' => $data['name'],
-            'description' => $data['description'],
-            'is_default' => (bool) ($data['is_default'] ?? false),
-
-            'low_firstResponse' => $data['low_firstResponse'],
-            'low_firstResponse_type' => $data['low_firstResponse_type'],
-            'low_onsite' => $data['low_onsite'],
-            'low_onsite_type' => $data['low_onsite_type'],
-
-            'medium_firstResponse' => $data['medium_firstResponse'],
-            'medium_firstResponse_type' => $data['medium_firstResponse_type'],
-            'medium_onsite' => $data['medium_onsite'],
-            'medium_onsite_type' => $data['medium_onsite_type'],
-
-            'high_firstResponse' => $data['high_firstResponse'],
-            'high_firstResponse_type' => $data['high_firstResponse_type'],
-            'high_onsite' => $data['high_onsite'],
-            'high_onsite_type' => $data['high_onsite_type'],
-
-            'updated_by_user_id' => auth()->id(),
-        ]);
-
-        $this->ensureSingleDefault($sla);
+        $sla = app(\App\Modules\Commercial\Actions\SlaCatalogueWorkflow::class)->update($request, $sla);
 
         return redirect()
             ->route('tech.sla.index')

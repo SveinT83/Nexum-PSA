@@ -1,148 +1,171 @@
-Commercial API routes expose the first stable commercial data surfaces for trusted integrations,
-automation, and future AI agents.
+The Commercial API covers the supported catalogue, Contract, customer-response, settings and
+operational timebank workflows through the same domain actions as web.
 
-All routes live under `/api/v1/commercial` and use Sanctum bearer tokens.
+## Availability - 25 October 2026
 
-Required scopes:
+This implementation is verified on Dev. Svein Tore accepted the completed delivery on
+25 October 2026; HR-2026-10-25-COMMERCIAL-API is Reviewed. Main promotion and
+production deployment remain separate actions. The additive command/delivery migration is applied on Dev
+(batch 23). Native locking/uniqueness and authenticated trusted HTTPS reads pass.
+A new durable command returns 503 on an installation whose required migration is absent.
 
-- `commercial.read`: list and view commercial records.
-- `commercial.create`: create commercial records.
-- `commercial.update`: update commercial records.
+COMMERCIAL_API_DELIVERY_ENABLED and COMMERCIAL_DURABLE_DELIVERY_ENABLED default to false.
+The second switch controls the browser's durable delivery rollout; existing browser delivery
+remains until controlled worker verification and deliberate activation. Do not enable either switch to
+bypass an error. Rollout owner: Svein Tore. Review: HR-2026-10-25-COMMERCIAL-API.
 
-## Included Resources
+## Prerequisites and access
 
-This API slice covers:
+1. Open **Admin > Integrations > API**, inspect a named token and grant only the required abilities.
+2. Verify its owner is active and retains the corresponding domain permission.
+3. Use trusted HTTPS, the /api/v1/commercial base path and generated Swagger at /docs.
+4. Never put a token in an article, ticket, command output or screenshot.
+5. Customer acceptance uses an exact public capability or current Customer Portal session;
+   staff tokens cannot choose a portal account/contact.
 
-- Services.
-- Contracts.
-- SLA policies.
-- Time rates.
+| Ability | Operations | Current user rights |
+| --- | --- | --- |
+| commercial.read | Catalogue/Contract/context/pricing/PDF | Corresponding owner permission |
+| commercial.create/update/delete | Supported records, composition, lines and terms | Corresponding owner permission |
+| commercial.approve | Manual approval/legacy attestation | commercial.contract_manage |
+| commercial.send | Frozen preview/submit/delivery/recovery | commercial.contract_manage |
+| commercial.operations.read | Own result, rechecking its original domain permission | Original operation permission |
+| commercial.settings.read/update | Hubs/timebank policy | commercial.view / commercial.contract_manage |
+| commercial.timebank.read | Client balances and consumption evidence | client.view |
+| commercial.timebank.consume | Quick consumption | quick-consume plus policy/overuse rights |
 
-It intentionally does not expose public contract sending, quote sending, acceptance, contract item
-editing, package composition, cost catalogue editing, or legal term snapshot refresh. Those workflows
-have more side effects and need separate API slices.
+Units retain economy.manage_settings and the actual administrative policy. Tokens never grant
+additional user permissions. Active provider-owned Services, Costs and protected links remain
+read-only. Provider legal documents and in-use legal terms retain their own restrictions.
 
-## Services
+## Catalogue and context
 
-Routes:
+Collections: services, packages, costs, terms, slas, time-rates and units.
+Each supports GET collection, GET collection/context, GET collection/context/{lookup},
+GET collection/{id}, POST collection and PUT/PATCH collection/{id}.
+Supported DELETE operations are Services, Packages, Costs, legal terms and Units; Contract
+draft/line deletion is described below. No SLA or Time Rate deletion is supported.
+The unused browser SLA delete declaration was removed.
 
-- `GET /api/v1/commercial/services`
-- `GET /api/v1/commercial/services/{service}`
-- `POST /api/v1/commercial/services`
-- `PUT /api/v1/commercial/services/{service}`
-- `PATCH /api/v1/commercial/services/{service}`
+Context supplies bounded lookups for the relevant clients/vendors/units/SLA/Services/Costs/
+legal terms/rates/provider offers. Lists use q, page and per_page (1-100), with the supported
+browser filters/sorts. Service audience and availability_audience are aliases; orderable
+supports booleans and browser yes/no.
 
-List filters:
+Service writes include metadata, add-on/audience/customer wording, prices/cadence/discounts,
+timebank setup and costs/terms/time_rates composition. time_rates is keyed by existing Time
+Rate ID, with enabled and optional amount_ex_vat. PATCH omission preserves composition.
+Explicit empty arrays clear manual selections while protected provider links remain.
 
-- `q`
-- `status`
-- `billing_cycle`
-- `availability_audience`
-- `orderable`
+Package writes include selected services/terms and the five sales_price_* fields.
+Detail separates direct and inherited terms. POST services/pricing-preview accepts cost_ids
+and sales_price. POST packages/pricing-preview accepts service_ids and custom_prices.
+Transient per-unit custom prices are calculated without claiming they are persisted.
+These calls do not save records. Catalogue calculations retain web semantics; Contract
+pricing uses the exact decimal calculator.
 
-Common fields:
+## Mutation and retry sequence
 
-- `sku`
-- `name`
-- `unitId`
-- `sla_id`
-- `category_id`
-- `status`
-- `availability_audience`
-- `orderable`
-- `taxable`
-- `billing_cycle`
-- `price_ex_vat`
-- `price_including_tax`
-- `short_description`
-- `long_description`
-- `customer_unit_singular`
-- `customer_unit_plural`
+1. GET the owning resource and retain revision.
+2. Supply If-Match and a unique Idempotency-Key of 8-200 characters on a new mutation.
+   Creation needs a key but no existing record revision.
+3. Send only documented typed fields. Omitted PATCH values are retained; null is accepted
+   only where allowed. Actor/evidence/provider ownership is server-owned.
+4. Read the returned data and operation_id. GET operations/{operation} reads your own durable
+   result and rechecks current original-operation permission.
+5. If the response is lost, repeat the identical path, body, key and If-Match. replayed=true
+   returns the original result without repeating side effects.
+6. Changed input under the same key returns 409. Reread/review before creating a new intent.
 
-## Contracts
+Legacy Service/SLA/Time Rate/Contract metadata create/update endpoints retain optional-key
+compatibility. A supplied key uses the same durable contract. New operations require it.
+Deletion does not remove receipts. Revoked rights also block replay and result reads.
 
-Routes:
+## Contract workflow
 
-- `GET /api/v1/commercial/contracts`
-- `GET /api/v1/commercial/contracts/{contract}`
-- `POST /api/v1/commercial/contracts`
-- `PUT /api/v1/commercial/contracts/{contract}`
-- `PATCH /api/v1/commercial/contracts/{contract}`
+Use contracts/context and its typed lookup links. GET contracts/{contract}/item-defaults
+with service_id discovers supported wording, quantity, price, cadence, SLA and rate defaults.
+GET/POST .../items and PUT/PATCH/DELETE .../items/{item} operate on lines.
+POST .../items/{item}/sync-cadence explicitly adopts current Service cadence on a draft.
+Foreign line/rate/offer IDs and authoritative non-NOK sale currency are rejected.
 
-List filters:
+GET .../pricing reads saved economics. POST .../pricing-preview calculates supplied items
+without saving. Inputs include quantity, unit_price, price_currency, billing_interval,
+discount_value/type and setup_fee. Totals separate monthly/quarterly/yearly/one-time and
+include integer minor units and decimal strings.
 
-- `q`
-- `client_id`
-- `status`
+GET .../terms exposes saved/generated text and readiness. PUT/PATCH .../terms saves reviewed
+manual wording; POST .../terms/refresh explicitly regenerates text and review fingerprints.
+GET never creates legal versions, records viewed evidence or repairs history.
 
-The create endpoint creates a draft contract only. Contract sending, public approval, and line-item
-editing remain owned by the Tech UI until their API slices are designed.
+Metadata supports license/indexing/binding/renewal settings as well as client/SLA/dates/text.
+The legacy created_by field is the web Technician assignment; context supplies the same eligible
+technicians and default contract dates. It defaults to the current user if omitted. Approval and
+attestation always record the actual authenticated actor, independently of that assignment.
+Sent/accepted Contracts are immutable. Only an eligible draft may be deleted.
 
-Contract resources expose additive `pricing` and `customer_document` projections. `pricing`
-contains exact line/cadence amounts from the shared Commercial calculator, including integer minor
-units and canonical decimal strings. `customer_document` is the same six-column Norwegian customer
-projection used by the Tech preview, secure public page, Customer Portal, captured acceptance
-evidence, and PDF. `customer_document_readiness` reports whether that evidence is available.
+POST .../approve-manual records the current named actor and freezes customer evidence.
+For legacy sent/accepted documents without complete evidence, GET
+.../customer-document/attestation-preview?document_type=Tilbud|Avtale, verify the original
+document, then POST .../customer-document/attest-legacy with explicit type/fingerprint,
+confirmation and a 20-2000 character note. Never attest an assumed reconstruction.
 
-Monthly, annual, one-time/setup, and supported legacy quarterly amounts remain separate. A zero-value
-customer line is included rather than silently omitted.
+GET .../pdf uses the shared immutable customer document/PDF renderer. Malformed or unknown
+stored schemas and missing historical evidence fail closed with 409. A paginated list
+isolates an unavailable historical row with honest null customer/pricing data. Customer
+output omits internal costs, provider metadata and staff-only rates. No live historical rebuild.
 
-The API may update editable Contract metadata, but it does not edit lines, send agreements, accept
-agreements, refresh terms, or rewrite `customer_document_snapshot`. Sent and approved Contracts are
-locked against ordinary metadata updates. When both dates exist, `binding_end_date` must be on or
-before `end_date`; validation errors use Norwegian customer-facing wording.
+## Sending a quote, agreement or resend
 
-A null customer-document snapshot means no captured JSON exists. Every non-null empty, scalar,
-malformed, or unsupported-schema value is immutable evidence and makes the API fail closed; it is
-never replaced with a live projection. Version 1 validates the complete typed envelope, including
-document/dates/parties/approval, the exact ordered Norwegian six-column map, priced lines, all four
-totals, optional rate/support structures, and appendices. Minor/decimal/display values and the
-`Inkludert` invariant must agree semantically. `schema_version: 1` alone is rejected.
+Available after controlled activation; code presence alone does not enable delivery.
 
-Every legacy sent/approved/won row without complete customer JSON requires named manual attestation
-against original evidence; API reads never repair or backfill it from mutable Company Profile, Client,
-Service, SLA, term, Time Rate, or integration data. A detail request returns 409 until attested. The
-paginated list isolates the row instead: `customer_document`, `pricing`, and
-`total_monthly_amount` are null and `customer_document_readiness` is
-`{ready:false, code:"manual_verification_required", message:...}`. Other rows and honest pagination
-remain available. Normal rows report `{ready:true, code:"ready", message:null}`.
+1. Resolve Contract legal identity, readiness and current terms.
+2. POST contracts/{contract}/communication-preview with kind=quote|contract|resend, optional
+   valid cc_email, key and current If-Match.
+3. Review exact recipient, CC, subject, HTML and customer document in review. This explicit
+   POST stages reviewed legal versions for a draft but sends nothing.
+4. Retain id, preview_hash and returned contract_revision. Preview expiry is 15 minutes;
+   it belongs to the current actor and Contract.
+5. POST .../send-quote, .../send-contract or .../resend with preview_id, preview_hash, a new
+   key and the returned Contract revision. Changed recipient/content/provider/state needs
+   a new preview. Resend retains the captured document and original public link.
+6. GET .../deliveries/{delivery}. States distinguish preview/queued/processing/no_recipient/
+   smtp_accepted/review_required/unknown. Missing recipient records no_recipient, not sent mail.
+7. SMTP acceptance is provider submission evidence; inbox_delivery_confirmed remains false.
+8. POST .../deliveries/{delivery}/recover may redispatch only a never-started queued attempt.
+   Started/unknown attempts need provider reconciliation and a human decision, never blind retry.
 
-Contract sale price currently supports NOK only, independently of cost currency. Authoritative
-Service/offer currency is re-read on mutation; non-NOK data fails before persistence rather than being
-formatted as kroner.
+Payloads/results are encrypted. Queue claim is atomic. The worker rechecks actor rights,
+exact recipient/CC/token/snapshot and the frozen system Email provider binding; no fallback.
 
-## SLA Policies
+## Customer and timebank operations
 
-Routes:
+Public: GET public/contracts/{token}, POST .../viewed and .../accept. GET is pure.
+Accept requires name/confirm/current customer revision/key. Token rotation invalidates old
+reads and replay. Staff identity cannot replace the public capability.
 
-- `GET /api/v1/commercial/slas`
-- `GET /api/v1/commercial/slas/{sla}`
-- `POST /api/v1/commercial/slas`
-- `PUT /api/v1/commercial/slas/{sla}`
-- `PATCH /api/v1/commercial/slas/{sla}`
+Portal: GET portal/contracts, GET portal/contracts/{contract} and POST .../accept.
+Current web session, CSRF, active account/membership/contact and Client/site scope are required.
+Acceptance preserves legal/audit/configured notification effects once. Site-only users cannot
+accept client-wide Contracts.
 
-When an SLA is marked as default, Nexum clears the default flag from other SLA policies. If no default
-SLA exists and a saved SLA is not marked default, Nexum promotes it to default so clean installs keep a
-usable policy.
+GET clients/{client}/timebank?work_date=YYYY-MM-DD returns eligible lines/rates/period,
+included/used/remaining minutes and balance revision. POST .../timebank/consumptions accepts
+contract_item_id, time_rate_source, work_date, minutes and policy-required note.
+Use the selected balance revision, not Contract revision. The locked action rechecks balance/
+policy/rights and stores rate/period/usage snapshots. Identical retry returns the same entry;
+stale new intent fails. This registers operational usage, not automatic invoice creation.
+The existing workload-bound pseudonymous exports keep their separate access/activation.
 
-## Time Rates
+## Troubleshooting
 
-Routes:
+- 401/403: check token ability, active owner/current rights or portal identity.
+- 404: verify exact owner/Client/site/item/offer/current token; do not enumerate IDs.
+- 409: review changed state/revision/preview or uncertain provider evidence.
+- 422: check Swagger fields/enums/nesting, dates/currency and note/limit policy.
+- 428: read the current relevant revision and send If-Match.
+- 503: rollout owner must complete the additive migration and native verification.
+- Disabled delivery: human review is recorded; retain defaults until controlled activation checks pass.
 
-- `GET /api/v1/commercial/time-rates`
-- `GET /api/v1/commercial/time-rates/{rate}`
-- `POST /api/v1/commercial/time-rates`
-- `PUT /api/v1/commercial/time-rates/{rate}`
-- `PATCH /api/v1/commercial/time-rates/{rate}`
-
-List filters:
-
-- `q`
-- `is_active`
-
-Time rate slugs are generated from `code`, matching the Tech UI behavior.
-`is_customer_visible` is an explicit presentation setting returned and accepted by the Time Rate
-resource. It defaults to false and does not affect operational Ticket/timebank rate eligibility.
-
-Customer-visible Contract rate snapshots are returned only through the deduplicated customer-document
-projection; they are not inferred from rate names.
+This describes Dev and prerequisites, not production deployment, real message delivery
+or successful retrieval by an employee's AI assistant.

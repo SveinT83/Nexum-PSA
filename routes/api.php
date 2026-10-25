@@ -26,6 +26,9 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     $salesPublicApiRoutes = true;
     require app_path('Modules/Sales/routes.php');
     unset($salesPublicApiRoutes);
+    $commercialPublicApiRoutes = true;
+    require app_path('Modules/Commercial/routes.php');
+    unset($commercialPublicApiRoutes);
 
     // ------------------------------------------------------------------------------------------
     // Protected routes

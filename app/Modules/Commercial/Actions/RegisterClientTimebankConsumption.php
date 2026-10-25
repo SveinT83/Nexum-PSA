@@ -18,10 +18,9 @@ class RegisterClientTimebankConsumption
     public function __construct(
         private readonly CalculateClientTimebankBalances $balances,
         private readonly ClientTimebankQuickPolicy $policy,
-    ) {
-    }
+    ) {}
 
-    public function handle(Client $client, User $actor, array $data): ClientContractTimeConsumption
+    public function handle(Client $client, User $actor, array $data, ?string $expectedBalanceRevision = null): ClientContractTimeConsumption
     {
         $settings = $this->policy->get();
 
@@ -44,7 +43,7 @@ class RegisterClientTimebankConsumption
             ]);
         }
 
-        return DB::transaction(function () use ($client, $actor, $data, $minutes, $settings): ClientContractTimeConsumption {
+        return DB::transaction(function () use ($client, $actor, $data, $minutes, $settings, $expectedBalanceRevision): ClientContractTimeConsumption {
             $item = ContractItem::query()
                 ->with(['contract', 'service'])
                 ->lockForUpdate()
@@ -73,6 +72,10 @@ class RegisterClientTimebankConsumption
                 $item,
                 $workDate,
             );
+
+            if ($expectedBalanceRevision !== null) {
+                abort_unless(hash_equals(\App\Modules\Commercial\Support\TimebankRevision::of($balance, $settings), $expectedBalanceRevision), 409, 'The timebank balance or policy changed; reload it.');
+            }
 
             $usedAfter = $balance['used_minutes'] + $minutes;
             $willOverconsume = $usedAfter > $balance['included_minutes'];

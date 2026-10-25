@@ -78,7 +78,7 @@ class ServicePricing extends Component
 
     public function getTotalCostProperty()
     {
-        return Cost::whereIn('id', $this->selected)->sum('cost');
+        return app(\App\Modules\Commercial\Actions\ServiceComposition::class)->preview($this->selected, (float) $this->price_ex_vat)['cost'];
     }
 
     public function getCommissionProperty()
@@ -100,44 +100,7 @@ class ServicePricing extends Component
             return;
         }
 
-        $managed = CostRelations::query()
-            ->where('serviceId', $this->service->id)
-            ->whereHas('cost', fn ($query) => $query->integrationManaged())
-            ->pluck('costId')
-            ->map(fn ($id) => (string) $id)
-            ->all();
-        $manual = Cost::query()
-            ->whereIn('id', $this->selected)
-            ->editableInNexum()
-            ->pluck('id')
-            ->map(fn ($id) => (string) $id)
-            ->all();
-        $keep = array_values(array_unique(array_merge($managed, $manual)));
-        $this->selected = $keep;
-
-        CostRelations::where('serviceId', $this->service->id)
-            ->whereHas('cost', fn ($query) => $query->editableInNexum())
-            ->whereNotIn('costId', $keep)
-            ->delete();
-
-        $existing = CostRelations::where('serviceId', $this->service->id)
-            ->pluck('costId')
-            ->map(fn ($id) => (string) $id)
-            ->all();
-
-        $toInsert = array_diff($keep, $existing);
-
-        $manualToInsert = Cost::query()
-            ->whereIn('id', $toInsert)
-            ->editableInNexum()
-            ->pluck('id');
-
-        foreach ($manualToInsert as $costId) {
-            CostRelations::create([
-                'serviceId' => $this->service->id,
-                'costId' => $costId,
-            ]);
-        }
+        $this->selected = app(\App\Modules\Commercial\Actions\ServiceComposition::class)->costs($this->service, $this->selected);
 
         $this->service->load('costRelations.cost.vendor');
     }

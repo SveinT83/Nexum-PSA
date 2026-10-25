@@ -16,15 +16,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use OpenApi\Attributes as OA;
 
-#[OA\Tag(
-    name: 'Commercial',
-    description: 'API endpoints for commercial services, contracts, SLA policies, and time rates.'
-)]
 class CommercialController extends Controller
 {
-    #[OA\Get(path: '/api/v1/commercial/services', operationId: 'getCommercialServices', summary: 'Get commercial services', security: [['bearerAuth' => []]], tags: ['Commercial'], responses: [new OA\Response(response: 200, description: 'Successful operation')])]
     public function services(Request $request)
     {
         $query = Services::query()
@@ -53,7 +47,6 @@ class CommercialController extends Controller
         return CommercialServiceResource::collection($query->paginate($request->integer('per_page') ?: 15));
     }
 
-    #[OA\Post(path: '/api/v1/commercial/services', operationId: 'createCommercialService', summary: 'Create commercial service', security: [['bearerAuth' => []]], tags: ['Commercial'], responses: [new OA\Response(response: 201, description: 'Service created'), new OA\Response(response: 422, description: 'Validation error')])]
     public function storeService(Request $request)
     {
         $data = $this->validatedService($request);
@@ -67,13 +60,11 @@ class CommercialController extends Controller
             ->setStatusCode(201);
     }
 
-    #[OA\Get(path: '/api/v1/commercial/services/{service}', operationId: 'getCommercialService', summary: 'Get commercial service', security: [['bearerAuth' => []]], tags: ['Commercial'], parameters: [new OA\Parameter(name: 'service', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'Successful operation')])]
     public function showService(Services $service)
     {
         return new CommercialServiceResource($this->loadService($service));
     }
 
-    #[OA\Patch(path: '/api/v1/commercial/services/{service}', operationId: 'updateCommercialService', summary: 'Update commercial service', security: [['bearerAuth' => []]], tags: ['Commercial'], parameters: [new OA\Parameter(name: 'service', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'Service updated'), new OA\Response(response: 422, description: 'Validation error')])]
     public function updateService(Request $request, Services $service)
     {
         $service->loadMissing('sourceIntegration');
@@ -87,7 +78,6 @@ class CommercialController extends Controller
         return new CommercialServiceResource($this->loadService($service->refresh()));
     }
 
-    #[OA\Get(path: '/api/v1/commercial/contracts', operationId: 'getCommercialContracts', summary: 'Get commercial contracts', security: [['bearerAuth' => []]], tags: ['Commercial'], responses: [new OA\Response(response: 200, description: 'Successful operation')])]
     public function contracts(Request $request)
     {
         $query = Contracts::query()
@@ -116,7 +106,6 @@ class CommercialController extends Controller
         return CommercialContractResource::collection($query->paginate($request->integer('per_page') ?: 15));
     }
 
-    #[OA\Post(path: '/api/v1/commercial/contracts', operationId: 'createCommercialContract', summary: 'Create commercial contract draft', security: [['bearerAuth' => []]], tags: ['Commercial'], responses: [new OA\Response(response: 201, description: 'Contract created'), new OA\Response(response: 422, description: 'Validation error')])]
     public function storeContract(Request $request)
     {
         $data = $this->validatedContract($request);
@@ -130,13 +119,11 @@ class CommercialController extends Controller
             ->setStatusCode(201);
     }
 
-    #[OA\Get(path: '/api/v1/commercial/contracts/{contract}', operationId: 'getCommercialContract', summary: 'Get commercial contract', security: [['bearerAuth' => []]], tags: ['Commercial'], parameters: [new OA\Parameter(name: 'contract', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'Successful operation')])]
     public function showContract(Contracts $contract)
     {
         return new CommercialContractResource($this->loadContract($contract));
     }
 
-    #[OA\Patch(path: '/api/v1/commercial/contracts/{contract}', operationId: 'updateCommercialContract', summary: 'Update commercial contract draft metadata', security: [['bearerAuth' => []]], tags: ['Commercial'], parameters: [new OA\Parameter(name: 'contract', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'Contract updated'), new OA\Response(response: 422, description: 'Validation error')])]
     public function updateContract(Request $request, Contracts $contract)
     {
         $contract = DB::transaction(function () use ($request, $contract): Contracts {
@@ -153,7 +140,6 @@ class CommercialController extends Controller
         return new CommercialContractResource($this->loadContract($contract->refresh()));
     }
 
-    #[OA\Get(path: '/api/v1/commercial/slas', operationId: 'getCommercialSlas', summary: 'Get commercial SLA policies', security: [['bearerAuth' => []]], tags: ['Commercial'], responses: [new OA\Response(response: 200, description: 'Successful operation')])]
     public function slas(Request $request)
     {
         $query = Sla::query()
@@ -169,7 +155,6 @@ class CommercialController extends Controller
         return CommercialSlaResource::collection($query->paginate($request->integer('per_page') ?: 15));
     }
 
-    #[OA\Post(path: '/api/v1/commercial/slas', operationId: 'createCommercialSla', summary: 'Create commercial SLA policy', security: [['bearerAuth' => []]], tags: ['Commercial'], responses: [new OA\Response(response: 201, description: 'SLA created'), new OA\Response(response: 422, description: 'Validation error')])]
     public function storeSla(Request $request)
     {
         $data = $this->validatedSla($request);
@@ -183,13 +168,11 @@ class CommercialController extends Controller
             ->setStatusCode(201);
     }
 
-    #[OA\Get(path: '/api/v1/commercial/slas/{sla}', operationId: 'getCommercialSla', summary: 'Get commercial SLA policy', security: [['bearerAuth' => []]], tags: ['Commercial'], parameters: [new OA\Parameter(name: 'sla', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'Successful operation')])]
     public function showSla(Sla $sla)
     {
         return new CommercialSlaResource($this->loadSla($sla));
     }
 
-    #[OA\Patch(path: '/api/v1/commercial/slas/{sla}', operationId: 'updateCommercialSla', summary: 'Update commercial SLA policy', security: [['bearerAuth' => []]], tags: ['Commercial'], parameters: [new OA\Parameter(name: 'sla', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'SLA updated'), new OA\Response(response: 422, description: 'Validation error')])]
     public function updateSla(Request $request, Sla $sla)
     {
         $data = array_merge($this->slaPayload($sla), $this->validatedSla($request, $sla));
@@ -199,7 +182,6 @@ class CommercialController extends Controller
         return new CommercialSlaResource($this->loadSla($sla));
     }
 
-    #[OA\Get(path: '/api/v1/commercial/time-rates', operationId: 'getCommercialTimeRates', summary: 'Get commercial time rates', security: [['bearerAuth' => []]], tags: ['Commercial'], responses: [new OA\Response(response: 200, description: 'Successful operation')])]
     public function timeRates(Request $request)
     {
         $query = TimeRate::query()
@@ -219,7 +201,6 @@ class CommercialController extends Controller
         return CommercialTimeRateResource::collection($query->paginate($request->integer('per_page') ?: 15));
     }
 
-    #[OA\Post(path: '/api/v1/commercial/time-rates', operationId: 'createCommercialTimeRate', summary: 'Create commercial time rate', security: [['bearerAuth' => []]], tags: ['Commercial'], responses: [new OA\Response(response: 201, description: 'Time rate created'), new OA\Response(response: 422, description: 'Validation error')])]
     public function storeTimeRate(Request $request)
     {
         $data = $this->validatedTimeRate($request);
@@ -232,13 +213,11 @@ class CommercialController extends Controller
             ->setStatusCode(201);
     }
 
-    #[OA\Get(path: '/api/v1/commercial/time-rates/{rate}', operationId: 'getCommercialTimeRate', summary: 'Get commercial time rate', security: [['bearerAuth' => []]], tags: ['Commercial'], parameters: [new OA\Parameter(name: 'rate', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'Successful operation')])]
     public function showTimeRate(TimeRate $rate)
     {
         return new CommercialTimeRateResource($this->loadTimeRate($rate));
     }
 
-    #[OA\Patch(path: '/api/v1/commercial/time-rates/{rate}', operationId: 'updateCommercialTimeRate', summary: 'Update commercial time rate', security: [['bearerAuth' => []]], tags: ['Commercial'], parameters: [new OA\Parameter(name: 'rate', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'Time rate updated'), new OA\Response(response: 422, description: 'Validation error')])]
     public function updateTimeRate(Request $request, TimeRate $rate)
     {
         $data = array_merge($this->timeRatePayload($rate), $this->validatedTimeRate($request, $rate));

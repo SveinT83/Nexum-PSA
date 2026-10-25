@@ -1244,3 +1244,13 @@ additive migration and current worker code; queue or SMTP acceptance does not pr
 Main merge confirmed on 2026-10-25: [Sales API PR #311](https://github.com/SveinT83/Nexum-PSA/pull/311).
 The reviewed source is in Main. Production deployment, migrations and provider activation
 have not been performed by this update.
+
+## Full Commercial API - 25 October 2026
+
+The full Commercial implementation is verified on Dev and was accepted by Svein Tore on 25 October 2026; HR-2026-10-25-COMMERCIAL-API is Reviewed. It includes catalogue composition, Contract lines/terms/pricing/PDF/approval/legacy attestation, frozen communication preview/submit/read-back, separate public/portal acceptance, Unit administration and operational Client timebank. See [Commercial API](https://doc.tronderdata.no/link/457) for exact steps and boundaries.
+
+New token abilities are commercial.delete, commercial.send, commercial.approve, commercial.operations.read, commercial.settings.read/update and commercial.timebank.read/consume. Existing read/create/update compatibility remains; current active user/domain rights are independently required. No existing token is automatically widened.
+
+New commands use current If-Match and durable Idempotency-Key receipts. Delivery payloads are encrypted, provider binding is frozen and a started unknown SMTP attempt is never blindly retried. SMTP acceptance is not inbox receipt. Public token and portal-session/CSRF identities remain separate from staff tokens.
+
+The additive receipt/delivery migration is applied on Dev as batch 23. Native locking/uniqueness and authenticated trusted HTTPS reads pass. COMMERCIAL_API_DELIVERY_ENABLED and COMMERCIAL_DURABLE_DELIVERY_ENABLED remain false by default until controlled worker verification and deliberate activation. This is not Main/production availability or employee-assistant retrieval evidence.

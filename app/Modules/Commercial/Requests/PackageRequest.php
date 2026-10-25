@@ -21,18 +21,6 @@ class PackageRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'sales_price_user' => 'nullable|numeric',
-            'sales_price_asset' => 'nullable|numeric',
-            'sales_price_site' => 'nullable|numeric',
-            'sales_price_client' => 'nullable|numeric',
-            'sales_price_other' => 'nullable|numeric',
-            'services' => 'nullable|array',
-            'services.*' => 'exists:services,id',
-            'terms' => 'nullable|array',
-            'terms.*' => 'exists:terms,id',
-        ];
+        return app(\App\Modules\Commercial\Actions\PackageCatalogueWorkflow::class)->rules($this);
     }
 }

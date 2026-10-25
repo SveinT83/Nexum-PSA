@@ -19,24 +19,7 @@ class ClientTimebankPolicyController extends Controller
 
     public function update(Request $request, ClientTimebankQuickPolicy $policy): RedirectResponse
     {
-        $data = $request->validate([
-            'quick_timebank_enabled' => ['sometimes', 'boolean'],
-            'quick_timebank_require_remaining' => ['sometimes', 'boolean'],
-            'quick_timebank_allow_overuse' => ['sometimes', 'boolean'],
-            'quick_timebank_require_note' => ['sometimes', 'boolean'],
-            'quick_timebank_max_minutes' => ['required', 'integer', 'min:1', 'max:1440'],
-        ]);
-
-        foreach ([
-            'quick_timebank_enabled',
-            'quick_timebank_require_remaining',
-            'quick_timebank_allow_overuse',
-            'quick_timebank_require_note',
-        ] as $key) {
-            $data[$key] = $request->boolean($key);
-        }
-
-        $policy->update($data);
+        app(\App\Modules\Commercial\Actions\TimebankPolicyWorkflow::class)->save($request);
 
         return redirect()
             ->route('tech.admin.settings.cs.timebank-policy')
