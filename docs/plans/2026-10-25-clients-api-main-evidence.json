@@ -1,0 +1,40 @@
+{
+  "state": "candidate_verified_ready_for_merge",
+  "base_main": "e7bce4321928863cefb7434bf873a3f5a6c541be",
+  "branch": "codex/clients-api-20261025",
+  "human_review": "HR-2026-10-25-CLIENTS-API",
+  "human_reviewer": "Svein Tore",
+  "human_acceptance": "Godkjent. Merge til main",
+  "test_runs": {
+    "candidate-regression.log": {
+      "passed": 407,
+      "assertions": 4857,
+      "sha256": "71e8ca1d598587a30e57b0858f663bbe5e6ff1bf2640dac73c0b5de1f84fafaf"
+    },
+    "candidate-cloudfactory.log": {
+      "passed": 29,
+      "assertions": 340,
+      "sha256": "da3ae0f5bc2e346fc6875fa0aa8c33d9feb4b37198a32011803db9619bf19741"
+    },
+    "candidate-tripletex.log": {
+      "passed": 2,
+      "assertions": 19,
+      "sha256": "2ee748be0b43c10d1dc97c942704f4d12be4f6600be0f12ad32f51f02465f2ed"
+    }
+  },
+  "tests_passed": 438,
+  "assertions": 5216,
+  "php_syntax_passed": 48,
+  "pint_passed": 48,
+  "class_references_resolve_in_candidate": 110,
+  "dependency_closure": [
+    "app/Modules/Integration/Support/DomainApiRead.php",
+    "app/Modules/Task/Services/TaskApiScope.php"
+  ],
+  "production_deployed": false,
+  "provider_api_enabled": false,
+  "swagger_methods": 51,
+  "swagger_schemas": 74,
+  "non_clients_swagger_paths_unchanged": true,
+  "swagger_sha256": "27129c2a0676d24c8ad1e1df37b2b5ea2ad0f3d4699288f9b753bce386e86dba"
+}

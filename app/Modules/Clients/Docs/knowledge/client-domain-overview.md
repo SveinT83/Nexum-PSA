@@ -258,3 +258,23 @@ Local changes export, provider changes import, and Tripletex wins simultaneous c
 field. Primary contacts, Site names and other Sites stay local after creation. Integration admins
 can inspect status, retry and explicitly choose the bound Site in the Tripletex customer-link review.
 See Integration Knowledge: tripletex-customer-numbers.md for pause, recovery and deployment.
+
+## Full Clients browser/API coverage - Dev
+
+The current Client workspace now has official typed API support for supported
+reads, creation, editing, Notes, settings/RMM, Sites/deletion/custom fields,
+authorized related data, source time correction, staff/customer licence operations
+and Client Formats. Refer to **Clients API Support** for exact routes, scopes,
+revision/idempotency headers, uncertain-result recovery and read-back steps.
+
+Availability is verified on Dev under HR-2026-10-25-CLIENTS-API. Main/production
+rollout and human acceptance are separate; check the installation's Swagger before
+using new routes. API provider writes remain independently disabled by default.
+Client archive/delete policy and new Contact portal invitation behavior are separate
+workstreams and are not enabled by this delivery.
+
+
+Site deletion refuses linked or historical records, provider bindings and Site-scoped
+portal access. Review or move references through their owning workflows first.
+Removing a Site must never erase historical Contacts/Documentation or turn Site-only
+Customer Portal membership into client-wide access.

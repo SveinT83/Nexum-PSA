@@ -1341,3 +1341,17 @@ New token abilities are commercial.delete, commercial.send, commercial.approve, 
 New commands use current If-Match and durable Idempotency-Key receipts. Delivery payloads are encrypted, provider binding is frozen and a started unknown SMTP attempt is never blindly retried. SMTP acceptance is not inbox receipt. Public token and portal-session/CSRF identities remain separate from staff tokens.
 
 The additive receipt/delivery migration is applied on Dev as batch 23. Native locking/uniqueness and authenticated trusted HTTPS reads pass. COMMERCIAL_API_DELIVERY_ENABLED and COMMERCIAL_DURABLE_DELIVERY_ENABLED remain false by default until controlled worker verification and deliberate activation. This is not Main/production availability or employee-assistant retrieval evidence.
+
+## Full Clients browser/API coverage - Dev
+
+The current Client workspace now has official typed API support for supported
+reads, creation, editing, Notes, settings/RMM, Sites/deletion/custom fields,
+authorized related data, source time correction, staff/customer licence operations
+and Client Formats. Refer to **Clients API Support** for exact routes, scopes,
+revision/idempotency headers, uncertain-result recovery and read-back steps.
+
+Availability is verified on Dev under HR-2026-10-25-CLIENTS-API. Main/production
+rollout and human acceptance are separate; check the installation's Swagger before
+using new routes. API provider writes remain independently disabled by default.
+Client archive/delete policy and new Contact portal invitation behavior are separate
+workstreams and are not enabled by this delivery.

@@ -1,5 +1,38 @@
 # tdPSA Development TODO
 
+## Full Clients browser/API coverage (2026-10-25)
+
+Status: Implemented and verified on authoritative Dev / Human Reviewed / Main promotion in progress.
+Implementation owner: Codex. Human reviewer and release owner: Svein Tore.
+Approved RFC: rfc/2026-10-25-clients-full-api-parity.md (Svein Tore: "Ja").
+All C01-C20 and six Feature Slices are implemented, including supported writes and
+actions. The contract has 51 Clients-owned HTTP operations and 74 typed schemas;
+canonical Contact, Task-template and Commercial timebank APIs are reused.
+Matrix: plans/2026-10-25-clients-api-gap-matrix.md.
+Exact operation/schema/test/native/handbook evidence and changed files:
+plans/2026-10-25-clients-api-verification.md and .json.
+
+Verification: broad regression 537 passed / 2 failed; both introduced Tripletex
+failures corrected and individually retested. Final core 30/637, committed provider
+intent 6/53, staff actions 1/21 and explicit Tripletex profile 1/13 passed; runs
+overlap and the full broad suite was not rerun. No unresolved failing check deferred.
+Pint/syntax 46 PHP files, scoped diff, native locks/uniqueness, 12 HTTPS reads and
+51 Swagger operation IDs passed. Additive Dev migration is batch 26.
+Knowledge bodies and actual BookStack pages 639, 451 and 449 verified, including
+existing employee access. Native automatic sync remains unconfigured/pending_push;
+the scoped personal BookStack publication/read-back is complete. Employee
+OpenWebUI retrieval is not verified.
+
+Human review: HR-2026-10-25-CLIENTS-API Reviewed by Svein Tore, 2026-10-25,
+explicit acceptance: "Godkjent. Merge til main". Main promotion is authorized.
+Current action (Codex): extract only Clients changes and required dependencies onto
+latest origin/main, run isolated candidate verification, create/merge PR and read back.
+Production migration/deployment, provider activation and real external writes are
+separate and were not requested. Provider API writes remain default-off.
+Client deletion/retention and Contact invitation Issue #254 remain separate.
+Shared dirty work is preserved.
+
+
 ## Full DataExchange browser/API coverage (2026-10-25)
 
 Status: Merged to Main / Human Reviewed (Svein Tore, 2026-10-25). Owner: Codex. Reviewer/release owner: Svein Tore.

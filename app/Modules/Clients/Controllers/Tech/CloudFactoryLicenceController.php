@@ -14,7 +14,6 @@ use App\Modules\Integration\Services\CloudFactory\CloudFactoryIntegration;
 use App\Modules\Integration\Services\CloudFactory\CloudFactoryLicenceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Throwable;
 
@@ -67,24 +66,8 @@ class CloudFactoryLicenceController extends Controller
         CloudFactoryIntegration $integrations,
         CloudFactoryLicenceService $licences,
     ): RedirectResponse {
-        $integration = $integrations->getOrCreate();
-        $data = $request->validate([
-            'offer_id' => [
-                'required',
-                'uuid',
-                Rule::exists('cloudfactory_offers', 'id')->where('integration_id', $integration->id),
-            ],
-            'quantity' => ['required', 'integer', 'min:1', 'max:100000'],
-        ]);
-
         try {
-            $operation = $licences->issue(
-                $integration,
-                $client,
-                Offer::query()->findOrFail($data['offer_id']),
-                (int) $data['quantity'],
-                $request->user()->id
-            );
+            $operation = app(\App\Modules\Clients\Actions\StaffClientLicenceWorkflow::class)->issue($request, $client, $integrations, $licences);
         } catch (Throwable $exception) {
             if ($exception instanceof \Illuminate\Validation\ValidationException) {
                 throw $exception;
@@ -92,7 +75,6 @@ class CloudFactoryLicenceController extends Controller
 
             return back()->withErrors(['licence' => $exception->getMessage()]);
         }
-
         CloudFactorySyncJob::dispatch('subscriptions')->delay(now()->addSeconds(30));
 
         return back()->with('success', 'Cloud Factory licence operation '.$operation->status.'.');
@@ -105,18 +87,8 @@ class CloudFactoryLicenceController extends Controller
         CloudFactoryIntegration $integrations,
         CloudFactoryLicenceService $licences,
     ): RedirectResponse {
-        $this->owns($client, $subscription);
-        $data = $request->validate([
-            'quantity' => ['required', 'integer', 'min:0', 'max:100000'],
-        ]);
-
         try {
-            $operation = $licences->changeQuantity(
-                $integrations->getOrCreate(),
-                $subscription,
-                (int) $data['quantity'],
-                $request->user()->id
-            );
+            $operation = app(\App\Modules\Clients\Actions\StaffClientLicenceWorkflow::class)->quantity($request, $client, $subscription, $integrations, $licences);
         } catch (Throwable $exception) {
             if ($exception instanceof \Illuminate\Validation\ValidationException) {
                 throw $exception;
@@ -124,7 +96,6 @@ class CloudFactoryLicenceController extends Controller
 
             return back()->withErrors(['licence' => $exception->getMessage()]);
         }
-
         CloudFactorySyncJob::dispatch('subscriptions')->delay(now()->addSeconds(30));
 
         return back()->with('success', 'Quantity change '.$operation->status.'.');
@@ -137,16 +108,8 @@ class CloudFactoryLicenceController extends Controller
         CloudFactoryIntegration $integrations,
         CloudFactoryLicenceService $licences,
     ): RedirectResponse {
-        $this->owns($client, $subscription);
-        $data = $request->validate(['enabled' => ['required', 'boolean']]);
-
         try {
-            $operation = $licences->setAutoRenew(
-                $integrations->getOrCreate(),
-                $subscription,
-                (bool) $data['enabled'],
-                $request->user()->id
-            );
+            $operation = app(\App\Modules\Clients\Actions\StaffClientLicenceWorkflow::class)->renewal($request, $client, $subscription, $integrations, $licences);
         } catch (Throwable $exception) {
             if ($exception instanceof \Illuminate\Validation\ValidationException) {
                 throw $exception;
@@ -154,7 +117,6 @@ class CloudFactoryLicenceController extends Controller
 
             return back()->withErrors(['licence' => $exception->getMessage()]);
         }
-
         CloudFactorySyncJob::dispatch('subscriptions')->delay(now()->addSeconds(30));
 
         return back()->with('success', 'Renewal change '.$operation->status.'.');
@@ -167,18 +129,8 @@ class CloudFactoryLicenceController extends Controller
         CloudFactoryIntegration $integrations,
         CloudFactoryLicenceService $licences,
     ): RedirectResponse {
-        $this->owns($client, $subscription);
-        $data = $request->validate([
-            'status' => ['required', Rule::in(['activate', 'suspend'])],
-        ]);
-
         try {
-            $operation = $licences->setMicrosoftStatus(
-                $integrations->getOrCreate(),
-                $subscription,
-                $data['status'],
-                $request->user()->id
-            );
+            $operation = app(\App\Modules\Clients\Actions\StaffClientLicenceWorkflow::class)->status($request, $client, $subscription, $integrations, $licences);
         } catch (Throwable $exception) {
             if ($exception instanceof \Illuminate\Validation\ValidationException) {
                 throw $exception;
@@ -186,7 +138,6 @@ class CloudFactoryLicenceController extends Controller
 
             return back()->withErrors(['licence' => $exception->getMessage()]);
         }
-
         CloudFactorySyncJob::dispatch('subscriptions')->delay(now()->addSeconds(30));
 
         return back()->with('success', 'Status change '.$operation->status.'.');

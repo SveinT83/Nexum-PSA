@@ -19,80 +19,76 @@ use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
 #[OA\Info(
-    version: "0.1.0",
-    description: "API documentation for the Nexum PSA Clients module",
-    title: "Nexum PSA API Documentation",
-    contact: new OA\Contact(email: "support@example.com"),
-    license: new OA\License(name: "Apache 2.0", url: "http://www.apache.org/licenses/LICENSE-2.0.html")
+    version: '0.1.0',
+    description: 'API documentation for the Nexum PSA Clients module',
+    title: 'Nexum PSA API Documentation',
+    contact: new OA\Contact(email: 'support@example.com'),
+    license: new OA\License(name: 'Apache 2.0', url: 'http://www.apache.org/licenses/LICENSE-2.0.html')
 )]
 #[OA\Server(
-    url: "/",
-    description: "Nexum PSA API Server"
+    url: '/',
+    description: 'Nexum PSA API Server'
 )]
 #[OA\SecurityScheme(
-    securityScheme: "bearerAuth",
-    type: "http",
-    scheme: "bearer",
-    bearerFormat: "JWT"
+    securityScheme: 'bearerAuth',
+    type: 'http',
+    scheme: 'bearer',
+    bearerFormat: 'Sanctum'
 )]
 #[OA\Tag(
-    name: "Clients",
-    description: "API Endpoints for Clients"
+    name: 'Clients',
+    description: 'API Endpoints for Clients'
 )]
 class ClientController extends Controller
 {
-    #[OA\Get(
-        path: "/api/v1/clients",
-        operationId: "getClientList",
-        description: "Returns list of clients with pagination",
-        summary: "Get list of clients",
-        security: [["bearerAuth" => []]],
-        tags: ["Clients"],
-        parameters: [
-            new OA\Parameter(
-                name: "q",
-                in: "query",
-                description: "Search by client name, organization number, client number, or billing email.",
-                required: false,
-                schema: new OA\Schema(type: "string")
-            ),
-            new OA\Parameter(
-                name: "active",
-                in: "query",
-                description: "Filter by active status.",
-                required: false,
-                schema: new OA\Schema(type: "boolean")
-            ),
-            new OA\Parameter(
-                name: "per_page",
-                in: "query",
-                description: "Number of clients per page.",
-                required: false,
-                schema: new OA\Schema(type: "integer")
-            ),
-            new OA\Parameter(
-                name: "custom_field[key]",
-                in: "query",
-                description: "Search by a searchable custom field key/value pair, for example custom_field[msp_manager_id]=12345.",
-                required: false,
-                schema: new OA\Schema(type: "string")
-            ),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: "Successful operation"),
-            new OA\Response(response: 401, description: "Unauthenticated")
-        ]
-    )]
     public function index(Request $request)
     {
-        $query = Client::query()
-            ->with('sites')
-            ->orderBy('name');
+        \App\Modules\Integration\Support\DomainApiRead::normalizeQueryBooleans($request, ['active']);
+        $request->validate([
+            'q' => 'sometimes|string|max:255', 'active' => 'sometimes|boolean',
+            'format_id' => 'sometimes|integer|exists:client_formats,id',
+            'contract_filter' => 'sometimes|in:without_contract,with_contract,won_contract',
+            'rmm_filter' => 'sometimes|in:linked,unlinked',
+            'sort' => 'sometimes|in:name,client_number,org_no,format,billing_email,status,contracts',
+            'direction' => 'sometimes|in:asc,desc', 'page' => 'sometimes|integer|min:1',
+            'per_page' => 'sometimes|integer|min:1|max:100',
+        ]);
+        $query = Client::query()->select('clients.*')->with(['sites', 'clientFormat']);
+        if ($request->filled('format_id')) {
+            $query->where('client_format_id', $request->integer('format_id'));
+        }
+        if ($request->filled('contract_filter')) {
+            $filter = $request->input('contract_filter');
+            if ($filter === 'without_contract') {
+                $query->doesntHave('contracts');
+            } elseif ($filter === 'with_contract') {
+                $query->has('contracts');
+            } else {
+                $query->whereHas('contracts', fn ($q) => $q->where('approval_status', 'won'));
+            }
+        }
+        if ($request->filled('rmm_filter')) {
+            $integration = \App\Models\System\Integrations\Integration::query()->where('type', 'rmm')->first();
+            if ($integration) {
+                $method = $request->input('rmm_filter') === 'linked' ? 'whereHas' : 'whereDoesntHave';
+                $query->$method('rmmLinks', fn ($q) => $q->where('integration_id', $integration->id));
+            }
+        }
+        $sort = $request->input('sort', 'name');
+        $columns = ['name' => 'clients.name', 'client_number' => 'clients.client_number', 'org_no' => 'clients.org_no',
+            'billing_email' => 'clients.billing_email', 'status' => 'clients.active', 'format' => 'client_formats.code', 'contracts' => 'contracts_count'];
+        if ($sort === 'format') {
+            $query->leftJoin('client_formats', 'client_formats.id', '=', 'clients.client_format_id');
+        }
+        if ($sort === 'contracts') {
+            $query->withCount('contracts');
+        }
+        $query->orderBy($columns[$sort], $request->input('direction', 'asc'))->orderBy('clients.id');
 
         if ($request->filled('q')) {
             $needle = trim((string) $request->input('q'));
             $query->where(function ($inner) use ($needle): void {
-                $inner->where('name', 'like', '%'.$needle.'%')
+                $inner->where('clients.name', 'like', '%'.$needle.'%')
                     ->orWhere('org_no', 'like', '%'.$needle.'%')
                     ->orWhere('client_number', 'like', '%'.$needle.'%')
                     ->orWhere('billing_email', 'like', '%'.$needle.'%');
@@ -108,194 +104,95 @@ class ClientController extends Controller
         return ClientResource::collection($query->paginate($request->integer('per_page') ?: 15));
     }
 
-    #[OA\Get(
-        path: "/api/v1/clients/{client}",
-        operationId: "getClientById",
-        description: "Returns client data",
-        summary: "Get client information",
-        security: [["bearerAuth" => []]],
-        tags: ["Clients"],
-        parameters: [
-            new OA\Parameter(
-                name: "client",
-                in: "path",
-                description: "ID of client to return",
-                required: true,
-                schema: new OA\Schema(type: "integer", format: "int64")
-            )
-        ],
-        responses: [
-            new OA\Response(response: 200, description: "Successful operation"),
-            new OA\Response(response: 400, description: "Bad Request"),
-            new OA\Response(response: 401, description: "Unauthenticated"),
-            new OA\Response(response: 404, description: "Resource Not Found")
-        ]
-    )]
     public function show(Client $client)
     {
-        return new ClientResource($client->load('sites'));
+        return new ClientResource($client->refresh()->load('sites'));
     }
 
-    #[OA\Post(
-        path: "/api/v1/clients",
-        operationId: "createClient",
-        description: "Creates a client and a default site.",
-        summary: "Create client",
-        security: [["bearerAuth" => []]],
-        tags: ["Clients"],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                required: ["name"],
-                properties: [
-                    new OA\Property(property: "name", type: "string"),
-                    new OA\Property(property: "client_number", type: "string", nullable: true, description: "Local five-digit number when customer sync is off; provider-authoritative suggestion when on."),
-                    new OA\Property(property: "tripletex_number_mode", type: "boolean", description: "Must be true when Tripletex customer-number synchronization is active."),
-                    new OA\Property(property: "tripletex_request_key", type: "string", format: "uuid", description: "Stable creation attempt key. Reuse with unchanged data after a recoverable failure."),
-                    new OA\Property(property: "tripletex_customer_id", type: "integer", nullable: true, description: "Explicit existing Tripletex customer identity; no automatic name matching."),
-                    new OA\Property(property: "org_no", type: "string", nullable: true),
-                    new OA\Property(property: "billing_email", type: "string", format: "email", nullable: true),
-                    new OA\Property(property: "active", type: "boolean", nullable: true),
-                    new OA\Property(property: "site_name", type: "string", nullable: true),
-                    new OA\Property(property: "custom_fields", type: "object", nullable: true),
-                ],
-                type: "object"
-            )
-        ),
-        responses: [
-            new OA\Response(response: 201, description: "Client created"),
-            new OA\Response(response: 401, description: "Unauthenticated"),
-            new OA\Response(response: 403, description: "Missing clients.create scope"),
-            new OA\Response(response: 422, description: "Validation error")
-        ]
-    )]
     public function store(Request $request, CreateClientRecord $createClient, SyncCustomFieldValues $customFields)
     {
         $validated = $this->validateClientPayload($request, creating: true);
 
-        $client = $createClient->handle([
-                'tripletex_number_mode' => $validated['tripletex_number_mode'] ?? false,
-                'tripletex_request_key' => $validated['tripletex_request_key'] ?? null,
-                'tripletex_customer_id' => $validated['tripletex_customer_id'] ?? null,
-                'name' => $validated['name'],
-                'client_number' => $validated['client_number'] ?? null,
-                'org_no' => $validated['org_no'] ?? null,
-                'client_format_id' => $validated['client_format_id'] ?? null,
-                'website' => $validated['website'] ?? null,
-                'sales_category_id' => $validated['sales_category_id'] ?? null,
-                'lead_temperature' => $validated['lead_temperature'] ?? 3,
-                'billing_email' => $validated['billing_email'] ?? null,
-                'notes' => $validated['notes'] ?? null,
-                'active' => $validated['active'] ?? true,
-            ], function (Client $client) use ($request, $customFields): void {
+        \App\Modules\Clients\Support\ClientInput::fields($request, new Client);
+        abort_if($request->boolean('create_in_rmm') && ! config('clients-api.provider_writes_enabled'), 409, 'Client API provider writes are disabled.');
+        $result = app(\App\Modules\Clients\Actions\ExecuteClientCommand::class)->handle($request, fn () => null,
+            function () use ($request, $validated, $createClient, $customFields) {
+                $client = $createClient->handle(array_filter([
+                    'tripletex_site' => $this->tripletexSitePayload($request),
+                    'tripletex_number_mode' => $validated['tripletex_number_mode'] ?? false,
+                    'tripletex_request_key' => $validated['tripletex_request_key'] ?? null,
+                    'tripletex_customer_id' => $validated['tripletex_customer_id'] ?? null,
+                    'name' => $validated['name'],
+                    'client_number' => $validated['client_number'] ?? null,
+                    'org_no' => $validated['org_no'] ?? null,
+                    'client_format_id' => $validated['client_format_id'] ?? null,
+                    'website' => $validated['website'] ?? null,
+                    'sales_category_id' => $validated['sales_category_id'] ?? null,
+                    'lead_temperature' => $validated['lead_temperature'] ?? 3,
+                    'billing_email' => $validated['billing_email'] ?? null,
+                    'notes' => $validated['notes'] ?? null,
+                    'active' => $validated['active'] ?? true,
+                ], static fn ($value, $key) => $key !== 'tripletex_site' || $value !== null, ARRAY_FILTER_USE_BOTH), function (Client $client) use ($request, $customFields): void {
 
-            $sitePayload = $this->sitePayloadFromRequest($request, 'Default');
-            $sitePayload['is_default'] = true;
-            $client->sites()->create($sitePayload);
-            $customFields->handle($client, (array) $request->input('custom_fields', []), $request->user(), 'api');
-        });
+                    $sitePayload = $this->sitePayloadFromRequest($request, 'Default');
+                    $sitePayload['is_default'] = true;
+                    $site = $client->sites()->create($sitePayload);
+                    if ($request->has('primary_contact')) {
+                        app(\App\Modules\Contact\Actions\StoreContact::class)->handle($request->input('primary_contact') + [
+                            'client_id' => $client->id, 'site_id' => $site->id, 'is_default_for_site' => true,
+                            'is_default_for_client' => true, 'active' => true, 'created_from' => 'client_api_creation',
+                        ]);
+                    }
+                    $customFields->handle($client, (array) $request->input('custom_fields', []), $request->user(), 'api');
+                });
 
-        return (new ClientResource($client->load('sites')))
+                $rmm = null;
+                if ($request->boolean('create_in_rmm')) {
+                    try {
+                        $rmm = app(\App\Modules\Clients\Actions\ProvisionClientRmm::class)->handle($client, $request->user()->id);
+                    } catch (\Throwable $error) {
+                        report($error);
+                        $rmm = ['state' => 'unknown', 'reconciliation_required' => true];
+                    }
+                }
+
+                return ['client_id' => $client->id, 'rmm' => $rmm];
+            }, $request->has('primary_contact') || $request->boolean('create_in_rmm'), $request->boolean('create_in_rmm') || (bool) app(\App\Modules\DataExchange\Services\TripletexCustomerNumbers::class)->connection());
+        if (! isset($result['client_id'])) {
+            return response()->json($result, 202);
+        }
+        $client = Client::query()->findOrFail($result['client_id']);
+
+        return (new ClientResource($client->load('sites')))->additional(['operation_id' => $result['operation_id'], 'replayed' => $result['replayed'], 'rmm' => $result['rmm'] ?? null])
             ->response()
             ->setStatusCode(201);
     }
 
-    #[OA\Put(
-        path: "/api/v1/clients/{client}",
-        operationId: "replaceClient",
-        description: "Updates a client record.",
-        summary: "Update client",
-        security: [["bearerAuth" => []]],
-        tags: ["Clients"],
-        parameters: [
-            new OA\Parameter(name: "client", in: "path", required: true, schema: new OA\Schema(type: "integer"))
-        ],
-        responses: [
-            new OA\Response(response: 200, description: "Client updated"),
-            new OA\Response(response: 401, description: "Unauthenticated"),
-            new OA\Response(response: 403, description: "Missing clients.update scope"),
-            new OA\Response(response: 404, description: "Client not found"),
-            new OA\Response(response: 422, description: "Validation error")
-        ]
-    )]
-    #[OA\Patch(
-        path: "/api/v1/clients/{client}",
-        operationId: "patchClient",
-        description: "Partially updates a client record.",
-        summary: "Partially update client",
-        security: [["bearerAuth" => []]],
-        tags: ["Clients"],
-        parameters: [
-            new OA\Parameter(name: "client", in: "path", required: true, schema: new OA\Schema(type: "integer"))
-        ],
-        responses: [
-            new OA\Response(response: 200, description: "Client updated"),
-            new OA\Response(response: 401, description: "Unauthenticated"),
-            new OA\Response(response: 403, description: "Missing clients.update scope"),
-            new OA\Response(response: 404, description: "Client not found"),
-            new OA\Response(response: 422, description: "Validation error")
-        ]
-    )]
     public function update(Request $request, Client $client, SyncCustomFieldValues $customFields)
     {
         $validated = $this->validateClientPayload($request, creating: false, client: $client);
+        abort_if($request->hasAny(['site', 'site_name', 'site_address', 'site_co_address', 'site_zip', 'site_city', 'site_county', 'site_country', 'primary_contact', 'create_in_rmm']), 422, 'Use the dedicated Site, Contact or provider action.');
+        \App\Modules\Clients\Support\ClientInput::fields($request, $client);
 
         DB::transaction(function () use ($request, $client, $validated, $customFields): void {
+            $client = Client::query()->lockForUpdate()->findOrFail($client->id);
+            \App\Modules\Clients\Support\ClientRevision::check($request, $client, false);
             $client->forceFill($this->clientAttributes($validated))->save();
             $customFields->handle($client, (array) $request->input('custom_fields', []), $request->user(), 'api');
         });
 
-        return new ClientResource($client->load('sites'));
+        return new ClientResource($client->refresh()->load('sites'));
     }
 
-    #[OA\Get(
-        path: "/api/v1/clients/{client}/assets",
-        operationId: "getClientAssets",
-        description: "Returns list of assets belonging to a specific client",
-        summary: "Get client assets",
-        security: [["bearerAuth" => []]],
-        tags: ["Clients", "Assets"],
-        parameters: [
-            new OA\Parameter(
-                name: "client",
-                in: "path",
-                description: "ID of client to return assets for",
-                required: true,
-                schema: new OA\Schema(type: "integer", format: "int64")
-            )
-        ],
-        responses: [
-            new OA\Response(response: 200, description: "Successful operation"),
-            new OA\Response(response: 401, description: "Unauthenticated"),
-            new OA\Response(response: 404, description: "Client Not Found")
-        ]
-    )]
     public function assets(Client $client)
     {
         return AssetResource::collection($client->assets()->paginate());
     }
 
-    #[OA\Get(
-        path: "/api/v1/client-sites",
-        operationId: "getClientSiteList",
-        description: "Returns all client sites with pagination. Supports direct custom field lookup for imports.",
-        summary: "Get list of client sites",
-        security: [["bearerAuth" => []]],
-        tags: ["Clients"],
-        parameters: [
-            new OA\Parameter(name: "q", in: "query", required: false, schema: new OA\Schema(type: "string")),
-            new OA\Parameter(name: "client_id", in: "query", required: false, schema: new OA\Schema(type: "integer")),
-            new OA\Parameter(name: "custom_field[key]", in: "query", description: "Search by a searchable site custom field key/value pair.", required: false, schema: new OA\Schema(type: "string")),
-            new OA\Parameter(name: "per_page", in: "query", required: false, schema: new OA\Schema(type: "integer")),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: "Successful operation"),
-            new OA\Response(response: 401, description: "Unauthenticated"),
-            new OA\Response(response: 403, description: "Missing clients.read scope")
-        ]
-    )]
     public function siteIndex(Request $request)
     {
+
+        $request->validate(['per_page' => 'sometimes|integer|min:1|max:100', 'page' => 'sometimes|integer|min:1']);
         $query = ClientSite::query()
             ->with('client')
             ->orderBy('name');
@@ -306,27 +203,10 @@ class ClientController extends Controller
         return ClientSiteResource::collection($query->paginate($request->integer('per_page') ?: 15));
     }
 
-    #[OA\Get(
-        path: "/api/v1/clients/{client}/sites",
-        operationId: "getClientSites",
-        description: "Returns sites for a client.",
-        summary: "Get client sites",
-        security: [["bearerAuth" => []]],
-        tags: ["Clients"],
-        parameters: [
-            new OA\Parameter(name: "client", in: "path", required: true, schema: new OA\Schema(type: "integer")),
-            new OA\Parameter(name: "custom_field[key]", in: "query", description: "Search by a searchable site custom field key/value pair.", required: false, schema: new OA\Schema(type: "string")),
-            new OA\Parameter(name: "per_page", in: "query", required: false, schema: new OA\Schema(type: "integer"))
-        ],
-        responses: [
-            new OA\Response(response: 200, description: "Successful operation"),
-            new OA\Response(response: 401, description: "Unauthenticated"),
-            new OA\Response(response: 403, description: "Missing clients.read scope"),
-            new OA\Response(response: 404, description: "Client not found")
-        ]
-    )]
     public function sites(Request $request, Client $client)
     {
+
+        $request->validate(['per_page' => 'sometimes|integer|min:1|max:100', 'page' => 'sometimes|integer|min:1']);
         $query = $client->sites()
             ->with('client')
             ->orderByDesc('is_default')
@@ -338,100 +218,55 @@ class ClientController extends Controller
         return ClientSiteResource::collection($query->paginate($request->integer('per_page') ?: 15));
     }
 
-    #[OA\Post(
-        path: "/api/v1/clients/{client}/sites",
-        operationId: "createClientSite",
-        description: "Creates a site for a client.",
-        summary: "Create client site",
-        security: [["bearerAuth" => []]],
-        tags: ["Clients"],
-        parameters: [
-            new OA\Parameter(name: "client", in: "path", required: true, schema: new OA\Schema(type: "integer"))
-        ],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                required: ["name"],
-                properties: [
-                    new OA\Property(property: "name", type: "string"),
-                    new OA\Property(property: "address", type: "string", nullable: true),
-                    new OA\Property(property: "zip", type: "string", nullable: true),
-                    new OA\Property(property: "city", type: "string", nullable: true),
-                    new OA\Property(property: "country", type: "string", nullable: true),
-                    new OA\Property(property: "is_default", type: "boolean", nullable: true),
-                    new OA\Property(property: "custom_fields", type: "object", nullable: true)
-                ],
-                type: "object"
-            )
-        ),
-        responses: [
-            new OA\Response(response: 201, description: "Site created"),
-            new OA\Response(response: 401, description: "Unauthenticated"),
-            new OA\Response(response: 403, description: "Missing clients.update scope"),
-            new OA\Response(response: 422, description: "Validation error")
-        ]
-    )]
     public function storeSite(Request $request, Client $client, SyncCustomFieldValues $customFields)
     {
         $validated = $this->validateSitePayload($request, $client);
         $siteAttributes = $this->siteAttributes($validated);
         $siteAttributes['is_default'] ??= ! $client->sites()->where('is_default', true)->exists();
 
-        $site = DB::transaction(function () use ($request, $client, $siteAttributes, $customFields): ClientSite {
-            $site = $client->sites()->create($siteAttributes);
-            $this->syncDefaultSite($site);
-            $customFields->handle($site, (array) $request->input('custom_fields', []), $request->user(), 'api');
+        abort_if($request->boolean('create_in_rmm') && ! config('clients-api.provider_writes_enabled'), 409, 'Client API provider writes are disabled.');
+        $result = app(\App\Modules\Clients\Actions\ExecuteClientCommand::class)->handle($request, fn () => null,
+            function () use ($request, $client, $siteAttributes, $customFields) {
+                $site = DB::transaction(function () use ($request, $client, $siteAttributes, $customFields): ClientSite {
+                    Client::query()->lockForUpdate()->findOrFail($client->id);
+                    $site = app(\App\Modules\Clients\Actions\SaveClientSite::class)->handle($client, $siteAttributes);
+                    $this->syncDefaultSite($site);
+                    $customFields->handle($site, (array) $request->input('custom_fields', []), $request->user(), 'api');
 
-            return $site;
-        });
+                    return $site;
+                });
 
-        return (new ClientSiteResource($site->load('client')))
+                $rmm = null;
+                if ($request->boolean('create_in_rmm')) {
+                    try {
+                        $rmm = app(\App\Modules\Clients\Actions\ProvisionClientRmm::class)->handle($site, $request->user()->id);
+                    } catch (\Throwable $error) {
+                        report($error);
+                        $rmm = ['state' => 'unknown', 'reconciliation_required' => true];
+                    }
+                }
+
+                return ['site_id' => $site->id, 'rmm' => $rmm];
+            }, $request->boolean('create_in_rmm'), $request->boolean('create_in_rmm'));
+        if (! isset($result['site_id'])) {
+            return response()->json($result, 202);
+        }
+        $site = ClientSite::query()->findOrFail($result['site_id']);
+
+        return (new ClientSiteResource($site->load('client')))->additional(['operation_id' => $result['operation_id'], 'replayed' => $result['replayed'], 'rmm' => $result['rmm'] ?? null])
             ->response()
             ->setStatusCode(201);
     }
 
-    #[OA\Put(
-        path: "/api/v1/client-sites/{site}",
-        operationId: "replaceClientSite",
-        description: "Updates a client site.",
-        summary: "Update client site",
-        security: [["bearerAuth" => []]],
-        tags: ["Clients"],
-        parameters: [
-            new OA\Parameter(name: "site", in: "path", required: true, schema: new OA\Schema(type: "integer"))
-        ],
-        responses: [
-            new OA\Response(response: 200, description: "Site updated"),
-            new OA\Response(response: 401, description: "Unauthenticated"),
-            new OA\Response(response: 403, description: "Missing clients.update scope"),
-            new OA\Response(response: 404, description: "Site not found"),
-            new OA\Response(response: 422, description: "Validation error")
-        ]
-    )]
-    #[OA\Patch(
-        path: "/api/v1/client-sites/{site}",
-        operationId: "patchClientSite",
-        description: "Partially updates a client site.",
-        summary: "Partially update client site",
-        security: [["bearerAuth" => []]],
-        tags: ["Clients"],
-        parameters: [
-            new OA\Parameter(name: "site", in: "path", required: true, schema: new OA\Schema(type: "integer"))
-        ],
-        responses: [
-            new OA\Response(response: 200, description: "Site updated"),
-            new OA\Response(response: 401, description: "Unauthenticated"),
-            new OA\Response(response: 403, description: "Missing clients.update scope"),
-            new OA\Response(response: 404, description: "Site not found"),
-            new OA\Response(response: 422, description: "Validation error")
-        ]
-    )]
     public function updateSite(Request $request, ClientSite $site, SyncCustomFieldValues $customFields)
     {
         $validated = $this->validateSitePayload($request, $site->client, $site);
 
         DB::transaction(function () use ($request, $site, $validated, $customFields): void {
-            $site->forceFill($this->siteAttributes($validated))->save();
+            Client::query()->lockForUpdate()->findOrFail($site->client_id);
+            $site = ClientSite::query()->lockForUpdate()->findOrFail($site->id);
+            \App\Modules\Clients\Support\ClientRevision::check($request, $site, false);
+            app(\App\Modules\Clients\Actions\SaveClientSite::class)->handle($site->client, $this->siteAttributes($validated), $site);
             $this->syncDefaultSite($site);
             $customFields->handle($site, (array) $request->input('custom_fields', []), $request->user(), 'api');
         });
@@ -458,7 +293,9 @@ class ClientController extends Controller
             $numberRules[] = Rule::unique('clients', 'client_number')->ignore($client?->id);
         }
 
-        return $request->validate([
+        \App\Modules\Clients\Support\ClientInput::allowed($request, ['name', 'client_number', 'tripletex_number_mode', 'tripletex_request_key', 'tripletex_customer_id', 'org_no', 'client_format_id', 'website', 'sales_category_id', 'lead_temperature', 'billing_email', 'notes', 'active', 'custom_fields', 'site', 'site_name', 'site_address', 'site_co_address', 'site_zip', 'site_city', 'site_county', 'site_country', 'primary_contact', 'create_in_rmm']);
+
+        return \App\Modules\Integration\Support\DomainApiInput::validate($request, [
             'name' => [$nameRule, 'string', 'max:255'],
             'client_number' => $numberRules,
             'tripletex_number_mode' => [$creating ? 'sometimes' : 'prohibited', 'boolean'],
@@ -473,7 +310,13 @@ class ClientController extends Controller
             'notes' => ['sometimes', 'nullable', 'string'],
             'active' => ['sometimes', 'boolean'],
             'custom_fields' => ['sometimes', 'array'],
-            'site' => ['sometimes', 'array'],
+            'primary_contact' => ['sometimes', 'array:display_name,email,phone,job_title'],
+            'primary_contact.display_name' => [Rule::requiredIf($request->has('primary_contact')), 'string', 'max:255'],
+            'primary_contact.email' => ['nullable', 'email', 'max:255'],
+            'primary_contact.phone' => ['nullable', 'string', 'max:50'],
+            'primary_contact.job_title' => ['nullable', 'string', 'max:100'],
+            'create_in_rmm' => ['sometimes', 'boolean'],
+            'site' => ['sometimes', 'array:name,address,co_address,zip,city,county,country'],
             'site.name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'site.address' => ['sometimes', 'nullable', 'string', 'max:255'],
             'site.co_address' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -493,7 +336,11 @@ class ClientController extends Controller
 
     private function validateSitePayload(Request $request, Client $client, ?ClientSite $site = null): array
     {
+        \App\Modules\Clients\Support\ClientInput::allowed($request, ['name', 'address', 'co_address', 'zip', 'city', 'county', 'country', 'is_default', 'custom_fields', 'create_in_rmm']);
+        \App\Modules\Clients\Support\ClientInput::fields($request, $site ?? new ClientSite);
+
         return $request->validate([
+            'create_in_rmm' => [$site ? 'prohibited' : 'sometimes', 'boolean'],
             'name' => [
                 $site ? 'sometimes' : 'required',
                 'string',
@@ -533,7 +380,7 @@ class ClientController extends Controller
 
     private function applyCustomFieldFilters($query, Request $request, string $modelClass, string $table): void
     {
-        $model = new $modelClass();
+        $model = new $modelClass;
         $modelTypes = app(CustomFieldModelRegistry::class)->storageTypesFor($model->getMorphClass());
 
         foreach ((array) $request->input('custom_field', []) as $key => $value) {
@@ -544,8 +391,8 @@ class ClientController extends Controller
                 ->where('searchable', true)
                 ->first();
 
-            if (! $definition) {
-                continue;
+            if (! $definition || ! array_key_exists($key, app(\App\Modules\CustomField\Support\CustomFieldPresenter::class)->apiFor($model, $request->user()))) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['custom_field.'.$key => 'This field is not searchable for the current actor.']);
             }
 
             $query->whereExists(function ($exists) use ($definition, $modelTypes, $table, $value): void {
@@ -559,12 +406,24 @@ class ClientController extends Controller
         }
     }
 
+    /** Preserve legacy number-only request hashes; profile export is explicit address input only. */
+    private function tripletexSitePayload(Request $request): ?array
+    {
+        $site = $this->sitePayloadFromRequest($request, 'Default');
+        $values = [];
+        foreach (['address', 'co_address', 'zip', 'city', 'country'] as $field) {
+            $values[$field] = (string) ($site[$field] ?? '');
+        }
+
+        return array_filter($values, fn ($value) => filled($value)) !== [] ? $values : null;
+    }
+
     private function sitePayloadFromRequest(Request $request, string $defaultName): array
     {
         $site = (array) $request->input('site', []);
 
         return [
-            'name' => $request->input('site_name', $site['name'] ?? $defaultName),
+            'name' => ($request->input('site_name') ?? $site['name'] ?? $defaultName),
             'address' => $request->input('site_address', $site['address'] ?? null),
             'co_address' => $request->input('site_co_address', $site['co_address'] ?? null),
             'zip' => $request->input('site_zip', $site['zip'] ?? null),

@@ -168,6 +168,41 @@ class CustomerPortalCloudFactoryLicenceTest extends TestCase
             'action' => 'issue',
             'status' => 'submitted',
         ]);
+        config(['clients-api.provider_writes_enabled' => false]);
+        $base = '/api/v1/portal/licenses';
+        $body = ['contract_item_id' => $item->id, 'quantity' => 4, 'name' => $contact->display_name, 'confirm' => true];
+        $headers = ['Idempotency-Key' => 'portal-api-licence-key'];
+        $this->postJson($base, $body, $headers)->assertConflict();
+        config(['clients-api.provider_writes_enabled' => true]);
+        $context = $this->getJson($base.'/context')->assertOk();
+        $headers['If-Match'] = $context->json('data.revision');
+        $beforeLegal = LegalAcceptanceEvent::count();
+        $beforeHttp = count(Http::recorded());
+        $result = $this->postJson($base, $body, $headers)->assertAccepted()->assertJsonPath('data.status', 'submitted');
+        $this->postJson($base, $body, $headers)->assertAccepted()->assertJsonPath('replayed', true);
+        $this->assertSame($beforeLegal + 1, LegalAcceptanceEvent::count());
+        $this->assertSame($beforeHttp + 1, count(Http::recorded()));
+        $this->getJson($base.'/operations/'.$result->json('provider_operation_id'))->assertOk()->assertJsonPath('data.confirmed', false);
+        $subscription = \App\Modules\Integration\Models\CloudFactory\Subscription::create([
+            'integration_id' => $integration->id, 'client_id' => $client->id, 'client_link_id' => ClientLink::where('client_id', $client->id)->value('id'),
+            'offer_id' => $offer->id, 'service_id' => $service->id, 'contract_id' => $contract->id, 'contract_item_id' => $item->id,
+            'external_subscription_id' => 'synthetic-portal-subscription', 'provider_family' => 'microsoft', 'name' => 'Portal subscription',
+            'quantity' => 1, 'auto_renew' => true, 'status' => 'active',
+        ]);
+        $beforeActions = LegalAcceptanceEvent::count();
+        foreach (['quantity' => ['quantity' => 3], 'renewal' => ['enabled' => false]] as $kind => $payload) {
+            $revision = $this->getJson($base.'/context')->assertOk()->json('data.revision');
+            $actionHeaders = ['Idempotency-Key' => 'portal-'.$kind.'-key', 'If-Match' => $revision];
+            $payload += ['name' => $contact->display_name, 'confirm' => true];
+            $this->patchJson($base.'/'.$subscription->id.'/'.$kind, $payload, $actionHeaders)->assertAccepted()->assertJsonPath('data.status', 'submitted');
+            $this->patchJson($base.'/'.$subscription->id.'/'.$kind, $payload, $actionHeaders)->assertAccepted()->assertJsonPath('replayed', true);
+        }
+        $this->assertSame($beforeActions + 2, LegalAcceptanceEvent::count());
+        $this->patchJson($base.'/'.$subscription->id.'/status', ['status' => 'suspend'])->assertNotFound();
+        $membership->update(['role' => CustomerPortalMembership::ROLE_VIEWER]);
+        $this->postJson($base, $body, $headers)->assertForbidden();
+        $this->getJson($base)->assertForbidden();
+
     }
 
     private function activeIntegration()

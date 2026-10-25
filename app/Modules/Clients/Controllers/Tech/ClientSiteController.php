@@ -6,12 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Tech\Clients\SiteRequest;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
-use App\Models\System\Integrations\ClientRmmLink;
-use App\Models\System\Integrations\Integration;
 use App\Modules\Clients\Menus\SideBar\ClientsMenu;
 use App\Modules\Contact\Queries\ContactsForSite;
 use App\Modules\CustomField\Support\CustomFieldPresenter;
-use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -211,35 +208,16 @@ class ClientSiteController extends Controller
         // -----------------------------------------
         // Save the form to DB
         // -----------------------------------------
-        $site = DB::transaction(function () use ($targetClient, $data, &$warning) {
-            $site = $targetClient->sites()->create($data);
-
-            // Handle N-able RMM creation if requested
-            if (! empty($data['create_in_rmm'])) {
-                $integration = Integration::where('type', 'rmm')->where('status', 'active')->first();
-                $clientLink = $targetClient->rmmLinks()->where('integration_id', $integration?->id)->first();
-
-                if ($integration && $clientLink) {
-                    $rmmClient = new NAbleRmmClient($integration);
-                    $result = $rmmClient->addSite($clientLink->external_id, $site->name);
-                    $status = $result['success'] ? 'success' : 'error';
-
-                    if ($status === 'success' && ! empty($result['siteid'])) {
-                        // Create RMM Link
-                        ClientRmmLink::create([
-                            'integration_id' => $integration->id,
-                            'external_id' => $result['siteid'],
-                            'linkable_type' => ClientSite::class,
-                            'linkable_id' => $site->id,
-                        ]);
-                    } else {
-                        $warning = 'Sites created locally, but failed to create in N-able RMM: '.($result['error'] ?? 'Unknown error');
-                    }
-                }
+        $site = app(\App\Modules\Clients\Actions\SaveClientSite::class)->handle($targetClient, $data);
+        if (! empty($data['create_in_rmm'])) {
+            try {
+                $result = app(\App\Modules\Clients\Actions\ProvisionClientRmm::class)->handle($site, auth()->id());
+                $warning = $result['state'] === 'confirmed' ? null : 'Site created locally; RMM provisioning requires reconciliation.';
+            } catch (\Throwable $error) {
+                report($error);
+                $warning = 'Site created locally; RMM provisioning was not verified.';
             }
-
-            return $site;
-        });
+        }
 
         // -----------------------------------------
         // Redirect wiew whit message
@@ -273,7 +251,7 @@ class ClientSiteController extends Controller
         // -----------------------------------------
         // Update the site in the database
         // -----------------------------------------
-        $site->update($data);
+        app(\App\Modules\Clients\Actions\SaveClientSite::class)->handle($site->client, $data, $site);
 
         // -----------------------------------------
         // Redirect with message
@@ -292,7 +270,7 @@ class ClientSiteController extends Controller
      */
     public function destroy(ClientSite $site)
     {
-        $site->delete();
+        app(\App\Modules\Clients\Actions\DeleteClientSite::class)->handle($site);
 
         return redirect()->back()->with('status', 'Sites deleted successfully.');
     }

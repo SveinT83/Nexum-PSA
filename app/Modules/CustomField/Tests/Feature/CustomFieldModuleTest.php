@@ -5,11 +5,11 @@ namespace App\Modules\CustomField\Tests\Feature;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Core\User;
-use App\Modules\Clients\Controllers\Tech\ClientCustomFieldValueController;
 use App\Modules\Clients\Controllers\Api\V1\ClientController as ApiClientController;
+use App\Modules\Clients\Controllers\Tech\ClientCustomFieldValueController;
 use App\Modules\Clients\Controllers\Tech\ClientSettingsController;
-use App\Modules\CustomField\Controllers\Api\V1\CustomFieldDefinitionController as ApiCustomFieldDefinitionController;
 use App\Modules\CustomField\Controllers\Admin\CustomFieldDefinitionController;
+use App\Modules\CustomField\Controllers\Api\V1\CustomFieldDefinitionController as ApiCustomFieldDefinitionController;
 use App\Modules\CustomField\Models\CustomFieldDefinition;
 use App\Modules\CustomField\Models\CustomFieldValue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -323,6 +323,7 @@ class CustomFieldModuleTest extends TestCase
             ->assertJsonPath('data.0.id', $site->id)
             ->assertJsonPath('data.0.custom_fields.msp_manager_site_id', 'SITE-ALIAS-339');
 
+        $beforeRevision = \App\Modules\Clients\Support\ClientRevision::of($site);
         $this->patchJson("/api/v1/client-sites/{$site->id}", [
             'custom_fields' => [
                 'msp_manager_site_id' => 'SITE-ALIAS-340',
@@ -330,6 +331,8 @@ class CustomFieldModuleTest extends TestCase
         ])
             ->assertOk()
             ->assertJsonPath('data.custom_fields.msp_manager_site_id', 'SITE-ALIAS-340');
+
+        $this->assertNotSame($beforeRevision, \App\Modules\Clients\Support\ClientRevision::of($site));
 
         $this->assertSame(1, CustomFieldValue::query()
             ->where('custom_field_definition_id', $definition->id)
@@ -404,6 +407,7 @@ class CustomFieldModuleTest extends TestCase
 
         $tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $tech->assignRole('Tech');
+        $tech->givePermissionTo('client.update');
 
         Sanctum::actingAs($tech, ['clients.update']);
 
@@ -412,7 +416,7 @@ class CustomFieldModuleTest extends TestCase
                 'integration_id' => 'DENIED',
             ],
         ])
-            ->assertOk();
+            ->assertUnprocessable()->assertJsonValidationErrors('custom_fields.integration_id');
 
         $this->assertSame(0, CustomFieldValue::query()->count());
 
