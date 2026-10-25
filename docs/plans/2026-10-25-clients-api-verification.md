@@ -1,6 +1,6 @@
 # Clients API verification and handoff
 
-Status: Implemented and verified on Dev; human Reviewed / Main promotion authorized.
+Status: Implemented and verified on Dev; human Reviewed / Merged to Main in PR #319.
 Date: 2026-10-25. Implementer: Codex. Reviewer/release owner: Svein Tore.
 Human-review checklist: HR-2026-10-25-CLIENTS-API.
 The human-review gate is cleared. Main promotion is authorized; production
@@ -56,7 +56,9 @@ New durable tables are created by
 database/migrations/2026_10_25_220000_create_client_api_command_records.php.
 config/clients-api.php keeps provider API writes default-off.
 The exact application/test file list and SHA-256 hashes are in the evidence JSON.
-Unrelated dirty work was preserved; no commit, push, Main merge or production deploy occurred.
+Unrelated dirty work was preserved. At the original Dev handoff no commit, push,
+Main merge or production deployment had occurred; the current verified Main merge
+is recorded below. Production remains undeployed.
 
 ## Automated verification
 
@@ -153,7 +155,7 @@ or delete receipts/encryption material to clear a conflict.
 Svein Tore explicitly accepted the completed delivery: "Godkjent. Merge til main".
 HR-2026-10-25-CLIENTS-API is Reviewed. The checklist below is retained as historical
 review scope without claiming individually witnessed scenario execution.
-The scoped Main candidate is being verified separately. See
+The scoped Main candidate passed verification and was merged in PR #319. See
 2026-10-25-clients-api-main-promotion.md for current promotion status.
 Production deployment, live provider writes/activation and external MCP publication
 remain separate and were not requested.
@@ -184,3 +186,8 @@ Promotion authorization: Svein Tore explicitly accepted the completed delivery o
 The review/checklist statements above describe the preceding Dev handoff; Main
 promotion evidence is recorded in 2026-10-25-clients-api-main-promotion.md.
 Production deployment and provider activation are not authorized by this approval.
+
+Main implementation merge verified: [PR #319](https://github.com/SveinT83/Nexum-PSA/pull/319),
+commit 154ca96b47867b5dfe7a21438d626000935fb24b. The complete merge tree equals the independently tested
+candidate. HR-2026-10-25-CLIENTS-API is Reviewed. Production remains undeployed.
+Current promotion evidence: 2026-10-25-clients-api-main-promotion.md.

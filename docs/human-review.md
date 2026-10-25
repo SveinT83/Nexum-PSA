@@ -61,7 +61,9 @@ were read back; source bodies/scoped section and inherited staff access verified
 Native automatic BookStack sync remains unconfigured; personal publication was
 verified separately. Employee OpenWebUI retrieval remains untested.
 
-Remaining: execute and verify the authorized scoped Main promotion. Production rollout,
+Main promotion verified in PR #319, merge 154ca96b47867b5dfe7a21438d626000935fb24b.
+The entire Main tree equals the tested candidate; 438 tests / 5216 assertions passed.
+Remaining: Production rollout,
 real provider writes/activation and external MCP catalogue publication are separate and
 were not requested. Acceptance is the explicit human statement above, not inferred from tests.
 

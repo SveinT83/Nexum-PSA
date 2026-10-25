@@ -1,6 +1,6 @@
 # Clients API Main promotion - 25 October 2026
 
-Status: Human Reviewed / isolated candidate verified; scoped Main merge authorized.
+Status: Merged to Main / Human Reviewed; production not deployed.
 Reviewer/release owner: Svein Tore. Implementation/reconciliation: Codex.
 Acceptance: "Godkjent. Merge til main", after the completed Dev delivery.
 Human-review entry: HR-2026-10-25-CLIENTS-API, Reviewed.
@@ -59,3 +59,25 @@ Keep new API provider writes disabled until a separate scoped activation is appr
 Native-runtime Swagger generation succeeded: all 51 methods and 74 exact schemas.
 Every non-Clients Swagger path remains structurally identical to current Main.
 The generated document is included in the candidate. No provider activation occurred.
+
+## Verified merge
+
+Implementation merged in [PR #319](https://github.com/SveinT83/Nexum-PSA/pull/319) at 154ca96b47867b5dfe7a21438d626000935fb24b.
+GitHub merged status and freshly fetched origin/main agree. The complete Main tree
+equals tested candidate 15374d844897e700a899539a5ba220237b3a942c
+(tree 21bd71355247653db000964525f438266c875345). Existing non-Clients paths and
+schemas are structurally unchanged. No commit status checks were registered;
+the 438 passing Dev-host candidate tests are the verification evidence.
+Dev HEAD/index remain unchanged. Production was not deployed or activated.
+
+## Final coordination and handbook read-back
+
+BookStack pages 639/2, 451/11 and 449/133 explicitly record Reviewed and Main
+PR #319, while production is still undeployed. Independent connector reads verified
+exact source bodies/scoped section, published state and rendered HTML. The new
+page retains inherited staff access; no permission changed. Native Knowledge source
+read-back passed; native automatic sync remains unavailable/pending_push and the
+personal publication was verified separately. Employee OpenWebUI retrieval is not
+claimed. One existing website editorial item was updated and read back, retaining
+the do-not-publish production gate. Documentation-only merge-record changes do not
+alter the tested PHP, routes, schemas or migration.

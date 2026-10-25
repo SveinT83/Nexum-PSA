@@ -2,14 +2,14 @@
   "date": "2026-10-25",
   "environment": "authoritative Dev working copy",
   "branch": "Dev",
-  "state": "verified_dev_human_reviewed_main_promotion_in_progress",
+  "state": "merged_main_human_reviewed_production_not_deployed",
   "browser_route_rows": 37,
   "additional_livewire_actions": 1,
   "owned_http_operations": 51,
   "typed_schemas": 74,
   "human_review": "HR-2026-10-25-CLIENTS-API",
   "human_review_status": "Reviewed",
-  "main_promoted": false,
+  "main_promoted": true,
   "production_deployed": false,
   "real_provider_writes_exercised": false,
   "external_mcp_catalogue_published": false,
@@ -733,5 +733,8 @@
   "coordination_docs": "RFC, ADR, all six slices, C01-C20 matrix, TODO and Pending HR reconciled",
   "human_reviewer": "Svein Tore",
   "human_acceptance": "Godkjent. Merge til main",
-  "promotion_clarification": "OpenAPI bearer-format documentation corrected from legacy JWT hint to Sanctum; runtime authentication unchanged."
+  "promotion_clarification": "OpenAPI bearer-format documentation corrected from legacy JWT hint to Sanctum; runtime authentication unchanged.",
+  "status": "merged_main_human_reviewed_production_not_deployed",
+  "implementation_pull_request": "https://github.com/SveinT83/Nexum-PSA/pull/319",
+  "implementation_merge_sha": "154ca96b47867b5dfe7a21438d626000935fb24b"
 }

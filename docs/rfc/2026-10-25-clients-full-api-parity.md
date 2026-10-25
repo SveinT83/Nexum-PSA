@@ -1,6 +1,6 @@
 # RFC: Full Clients Browser/API Coverage
 
-Status: Approved / Implemented and verified on Dev / Human Reviewed / Main promotion authorized
+Status: Approved / Implemented and verified on Dev / Human Reviewed / Merged to Main in PR #319
 Date: 2026-10-25
 Owner: Codex
 Product/design approver and human reviewer: Svein Tore
@@ -320,3 +320,8 @@ Promotion authorization: Svein Tore explicitly accepted the completed delivery o
 The review/checklist statements above describe the preceding Dev handoff; Main
 promotion evidence is recorded in 2026-10-25-clients-api-main-promotion.md.
 Production deployment and provider activation are not authorized by this approval.
+
+Main implementation merge verified: [PR #319](https://github.com/SveinT83/Nexum-PSA/pull/319),
+commit 154ca96b47867b5dfe7a21438d626000935fb24b. The complete merge tree equals the independently tested
+candidate. HR-2026-10-25-CLIENTS-API is Reviewed. Production remains undeployed.
+Current promotion evidence: 2026-10-25-clients-api-main-promotion.md.

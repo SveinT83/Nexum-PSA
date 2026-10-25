@@ -1,8 +1,9 @@
 The official Clients API supports the current customer workspace, supported
 writes/actions, Client administration and customer licence ordering.
 
-Availability: implemented and verified on Dev under HR-2026-10-25-CLIENTS-API.
-Main promotion and production rollout are separate. Do not assume these new routes
+Availability: verified on Dev and source merged to Main in PR #319 (2026-10-25).
+HR-2026-10-25-CLIENTS-API is Reviewed, approved by Svein Tore. Production rollout
+has not been performed. Do not assume these new routes
 are available on a production installation until its deployed Swagger confirms them.
 Provider API writes are independently disabled by default.
 
@@ -177,7 +178,8 @@ command status. It exposes no credentials or unrestricted stored request/respons
 - 428: read the current revision and send If-Match.
 - 503: the required dependency, migration or trusted provider lookup is unavailable.
 
-Operators apply only the approved additive Client command migration on Dev.
+On a separately authorized deployment, operators apply only the approved additive
+Client command migration before declaring the target installation available.
 The default-off provider API switch is an independent deliberate activation;
 API documentation or passing tests never enables a provider or changes rights.
 Employee OpenWebUI retrieval is a separate acceptance check.
