@@ -1,5 +1,5 @@
 {
-  "state": "candidate_verified_ready_for_merge",
+  "state": "merged_to_main_verified",
   "base_main": "e7bce4321928863cefb7434bf873a3f5a6c541be",
   "branch": "codex/clients-api-20261025",
   "human_review": "HR-2026-10-25-CLIENTS-API",
@@ -36,5 +36,85 @@
   "swagger_methods": 51,
   "swagger_schemas": 74,
   "non_clients_swagger_paths_unchanged": true,
-  "swagger_sha256": "27129c2a0676d24c8ad1e1df37b2b5ea2ad0f3d4699288f9b753bce386e86dba"
+  "swagger_sha256": "27129c2a0676d24c8ad1e1df37b2b5ea2ad0f3d4699288f9b753bce386e86dba",
+  "pull_request": "https://github.com/SveinT83/Nexum-PSA/pull/319",
+  "merge_sha": "154ca96b47867b5dfe7a21438d626000935fb24b",
+  "candidate_sha": "15374d844897e700a899539a5ba220237b3a942c",
+  "merge_tree": "21bd71355247653db000964525f438266c875345",
+  "main_tree_equals_tested_candidate": true,
+  "non_clients_swagger_schemas_unchanged": true,
+  "github_registered_commit_statuses": 0,
+  "dev_head_index_preserved": true,
+  "bookstack": {
+    "bound_user": "sveintore-admin",
+    "book_id": 339,
+    "pages": [
+      {
+        "id": 639,
+        "revision": 2,
+        "published": true,
+        "content_verified": true,
+        "sha256": "8f3085f944ecd322ed2c65f4e17ea67231986d336f14594f2002526bd2db7f5e"
+      },
+      {
+        "id": 451,
+        "revision": 11,
+        "published": true,
+        "content_verified": true,
+        "sha256": "81f20d55245a57e305dacaf404a80b55772ff60ba1918659f757d8e2bac5169d"
+      },
+      {
+        "id": 449,
+        "revision": 133,
+        "published": true,
+        "content_verified": true,
+        "sha256": "50499afab5b74036b307feb7c3bb8b3ec106b607442c3f847996c3103cefb591"
+      }
+    ],
+    "independent_readback": {
+      "guide_exact": true,
+      "overview_exact": true,
+      "api_management_section_exact": true,
+      "published": true,
+      "staff_access_unchanged": true,
+      "openwebui_retrieval": "not tested"
+    }
+  },
+  "native_knowledge": {
+    "sync": {
+      "chapters": 1,
+      "articles": 2,
+      "skipped": 0,
+      "modules": [
+        "Clients"
+      ]
+    },
+    "articles": [
+      {
+        "id": 28,
+        "source_id": "clients/clients-api",
+        "exact_source": true,
+        "internal": true,
+        "published": true,
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 27,
+        "source_id": "clients/client-domain-overview",
+        "exact_source": true,
+        "internal": true,
+        "published": true,
+        "sync_status": "pending_push"
+      }
+    ],
+    "automatic_bookstack_sync_available": false,
+    "api_management_section_verified": true
+  },
+  "website_handoff": {
+    "existing_item_updated": true,
+    "readback_verified": true,
+    "human_review": "Reviewed",
+    "implementation_merge_verified": true,
+    "production_publication_gate_retained": true
+  }
 }

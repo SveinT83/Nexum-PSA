@@ -1,6 +1,6 @@
 {
   "date": "2026-10-25",
-  "status": "implemented_verified_dev_human_reviewed_main_promotion_authorized",
+  "status": "merged_main_human_reviewed_production_not_deployed",
   "operations": [
     {
       "method": "GET",
@@ -3453,5 +3453,8 @@
         }
       }
     }
-  }
+  },
+  "main_promoted": true,
+  "implementation_pull_request": "https://github.com/SveinT83/Nexum-PSA/pull/319",
+  "implementation_merge_sha": "154ca96b47867b5dfe7a21438d626000935fb24b"
 }

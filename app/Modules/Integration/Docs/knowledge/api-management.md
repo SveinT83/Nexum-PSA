@@ -1342,7 +1342,7 @@ New commands use current If-Match and durable Idempotency-Key receipts. Delivery
 
 The additive receipt/delivery migration is applied on Dev as batch 23. Native locking/uniqueness and authenticated trusted HTTPS reads pass. COMMERCIAL_API_DELIVERY_ENABLED and COMMERCIAL_DURABLE_DELIVERY_ENABLED remain false by default until controlled worker verification and deliberate activation. This is not Main/production availability or employee-assistant retrieval evidence.
 
-## Full Clients browser/API coverage - Dev
+## Full Clients browser/API coverage - Main source
 
 The current Client workspace now has official typed API support for supported
 reads, creation, editing, Notes, settings/RMM, Sites/deletion/custom fields,
@@ -1350,8 +1350,9 @@ authorized related data, source time correction, staff/customer licence operatio
 and Client Formats. Refer to **Clients API Support** for exact routes, scopes,
 revision/idempotency headers, uncertain-result recovery and read-back steps.
 
-Availability is verified on Dev under HR-2026-10-25-CLIENTS-API. Main/production
-rollout and human acceptance are separate; check the installation's Swagger before
-using new routes. API provider writes remain independently disabled by default.
+Availability was verified on Dev and the source was merged to Main in PR #319
+on 2026-10-25. Svein Tore approved HR-2026-10-25-CLIENTS-API (Reviewed).
+Production deployment is not verified; check the installation's deployed Swagger
+before using new routes. API provider writes remain independently disabled by default.
 Client archive/delete policy and new Contact portal invitation behavior are separate
 workstreams and are not enabled by this delivery.

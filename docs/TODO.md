@@ -2,7 +2,7 @@
 
 ## Full Clients browser/API coverage (2026-10-25)
 
-Status: Implemented and verified on authoritative Dev / Human Reviewed / Main promotion in progress.
+Status: Implemented and verified on authoritative Dev / Human Reviewed / Merged to Main in PR #319.
 Implementation owner: Codex. Human reviewer and release owner: Svein Tore.
 Approved RFC: rfc/2026-10-25-clients-full-api-parity.md (Svein Tore: "Ja").
 All C01-C20 and six Feature Slices are implemented, including supported writes and
@@ -25,12 +25,17 @@ OpenWebUI retrieval is not verified.
 
 Human review: HR-2026-10-25-CLIENTS-API Reviewed by Svein Tore, 2026-10-25,
 explicit acceptance: "Godkjent. Merge til main". Main promotion is authorized.
-Current action (Codex): extract only Clients changes and required dependencies onto
-latest origin/main, run isolated candidate verification, create/merge PR and read back.
-Production migration/deployment, provider activation and real external writes are
-separate and were not requested. Provider API writes remain default-off.
-Client deletion/retention and Contact invitation Issue #254 remain separate.
-Shared dirty work is preserved.
+Main implementation merged and independently read back in PR #319,
+commit 154ca96b47867b5dfe7a21438d626000935fb24b. The Main tree equals the tested
+candidate: 438 tests / 5216 assertions passed, 48 PHP syntax/Pint checks, exact
+51-method/74-schema Swagger; all other paths and existing schemas unchanged.
+Evidence: plans/2026-10-25-clients-api-main-promotion.md and -main-evidence.json.
+No Clients implementation or Main-promotion action remains.
+Next action (release owner, only when separately authorized): production rollout
+and target verification. No production migration/deployment, provider activation or
+real external write occurred. Provider API writes remain default-off.
+Shared dirty Dev HEAD/index preserved. Client deletion/retention and Contact
+invitation Issue #254 remain separate.
 
 
 ## Full DataExchange browser/API coverage (2026-10-25)
