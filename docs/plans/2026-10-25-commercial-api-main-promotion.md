@@ -1,6 +1,6 @@
 # Commercial API Main promotion - 25 October 2026
 
-Status: Tested Main candidate; merge explicitly authorized by Svein Tore ("Merge").
+Status: Merged to Main / Human Reviewed. Explicit Main merge request: Svein Tore ("Merge").
 Human review: HR-2026-10-25-COMMERCIAL-API, Reviewed by Svein Tore after the completed delivery.
 Base: origin/main 2e2c500506e48981198e7ce18778060c7716b95a.
 Candidate: codex/commercial-api-20261025 on the Dev server.
@@ -36,3 +36,9 @@ This is source promotion only. Production deployment, the exact additive receipt
 worker refresh, controlled delivery activation and actual provider/inbox verification remain separate.
 Retain encrypted delivery evidence and the app key during rollout/rollback. No production action ran.
 The GitHub PR and independent Main read-back are the authoritative merge result.
+
+## Independent merge verification
+
+[PR #313](https://github.com/SveinT83/Nexum-PSA/pull/313) merged as `d1e688a2ff6e794dd15629db89d720405548dce1`. GitHub and origin/main agree.
+The Main merge tree equals the tested candidate tree a21965de761aa85f883aea8005af92399dc3ada1.
+Original Dev HEAD/index remain unchanged. No production deployment or activation occurred.

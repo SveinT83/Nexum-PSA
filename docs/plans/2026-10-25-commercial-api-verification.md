@@ -1,10 +1,10 @@
 # Commercial API verification - 25 October 2026
 
-Status: implemented and verified on Dev; Reviewed by Svein Tore on 2026-10-25.
+Status: Merged to Main / Human Reviewed (Svein Tore, 2026-10-25).
 Implementation owner: Codex. Human reviewer and release owner: Svein Tore.
 Approved scope: full Commercial web/API parity, not a read-only or metadata-only slice.
 Authoritative checkout: /var/Projects/tdPSA, branch Dev, original/current HEAD
-36918edbcaae1ce7b1208ba34f84a3a1719f0e98. Shared dirty work preserved; no commit/push/Main/production.
+36918edbcaae1ce7b1208ba34f84a3a1719f0e98. Shared dirty Dev work preserved; subsequent Main promotion is recorded below.
 
 ## Implemented behavior
 
@@ -86,14 +86,14 @@ published and read back with exact source or exact appended section:
 
 | Page | Revision |
 | --- | ---: |
-| Commercial API 457 | 11 |
-| Contract System 380 | 12 |
-| Cost Catalogue 389 | 12 |
-| Package Catalogue 396 | 12 |
-| Service Catalogue 401 | 13 |
-| SLA Inheritance 406 | 13 |
-| Time Rates 410 | 13 |
-| API Management 449 | 126 |
+| Commercial API 457 | 13 |
+| Contract System 380 | 14 |
+| Cost Catalogue 389 | 14 |
+| Package Catalogue 396 | 14 |
+| Service Catalogue 401 | 15 |
+| SLA Inheritance 406 | 15 |
+| Time Rates 410 | 15 |
+| API Management 449 | 128 |
 
 Pages and chapters inherit from book 339. Staff Editor role 2 maps to /staff-internal and has
 book/chapter/page view-all. No permissions were expanded. Machine evidence is in
@@ -177,4 +177,14 @@ rerun because application behavior is unchanged.
 One public-safe Commercial item was appended to the agreed editorial handoff, read back exactly as
 UTF-8, status klar for vurdering. Heading count increased 6 to 7. Its do-not-publish gate requires
 production rollout and verified availability; human review is now recorded; it makes no production or MCP claim.
-No Main commit/push/merge, production deployment, real customer send or runtime activation occurred.
+Main source promotion is verified below. No production deployment, real customer send or runtime activation occurred.
+
+## Verified Main promotion - 25 October 2026
+
+Svein Tore requested "Merge" after approving the delivered scope. [PR #313](https://github.com/SveinT83/Nexum-PSA/pull/313)
+merged as `d1e688a2ff6e794dd15629db89d720405548dce1`. GitHub and origin/main agree; the complete merge
+tree equals tested candidate `a21965de761aa85f883aea8005af92399dc3ada1`. Fresh candidate tests:
+145 Commercial/Portal / 2040 assertions and 356 affected / 4880 assertions passed. All 68
+PHP files pass syntax/Pint. Non-Commercial Swagger paths/schemas/security/tags are unchanged.
+See commercial-api-main-promotion.md and commercial-api-main-evidence.json.
+Production deployment, migrations, worker refresh and controlled activation are not included.

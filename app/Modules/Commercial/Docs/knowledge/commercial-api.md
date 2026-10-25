@@ -4,8 +4,9 @@ operational timebank workflows through the same domain actions as web.
 ## Availability - 25 October 2026
 
 This implementation is verified on Dev. Svein Tore accepted the completed delivery on
-25 October 2026; HR-2026-10-25-COMMERCIAL-API is Reviewed. Main promotion and
-production deployment remain separate actions. The additive command/delivery migration is applied on Dev
+25 October 2026; HR-2026-10-25-COMMERCIAL-API is Reviewed. Main source promotion was
+verified on 25 October 2026: [PR #313](https://github.com/SveinT83/Nexum-PSA/pull/313). Production deployment
+and controlled delivery activation remain separate actions. The additive command/delivery migration is applied on Dev
 (batch 23). Native locking/uniqueness and authenticated trusted HTTPS reads pass.
 A new durable command returns 503 on an installation whose required migration is absent.
 

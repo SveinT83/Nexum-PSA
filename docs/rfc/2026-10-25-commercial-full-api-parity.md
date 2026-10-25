@@ -1,6 +1,8 @@
 # RFC: Full Commercial Browser And API Coverage
 
 Status: Approved / Implemented and verified on Dev; human review Reviewed (Svein Tore, 2026-10-25)
+Main promotion: [PR #313](https://github.com/SveinT83/Nexum-PSA/pull/313), d1e688a2ff6e794dd15629db89d720405548dce1; verified 2026-10-25.
+Production deployment and controlled delivery activation remain separate.
 Date: 2026-10-25
 Owner: Codex. Product/design/human-review/release owner: Svein Tore.
 Change level: Level 3 - API, authorization, command/delivery evidence and cross-module contracts.
@@ -280,7 +282,7 @@ permission, identity, legal/pricing, Integration and domain ownership rules?
 
 Approved by Svein Tore in chat on 2026-10-25: "Godkjenner. Kjor pa" (original Norwegian approval in conversation).
 The entire target including additive receipts/delivery evidence is approved for Dev implementation.
-Human review HR-2026-10-25-COMMERCIAL-API is Reviewed: Svein Tore accepted the completed delivery with "Godkjent" on 2026-10-25. No Main/production action was requested or performed.
+Human review HR-2026-10-25-COMMERCIAL-API is Reviewed: Svein Tore accepted the completed delivery with "Godkjent" on 2026-10-25. Subsequent Main promotion is recorded above; production deployment was not performed.
 
 
 ## Implementation Evidence - 25 October 2026

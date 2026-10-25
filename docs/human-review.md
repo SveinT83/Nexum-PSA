@@ -8,7 +8,9 @@ Owner/reviewer: Svein Tore. Implementation: Codex on authoritative Dev.
 Related: approved RFC 2026-10-25-commercial-full-api-parity and six Commercial API slices.
 Acceptance: Svein Tore replied "Godkjent" after the completed implementation and verification handoff.
 This accepts the delivered scope and clears this entry's human-review gate for Main promotion.
-Promotion, production deployment and delivery activation remain separate actions and were not performed.
+Main promotion was separately requested ("Merge") and completed: [PR #313](https://github.com/SveinT83/Nexum-PSA/pull/313),
+commit d1e688a2ff6e794dd15629db89d720405548dce1. The merge tree equals the tested candidate.
+Production deployment and delivery activation remain separate actions and were not performed.
 The original scenario checklist below is retained as review history; individual execution is not inferred.
 
 - [ ] Compare staff catalogue composition, filters/context, prices/terms/rates and actual Admin
@@ -35,7 +37,7 @@ Restart workers deliberately for reviewed activation; retain durable evidence/ke
 No frontend build or new scheduler job is needed.
 
 Risks: forged/foreign/stale evidence, duplicate delivery/consumption, unknown SMTP and mutable history.
-No real customer/provider action, Main or production was performed. Final automated: 129 Commercial/
+No real customer/provider action or production deployment was performed. Main promotion is recorded above. Final automated: 129 Commercial/
 portal tests / 1898 assertions and 113 broader affected tests / 1104 assertions pass. Four existing
 SLA PHPDoc metadata warnings remain; no failing test is deferred. 68 scoped PHP files pass syntax/Pint.
 BookStack 457/380/389/396/401/406/410 and scoped section 449 published/read back with staff access;
@@ -43,6 +45,8 @@ eight native Commercial Knowledge articles match source, internal/published. See
 plans/2026-10-25-commercial-api-verification.md for exact evidence. The original six concrete checks
 above are retained as scenario history. Reviewed status records Svein Tore's explicit acceptance
 of the completed deliverable, not an assertion that each scenario was individually reported.
+Fresh Main candidate: 145 Commercial/Portal tests / 2040 assertions and 356 broader tests / 4880
+assertions passed. All 68 scoped PHP files pass syntax/Pint. Original Dev HEAD/index preserved.
 
 ## HR-2026-10-24-SALES-API - Full Sales API coverage
 

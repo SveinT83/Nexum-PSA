@@ -40,4 +40,5 @@ rejected because they bypass typed workflows or lose authorization/evidence guar
 
 All six slices, native/Dev tests, OpenAPI and handbook read-back are complete.
 HR-2026-10-25-COMMERCIAL-API is Reviewed following Svein Tore's "Godkjent" on 2026-10-25.
-Main promotion, production deployment and controlled delivery activation require separate execution.
+Main source promotion is verified via PR #313 (25 October 2026).
+Production deployment and controlled delivery activation require separate execution.

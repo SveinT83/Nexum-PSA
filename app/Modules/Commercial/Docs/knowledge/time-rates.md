@@ -74,4 +74,5 @@ This is not production availability. The additive migration and authenticated na
 checks now pass on Dev. API delivery and browser durable delivery remain off by default
 until controlled worker verification and deliberate activation. Svein Tore accepted the
 completed delivery on 25 October 2026; HR-2026-10-25-COMMERCIAL-API is Reviewed.
-Main promotion and production deployment remain separate actions.
+Main source promotion is verified: [PR #313](https://github.com/SveinT83/Nexum-PSA/pull/313), 25 October 2026.
+Production deployment and controlled delivery activation remain separate actions.
