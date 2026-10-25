@@ -1,6 +1,6 @@
 # RFC Index
 
-- [Approved: Full DataExchange browser/API coverage](2026-10-25-data-exchange-full-api-parity.md) (Done On Dev; Reviewed by Svein Tore; Main promotion authorized)
+- [Approved: Full DataExchange browser/API coverage](2026-10-25-data-exchange-full-api-parity.md) (Merged to Main via PR #317; HR-2026-10-25-DATA-EXCHANGE-API Reviewed)
 
 - [Approved: Full Sales browser/API coverage](2026-10-24-sales-full-api-parity.md) (Merged to Main; Reviewed; production pending)
 

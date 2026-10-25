@@ -1,6 +1,6 @@
 # Feature Slice: Complete contract and handbook verification
 
-Status: Done On Dev; human review Reviewed (Svein Tore, 2026-10-25)
+Status: Merged to Main (PR #317); human review Reviewed (Svein Tore, 2026-10-25)
 Date: 2026-10-25
 Parent: [Approved RFC](../rfc/2026-10-25-data-exchange-full-api-parity.md)
 Owner: Codex

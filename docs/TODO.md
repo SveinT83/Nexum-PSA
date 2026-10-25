@@ -2,7 +2,7 @@
 
 ## Full DataExchange browser/API coverage (2026-10-25)
 
-Status: Done On Dev / Human Reviewed; Main promotion in progress. Owner: Codex. Reviewer/release owner: Svein Tore.
+Status: Merged to Main / Human Reviewed (Svein Tore, 2026-10-25). Owner: Codex. Reviewer/release owner: Svein Tore.
 Approved in chat: "Ja godkjenner". RFC: rfc/2026-10-25-data-exchange-full-api-parity.md.
 All six slices and DX01-DX12 are implemented: 35 HTTP operations / 31 typed schemas.
 Final affected set 82 tests / 1011 assertions; broad affected 310 / 3233; API admin 5 / 316 pass
@@ -10,14 +10,18 @@ Final affected set 82 tests / 1011 assertions; broad affected 310 / 3233; API ad
 reads and exact 35-method Swagger read-back pass. Knowledge and BookStack pages 515/449 and
 inherited employee scope are verified; employee OpenWebUI retrieval is separate and untested.
 Exact evidence: plans/2026-10-25-data-exchange-api-verification.md.
-HR-2026-10-25-DATA-EXCHANGE-API Reviewed by Svein Tore, 2026-10-25; Main merge explicitly authorized.
+HR-2026-10-25-DATA-EXCHANGE-API Reviewed by Svein Tore, 2026-10-25; Main merge verified in PR #317.
 Runtime follow-up owner: Svein Tore / Dev runtime operator. API delivery remains disabled; approved
 delivery disks are empty. Assess the substantial pre-existing unrelated shared queue backlog before
 deliberately refreshing workers; prove the external every-minute scheduler and controlled delivery
-before activation. No queue draining, Main, production or provider activation was performed.
+before activation. No queue draining, production deployment or provider activation was performed.
 Automatic import pickup remains explicitly unavailable and outside this approved parity scope.
 Existing Economy and Tripletex work is preserved; no known failing test is deferred.
 
+Main merge verified: [PR #317](https://github.com/SveinT83/Nexum-PSA/pull/317), commit
+9090026f2172da0dfacc188132a5195156e8df45. The merged tree equals tested candidate
+8eda27d3567eef5f62dc4eaadcc5e87064f92473 (tree e8962d18d6eee887783970363148060c305ecd14).
+Production deployment and runtime activation were not performed.
 
 
 ## Full Economy browser/API coverage (2026-10-25)

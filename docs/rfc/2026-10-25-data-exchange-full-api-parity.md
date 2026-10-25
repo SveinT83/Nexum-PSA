@@ -5,7 +5,7 @@ Date: 2026-10-25
 Owner: Codex
 Change Level: 3
 Requested by: Svein Tore; full DataExchange API support requested in conversation.
-Implementation: Done On Dev; approved 2026-10-25. HR-2026-10-25-DATA-EXCHANGE-API Reviewed; Main promotion authorized.
+Implementation: Merged to Main via PR #317; HR-2026-10-25-DATA-EXCHANGE-API Reviewed by Svein Tore, 2026-10-25.
 Related: [coverage matrix](../plans/2026-10-25-data-exchange-api-gap-matrix.md),
 [platform RFC](2026-07-03-data-exchange-platform.md),
 [ownership ADR](../adr/2026-07-03-data-exchange-platform-ownership.md),

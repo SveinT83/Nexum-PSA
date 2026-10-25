@@ -1,7 +1,7 @@
 # Full DataExchange API Verification
 
 Date: 2026-10-25
-Status: Done On Dev; automated, native, HTTPS, Swagger and handbook verification complete. Human review Reviewed by Svein Tore; Main candidate verified; human approval and promotion authorization recorded.
+Status: Done On Dev; automated, native, HTTPS, Swagger and handbook verification complete. Human review Reviewed by Svein Tore; Merged to Main; human review Reviewed by Svein Tore.
 Owner: Codex. Human reviewer/release owner: Svein Tore.
 Parent: approved RFC 2026-10-25-data-exchange-full-api-parity.md ("Ja godkjenner").
 ADR: 2026-10-25-data-exchange-api-commands-and-delivery.md.
@@ -34,7 +34,7 @@ require If-Match and Idempotency-Key. See the exact contract JSON and gap matrix
 ## Files and architecture
 
 Implementation is directly in /var/Projects/tdPSA, branch Dev. No local Windows implementation or production deployment was performed. Shared dirty work is preserved.
-Main promotion is now authorized by Svein Tore and is being verified separately.
+Main promotion is verified below; production deployment remains separate.
 
 Exact changed PHP/module file inventory and hashes: 2026-10-25-data-exchange-api-files.json.
 Main areas: module-owned routes/controllers, shared Actions/Queries/Support, Livewire profile
@@ -134,3 +134,10 @@ No unrelated dirty Dev work, .env, vendor, runtime storage or frontend build fil
 The repository-tracked Swagger JSON is regenerated in production scan mode from this exact candidate.
 See 2026-10-25-data-exchange-api-main-candidate-evidence.json. Human approval is recorded;
 production deployment and runtime activation remain separate.
+
+## Verified Main merge
+
+Main merge verified: [PR #317](https://github.com/SveinT83/Nexum-PSA/pull/317), commit
+9090026f2172da0dfacc188132a5195156e8df45. The merged tree equals tested candidate
+8eda27d3567eef5f62dc4eaadcc5e87064f92473 (tree e8962d18d6eee887783970363148060c305ecd14).
+Production deployment and runtime activation were not performed.
