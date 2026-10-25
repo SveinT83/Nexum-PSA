@@ -1,0 +1,147 @@
+{
+  "status": "Implemented and verified on Dev; human review Reviewed by Svein Tore on 2026-10-25",
+  "workflows": {
+    "C18": [
+      "GET /api/v1/commercial/worklog/time-consumptions",
+      "GET /api/v1/commercial/worklog/contract-links"
+    ],
+    "C09": [
+      "GET /api/v1/commercial/services",
+      "POST /api/v1/commercial/services",
+      "GET /api/v1/commercial/services/context",
+      "GET /api/v1/commercial/services/context/{lookup}",
+      "POST /api/v1/commercial/services/pricing-preview",
+      "GET /api/v1/commercial/services/{service}",
+      "PUT /api/v1/commercial/services/{service}",
+      "DELETE /api/v1/commercial/services/{service}",
+      "PATCH /api/v1/commercial/services/{service}"
+    ],
+    "C10": [
+      "GET /api/v1/commercial/packages",
+      "POST /api/v1/commercial/packages",
+      "GET /api/v1/commercial/packages/context",
+      "GET /api/v1/commercial/packages/context/{lookup}",
+      "POST /api/v1/commercial/packages/pricing-preview",
+      "GET /api/v1/commercial/packages/{package}",
+      "PUT /api/v1/commercial/packages/{package}",
+      "DELETE /api/v1/commercial/packages/{package}",
+      "PATCH /api/v1/commercial/packages/{package}"
+    ],
+    "C11": [
+      "GET /api/v1/commercial/costs",
+      "POST /api/v1/commercial/costs",
+      "GET /api/v1/commercial/costs/context",
+      "GET /api/v1/commercial/costs/context/{lookup}",
+      "GET /api/v1/commercial/costs/{cost}",
+      "PUT /api/v1/commercial/costs/{cost}",
+      "DELETE /api/v1/commercial/costs/{cost}",
+      "PATCH /api/v1/commercial/costs/{cost}"
+    ],
+    "C12": [
+      "GET /api/v1/commercial/terms",
+      "POST /api/v1/commercial/terms",
+      "GET /api/v1/commercial/terms/context",
+      "GET /api/v1/commercial/terms/context/{lookup}",
+      "GET /api/v1/commercial/terms/{term}",
+      "PUT /api/v1/commercial/terms/{term}",
+      "DELETE /api/v1/commercial/terms/{term}",
+      "PATCH /api/v1/commercial/terms/{term}"
+    ],
+    "C13": [
+      "GET /api/v1/commercial/slas",
+      "POST /api/v1/commercial/slas",
+      "GET /api/v1/commercial/slas/context",
+      "GET /api/v1/commercial/slas/context/{lookup}",
+      "GET /api/v1/commercial/slas/{sla}",
+      "PUT /api/v1/commercial/slas/{sla}",
+      "PATCH /api/v1/commercial/slas/{sla}"
+    ],
+    "C14": [
+      "GET /api/v1/commercial/time-rates",
+      "POST /api/v1/commercial/time-rates",
+      "GET /api/v1/commercial/time-rates/context",
+      "GET /api/v1/commercial/time-rates/context/{lookup}",
+      "GET /api/v1/commercial/time-rates/{rate}",
+      "PUT /api/v1/commercial/time-rates/{rate}",
+      "PATCH /api/v1/commercial/time-rates/{rate}"
+    ],
+    "C15": [
+      "GET /api/v1/commercial/units",
+      "POST /api/v1/commercial/units",
+      "GET /api/v1/commercial/units/context",
+      "GET /api/v1/commercial/units/context/{lookup}",
+      "GET /api/v1/commercial/units/{unit}",
+      "PUT /api/v1/commercial/units/{unit}",
+      "DELETE /api/v1/commercial/units/{unit}",
+      "PATCH /api/v1/commercial/units/{unit}"
+    ],
+    "C01": [
+      "GET /api/v1/commercial/contracts",
+      "POST /api/v1/commercial/contracts",
+      "GET /api/v1/commercial/contracts/context",
+      "GET /api/v1/commercial/contracts/context/{lookup}",
+      "GET /api/v1/commercial/contracts/{contract}",
+      "PUT /api/v1/commercial/contracts/{contract}",
+      "DELETE /api/v1/commercial/contracts/{contract}",
+      "PATCH /api/v1/commercial/contracts/{contract}"
+    ],
+    "C02": [
+      "GET /api/v1/commercial/contracts/{contract}/items",
+      "POST /api/v1/commercial/contracts/{contract}/items",
+      "GET /api/v1/commercial/contracts/{contract}/item-defaults",
+      "PUT /api/v1/commercial/contracts/{contract}/items/{item}",
+      "DELETE /api/v1/commercial/contracts/{contract}/items/{item}",
+      "PATCH /api/v1/commercial/contracts/{contract}/items/{item}",
+      "POST /api/v1/commercial/contracts/{contract}/items/{item}/sync-cadence",
+      "GET /api/v1/commercial/contracts/{contract}/pricing",
+      "POST /api/v1/commercial/contracts/{contract}/pricing-preview"
+    ],
+    "C03": [
+      "GET /api/v1/commercial/contracts/{contract}/terms",
+      "PUT /api/v1/commercial/contracts/{contract}/terms",
+      "PATCH /api/v1/commercial/contracts/{contract}/terms",
+      "POST /api/v1/commercial/contracts/{contract}/terms/refresh"
+    ],
+    "C05": [
+      "POST /api/v1/commercial/contracts/{contract}/approve-manual",
+      "GET /api/v1/commercial/contracts/{contract}/customer-document/attestation-preview",
+      "POST /api/v1/commercial/contracts/{contract}/customer-document/attest-legacy"
+    ],
+    "C06": [
+      "GET /api/v1/commercial/contracts/{contract}/pdf"
+    ],
+    "C04": [
+      "POST /api/v1/commercial/contracts/{contract}/communication-preview",
+      "POST /api/v1/commercial/contracts/{contract}/send-quote",
+      "POST /api/v1/commercial/contracts/{contract}/send-contract",
+      "POST /api/v1/commercial/contracts/{contract}/resend",
+      "GET /api/v1/commercial/contracts/{contract}/deliveries/{delivery}",
+      "POST /api/v1/commercial/contracts/{contract}/deliveries/{delivery}/recover",
+      "GET /api/v1/commercial/operations/{operation}"
+    ],
+    "C17": [
+      "GET /api/v1/commercial/clients/{client}/timebank",
+      "GET /api/v1/commercial/clients/{client}/timebank/consumptions/{consumption}",
+      "POST /api/v1/commercial/clients/{client}/timebank/consumptions"
+    ],
+    "C16": [
+      "GET /api/v1/commercial/settings",
+      "GET /api/v1/commercial/settings/timebank-policy",
+      "PUT /api/v1/commercial/settings/timebank-policy",
+      "PATCH /api/v1/commercial/settings/timebank-policy"
+    ],
+    "C07": [
+      "GET /api/v1/commercial/public/contracts/{token}",
+      "POST /api/v1/commercial/public/contracts/{token}/accept",
+      "POST /api/v1/commercial/public/contracts/{token}/viewed"
+    ],
+    "C08": [
+      "GET /api/v1/commercial/portal/contracts",
+      "GET /api/v1/commercial/portal/contracts/{contract}",
+      "POST /api/v1/commercial/portal/contracts/{contract}/accept"
+    ]
+  },
+  "api_operation_count": 103,
+  "schema_count": 47,
+  "human_review": "HR-2026-10-25-COMMERCIAL-API Reviewed by Svein Tore on 2026-10-25"
+}

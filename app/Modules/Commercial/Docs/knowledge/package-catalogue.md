@@ -24,3 +24,15 @@ Rows are clickable and open the package detail view. The package name remains a 
 - Use descriptions for sales context, not long legal wording.
 - Legal wording should stay in reusable terms and be attached to packages through the package legal section.
 - Package pricing should be reviewed before using the package as a quote or contract starting point.
+
+## Commercial API parity on Dev - 25 October 2026
+
+The supported workflow now has a typed Commercial API on Dev, using shared domain actions,
+current user rights, token scopes, strict fields and revision/replay checks.
+See [Commercial API](https://doc.tronderdata.no/link/457) for exact operation sequences,
+customer/portal identity, composition, timebank and immutable document boundaries.
+This is not production availability. The additive migration and authenticated native HTTP
+checks now pass on Dev. API delivery and browser durable delivery remain off by default
+until controlled worker verification and deliberate activation. Svein Tore accepted the
+completed delivery on 25 October 2026; HR-2026-10-25-COMMERCIAL-API is Reviewed.
+Main promotion and production deployment remain separate actions.

@@ -4,7 +4,7 @@ namespace App\Modules\Commercial\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Commercial\Models\Economy\Units;
-//Request unit
+// Request unit
 use Illuminate\Http\Request;
 
 class UnitsController extends Controller
@@ -38,11 +38,8 @@ class UnitsController extends Controller
     // ----------------------------------------------------------------------------------
     public function store()
     {
-        //Store an emty row in database, where name is xxx
-        Units::create(['name' => 'xxx', 'short' => '']);
+        app(\App\Modules\Commercial\Actions\UnitCatalogueWorkflow::class)->store(request());
 
-        //Redirect view to index.
-        //Bug: The route do not work
         return redirect()->route('tech.admin.settings.economy.units');
     }
 
@@ -52,12 +49,7 @@ class UnitsController extends Controller
     // ----------------------------------------------------------------------------------
     public function update(Request $request, Units $unit)
     {
-
-        if ($request->input('action') === 'delete') {
-            $unit->delete();
-        } else {
-            $unit->update($request->only(['name', 'short', 'common_code']));
-        }
+        app(\App\Modules\Commercial\Actions\UnitCatalogueWorkflow::class)->update($request, $unit);
 
         return redirect()->route('tech.admin.settings.economy.units');
     }

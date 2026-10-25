@@ -54,3 +54,15 @@ verified Service billing data and never in view-name or SKU checks.
 - Price and billing cycle should be reviewed before the service is used in a package or contract.
 - Services should be archived or made inactive instead of deleted when they are already used in active agreements.
 - Terms and time rates attached to a service are defaults for future contract snapshots; they do not rewrite existing accepted contract terms.
+
+## Commercial API parity on Dev - 25 October 2026
+
+The supported workflow now has a typed Commercial API on Dev, using shared domain actions,
+current user rights, token scopes, strict fields and revision/replay checks.
+See [Commercial API](https://doc.tronderdata.no/link/457) for exact operation sequences,
+customer/portal identity, composition, timebank and immutable document boundaries.
+This is not production availability. The additive migration and authenticated native HTTP
+checks now pass on Dev. API delivery and browser durable delivery remain off by default
+until controlled worker verification and deliberate activation. Svein Tore accepted the
+completed delivery on 25 October 2026; HR-2026-10-25-COMMERCIAL-API is Reviewed.
+Main promotion and production deployment remain separate actions.

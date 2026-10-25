@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Modules\Commercial\Models\TimeRate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -29,10 +28,7 @@ class TimeRateController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $data = $this->validated($request);
-        $data['slug'] = Str::slug($data['code']);
-
-        TimeRate::query()->create($data);
+        $rate = app(\App\Modules\Commercial\Actions\TimeRateCatalogueWorkflow::class)->store($request);
 
         return back()->with('success', 'Time rate created.');
     }
@@ -42,10 +38,7 @@ class TimeRateController extends Controller
      */
     public function update(Request $request, TimeRate $rate): RedirectResponse
     {
-        $data = $this->validated($request, $rate);
-        $data['slug'] = Str::slug($data['code']);
-
-        $rate->update($data);
+        $rate = app(\App\Modules\Commercial\Actions\TimeRateCatalogueWorkflow::class)->update($request, $rate);
 
         return back()->with('success', 'Time rate updated.');
     }

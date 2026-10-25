@@ -14,7 +14,6 @@ use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use UnexpectedValueException;
 
@@ -106,47 +105,7 @@ class PortalContractController extends Controller
         ]);
 
         try {
-            $acceptedContract = DB::transaction(function () use ($request, $contract, $context, $access, $audit, $legalAcceptance, $customerDocuments, $data): ?Contracts {
-                $locked = Contracts::query()
-                    ->lockForUpdate()
-                    ->findOrFail($contract->getKey());
-
-                if (! $access->canAccept($locked)) {
-                    return null;
-                }
-
-                $customerDocuments->handle($locked, 'won');
-
-                $locked->forceFill([
-                    'approval_status' => 'won',
-                    'accepted_at' => now(),
-                    'accepted_by_name' => $data['name'],
-                    'accepted_ip' => $request->ip(),
-                    'accepted_ua' => $request->userAgent(),
-                    'portal_accepted_account_id' => $context->account->id,
-                    'portal_accepted_membership_id' => $context->membership->id,
-                    'portal_accepted_contact_id' => $context->contact->id,
-                ])->save();
-
-                $legalAcceptance->forContract($request, $context, $locked, $data['name']);
-
-                $audit->handle(
-                    'portal_contract_accepted',
-                    $context->account,
-                    $request->user(),
-                    $context->contact,
-                    $context->client,
-                    $context->site,
-                    [
-                        'contract_id' => $locked->id,
-                        'approval_status' => 'won',
-                        'accepted_by_name' => $data['name'],
-                    ],
-                    $request,
-                );
-
-                return $locked;
-            });
+            $acceptedContract = app(\App\Modules\Commercial\Actions\ContractCustomerWorkflow::class)->acceptPortal($request, $contract, $data);
         } catch (DomainException $exception) {
             return back()->with('error', $exception->getMessage());
         } catch (UnexpectedValueException) {
@@ -156,21 +115,6 @@ class PortalContractController extends Controller
         if (! $acceptedContract) {
             return back()->with('error', 'Avtalen kan ikke godtas med nåværende status.');
         }
-
-        $portalNotifications->handle(
-            type: 'portal_contract_accepted',
-            clientId: (int) $context->client->id,
-            siteId: null,
-            title: 'Avtale godtatt',
-            body: $acceptedContract->description.' ble godtatt av '.$data['name'].'.',
-            url: route('customer-portal.contracts.show', $acceptedContract),
-            sourceType: Contracts::class,
-            sourceId: $acceptedContract->id,
-            metadata: [
-                'contract_id' => $acceptedContract->id,
-                'accepted_by_name' => $data['name'],
-            ],
-        );
 
         return redirect()->route('customer-portal.contracts.show', $acceptedContract->refresh())
             ->with('success', 'Avtalen er godtatt. Takk.');

@@ -1,5 +1,46 @@
 # tdPSA Development TODO
 
+## Full Commercial browser/API coverage (2026-10-25)
+
+Status: Implemented and verified on Dev; Reviewed by Svein Tore on 2026-10-25.
+Owner: Codex. Human reviewer/release owner: Svein Tore.
+Approved RFC: rfc/2026-10-25-commercial-full-api-parity.md. Accepted ADR:
+adr/2026-10-25-commercial-api-commands-and-delivery.md. All six Feature Slices complete on Dev.
+
+103 HTTP operations (101 full staff/customer operations plus two existing controlled exports)
+cover the mapped current web workflows. Catalogue composition, Contract lines/terms/pricing/PDF/
+approval/attestation, frozen communication, customer acceptance, settings and operational timebank
+share domain actions with web/Livewire. Current actor/token rights, source ownership, strict fields,
+strong revisions, durable replay, frozen encrypted delivery and exact parent scope are enforced.
+Unit delete actions require commercial.delete even via update; create revisions include DB defaults.
+Dead SLA delete removed. No existing token was widened.
+
+Final Commercial/portal suite: 129 tests / 1898 assertions passed. Broader affected Economy,
+Integration/API administration/production Swagger scan, Clients and scheduled SLA suite:
+113 tests / 1104 assertions passed, with four existing PHPDoc metadata deprecation warnings.
+68 scoped PHP files pass syntax/Pint. No failing test is deferred.
+
+Native database connectivity recovered; the earlier outage is resolved. Exact additive migration
+2026_10_25_120000_create_commercial_command_and_delivery_records applied/read back as batch 23.
+Receipt/delivery tables have 7/15 columns and zero rows. Native two-connection locking (1205) and
+uniqueness (1062) passed; scratch table removed. Seven authenticated trusted HTTPS reads pass.
+The temporary read-only test token was revoked; original token count restored.
+Trusted Swagger exact bytes and anonymous 401 verified; /up alone is not DB health evidence.
+
+Eight Commercial Knowledge articles match source and are internal/published. BookStack
+457/380/389/396/401/406/410 plus scoped section 449 published/read back with inherited staff scope.
+Integration's larger pre-existing unpublished source differences were preserved; no blanket push.
+Employee OpenWebUI retrieval is not claimed. Editorial handoff added with explicit do-not-publish gate.
+
+HR-2026-10-25-COMMERCIAL-API is Reviewed: Svein Tore accepted the completed delivery with "Godkjent".
+Next (Svein Tore): separately authorize promotion/deployment and controlled activation as needed.
+COMMERCIAL_API_DELIVERY_ENABLED and COMMERCIAL_DURABLE_DELIVERY_ENABLED stay false by default.
+Verify controlled worker/provider/message behavior before deliberately enabling delivery.
+Main/production, real customer/provider messages, commit/push and activation were not performed.
+Preserve durable evidence/encryption key on rollback, shared dirty work, Reviewed
+HR-2026-08-24-003 and separate worklog activation HR-2026-09-27-WORKLOG.
+Evidence: plans/2026-10-25-commercial-api-verification.md and current endpoint/schema/evidence artifacts.
+
 ## Full Sales browser/API coverage (2026-10-24)
 
 Status: Merged To Main / Human Reviewed; production rollout not performed. Design approved by Svein Tore: "Godkjenner".

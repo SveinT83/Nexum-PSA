@@ -102,21 +102,7 @@ class ServiceLegal extends Component
         if (! $this->service?->exists) {
             return;
         }
-
-        $providerIds = $this->service->serviceTerms()
-            ->where(fn ($query) => $query
-                ->where('origin', 'provider')
-                ->orWhere('managed_externally', true))
-            ->pluck('terms.id')
-            ->map(fn ($id) => (string) $id);
-
-        $this->selectedTermIds = collect($this->selectedTermIds)
-            ->merge($providerIds)
-            ->unique()
-            ->values()
-            ->all();
-
-        $this->service->serviceTerms()->sync($this->selectedTermIds);
+        $this->selectedTermIds = app(\App\Modules\Commercial\Actions\ServiceComposition::class)->terms($this->service, $this->selectedTermIds);
     }
 
     public function render()

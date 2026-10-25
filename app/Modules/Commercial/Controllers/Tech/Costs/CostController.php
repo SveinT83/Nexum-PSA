@@ -102,19 +102,7 @@ class CostController extends Controller
     // -----------------------------------------
     public function store(StoreCostRequest $request)
     {
-        // Validate request via FormRequest
-        $data = $request->validated();
-
-        Cost::create([
-            'name' => $data['name'],
-            'cost' => $data['cost'],
-            'unitId' => $data['unitId'],
-            'recurrence' => $data['recurrence'],
-            'vendor_id' => $data['vendor_id'],
-            'note' => $data['note'] ?? '',
-            'created_by_user_id' => auth()->id(),
-            'updated_by_user_id' => auth()->id(),
-        ]);
+        $cost = app(\App\Modules\Commercial\Actions\CostCatalogueWorkflow::class)->store($request);
 
         return redirect()->route('tech.costs.index')->with('success', 'Cost created successfully');
     }
@@ -143,19 +131,7 @@ class CostController extends Controller
     // -----------------------------------------
     public function update(StoreCostRequest $request, Cost $cost)
     {
-        abort_if($cost->isIntegrationManaged(), 403, 'This Cost is owned by its active source Integration.');
-
-        $data = $request->validated();
-
-        $cost->update([
-            'name' => $data['name'],
-            'cost' => $data['cost'],
-            'unitId' => $data['unitId'],
-            'recurrence' => $data['recurrence'],
-            'vendor_id' => $data['vendor_id'],
-            'note' => $data['note'] ?? '',
-            'updated_by_user_id' => auth()->id(),
-        ]);
+        $cost = app(\App\Modules\Commercial\Actions\CostCatalogueWorkflow::class)->update($request, $cost);
 
         return redirect()->route('tech.costs.show', $cost)->with('success', 'Cost updated successfully');
     }

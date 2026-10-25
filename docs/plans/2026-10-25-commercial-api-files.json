@@ -1,0 +1,397 @@
+{
+  "date": "2026-10-25",
+  "branch": "Dev",
+  "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "scope_note": "Final file hashes only; shared files include preserved pre-existing changes. Not a commit/merge patch.",
+  "files": [
+    {
+      "path": "app/Http/Middleware/EnforceTechRoutePermission.php",
+      "sha256": "949b78998e1feee3254883127f47863110b3a0442f899ff80322b2aa9e233c22"
+    },
+    {
+      "path": "app/Modules/Commercial/Actions/BuildContractPdf.php",
+      "sha256": "dfa076aa23534d28b582df9445b5c60df65b709e42762222f7a59a13b6f18e84"
+    },
+    {
+      "path": "app/Modules/Commercial/Actions/CaptureContractCustomerDocument.php",
+      "sha256": "02c933c7a152c197c76de30ce8bfc83e96a30e33ed2d17b748d834dae3e99b47"
+    },
+    {
+      "path": "app/Modules/Commercial/Actions/ContractCustomerWorkflow.php",
+      "sha256": "00c682e297b1846d23fc88f96ba8732fbe7c9d75271ba79d2c4c99d6405a32f7"
+    },
+    {
+      "path": "app/Modules/Commercial/Actions/ContractItemWorkflow.php",
+      "sha256": "6836dc945d90d2630c559e41e389e5a507e2fffdd41f5287fb1f066c48ddd166"
+    },
+    {
+      "path": "app/Modules/Commercial/Actions/ContractLifecycleWorkflow.php",
+      "sha256": "f2408187ecf42bf87c4974ed9d38f8121af81c86d371c06435f802b9346a19fb"
+    },
+    {
+      "path": "app/Modules/Commercial/Actions/ContractMetadataWorkflow.php",
+      "sha256": "e90e597848787b148ef1887f6800b90d286a1f2bab9dc5c4c72b006aeb4ebbdc"
+    },
+    {
+      "path": "app/Modules/Commercial/Actions/CostCatalogueWorkflow.php",
+      "sha256": "96dcc28e679e4de2e762e7c4e08d14c13e65df3623f006e98b0a90761731c12d"
+    },
+    {
+      "path": "app/Modules/Commercial/Actions/ExecuteCommercialCommand.php",
+      "sha256": "a266fa0440e7c3f1019f681ba312280a998d2d15da13b3412ee4335ebff63fc7"
+    },
+    {
+      "path": "app/Modules/Commercial/Actions/LegalCatalogueWorkflow.php",
+      "sha256": "060b17787bbdd2f52e4583786cd2be1a8d08696a1f45f1a67edcf9db155c0cbf"
+    },
+    {
+      "path": "app/Modules/Commercial/Actions/PackageCatalogueWorkflow.php",
+      "sha256": "f1b13a84af402379933c8e5ad09560fe9906faf9de14fd7e51cd37ef08dabe87"
+    },
+    {
+      "path": "app/Modules/Commercial/Actions/RegisterClientTimebankConsumption.php",
+      "sha256": "c684a146e84b8cff94c52ff06f3cdf5df879a25485380973803514a8665fa599"
+    },
+    {
+      "path": "app/Modules/Commercial/Actions/ServiceCatalogueWorkflow.php",
+      "sha256": "5a368f15dff52260ca12c23cdb9176a674197a7b2fdb4c05bc3b5645975dca6f"
+    },
+    {
+      "path": "app/Modules/Commercial/Actions/ServiceComposition.php",
+      "sha256": "ff01df21bd05ba96654fecc709bb3d3f4adcb0d8db1be185b16acf44508059df"
+    },
+    {
+      "path": "app/Modules/Commercial/Actions/SlaCatalogueWorkflow.php",
+      "sha256": "a8342615ce23432da96104a1745fd25e0a5e4d149db295a4a6f6eabb097b4612"
+    },
+    {
+      "path": "app/Modules/Commercial/Actions/TimeRateCatalogueWorkflow.php",
+      "sha256": "069c02f58a16ad0dfc8db9deea429fad6a9ef55b8d39c49b33f142ccca9cc64c"
+    },
+    {
+      "path": "app/Modules/Commercial/Actions/TimebankPolicyWorkflow.php",
+      "sha256": "f9864a4f1ce3a1b88d9806192f7cc518b9a68df89465fc8e94ea2c91fe3e5735"
+    },
+    {
+      "path": "app/Modules/Commercial/Actions/UnitCatalogueWorkflow.php",
+      "sha256": "a7c7a49f1fa24eb269c4b92563f05d779761aa40d7b7e659ce12dec2f1fa0896"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Admin/ClientTimebankPolicyController.php",
+      "sha256": "015123440907820831c254b299a7e150203ab6357fc1d6d77d8e7a39d68f7a93"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Admin/UnitsController.php",
+      "sha256": "8d763e2f2366568477a44853400a11e1f582341e02b55d649860bad8061393ef"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Api/V1/CommercialApiController.php",
+      "sha256": "ecfd1ee9fe42139b25d84400c826bd2aa32ee2cba7aa03eea1325ee063a2c69d"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Api/V1/CommercialCatalogueController.php",
+      "sha256": "8bd79130e28e7d3d6a0ad13f89871391df4d5c62ae329feef96f6f2c5d9336d4"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Api/V1/CommercialCommunicationController.php",
+      "sha256": "941f8b82f963cae630e4f99642107b4ea9b37e20e36cacfba7dbf0c838e0276b"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Api/V1/CommercialContractController.php",
+      "sha256": "ac3c3bc5d68aade708569f9f0e22b9a9bc09882c8b9477081af6fba5b5b35328"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Api/V1/CommercialController.php",
+      "sha256": "26a57fd725a6b9f2c4facc6de85ccb0605cc4681e7c774207243ee5b9fda305f"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Api/V1/CommercialCustomerContractController.php",
+      "sha256": "206daedd66aaa90f89e369cda9bcd1d86ee8879e9b8839328c8d929854c5d78b"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Api/V1/CommercialTimebankController.php",
+      "sha256": "4ab30f451767dbcc93aa503205cdd7c9be383687a76f40d6c6077d19d93c57d6"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Portal/PortalContractController.php",
+      "sha256": "bac1c7ce2a6ed8de4e2bc51ebf2d97fb9862cf613704b35f2473e37dfb0672a7"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Tech/Contracts/ContractController.php",
+      "sha256": "dc179aa88078579091a1d64359ade2158786eafa184191ba98d1cfaca37cbbb7"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Tech/Contracts/PublicContractController.php",
+      "sha256": "78b89332494e50c6c1c0e9c7f4570b602eb3fb293fa8bbb4b2b275ab4e2b0c2f"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Tech/Costs/CostController.php",
+      "sha256": "513cfd26f8517f78cc17fa1b435c421243e0382e5df344b01742ecae3c47175e"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Tech/Legal/LegalController.php",
+      "sha256": "c8cf8fb7930319f53c67a74a5a44d15fce48eff5925a18e51930c78b5da96854"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Tech/Package/PackageController.php",
+      "sha256": "2b2437a8dfd69d6cec48542ebe4ed4088756c25b8bfe5b39ed6f99e4e46e6a6b"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Tech/Rates/TimeRateController.php",
+      "sha256": "5e8fd3ca1e85b9fe6d789cf6345a5c59fcce0f3f1add4689b08cc5d1047ebfa9"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Tech/Services/ServiceController.php",
+      "sha256": "41f7e90a62719b4259cd786fc584a5cee664052a9b2f1025407fe4db2bc77cfb"
+    },
+    {
+      "path": "app/Modules/Commercial/Controllers/Tech/Sla/SlaController.php",
+      "sha256": "d08258c432ab8806f360680058045c62d0e06105b8759f6e54cff22a45578d6d"
+    },
+    {
+      "path": "app/Modules/Commercial/Docs/api-contract.json",
+      "sha256": "ecbe6e81560038a9f5f49c9a65e169697aa40f03bd6e610961892158a96e8826"
+    },
+    {
+      "path": "app/Modules/Commercial/Docs/api-schemas.json",
+      "sha256": "df64929e5241379dff73931e6f6715fe8929b0593427a18b32ef018e82d80c7a"
+    },
+    {
+      "path": "app/Modules/Commercial/Docs/knowledge/commercial-api.md",
+      "sha256": "dcc77b6972d7bf86fd719934188d53d58335aa749308fdfdd03ec6040b5e3816"
+    },
+    {
+      "path": "app/Modules/Commercial/Docs/knowledge/contract-system.md",
+      "sha256": "8af52ee94d20645bc18c6bbaed7f959c9e782f8eff2d4538fe73b6e6964e42d8"
+    },
+    {
+      "path": "app/Modules/Commercial/Docs/knowledge/cost-catalogue.md",
+      "sha256": "1f1b08a27862821a86461880e2d01d358ffae74b4b773d2ccbffe9d49c54f3b1"
+    },
+    {
+      "path": "app/Modules/Commercial/Docs/knowledge/package-catalogue.md",
+      "sha256": "7f2f6287ee4de6bf5442213132e3d6d7e916da4583a726a6dfe200e941c11721"
+    },
+    {
+      "path": "app/Modules/Commercial/Docs/knowledge/service-catalogue.md",
+      "sha256": "41f40afefa8d406c07e9f0cb7f53917beeabe8e5b54db9bbb375eed85c612373"
+    },
+    {
+      "path": "app/Modules/Commercial/Docs/knowledge/sla-inheritance.md",
+      "sha256": "0934dd5c25302870be7164146587415df3dacb1b0b25086f7a3b4b71057ee402"
+    },
+    {
+      "path": "app/Modules/Commercial/Docs/knowledge/time-rates.md",
+      "sha256": "aeeede7fc098da1bbc294cec55ef4b40e08978426395b8331e3dbdb3237a6b8a"
+    },
+    {
+      "path": "app/Modules/Commercial/Http/Middleware/CommercialApiErrors.php",
+      "sha256": "f7928957aeb75c9d5ec4d41ef927b333b1c9347721840e05f2ad2154a2ea465c"
+    },
+    {
+      "path": "app/Modules/Commercial/Http/Middleware/CommercialApiGuard.php",
+      "sha256": "e4863d034600740a034d4cd33ddf331f866ed9e3302617b7ada22589434129da"
+    },
+    {
+      "path": "app/Modules/Commercial/Jobs/SendCommercialDelivery.php",
+      "sha256": "2372ce93abfb305b1a29c3734d99b37c81fedb981a803356ec03617444726a11"
+    },
+    {
+      "path": "app/Modules/Commercial/Livewire/Tech/Contracts/ContractItemsEditor.php",
+      "sha256": "5c8573c7ca8c93f85c087e7ff2ffa8602061ade87ed2aa20b77af08a3d6a3f9c"
+    },
+    {
+      "path": "app/Modules/Commercial/Livewire/Tech/PackagePricing.php",
+      "sha256": "3da06a7cb5f5f971ff703400612d5ff50e11980ea4a506b54dd98b8b4e4d34bb"
+    },
+    {
+      "path": "app/Modules/Commercial/Livewire/Tech/ServiceLegal.php",
+      "sha256": "498f430fefbb6693f79bd26c067ba3fc2e12227624b6e2dd8cc062a95d0248dc"
+    },
+    {
+      "path": "app/Modules/Commercial/Livewire/Tech/ServicePricing.php",
+      "sha256": "c161454714243aeae73bc60182798798a7c940faea967e8736caf0c687916874"
+    },
+    {
+      "path": "app/Modules/Commercial/Models/CommercialCommandReceipt.php",
+      "sha256": "d0f0e64895b3d6ba4b0c08c1604f11697c4f020fd45e773c3f4e52f0046fc97d"
+    },
+    {
+      "path": "app/Modules/Commercial/Models/CommercialDeliveryAttempt.php",
+      "sha256": "afba083b057ade3eb391dd650a25191bf261f3e6ad0fc129b1342b4598a9f5fc"
+    },
+    {
+      "path": "app/Modules/Commercial/Queries/CommercialCatalogueQuery.php",
+      "sha256": "3e2de21b1e234dbc751061be1a6c773e228c9188794750c1b075eebabcce2616"
+    },
+    {
+      "path": "app/Modules/Commercial/Queries/CommercialContractFormContext.php",
+      "sha256": "6f17063999ced835457ea7224e434e056fa009590c05eea19ada8399ad5a29bf"
+    },
+    {
+      "path": "app/Modules/Commercial/Queries/CommercialContractQuery.php",
+      "sha256": "34013449d09e5fc77c072980e9bf2ed95f67cdbf106b29b99f951753d0fc8f25"
+    },
+    {
+      "path": "app/Modules/Commercial/Requests/PackageRequest.php",
+      "sha256": "d3028364324ebbf98f0ece8544a43e90229e5641296063b3ea5f94ea791cb8bf"
+    },
+    {
+      "path": "app/Modules/Commercial/Requests/ServiceStoreRequest.php",
+      "sha256": "281f3b7b5368a64e9e027ddc9141d6ae60b278304f1c3946661a202e69cb1df7"
+    },
+    {
+      "path": "app/Modules/Commercial/Requests/SlaRequest.php",
+      "sha256": "aea0cdaef1a4c3a0f80c98b081ec8b52c63f4ed6974d5837bb79bb934bac396e"
+    },
+    {
+      "path": "app/Modules/Commercial/Requests/StoreCostRequest.php",
+      "sha256": "1bbca1db4e98e686e2bde5bfa1e7713a72cad5df50da9466686446ac81dc40ff"
+    },
+    {
+      "path": "app/Modules/Commercial/Resources/Api/V1/CommercialApiOpenApi.php",
+      "sha256": "e773eff6032314f1e68073bec9500a7b542648cc630bd225d7eba0ec53d61db1"
+    },
+    {
+      "path": "app/Modules/Commercial/Services/CommercialDelivery.php",
+      "sha256": "95036797d92456cc3f3aaf137828e2ff88115a0bfc301a43e044b70a88e905c0"
+    },
+    {
+      "path": "app/Modules/Commercial/Services/CommercialDeliveryTransport.php",
+      "sha256": "235e48c7a02035c3b7b815fdbab348ab053fd0840cecd86818a5fbe80502c99e"
+    },
+    {
+      "path": "app/Modules/Commercial/Support/CommercialInput.php",
+      "sha256": "a902be0ffc806f0d5fe6fa2f5d8975806cf39715ede8a9a126407ee5f75255c9"
+    },
+    {
+      "path": "app/Modules/Commercial/Support/CommercialProjection.php",
+      "sha256": "5fe20cf6cbb609ff0e61a6338b015f7ab51b36f75733a37e3679cbd0f18ff1bd"
+    },
+    {
+      "path": "app/Modules/Commercial/Support/CommercialRevision.php",
+      "sha256": "d2b57573e585c87c4b2aa4ab3c617d38865c8122100b9cbde84537d1555baedd"
+    },
+    {
+      "path": "app/Modules/Commercial/Support/ContractEditorPricing.php",
+      "sha256": "6d84bec16c034071730cc96dbbf338d858320eb03cdd0dfe7ba13fc030c07cfa"
+    },
+    {
+      "path": "app/Modules/Commercial/Support/PackagePricingCalculator.php",
+      "sha256": "2a500789686600284f4fd5727be3753764d825b157090c5f3948903a9398a45c"
+    },
+    {
+      "path": "app/Modules/Commercial/Support/TimebankRevision.php",
+      "sha256": "7f1e91598d7716f2531403cf982d5273285de7da6e78f3ba358cc391f5352ad6"
+    },
+    {
+      "path": "app/Modules/Commercial/Tests/Feature/CommercialApiParityTest.php",
+      "sha256": "d9cc292d956d1bbb09e097bba0fc83d0b9e1c75374879681e18cdaa02f753980"
+    },
+    {
+      "path": "app/Modules/Commercial/api.php",
+      "sha256": "4092f71c0aa7f827071b3e14a501c6e6ce6ba711858ecad99caaa494abb22c68"
+    },
+    {
+      "path": "app/Modules/Commercial/routes.php",
+      "sha256": "d55263ef556a1f318041f857672d94c0aa8339597fdd07e6c7bdc1bf7775d947"
+    },
+    {
+      "path": "app/Modules/Integration/Docs/knowledge/api-management.md",
+      "sha256": "7334aa56d3bb0d8321cfab00fc292fe50de214981238c8aa5d10fde95942037e"
+    },
+    {
+      "path": "app/Modules/Integration/Support/ApiAbilityCatalog.php",
+      "sha256": "d26670ca3c2bb3135719d83253955c27e3ec01cdffd26e30895ae7b41ec4af64"
+    },
+    {
+      "path": "config/commercial.php",
+      "sha256": "65441f4775a36909e937e5eda725719c3ce4d2336101ccb703921a02af4630bd"
+    },
+    {
+      "path": "database/migrations/2026_10_25_120000_create_commercial_command_and_delivery_records.php",
+      "sha256": "0aae5aaebb80b48d94cd204340d448e38740cafe6183fa95f17a0ad952778a83"
+    },
+    {
+      "path": "docs/TODO.md",
+      "sha256": "fc59f9245066177d4a325bef444db3f5bad7ecf6925c111aec552171998d19db"
+    },
+    {
+      "path": "docs/adr/2026-10-25-commercial-api-commands-and-delivery.md",
+      "sha256": "81913c57f25ece39517aea7986d8af8ae1a76f96f709446d8c18c97ab4224534"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-25-commercial-api-01-foundation.md",
+      "sha256": "b4598901acab026fecdd842fc69b1ace25f0df05caeed0426e79f49543a6a24f"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-25-commercial-api-02-catalogues.md",
+      "sha256": "b5cd4bcf8440c8aa6f855966e742c7247bd934c9c4e44a3c10841c56d8ac93d7"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-25-commercial-api-03-contracts.md",
+      "sha256": "a5b80e165f468d397311c61a3769af5f3e362d4daafec49bb4b304c0e8da879d"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-25-commercial-api-04-delivery.md",
+      "sha256": "93c6f95ed61e6ad4d8bf3d15810977b1650edf9561251fe52dc331397fd7489d"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-25-commercial-api-05-customer-timebank.md",
+      "sha256": "1053d6c94cab217aa8bf5e5fa4c3a49094fa13ae46085456344e554bc15c4bd5"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-25-commercial-api-06-acceptance.md",
+      "sha256": "9236115209ef2d0e1c5e2f04bf764d1c977261afe3681ab2175d16dab918db1c"
+    },
+    {
+      "path": "docs/human-review.md",
+      "sha256": "3695e8b9937da8306fa6dc0216738bb8c3884fe6d64f650b12119abe2e13c31b"
+    },
+    {
+      "path": "docs/plans/2026-10-25-commercial-api-current-coverage.json",
+      "sha256": "3ac66f4c186258ff650e2eb025120b2d536a3ec068b6fb1935af448b5fedd98c"
+    },
+    {
+      "path": "docs/plans/2026-10-25-commercial-api-endpoints.json",
+      "sha256": "91040acbb470ffd01356d49ecb1e2f65aa40fe37c67d657c0a3a4f7f0cba1a10"
+    },
+    {
+      "path": "docs/plans/2026-10-25-commercial-api-gap-matrix.md",
+      "sha256": "7ac7614378dd6c3192ba9f721ac136dde7f2222681121ed2fba34aa667e3bfa6"
+    },
+    {
+      "path": "docs/plans/2026-10-25-commercial-api-handbook-evidence.json",
+      "sha256": "4eed3a434357534fdd5ab68966efec36f7ae2521c15e2ffdfbf56f08d39f93f9"
+    },
+    {
+      "path": "docs/plans/2026-10-25-commercial-api-inventory.json",
+      "sha256": "c84556e8e40aeaf6c66d428771e5508d6031765df6ce82131b6afb921fdb5c5d"
+    },
+    {
+      "path": "docs/plans/2026-10-25-commercial-api-knowledge-evidence.json",
+      "sha256": "dc8403afc4815743374967e56ce82db3216463a731d24a2278758effd1d6dd2c"
+    },
+    {
+      "path": "docs/plans/2026-10-25-commercial-api-native-evidence.json",
+      "sha256": "f861bb9ad2a65e41adb0aadb5c26bd6c8a106261c14a7bb8aa04840414648701"
+    },
+    {
+      "path": "docs/plans/2026-10-25-commercial-api-test-evidence.json",
+      "sha256": "653a70b3aae7f2809e619064985fab16eba86d2dd4226ea2fe6882ad3d503d9f"
+    },
+    {
+      "path": "docs/plans/2026-10-25-commercial-api-verification.md",
+      "sha256": "de9071d6ad56b2f81bab7f34be52ca28927c07d7201eb35b09eaa99233223288"
+    },
+    {
+      "path": "docs/rfc/2026-10-25-commercial-full-api-parity.md",
+      "sha256": "83f4496ac14696a4b82d8c3f5299a8b2934612c432ecb0dbd91f82e304566030"
+    },
+    {
+      "path": "routes/api.php",
+      "sha256": "6c6de662db7a16943428b577df38f20461d1ed9656ad35216975ed5571f6f19d"
+    }
+  ],
+  "verification_status": "Implemented and verified on Dev; HR Reviewed by Svein Tore on 2026-10-25; no Main/production"
+}

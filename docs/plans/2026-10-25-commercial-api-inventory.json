@@ -1,0 +1,1771 @@
+{
+  "status": "Draft baseline; no new API implementation or behavior certification",
+  "date": "2026-10-25",
+  "source": "authoritative Dev /var/Projects/tdPSA",
+  "branch": "Dev",
+  "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "dirty_paths_at_preflight": 872,
+  "counts": {
+    "browser_route_entries": 73,
+    "api_route_entries": 18,
+    "api_http_operations_excluding_head": 22,
+    "livewire_components": 6,
+    "workflow_rows": 19
+  },
+  "counting_rule": "Entries include forms, aliases, hubs and one dead declaration; HEAD excluded from HTTP operation count. Do not divide API methods by browser route entries. Livewire methods include framework/helpers, not all distinct public capabilities.",
+  "browser_routes": [
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "contract/accept/{token}",
+      "name": "contracts.public.accept",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\PublicContractController@accept",
+      "middleware": [
+        "web"
+      ],
+      "path": null,
+      "workflow": "C07"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "contract/view/{token}",
+      "name": "contracts.public.view",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\PublicContractController@view",
+      "middleware": [
+        "web"
+      ],
+      "path": null,
+      "workflow": "C07"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "portal/contracts",
+      "name": "customer-portal.contracts.index",
+      "action": "App\\Modules\\Commercial\\Controllers\\Portal\\PortalContractController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null,
+      "workflow": "C08"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "portal/contracts/{contract}",
+      "name": "customer-portal.contracts.show",
+      "action": "App\\Modules\\Commercial\\Controllers\\Portal\\PortalContractController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null,
+      "workflow": "C08"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "portal/contracts/{contract}/accept",
+      "name": "customer-portal.contracts.accept",
+      "action": "App\\Modules\\Commercial\\Controllers\\Portal\\PortalContractController@accept",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null,
+      "workflow": "C08"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/cs/timebank-policy",
+      "name": "tech.admin.settings.cs.timebank-policy",
+      "action": "App\\Modules\\Commercial\\Controllers\\Admin\\ClientTimebankPolicyController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "workflow": "C16"
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/admin/settings/cs/timebank-policy",
+      "name": "tech.admin.settings.cs.timebank-policy.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Admin\\ClientTimebankPolicyController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "workflow": "C16"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/economy/rates",
+      "name": "tech.admin.settings.economy.rates",
+      "action": "App\\Modules\\Commercial\\Controllers\\Admin\\TimeRateController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "workflow": "C14"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/settings/economy/rates",
+      "name": "tech.admin.settings.economy.rates.store",
+      "action": "App\\Modules\\Commercial\\Controllers\\Admin\\TimeRateController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "workflow": "C14"
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/admin/settings/economy/rates/{rate}",
+      "name": "tech.admin.settings.economy.rates.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Admin\\TimeRateController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "workflow": "C14"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/economy/units",
+      "name": "tech.admin.settings.economy.units",
+      "action": "App\\Modules\\Commercial\\Controllers\\Admin\\UnitsController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "workflow": "C15"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/settings/economy/units",
+      "name": "tech.admin.settings.economy.units.store",
+      "action": "App\\Modules\\Commercial\\Controllers\\Admin\\UnitsController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "workflow": "C15"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/settings/economy/units/update/{unit}",
+      "name": "tech.admin.settings.economy.units.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Admin\\UnitsController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "workflow": "C15"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/clients/{client}/contracts/timebank-consumptions",
+      "name": "tech.clients.contracts.timebank-consumptions.store",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ClientTimebankConsumptionController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C17"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/contracts",
+      "name": "tech.contracts.index",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C01"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/contracts/create",
+      "name": "tech.contracts.create",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@create",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C01"
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/contracts/delete/{contract}",
+      "name": "tech.contracts.destroy",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@destroy",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C01"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/contracts/edit/{contract}",
+      "name": "tech.contracts.edit",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C01"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/contracts/show/{contract}",
+      "name": "tech.contracts.show",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C01"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/contracts/store",
+      "name": "tech.contracts.store",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C01"
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/contracts/update/{contract}",
+      "name": "tech.contracts.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C01"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/contracts/{contract}/approve-manual",
+      "name": "tech.contracts.approve-manual",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@approveManual",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C05"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/contracts/{contract}/customer-document/attest-legacy",
+      "name": "tech.contracts.customer-document.attest-legacy",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@attestLegacyCustomerDocument",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C05"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/contracts/{contract}/pdf",
+      "name": "tech.contracts.pdf",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@pdf",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C06"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/contracts/{contract}/resend",
+      "name": "tech.contracts.resend",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@resend",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C04"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/contracts/{contract}/send-contract",
+      "name": "tech.contracts.send-contract",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@sendContract",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C04"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/contracts/{contract}/send-quote",
+      "name": "tech.contracts.send-quote",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@sendQuote",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C04"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/contracts/{contract}/services",
+      "name": "tech.contracts.services.edit",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@servicesEdit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C02"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/contracts/{contract}/services",
+      "name": "tech.contracts.services.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@servicesUpdate",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C02"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/contracts/{contract}/terms",
+      "name": "tech.contracts.terms",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@terms",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C03"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/contracts/{contract}/terms",
+      "name": "tech.contracts.terms.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@termsUpdate",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C03"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/contracts/{contract}/terms/refresh",
+      "name": "tech.contracts.terms.refresh",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\ContractController@termsRefresh",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C03"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/costs",
+      "name": "tech.costs.index",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Costs\\CostController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C11"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/costs/create",
+      "name": "tech.costs.create",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Costs\\CostController@create",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C11"
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/costs/delete/{cost}",
+      "name": "tech.costs.delete",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Costs\\CostController@delete",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C11"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/costs/edit/{cost}",
+      "name": "tech.costs.edit",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Costs\\CostController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C11"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/costs/store",
+      "name": "tech.costs.store",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Costs\\CostController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C11"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/costs/update/{cost}",
+      "name": "tech.costs.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Costs\\CostController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C11"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/costs/{cost}",
+      "name": "tech.costs.show",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Costs\\CostController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C11"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/legal",
+      "name": "tech.legal.index",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Legal\\LegalController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C12"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/legal/create",
+      "name": "tech.legal.create",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Legal\\LegalController@create",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C12"
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/legal/delete/{term}",
+      "name": "tech.legal.delete",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Legal\\LegalController@delete",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C12"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/legal/edit/{term}",
+      "name": "tech.legal.edit",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Legal\\LegalController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C12"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/legal/show/{term}",
+      "name": "tech.legal.show",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Legal\\LegalController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C12"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/legal/store",
+      "name": "tech.legal.store",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Legal\\LegalController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C12"
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/legal/update/{term}",
+      "name": "tech.legal.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Legal\\LegalController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C12"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/package/create",
+      "name": "tech.packages.create",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Package\\PackageController@create",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C10"
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/package/delete/{package}",
+      "name": "tech.packages.delete",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Package\\PackageController@destroy",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C10"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/package/edit/{package}",
+      "name": "tech.packages.edit",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Package\\PackageController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C10"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/package/show/{package}",
+      "name": "tech.packages.show",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Package\\PackageController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C10"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/package/store",
+      "name": "tech.packages.store",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Package\\PackageController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C10"
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/package/update/{package}",
+      "name": "tech.packages.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Package\\PackageController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C10"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/packages",
+      "name": "tech.packages.index",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Package\\PackageController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C10"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/rates",
+      "name": "tech.rates.index",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Rates\\TimeRateController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C14"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/rates",
+      "name": "tech.rates.store",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Rates\\TimeRateController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C14"
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/rates/{rate}",
+      "name": "tech.rates.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Rates\\TimeRateController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C14"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/services",
+      "name": "tech.services.index",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Services\\ServiceController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C09"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/services",
+      "name": "tech.services.store",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Services\\ServiceController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C09"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/services/create",
+      "name": "tech.services.create",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Services\\ServiceController@create",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C09"
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/services/destroy/{service}",
+      "name": "tech.services.destroy",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Services\\ServiceController@destroy",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C09"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/services/edit/{service}",
+      "name": "tech.services.edit",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Services\\ServiceController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C09"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/services/update/{service}",
+      "name": "tech.services.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Services\\ServiceController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C09"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/services/{service}",
+      "name": "tech.services.show",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Services\\ServiceController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C09"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/sla",
+      "name": "tech.sla.index",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Sla\\SlaController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C13"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/sla/create",
+      "name": "tech.sla.create",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Sla\\SlaController@create",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C13"
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/sla/delete/{sla}",
+      "name": "tech.sla.delete",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Sla\\SlaController@destroy",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "D01"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/sla/edit/{sla}",
+      "name": "tech.sla.edit",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Sla\\SlaController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C13"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/sla/show/{sla}",
+      "name": "tech.sla.show",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Sla\\SlaController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C13"
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/sla/store",
+      "name": "tech.sla.store",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Sla\\SlaController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C13"
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/sla/update/{sla}",
+      "name": "tech.sla.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Sla\\SlaController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "workflow": "C13"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS",
+      "uri": "tech/admin/settings/cs/contacts",
+      "name": "tech.admin.settings.cs.contracts.legacy",
+      "action": "Illuminate\\Routing\\RedirectController",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "workflow": "C16"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/cs/contracts",
+      "name": "tech.admin.settings.cs.contracts",
+      "action": "Closure",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": "app/Modules/Commercial/routes.php:208",
+      "workflow": "C16"
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/cs/services",
+      "name": "tech.admin.settings.cs.services",
+      "action": "Closure",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": "app/Modules/Commercial/routes.php:212",
+      "workflow": "C16"
+    }
+  ],
+  "current_api_routes": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/commercial/contracts",
+      "name": "api.v1.commercial.contracts.index",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialController@contracts",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:commercial.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/commercial/contracts",
+      "name": "api.v1.commercial.contracts.store",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialController@storeContract",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:commercial.create"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/commercial/contracts/{contract}",
+      "name": "api.v1.commercial.contracts.show",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialController@showContract",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:commercial.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT|PATCH",
+      "uri": "api/v1/commercial/contracts/{contract}",
+      "name": "api.v1.commercial.contracts.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialController@updateContract",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:commercial.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/commercial/services",
+      "name": "api.v1.commercial.services.index",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialController@services",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:commercial.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/commercial/services",
+      "name": "api.v1.commercial.services.store",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialController@storeService",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:commercial.create"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/commercial/services/{service}",
+      "name": "api.v1.commercial.services.show",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialController@showService",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:commercial.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT|PATCH",
+      "uri": "api/v1/commercial/services/{service}",
+      "name": "api.v1.commercial.services.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialController@updateService",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:commercial.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/commercial/slas",
+      "name": "api.v1.commercial.slas.index",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialController@slas",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:commercial.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/commercial/slas",
+      "name": "api.v1.commercial.slas.store",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialController@storeSla",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:commercial.create"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/commercial/slas/{sla}",
+      "name": "api.v1.commercial.slas.show",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialController@showSla",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:commercial.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT|PATCH",
+      "uri": "api/v1/commercial/slas/{sla}",
+      "name": "api.v1.commercial.slas.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialController@updateSla",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:commercial.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/commercial/time-rates",
+      "name": "api.v1.commercial.time-rates.index",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialController@timeRates",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:commercial.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/commercial/time-rates",
+      "name": "api.v1.commercial.time-rates.store",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialController@storeTimeRate",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:commercial.create"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/commercial/time-rates/{rate}",
+      "name": "api.v1.commercial.time-rates.show",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialController@showTimeRate",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:commercial.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT|PATCH",
+      "uri": "api/v1/commercial/time-rates/{rate}",
+      "name": "api.v1.commercial.time-rates.update",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialController@updateTimeRate",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:commercial.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/commercial/worklog/contract-links",
+      "name": "api.v1.commercial.worklog.contract-links.index",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialWorklogController@contractLinks",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Integration\\Http\\Middleware\\EnforceCoordinatorWorkload:pseudonymized,commercial.worklog-links.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/commercial/worklog/time-consumptions",
+      "name": "api.v1.commercial.worklog.time-consumptions.index",
+      "action": "App\\Modules\\Commercial\\Controllers\\Api\\V1\\CommercialWorklogController@consumptions",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Integration\\Http\\Middleware\\EnforceCoordinatorWorkload:pseudonymized,commercial.worklog.read"
+      ],
+      "path": null
+    }
+  ],
+  "livewire_components": [
+    {
+      "file": "app/Modules/Commercial/Livewire/Tech/Contracts/ContractItemsEditor.php",
+      "sha256": "7f3a9e12b07581ccfa11b3d790aa7bba2d87831a41db1647e02f8c2ee0618b4f",
+      "public_methods": [
+        "mount",
+        "loadItems",
+        "addItem",
+        "updatedItems",
+        "syncBillingIntervalFromService",
+        "calculateLineTotals",
+        "calculateBillingTotals",
+        "saveItem",
+        "removeItem",
+        "calculateTotalCost",
+        "calculateTotalDiscount",
+        "calculateAnnualProfit",
+        "render"
+      ],
+      "workflow": "C02"
+    },
+    {
+      "file": "app/Modules/Commercial/Livewire/Tech/PackageLegal.php",
+      "sha256": "93c38e98519b7b6e9b22db187f25990b826b2a7736caa04884abf45413b7c3af",
+      "public_methods": [
+        "mount",
+        "updateServices",
+        "allTerms",
+        "selectedTerms",
+        "termsFromServices",
+        "toggleTerm",
+        "removeTerm",
+        "render"
+      ],
+      "workflow": "C10"
+    },
+    {
+      "file": "app/Modules/Commercial/Livewire/Tech/PackagePricing.php",
+      "sha256": "84c884a2dd6c003eef3c7e1d015558eb2e1637fe9075ab1cc219688484d2d2e4",
+      "public_methods": [
+        "mount",
+        "updateServices",
+        "selectedServices",
+        "pricingByUnit",
+        "pricingRows",
+        "totalCostPrice",
+        "totalServiceSalesPrice",
+        "currentSalesPrice",
+        "marginAmount",
+        "marginPercentage",
+        "render"
+      ],
+      "workflow": "C10"
+    },
+    {
+      "file": "app/Modules/Commercial/Livewire/Tech/ServiceLegal.php",
+      "sha256": "da43326d80519c572e2e4a8ca460138d2ebaec77cf956254a9a8f9d915c2ec0a",
+      "public_methods": [
+        "mount",
+        "allTerms",
+        "selectedTerms",
+        "providerTerms",
+        "selectedNexumTerms",
+        "toggleTerm",
+        "removeTerm",
+        "render"
+      ],
+      "workflow": "C09"
+    },
+    {
+      "file": "app/Modules/Commercial/Livewire/Tech/ServicePicker.php",
+      "sha256": "5dede7d5b2592e005612811a6a92d6064a3acd06b4604faf6346d738e2d5c162",
+      "public_methods": [
+        "mount",
+        "allServices",
+        "selectedServices",
+        "toggleService",
+        "removeService",
+        "render"
+      ],
+      "workflow": "C10"
+    },
+    {
+      "file": "app/Modules/Commercial/Livewire/Tech/ServicePricing.php",
+      "sha256": "70ceb41057f8fd84de2d7e18aa0403b67c9d192fa0add218fbfeb1e995a1f8fd",
+      "public_methods": [
+        "mount",
+        "checkRecommendedPrice",
+        "getTotalCostProperty",
+        "getCommissionProperty",
+        "updatedSelected",
+        "remove",
+        "render"
+      ],
+      "workflow": "C09"
+    }
+  ],
+  "workflows": [
+    {
+      "id": "C01",
+      "workflow": "Contract list/filter/sort, context and metadata",
+      "current_api": "Partial: list/detail/create/update only",
+      "target": "Full fields and typed context, client-only scope, draft-only delete and receipt."
+    },
+    {
+      "id": "C02",
+      "workflow": "Contract line editor and pricing preview",
+      "current_api": "Missing",
+      "target": "Add/update/remove, service/offer selection, quantity/defaults, exact economics/currency/customer wording, SLA/rate snapshots and explicit draft cadence adoption."
+    },
+    {
+      "id": "C03",
+      "workflow": "Contract terms review and versions",
+      "current_api": "Missing",
+      "target": "Discover sources/versions/readiness; explicit refresh/save with exact fingerprints, manual wording and stale-review denial."
+    },
+    {
+      "id": "C04",
+      "workflow": "Send quote/agreement and resend",
+      "current_api": "Missing",
+      "target": "Frozen reviewable recipient/CC/content/provider, explicit commands, deduplication, truthful delivery evidence and recovery."
+    },
+    {
+      "id": "C05",
+      "workflow": "Manual approval and legacy attestation",
+      "current_api": "Missing",
+      "target": "Current named actor, original evidence, fresh preview fingerprint, explicit type/note/confirmation, immutable snapshot and receipt."
+    },
+    {
+      "id": "C06",
+      "workflow": "Staff PDF/customer-document output",
+      "current_api": "Partial: JSON projection exists; PDF API absent",
+      "target": "Existing exact calculator/projector/snapshot/PDF, pure readiness and honest unavailable evidence."
+    },
+    {
+      "id": "C07",
+      "workflow": "Public view and accept",
+      "current_api": "Missing",
+      "target": "Exact current bearer capability, safe projection, explicit viewed event, bounded accept and receipt; no staff impersonation."
+    },
+    {
+      "id": "C08",
+      "workflow": "Portal list/detail/accept",
+      "current_api": "Missing",
+      "target": "Current portal session/CSRF/account/membership/contact/client/site, safe document, legal/audit/notification effects and receipt."
+    },
+    {
+      "id": "C09",
+      "workflow": "Service catalogue/composition",
+      "current_api": "Partial: basic read/create/update",
+      "target": "Full fields/context/filter/sort/delete, cost/legal/rate links, add-on/audience defaults and calculated previews; active Integration locks."
+    },
+    {
+      "id": "C10",
+      "workflow": "Packages/composition",
+      "current_api": "Missing",
+      "target": "Read/context/create/update/delete, services/terms/inherited terms, per-unit and aggregate pricing/margin previews."
+    },
+    {
+      "id": "C11",
+      "workflow": "Cost catalogue",
+      "current_api": "Missing",
+      "target": "Full fields/context/filter/sort/read/create/update/delete; vendor/unit/recurrence and active source/in-use guards."
+    },
+    {
+      "id": "C12",
+      "workflow": "Legal terms and versions",
+      "current_api": "Missing",
+      "target": "Read/context/create/update/delete, version creation, kind/source/reference, provider and in-use guards."
+    },
+    {
+      "id": "C13",
+      "workflow": "SLA and default selection",
+      "current_api": "Partial: read/create/update exist",
+      "target": "All fields/context/default invariants and Ticket inheritance regressions. Declared delete is D01."
+    },
+    {
+      "id": "C14",
+      "workflow": "Time rates",
+      "current_api": "Partial: read/create/update exist",
+      "target": "All fields/context/enums, customer visibility/application/active/sort semantics; no invented deletion."
+    },
+    {
+      "id": "C15",
+      "workflow": "Unit administration",
+      "current_api": "Missing",
+      "target": "Read/create/update with Admin plus economy.manage_settings; references retained, no unsupported delete."
+    },
+    {
+      "id": "C16",
+      "workflow": "Timebank policy and settings hubs",
+      "current_api": "Missing",
+      "target": "Actual quick policy read/update under Admin plus contract_manage; canonical capability discovery for hubs and redirect aliases."
+    },
+    {
+      "id": "C17",
+      "workflow": "Client timebank options/balances/registration",
+      "current_api": "Missing staff operations; coordinator export is separate",
+      "target": "Eligible lines/rates/period balance, quick consumption policy/note/limit/overuse, exact snapshots and safe retries; reuse supported owner time-correction APIs."
+    },
+    {
+      "id": "C18",
+      "workflow": "Controlled worklog and contract-link export",
+      "current_api": "Existing two coordinator reads; preserve distinct boundary",
+      "target": "Workload/pseudonym/context/source limits, totals/truncation and separate direct consumption versus billing allocations; no operational access widening."
+    },
+    {
+      "id": "D01",
+      "workflow": "Declared SLA delete without method",
+      "current_api": "Defect: SlaController::destroy absent",
+      "target": "No matching control found in SLA views. Verify callers, remove unused dead route with regression; no invented cascade/default/history rules."
+    }
+  ],
+  "source_hashes": {
+    "app/Modules/Commercial/routes.php": "96790cfce48881dd7d51ab4477e0869ad9c12ee8e4556c2af0ba78071993ab93",
+    "app/Modules/Commercial/api.php": "fbd72e9a4c4f88cd6c35f39870b1d77f8c969293e8a1b811d9c2db46e5e69761",
+    "app/Modules/Commercial/Livewire/Tech/PackageLegal.php": "93c38e98519b7b6e9b22db187f25990b826b2a7736caa04884abf45413b7c3af",
+    "app/Modules/Commercial/Livewire/Tech/ServiceLegal.php": "da43326d80519c572e2e4a8ca460138d2ebaec77cf956254a9a8f9d915c2ec0a",
+    "app/Modules/Commercial/Livewire/Tech/PackagePricing.php": "84c884a2dd6c003eef3c7e1d015558eb2e1637fe9075ab1cc219688484d2d2e4",
+    "app/Modules/Commercial/Livewire/Tech/ServicePricing.php": "70ceb41057f8fd84de2d7e18aa0403b67c9d192fa0add218fbfeb1e995a1f8fd",
+    "app/Modules/Commercial/Livewire/Tech/ServicePicker.php": "5dede7d5b2592e005612811a6a92d6064a3acd06b4604faf6346d738e2d5c162",
+    "app/Modules/Commercial/Livewire/Tech/Contracts/ContractItemsEditor.php": "7f3a9e12b07581ccfa11b3d790aa7bba2d87831a41db1647e02f8c2ee0618b4f",
+    "app/Modules/Commercial/Models/ServiceTimeRate.php": "3092811fcafb144cb4fceed3c71e9e042af2e4d425f64fbc64d63a61639609cc",
+    "app/Modules/Commercial/Models/TimeRate.php": "b2a1adf38e1fa6c09e6ce9ae1fbe9f4b249897f222cede46c17db59a1cbb34dc",
+    "app/Modules/Commercial/Models/CostRelations.php": "717de59f7078f19af45f922ffb7926fa21ca9cfd1d6db85736b59e76045d3c78",
+    "app/Modules/Commercial/Models/Cost.php": "b38262e972210129dd0d10550461cf8e0ed90d08f0da2be17ba74c3fa8c65742",
+    "app/Modules/Commercial/Models/Economy/Units.php": "39024391ab47c075e0ed1709b1b92866617172cec3b7c9d88a79dcb154ab86fd",
+    "app/Modules/Commercial/Models/Sla/Sla.php": "a7cbd757f3797d39e456cd81e138a3d230e1bc64be8051730e566b3707b00b71",
+    "app/Modules/Commercial/Models/Services/Services.php": "87fe33af7405b20ccdea59ddbcf6b1e855c2a2b6bd44d138792b344f318f4e3e",
+    "app/Modules/Commercial/Models/Contracts/Contracts.php": "be287b45a79a68667df1dd40c653d96d63ec8a63283bb57f641b6a5779a16792",
+    "app/Modules/Commercial/Models/Contracts/ContractItem.php": "f26699db6ab5628162aea602d0719a0248e8e782f655bd085c302002f05ce021",
+    "app/Modules/Commercial/Models/Contracts/ContractItemTimeRate.php": "46e04552e4c0f2e6ed8c4fa9e872601e2b96529684cb666836bd8b82b473cdcb",
+    "app/Modules/Commercial/Models/Contracts/ClientContractTimeConsumption.php": "805631eaf37e9f1e5eb1cffb62af11379cd5842ab6aa7628b3bcc55c07eebbcd",
+    "app/Modules/Commercial/Models/Packages/Package.php": "f871c956effd0be77d09892eeb1e3f802d5d29dc959c97b78ebefaf9faa2cf98",
+    "app/Modules/Commercial/Models/Terms/terms.php": "7828cd4f78a9c2154e7e45c992e28cf06b3f85ea425fb23c50b597b98cbd49a9",
+    "app/Modules/Commercial/Models/Terms/ContractTermSnapshot.php": "11fd9b0963eb42accebd49d5428cad15564008b92a7928eef4150aaae1fb4997",
+    "app/Modules/Commercial/Models/Terms/LegalAcceptanceEvent.php": "19db5a2944e0b1549ec46b89a3dd70eaa180477c6af88312258cd4f86c44eedc",
+    "app/Modules/Commercial/Models/Terms/TermVersion.php": "397e6586cd728cee7d1d5be6e2b56b20ff0a850bbd9836ccfde49dee49401cef",
+    "app/Modules/Commercial/Services/LegalDocumentVersioning.php": "d41cc8ad440c99681c5af7b0b440e058d6ef4214fcf98ead97ddd09baf405050",
+    "app/Modules/Commercial/Actions/RecordLegalAcceptance.php": "ad986e07b9d00f1347676c906947021920efd3222468a7cfbfc7c15f8f2f75ef",
+    "app/Modules/Commercial/Actions/AttestLegacyContractCustomerDocument.php": "c67c20d61cd53425267879569395834c4b52ad7a147c8d6d90931ea9c5c8fe81",
+    "app/Modules/Commercial/Actions/SyncContractPricingSummary.php": "1df1a672d1a5872dae36bdd7200134103cfdf6f41d02e1156230af5909f30825",
+    "app/Modules/Commercial/Actions/CalculateClientTimebankBalances.php": "453683ce18cb0909000cfa4b79cdf5de0352c36bff0ad72f535d3de282efd146",
+    "app/Modules/Commercial/Actions/BuildContractTermSnapshots.php": "0ba75e645dd3cb2f84cdca7445bd4bbf21b06159a7657046962a54c7485393fe",
+    "app/Modules/Commercial/Actions/RegisterClientTimebankConsumption.php": "137091b06a3c76c5ff1cf1a26ecd7fab9da2580d5c401413812637922f93ca4d",
+    "app/Modules/Commercial/Actions/CaptureContractCustomerDocument.php": "56b52c06df8fbbf68f6a19f4dfbe521a5bce125daf1b15a9749e7c3e4260c5b4",
+    "app/Modules/Commercial/Actions/CaptureContractTermVersions.php": "b78f27f4b60ca281ea31f35264b9ddb56e84f7fa6e1b7bf700571fddfab19355",
+    "app/Modules/Commercial/Views/Tech/partials/forms/create-service-form.blade.php": "ce4849b1127f9b0418580a6f3e831bb6db0c183528a2b86f1f17ffff25bfe529",
+    "app/Modules/Commercial/Views/Tech/cs/costs/show.blade.php": "c34b80270be0b810a638309d39bcc262ded68f10a5b1a9ff26fe01d3c7903e85",
+    "app/Modules/Commercial/Views/Tech/cs/costs/form.blade.php": "5aa048b3dc4b1243a3e15fa05869a49be3cd5615c4ea4763857da3918e54755b",
+    "app/Modules/Commercial/Views/Tech/cs/costs/index.blade.php": "6257a8afe3dd1a0e62895acbd401bb7a6e7b5d247c20f1c29de8f6a3cc517a9d",
+    "app/Modules/Commercial/Views/Tech/cs/packages/form.blade.php": "906eff2e5699b70860c059f98fc9390a591b74b4a6d4bb909d187a40b3b23a91",
+    "app/Modules/Commercial/Views/Tech/cs/packages/index.blade.php": "997655b46121d5bc39f3aae9fa1477802cb86955434731a7b5bed7bb1c5b3c73",
+    "app/Modules/Commercial/Views/Tech/cs/legal/form.blade.php": "8100019dba5e5637386f89f28c9ff114a02fcc1d1c34281d6f0925e5c7418301",
+    "app/Modules/Commercial/Views/Tech/cs/legal/index.blade.php": "6929c812f51ff6811aebda6d14e8ada15670e91eb111dc11db70f7627a2d9a84",
+    "app/Modules/Commercial/Views/Tech/cs/services/show.blade.php": "544958e9cd851365f2c582b708c593db6459d7ed2147ba7003c7e5260744b8e0",
+    "app/Modules/Commercial/Views/Tech/cs/services/index.blade.php": "1ea9476c6d9bcdf615cd1def7a7c5a8cc824f6a26b6a3d539c00901cbec5079d",
+    "app/Modules/Commercial/Views/Tech/cs/services/create.blade.php": "2186616d84804bae0d65f3ca89d2f73b8183f5fc1e106450873fe3e7149c681a",
+    "app/Modules/Commercial/Views/Tech/cs/services/edit.blade.php": "731b00f1053f45935744515268a296e77f792f87f2a738ae86394be644e72ce3",
+    "app/Modules/Commercial/Views/Tech/cs/contracts/show.blade.php": "6ab44e0768d241a766ba56bfc89dfdcad4ba0bd1724e7ae28f7ede27383585ea",
+    "app/Modules/Commercial/Views/Tech/cs/contracts/index.blade.php": "c18460e6b08bbfd53a769192a30c5dc1569b96b0cc6ea7b6b7c859a57a42cb5f",
+    "app/Modules/Commercial/Views/Tech/cs/contracts/pdf.blade.php": "8c4e0669d7ada2f76911a1d154df689a5aacaec0da6c9ffd19e8ed6428eb41ae",
+    "app/Modules/Commercial/Views/Tech/cs/contracts/create/create.blade.php": "7733a62a0915172693870b88724d56554918a1bbfa95f0cd30a572a1edf64824",
+    "app/Modules/Commercial/Views/Tech/cs/contracts/public/view.blade.php": "afa77d5002f5551c03ad5961a9ad7162f382b38bcc9235412ae14f5dde806c53",
+    "app/Modules/Commercial/Views/Tech/cs/contracts/services/edit.blade.php": "478c75d5211cef0f6af2a738ce21dca064c49e6c7fd6f8f546165ce207ee1a5a",
+    "app/Modules/Commercial/Views/Tech/cs/contracts/terms/terms.blade.php": "d17cff639e359da7c9f2201d6141f8c5c5595e28b77cda804b770a83a69b1868",
+    "app/Modules/Commercial/Views/Tech/cs/sla/form.blade.php": "b893a2563a767d3e061f6838f6638d4fce5f54535610e7525fa6662c43398da3",
+    "app/Modules/Commercial/Views/Tech/cs/sla/index.blade.php": "5235d11c48857488eeffa0d4bc038528345f4ea1532114c9c7f1c0b65c849128",
+    "app/Modules/Commercial/Views/Tech/cs/sla/partials/responseTime.blade.php": "c8f35ce458b754d1a2b148d1784a674044d12ccefd36671af73701f59c408511",
+    "app/Modules/Commercial/Views/Tech/cs/rates/index.blade.php": "ae274205dda21a9905ff2611b7f72ed47a225e9268a434ea5da252b75e337f5b",
+    "app/Modules/Commercial/Views/Tech/cs/rates/partials/form.blade.php": "e5281fa48961204b94988c639afa160c2d1eff1dcf334683a8d765ea6fde1cc9",
+    "app/Modules/Commercial/Views/Livewire/Tech/service-pricing.blade.php": "7bba0194e32b4ca6a5164c65e6e3b52388aed88448883ce471f6a5229ee24c90",
+    "app/Modules/Commercial/Views/Livewire/Tech/service-picker.blade.php": "85fd4675fdfc72bd7649fa78d41f58692a919756447c5078e7ece8ae95e2b79a",
+    "app/Modules/Commercial/Views/Livewire/Tech/package-legal.blade.php": "35c3286c3c11cdd6d2bef6caf517d0a147f74e729c60b25bd498b7d07937cada",
+    "app/Modules/Commercial/Views/Livewire/Tech/service-legal.blade.php": "fc2d6c55e66d6db338f43003cde898c92d7c4cc3310dedf4cecdc0653f719694",
+    "app/Modules/Commercial/Views/Livewire/Tech/package-pricing.blade.php": "562e4fed91cc2f7184747dbecfb117b7af328a114c19eeb61d2b474bb093b55e",
+    "app/Modules/Commercial/Views/Livewire/Tech/Contract/contract-items-editor.blade.php": "fdcb0b0a6b7263f5f033cf367e303d9323eecbfd44ebe931ecbd2592cad0404f",
+    "app/Modules/Commercial/Views/Shared/customer-document-web.blade.php": "99d1aac64e2350675dfc2eabeae5538c8ab7ee0df14d12516637d8b2c474da1b",
+    "app/Modules/Commercial/Views/Portal/contracts/show.blade.php": "179eba146fe00f898c9e0048671ace0f869741cf3906cd53a9305aefd2e704f1",
+    "app/Modules/Commercial/Views/Portal/contracts/index.blade.php": "df1edf6e12e42d22c399ed5b31d84168820e2462cf616428c0f426bc5fb05960",
+    "app/Modules/Commercial/Views/Admin/economy/index.blade.php": "67ae088715d33c0def9fcbac841b4cacf139b3f9c805a0c271824c22e98ed703",
+    "app/Modules/Commercial/Views/Admin/economy/units/index.blade.php": "03898425753ea35abeaae31c4a262d389945ef60495dc19f3abdf77b551514c8",
+    "app/Modules/Commercial/Views/Admin/settings/contracts.blade.php": "75598c437c656c3d3240ae5e3336ec6eee2ac062da74ca6e45ec081c6cdb3b43",
+    "app/Modules/Commercial/Views/Admin/settings/timebank-policy.blade.php": "3c51890c43729c04186ed0d215640f2d0b350c5ab48e6c487c077b637baa0c2b",
+    "app/Modules/Commercial/Views/Admin/settings/services.blade.php": "64c65d7a87adc7f6c8a8388360002d0227429d798a76f569a72647884a15fd5e",
+    "app/Modules/Commercial/Resources/Api/V1/CommercialContractResource.php": "e50b24f999a73a535661aacce6b54f569fe458164427d5a5cc6431aeee9c3323",
+    "app/Modules/Commercial/Resources/Api/V1/CommercialTimeRateResource.php": "aa03b4cc37bae7fbf959bb93db1b679bb9c27b9f19581f96d062b20c54965ba7",
+    "app/Modules/Commercial/Resources/Api/V1/CommercialWorklogOpenApi.php": "d45af09d4ef96ad7121545f7a2ec18e2694771ad1b149caee976477455a6df1c",
+    "app/Modules/Commercial/Resources/Api/V1/CommercialServiceResource.php": "7c0644f4e16b5d9b0485740331b912972d78b88b42931bb6f381fb3445d8364f",
+    "app/Modules/Commercial/Resources/Api/V1/CommercialSlaResource.php": "21bab4fcfc3d1ed1b1108fdec500dde7072c730decc30061f637f09be50b7065",
+    "app/Modules/Commercial/Tests/Unit/ContractPricingTest.php": "88e653180ccba89fdb107b58fe677e0a0a51904b736c97642c32fc97592a411b",
+    "app/Modules/Commercial/Tests/Feature/CommercialWorklogTest.php": "db99ce37718c606af42e72b67d58b0faea17866ae7cb825813574b26841d42e4",
+    "app/Modules/Commercial/Tests/Feature/ContractFinalReviewRegressionTest.php": "01a50a4676aacd30bb8467bae6afee494b0f523e8bc67b1179f0388bc12a5bfe",
+    "app/Modules/Commercial/Tests/Feature/ContractCustomerDocumentTest.php": "35f8ed2d32209c08cc5bfcf4e0c655b04b5d3eb4b39d1b178360acaeaf92718d",
+    "app/Modules/Commercial/Tests/Feature/CommercialModuleTest.php": "052bc6a6be03fa55c6f11041055a60eb4af0766be081d9cb6b01ef67082a584b",
+    "app/Modules/Commercial/Requests/PackageRequest.php": "30d4cec158139fd47776517c4fe62d40b866ed14c404aa343d8b1f49b88c25c7",
+    "app/Modules/Commercial/Requests/UnitsRequest.php": "5182b41dfa5d519bbbcb7d158b75603bd3de85e030753cccda6b84f56fd05d0c",
+    "app/Modules/Commercial/Requests/ContractsRequest.php": "fa5e69c5ac2bbb8f44dc30a6130a32d880f704412e2ad3065a18e9ea1c43ca3d",
+    "app/Modules/Commercial/Requests/StoreCostRequest.php": "c0e203ee83f21b6face22e44d1eb370c8a9ba820d43a6295a32703ba246bd039",
+    "app/Modules/Commercial/Requests/ServiceStoreRequest.php": "7b1f331d687733e3d50c0c7fde5bd38c3dc315af81c7d6422f35bf5d162c7b05",
+    "app/Modules/Commercial/Requests/termsRequest.php": "78ea56a7e3e1cd7ff591b520db1f9d9976afcddebdd0c0b06cdcf044f2740ace",
+    "app/Modules/Commercial/Requests/SlaRequest.php": "3deb6cbe310f48ec8f12000eb1216d1123869535623554dc913e1a73fbc74900",
+    "app/Modules/Commercial/Controllers/Tech/Rates/TimeRateController.php": "6b3064db50af65eb4de0f868ae6a736e178a8e701bcb8a1516ee4f32a946df2b",
+    "app/Modules/Commercial/Controllers/Tech/Sla/SlaController.php": "5c6512cf59b7771e292076cc92f62a8859a466374480b5ba3734f5704eeeebde",
+    "app/Modules/Commercial/Controllers/Tech/Services/ServiceController.php": "7dbeca3d1c21d8177811171ca244ca136ef6d036f17cfecdc65736f348f07d5d",
+    "app/Modules/Commercial/Controllers/Tech/Contracts/PublicContractController.php": "4e785c1016dda85f64c7050341ff4fe6555bc3adf0016da8429fb9539df1c5bc",
+    "app/Modules/Commercial/Controllers/Tech/Contracts/ClientTimebankConsumptionController.php": "8d73e0e23e8eefffa4e434ed05437900e32136e1e8f86a923fd05adf2bfe97af",
+    "app/Modules/Commercial/Controllers/Tech/Contracts/ContractController.php": "288d39f850eff38daa8ee9be30db60d00eda2b4d114bf4bab54e951b353d34c0",
+    "app/Modules/Commercial/Controllers/Tech/Package/PackageController.php": "73a10250fa7510699652dced16fdc3f7429456e47b8ca45b4b347d57f0559302",
+    "app/Modules/Commercial/Controllers/Tech/Costs/CostController.php": "626a508be8c764ffc72af8baf5c57fce0cfe760669b5e06429036268575161a8",
+    "app/Modules/Commercial/Controllers/Tech/Legal/LegalController.php": "2b9994dd334e7d7d5b880c5cb3a3ae49f2131d90a3f67a6c96bb2e49f18f393d",
+    "app/Modules/Commercial/Controllers/Portal/PortalContractController.php": "7b6123a12bed1b6e1c8f695bc2d4faffcec21371b00ae9ca2f2bd3135728d274",
+    "app/Modules/Commercial/Controllers/Admin/EconomyController.php": "ec98f06d632c9b0a98ac35223f4d25baa7a8c5b403953ac6cfe29fbb7f9f0f22",
+    "app/Modules/Commercial/Controllers/Admin/UnitsController.php": "6c3410b4bdd3ff0f7c4b9db17aed4269e3115b877a9b29d3c134989086ddb0b1",
+    "app/Modules/Commercial/Controllers/Admin/ClientTimebankPolicyController.php": "e53133e33a4a8695ce62d93ae00340ea7b65c0dc76d2458f814705620b39736c",
+    "app/Modules/Commercial/Controllers/Admin/TimeRateController.php": "6d7ec69db98eb0a69c04356046c9b710c960a956c272039a72d201c4721baa04",
+    "app/Modules/Commercial/Controllers/Api/V1/CommercialController.php": "8aef96eb2015085518c4aea04dbdfbae46ded9d25f3140b5e789c4b789eba915",
+    "app/Modules/Commercial/Controllers/Api/V1/CommercialWorklogController.php": "9a8b5ea328be460c51ea7dc03fa085f1e304793116b08bbb38848755834e8ae7",
+    "app/Modules/Commercial/Support/ContractCustomerDocument.php": "d6f9e9be037ecab838fdad7cfa4c04e8bc552f90750e536b220e6ff9d03e20f1",
+    "app/Modules/Commercial/Support/ClientTimebankQuickPolicy.php": "fc4d7e4034ae44cbcb7919913d8deef9067563b3baef1cbaf331deeb97ca62b2",
+    "app/Modules/Commercial/Support/ContractTermSnapshotReadiness.php": "59ac51a64bdb9718a7503ccb3ca5ea8ca0e5007516c9e49c2029fe5750a8776c",
+    "app/Modules/Commercial/Support/ContractDocumentReadiness.php": "ba11d09487e811ef6ec1a4e2b71ce603d391a3fa90a1047b8186d47e346f3d02",
+    "app/Modules/Commercial/Support/PortalContractAccess.php": "a7a4cab40aa7ba6da34df2d6dfa73502f7dc97f50030560c2c9bc345befc4676",
+    "app/Modules/Commercial/Support/ContractPricing.php": "3555af77c722cad9095ddadf790fb7a003c960544136f927fb34e17286f11e67",
+    "app/Modules/Commercial/Support/ContractLegacyDocumentReadiness.php": "7d20b30a84e5dfe7f350c9fc3bfb7382c6c88f4fa80f959eae2000bfcb46f861",
+    "app/Modules/Commercial/Support/CommercialWorkflowFacts.php": "dfec3caab40b319246291b1a71c01b80d32fefa093925e042ed493319136406c",
+    "app/Modules/Commercial/Docs/knowledge/commercial-api.md": "cd0f0f4ae6a792e0f80f08a33cd5d70f068ac02d927e1ad575eba449f481ec80",
+    "app/Modules/Commercial/Docs/knowledge/service-catalogue.md": "796f68b213a286253c3770ba140bc8f74a3f184e772b2352c556b38cb889dbf9",
+    "app/Modules/Commercial/Docs/knowledge/sla-inheritance.md": "4f1478d3339cea67c89e1cd0e927f07db0ad732fb6603a4acf4ef41238f13da2",
+    "app/Modules/Commercial/Docs/knowledge/contract-system.md": "aa96e1c256f2edc3503a3ee7f06222c897da284daed0435feb74369f9c83c4b0",
+    "app/Modules/Commercial/Docs/knowledge/cost-catalogue.md": "02153bb439df451175f0210f97b94bca7fa52ce2437697680b5fa8051c7117cd",
+    "app/Modules/Commercial/Docs/knowledge/package-catalogue.md": "1b8a9e416df8f3b1bfbe05ec40a94485affbcab4f7e5f9f77b8be5c76908cadd",
+    "app/Modules/Commercial/Docs/knowledge/time-rates.md": "ade07bd4f4fda7986b3c89be0af77639c76ba1e6360b4c1262e09d62a2bded87",
+    "app/Modules/Commercial/Docs/knowledge/commercial-worklog-api.md": "60b6fdc678d17a8b4b81ff5339c8960bdabc1e304c93bbda7408b2d54a9f7f34",
+    "app/Modules/Commercial/Docs/legacy-view-specs/Tech/cs/cs - contract & services.md": "1629386244e3654abd99f5e05b1112007861a9521fc8f5392418dccff38ae02c",
+    "app/Modules/Commercial/Docs/legacy-view-specs/Tech/cs/services/services.md": "08a04d55d93f918d00d26a4775acc4b9fdf5f77b2eb4c33b03d3196e33c8ab01",
+    "app/Modules/Commercial/Docs/legacy-view-specs/Tech/cs/contracts/contracts.md": "07c7c62f947ef8b8faf01c84d0ad6e606f10bab2a5a1a1a5187ea0a43955564c",
+    "app/Modules/Commercial/Docs/legacy-view-specs/Tech/cs/contracts/create-view-spec.md": "d707bea8a82dba6adc79c651bc3ebb8446dbc9e7e06008d9a0d3a4ad0fb3b83d",
+    "app/Modules/Commercial/Docs/legacy-view-specs/Tech/cs/contracts/edit-view-spec.md": "3969f615bc3e6cfa722e1bad3ee1b8769c724d61073b5a55a19ac62003b39523",
+    "app/Modules/Commercial/Docs/legacy-view-specs/Controllers/Tech/Sla/SlaController.md": "81d6a99121ab0b95e26765cfe49b482d7fea27b6741f54d0cb8ae1374fc7e0bf",
+    "app/Modules/Commercial/Docs/legacy-view-specs/Controllers/Tech/Services/ServiceController.md": "5c12d3d7540f64c140d5bf3ded5ae6e0b7868fe447b362e4d8160a778ff56bff",
+    "app/Modules/Commercial/Docs/legacy-view-specs/Controllers/Tech/Contracts/ContractController.md": "8cacc438e09a8148764e8391daeaf3fa4c8348d7c4f6f4a1832bdef3b565a2e7",
+    "app/Modules/Commercial/Docs/legacy-view-specs/Controllers/Tech/Contracts/PublicContractController.md": "b3d66646c863827c8a61b7c4711f5c6f4933bba7f9aa0dbaaf976e88c2164fa9",
+    "app/Modules/Commercial/Docs/legacy-view-specs/Controllers/Tech/Package/PackageController.md": "980f5ed7e20b5eb1553336177f35f490c25ebdd1c24849cd3906cf1d3511538f",
+    "app/Modules/Commercial/Docs/legacy-view-specs/Controllers/Tech/Costs/CostController.md": "30ec6fd6eccca801923d5de7dce7b124b13c63355aa5752ec458f24ed0a51a05",
+    "app/Modules/Commercial/Docs/legacy-view-specs/Controllers/Tech/Legal/LegalController.md": "fe393869c731b569ef0a78adcaa32a626a624df0d077eed0c835d534c69e5a3f",
+    "app/Modules/Commercial/Docs/legacy-view-specs/Controllers/Admin/UnitsController.md": "c257cfce100ce94fb0664a55ff4cbf56b1301041d7d573221323feb1e175f8cd",
+    "app/Modules/Commercial/Docs/legacy-view-specs/Controllers/Admin/EconomyController.md": "0ce78c4bece009fc8c0f19cd93a13d453160eb65aa0f03f8368885a77b10b143",
+    "routes/api.php": "c3b13eb7fd6e18f73d120cf0c255f63f6c8aeacc47dafb12af8ff3deb9393683",
+    "app/Http/Middleware/EnforceTechRoutePermission.php": "a0fa55b503b777bcc382db8ac259a1c19623cc771e5fb3f1e753cbf3e10bca42",
+    "docs/human-review.md": "b802e0dbcbd64c37eea4a842a4f13e057c45fd5ca377841918649ac42d6ec203"
+  }
+}

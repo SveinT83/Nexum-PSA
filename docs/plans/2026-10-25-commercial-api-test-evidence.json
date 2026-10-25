@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-25",
+  "commercial_portal": {
+    "tests": 129,
+    "assertions": 1898,
+    "seconds": 88.824,
+    "result": "pass"
+  },
+  "broader_affected": {
+    "tests": 113,
+    "assertions": 1104,
+    "seconds": 146.152,
+    "result": "pass",
+    "pre_existing_phpunit_deprecations": 4
+  },
+  "scoped_php_files": 68,
+  "syntax": "pass",
+  "pint": "pass",
+  "api_operations": 103,
+  "schemas": 47,
+  "swagger_sha256": "2a0bc6f2d5285eef7be925f65463ee8b38eed6c9da4a85d0c7e14898352a9c67",
+  "native_migration_batch": 23,
+  "human_review": "HR-2026-10-25-COMMERCIAL-API Reviewed by Svein Tore on 2026-10-25"
+}

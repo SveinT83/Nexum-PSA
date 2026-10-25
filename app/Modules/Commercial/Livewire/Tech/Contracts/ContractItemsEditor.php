@@ -10,16 +10,10 @@ use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Commercial\Models\ServiceTimeRate;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Commercial\Models\TimeRate;
-use App\Modules\Commercial\Support\ContractCustomerDocument;
-use App\Modules\Commercial\Support\ContractPricing;
 use App\Modules\Integration\Models\CloudFactory\Offer;
 use App\Modules\Integration\Services\CloudFactory\CloudFactoryServiceManager;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
-use OverflowException;
 
 class ContractItemsEditor extends Component
 {
@@ -155,86 +149,15 @@ class ContractItemsEditor extends Component
 
     public function updatedItems($value, $key)
     {
-        $this->editableContract();
-        $parts = explode('.', (string) $key);
-
-        if (count($parts) < 2 || ! ctype_digit($parts[0]) || ! isset($this->items[(int) $parts[0]])) {
-            return;
+        $engine = new \App\Modules\Commercial\Actions\ContractItemWorkflow(Contracts::query()->findOrFail($this->contractId));
+        $engine->items = $this->items;
+        try {
+            $engine->updatedItems($value, $key);
+            $engine->saveItem((int) explode('.', $key)[0]);
+        } finally {
+            $this->items = $engine->items;
+            $this->contract = $engine->contract;
         }
-
-        // $key looks like "0.service_id"
-        $index = (int) $parts[0];
-        $field = $parts[1];
-
-        if ($field === 'service_id' && $value) {
-            $service = Services::with([
-                'unit',
-                'sla',
-                'serviceTimeRates.timeRate',
-                'costRelations.cost',
-                'cloudFactoryOffer',
-                'sourceIntegration',
-            ])->find($value);
-            if ($service) {
-                $this->items[$index]['name'] = $service->name;
-                $this->items[$index]['sku'] = $service->sku;
-                $this->items[$index]['unit_price'] = $service->price_ex_vat;
-                $this->items[$index]['price_currency'] = strtoupper(trim((string) ($service->price_currency ?: 'NOK')));
-                $this->items[$index]['customer_description'] = app(ContractCustomerDocument::class)
-                    ->plainText($service->short_description ?: $service->name);
-                $this->items[$index]['customer_unit_singular'] = $service->customer_unit_singular
-                    ?: ($service->unit->name ?? '');
-                $this->items[$index]['customer_unit_plural'] = $service->customer_unit_plural
-                    ?: ($service->unit->name ?? '');
-                $this->items[$index]['unit'] = $service->unit->name ?? '';
-                $this->items[$index]['billing_interval'] = $service->billing_cycle ?? 'monthly';
-                $this->items[$index]['setup_fee'] = $service->setup_fee ?? $service->one_time_fee;
-                $this->items[$index]['discount_value'] = $service->default_discount_value;
-                $this->items[$index]['discount_type'] = $service->default_discount_type ?? 'percent';
-                $this->items[$index]['tax_rate'] = $service->taxable; // Add tax_rate to items array
-                $this->items[$index]['sla_id'] = $service->sla_id;
-                $this->items[$index]['uses_contract_default_sla'] = empty($service->sla_id);
-                $this->items[$index]['sla_snapshot'] = $service->sla ? $this->slaSnapshot($service->sla) : null;
-                $this->items[$index]['sla_label'] = $service->sla
-                    ? $service->sla->name
-                    : ($this->contract->sla?->name ? 'Contract default: '.$this->contract->sla->name : 'Contract default');
-
-                $this->items[$index]['item_cost'] = (float) $service->costRelations
-                    ->sum(fn ($relation) => $relation->cost->cost ?? 0);
-                $this->items[$index]['cost_unit_price'] = $this->items[$index]['item_cost'];
-                $this->items[$index]['cost_currency'] = $service->price_currency ?: 'NOK';
-                $this->items[$index]['source'] = $service->source ?: 'nexum';
-                $this->items[$index]['cloudfactory_offer_id'] = null;
-                $this->items[$index]['licence_metadata'] = null;
-
-                if ($service->isIntegrationManaged() && $service->cloudFactoryOffer) {
-                    $this->applyCloudFactoryOffer($index, $service->cloudFactoryOffer);
-                }
-
-                // Magic quantity calculation
-                $this->items[$index]['quantity'] = $this->calculateQuantity($service);
-                $this->items[$index]['time_rates'] = $this->timeRatesForService($service);
-            }
-        }
-
-        if ($field === 'cloudfactory_offer_id' && $value) {
-            $offer = Offer::query()->with(['integration', 'service.sourceIntegration'])->find($value);
-            if (
-                ! $offer
-                || (int) $offer->service_id !== (int) ($this->items[$index]['service_id'] ?? 0)
-                || ! $offer->service?->isIntegrationManaged()
-                || (string) $offer->integration_id !== (string) $offer->service->source_integration_id
-            ) {
-                $this->items[$index]['cloudfactory_offer_id'] = null;
-                $this->addError('items.'.$index.'.cloudfactory_offer_id', 'Select an offer that belongs to this Service.');
-
-                return;
-            }
-
-            $this->applyCloudFactoryOffer($index, $offer);
-        }
-
-        $this->saveItem($index);
     }
 
     /**
@@ -243,26 +166,14 @@ class ContractItemsEditor extends Component
      */
     public function syncBillingIntervalFromService(int $index): void
     {
-        if (empty($this->items[$index]['id'])) {
-            return;
+        $engine = new \App\Modules\Commercial\Actions\ContractItemWorkflow(Contracts::query()->findOrFail($this->contractId));
+        $engine->items = $this->items;
+        try {
+            $engine->syncBillingIntervalFromService($index);
+        } finally {
+            $this->items = $engine->items;
+            $this->contract = $engine->contract;
         }
-
-        DB::transaction(function () use ($index): void {
-            $contract = $this->editableContract(true);
-            $item = $contract->items()
-                ->with('service')
-                ->whereKey((int) $this->items[$index]['id'])
-                ->firstOrFail();
-            $service = $item->service;
-
-            if (! $service) {
-                return;
-            }
-
-            $cadence = app(ContractPricing::class)->normalizeCadence($service->billing_cycle);
-            $item->update(['billing_interval' => $cadence]);
-            $this->items[$index]['billing_interval'] = $cadence;
-        });
     }
 
     private function applyCloudFactoryOffer(int $index, Offer $offer): void
@@ -299,43 +210,12 @@ class ContractItemsEditor extends Component
 
     public function calculateLineTotals($index)
     {
-        $item = $this->items[$index] ?? null;
-        if (! $item) {
-            return [
-                'total' => '0,00 kr',
-                'discount_total' => 0,
-                'total_numeric' => 0,
-            ];
-        }
-
-        try {
-            $line = app(ContractPricing::class)->calculateLine($item);
-        } catch (InvalidArgumentException|OverflowException) {
-            // Livewire retains invalid public input after validation fails. Do
-            // not let the totals preview turn that useful validation response
-            // into a second rendering exception.
-            return [
-                'total' => '—',
-                'discount_total' => 0,
-                'total_numeric' => 0,
-            ];
-        }
-
-        return [
-            'total' => $line['included'] ? 'Inkludert' : $line['line_total']['display'],
-            'discount_total' => $line['discount']['minor'],
-            'total_numeric' => $line['line_total']['decimal'],
-            'line' => $line,
-        ];
+        return (new \App\Modules\Commercial\Support\ContractEditorPricing($this->items))->calculateLineTotals($index);
     }
 
     public function calculateBillingTotals(): array
     {
-        try {
-            return app(ContractPricing::class)->calculateTotals($this->items);
-        } catch (InvalidArgumentException|OverflowException) {
-            return [];
-        }
+        return (new \App\Modules\Commercial\Support\ContractEditorPricing($this->items))->calculateBillingTotals();
     }
 
     protected function calculateQuantity(Services $service): int
@@ -358,200 +238,41 @@ class ContractItemsEditor extends Component
 
     public function saveItem($index)
     {
-        DB::transaction(function () use ($index): void {
-            $contract = $this->editableContract(true);
-
-            if (! isset($this->items[$index]) || empty($this->items[$index]['service_id'])) {
-                return;
-            }
-
-            $service = Services::with([
-                'costRelations.cost',
-                'sourceIntegration',
-            ])->find($this->items[$index]['service_id']);
-            if (! $service) {
-                return;
-            }
-
-            $offerId = $this->items[$index]['cloudfactory_offer_id'] ?? null;
-            $serviceOffer = $service->isIntegrationManaged()
-                ? Offer::query()
-                    ->where('service_id', $service->id)
-                    ->where('integration_id', $service->source_integration_id)
-                    ->first()
-                : null;
-            if ($serviceOffer) {
-                if ($offerId && (string) $offerId !== (string) $serviceOffer->id) {
-                    $this->addError('items.'.$index.'.cloudfactory_offer_id', 'Select an offer that belongs to this Service.');
-
-                    return;
-                }
-
-                $this->applyCloudFactoryOffer($index, $serviceOffer);
-            } elseif ($offerId) {
-                $this->addError(
-                    'items.'.$index.'.cloudfactory_offer_id',
-                    'This Service is not linked to that Cloud Factory offer.'
-                );
-
-                return;
-            } else {
-                $this->items[$index]['item_cost'] = (float) $service->costRelations
-                    ->sum(fn ($relation) => $relation->cost?->cost ?? 0);
-                $this->items[$index]['cost_unit_price'] = $this->items[$index]['item_cost'];
-                $this->items[$index]['cost_currency'] = $service->price_currency ?: 'NOK';
-                $this->items[$index]['price_currency'] = strtoupper(trim((string) ($service->price_currency ?: 'NOK')));
-                $this->items[$index]['source'] = $service->source ?: 'nexum';
-                $this->items[$index]['cloudfactory_offer_id'] = null;
-            }
-
-            $priceCurrency = strtoupper(trim((string) ($this->items[$index]['price_currency'] ?? 'NOK')));
-            $this->items[$index]['price_currency'] = $priceCurrency;
-
-            if ($priceCurrency !== 'NOK') {
-                $this->addError('items.'.$index.'.price_currency', 'Kundekontrakter støtter foreløpig bare salgsvaluta NOK.');
-
-                return;
-            }
-
-            foreach (['discount_value', 'setup_fee'] as $field) {
-                if (($this->items[$index][$field] ?? null) === '' || ($this->items[$index][$field] ?? null) === null) {
-                    $this->items[$index][$field] = 0;
-                }
-            }
-
-            $this->validate($this->rulesForItem((int) $index));
-
-            $submitted = $this->items[$index];
-            $timeRates = $submitted['time_rates'] ?? [];
-            $itemData = Arr::only($submitted, [
-                'service_id',
-                'name',
-                'sku',
-                'customer_description',
-                'customer_unit_singular',
-                'customer_unit_plural',
-                'unit_price',
-                'price_currency',
-                'quantity',
-                'unit',
-                'billing_interval',
-                'discount_value',
-                'discount_type',
-                'setup_fee',
-                'sla_id',
-                'uses_contract_default_sla',
-            ]);
-            $itemData['contract_id'] = $contract->id;
-            $itemData['service_id'] = $service->id;
-            $itemData['source'] = $serviceOffer ? 'cloudfactory' : ($service->source ?: 'nexum');
-            $itemData['cloudfactory_offer_id'] = $serviceOffer?->id;
-            $itemData['cost_unit_price'] = $submitted['cost_unit_price'] ?? 0;
-            $itemData['cost_currency'] = $submitted['cost_currency'] ?? ($service->price_currency ?: 'NOK');
-
-            if ($serviceOffer) {
-                $itemData['licence_metadata'] = $submitted['licence_metadata'] ?? null;
-            }
-
-            if (! empty($itemData['uses_contract_default_sla'])) {
-                $itemData['sla_id'] = null;
-                $itemData['sla_snapshot'] = null;
-            } else {
-                $sla = ! empty($itemData['sla_id']) ? Sla::query()->find($itemData['sla_id']) : null;
-                $itemData['sla_snapshot'] = $sla ? $this->slaSnapshot($sla) : null;
-            }
-
-            if (isset($submitted['id'])) {
-                $item = $contract->items()
-                    ->whereKey((int) $submitted['id'])
-                    ->firstOrFail();
-                $item->update($itemData);
-            } else {
-                $item = $contract->items()->create($itemData);
-                $this->items[$index]['id'] = $item->id;
-            }
-
-            $this->syncTimeRates($item, $timeRates);
-            $this->syncMissingContractTermSnapshots();
-        });
+        $engine = new \App\Modules\Commercial\Actions\ContractItemWorkflow(Contracts::query()->findOrFail($this->contractId));
+        $engine->items = $this->items;
+        try {
+            $engine->saveItem($index);
+        } finally {
+            $this->items = $engine->items;
+            $this->contract = $engine->contract;
+        }
     }
 
     public function removeItem($index)
     {
-        DB::transaction(function () use ($index): void {
-            $contract = $this->editableContract(true);
-            $itemData = $this->items[$index] ?? null;
-
-            if (! $itemData) {
-                return;
-            }
-
-            if (isset($itemData['id'])) {
-                $contract->items()
-                    ->whereKey((int) $itemData['id'])
-                    ->firstOrFail()
-                    ->delete();
-            }
-
-            unset($this->items[$index]);
-            $this->items = array_values($this->items);
-            $this->syncMissingContractTermSnapshots();
-        });
+        $engine = new \App\Modules\Commercial\Actions\ContractItemWorkflow(Contracts::query()->findOrFail($this->contractId));
+        $engine->items = $this->items;
+        try {
+            $engine->removeItem($index);
+        } finally {
+            $this->items = $engine->items;
+            $this->contract = $engine->contract;
+        }
     }
 
     public function calculateTotalCost()
     {
-        $totalCost = 0;
-        foreach ($this->items as $item) {
-            $totalCost += (float) ($item['item_cost'] ?? 0) * (int) ($item['quantity'] ?? 1);
-        }
-
-        return number_format($totalCost, 2, ',', ' ').' kr';
+        return (new \App\Modules\Commercial\Support\ContractEditorPricing($this->items))->calculateTotalCost();
     }
 
     public function calculateTotalDiscount()
     {
-        $totalDiscountMinor = 0;
-        foreach ($this->items as $index => $item) {
-            $totals = $this->calculateLineTotals($index);
-            $totalDiscountMinor += $totals['discount_total'] ?? 0;
-        }
-
-        return app(ContractPricing::class)->formatMinor($totalDiscountMinor);
+        return (new \App\Modules\Commercial\Support\ContractEditorPricing($this->items))->calculateTotalDiscount();
     }
 
     public function calculateAnnualProfit()
     {
-        $annualProfit = 0;
-
-        foreach ($this->items as $index => $item) {
-            $totals = $this->calculateLineTotals($index);
-            $revenuePerPeriod = $totals['total_numeric'] ?? 0;
-            $costPerPeriod = (float) ($item['item_cost'] ?? 0) * (int) ($item['quantity'] ?? 1);
-
-            $billingInterval = $item['billing_interval'] ?? 'monthly';
-            $multiplier = 0;
-
-            switch ($billingInterval) {
-                case 'monthly':
-                    $multiplier = 12;
-                    break;
-                case 'quarterly':
-                    $multiplier = 4;
-                    break;
-                case 'yearly':
-                    $multiplier = 1;
-                    break;
-                case 'one_time':
-                default:
-                    $multiplier = 0; // One-time items might not count towards "annual" profit in the same way, but usually profit is calculated for the first year or similar. User said "årlig profitt" (annual profit).
-                    break;
-            }
-
-            $annualProfit += ($revenuePerPeriod - $costPerPeriod) * $multiplier;
-        }
-
-        return number_format($annualProfit, 2, ',', ' ').' kr';
+        return (new \App\Modules\Commercial\Support\ContractEditorPricing($this->items))->calculateAnnualProfit();
     }
 
     protected function timeRatesForService(Services $service): array

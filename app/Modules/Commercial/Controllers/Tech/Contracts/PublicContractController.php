@@ -3,12 +3,10 @@
 namespace App\Modules\Commercial\Controllers\Tech\Contracts;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Commercial\Actions\CaptureContractCustomerDocument;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Support\ContractCustomerDocument;
 use DomainException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use UnexpectedValueException;
 
 class PublicContractController extends Controller
@@ -35,12 +33,7 @@ class PublicContractController extends Controller
             abort(409, 'Kundedokumentets lagrede format kan ikke behandles.');
         }
 
-        // Record a customer view only after the immutable document passed all release gates.
-        $contract->update([
-            'viewed_at' => now(),
-            'viewed_ip' => request()->ip(),
-            'viewed_ua' => request()->userAgent(),
-        ]);
+        app(\App\Modules\Commercial\Actions\ContractCustomerWorkflow::class)->viewed(request(), $contract, $token);
 
         return view('commercial::Tech.cs.contracts.public.view', [
             'contract' => $contract,
@@ -67,27 +60,7 @@ class PublicContractController extends Controller
         ]);
 
         try {
-            $accepted = DB::transaction(function () use ($request, $token, $data): bool {
-                $locked = Contracts::query()
-                    ->where('secure_token', $token)
-                    ->lockForUpdate()
-                    ->firstOrFail();
-
-                if (! in_array($locked->approval_status, ['sent_quote', 'sent_contract'], true)) {
-                    return false;
-                }
-
-                app(CaptureContractCustomerDocument::class)->handle($locked, 'won');
-                $locked->forceFill([
-                    'approval_status' => 'won',
-                    'accepted_at' => now(),
-                    'accepted_by_name' => $data['name'],
-                    'accepted_ip' => $request->ip(),
-                    'accepted_ua' => $request->userAgent(),
-                ])->save();
-
-                return true;
-            });
+            $accepted = app(\App\Modules\Commercial\Actions\ContractCustomerWorkflow::class)->acceptPublic($request, $token, $data);
         } catch (DomainException $exception) {
             return back()->with('error', $exception->getMessage());
         } catch (UnexpectedValueException) {

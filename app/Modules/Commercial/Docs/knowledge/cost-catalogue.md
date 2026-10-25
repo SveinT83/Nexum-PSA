@@ -55,3 +55,15 @@ controlled mapping workflow while Nexum keeps the existing commercial history.
 - Recurrence should match the vendor billing rhythm as closely as possible.
 - Vendors are shared master data owned by Documentation. Use `New vendor` on the Cost form when the needed vendor is not already available in the selector.
 - Costs attached to services influence profitability calculations, so update them when vendor pricing changes.
+
+## Commercial API parity on Dev - 25 October 2026
+
+The supported workflow now has a typed Commercial API on Dev, using shared domain actions,
+current user rights, token scopes, strict fields and revision/replay checks.
+See [Commercial API](https://doc.tronderdata.no/link/457) for exact operation sequences,
+customer/portal identity, composition, timebank and immutable document boundaries.
+This is not production availability. The additive migration and authenticated native HTTP
+checks now pass on Dev. API delivery and browser durable delivery remain off by default
+until controlled worker verification and deliberate activation. Svein Tore accepted the
+completed delivery on 25 October 2026; HR-2026-10-25-COMMERCIAL-API is Reviewed.
+Main promotion and production deployment remain separate actions.
