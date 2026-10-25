@@ -4,10 +4,7 @@ namespace App\Modules\Clients\Actions;
 
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
-use App\Models\System\Integrations\ClientRmmLink;
-use App\Models\System\Integrations\Integration;
 use App\Modules\Contact\Actions\StoreContact;
-use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
 
 /**
  * Creates a client with its required default site and primary contact.
@@ -71,25 +68,17 @@ class CreateClientWithDefaults
                 'created_from' => 'client_creation',
             ]);
 
-            if (! empty($data['create_in_rmm'])) {
-                $integration = Integration::query()->where('type', 'rmm')->where('status', 'active')->first();
-
-                if ($integration) {
-                    $result = (new NAbleRmmClient($integration))->addClient($client->client_number.' - '.$client->name);
-
-                    if (($result['success'] ?? false) && ! empty($result['clientid'])) {
-                        ClientRmmLink::query()->create([
-                            'integration_id' => $integration->id,
-                            'external_id' => $result['clientid'],
-                            'linkable_type' => Client::class,
-                            'linkable_id' => $client->id,
-                        ]);
-                    } else {
-                        $warning = 'Client created locally, but failed to create in N-able RMM: '.($result['error'] ?? 'Unknown error');
-                    }
-                }
-            }
         });
+
+        if (! empty($data['create_in_rmm'])) {
+            try {
+                $result = app(ProvisionClientRmm::class)->handle($client, auth()->id());
+                $warning = $result['state'] === 'confirmed' ? null : 'Client created locally; RMM provisioning requires reconciliation.';
+            } catch (\Throwable $error) {
+                report($error);
+                $warning = 'Client created locally; RMM provisioning was not verified.';
+            }
+        }
 
         return ['client' => $client, 'warning' => $warning];
     }

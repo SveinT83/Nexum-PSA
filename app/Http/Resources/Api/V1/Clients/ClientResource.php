@@ -23,14 +23,23 @@ class ClientResource extends JsonResource
             'org_no' => $this->org_no,
             'billing_email' => $this->billing_email,
             'active' => (bool) $this->active,
-            'risk_score' => $this->risk_score,
+            'website' => $this->website,
+            'notes' => $this->notes,
+            'client_format_id' => $this->client_format_id,
+            'client_format' => $this->clientFormat?->only(['id', 'name', 'code']),
+            'sales_category_id' => $this->sales_category_id,
+            'lead_temperature' => $this->lead_temperature,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+            'revision' => \App\Modules\Clients\Support\ClientRevision::of($this->resource),
+            'risk_score' => $this->when($request->user()?->can('risk.view') === true && $request->user()?->tokenCan('risk.read'), fn () => $this->risk_score),
             'custom_fields' => app(CustomFieldPresenter::class)->apiFor($this->resource, $request->user()),
             'sites' => ClientSiteResource::collection($this->whenLoaded('sites')),
             'links' => [
                 'self' => route('api.v1.clients.show', $this->id),
                 'assets' => route('api.v1.clients.assets', $this->id),
                 'sites' => route('api.v1.clients.sites.index', $this->id),
-            ]
+            ],
         ];
     }
 }

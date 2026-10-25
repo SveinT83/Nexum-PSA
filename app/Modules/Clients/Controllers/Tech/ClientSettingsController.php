@@ -71,36 +71,7 @@ class ClientSettingsController extends Controller
             'custom_fields' => ['nullable', 'array'],
         ]);
 
-        $client->forceFill([
-            'name' => $validated['name'],
-            'client_number' => $validated['client_number'] ?? null,
-            'org_no' => $validated['org_no'] ?? null,
-            'client_format_id' => $validated['client_format_id'] ?? null,
-            'website' => $validated['website'] ?? null,
-            'billing_email' => $validated['billing_email'] ?? null,
-            'notes' => $validated['notes'] ?? null,
-            'active' => $request->boolean('active'),
-        ])->save();
-
-        $rmmIntegration = Integration::where('type', 'rmm')->where('status', 'active')->first();
-        if ($rmmIntegration && $request->has('rmm_external_id')) {
-            if ($validated['rmm_external_id'] ?? null) {
-                \App\Models\System\Integrations\ClientRmmLink::updateOrCreate(
-                    [
-                        'integration_id' => $rmmIntegration->id,
-                        'linkable_type' => Client::class,
-                        'linkable_id' => $client->id,
-                    ],
-                    [
-                        'external_id' => $request->rmm_external_id,
-                    ]
-                );
-            } else {
-                $client->rmmLinks()->where('integration_id', $rmmIntegration->id)->delete();
-            }
-        }
-
-        $customFields->handle($client, (array) $request->input('custom_fields', []), $request->user(), 'ui');
+        app(\App\Modules\Clients\Actions\UpdateClientSettings::class)->handle($request, $client, $validated);
 
         return redirect()->route('tech.clients.show', $client->id)
             ->with('success', 'Client settings updated.');

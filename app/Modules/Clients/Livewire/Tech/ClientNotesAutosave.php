@@ -58,9 +58,7 @@ class ClientNotesAutosave extends Component
             ]);
 
             $client = Client::query()->findOrFail($this->clientId);
-            $client->forceFill([
-                'notes' => filled($validated['notes']) ? $validated['notes'] : null,
-            ])->save();
+            app(\App\Modules\Clients\Actions\UpdateClientNotes::class)->handle($client, $validated['notes']);
 
             $this->saveState = 'saved';
         } catch (Throwable $exception) {

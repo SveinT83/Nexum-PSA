@@ -1,0 +1,737 @@
+{
+  "date": "2026-10-25",
+  "environment": "authoritative Dev working copy",
+  "branch": "Dev",
+  "state": "verified_dev_human_reviewed_main_promotion_in_progress",
+  "browser_route_rows": 37,
+  "additional_livewire_actions": 1,
+  "owned_http_operations": 51,
+  "typed_schemas": 74,
+  "human_review": "HR-2026-10-25-CLIENTS-API",
+  "human_review_status": "Reviewed",
+  "main_promoted": false,
+  "production_deployed": false,
+  "real_provider_writes_exercised": false,
+  "external_mcp_catalogue_published": false,
+  "matrix": {
+    "C01": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientsContextGet",
+        "clientsApiClientsIndexGet",
+        "clientsApiClientsStorePost"
+      ],
+      "reused_owner_operations": [],
+      "tests": [
+        "ClientsApiParityTest::client_filters_sort_and_pagination_match_actual_eligible_records",
+        "ClientsApiParityTest::context_and_workspace_reads_do_not_create_state_or_leak_owner_links"
+      ]
+    },
+    "C02": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientsShowGet",
+        "clientsApiClientsUpdatePatch",
+        "clientsApiClientsUpdatePut",
+        "clientsApiClientsWorkspaceGet"
+      ],
+      "reused_owner_operations": [],
+      "tests": [
+        "ClientsApiParityTest::all_editable_client_fields_are_read_back_without_unrelated_owner_data"
+      ]
+    },
+    "C03": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientsContextGet",
+        "clientsApiClientsContextNumberGet",
+        "clientsApiClientsContextRmmGet",
+        "clientsApiClientsContextTripletexGet",
+        "clientsApiProviderProfile"
+      ],
+      "reused_owner_operations": [],
+      "tests": [
+        "ClientsApiParityTest::context_and_workspace_reads_do_not_create_state_or_leak_owner_links",
+        "TripletexCustomerProfileTest"
+      ]
+    },
+    "C04": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientsIndexGet",
+        "clientsApiClientsStorePost"
+      ],
+      "reused_owner_operations": [],
+      "tests": [
+        "ClientsApiParityTest::composite_creation_replays_one_client_site_and_canonical_contact_without_copying_billing_email",
+        "ClientsApiParityTest::failed_composite_validation_and_unsupported_input_leave_no_partial_graph",
+        "ClientTechTest",
+        "TripletexCustomerNumberTest"
+      ]
+    },
+    "C05": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientSitesRmmCreatePost",
+        "clientsApiClientSitesRmmReconcilePost",
+        "clientsApiClientsContextRmmGet",
+        "clientsApiClientsRmmCreatePost",
+        "clientsApiClientsRmmReconcilePost",
+        "clientsApiClientsSettingsGet",
+        "clientsApiClientsSettingsUpdatePatch"
+      ],
+      "reused_owner_operations": [],
+      "tests": [
+        "ClientsApiParityTest::settings_and_notes_have_distinct_rights_and_revision_checks",
+        "ClientsProviderApiTest"
+      ]
+    },
+    "C06": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientsNotesUpdatePatch"
+      ],
+      "reused_owner_operations": [],
+      "tests": [
+        "ClientsApiParityTest::settings_and_notes_have_distinct_rights_and_revision_checks",
+        "ClientNotesAutosaveTest"
+      ]
+    },
+    "C07": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientSitesContextGet",
+        "clientsApiClientSitesDestroyDelete",
+        "clientsApiClientSitesIndexGet",
+        "clientsApiClientSitesShowGet",
+        "clientsApiClientSitesUpdatePatch",
+        "clientsApiClientSitesUpdatePut",
+        "clientsApiClientsSitesIndexGet",
+        "clientsApiClientsSitesStorePost"
+      ],
+      "reused_owner_operations": [],
+      "tests": [
+        "ClientsApiParityTest::site_detail_default_and_delete_are_real_and_replay_is_not_a_second_delete",
+        "ClientTechTest"
+      ]
+    },
+    "C08": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientSitesUpdatePatch",
+        "clientsApiClientSitesUpdatePut",
+        "clientsApiClientsSitesStorePost"
+      ],
+      "reused_owner_operations": [],
+      "tests": [
+        "ClientsApiParityTest::site_detail_default_and_delete_are_real_and_replay_is_not_a_second_delete",
+        "ClientsApiParityTest::explicit_null_default_site_name_uses_the_documented_default",
+        "ClientTechTest"
+      ]
+    },
+    "C09": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientSitesDestroyDelete"
+      ],
+      "reused_owner_operations": [],
+      "tests": [
+        "ClientsApiParityTest::site_detail_default_and_delete_are_real_and_replay_is_not_a_second_delete",
+        "ClientsApiParityTest::site_delete_cannot_cascade_legacy_identity_or_broaden_site_portal_membership"
+      ]
+    },
+    "C10": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientSitesContextGet",
+        "clientsApiClientSitesDestroyDelete",
+        "clientsApiClientSitesShowGet",
+        "clientsApiClientSitesUpdatePatch",
+        "clientsApiClientSitesUpdatePut",
+        "clientsApiClientsContextGet",
+        "clientsApiClientsIndexGet",
+        "clientsApiClientsShowGet",
+        "clientsApiClientsSitesIndexGet",
+        "clientsApiClientsSitesStorePost",
+        "clientsApiClientsStorePost",
+        "clientsApiClientsUpdatePatch",
+        "clientsApiClientsUpdatePut"
+      ],
+      "reused_owner_operations": [],
+      "tests": [
+        "CustomFieldModuleTest",
+        "ClientsApiParityTest::failed_composite_validation_and_unsupported_input_leave_no_partial_graph"
+      ]
+    },
+    "C11": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientsRelatedIndexGet",
+        "clientsApiClientsWorkspaceGet"
+      ],
+      "reused_owner_operations": [
+        "GET /api/v1/clients/{client}/contacts",
+        "GET|POST /api/v1/contacts",
+        "GET|PUT|PATCH /api/v1/contacts/{contact}",
+        "POST /api/v1/contacts/{contact}/move",
+        "POST /api/v1/clients/{client}/contacts/bulk-fix",
+        "DELETE /api/v1/clients/{client}/contacts/{contact}"
+      ],
+      "tests": [
+        "ContactModuleTest",
+        "ContactMigrationTest",
+        "ContactTicketApiRegressionTest",
+        "ClientTechTest"
+      ]
+    },
+    "C12": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientsAssetsGet",
+        "clientsApiClientsRelatedIndexGet",
+        "clientsApiClientsWorkspaceGet"
+      ],
+      "reused_owner_operations": [],
+      "tests": [
+        "ClientsApiParityTest::related_workspace_requires_both_owner_scopes_and_current_permissions",
+        "ClientsApiParityTest::signal_projection_needs_its_explicit_scope_and_never_returns_raw_payload",
+        "TaskModuleTest"
+      ]
+    },
+    "C13": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientsWorkspaceGet"
+      ],
+      "reused_owner_operations": [
+        "GET /api/v1/task-template-targets",
+        "GET /api/v1/task-templates/{template}/preview",
+        "POST /api/v1/task-templates/{template}/apply",
+        "GET /api/v1/task-templates/{template}/runs/{run}",
+        "GET /api/v1/task-templates/{template}/runs/{run}/tasks"
+      ],
+      "tests": [
+        "TaskTemplateApiTest",
+        "TaskTemplateManagementTest",
+        "TaskTemplateApplicationTest"
+      ]
+    },
+    "C14": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientsWorkspaceGet"
+      ],
+      "reused_owner_operations": [
+        "GET /api/v1/commercial/clients/{client}/timebank",
+        "POST /api/v1/commercial/clients/{client}/timebank/consumptions",
+        "GET /api/v1/commercial/clients/{client}/timebank/consumptions/{consumption}"
+      ],
+      "tests": [
+        "CommercialApiParityTest::timebank_consumption_uses_balance_revision_and_durable_snapshot",
+        "CommercialWorklogTest",
+        "CommercialModuleTest"
+      ]
+    },
+    "C15": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientsTimeIndexGet",
+        "clientsApiClientsTimeShowGet",
+        "clientsApiClientsTimeUpdatePatch"
+      ],
+      "reused_owner_operations": [],
+      "tests": [
+        "ClientsApiParityTest::ticket_time_correction_preserves_source_authority_and_blocks_ordered_or_foreign_rows",
+        "ClientsApiParityTest::source_owner_is_rechecked_on_replay_and_another_users_time_cannot_be_edited",
+        "ClientsApiParityTest::task_actual_time_and_coupled_ticket_billing_are_not_independently_corrected",
+        "ClientsApiParityTest::quick_correction_recalculates_balance_and_returns_exact_persisted_rate_context"
+      ]
+    },
+    "C16": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientsLicensesContextGet",
+        "clientsApiClientsLicensesIndexGet",
+        "clientsApiClientsLicensesIssuePost",
+        "clientsApiClientsLicensesOperationsGet",
+        "clientsApiClientsLicensesOperationsShowGet",
+        "clientsApiClientsLicensesQuantityPatch",
+        "clientsApiClientsLicensesRenewalPatch",
+        "clientsApiClientsLicensesStatusPatch"
+      ],
+      "reused_owner_operations": [],
+      "tests": [
+        "ClientsProviderApiTest"
+      ]
+    },
+    "C17": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientsPortalLicensesContextGet",
+        "clientsApiClientsPortalLicensesIndexGet",
+        "clientsApiClientsPortalLicensesIssuePost",
+        "clientsApiClientsPortalLicensesOperationsGet",
+        "clientsApiClientsPortalLicensesOperationsShowGet",
+        "clientsApiClientsPortalLicensesQuantityPatch",
+        "clientsApiClientsPortalLicensesRenewalPatch"
+      ],
+      "reused_owner_operations": [],
+      "tests": [
+        "CustomerPortalCloudFactoryLicenceTest"
+      ]
+    },
+    "C18": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientsFormatsIndexGet",
+        "clientsApiClientsFormatsShowGet",
+        "clientsApiClientsFormatsStorePost",
+        "clientsApiClientsFormatsUpdatePatch"
+      ],
+      "reused_owner_operations": [],
+      "tests": [
+        "ClientsApiParityTest::formats_follow_current_permission_based_admin_access_and_preserve_omitted_values"
+      ]
+    },
+    "C19": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientSitesRmmCreatePost",
+        "clientsApiClientSitesRmmReconcilePost",
+        "clientsApiClientsContextNumberGet",
+        "clientsApiClientsContextRmmGet",
+        "clientsApiClientsContextTripletexGet",
+        "clientsApiClientsRmmCreatePost",
+        "clientsApiClientsRmmReconcilePost",
+        "clientsApiClientsStorePost",
+        "clientsApiProviderProfile"
+      ],
+      "reused_owner_operations": [],
+      "tests": [
+        "TripletexCustomerNumberTest",
+        "TripletexCustomerProfileTest",
+        "ClientsProviderApiTest"
+      ]
+    },
+    "C20": {
+      "status": "implemented_verified_dev",
+      "operation_ids": [
+        "clientsApiClientSitesContextGet",
+        "clientsApiClientSitesDestroyDelete",
+        "clientsApiClientSitesIndexGet",
+        "clientsApiClientSitesRmmCreatePost",
+        "clientsApiClientSitesRmmReconcilePost",
+        "clientsApiClientSitesShowGet",
+        "clientsApiClientSitesUpdatePatch",
+        "clientsApiClientSitesUpdatePut",
+        "clientsApiClientsAssetsGet",
+        "clientsApiClientsContextGet",
+        "clientsApiClientsContextNumberGet",
+        "clientsApiClientsContextRmmGet",
+        "clientsApiClientsContextTripletexGet",
+        "clientsApiClientsFormatsIndexGet",
+        "clientsApiClientsFormatsShowGet",
+        "clientsApiClientsFormatsStorePost",
+        "clientsApiClientsFormatsUpdatePatch",
+        "clientsApiClientsIndexGet",
+        "clientsApiClientsLicensesContextGet",
+        "clientsApiClientsLicensesIndexGet",
+        "clientsApiClientsLicensesIssuePost",
+        "clientsApiClientsLicensesOperationsGet",
+        "clientsApiClientsLicensesOperationsShowGet",
+        "clientsApiClientsLicensesQuantityPatch",
+        "clientsApiClientsLicensesRenewalPatch",
+        "clientsApiClientsLicensesStatusPatch",
+        "clientsApiClientsNotesUpdatePatch",
+        "clientsApiClientsOperationsShowGet",
+        "clientsApiClientsPortalLicensesContextGet",
+        "clientsApiClientsPortalLicensesIndexGet",
+        "clientsApiClientsPortalLicensesIssuePost",
+        "clientsApiClientsPortalLicensesOperationsGet",
+        "clientsApiClientsPortalLicensesOperationsShowGet",
+        "clientsApiClientsPortalLicensesQuantityPatch",
+        "clientsApiClientsPortalLicensesRenewalPatch",
+        "clientsApiClientsRelatedIndexGet",
+        "clientsApiClientsRmmCreatePost",
+        "clientsApiClientsRmmReconcilePost",
+        "clientsApiClientsSettingsGet",
+        "clientsApiClientsSettingsUpdatePatch",
+        "clientsApiClientsShowGet",
+        "clientsApiClientsSitesIndexGet",
+        "clientsApiClientsSitesStorePost",
+        "clientsApiClientsStorePost",
+        "clientsApiClientsTimeIndexGet",
+        "clientsApiClientsTimeShowGet",
+        "clientsApiClientsTimeUpdatePatch",
+        "clientsApiClientsUpdatePatch",
+        "clientsApiClientsUpdatePut",
+        "clientsApiClientsWorkspaceGet",
+        "clientsApiProviderProfile"
+      ],
+      "reused_owner_operations": [],
+      "tests": [
+        "ClientsApiContractTest",
+        "ClientsApiParityTest::actor_and_scope_denials_are_independent_and_use_current_database_state",
+        "ClientsApiParityTest::operation_status_is_bound_to_its_actual_actor_and_token"
+      ]
+    }
+  },
+  "test_runs": [
+    {
+      "log": "baseline-tests.log",
+      "passed": 100,
+      "assertions": 779,
+      "state": "baseline_before_changes"
+    },
+    {
+      "log": "broad-tests.log",
+      "passed": 537,
+      "failed": 2,
+      "assertions": 5866,
+      "state": "historical_initial_broad_run_both_failures_corrected_and_retested",
+      "scope": "Clients, CustomField, Contact, Commercial, Economy, Task, CustomerPortal; CloudFactory, Tripletex number/profile and Integration administration"
+    },
+    {
+      "log": "tripletex-api-fixed.log",
+      "passed": 1,
+      "assertions": 5,
+      "state": "corrected_broad_failure_passed"
+    },
+    {
+      "log": "tripletex-authority-fixed.log",
+      "passed": 1,
+      "assertions": 6,
+      "state": "corrected_broad_failure_passed"
+    },
+    {
+      "log": "final-all-contracts.log",
+      "passed": 30,
+      "assertions": 637,
+      "state": "passed_final_core",
+      "scope": "Clients parity and exact contract; CustomField; portal licence workflow"
+    },
+    {
+      "log": "provider-tests-commits.log",
+      "passed": 6,
+      "assertions": 53,
+      "state": "passed_committed_provider_intent",
+      "scope": "real independent local commits; fake external transport"
+    },
+    {
+      "log": "subscription-actions-tests.log",
+      "passed": 1,
+      "assertions": 21,
+      "state": "passed_staff_quantity_renewal_status_policy"
+    },
+    {
+      "log": "tripletex-api-profile.log",
+      "passed": 1,
+      "assertions": 13,
+      "state": "passed_explicit_profile_and_site_binding"
+    }
+  ],
+  "test_interpretation": "Runs overlap. Do not add counts. The full broad suite was not rerun after the fix; both failures and the final affected contracts passed targeted reruns. No known failing check is deferred.",
+  "native": {
+    "before": {
+      "clients": 2,
+      "sites": 3,
+      "tokens": 0,
+      "commands": 0,
+      "rmm": 0
+    },
+    "migration_batch": 26,
+    "columns": {
+      "commands": 11,
+      "rmm_intents": 11
+    },
+    "row_lock": true,
+    "unique": {
+      "client_api_commands": true,
+      "client_rmm_intents": true
+    },
+    "http": [
+      {
+        "path": "/api/v{id}/clients?per_page={id}",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v{id}/clients/context",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v{id}/clients/{id}",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v{id}/clients/{id}/sites",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v{id}/client-sites/{id}",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v{id}/client-sites/{id}/context",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v{id}/clients/{id}/workspace",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v{id}/clients/{id}/settings",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v{id}/client-settings/formats",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v{id}/clients/{id}/licenses",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v{id}/clients/{id}/licenses/context",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v{id}/clients/{id}/time-usage",
+        "status": 200,
+        "json": true
+      }
+    ],
+    "anonymous_status": 401,
+    "missing_status": 404,
+    "swagger_status": 200,
+    "swagger_exact_bytes": true,
+    "swagger_methods": 51,
+    "after": {
+      "clients": 2,
+      "sites": 3,
+      "tokens": 0,
+      "commands": 0,
+      "rmm": 0
+    },
+    "unchanged_counts": true,
+    "provider_api_enabled": false
+  },
+  "bookstack": {
+    "bound_user": "sveintore-admin",
+    "book_id": 339,
+    "chapter_id": 450,
+    "pages": [
+      {
+        "id": 639,
+        "name": "Clients API Support",
+        "url": null,
+        "revision": 1,
+        "published": true,
+        "content_verified": true,
+        "sha256": "db0fad656109044b17976dd32be4f1a9c94f6d09d28707eeaa4958de75a108a2"
+      },
+      {
+        "id": 451,
+        "name": "Client Domain Overview",
+        "url": null,
+        "revision": 10,
+        "published": true,
+        "content_verified": true,
+        "sha256": "130ad82fd6df7009ee854dd57f30bb88e91c53acae39d9056b71651b01114614"
+      },
+      {
+        "id": 449,
+        "name": "Api Management",
+        "url": null,
+        "revision": 132,
+        "published": true,
+        "content_verified": true,
+        "sha256": "433023290df1b5d42953a1c4439f9e595799f17ec1dbe21c35c83da89310ae04"
+      }
+    ],
+    "independent_connector_readback": {
+      "guide_exact": true,
+      "overview_exact": true,
+      "api_management_section_present": true,
+      "employee_role": "Editor /staff-internal",
+      "access": "page/chapter/book inherited; page-view-all and book-view-all; no permission changes",
+      "employee_openwebui_retrieval": "not tested",
+      "rendered_html_present": true,
+      "book_slug": "nexum-psa"
+    }
+  },
+  "knowledge": {
+    "sync": {
+      "chapters": 1,
+      "articles": 2,
+      "skipped": 0,
+      "modules": [
+        "Clients"
+      ]
+    },
+    "articles": [
+      {
+        "id": 28,
+        "source_id": "clients/clients-api",
+        "exact_source": true,
+        "internal": true,
+        "published": true,
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 27,
+        "source_id": "clients/client-domain-overview",
+        "exact_source": true,
+        "internal": true,
+        "published": true,
+        "sync_status": "pending_push"
+      }
+    ],
+    "automatic_bookstack_sync_available": false,
+    "api_management_section_verified": true
+  },
+  "format_and_syntax": {
+    "php_files": 46,
+    "pint": "passed",
+    "php_syntax": "passed",
+    "scoped_git_diff_check": "passed"
+  },
+  "files_changed": [
+    "app/Http/Resources/Api/V1/Clients/ClientResource.php",
+    "app/Modules/Clients/Actions/ClientFormatWorkflow.php",
+    "app/Modules/Clients/Actions/CorrectClientTimeUsage.php",
+    "app/Modules/Clients/Actions/CreateClientWithDefaults.php",
+    "app/Modules/Clients/Actions/DeleteClientSite.php",
+    "app/Modules/Clients/Actions/ExecuteClientCommand.php",
+    "app/Modules/Clients/Actions/PortalClientLicenceWorkflow.php",
+    "app/Modules/Clients/Actions/ProvisionClientRmm.php",
+    "app/Modules/Clients/Actions/SaveClientSite.php",
+    "app/Modules/Clients/Actions/StaffClientLicenceWorkflow.php",
+    "app/Modules/Clients/Actions/UpdateClientNotes.php",
+    "app/Modules/Clients/Actions/UpdateClientSettings.php",
+    "app/Modules/Clients/Controllers/Admin/ClientFormatSettingsController.php",
+    "app/Modules/Clients/Controllers/Api/V1/ClientController.php",
+    "app/Modules/Clients/Controllers/Api/V1/ClientLicenceController.php",
+    "app/Modules/Clients/Controllers/Api/V1/ClientOperationsController.php",
+    "app/Modules/Clients/Controllers/Api/V1/ClientProviderController.php",
+    "app/Modules/Clients/Controllers/Api/V1/ClientRelatedController.php",
+    "app/Modules/Clients/Controllers/Api/V1/ClientTimeController.php",
+    "app/Modules/Clients/Controllers/Api/V1/ClientWorkspaceController.php",
+    "app/Modules/Clients/Controllers/Portal/CloudFactoryLicenceController.php",
+    "app/Modules/Clients/Controllers/Tech/ClientSettingsController.php",
+    "app/Modules/Clients/Controllers/Tech/ClientSiteController.php",
+    "app/Modules/Clients/Controllers/Tech/ClientTimeUsageController.php",
+    "app/Modules/Clients/Controllers/Tech/CloudFactoryLicenceController.php",
+    "app/Modules/Clients/Docs/knowledge/client-domain-overview.md",
+    "app/Modules/Clients/Docs/knowledge/clients-api.md",
+    "app/Modules/Clients/Http/Middleware/ClientApiErrors.php",
+    "app/Modules/Clients/Http/Middleware/ClientApiGuard.php",
+    "app/Modules/Clients/Livewire/Tech/ClientNotesAutosave.php",
+    "app/Modules/Clients/Models/ClientApiCommand.php",
+    "app/Modules/Clients/Resources/Api/V1/ClientApiOpenApi.php",
+    "app/Modules/Clients/Resources/Api/V1/ClientSiteResource.php",
+    "app/Modules/Clients/Support/ClientInput.php",
+    "app/Modules/Clients/Support/ClientLicenceRevision.php",
+    "app/Modules/Clients/Support/ClientRevision.php",
+    "app/Modules/Clients/Tests/Feature/ClientsApiContractTest.php",
+    "app/Modules/Clients/Tests/Feature/ClientsApiParityTest.php",
+    "app/Modules/Clients/Tests/Feature/ClientsProviderApiTest.php",
+    "app/Modules/Clients/api.php",
+    "app/Modules/Clients/routes.php",
+    "app/Modules/CustomField/Tests/Feature/CustomFieldModuleTest.php",
+    "app/Modules/CustomerPortal/Tests/Feature/CustomerPortalCloudFactoryLicenceTest.php",
+    "app/Modules/Integration/Docs/knowledge/api-management.md",
+    "app/Modules/Integration/Support/ApiAbilityCatalog.php",
+    "app/Modules/Integration/Tests/Feature/TripletexCustomerProfileTest.php",
+    "config/clients-api.php",
+    "database/migrations/2026_10_25_220000_create_client_api_command_records.php",
+    "docs/TODO.md",
+    "docs/adr/2026-10-25-clients-api-commands-and-provider-intent.md",
+    "docs/feature-slices/2026-10-25-clients-api-01-context-and-authority.md",
+    "docs/feature-slices/2026-10-25-clients-api-02-client-commands.md",
+    "docs/feature-slices/2026-10-25-clients-api-03-sites-and-fields.md",
+    "docs/feature-slices/2026-10-25-clients-api-04-workspace-and-time.md",
+    "docs/feature-slices/2026-10-25-clients-api-05-licence-operations.md",
+    "docs/feature-slices/2026-10-25-clients-api-06-contract-and-verification.md",
+    "docs/human-review.md",
+    "docs/plans/2026-10-25-clients-api-contract.json",
+    "docs/plans/2026-10-25-clients-api-gap-matrix.md",
+    "docs/plans/2026-10-25-clients-api-route-baseline.json",
+    "docs/plans/2026-10-25-clients-api-verification.json",
+    "docs/plans/2026-10-25-clients-api-verification.md",
+    "docs/rfc/2026-10-25-clients-full-api-parity.md",
+    "routes/api.php"
+  ],
+  "implementation_sha256": {
+    "app/Http/Resources/Api/V1/Clients/ClientResource.php": "e05b8ef69f87d3d37ebb30639feb278cf6e098f4ea5bbb20e144b291785ab2d4",
+    "app/Modules/Clients/Actions/ClientFormatWorkflow.php": "e834f9227bf169f0c8bcd532b78afd3d709b94eb273bd8543d6d6b0ab052386f",
+    "app/Modules/Clients/Actions/CorrectClientTimeUsage.php": "719f8f43ef78a02d4397e570d3017b792b9fe0ad3243250ce6afccfcbded89ba",
+    "app/Modules/Clients/Actions/CreateClientWithDefaults.php": "dc0bc0634aab82a604dc08c60312b4c449e298ffb6d17fa4b4c4d9cf7da63850",
+    "app/Modules/Clients/Actions/DeleteClientSite.php": "f20d5a581fd6a59dc94a8701f93d291a0bddd4c6bcad66644a0394890e4126ee",
+    "app/Modules/Clients/Actions/ExecuteClientCommand.php": "289a061c6518281dc2a7b1ebe7588c46e19e147b794ba1303360242a2be29d23",
+    "app/Modules/Clients/Actions/PortalClientLicenceWorkflow.php": "616f03a04ebab4f7cc210049e59337c9ae02e35e354e757df1c23fd5c70ac076",
+    "app/Modules/Clients/Actions/ProvisionClientRmm.php": "ab05c1776de74a007d22e04f97a7053aa3bc5e4f6ccea396ac224171b2b40607",
+    "app/Modules/Clients/Actions/SaveClientSite.php": "63a416353cb35d60f3f8211970d5b56f42c160c9a9dee74a09b131743136f8f6",
+    "app/Modules/Clients/Actions/StaffClientLicenceWorkflow.php": "c3fd807f20224eb9d61180072c154595cb19fb79eff51dd57dfc87564e7b39b4",
+    "app/Modules/Clients/Actions/UpdateClientNotes.php": "1cd792f1e8acae87c6e5204f23e9cb9926428207476735f8f177fd8ad3b5bb1a",
+    "app/Modules/Clients/Actions/UpdateClientSettings.php": "dd944d15b5c3f0b1716821367e390526c90e261440a1fa18e4959ac16b66c86d",
+    "app/Modules/Clients/Controllers/Admin/ClientFormatSettingsController.php": "3e1cd464ae7e399ad4ed24699f511f66249830ae68476b4171f8193aefd0efe0",
+    "app/Modules/Clients/Controllers/Api/V1/ClientController.php": "eb762ac8510585b7f70d748142e1755b2ff65a3ffca22b7d396376e353a08573",
+    "app/Modules/Clients/Controllers/Api/V1/ClientLicenceController.php": "62e7bcd4c8fac07319b3b3760211e214b2e456c7cf63820dcf3f9b1ff2b26d96",
+    "app/Modules/Clients/Controllers/Api/V1/ClientOperationsController.php": "65b9587b68e4bb0b4a53200f64f0a63fc6f15359db745d6699a8ebed11a7e022",
+    "app/Modules/Clients/Controllers/Api/V1/ClientProviderController.php": "37a10557570b7b33f071196ff54aa6a2e74bcaa98e3d900795bd64fdadf072b7",
+    "app/Modules/Clients/Controllers/Api/V1/ClientRelatedController.php": "11e9af58c57b34ff8b8e38ba34ffec2b43a84baa48dd37e35d33edd1f4075bae",
+    "app/Modules/Clients/Controllers/Api/V1/ClientTimeController.php": "b942b5935c31fc49375fc0ba63203d3d6f683f467396fe913184c3c25bc63c61",
+    "app/Modules/Clients/Controllers/Api/V1/ClientWorkspaceController.php": "3f5c73cf1de08760da3259c5fc80c0572b537e96185ad3f3ea6836fcfea2b9fe",
+    "app/Modules/Clients/Controllers/Portal/CloudFactoryLicenceController.php": "36070f48eaf9018a9efc284889e9e23f5ef1ae700f14250df7fca6784f5d8f1a",
+    "app/Modules/Clients/Controllers/Tech/ClientSettingsController.php": "88712532231e01cf11162bede101673f5ce81d378f03a5f13ee840ac4a933a70",
+    "app/Modules/Clients/Controllers/Tech/ClientSiteController.php": "ce9fcc28b1a40201452c90d417f5198804881334a68330141a7bccd4c53c4cdf",
+    "app/Modules/Clients/Controllers/Tech/ClientTimeUsageController.php": "58c1a835ab89c25977e5765a070b761d4c798d11748a4ad8ab3641900de1aa14",
+    "app/Modules/Clients/Controllers/Tech/CloudFactoryLicenceController.php": "7860f4a6527ee70575c8a809c3a9cecb444374ab34a5adb24ff95214a4dc5d70",
+    "app/Modules/Clients/Docs/knowledge/client-domain-overview.md": "116502bab35c0a1feb11b8c4c1b2514716859d8dda26ca52551cc9b1ba08ac20",
+    "app/Modules/Clients/Docs/knowledge/clients-api.md": "80f8202aed15644f678ccd83978cf2236a3602f16f11f58ec579c5dbca275015",
+    "app/Modules/Clients/Http/Middleware/ClientApiErrors.php": "b5eadc6c77c721899018d4dcb31c1f8ee507ccedcc385d147174d8699aa0fc3e",
+    "app/Modules/Clients/Http/Middleware/ClientApiGuard.php": "0f78225a32130898d019e7c2e034a4840fc5ce6291180277215e8f7b2256d081",
+    "app/Modules/Clients/Livewire/Tech/ClientNotesAutosave.php": "0a1f16008f5d29d83d9eb9db9648030b779781fdf46d3d236d391a56f69a2c93",
+    "app/Modules/Clients/Models/ClientApiCommand.php": "713c850c3797e942e7ac59d269a9aa5409c63c97ae4cb5d8e6fe1b264e3484fc",
+    "app/Modules/Clients/Resources/Api/V1/ClientApiOpenApi.php": "d18e882182a6b150de3bbfa6dd9cf1b1c1fa436fc40fdd5bbb19a6b01349b339",
+    "app/Modules/Clients/Resources/Api/V1/ClientSiteResource.php": "a5b0e078dfa7cca3904c04629f178369988e06768275a7a5b5bc1a06935dc0fe",
+    "app/Modules/Clients/Support/ClientInput.php": "468b53e472fc024f8aeb1510395370208e6d6677a627433da0986719c3da61cd",
+    "app/Modules/Clients/Support/ClientLicenceRevision.php": "a927f523d5db98005eb41b8b5178d441ca09503944bb0f9100ec04dda930281a",
+    "app/Modules/Clients/Support/ClientRevision.php": "83afd1919fe44fdfd0ae86da84dfc4fbab99804b0a4d9f792aacee8581521303",
+    "app/Modules/Clients/Tests/Feature/ClientsApiContractTest.php": "bd472a52e82b7e2412cdcea2129c07799b78e5f72e8d28302343ca9bb963edf2",
+    "app/Modules/Clients/Tests/Feature/ClientsApiParityTest.php": "46753031bfc1eb13dc6e9be12d128f7a25c51e159cb554bf3ef6dfec4c644bb5",
+    "app/Modules/Clients/Tests/Feature/ClientsProviderApiTest.php": "d1a07d720b7531d25e67d1e92c337ba5ea2e942267f48d5332263d780a7c6cbd",
+    "app/Modules/Clients/api.php": "1eea9bfe01b65900c21c68cb84ef255a7f3bc17cc4a70c138d96cc0780e71fb3",
+    "app/Modules/Clients/routes.php": "095ca1df421962ab7453f549d8979fc322c6d8bb32fd99c45c0b0f0135e6a443",
+    "app/Modules/CustomField/Tests/Feature/CustomFieldModuleTest.php": "fe722f5084d69e57e44956df65cfabf5c5e6c65f51e28303e0ac4099a0a84694",
+    "app/Modules/CustomerPortal/Tests/Feature/CustomerPortalCloudFactoryLicenceTest.php": "b7bd39fd08bc82b9a089f0d191cd7f4b9df72e8fb8e18258c8155d4892167c7e",
+    "app/Modules/Integration/Docs/knowledge/api-management.md": "528c449e945f4f8213db81b8021020ec0986830d5f9919c2b64600fffa1dd56f",
+    "app/Modules/Integration/Support/ApiAbilityCatalog.php": "d0976d025526ecf7342609e3a49f5cb0a6db0d83b504460c27d81ea784926a98",
+    "app/Modules/Integration/Tests/Feature/TripletexCustomerProfileTest.php": "dc4d5196270e33f059dce972eddbfea11f06a34084fa0d8f51c8ada3aa08f343",
+    "config/clients-api.php": "0d116aadc17c62cd94e9a43c46a58fa933af327fb0806c045056e38a178851b1",
+    "database/migrations/2026_10_25_220000_create_client_api_command_records.php": "784a9f7389461c30e4d7a6b2f4f9850d1965988020886924d8771127097d2867",
+    "routes/api.php": "c24bb4fec3ca21b3a6d4e8185afded00d57df0eb9f6642d4fddd368b5f83e979"
+  },
+  "reused_owner_methods_checked": 17,
+  "website_editorial_handoff": {
+    "items_added": 1,
+    "utf8_readback_verified": true,
+    "status": "klar for vurdering",
+    "do_not_publish_until": "human review, production rollout and availability verification"
+  },
+  "coordination_docs": "RFC, ADR, all six slices, C01-C20 matrix, TODO and Pending HR reconciled",
+  "human_reviewer": "Svein Tore",
+  "human_acceptance": "Godkjent. Merge til main",
+  "promotion_clarification": "OpenAPI bearer-format documentation corrected from legacy JWT hint to Sanctum; runtime authentication unchanged."
+}

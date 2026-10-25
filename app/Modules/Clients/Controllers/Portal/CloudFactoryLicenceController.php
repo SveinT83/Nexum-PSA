@@ -13,7 +13,6 @@ use App\Modules\Integration\Services\CloudFactory\CloudFactoryIntegration;
 use App\Modules\Integration\Services\CloudFactory\CloudFactoryLicenceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Throwable;
 
@@ -76,55 +75,15 @@ class CloudFactoryLicenceController extends Controller
         CloudFactoryLicenceService $licences,
         RecordLegalAcceptance $acceptance,
     ): RedirectResponse {
-        $context = $this->context($request);
-        $this->authorizeOrdering($context);
-        $data = $request->validate([
-            'contract_item_id' => ['required', 'integer', Rule::exists('contract_items', 'id')],
-            'quantity' => ['required', 'integer', 'min:1', 'max:100000'],
-            'name' => ['required', 'string', 'max:255'],
-            'confirm' => ['required', 'accepted'],
-        ]);
-
-        $item = $this->eligibleItem($context, (int) $data['contract_item_id'], true);
-        $offer = $item->cloudFactoryOffer;
-        $event = $acceptance->forLicence(
-            $request,
-            $context,
-            'licence_issue',
-            $item,
-            $offer,
-            null,
-            (int) $data['quantity'],
-            null,
-            $data['name'],
-        );
-
         try {
-            $operation = $licences->issue(
-                $integrations->getOrCreate(),
-                $context->client,
-                $offer,
-                (int) $data['quantity'],
-                $request->user()->id,
-                $item,
-            );
-            $event->forceFill([
-                'cloudfactory_operation_id' => $operation->id,
-                'status' => $operation->status,
-            ])->save();
+            $operation = app(\App\Modules\Clients\Actions\PortalClientLicenceWorkflow::class)->issue($request, $integrations, $licences, $acceptance);
         } catch (Throwable $exception) {
-            $event->forceFill([
-                'status' => 'failed',
-                'metadata' => ['error' => mb_substr($exception->getMessage(), 0, 500)],
-            ])->save();
-
             if ($exception instanceof \Illuminate\Validation\ValidationException) {
                 throw $exception;
             }
 
             return back()->withErrors(['licence' => $exception->getMessage()]);
         }
-
         CloudFactorySyncJob::dispatch('subscriptions')->delay(now()->addSeconds(30));
 
         return back()->with('success', 'Licence order '.$operation->status.'.');
@@ -137,54 +96,15 @@ class CloudFactoryLicenceController extends Controller
         CloudFactoryLicenceService $licences,
         RecordLegalAcceptance $acceptance,
     ): RedirectResponse {
-        $context = $this->context($request);
-        $this->authorizeOrdering($context);
-        $this->owns($context, $subscription);
-        $data = $request->validate([
-            'quantity' => ['required', 'integer', 'min:0', 'max:100000'],
-            'name' => ['required', 'string', 'max:255'],
-            'confirm' => ['required', 'accepted'],
-        ]);
-
-        $subscription->loadMissing(['contractItem.contract', 'contractItem.service', 'offer']);
-        $item = $subscription->contractItem;
-        abort_unless($item && $subscription->offer, 404);
-        $event = $acceptance->forLicence(
-            $request,
-            $context,
-            'licence_quantity_change',
-            $item,
-            $subscription->offer,
-            $subscription,
-            (int) $data['quantity'],
-            (int) $subscription->quantity,
-            $data['name'],
-        );
-
         try {
-            $operation = $licences->changeQuantity(
-                $integrations->getOrCreate(),
-                $subscription,
-                (int) $data['quantity'],
-                $request->user()->id,
-            );
-            $event->forceFill([
-                'cloudfactory_operation_id' => $operation->id,
-                'status' => $operation->status,
-            ])->save();
+            $operation = app(\App\Modules\Clients\Actions\PortalClientLicenceWorkflow::class)->quantity($request, $subscription, $integrations, $licences, $acceptance);
         } catch (Throwable $exception) {
-            $event->forceFill([
-                'status' => 'failed',
-                'metadata' => ['error' => mb_substr($exception->getMessage(), 0, 500)],
-            ])->save();
-
             if ($exception instanceof \Illuminate\Validation\ValidationException) {
                 throw $exception;
             }
 
             return back()->withErrors(['licence' => $exception->getMessage()]);
         }
-
         CloudFactorySyncJob::dispatch('subscriptions')->delay(now()->addSeconds(30));
 
         return back()->with('success', 'Quantity change '.$operation->status.'.');
@@ -197,54 +117,15 @@ class CloudFactoryLicenceController extends Controller
         CloudFactoryLicenceService $licences,
         RecordLegalAcceptance $acceptance,
     ): RedirectResponse {
-        $context = $this->context($request);
-        $this->authorizeOrdering($context);
-        $this->owns($context, $subscription);
-        $data = $request->validate([
-            'enabled' => ['required', 'boolean'],
-            'name' => ['required', 'string', 'max:255'],
-            'confirm' => ['required', 'accepted'],
-        ]);
-
-        $subscription->loadMissing(['contractItem.contract', 'contractItem.service', 'offer']);
-        $item = $subscription->contractItem;
-        abort_unless($item && $subscription->offer, 404);
-        $event = $acceptance->forLicence(
-            $request,
-            $context,
-            'licence_renewal_change',
-            $item,
-            $subscription->offer,
-            $subscription,
-            (int) $subscription->quantity,
-            (int) $subscription->quantity,
-            $data['name'],
-        );
-
         try {
-            $operation = $licences->setAutoRenew(
-                $integrations->getOrCreate(),
-                $subscription,
-                (bool) $data['enabled'],
-                $request->user()->id,
-            );
-            $event->forceFill([
-                'cloudfactory_operation_id' => $operation->id,
-                'status' => $operation->status,
-            ])->save();
+            $operation = app(\App\Modules\Clients\Actions\PortalClientLicenceWorkflow::class)->renewal($request, $subscription, $integrations, $licences, $acceptance);
         } catch (Throwable $exception) {
-            $event->forceFill([
-                'status' => 'failed',
-                'metadata' => ['error' => mb_substr($exception->getMessage(), 0, 500)],
-            ])->save();
-
             if ($exception instanceof \Illuminate\Validation\ValidationException) {
                 throw $exception;
             }
 
             return back()->withErrors(['licence' => $exception->getMessage()]);
         }
-
         CloudFactorySyncJob::dispatch('subscriptions')->delay(now()->addSeconds(30));
 
         return back()->with('success', 'Renewal change '.$operation->status.'.');

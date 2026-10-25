@@ -34,6 +34,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     require app_path('Modules/Economy/routes.php');
     unset($economyPortalApiRoutes);
 
+    $clientsPortalApiRoutes = true;
+    require app_path('Modules/Clients/routes.php');
+    unset($clientsPortalApiRoutes);
+
     // ------------------------------------------------------------------------------------------
     // Protected routes
     // ------------------------------------------------------------------------------------------

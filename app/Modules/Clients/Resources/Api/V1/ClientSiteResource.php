@@ -15,6 +15,7 @@ class ClientSiteResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'revision' => \App\Modules\Clients\Support\ClientRevision::of($this->resource),
             'client_id' => $this->client_id,
             'name' => $this->name,
             'address' => $this->address,

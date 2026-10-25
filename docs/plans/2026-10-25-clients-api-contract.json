@@ -1,0 +1,3457 @@
+{
+  "date": "2026-10-25",
+  "status": "implemented_verified_dev_human_reviewed_main_promotion_authorized",
+  "operations": [
+    {
+      "method": "GET",
+      "path": "/api/v1/client-operations/{command}",
+      "name": "api.v1.clients.operations.show",
+      "operationId": "clientsApiClientsOperationsShowGet",
+      "request": null,
+      "response": "ClientApiOperationResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.operations.read"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/client-settings/formats",
+      "name": "api.v1.clients.formats.index",
+      "operationId": "clientsApiClientsFormatsIndexGet",
+      "request": null,
+      "response": "ClientApiFormatList",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.settings.read"
+      ],
+      "portal": false,
+      "list": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/client-settings/formats",
+      "name": "api.v1.clients.formats.store",
+      "operationId": "clientsApiClientsFormatsStorePost",
+      "request": "ClientApiFormatCreateInput",
+      "response": "ClientApiFormatResponse",
+      "required_key": true,
+      "required_revision": false,
+      "scopes": [
+        "clients.settings.update"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/client-settings/formats/{clientFormat}",
+      "name": "api.v1.clients.formats.show",
+      "operationId": "clientsApiClientsFormatsShowGet",
+      "request": null,
+      "response": "ClientApiFormatResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.settings.read"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/client-settings/formats/{clientFormat}",
+      "name": "api.v1.clients.formats.update",
+      "operationId": "clientsApiClientsFormatsUpdatePatch",
+      "request": "ClientApiFormatInput",
+      "response": "ClientApiFormatResponse",
+      "required_key": true,
+      "required_revision": true,
+      "scopes": [
+        "clients.settings.update"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/client-sites",
+      "name": "api.v1.client-sites.index",
+      "operationId": "clientsApiClientSitesIndexGet",
+      "request": null,
+      "response": "ClientApiSiteList",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.read"
+      ],
+      "portal": false,
+      "list": true
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/client-sites/{site}",
+      "name": "api.v1.client-sites.destroy",
+      "operationId": "clientsApiClientSitesDestroyDelete",
+      "request": "ClientApiEmptyInput",
+      "response": "ClientApiDeletedResponse",
+      "required_key": true,
+      "required_revision": true,
+      "scopes": [
+        "clients.delete"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/client-sites/{site}",
+      "name": "api.v1.client-sites.show",
+      "operationId": "clientsApiClientSitesShowGet",
+      "request": null,
+      "response": "ClientApiSiteResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.read"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/client-sites/{site}",
+      "name": "api.v1.client-sites.update",
+      "operationId": "clientsApiClientSitesUpdatePut",
+      "request": "ClientApiSiteInput",
+      "response": "ClientApiSiteResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.update"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/client-sites/{site}",
+      "name": "api.v1.client-sites.update",
+      "operationId": "clientsApiClientSitesUpdatePatch",
+      "request": "ClientApiSiteInput",
+      "response": "ClientApiSiteResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.update"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/client-sites/{site}/context",
+      "name": "api.v1.client-sites.context",
+      "operationId": "clientsApiClientSitesContextGet",
+      "request": null,
+      "response": "ClientApiSiteContextResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.read"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/client-sites/{site}/rmm",
+      "name": "api.v1.client-sites.rmm.create",
+      "operationId": "clientsApiClientSitesRmmCreatePost",
+      "request": "ClientApiEmptyInput",
+      "response": "ClientApiRmmResponse",
+      "required_key": true,
+      "required_revision": true,
+      "scopes": [
+        "clients.settings.update"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/client-sites/{site}/rmm/reconcile",
+      "name": "api.v1.client-sites.rmm.reconcile",
+      "operationId": "clientsApiClientSitesRmmReconcilePost",
+      "request": "ClientApiRmmReconcileInput",
+      "response": "ClientApiRmmResponse",
+      "required_key": true,
+      "required_revision": true,
+      "scopes": [
+        "clients.settings.update"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients",
+      "name": "api.v1.clients.index",
+      "operationId": "clientsApiClientsIndexGet",
+      "request": null,
+      "response": "ClientApiList",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.read"
+      ],
+      "portal": false,
+      "list": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/clients",
+      "name": "api.v1.clients.store",
+      "operationId": "clientsApiClientsStorePost",
+      "request": "ClientApiCreateInput",
+      "response": "ClientApiRecordResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.create"
+      ],
+      "portal": false,
+      "list": false,
+      "responses": {
+        "201": "ClientApiRecordResponse",
+        "202": "ClientApiUnresolvedCommand"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/context",
+      "name": "api.v1.clients.context",
+      "operationId": "clientsApiClientsContextGet",
+      "request": null,
+      "response": "ClientApiContextResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.read"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/context/rmm",
+      "name": "api.v1.clients.context.rmm",
+      "operationId": "clientsApiClientsContextRmmGet",
+      "request": null,
+      "response": "ClientApiRmmList",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.settings.read"
+      ],
+      "portal": false,
+      "list": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/context/tripletex/customers",
+      "name": "api.v1.clients.context.tripletex",
+      "operationId": "clientsApiClientsContextTripletexGet",
+      "request": null,
+      "response": "ClientApiProviderCustomerList",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.read"
+      ],
+      "portal": false,
+      "list": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/context/tripletex/number",
+      "name": "api.v1.clients.context.number",
+      "operationId": "clientsApiClientsContextNumberGet",
+      "request": null,
+      "response": "ClientApiNumberResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.read"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/{client}",
+      "name": "api.v1.clients.show",
+      "operationId": "clientsApiClientsShowGet",
+      "request": null,
+      "response": "ClientApiRecordResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.read"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/clients/{client}",
+      "name": "api.v1.clients.update",
+      "operationId": "clientsApiClientsUpdatePut",
+      "request": "ClientApiClientPatch",
+      "response": "ClientApiRecordResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.update"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/clients/{client}",
+      "name": "api.v1.clients.update",
+      "operationId": "clientsApiClientsUpdatePatch",
+      "request": "ClientApiClientPatch",
+      "response": "ClientApiRecordResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.update"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/{client}/assets",
+      "name": "api.v1.clients.assets",
+      "operationId": "clientsApiClientsAssetsGet",
+      "request": null,
+      "response": "AssetListResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "assets.read"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/{client}/licenses",
+      "name": "api.v1.clients.licenses.index",
+      "operationId": "clientsApiClientsLicensesIndexGet",
+      "request": null,
+      "response": "ClientApiLicenceList",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.licenses.read"
+      ],
+      "portal": false,
+      "list": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/clients/{client}/licenses",
+      "name": "api.v1.clients.licenses.issue",
+      "operationId": "clientsApiClientsLicensesIssuePost",
+      "request": "ClientApiLicenceIssue",
+      "response": "ClientApiLicenceCommandResponse",
+      "required_key": true,
+      "required_revision": true,
+      "scopes": [
+        "clients.licenses.write"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/{client}/licenses/context",
+      "name": "api.v1.clients.licenses.context",
+      "operationId": "clientsApiClientsLicensesContextGet",
+      "request": null,
+      "response": "ClientApiLicenceContextResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.licenses.read"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/{client}/licenses/operations",
+      "name": "api.v1.clients.licenses.operations",
+      "operationId": "clientsApiClientsLicensesOperationsGet",
+      "request": null,
+      "response": "ClientApiLicenceOperationList",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.licenses.read"
+      ],
+      "portal": false,
+      "list": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/{client}/licenses/operations/{operation}",
+      "name": "api.v1.clients.licenses.operations.show",
+      "operationId": "clientsApiClientsLicensesOperationsShowGet",
+      "request": null,
+      "response": "ClientApiLicenceOperationResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.licenses.read"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/clients/{client}/licenses/{subscription}/quantity",
+      "name": "api.v1.clients.licenses.quantity",
+      "operationId": "clientsApiClientsLicensesQuantityPatch",
+      "request": "ClientApiLicenceQuantity",
+      "response": "ClientApiLicenceCommandResponse",
+      "required_key": true,
+      "required_revision": true,
+      "scopes": [
+        "clients.licenses.write"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/clients/{client}/licenses/{subscription}/renewal",
+      "name": "api.v1.clients.licenses.renewal",
+      "operationId": "clientsApiClientsLicensesRenewalPatch",
+      "request": "ClientApiLicenceRenewal",
+      "response": "ClientApiLicenceCommandResponse",
+      "required_key": true,
+      "required_revision": true,
+      "scopes": [
+        "clients.licenses.write"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/clients/{client}/licenses/{subscription}/status",
+      "name": "api.v1.clients.licenses.status",
+      "operationId": "clientsApiClientsLicensesStatusPatch",
+      "request": "ClientApiLicenceStatus",
+      "response": "ClientApiLicenceCommandResponse",
+      "required_key": true,
+      "required_revision": true,
+      "scopes": [
+        "clients.licenses.write"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/clients/{client}/notes",
+      "name": "api.v1.clients.notes.update",
+      "operationId": "clientsApiClientsNotesUpdatePatch",
+      "request": "ClientApiNotesInput",
+      "response": "ClientApiRecordResponse",
+      "required_key": true,
+      "required_revision": true,
+      "scopes": [
+        "clients.update"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/{client}/related/{section}",
+      "name": "api.v1.clients.related.index",
+      "operationId": "clientsApiClientsRelatedIndexGet",
+      "request": null,
+      "response": "ClientApiRelatedList",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.read"
+      ],
+      "portal": false,
+      "list": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/clients/{client}/rmm",
+      "name": "api.v1.clients.rmm.create",
+      "operationId": "clientsApiClientsRmmCreatePost",
+      "request": "ClientApiEmptyInput",
+      "response": "ClientApiRmmResponse",
+      "required_key": true,
+      "required_revision": true,
+      "scopes": [
+        "clients.settings.update"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/clients/{client}/rmm/reconcile",
+      "name": "api.v1.clients.rmm.reconcile",
+      "operationId": "clientsApiClientsRmmReconcilePost",
+      "request": "ClientApiRmmReconcileInput",
+      "response": "ClientApiRmmResponse",
+      "required_key": true,
+      "required_revision": true,
+      "scopes": [
+        "clients.settings.update"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/{client}/settings",
+      "name": "api.v1.clients.settings",
+      "operationId": "clientsApiClientsSettingsGet",
+      "request": null,
+      "response": "ClientApiSettingsResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.settings.read"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/clients/{client}/settings",
+      "name": "api.v1.clients.settings.update",
+      "operationId": "clientsApiClientsSettingsUpdatePatch",
+      "request": "ClientApiSettingsInput",
+      "response": "ClientApiRecordResponse",
+      "required_key": true,
+      "required_revision": true,
+      "scopes": [
+        "clients.settings.update"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/{client}/sites",
+      "name": "api.v1.clients.sites.index",
+      "operationId": "clientsApiClientsSitesIndexGet",
+      "request": null,
+      "response": "ClientApiSiteList",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.read"
+      ],
+      "portal": false,
+      "list": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/clients/{client}/sites",
+      "name": "api.v1.clients.sites.store",
+      "operationId": "clientsApiClientsSitesStorePost",
+      "request": "ClientApiSiteCreateInput",
+      "response": "ClientApiSiteResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.update"
+      ],
+      "portal": false,
+      "list": false,
+      "responses": {
+        "201": "ClientApiSiteResponse",
+        "202": "ClientApiUnresolvedCommand"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/{client}/time-usage",
+      "name": "api.v1.clients.time.index",
+      "operationId": "clientsApiClientsTimeIndexGet",
+      "request": null,
+      "response": "ClientApiTimeList",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.time.read"
+      ],
+      "portal": false,
+      "list": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/{client}/time-usage/{source}/{entry}",
+      "name": "api.v1.clients.time.show",
+      "operationId": "clientsApiClientsTimeShowGet",
+      "request": null,
+      "response": "ClientApiTimeResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.time.read"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/clients/{client}/time-usage/{source}/{entry}",
+      "name": "api.v1.clients.time.update",
+      "operationId": "clientsApiClientsTimeUpdatePatch",
+      "request": "ClientApiTimeInput",
+      "response": "ClientApiTimeResponse",
+      "required_key": true,
+      "required_revision": true,
+      "scopes": [
+        "clients.time.update"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/{client}/workspace",
+      "name": "api.v1.clients.workspace",
+      "operationId": "clientsApiClientsWorkspaceGet",
+      "request": null,
+      "response": "ClientApiWorkspaceResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.read"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/portal/licenses",
+      "name": "api.v1.clients.portal.licenses.index",
+      "operationId": "clientsApiClientsPortalLicensesIndexGet",
+      "request": null,
+      "response": "ClientApiLicenceList",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [],
+      "portal": true,
+      "list": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/portal/licenses",
+      "name": "api.v1.clients.portal.licenses.issue",
+      "operationId": "clientsApiClientsPortalLicensesIssuePost",
+      "request": "ClientApiPortalIssue",
+      "response": "ClientApiLicenceCommandResponse",
+      "required_key": true,
+      "required_revision": true,
+      "scopes": [],
+      "portal": true,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/portal/licenses/context",
+      "name": "api.v1.clients.portal.licenses.context",
+      "operationId": "clientsApiClientsPortalLicensesContextGet",
+      "request": null,
+      "response": "ClientApiLicenceContextResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [],
+      "portal": true,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/portal/licenses/operations",
+      "name": "api.v1.clients.portal.licenses.operations",
+      "operationId": "clientsApiClientsPortalLicensesOperationsGet",
+      "request": null,
+      "response": "ClientApiLicenceOperationList",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [],
+      "portal": true,
+      "list": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/portal/licenses/operations/{operation}",
+      "name": "api.v1.clients.portal.licenses.operations.show",
+      "operationId": "clientsApiClientsPortalLicensesOperationsShowGet",
+      "request": null,
+      "response": "ClientApiLicenceOperationResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [],
+      "portal": true,
+      "list": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/portal/licenses/{subscription}/quantity",
+      "name": "api.v1.clients.portal.licenses.quantity",
+      "operationId": "clientsApiClientsPortalLicensesQuantityPatch",
+      "request": "ClientApiPortalQuantity",
+      "response": "ClientApiLicenceCommandResponse",
+      "required_key": true,
+      "required_revision": true,
+      "scopes": [],
+      "portal": true,
+      "list": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/portal/licenses/{subscription}/renewal",
+      "name": "api.v1.clients.portal.licenses.renewal",
+      "operationId": "clientsApiClientsPortalLicensesRenewalPatch",
+      "request": "ClientApiPortalRenewal",
+      "response": "ClientApiLicenceCommandResponse",
+      "required_key": true,
+      "required_revision": true,
+      "scopes": [],
+      "portal": true,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/context/tripletex/customers/{customer}",
+      "name": "api.v1.clients.context.tripletex.profile",
+      "operationId": "clientsApiProviderProfile",
+      "request": null,
+      "response": "ClientApiProviderProfileResponse",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.read"
+      ],
+      "portal": false,
+      "list": false
+    }
+  ],
+  "schemas": {
+    "ClientApiFieldValues": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "string",
+            "nullable": true
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "ClientApiSite": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "client_id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string",
+          "nullable": true
+        },
+        "address": {
+          "type": "string",
+          "nullable": true
+        },
+        "co_address": {
+          "type": "string",
+          "nullable": true
+        },
+        "zip": {
+          "type": "string",
+          "nullable": true
+        },
+        "city": {
+          "type": "string",
+          "nullable": true
+        },
+        "county": {
+          "type": "string",
+          "nullable": true
+        },
+        "country": {
+          "type": "string",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "revision": {
+          "type": "string",
+          "nullable": true
+        },
+        "is_default": {
+          "type": "boolean"
+        },
+        "custom_fields": {
+          "$ref": "#/components/schemas/ClientApiFieldValues"
+        },
+        "client": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "string"
+            },
+            "client_number": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        }
+      },
+      "required": [
+        "id",
+        "client_id",
+        "name",
+        "is_default",
+        "revision"
+      ]
+    },
+    "ClientApiFormat": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "sort_order": {
+          "type": "integer",
+          "nullable": true
+        },
+        "clients_count": {
+          "type": "integer",
+          "nullable": true
+        },
+        "name": {
+          "type": "string",
+          "nullable": true
+        },
+        "code": {
+          "type": "string",
+          "nullable": true
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "revision": {
+          "type": "string",
+          "nullable": true
+        },
+        "is_active": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "code"
+      ]
+    },
+    "ClientApiRecord": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string",
+          "nullable": true
+        },
+        "client_number": {
+          "type": "string",
+          "nullable": true
+        },
+        "org_no": {
+          "type": "string",
+          "nullable": true
+        },
+        "billing_email": {
+          "type": "string",
+          "nullable": true
+        },
+        "website": {
+          "type": "string",
+          "nullable": true
+        },
+        "notes": {
+          "type": "string",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "revision": {
+          "type": "string",
+          "nullable": true
+        },
+        "client_format_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "sales_category_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "lead_temperature": {
+          "type": "integer",
+          "nullable": true
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "risk_score": {
+          "type": "number",
+          "nullable": true
+        },
+        "client_format": {
+          "$ref": "#/components/schemas/ClientApiFormat"
+        },
+        "custom_fields": {
+          "$ref": "#/components/schemas/ClientApiFieldValues"
+        },
+        "sites": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiSite"
+          }
+        },
+        "links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "type": "string"
+            },
+            "assets": {
+              "type": "string"
+            },
+            "sites": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "active",
+        "revision"
+      ]
+    },
+    "ClientApiRmmResult": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "running",
+            "linked",
+            "confirmed",
+            "unknown"
+          ]
+        },
+        "intent_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "external_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "reconciliation_required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ClientApiRecordResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/ClientApiRecord"
+        },
+        "operation_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "state": {
+          "type": "string",
+          "nullable": true
+        },
+        "provider_operation_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "reconciliation_required": {
+          "type": "boolean"
+        },
+        "rmm": {
+          "$ref": "#/components/schemas/ClientApiRmmResult"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiSiteResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/ClientApiSite"
+        },
+        "operation_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "state": {
+          "type": "string",
+          "nullable": true
+        },
+        "provider_operation_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "reconciliation_required": {
+          "type": "boolean"
+        },
+        "rmm": {
+          "$ref": "#/components/schemas/ClientApiRmmResult"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiPrimaryContact": {
+      "type": "object",
+      "properties": {
+        "display_name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "nullable": true
+        },
+        "phone": {
+          "type": "string",
+          "nullable": true
+        },
+        "job_title": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [
+        "display_name"
+      ]
+    },
+    "ClientApiSiteInput": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "address": {
+          "type": "string",
+          "nullable": true
+        },
+        "co_address": {
+          "type": "string",
+          "nullable": true
+        },
+        "zip": {
+          "type": "string",
+          "nullable": true
+        },
+        "city": {
+          "type": "string",
+          "nullable": true
+        },
+        "county": {
+          "type": "string",
+          "nullable": true
+        },
+        "country": {
+          "type": "string",
+          "nullable": true
+        },
+        "is_default": {
+          "type": "boolean"
+        },
+        "custom_fields": {
+          "$ref": "#/components/schemas/ClientApiFieldValues"
+        }
+      }
+    },
+    "ClientApiSiteCreateInput": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "address": {
+          "type": "string",
+          "nullable": true
+        },
+        "co_address": {
+          "type": "string",
+          "nullable": true
+        },
+        "zip": {
+          "type": "string",
+          "nullable": true
+        },
+        "city": {
+          "type": "string",
+          "nullable": true
+        },
+        "county": {
+          "type": "string",
+          "nullable": true
+        },
+        "country": {
+          "type": "string",
+          "nullable": true
+        },
+        "is_default": {
+          "type": "boolean"
+        },
+        "custom_fields": {
+          "$ref": "#/components/schemas/ClientApiFieldValues"
+        },
+        "create_in_rmm": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "ClientApiClientPatch": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "client_number": {
+          "type": "string",
+          "nullable": true
+        },
+        "org_no": {
+          "type": "string",
+          "nullable": true
+        },
+        "billing_email": {
+          "type": "string",
+          "nullable": true
+        },
+        "website": {
+          "type": "string",
+          "nullable": true
+        },
+        "notes": {
+          "type": "string",
+          "nullable": true
+        },
+        "client_format_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "sales_category_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "lead_temperature": {
+          "type": "integer",
+          "nullable": true
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "custom_fields": {
+          "$ref": "#/components/schemas/ClientApiFieldValues"
+        }
+      }
+    },
+    "ClientApiCreateInput": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "client_number": {
+          "type": "string",
+          "nullable": true
+        },
+        "org_no": {
+          "type": "string",
+          "nullable": true
+        },
+        "billing_email": {
+          "type": "string",
+          "nullable": true
+        },
+        "website": {
+          "type": "string",
+          "nullable": true
+        },
+        "notes": {
+          "type": "string",
+          "nullable": true
+        },
+        "client_format_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "sales_category_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "lead_temperature": {
+          "type": "integer",
+          "nullable": true
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "custom_fields": {
+          "$ref": "#/components/schemas/ClientApiFieldValues"
+        },
+        "site": {
+          "$ref": "#/components/schemas/ClientApiDefaultSiteInput"
+        },
+        "site_name": {
+          "type": "string",
+          "nullable": true
+        },
+        "site_address": {
+          "type": "string",
+          "nullable": true
+        },
+        "site_co_address": {
+          "type": "string",
+          "nullable": true
+        },
+        "site_zip": {
+          "type": "string",
+          "nullable": true
+        },
+        "site_city": {
+          "type": "string",
+          "nullable": true
+        },
+        "site_county": {
+          "type": "string",
+          "nullable": true
+        },
+        "site_country": {
+          "type": "string",
+          "nullable": true
+        },
+        "primary_contact": {
+          "$ref": "#/components/schemas/ClientApiPrimaryContact"
+        },
+        "create_in_rmm": {
+          "type": "boolean"
+        },
+        "tripletex_number_mode": {
+          "type": "boolean"
+        },
+        "tripletex_request_key": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "tripletex_customer_id": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "ClientApiSettingsInput": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "client_number": {
+          "type": "string",
+          "nullable": true
+        },
+        "org_no": {
+          "type": "string",
+          "nullable": true
+        },
+        "billing_email": {
+          "type": "string",
+          "nullable": true
+        },
+        "website": {
+          "type": "string",
+          "nullable": true
+        },
+        "notes": {
+          "type": "string",
+          "nullable": true
+        },
+        "client_format_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "custom_fields": {
+          "$ref": "#/components/schemas/ClientApiFieldValues"
+        },
+        "rmm_external_id": {
+          "type": "string",
+          "nullable": true
+        }
+      }
+    },
+    "ClientApiNotesInput": {
+      "type": "object",
+      "properties": {
+        "notes": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [
+        "notes"
+      ]
+    },
+    "ClientApiFormatInput": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "nullable": true
+        },
+        "code": {
+          "type": "string",
+          "nullable": true
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "sort_order": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "is_active": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ClientApiFieldContext": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "help_text": {
+          "type": "string",
+          "nullable": true
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "can_edit": {
+          "type": "boolean"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "value": {
+          "oneOf": [
+            {
+              "type": "string",
+              "nullable": true
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "ClientApiRmmSettings": {
+      "type": "object",
+      "properties": {
+        "configured": {
+          "type": "boolean"
+        },
+        "integration_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "external_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "api_provider_writes_enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ClientApiSettings": {
+      "type": "object",
+      "properties": {
+        "client": {
+          "$ref": "#/components/schemas/ClientApiRecord"
+        },
+        "rmm": {
+          "$ref": "#/components/schemas/ClientApiRmmSettings"
+        },
+        "custom_fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiFieldContext"
+          }
+        },
+        "revision": {
+          "type": "string"
+        }
+      }
+    },
+    "ClientApiSettingsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/ClientApiSettings"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiSiteContext": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "$ref": "#/components/schemas/ClientApiSite"
+        },
+        "custom_fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiFieldContext"
+          }
+        },
+        "default_site_id": {
+          "type": "integer",
+          "nullable": true
+        }
+      }
+    },
+    "ClientApiSiteContextResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/ClientApiSiteContext"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiNumberContext": {
+      "type": "object",
+      "properties": {
+        "authority": {
+          "type": "string",
+          "enum": [
+            "local",
+            "tripletex"
+          ]
+        },
+        "local_suggestion": {
+          "type": "string",
+          "nullable": true
+        },
+        "suggestion": {
+          "type": "string",
+          "nullable": true
+        },
+        "reserved": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ClientApiNumberResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/ClientApiNumberContext"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiContext": {
+      "type": "object",
+      "properties": {
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiFormat"
+          }
+        },
+        "filters": {
+          "type": "object",
+          "properties": {
+            "active": {
+              "type": "array",
+              "items": {
+                "type": "boolean"
+              }
+            },
+            "contract_filter": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "rmm_filter": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "sort": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "page_size": {
+          "type": "object",
+          "properties": {
+            "default": {
+              "type": "integer"
+            },
+            "maximum": {
+              "type": "integer"
+            }
+          }
+        },
+        "number": {
+          "$ref": "#/components/schemas/ClientApiNumberContext"
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "create": {
+              "type": "boolean"
+            },
+            "update": {
+              "type": "boolean"
+            },
+            "settings": {
+              "type": "boolean"
+            }
+          }
+        },
+        "defaults": {
+          "type": "object",
+          "properties": {
+            "site_name": {
+              "type": "string"
+            },
+            "active": {
+              "type": "boolean"
+            },
+            "lead_temperature": {
+              "type": "integer"
+            }
+          }
+        },
+        "constraints": {
+          "type": "object",
+          "properties": {
+            "local_number_digits": {
+              "type": "integer"
+            },
+            "provider_number_request_key": {
+              "type": "string"
+            },
+            "primary_contact": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ClientApiContextResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/ClientApiContext"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiWorkspace": {
+      "type": "object",
+      "properties": {
+        "client": {
+          "$ref": "#/components/schemas/ClientApiRecord"
+        },
+        "links": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ClientApiWorkspaceResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/ClientApiWorkspace"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiTimeEntry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "user_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "minutes": {
+          "type": "integer",
+          "nullable": true
+        },
+        "contract_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "contract_item_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "time_rate_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "overused_minutes": {
+          "type": "integer",
+          "nullable": true
+        },
+        "source": {
+          "type": "string",
+          "nullable": true
+        },
+        "work_date": {
+          "type": "string",
+          "nullable": true
+        },
+        "note": {
+          "type": "string",
+          "nullable": true
+        },
+        "invoice_text": {
+          "type": "string",
+          "nullable": true
+        },
+        "billing_status": {
+          "type": "string",
+          "nullable": true
+        },
+        "timebank_status": {
+          "type": "string",
+          "nullable": true
+        },
+        "rate_name": {
+          "type": "string",
+          "nullable": true
+        },
+        "rate_currency": {
+          "type": "string",
+          "nullable": true
+        },
+        "revision": {
+          "type": "string",
+          "nullable": true
+        },
+        "label": {
+          "type": "string",
+          "nullable": true
+        },
+        "context": {
+          "type": "string",
+          "nullable": true
+        },
+        "current_rate_source": {
+          "type": "string",
+          "nullable": true
+        },
+        "rate_amount_ex_vat": {
+          "type": "string",
+          "nullable": true
+        },
+        "can_edit": {
+          "type": "boolean"
+        },
+        "rate_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ClientApiTimeResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/ClientApiTimeEntry"
+        },
+        "operation_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "state": {
+          "type": "string",
+          "nullable": true
+        },
+        "provider_operation_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "reconciliation_required": {
+          "type": "boolean"
+        },
+        "rmm": {
+          "$ref": "#/components/schemas/ClientApiRmmResult"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiTimeInput": {
+      "type": "object",
+      "properties": {
+        "work_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "minutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1440
+        },
+        "note": {
+          "type": "string",
+          "nullable": true
+        },
+        "invoice_text": {
+          "type": "string",
+          "nullable": true
+        },
+        "time_rate_source": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [
+        "work_date",
+        "minutes"
+      ]
+    },
+    "ClientApiLicenceOperation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "subscription_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "action": {
+          "type": "string",
+          "nullable": true
+        },
+        "status": {
+          "type": "string",
+          "nullable": true
+        },
+        "submitted_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "confirmed_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "failed_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "confirmed": {
+          "type": "boolean"
+        },
+        "reconciliation_required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ClientApiLicenceOperationResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/ClientApiLicenceOperation"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiLicenceCommandResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/ClientApiLicenceOperation"
+        },
+        "operation_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "state": {
+          "type": "string",
+          "nullable": true
+        },
+        "provider_operation_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "reconciliation_required": {
+          "type": "boolean"
+        },
+        "rmm": {
+          "$ref": "#/components/schemas/ClientApiRmmResult"
+        }
+      }
+    },
+    "ClientApiSubscription": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "nullable": true
+        },
+        "provider_family": {
+          "type": "string",
+          "nullable": true
+        },
+        "status": {
+          "type": "string",
+          "nullable": true
+        },
+        "revision": {
+          "type": "string",
+          "nullable": true
+        },
+        "commitment_start_date": {
+          "type": "string",
+          "nullable": true
+        },
+        "commitment_end_date": {
+          "type": "string",
+          "nullable": true
+        },
+        "quantity": {
+          "type": "integer",
+          "nullable": true
+        },
+        "renewal_quantity": {
+          "type": "integer",
+          "nullable": true
+        },
+        "contract_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "contract_item_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "service_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "auto_renew": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ClientApiOffer": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "nullable": true
+        },
+        "provider_family": {
+          "type": "string",
+          "nullable": true
+        },
+        "currency": {
+          "type": "string",
+          "nullable": true
+        },
+        "service_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "vendor_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "recurrence_term": {
+          "type": "integer",
+          "nullable": true
+        },
+        "billing_term": {
+          "type": "integer",
+          "nullable": true
+        }
+      }
+    },
+    "ClientApiLicenceTerm": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "version_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "name": {
+          "type": "string",
+          "nullable": true
+        },
+        "checksum": {
+          "type": "string",
+          "nullable": true
+        },
+        "content": {
+          "type": "string",
+          "nullable": true
+        },
+        "source_url": {
+          "type": "string",
+          "nullable": true
+        }
+      }
+    },
+    "ClientApiLicenceItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "contract_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "service_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "quantity": {
+          "type": "integer",
+          "nullable": true
+        },
+        "cloudfactory_offer_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "unit_price": {
+          "type": "string"
+        },
+        "terms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiLicenceTerm"
+          }
+        }
+      }
+    },
+    "ClientApiLicenceContext": {
+      "type": "object",
+      "properties": {
+        "client_id": {
+          "type": "integer"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "provider_configured": {
+          "type": "boolean"
+        },
+        "api_provider_writes_enabled": {
+          "type": "boolean"
+        },
+        "provider_writes_enabled": {
+          "type": "boolean"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "offers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiOffer"
+          }
+        },
+        "contract_items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiLicenceItem"
+          }
+        }
+      }
+    },
+    "ClientApiLicenceContextResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/ClientApiLicenceContext"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiLicenceIssue": {
+      "type": "object",
+      "properties": {
+        "offer_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        }
+      },
+      "required": [
+        "offer_id",
+        "quantity"
+      ]
+    },
+    "ClientApiPortalIssue": {
+      "type": "object",
+      "properties": {
+        "contract_item_id": {
+          "type": "integer"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "name": {
+          "type": "string"
+        },
+        "confirm": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "contract_item_id",
+        "quantity",
+        "name",
+        "confirm"
+      ]
+    },
+    "ClientApiLicenceQuantity": {
+      "type": "object",
+      "properties": {
+        "quantity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        }
+      },
+      "required": [
+        "quantity"
+      ]
+    },
+    "ClientApiPortalQuantity": {
+      "type": "object",
+      "properties": {
+        "quantity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "name": {
+          "type": "string"
+        },
+        "confirm": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "quantity",
+        "name",
+        "confirm"
+      ]
+    },
+    "ClientApiLicenceRenewal": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "enabled"
+      ]
+    },
+    "ClientApiPortalRenewal": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "confirm": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "enabled",
+        "name",
+        "confirm"
+      ]
+    },
+    "ClientApiLicenceStatus": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "activate",
+            "suspend"
+          ]
+        }
+      },
+      "required": [
+        "status"
+      ]
+    },
+    "ClientApiOperationStatus": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "operation": {
+          "type": "string",
+          "nullable": true
+        },
+        "state": {
+          "type": "string",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "reconciliation_required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ClientApiOperationResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/ClientApiOperationStatus"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiDeleted": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "deleted": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "deleted"
+      ]
+    },
+    "ClientApiDeletedResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/ClientApiDeleted"
+        },
+        "operation_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "state": {
+          "type": "string",
+          "nullable": true
+        },
+        "provider_operation_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "reconciliation_required": {
+          "type": "boolean"
+        },
+        "rmm": {
+          "$ref": "#/components/schemas/ClientApiRmmResult"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiFormatResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/ClientApiFormat"
+        },
+        "operation_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "state": {
+          "type": "string",
+          "nullable": true
+        },
+        "provider_operation_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "reconciliation_required": {
+          "type": "boolean"
+        },
+        "rmm": {
+          "$ref": "#/components/schemas/ClientApiRmmResult"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiRmmResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/ClientApiRmmResult"
+        },
+        "operation_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "state": {
+          "type": "string",
+          "nullable": true
+        },
+        "provider_operation_id": {
+          "type": "string",
+          "nullable": true
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "reconciliation_required": {
+          "type": "boolean"
+        },
+        "rmm": {
+          "$ref": "#/components/schemas/ClientApiRmmResult"
+        }
+      }
+    },
+    "ClientApiRmmReconcileInput": {
+      "type": "object",
+      "properties": {
+        "external_id": {
+          "type": "string",
+          "nullable": true
+        }
+      }
+    },
+    "ClientApiEmptyInput": {
+      "type": "object",
+      "properties": {}
+    },
+    "ClientApiProviderCustomer": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "customerNumber": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "organizationNumber": {
+          "type": "string",
+          "nullable": true
+        }
+      }
+    },
+    "ClientApiProviderProfile": {
+      "type": "object",
+      "properties": {
+        "billing_email": {
+          "type": "string",
+          "nullable": true
+        },
+        "site_address": {
+          "type": "string",
+          "nullable": true
+        },
+        "site_co_address": {
+          "type": "string",
+          "nullable": true
+        },
+        "site_zip": {
+          "type": "string",
+          "nullable": true
+        },
+        "site_city": {
+          "type": "string",
+          "nullable": true
+        },
+        "site_country": {
+          "type": "string",
+          "nullable": true
+        },
+        "user_name": {
+          "type": "string",
+          "nullable": true
+        },
+        "user_email": {
+          "type": "string",
+          "nullable": true
+        },
+        "user_phone": {
+          "type": "string",
+          "nullable": true
+        },
+        "user_role": {
+          "type": "string",
+          "nullable": true
+        },
+        "site_name": {
+          "type": "string",
+          "nullable": true
+        }
+      }
+    },
+    "ClientApiProviderProfileResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/ClientApiProviderProfile"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiRmmOption": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "ClientApiRelatedRecord": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "status_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "priority_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "owner_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "assigned_to": {
+          "type": "integer",
+          "nullable": true
+        },
+        "client_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "name": {
+          "type": "string",
+          "nullable": true
+        },
+        "title": {
+          "type": "string",
+          "nullable": true
+        },
+        "ticket_key": {
+          "type": "string",
+          "nullable": true
+        },
+        "subject": {
+          "type": "string",
+          "nullable": true
+        },
+        "display_name": {
+          "type": "string",
+          "nullable": true
+        },
+        "organization_name": {
+          "type": "string",
+          "nullable": true
+        },
+        "job_title": {
+          "type": "string",
+          "nullable": true
+        },
+        "status": {
+          "type": "string",
+          "nullable": true
+        },
+        "approval_status": {
+          "type": "string",
+          "nullable": true
+        },
+        "start_date": {
+          "type": "string",
+          "nullable": true
+        },
+        "end_date": {
+          "type": "string",
+          "nullable": true
+        },
+        "signal_type": {
+          "type": "string",
+          "nullable": true
+        },
+        "severity": {
+          "type": "string",
+          "nullable": true
+        },
+        "summary": {
+          "type": "string",
+          "nullable": true
+        },
+        "occurred_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "completed_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "owner_type": {
+          "type": "string",
+          "nullable": true
+        },
+        "url": {
+          "type": "string",
+          "nullable": true
+        }
+      }
+    },
+    "ClientApiError": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "errors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "required": [
+        "message"
+      ]
+    },
+    "ClientApiList": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiRecord"
+          }
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "current_page": {
+              "type": "integer",
+              "nullable": true
+            },
+            "from": {
+              "type": "integer",
+              "nullable": true
+            },
+            "last_page": {
+              "type": "integer",
+              "nullable": true
+            },
+            "per_page": {
+              "type": "integer",
+              "nullable": true
+            },
+            "to": {
+              "type": "integer",
+              "nullable": true
+            },
+            "total": {
+              "type": "integer",
+              "nullable": true
+            }
+          }
+        },
+        "links": {
+          "type": "object",
+          "properties": {
+            "first": {
+              "type": "string",
+              "nullable": true
+            },
+            "last": {
+              "type": "string",
+              "nullable": true
+            },
+            "prev": {
+              "type": "string",
+              "nullable": true
+            },
+            "next": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiSiteList": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiSite"
+          }
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "current_page": {
+              "type": "integer",
+              "nullable": true
+            },
+            "from": {
+              "type": "integer",
+              "nullable": true
+            },
+            "last_page": {
+              "type": "integer",
+              "nullable": true
+            },
+            "per_page": {
+              "type": "integer",
+              "nullable": true
+            },
+            "to": {
+              "type": "integer",
+              "nullable": true
+            },
+            "total": {
+              "type": "integer",
+              "nullable": true
+            }
+          }
+        },
+        "links": {
+          "type": "object",
+          "properties": {
+            "first": {
+              "type": "string",
+              "nullable": true
+            },
+            "last": {
+              "type": "string",
+              "nullable": true
+            },
+            "prev": {
+              "type": "string",
+              "nullable": true
+            },
+            "next": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiFormatList": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiFormat"
+          }
+        },
+        "current_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "from": {
+          "type": "integer",
+          "nullable": true
+        },
+        "last_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "per_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "to": {
+          "type": "integer",
+          "nullable": true
+        },
+        "total": {
+          "type": "integer",
+          "nullable": true
+        },
+        "first_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "last_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "next_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "prev_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "path": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiTimeList": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiTimeEntry"
+          }
+        },
+        "current_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "from": {
+          "type": "integer",
+          "nullable": true
+        },
+        "last_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "per_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "to": {
+          "type": "integer",
+          "nullable": true
+        },
+        "total": {
+          "type": "integer",
+          "nullable": true
+        },
+        "first_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "last_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "next_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "prev_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "path": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiRelatedList": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiRelatedRecord"
+          }
+        },
+        "current_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "from": {
+          "type": "integer",
+          "nullable": true
+        },
+        "last_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "per_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "to": {
+          "type": "integer",
+          "nullable": true
+        },
+        "total": {
+          "type": "integer",
+          "nullable": true
+        },
+        "first_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "last_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "next_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "prev_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "path": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiLicenceList": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiSubscription"
+          }
+        },
+        "current_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "from": {
+          "type": "integer",
+          "nullable": true
+        },
+        "last_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "per_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "to": {
+          "type": "integer",
+          "nullable": true
+        },
+        "total": {
+          "type": "integer",
+          "nullable": true
+        },
+        "first_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "last_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "next_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "prev_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "path": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiLicenceOperationList": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiLicenceOperation"
+          }
+        },
+        "current_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "from": {
+          "type": "integer",
+          "nullable": true
+        },
+        "last_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "per_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "to": {
+          "type": "integer",
+          "nullable": true
+        },
+        "total": {
+          "type": "integer",
+          "nullable": true
+        },
+        "first_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "last_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "next_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "prev_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "path": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiRmmList": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiRmmOption"
+          }
+        },
+        "current_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "from": {
+          "type": "integer",
+          "nullable": true
+        },
+        "last_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "per_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "to": {
+          "type": "integer",
+          "nullable": true
+        },
+        "total": {
+          "type": "integer",
+          "nullable": true
+        },
+        "first_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "last_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "next_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "prev_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "path": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiProviderCustomerList": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiProviderCustomer"
+          }
+        },
+        "current_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "from": {
+          "type": "integer",
+          "nullable": true
+        },
+        "last_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "per_page": {
+          "type": "integer",
+          "nullable": true
+        },
+        "to": {
+          "type": "integer",
+          "nullable": true
+        },
+        "total": {
+          "type": "integer",
+          "nullable": true
+        },
+        "first_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "last_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "next_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "prev_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "path": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiAsset": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string",
+          "nullable": true
+        },
+        "serial_number": {
+          "type": "string",
+          "nullable": true
+        },
+        "status": {
+          "type": "string",
+          "nullable": true
+        },
+        "client_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "site_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "work_context_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "user_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "vendor_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "type": {
+          "type": "string",
+          "nullable": true
+        },
+        "vendor": {
+          "type": "string",
+          "nullable": true
+        },
+        "model": {
+          "type": "string",
+          "nullable": true
+        },
+        "mac_address": {
+          "type": "string",
+          "nullable": true
+        },
+        "ip_address": {
+          "type": "string",
+          "nullable": true
+        },
+        "ip_type": {
+          "type": "string",
+          "nullable": true
+        },
+        "hostname": {
+          "type": "string",
+          "nullable": true
+        },
+        "source": {
+          "type": "string",
+          "nullable": true
+        },
+        "last_seen_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "is_managed": {
+          "type": "boolean"
+        },
+        "rmm_links": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "integration_id": {
+                "type": "string"
+              },
+              "external_id": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "nullable": true,
+          "additionalProperties": true
+        },
+        "work_context": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "type": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        },
+        "links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "type": "string"
+            },
+            "client": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        }
+      }
+    },
+    "AssetListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiAsset"
+          }
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "current_page": {
+              "type": "integer",
+              "nullable": true
+            },
+            "last_page": {
+              "type": "integer",
+              "nullable": true
+            },
+            "per_page": {
+              "type": "integer",
+              "nullable": true
+            },
+            "total": {
+              "type": "integer",
+              "nullable": true
+            }
+          }
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ClientApiUnresolvedCommand": {
+      "type": "object",
+      "properties": {
+        "operation_id": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "running",
+            "unknown",
+            "rejected"
+          ]
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "reconciliation_required": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "operation_id",
+        "state"
+      ]
+    },
+    "ClientApiFormatCreateInput": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "nullable": true
+        },
+        "code": {
+          "type": "string",
+          "nullable": true
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "sort_order": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "is_active": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "code"
+      ]
+    },
+    "ClientApiDefaultSiteInput": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "nullable": true
+        },
+        "address": {
+          "type": "string",
+          "nullable": true
+        },
+        "co_address": {
+          "type": "string",
+          "nullable": true
+        },
+        "zip": {
+          "type": "string",
+          "nullable": true
+        },
+        "city": {
+          "type": "string",
+          "nullable": true
+        },
+        "county": {
+          "type": "string",
+          "nullable": true
+        },
+        "country": {
+          "type": "string",
+          "nullable": true
+        }
+      }
+    }
+  }
+}

@@ -502,4 +502,33 @@ class TripletexCustomerProfileTest extends TestCase
         $response = $this->get(route('tech.clients.sites.edit', [$this->site, $this->client]))->assertOk();
         $this->assertMatchesRegularExpression('/<input\\b(?=[^>]*\\bname="zip")(?=[^>]*\\btype="text")[^>]*>/', $response->getContent());
     }
+
+    public function test_api_creation_exports_only_reviewed_site_and_billing_and_binds_exact_default_site(): void
+    {
+        DB::commit();
+        try {
+            \Laravel\Sanctum\Sanctum::actingAs($this->user, ['clients.read', 'clients.create']);
+            $this->getJson('/api/v1/clients/context/tripletex/customers/10')->assertOk()
+                ->assertJsonPath('data.billing_email', 'billing@example.test')->assertJsonMissingPath('data.user_email');
+            $this->assertSame(0, $this->posts);
+            $body = ['name' => 'API synthetic customer', 'tripletex_number_mode' => true, 'tripletex_request_key' => (string) Str::uuid(),
+                'site' => ['name' => 'API reviewed Site', 'address' => 'API Road 7', 'zip' => '0070', 'city' => 'Oslo', 'country' => 'NO'],
+                'billing_email' => 'api-billing@example.test', 'primary_contact' => ['display_name' => 'API private person', 'email' => 'api-person@example.test']];
+            $response = $this->postJson('/api/v1/clients', $body, ['Idempotency-Key' => 'tripletex-api-profile-key'])
+                ->assertCreated()->assertJsonPath('data.sites.0.zip', '0070')->assertJsonPath('data.billing_email', 'api-billing@example.test');
+            $id = $response->json('data.id');
+            $link = TripletexCustomerLink::where('client_id', $id)->firstOrFail();
+            $profile = TripletexCustomerProfile::where('link_id', $link->id)->firstOrFail();
+            $this->assertSame($response->json('data.sites.0.id'), $profile->site_id);
+            $this->assertSame(1, $this->posts);
+            $this->postJson('/api/v1/clients', $body, ['Idempotency-Key' => 'tripletex-api-profile-key'])->assertCreated()->assertJsonPath('data.id', $id);
+            $this->assertSame(1, $this->posts);
+            Http::assertSent(fn ($request) => $request->method() === 'POST' && str_ends_with($request->url(), '/customer')
+                && $request['physicalAddress']['addressLine1'] === 'API Road 7' && $request['physicalAddress']['postalCode'] === '0070'
+                && $request['invoiceEmail'] === 'api-billing@example.test' && ! isset($request['email']) && ! isset($request['phoneNumber']));
+        } finally {
+            \Illuminate\Foundation\Testing\RefreshDatabaseState::$migrated = false;
+            DB::beginTransaction();
+        }
+    }
 }

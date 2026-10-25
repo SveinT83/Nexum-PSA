@@ -1,0 +1,682 @@
+{
+  "date": "2026-10-25",
+  "status": "audited_existing_runtime_not_proposed_endpoints",
+  "root": "/var/Projects/tdPSA",
+  "branch": "Dev",
+  "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "browser_route_rows": 37,
+  "api_route_rows": 9,
+  "api_http_operations_excluding_head": 11,
+  "additional_livewire_actions": [
+    "App\\Modules\\Clients\\Livewire\\Tech\\ClientNotesAutosave::saveNotes"
+  ],
+  "routes": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/client-sites",
+      "name": "api.v1.client-sites.index",
+      "action": "App\\Modules\\Clients\\Controllers\\Api\\V1\\ClientController@siteIndex",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:clients.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT|PATCH",
+      "uri": "api/v1/client-sites/{site}",
+      "name": "api.v1.client-sites.update",
+      "action": "App\\Modules\\Clients\\Controllers\\Api\\V1\\ClientController@updateSite",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:clients.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/clients",
+      "name": "api.v1.clients.index",
+      "action": "App\\Modules\\Clients\\Controllers\\Api\\V1\\ClientController@index",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:clients.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/clients",
+      "name": "api.v1.clients.store",
+      "action": "App\\Modules\\Clients\\Controllers\\Api\\V1\\ClientController@store",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:clients.create"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/clients/{client}",
+      "name": "api.v1.clients.show",
+      "action": "App\\Modules\\Clients\\Controllers\\Api\\V1\\ClientController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:clients.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT|PATCH",
+      "uri": "api/v1/clients/{client}",
+      "name": "api.v1.clients.update",
+      "action": "App\\Modules\\Clients\\Controllers\\Api\\V1\\ClientController@update",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:clients.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/clients/{client}/assets",
+      "name": "api.v1.clients.assets",
+      "action": "App\\Modules\\Clients\\Controllers\\Api\\V1\\ClientController@assets",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:assets.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/clients/{client}/sites",
+      "name": "api.v1.clients.sites.index",
+      "action": "App\\Modules\\Clients\\Controllers\\Api\\V1\\ClientController@sites",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:clients.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/clients/{client}/sites",
+      "name": "api.v1.clients.sites.store",
+      "action": "App\\Modules\\Clients\\Controllers\\Api\\V1\\ClientController@storeSite",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:clients.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "portal/licenses",
+      "name": "customer-portal.licenses.index",
+      "action": "App\\Modules\\Clients\\Controllers\\Portal\\CloudFactoryLicenceController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "portal/licenses",
+      "name": "customer-portal.licenses.issue",
+      "action": "App\\Modules\\Clients\\Controllers\\Portal\\CloudFactoryLicenceController@issue",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "portal/licenses/{subscription}/quantity",
+      "name": "customer-portal.licenses.quantity",
+      "action": "App\\Modules\\Clients\\Controllers\\Portal\\CloudFactoryLicenceController@quantity",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "portal/licenses/{subscription}/renewal",
+      "name": "customer-portal.licenses.renewal",
+      "action": "App\\Modules\\Clients\\Controllers\\Portal\\CloudFactoryLicenceController@renewal",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/clients/client-formats",
+      "name": "tech.admin.settings.clients.client-formats",
+      "action": "App\\Modules\\Clients\\Controllers\\Admin\\ClientFormatSettingsController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/settings/clients/client-formats",
+      "name": "tech.admin.settings.clients.client-formats.store",
+      "action": "App\\Modules\\Clients\\Controllers\\Admin\\ClientFormatSettingsController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "tech/admin/settings/clients/client-formats/{clientFormat}",
+      "name": "tech.admin.settings.clients.client-formats.update",
+      "action": "App\\Modules\\Clients\\Controllers\\Admin\\ClientFormatSettingsController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/clients",
+      "name": "tech.clients.index",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/clients/create",
+      "name": "tech.clients.create",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientController@create",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/clients/index",
+      "name": "tech.client.index",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/clients/show/{client}",
+      "name": "tech.clients.show",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/clients/sites/create/{client?}",
+      "name": "tech.clients.sites.create",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientSiteController@create",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/clients/sites/destroy/{site}",
+      "name": "tech.clients.sites.destroy",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientSiteController@destroy",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/clients/sites/edit/{site}/{client?}",
+      "name": "tech.clients.sites.edit",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientSiteController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/clients/sites/show/{site}",
+      "name": "tech.clients.sites.show",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientSiteController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/clients/sites/store/{client?}",
+      "name": "tech.clients.sites.store",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientSiteController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/clients/sites/update/{site}/{client?}",
+      "name": "tech.clients.sites.update",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientSiteController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/clients/sites/{client?}",
+      "name": "tech.clients.sites.index",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientSiteController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "tech/clients/sites/{site}/custom-fields/{definition}",
+      "name": "tech.clients.sites.custom-fields.update",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientCustomFieldValueController@updateSite",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/clients/store",
+      "name": "tech.clients.store",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/clients/user/create/{client}",
+      "name": "tech.clients.user.create",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientUsersController@create",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/clients/user/delete/{ClientUser}",
+      "name": "tech.clients.user.delete",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientUsersController@delete",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/clients/user/edit/{ClientUser}",
+      "name": "tech.clients.user.edit",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientUsersController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/clients/user/show/{ClientUser}",
+      "name": "tech.clients.user.show",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientUsersController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/clients/user/store/{client}",
+      "name": "tech.clients.user.store",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientUsersController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/clients/user/update/{ClientUser}",
+      "name": "tech.clients.user.update",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientUsersController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/clients/user_management/{client?}",
+      "name": "tech.clients.user_management.index",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientUsersController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/clients/users/{client?}",
+      "name": "tech.clients.users.index",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientUsersController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "tech/clients/{client}/custom-fields/{definition}",
+      "name": "tech.clients.custom-fields.update",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientCustomFieldValueController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/clients/{client}/licenses",
+      "name": "tech.clients.licenses.index",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\CloudFactoryLicenceController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/clients/{client}/licenses",
+      "name": "tech.clients.licenses.issue",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\CloudFactoryLicenceController@issue",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "tech/clients/{client}/licenses/{subscription}/quantity",
+      "name": "tech.clients.licenses.quantity",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\CloudFactoryLicenceController@quantity",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "tech/clients/{client}/licenses/{subscription}/renewal",
+      "name": "tech.clients.licenses.renewal",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\CloudFactoryLicenceController@renewal",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "tech/clients/{client}/licenses/{subscription}/status",
+      "name": "tech.clients.licenses.status",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\CloudFactoryLicenceController@status",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/clients/{client}/settings",
+      "name": "tech.clients.settings.edit",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientSettingsController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/clients/{client}/settings",
+      "name": "tech.clients.settings.update",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientSettingsController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "tech/clients/{client}/time-usage/{source}/{entry}",
+      "name": "tech.clients.time-usage.update",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientTimeUsageController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    }
+  ]
+}
