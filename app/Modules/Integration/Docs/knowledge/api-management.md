@@ -927,8 +927,8 @@ Time rate create/update generates `slug` from `code`.
 ## Economy API
 
 The full current Economy browser/API surface is implemented on Dev under
-HR-2026-10-25-ECONOMY-API (human review pending). Main promotion and production deployment remain
-separate. Read the Economy API handbook article for the complete 23-operation contract and examples.
+HR-2026-10-25-ECONOMY-API (Reviewed by Svein Tore, 25 October 2026). Merged to Main in
+[PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315). Production deployment is not verified. Read the Economy API handbook article for the complete 23-operation contract and examples.
 
 Supported operations include staff order list/context/detail/lines, all-source generation and pure
 preview, ready/draft/manual-invoiced, portal publication/hiding and preview, supported deletion,

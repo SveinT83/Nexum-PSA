@@ -1,6 +1,6 @@
 # Economy API Main promotion - 25 October 2026
 
-Status: Human Reviewed; isolated Main candidate verified; authorized merge in progress. Production is not deployed.
+Status: Merged to Main / Human Reviewed; production not deployed. Production is not deployed.
 Reviewer/release owner: Svein Tore. Implementation/reconciliation owner: Codex.
 
 ## Authorization and scope
@@ -36,8 +36,12 @@ read-backs are recorded in the linked original verification evidence. They are n
 
 Fresh exact candidate: 428 affected tests / 4904 assertions pass, including Economy/DataExchange,
 all Commercial/Portal features, Ticket/Storage workflows, CloudFactory, API administration and
-production-mode Swagger scan. No failure is deferred. See economy-api-main-candidate-tests.json.
-Push/PR/merge and exact merge-tree comparison will be recorded after successful promotion.
+production-mode Swagger scan. No failure is deferred. See 2026-10-25-economy-api-main-candidate-tests.json.
+Implementation merged in [PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315) at 33eac1a3cba47ffe57f2253847dbaaf8f9b6d4e9.
+GitHub merged status and freshly fetched origin/main agree. The whole Main tree equals tested
+candidate abe5def8ac7686a37af16231947e5998d116d4e8 (tree 531f5e7e43fcd1c65ab2d95c15d850e3ac898d94).
+No GitHub commit status checks were registered; fresh Dev-host candidate tests are the evidence.
+Dev HEAD/index remain unchanged. Production was not deployed.
 Do not deploy or activate real billing, notifications, provider delivery or scheduler work from
 this document alone. On a separately approved deployment, run the exact Economy additive migration,
 regenerate Swagger, clear relevant caches and gracefully refresh affected workers as documented
@@ -55,3 +59,13 @@ import preview with its review results. These are existing browser workflows, no
 Recommend a full DataExchange parity RFC/matrix next, preserving Economy source policy and
 Integration-owned credentials. No next-domain implementation or new RFC was started. Existing
 Tripletex-related dirty models/services are outside this audit and must be reconciled before coding.
+
+## Final coordination and handbook read-back
+
+Six BookStack pages now explicitly record Reviewed and Main PR #315, with production still
+not verified. Revisions: 494/9, 390/12, 395/12, 514/4, 515/4 and 449/130. Exact changed fragments
+were independently read back; page/chapter inheritance and staff Editor view permissions were
+rechecked. No audience change. Six native Knowledge source articles match, plus the scoped
+Integration section. Employee OpenWebUI retrieval is not claimed. One existing public-safe
+website editorial item was updated/read back, retaining its production/publication gate.
+Evidence: 2026-10-25-economy-api-main-evidence.json.

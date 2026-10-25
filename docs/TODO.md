@@ -3,7 +3,7 @@
 
 ## Full Economy browser/API coverage (2026-10-25)
 
-Status: Done On Dev / Human Reviewed; authorized Main promotion in progress. Owner: Codex. Human reviewer/release owner: Svein Tore.
+Status: Merged to Main / Human Reviewed (Svein Tore, 2026-10-25); production not deployed. Owner: Codex. Human reviewer/release owner: Svein Tore.
 Design approved in chat: "Godkjent. Kjør på". RFC: rfc/2026-10-25-economy-full-api-parity.md;
 accepted ADR: adr/2026-10-25-economy-api-commands-and-source-locking.md. All six slices Done On Dev.
 All E01-E14 current workflows have official APIs: 23 HTTP operations / 34 schemas, shared web/API
@@ -18,7 +18,9 @@ Six native source articles plus scoped API Management are verified. Six actual B
 494/390/395/514/515/449 read back with inherited employee scope; no permission expansion.
 Employee OpenWebUI retrieval is separate and untested. Native pending_push is not publication evidence.
 HR-2026-10-25-ECONOMY-API Reviewed by Svein Tore, 2026-10-25: "Godkjent. Merge til main og foreslå neste domain som mangler api".
-Next (Codex): verify an isolated Main candidate and complete the explicitly authorized merge.
+Main merge verified: [PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315), commit 33eac1a3cba47ffe57f2253847dbaaf8f9b6d4e9.
+The complete merge tree equals the tested candidate abe5def8ac7686a37af16231947e5998d116d4e8.
+Fresh candidate: 428 tests / 4904 assertions, 40 PHP syntax/Pint pass; no failure deferred.
 Next (Svein Tore): separately authorize production rollout/activation. No production deployment,
 real customer billing/send, provider or scheduler activation occurred.
 Preserve shared dirty work and original GenerateOrders financial-customer dependency.

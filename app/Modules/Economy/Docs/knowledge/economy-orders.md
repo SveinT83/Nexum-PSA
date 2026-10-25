@@ -88,8 +88,9 @@ instead of adding a separate Economy export workflow.
 
 The supported Economy workspace now has typed API equivalents for staff order list/detail/lines,
 generation, ready/unready/manual-invoiced, portal publication/hiding, settings, export and customer
-Portal reads. This addition is Dev-only pending HR-2026-10-25-ECONOMY-API, Main promotion and
-production deployment. See the Economy API article for exact paths, scopes and request headers.
+Portal reads. HR-2026-10-25-ECONOMY-API is Reviewed by Svein Tore (25 October 2026), and the
+implementation is merged to Main in [PR #315](https://github.com/SveinT83/Nexum-PSA/pull/315).
+Production deployment is not verified. See the Economy API article for exact paths, scopes and request headers.
 
 To prepare orders in the browser:
 
