@@ -1,0 +1,8 @@
+{
+    "queue_connection": "database",
+    "active_dx_schedules": 0,
+    "dx_targets": 0,
+    "api_delivery_enabled": false,
+    "queued_jobs": 138041,
+    "queued_dx_jobs": 0
+}

@@ -1,0 +1,28 @@
+{
+    "tables": {
+        "data_exchange_write_mutex": {
+            "present": true,
+            "columns": 1,
+            "rows": 1
+        },
+        "data_exchange_command_receipts": {
+            "present": true,
+            "columns": 9,
+            "rows": 0
+        },
+        "data_exchange_schedule_occurrences": {
+            "present": true,
+            "columns": 9,
+            "rows": 0
+        }
+    },
+    "existing_counts_unchanged": true,
+    "api_delivery_enabled": false,
+    "allowed_delivery_disk_count": 0,
+    "migration_batch": 25,
+    "mutex_lock_enforced": true,
+    "receipt_unique_enforced": true,
+    "occurrence_unique_enforced": true,
+    "receipt_rows_after": 0,
+    "occurrence_rows_after": 0
+}

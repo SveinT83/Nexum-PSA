@@ -1,0 +1,45 @@
+{
+  "final-tests": {
+    "summary": [
+      {
+        "name": "CLI Arguments",
+        "tests": "310",
+        "assertions": "3233",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "time": "317.611380"
+      }
+    ],
+    "failures": []
+  },
+  "release-tests": {
+    "summary": [
+      {
+        "name": "CLI Arguments",
+        "tests": "82",
+        "assertions": "1011",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "time": "96.359241"
+      }
+    ],
+    "failures": []
+  },
+  "api-administration-tests": {
+    "summary": [
+      {
+        "name": "App\\Modules\\Integration\\Tests\\Feature\\IntegrationModuleTest",
+        "file": "/var/Projects/tdPSA/app/Modules/Integration/Tests/Feature/IntegrationModuleTest.php",
+        "tests": "5",
+        "assertions": "316",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "time": "30.898502"
+      }
+    ],
+    "failures": []
+  }
+}

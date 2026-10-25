@@ -20,6 +20,9 @@ class RunDataExchangeImportDryRun
     {
         abort_unless($profile->direction === DataExchangeProfile::DIRECTION_IMPORT, 422, 'Profile is not an import profile.');
 
+        \App\Modules\DataExchange\Support\DataExchangeAuthority::runtime($profile, $actor, 'import');
+        abort_unless($profile->status === 'active', 422, 'Use an active import profile.');
+        $this->sources->assertProfile($profile, 'import');
         $profile->loadMissing(['sources', 'mappings']);
         $profileSource = $profile->sources->sortBy('sort_order')->first();
         $source = $profileSource ? $this->sources->get($profileSource->source_key) : null;
@@ -30,6 +33,10 @@ class RunDataExchangeImportDryRun
         $filename = $file instanceof UploadedFile ? $file->getClientOriginalName() : basename($file);
         $format ??= strtolower(pathinfo($filename, PATHINFO_EXTENSION) ?: ($profile->format ?: 'csv'));
 
+        abort_unless(in_array($format, ['csv', 'json', 'xlsx'], true), 422, 'Unsupported import format.');
+        abort_unless(is_file($path) && filesize($path) <= 10 * 1024 * 1024, 422, 'Use an import file up to 10 MiB.');
+        $profileRevision = \App\Modules\DataExchange\Support\DataExchangeRevision::of($profile);
+        $sourceRevision = $source->importRevision();
         $run = DataExchangeRun::query()->create([
             'profile_id' => $profile->id,
             'direction' => DataExchangeProfile::DIRECTION_IMPORT,
@@ -41,7 +48,16 @@ class RunDataExchangeImportDryRun
 
         try {
             $rows = $this->parseRows((string) $path, $format);
+            abort_unless(count($rows) > 0 && count($rows) <= 10000, 422, 'Use between 1 and 10000 import rows.');
             $mapping = $this->mappingFor($profile);
+            foreach ($rows as $row) {
+                foreach (array_keys($row) as $column) {
+                    abort_if($this->sources->isSecretField((string) $column), 422, 'Secret-like input columns are not accepted.');
+                }
+            }
+            // Keep only reviewed mapped inputs; unrelated uploaded columns must not enter stored previews.
+            $allowedInputs = array_fill_keys(array_values($mapping), true);
+            $rows = array_map(fn ($row) => array_intersect_key($row, $allowedInputs), $rows);
             $preview = $source->previewImportRows($profile, $rows, $mapping, $actor);
             $previewRows = $preview['rows'];
             $valid = collect($previewRows)->where('valid', true)->count();
@@ -60,7 +76,11 @@ class RunDataExchangeImportDryRun
                 'mapping' => $mapping,
                 'rows' => $previewRows,
                 'errors' => $preview['errors'],
-                'summary' => $preview['summary'],
+                'summary' => $preview['summary'] + ['review' => [
+                    'profile_revision' => $profileRevision, 'source_revision' => $sourceRevision,
+                    'input_checksum' => hash_file('sha256', $path),
+                    'rows_hash' => \App\Modules\DataExchange\Support\DataExchangeRevision::hash([$previewRows, $mapping]),
+                ]],
                 'created_by' => $actor?->id,
             ]);
 
@@ -117,10 +137,13 @@ class RunDataExchangeImportDryRun
 
         while (($line = fgetcsv($handle)) !== false) {
             if ($headers === []) {
-                $headers = array_map('trim', $line);
+                $headers = array_map(fn ($h) => trim(ltrim((string) $h, "\xEF\xBB\xBF")), $line);
+                abort_unless(count(array_unique($headers)) === count($headers) && ! in_array('', $headers, true), 422, 'Use unique nonempty column names.');
+
                 continue;
             }
 
+            abort_unless(count($line) <= count($headers), 422, 'A row has more values than column names.');
             $rows[] = array_combine($headers, array_pad($line, count($headers), null));
         }
 
@@ -134,10 +157,17 @@ class RunDataExchangeImportDryRun
      */
     private function parseJson(string $path): array
     {
-        $payload = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+        try {
+            $payload = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            abort(422, 'The import JSON is invalid.');
+        }
+        abort_unless(is_array($payload), 422, 'Use a JSON array of row objects.');
         $rows = $payload['rows'] ?? $payload;
 
-        return array_values(array_filter((array) $rows, 'is_array'));
+        abort_unless(is_array($rows) && array_is_list($rows) && count(array_filter($rows, 'is_array')) === count($rows), 422, 'Use a JSON array of row objects.');
+
+        return $rows;
     }
 
     /**
@@ -146,8 +176,9 @@ class RunDataExchangeImportDryRun
     private function parseSpreadsheet(string $path): array
     {
         $sheet = IOFactory::load($path)->getActiveSheet();
-        $matrix = $sheet->toArray(null, true, true, false);
+        $matrix = $sheet->toArray(null, false, false, false);
         $headers = array_map('trim', array_shift($matrix) ?: []);
+        abort_unless(count($headers) > 0 && count(array_unique($headers)) === count($headers) && ! in_array('', $headers, true), 422, 'Use unique nonempty column names.');
         $rows = [];
 
         foreach ($matrix as $line) {
@@ -155,6 +186,7 @@ class RunDataExchangeImportDryRun
                 continue;
             }
 
+            abort_unless(count($line) <= count($headers), 422, 'A row has more values than column names.');
             $rows[] = array_combine($headers, array_pad($line, count($headers), null));
         }
 

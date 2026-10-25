@@ -1,0 +1,269 @@
+{
+  "base": "95c10a422459b0b7c440deb86ccc39085a3f4bbc",
+  "branch": "codex/data-exchange-api-20261025",
+  "tests": {
+    "affected": [
+      {
+        "name": "CLI Arguments",
+        "tests": "308",
+        "assertions": "3214",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "time": "263.111149"
+      }
+    ],
+    "api-admin": [
+      {
+        "name": "App\\Modules\\Integration\\Tests\\Feature\\IntegrationModuleTest",
+        "file": "/tmp/nexum-dataexchange-api-main-20261025/app/Modules/Integration/Tests/Feature/IntegrationModuleTest.php",
+        "tests": "5",
+        "assertions": "257",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "time": "25.371130"
+      }
+    ]
+  },
+  "static": {
+    "php_files": 38,
+    "syntax": {
+      "app/Modules/Clients/Support/ClientDataExchangeSource.php": true,
+      "app/Modules/DataExchange/Actions/CommitDataExchangeImportPreview.php": true,
+      "app/Modules/DataExchange/Actions/DataExchangeExportWorkflow.php": true,
+      "app/Modules/DataExchange/Actions/DeliverDataExchangeFile.php": true,
+      "app/Modules/DataExchange/Actions/ExecuteDataExchangeCommand.php": true,
+      "app/Modules/DataExchange/Actions/PlanDueDataExchangeSchedules.php": true,
+      "app/Modules/DataExchange/Actions/RunDataExchangeExport.php": true,
+      "app/Modules/DataExchange/Actions/RunDataExchangeImportDryRun.php": true,
+      "app/Modules/DataExchange/Actions/SaveDataExchangeOperations.php": true,
+      "app/Modules/DataExchange/Actions/SaveDataExchangeProfile.php": true,
+      "app/Modules/DataExchange/Actions/VerifiedDataExchangeDelivery.php": true,
+      "app/Modules/DataExchange/Controllers/Admin/DataExchangeDeliveryTargetController.php": true,
+      "app/Modules/DataExchange/Controllers/Admin/DataExchangeImportController.php": true,
+      "app/Modules/DataExchange/Controllers/Admin/DataExchangeRunController.php": true,
+      "app/Modules/DataExchange/Controllers/Admin/DataExchangeScheduleController.php": true,
+      "app/Modules/DataExchange/Controllers/Api/V1/DataExchangeController.php": true,
+      "app/Modules/DataExchange/Http/Middleware/DataExchangeApiGuard.php": true,
+      "app/Modules/DataExchange/Jobs/RunDataExchangeScheduleJob.php": true,
+      "app/Modules/DataExchange/Livewire/Admin/ProfileBuilder.php": true,
+      "app/Modules/DataExchange/Models/DataExchangeCommandReceipt.php": true,
+      "app/Modules/DataExchange/Models/DataExchangeScheduleOccurrence.php": true,
+      "app/Modules/DataExchange/Queries/DataExchangeQueries.php": true,
+      "app/Modules/DataExchange/Resources/Api/V1/DataExchangeApiOpenApi.php": true,
+      "app/Modules/DataExchange/Support/DataExchangeAuthority.php": true,
+      "app/Modules/DataExchange/Support/DataExchangeInput.php": true,
+      "app/Modules/DataExchange/Support/DataExchangeMutex.php": true,
+      "app/Modules/DataExchange/Support/DataExchangeProjection.php": true,
+      "app/Modules/DataExchange/Support/DataExchangeRevision.php": true,
+      "app/Modules/DataExchange/Support/DataExchangeSourceDefinition.php": true,
+      "app/Modules/DataExchange/Support/DataExchangeSourceRegistry.php": true,
+      "app/Modules/DataExchange/Tests/Feature/DataExchangeFullApiTest.php": true,
+      "app/Modules/DataExchange/Tests/Feature/DataExchangeRuntimeTest.php": true,
+      "app/Modules/DataExchange/api.php": true,
+      "app/Modules/DataExchange/routes.php": true,
+      "app/Modules/Economy/Tests/Feature/EconomyApiParityTest.php": true,
+      "app/Modules/Integration/Support/ApiAbilityCatalog.php": true,
+      "config/data_exchange.php": true,
+      "database/migrations/2026_10_25_190000_create_data_exchange_command_records.php": true
+    },
+    "pint_pass": true,
+    "sha256": {
+      "app/Modules/Clients/Support/ClientDataExchangeSource.php": "6f77804cfe26355d63988b87663d7bb37bddf81cd8e3de8b14df42a28da9c0ab",
+      "app/Modules/DataExchange/Actions/CommitDataExchangeImportPreview.php": "81707f706d5a0d6537c3ade328f53543dc2bc949fae421d2a17d464b42dba731",
+      "app/Modules/DataExchange/Actions/DataExchangeExportWorkflow.php": "c98cf0946bd6c48692d6caae4c0a5ca663caea90224e17ec3e209a79f79f48df",
+      "app/Modules/DataExchange/Actions/DeliverDataExchangeFile.php": "06ec18b91b5549375392285918fac001a58f460b659d525f91d88fa3450e8513",
+      "app/Modules/DataExchange/Actions/ExecuteDataExchangeCommand.php": "24d11b417178e4dec182bc45d1150e756c0c0a4aaec3fa49652087a98e9f8cf3",
+      "app/Modules/DataExchange/Actions/PlanDueDataExchangeSchedules.php": "31fa5b9879bad983204e2612637ffe5a5e795745d199e89c81f6e389011d6caa",
+      "app/Modules/DataExchange/Actions/RunDataExchangeExport.php": "5064cd813ddcbda1dbef422d2d537969c361603891c75bdfc7020de2d93e6c04",
+      "app/Modules/DataExchange/Actions/RunDataExchangeImportDryRun.php": "ddef5c8fc516dcd5448fb9cda9fdd7202ee6cd72d2993638d1cf6462e9387320",
+      "app/Modules/DataExchange/Actions/SaveDataExchangeOperations.php": "52c9dc4126959d8869faa99f6dfe06b39022ca560c05aecdd94dd1a1304074c2",
+      "app/Modules/DataExchange/Actions/SaveDataExchangeProfile.php": "2f38f620d6996e5d2a780dcfc56941f27efc0a5329ec48074232e301468387a3",
+      "app/Modules/DataExchange/Actions/VerifiedDataExchangeDelivery.php": "99babdc5390e24b103a889edf651df153587e9cbbc3407678a45283f7800eaec",
+      "app/Modules/DataExchange/Controllers/Admin/DataExchangeDeliveryTargetController.php": "ff3730e55822568499fffbc207880a9072ceaaf6e8ea92ddf35e1e5ddf83cc5c",
+      "app/Modules/DataExchange/Controllers/Admin/DataExchangeImportController.php": "4085e09f958220354d33e9a73bf55d297d0e27fa7900f5a740a23bda78d09e7c",
+      "app/Modules/DataExchange/Controllers/Admin/DataExchangeRunController.php": "bdbd201d6090f8ea184e84dc4f1c0f02066dd10527d3d28245f492998a8e1352",
+      "app/Modules/DataExchange/Controllers/Admin/DataExchangeScheduleController.php": "6ae5e26dc02e17d919a46b3a016d8647e53a67c8a09444f44b5fc1bf38b604bb",
+      "app/Modules/DataExchange/Controllers/Api/V1/DataExchangeController.php": "3d1cc393b3b6a3997abaf5d5866b6709e016c4d732da5be36348ccd6f4e5429c",
+      "app/Modules/DataExchange/Docs/knowledge/data-exchange-overview.md": "03616c1a954c6eba64ae87ca5ea6a07f1cc8761b6e36dbe357a59faa4de89845",
+      "app/Modules/DataExchange/Http/Middleware/DataExchangeApiGuard.php": "e42c5afb1652610ef8bda3c414ac57d44cb185691751dd2b520de6b1fffa82b2",
+      "app/Modules/DataExchange/Jobs/RunDataExchangeScheduleJob.php": "4253b34e5abc464191d498e75acef0a25f0d7f2084818216323f68f05d353ca6",
+      "app/Modules/DataExchange/Livewire/Admin/ProfileBuilder.php": "6ba86a62b7d4420870c19aaa4e2f089f391e41952b93f0ff18a5ef2dee869868",
+      "app/Modules/DataExchange/Models/DataExchangeCommandReceipt.php": "9e11782f30b7680c02792d052c14665d3a29f8b34247f4d78ab391f1301d6db0",
+      "app/Modules/DataExchange/Models/DataExchangeScheduleOccurrence.php": "20550b80d2d3da900aa8a7b8f37d813fb616886ef651c9295b175ee6c08b2601",
+      "app/Modules/DataExchange/Queries/DataExchangeQueries.php": "a04132755fb72905c006acf603a1f992848bc7abe577c21b3f8431c862239115",
+      "app/Modules/DataExchange/README.md": "a9e577b40e6083e91a178b044531098fe06775c985e0ebe370929d89445aa7e8",
+      "app/Modules/DataExchange/Resources/Api/V1/DataExchangeApiOpenApi.php": "cf7984fec27087557f309985b590f5b1a2c66dbad735ad4e47ee5d2c06bf0915",
+      "app/Modules/DataExchange/Support/DataExchangeAuthority.php": "658eca691c8b2fe5f2c16a237f2f566ccbe88e62d97831724bfdcf20de5ccc3d",
+      "app/Modules/DataExchange/Support/DataExchangeInput.php": "d8504d466e9c1822f28ea487995304b82d256880dce1a683ff506b513dd9c98f",
+      "app/Modules/DataExchange/Support/DataExchangeMutex.php": "03c3d6117245072bd00f1afea85605d738ccf452476d94d11b607d822e3c65c5",
+      "app/Modules/DataExchange/Support/DataExchangeProjection.php": "d66846464bcac1add2a3f2f1fbd0e4685cf77f6bc0f3e30c809d1fffa7c31d8b",
+      "app/Modules/DataExchange/Support/DataExchangeRevision.php": "ecdafddd898dd96b18f178332cf011c642484e3d81178e28374f6c87c85cbcc2",
+      "app/Modules/DataExchange/Support/DataExchangeSourceDefinition.php": "54cff3a7da7460f3cb6c0bbb199842af84ab7a36f142d9dab16b4850182f66a1",
+      "app/Modules/DataExchange/Support/DataExchangeSourceRegistry.php": "831daafcd8c34e9a6c781a85357fc9f27a96f31a6a2b2b0f714b21d2cc777805",
+      "app/Modules/DataExchange/Tests/Feature/DataExchangeFullApiTest.php": "b33cce7979a39e544af2dc0588c656e031f8289388715378a1219bdd1c344308",
+      "app/Modules/DataExchange/Tests/Feature/DataExchangeRuntimeTest.php": "86bd5401b303dfb0c0e8714f0a3b5edd9af8c6e2dcfa584999a7df6155b30f23",
+      "app/Modules/DataExchange/Views/Admin/imports/show.blade.php": "326019410299b7795f86088ed831d4e8a7227f855b4666ca3b3895529c0392dd",
+      "app/Modules/DataExchange/Views/Admin/index.blade.php": "cee6abc1f320dfde0b733511dbdfd40744360cad38fe043ec9f3695e486a2d18",
+      "app/Modules/DataExchange/Views/Livewire/Admin/profile-builder.blade.php": "70c18e058e10b83e4a4770acf86972a7df5c48ff683ade8a8df1383566c4e57a",
+      "app/Modules/DataExchange/api.php": "2872ea98811e388d9a1b55e92d5d1d36fe5e1797cab6b40b2404352397bb9086",
+      "app/Modules/DataExchange/routes.php": "9e02085bac23b596a88b2d4123a43a362a8cc37fd063490f0d04c93963679d95",
+      "app/Modules/Economy/Tests/Feature/EconomyApiParityTest.php": "dcedef6694b82bc463f5bf4fc1aa509f4edc462db1f73f9be9be3b3b8f08a3e0",
+      "app/Modules/Integration/Docs/knowledge/api-management.md": "155cb999d80179e6a4edd6904419a3c363f96abe05739ea9544c605f8cccc7a0",
+      "app/Modules/Integration/Support/ApiAbilityCatalog.php": "1134ae032c795febd8e5598fa98601e01a9d30f33123520fabd357b7a9f4053b",
+      "config/data_exchange.php": "2ee1cf555ede95a7a297ba424a6b14a8bb20b272bd316a93d9ee57c9434064ff",
+      "database/migrations/2026_10_25_190000_create_data_exchange_command_records.php": "147012399c8f8370e26f8be6fddb501fa46e269bfbe1f32ed6e0f620efb61829"
+    }
+  },
+  "swagger": {
+    "data_exchange_operations": 35,
+    "operations": [
+      [
+        "/api/v1/data-exchange/context",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/sources",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/sources/{sourceKey}",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/profiles",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/profiles",
+        "post"
+      ],
+      [
+        "/api/v1/data-exchange/profiles/templates",
+        "post"
+      ],
+      [
+        "/api/v1/data-exchange/profiles/{profile}",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/profiles/{profile}",
+        "patch"
+      ],
+      [
+        "/api/v1/data-exchange/profiles/{profile}/runs/preview",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/profiles/{profile}/runs",
+        "post"
+      ],
+      [
+        "/api/v1/data-exchange/runs",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/runs/{run}",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/files",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/files/{file}",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/files/{file}/download",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/imports",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/imports/dry-run",
+        "post"
+      ],
+      [
+        "/api/v1/data-exchange/imports/{preview}",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/imports/{preview}/commit",
+        "post"
+      ],
+      [
+        "/api/v1/data-exchange/schedules",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/schedules",
+        "post"
+      ],
+      [
+        "/api/v1/data-exchange/schedules/{schedule}",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/schedules/{schedule}",
+        "patch"
+      ],
+      [
+        "/api/v1/data-exchange/delivery-targets",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/delivery-targets",
+        "post"
+      ],
+      [
+        "/api/v1/data-exchange/delivery-targets/{deliveryTarget}",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/delivery-targets/{deliveryTarget}",
+        "patch"
+      ],
+      [
+        "/api/v1/data-exchange/audit-events",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/operations/{operation}",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/files/{file}/deliveries/preview",
+        "post"
+      ],
+      [
+        "/api/v1/data-exchange/files/{file}/deliveries",
+        "post"
+      ],
+      [
+        "/api/v1/data-exchange/delivery-attempts",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/delivery-attempts/{attempt}",
+        "get"
+      ],
+      [
+        "/api/v1/data-exchange/delivery-attempts/{attempt}/retry",
+        "post"
+      ],
+      [
+        "/api/v1/data-exchange/delivery-attempts/{attempt}/reconcile",
+        "post"
+      ]
+    ],
+    "production_scan": true,
+    "sha256": "05febfdf88018655a8e950db542403b0c40438bf43f472a7bef7b4fcf5b268bf"
+  },
+  "review": "HR-2026-10-25-DATA-EXCHANGE-API Reviewed by Svein Tore, 2026-10-25",
+  "production_deployed": false,
+  "delivery_activated": false
+}

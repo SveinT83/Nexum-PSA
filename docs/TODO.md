@@ -1,5 +1,24 @@
 # tdPSA Development TODO
 
+## Full DataExchange browser/API coverage (2026-10-25)
+
+Status: Done On Dev / Human Reviewed; Main promotion in progress. Owner: Codex. Reviewer/release owner: Svein Tore.
+Approved in chat: "Ja godkjenner". RFC: rfc/2026-10-25-data-exchange-full-api-parity.md.
+All six slices and DX01-DX12 are implemented: 35 HTTP operations / 31 typed schemas.
+Final affected set 82 tests / 1011 assertions; broad affected 310 / 3233; API admin 5 / 316 pass
+(overlapping sets). Syntax/Pint, native migration batch 25, lock/unique probes, nine trusted HTTPS
+reads and exact 35-method Swagger read-back pass. Knowledge and BookStack pages 515/449 and
+inherited employee scope are verified; employee OpenWebUI retrieval is separate and untested.
+Exact evidence: plans/2026-10-25-data-exchange-api-verification.md.
+HR-2026-10-25-DATA-EXCHANGE-API Reviewed by Svein Tore, 2026-10-25; Main merge explicitly authorized.
+Runtime follow-up owner: Svein Tore / Dev runtime operator. API delivery remains disabled; approved
+delivery disks are empty. Assess the substantial pre-existing unrelated shared queue backlog before
+deliberately refreshing workers; prove the external every-minute scheduler and controlled delivery
+before activation. No queue draining, Main, production or provider activation was performed.
+Automatic import pickup remains explicitly unavailable and outside this approved parity scope.
+Existing Economy and Tripletex work is preserved; no known failing test is deferred.
+
+
 
 ## Full Economy browser/API coverage (2026-10-25)
 

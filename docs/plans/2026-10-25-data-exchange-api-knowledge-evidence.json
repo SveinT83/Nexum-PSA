@@ -1,0 +1,27 @@
+{
+    "scoped_sync": {
+        "chapters": 1,
+        "articles": 1,
+        "skipped": 0,
+        "modules": [
+            "DataExchange"
+        ]
+    },
+    "overview": {
+        "id": 22,
+        "source_match": true,
+        "visibility": "internal",
+        "status": "published",
+        "published_revision_id": 53
+    },
+    "api_management": {
+        "id": 3,
+        "scoped_section_match": true,
+        "unrelated_native_text_preserved": true,
+        "full_source_match_claimed": false,
+        "visibility": "internal",
+        "status": "published",
+        "published_revision_id": 54
+    },
+    "bookstack": "Actual pages 515 and 449 separately published and read back in full; native pending_push is not publication proof."
+}

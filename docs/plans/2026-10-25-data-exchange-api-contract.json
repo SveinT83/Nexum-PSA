@@ -1,0 +1,1720 @@
+{
+  "operations": [
+    [
+      "get",
+      "context",
+      "context",
+      "context",
+      "read",
+      "view"
+    ],
+    [
+      "get",
+      "sources",
+      "sources",
+      "sources.index",
+      "read",
+      "view"
+    ],
+    [
+      "get",
+      "sources/{sourceKey}",
+      "source",
+      "sources.show",
+      "read",
+      "view"
+    ],
+    [
+      "get",
+      "profiles",
+      "profiles",
+      "profiles.index",
+      "read",
+      "view"
+    ],
+    [
+      "post",
+      "profiles",
+      "storeProfile",
+      "profiles.store",
+      "manage",
+      "manage"
+    ],
+    [
+      "post",
+      "profiles/templates",
+      "templates",
+      "profiles.templates",
+      "manage",
+      "manage"
+    ],
+    [
+      "get",
+      "profiles/{profile}",
+      "profile",
+      "profiles.show",
+      "read",
+      "view"
+    ],
+    [
+      "patch",
+      "profiles/{profile}",
+      "updateProfile",
+      "profiles.update",
+      "manage",
+      "manage"
+    ],
+    [
+      "get",
+      "profiles/{profile}/runs/preview",
+      "exportPreview",
+      "profiles.runs.preview",
+      "run",
+      "run"
+    ],
+    [
+      "post",
+      "profiles/{profile}/runs",
+      "trigger",
+      "profiles.runs.store",
+      "run",
+      "run"
+    ],
+    [
+      "get",
+      "runs",
+      "runs",
+      "runs.index",
+      "read",
+      "view"
+    ],
+    [
+      "get",
+      "runs/{run}",
+      "run",
+      "runs.show",
+      "read",
+      "view"
+    ],
+    [
+      "get",
+      "files",
+      "files",
+      "files.index",
+      "read",
+      "view"
+    ],
+    [
+      "get",
+      "files/{file}",
+      "file",
+      "files.show",
+      "read",
+      "view"
+    ],
+    [
+      "get",
+      "files/{file}/download",
+      "download",
+      "files.download",
+      "download",
+      "download"
+    ],
+    [
+      "get",
+      "imports",
+      "imports",
+      "imports.index",
+      "read",
+      "view"
+    ],
+    [
+      "post",
+      "imports/dry-run",
+      "dryRun",
+      "imports.dry-run",
+      "import",
+      "import"
+    ],
+    [
+      "get",
+      "imports/{preview}",
+      "preview",
+      "imports.show",
+      "read",
+      "view"
+    ],
+    [
+      "post",
+      "imports/{preview}/commit",
+      "commit",
+      "imports.commit",
+      "approve_import",
+      "approve_import"
+    ],
+    [
+      "get",
+      "schedules",
+      "schedules",
+      "schedules.index",
+      "schedule",
+      "schedule"
+    ],
+    [
+      "post",
+      "schedules",
+      "storeSchedule",
+      "schedules.store",
+      "schedule",
+      "schedule"
+    ],
+    [
+      "get",
+      "schedules/{schedule}",
+      "schedule",
+      "schedules.show",
+      "schedule",
+      "schedule"
+    ],
+    [
+      "patch",
+      "schedules/{schedule}",
+      "updateSchedule",
+      "schedules.update",
+      "schedule",
+      "schedule"
+    ],
+    [
+      "get",
+      "delivery-targets",
+      "targets",
+      "delivery-targets.index",
+      "delivery",
+      "delivery"
+    ],
+    [
+      "post",
+      "delivery-targets",
+      "storeTarget",
+      "delivery-targets.store",
+      "delivery",
+      "delivery"
+    ],
+    [
+      "get",
+      "delivery-targets/{deliveryTarget}",
+      "target",
+      "delivery-targets.show",
+      "delivery",
+      "delivery"
+    ],
+    [
+      "patch",
+      "delivery-targets/{deliveryTarget}",
+      "updateTarget",
+      "delivery-targets.update",
+      "delivery",
+      "delivery"
+    ],
+    [
+      "get",
+      "audit-events",
+      "audit",
+      "audit-events.index",
+      "read",
+      "view"
+    ],
+    [
+      "get",
+      "operations/{operation}",
+      "operation",
+      "operations.show",
+      "read",
+      "view"
+    ],
+    [
+      "post",
+      "files/{file}/deliveries/preview",
+      "deliveryPreview",
+      "files.deliveries.preview",
+      "delivery",
+      "delivery"
+    ],
+    [
+      "post",
+      "files/{file}/deliveries",
+      "deliver",
+      "files.deliveries.store",
+      "delivery",
+      "delivery"
+    ],
+    [
+      "get",
+      "delivery-attempts",
+      "attempts",
+      "delivery-attempts.index",
+      "delivery",
+      "delivery"
+    ],
+    [
+      "get",
+      "delivery-attempts/{attempt}",
+      "attempt",
+      "delivery-attempts.show",
+      "delivery",
+      "delivery"
+    ],
+    [
+      "post",
+      "delivery-attempts/{attempt}/retry",
+      "retryDelivery",
+      "delivery-attempts.retry",
+      "delivery",
+      "delivery"
+    ],
+    [
+      "post",
+      "delivery-attempts/{attempt}/reconcile",
+      "reconcileDelivery",
+      "delivery-attempts.reconcile",
+      "delivery",
+      "delivery"
+    ]
+  ],
+  "schemas": {
+    "DXError": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "errors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXPage": {
+      "type": "object",
+      "properties": {
+        "current_page": {
+          "type": "integer"
+        },
+        "per_page": {
+          "type": "integer"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "last_page": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXField": {
+      "type": "object",
+      "properties": {
+        "field_key": {
+          "type": "string"
+        },
+        "output_key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "field_key",
+        "output_key"
+      ]
+    },
+    "DXFilter": {
+      "type": "object",
+      "properties": {
+        "field_key": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string",
+          "enum": [
+            "equals",
+            "not_equals",
+            "contains",
+            "starts_with",
+            "greater_than",
+            "less_than",
+            "in",
+            "is_empty",
+            "is_not_empty"
+          ]
+        },
+        "value": {
+          "oneOf": [
+            {
+              "type": "string",
+              "nullable": true
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ],
+                "nullable": true
+              }
+            }
+          ],
+          "nullable": true
+        },
+        "active": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "field_key",
+        "operator",
+        "value",
+        "active"
+      ]
+    },
+    "DXProfileInput": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "export",
+            "import"
+          ]
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "csv",
+            "xlsx",
+            "json"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "active",
+            "paused"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "source_key": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/DXField"
+          }
+        },
+        "filters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/DXFilter"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "key",
+        "direction",
+        "format",
+        "status",
+        "source_key",
+        "fields",
+        "filters"
+      ]
+    },
+    "DXProfileUpdate": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "export",
+            "import"
+          ]
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "csv",
+            "xlsx",
+            "json"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "active",
+            "paused"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "source_key": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/DXField"
+          }
+        },
+        "filters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/DXFilter"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXProfile": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "runs_count": {
+          "type": "integer"
+        },
+        "files_count": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "export",
+            "import"
+          ]
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "csv",
+            "xlsx",
+            "json"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "active",
+            "paused"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "source_key": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/DXField"
+          }
+        },
+        "filters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/DXFilter"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXSourceField": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "exportable": {
+          "type": "boolean"
+        },
+        "importable": {
+          "type": "boolean"
+        },
+        "relation": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXSource": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "module": {
+          "type": "string"
+        },
+        "supports_export": {
+          "type": "boolean"
+        },
+        "supports_import": {
+          "type": "boolean"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/DXSourceField"
+          }
+        },
+        "filters": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "relations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "cardinality": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXContext": {
+      "type": "object",
+      "properties": {
+        "formats": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "directions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "statuses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "filter_operators": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "timezone": {
+          "type": "string"
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "automatic_import_pickup": {
+              "type": "boolean"
+            },
+            "api_delivery_enabled": {
+              "type": "boolean"
+            },
+            "max_import_bytes": {
+              "type": "integer"
+            },
+            "max_import_rows": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        },
+        "actions": {
+          "type": "object",
+          "properties": {
+            "manage": {
+              "type": "boolean"
+            },
+            "run": {
+              "type": "boolean"
+            },
+            "download": {
+              "type": "boolean"
+            },
+            "import": {
+              "type": "boolean"
+            },
+            "approve_import": {
+              "type": "boolean"
+            },
+            "schedule": {
+              "type": "boolean"
+            },
+            "delivery": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/DXSource"
+          }
+        },
+        "counts": {
+          "type": "object",
+          "properties": {
+            "profiles": {
+              "type": "integer"
+            },
+            "runs": {
+              "type": "integer"
+            },
+            "files": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        },
+        "delivery_disks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "credential_references": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXFile": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "run_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "profile_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "filename": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string",
+          "nullable": true
+        },
+        "mime_type": {
+          "type": "string",
+          "nullable": true
+        },
+        "size_bytes": {
+          "type": "integer"
+        },
+        "checksum": {
+          "type": "string",
+          "nullable": true
+        },
+        "retention_until": {
+          "type": "string",
+          "nullable": true
+        },
+        "downloaded_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "download_url": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXRun": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "profile_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "profile": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "key": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "direction": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "trigger_type": {
+          "type": "string"
+        },
+        "started_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "finished_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "summary": {
+          "type": "object",
+          "properties": {
+            "rows": {
+              "type": "integer"
+            },
+            "format": {
+              "type": "string"
+            },
+            "file_id": {
+              "type": "integer"
+            },
+            "filename": {
+              "type": "string"
+            },
+            "preview_id": {
+              "type": "integer"
+            },
+            "valid": {
+              "type": "integer"
+            },
+            "invalid": {
+              "type": "integer"
+            },
+            "created": {
+              "type": "integer"
+            },
+            "updated": {
+              "type": "integer"
+            },
+            "skipped": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        },
+        "error_message": {
+          "type": "string",
+          "nullable": true
+        },
+        "error_code": {
+          "type": "string",
+          "nullable": true
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/DXFile"
+          }
+        },
+        "file_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "order_state_changed": {
+          "type": "boolean"
+        },
+        "provider_invoice_created": {
+          "type": "boolean"
+        },
+        "delivery_dispatched": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXExportPreview": {
+      "type": "object",
+      "properties": {
+        "profile_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "profile_key": {
+          "type": "string"
+        },
+        "profile_exists": {
+          "type": "boolean"
+        },
+        "profile_revision": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "row_count": {
+          "type": "integer"
+        },
+        "preview_hash": {
+          "type": "string"
+        },
+        "default_statuses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "uses_configured_filters": {
+          "type": "boolean"
+        },
+        "configured_delivery_targets": {
+          "type": "integer"
+        },
+        "delivery_will_be_dispatched": {
+          "type": "boolean"
+        },
+        "order_state_will_change": {
+          "type": "boolean"
+        },
+        "result_is": {
+          "type": "string"
+        },
+        "profile_initialization": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXImportRow": {
+      "type": "object",
+      "properties": {
+        "row_number": {
+          "type": "integer"
+        },
+        "input": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string",
+                "nullable": true
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "values": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string",
+                "nullable": true
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "valid": {
+          "type": "boolean"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXImportSummary": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "type": "string"
+        },
+        "valid": {
+          "type": "integer"
+        },
+        "invalid": {
+          "type": "integer"
+        },
+        "supported": {
+          "type": "boolean"
+        },
+        "commit": {
+          "type": "object",
+          "properties": {
+            "created": {
+              "type": "integer"
+            },
+            "updated": {
+              "type": "integer"
+            },
+            "skipped": {
+              "type": "integer"
+            },
+            "errors": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "commit_run_id": {
+          "type": "integer"
+        },
+        "review": {
+          "type": "object",
+          "properties": {
+            "profile_revision": {
+              "type": "string"
+            },
+            "source_revision": {
+              "type": "string",
+              "nullable": true
+            },
+            "input_checksum": {
+              "type": "string"
+            },
+            "rows_hash": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXImportPreview": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "profile_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "run_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "status": {
+          "type": "string"
+        },
+        "source_key": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "original_filename": {
+          "type": "string",
+          "nullable": true
+        },
+        "row_count": {
+          "type": "integer"
+        },
+        "valid_count": {
+          "type": "integer"
+        },
+        "invalid_count": {
+          "type": "integer"
+        },
+        "mapping": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/DXImportRow"
+          }
+        },
+        "errors": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          ]
+        },
+        "summary": {
+          "$ref": "#/components/schemas/DXImportSummary"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "rows_offset": {
+          "type": "integer"
+        },
+        "rows_limit": {
+          "type": "integer"
+        },
+        "committed_at": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXScheduleInput": {
+      "type": "object",
+      "properties": {
+        "profile_id": {
+          "type": "integer"
+        },
+        "delivery_target_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "export"
+          ]
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "frequency": {
+          "type": "string",
+          "enum": [
+            "hourly",
+            "daily",
+            "weekly",
+            "monthly"
+          ]
+        },
+        "run_time": {
+          "type": "string",
+          "nullable": true
+        },
+        "weekdays": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "profile_id",
+        "direction",
+        "active",
+        "frequency"
+      ]
+    },
+    "DXScheduleUpdate": {
+      "type": "object",
+      "properties": {
+        "profile_id": {
+          "type": "integer"
+        },
+        "delivery_target_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "export"
+          ]
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "frequency": {
+          "type": "string",
+          "enum": [
+            "hourly",
+            "daily",
+            "weekly",
+            "monthly"
+          ]
+        },
+        "run_time": {
+          "type": "string",
+          "nullable": true
+        },
+        "weekdays": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXSchedule": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "profile_id": {
+          "type": "integer"
+        },
+        "delivery_target_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "export"
+          ]
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "frequency": {
+          "type": "string",
+          "enum": [
+            "hourly",
+            "daily",
+            "weekly",
+            "monthly"
+          ]
+        },
+        "run_time": {
+          "type": "string",
+          "nullable": true
+        },
+        "weekdays": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7
+          }
+        },
+        "timezone": {
+          "type": "string"
+        },
+        "next_run_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "last_run_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "last_run_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "revision": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXTargetInput": {
+      "type": "object",
+      "properties": {
+        "profile_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "local",
+            "ftp",
+            "sftp"
+          ]
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "export",
+            "both"
+          ]
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "credential_reference": {
+          "type": "string",
+          "nullable": true
+        },
+        "filesystem_disk": {
+          "type": "string"
+        },
+        "remote_path": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "type",
+        "direction",
+        "active",
+        "filesystem_disk",
+        "remote_path"
+      ]
+    },
+    "DXTargetUpdate": {
+      "type": "object",
+      "properties": {
+        "profile_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "local",
+            "ftp",
+            "sftp"
+          ]
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "export",
+            "both"
+          ]
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "credential_reference": {
+          "type": "string",
+          "nullable": true
+        },
+        "filesystem_disk": {
+          "type": "string"
+        },
+        "remote_path": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXTarget": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "profile_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "local",
+            "ftp",
+            "sftp"
+          ]
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "export",
+            "both"
+          ]
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "credential_reference": {
+          "type": "string",
+          "nullable": true
+        },
+        "filesystem_disk": {
+          "type": "string"
+        },
+        "remote_path": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string",
+          "nullable": true
+        },
+        "revision": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXDeliveryInput": {
+      "type": "object",
+      "properties": {
+        "target_id": {
+          "type": "integer"
+        },
+        "preview_hash": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "target_id",
+        "preview_hash"
+      ]
+    },
+    "DXDeliveryPreview": {
+      "type": "object",
+      "properties": {
+        "file_id": {
+          "type": "integer"
+        },
+        "target_id": {
+          "type": "integer"
+        },
+        "checksum": {
+          "type": "string"
+        },
+        "preview_hash": {
+          "type": "string"
+        },
+        "api_delivery_enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXAttempt": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "file_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "run_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "delivery_target_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "schedule_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "queued",
+            "writing",
+            "unknown",
+            "failed",
+            "succeeded"
+          ]
+        },
+        "attempted_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "finished_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "verified": {
+          "type": "boolean"
+        },
+        "safe_to_retry": {
+          "type": "boolean"
+        },
+        "error_code": {
+          "type": "string",
+          "nullable": true
+        },
+        "revision": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXAudit": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "profile_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "run_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "file_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "actor_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "event_type": {
+          "type": "string"
+        },
+        "outcome": {
+          "type": "string"
+        },
+        "occurred_at": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXCommand": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "oneOf": [
+            {
+              "$ref": "#/components/schemas/DXProfile"
+            },
+            {
+              "$ref": "#/components/schemas/DXRun"
+            },
+            {
+              "$ref": "#/components/schemas/DXImportPreview"
+            },
+            {
+              "$ref": "#/components/schemas/DXSchedule"
+            },
+            {
+              "$ref": "#/components/schemas/DXTarget"
+            },
+            {
+              "$ref": "#/components/schemas/DXAttempt"
+            }
+          ]
+        },
+        "operation_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "profile_id": {
+          "type": "integer",
+          "nullable": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXOperation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "operation": {
+          "type": "string"
+        },
+        "result": {
+          "$ref": "#/components/schemas/DXCommand"
+        },
+        "created_at": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DXExportInput": {
+      "type": "object",
+      "properties": {
+        "preview_hash": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "preview_hash"
+      ]
+    },
+    "DXTemplateInput": {
+      "type": "object",
+      "properties": {
+        "source_key": {
+          "type": "string",
+          "enum": [
+            "clients",
+            "economy.orders"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "source_key"
+      ]
+    },
+    "DXTargetChoice": {
+      "type": "object",
+      "properties": {
+        "target_id": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "target_id"
+      ]
+    }
+  }
+}

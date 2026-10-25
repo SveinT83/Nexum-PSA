@@ -3,6 +3,16 @@
     <!-- Profile Builder Form -->
     <!-- ------------------------------------------------- -->
     <form wire:submit="save" class="d-grid gap-3">
+        <!-- Shared Domain Validation -->
+        @if($errors->any())
+            <div class="alert alert-danger mb-0" role="alert">
+                <ul class="mb-0">
+                    @foreach($errors->all() as $message)
+                        <li>{{ $message }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         <div class="card">
             <div class="card-header">
                 <h2 class="h6 mb-0">Profile</h2>

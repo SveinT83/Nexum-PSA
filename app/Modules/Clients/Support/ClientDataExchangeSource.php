@@ -26,6 +26,11 @@ class ClientDataExchangeSource
             exporter: fn (DataExchangeProfile $profile, array $options = []): array => $this->exportRows(),
             importPreviewer: fn (DataExchangeProfile $profile, array $rows, array $mapping, ?User $actor = null): array => $this->previewRows($rows, $mapping),
             importCommitter: fn (DataExchangeProfile $profile, array $previewRows, ?User $actor = null): array => $this->commitRows($previewRows, $actor),
+            // Bind import review to current domain records and provider authority, without copying credentials.
+            importRevisioner: fn (): string => \App\Modules\DataExchange\Support\DataExchangeRevision::hash([
+                Client::query()->orderBy('id')->get()->map->getRawOriginal()->all(),
+                (bool) app(\App\Modules\DataExchange\Services\TripletexCustomerNumbers::class)->connection(),
+            ]),
         );
     }
 
@@ -71,7 +76,7 @@ class ClientDataExchangeSource
     }
 
     /**
-     * @param array<int, array<string, mixed>> $rows
+     * @param  array<int, array<string, mixed>>  $rows
      * @return array{rows: array<int, array<string, mixed>>, errors: array<int, array<string>>, summary: array<string, mixed>}
      */
     private function previewRows(array $rows, array $mapping): array
@@ -123,7 +128,7 @@ class ClientDataExchangeSource
     }
 
     /**
-     * @param array<int, array<string, mixed>> $previewRows
+     * @param  array<int, array<string, mixed>>  $previewRows
      * @return array<string, mixed>
      */
     private function commitRows(array $previewRows, ?User $actor): array
@@ -135,6 +140,7 @@ class ClientDataExchangeSource
         foreach ($previewRows as $previewRow) {
             if (! ($previewRow['valid'] ?? false)) {
                 $skipped++;
+
                 continue;
             }
 
@@ -153,6 +159,7 @@ class ClientDataExchangeSource
             if ($client) {
                 $client->fill(array_filter($attributes, fn ($value): bool => $value !== null))->save();
                 $updated++;
+
                 continue;
             }
 
@@ -189,6 +196,11 @@ class ClientDataExchangeSource
                 continue;
             }
 
+            if ($mapping !== [] && ! array_key_exists($field->key, $mapping)) {
+                $values[$field->key] = null;
+
+                continue;
+            }
             $inputKey = $mapping[$field->key] ?? $field->key;
             $values[$field->key] = array_key_exists($inputKey, $row) ? $row[$inputKey] : data_get($row, $inputKey);
         }

@@ -280,7 +280,7 @@
                             <label class="form-label small">Direction</label>
                             <select name="direction" class="form-select form-select-sm">
                                 <option value="export">Export</option>
-                                <option value="import">Import</option>
+                                <option value="import" disabled>Import pickup unavailable</option>
                                 <option value="both">Both</option>
                             </select>
                         </div>
