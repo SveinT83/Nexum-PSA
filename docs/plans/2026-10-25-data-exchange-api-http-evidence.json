@@ -1,0 +1,63 @@
+{
+    "checks": [
+        {
+            "path": "\/api\/v1\/data-exchange\/context",
+            "status": 200,
+            "ok": true
+        },
+        {
+            "path": "\/api\/v1\/data-exchange\/sources",
+            "status": 200,
+            "ok": true
+        },
+        {
+            "path": "\/api\/v1\/data-exchange\/profiles",
+            "status": 200,
+            "ok": true
+        },
+        {
+            "path": "\/api\/v1\/data-exchange\/runs",
+            "status": 200,
+            "ok": true
+        },
+        {
+            "path": "\/api\/v1\/data-exchange\/files",
+            "status": 200,
+            "ok": true
+        },
+        {
+            "path": "\/api\/v1\/data-exchange\/imports",
+            "status": 200,
+            "ok": true
+        },
+        {
+            "path": "\/api\/v1\/data-exchange\/schedules",
+            "status": 200,
+            "ok": true
+        },
+        {
+            "path": "\/api\/v1\/data-exchange\/delivery-targets",
+            "status": 200,
+            "ok": true
+        },
+        {
+            "path": "\/api\/v1\/data-exchange\/delivery-attempts",
+            "status": 200,
+            "ok": true
+        }
+    ],
+    "all_ok": true,
+    "native_profile_count": 2,
+    "http_profile_count": 2,
+    "anonymous_denied": true,
+    "missing_record_denied": true,
+    "swagger": {
+        "path": "\/docs?jsonFile=api-docs.json",
+        "status": 200,
+        "methods_verified": 35,
+        "missing": [],
+        "exact_bytes_match": true
+    },
+    "temporary_token_revoked": true,
+    "original_token_count_restored": true
+}

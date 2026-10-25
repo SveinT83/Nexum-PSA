@@ -30,6 +30,7 @@ class DataExchangeRunController extends Controller
     {
         abort_unless(request()->user()?->can('data_exchange.view'), 403);
 
+        \App\Modules\DataExchange\Support\DataExchangeAuthority::runtime(\App\Modules\DataExchange\Models\DataExchangeProfile::withTrashed()->findOrFail($run->profile_id), request()->user(), 'view');
         $run->load(['profile', 'files', 'actor']);
 
         return view('dataexchange::Admin.runs.show', [
@@ -45,7 +46,9 @@ class DataExchangeRunController extends Controller
     {
         abort_unless($request->user()?->can('data_exchange.download'), 403);
 
+        \App\Modules\DataExchange\Support\DataExchangeAuthority::runtime(\App\Modules\DataExchange\Models\DataExchangeProfile::withTrashed()->findOrFail($file->profile_id), $request->user(), 'download');
         abort_unless(Storage::disk($file->disk)->exists($file->path), 404);
+        abort_unless(hash_equals($file->checksum, hash('sha256', Storage::disk($file->disk)->get($file->path))), 409, 'The file checksum changed.');
 
         $file->forceFill(['downloaded_at' => now()])->save();
 

@@ -92,6 +92,7 @@ class DataExchangeRuntimeTest extends TestCase
         Client::factory()->create(['name' => 'Runtime Client AS', 'billing_email' => 'billing@example.test']);
         $templates = app(EnsureDataExchangeProfileTemplates::class);
         $profile = $templates->clientsBasicImportProfile($this->admin);
+        $profile->fields()->whereIn('field_key', ['site_name', 'contact_name', 'contact_email'])->delete();
         $profile->forceFill(['direction' => DataExchangeProfile::DIRECTION_EXPORT])->save();
 
         foreach (['csv', 'json', 'xlsx'] as $format) {
@@ -167,6 +168,7 @@ class DataExchangeRuntimeTest extends TestCase
         Storage::fake('dx-target');
         Client::factory()->create(['name' => 'Delivery Client AS']);
         $profile = app(EnsureDataExchangeProfileTemplates::class)->clientsBasicImportProfile($this->admin);
+        $profile->fields()->whereIn('field_key', ['site_name', 'contact_name', 'contact_email'])->delete();
         $profile->forceFill(['direction' => DataExchangeProfile::DIRECTION_EXPORT, 'format' => 'csv'])->save();
         $run = app(RunDataExchangeExport::class)->handle($profile, $this->admin);
         $file = $run->files()->firstOrFail();
@@ -198,6 +200,7 @@ class DataExchangeRuntimeTest extends TestCase
         Storage::fake('local');
         Client::factory()->create(['name' => 'API Client AS']);
         $profile = app(EnsureDataExchangeProfileTemplates::class)->clientsBasicImportProfile($this->admin);
+        $profile->fields()->whereIn('field_key', ['site_name', 'contact_name', 'contact_email'])->delete();
         $profile->forceFill(['direction' => DataExchangeProfile::DIRECTION_EXPORT, 'format' => 'csv'])->save();
 
         Sanctum::actingAs($this->admin, ['data_exchange.read', 'data_exchange.run', 'data_exchange.download']);
@@ -206,7 +209,8 @@ class DataExchangeRuntimeTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.key', 'clients_basic_import');
 
-        $runId = $this->postJson('/api/v1/data-exchange/profiles/'.$profile->id.'/runs')
+        $preview = $this->getJson('/api/v1/data-exchange/profiles/'.$profile->id.'/runs/preview')->assertOk()->json('data.preview_hash');
+        $runId = $this->withHeader('Idempotency-Key', 'runtime-export-0001')->postJson('/api/v1/data-exchange/profiles/'.$profile->id.'/runs', ['preview_hash' => $preview])
             ->assertCreated()
             ->json('data.id');
 

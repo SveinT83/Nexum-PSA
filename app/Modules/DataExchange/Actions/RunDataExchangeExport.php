@@ -19,8 +19,35 @@ class RunDataExchangeExport
 {
     public function __construct(private readonly DataExchangeSourceRegistry $sources) {}
 
+    /** Browser/API/jobs share the same configuration lock; failed runs survive a caller's error path. */
     public function handle(DataExchangeProfile $profile, ?User $actor = null, string $triggerType = 'manual', array $options = []): DataExchangeRun
     {
+        $error = null;
+        $run = app(\App\Modules\DataExchange\Support\DataExchangeMutex::class)->run(function () use ($profile, $actor, $triggerType, $options, &$error) {
+            $before = $profile->runs()->max('id') ?? 0;
+            try {
+                return $this->execute($profile->fresh(), $actor, $triggerType, $options);
+            } catch (\Throwable $failure) {
+                $failed = $profile->runs()->where('id', '>', $before)->where('status', DataExchangeRun::STATUS_FAILED)->latest('id')->first();
+                if (! $failed) {
+                    throw $failure;
+                }
+                $error = $failure;
+
+                return $failed;
+            }
+        });
+        if ($error) {
+            throw $error;
+        }
+
+        return $run;
+    }
+
+    private function execute(DataExchangeProfile $profile, ?User $actor = null, string $triggerType = 'manual', array $options = []): DataExchangeRun
+    {
+        \App\Modules\DataExchange\Support\DataExchangeAuthority::runtime($profile, $actor, 'run');
+        abort_unless($profile->status === 'active', 422, 'Use an active export profile.');
         $run = DataExchangeRun::query()->create([
             'profile_id' => $profile->id,
             'direction' => DataExchangeProfile::DIRECTION_EXPORT,
@@ -43,7 +70,8 @@ class RunDataExchangeExport
             $filename = Str::slug($profile->key ?: $profile->name).'_'.$run->id.'_'.now()->format('Ymd_His').'.'.$extension;
             $path = 'data-exchange/exports/'.Str::slug($profile->key ?: 'profile-'.$profile->id).'/'.$filename;
 
-            Storage::disk('local')->put($path, $contents);
+            abort_unless(Storage::disk('local')->put($path, $contents), 503, 'The generated file could not be stored.');
+            abort_unless(hash_equals(hash('sha256', $contents), hash('sha256', Storage::disk('local')->get($path))), 503, 'The stored export checksum could not be verified.');
 
             $file = DataExchangeFile::query()->create([
                 'profile_id' => $profile->id,
@@ -95,6 +123,7 @@ class RunDataExchangeExport
      */
     public function mappedRows(DataExchangeProfile $profile, array $options = []): array
     {
+        $this->sources->assertProfile($profile, 'export');
         $profile->loadMissing(['sources', 'fields', 'filters']);
         $profileSource = $profile->sources->sortBy('sort_order')->first();
         $source = $profileSource ? $this->sources->get($profileSource->source_key) : null;
@@ -158,7 +187,7 @@ class RunDataExchangeExport
     }
 
     /**
-     * @param array<int, array<string, mixed>> $rows
+     * @param  array<int, array<string, mixed>>  $rows
      */
     private function contentsFor(array $rows, string $format): string
     {
@@ -170,7 +199,7 @@ class RunDataExchangeExport
     }
 
     /**
-     * @param array<int, array<string, mixed>> $rows
+     * @param  array<int, array<string, mixed>>  $rows
      */
     private function csvContents(array $rows): string
     {
@@ -193,11 +222,11 @@ class RunDataExchangeExport
     }
 
     /**
-     * @param array<int, array<string, mixed>> $rows
+     * @param  array<int, array<string, mixed>>  $rows
      */
     private function xlsxContents(array $rows): string
     {
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $headers = array_keys($rows[0] ?? []);
 

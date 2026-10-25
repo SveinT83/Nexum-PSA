@@ -157,7 +157,10 @@ Implemented scopes:
 - `economy.settings.read` / `economy.settings.update`: complete settings under current administrative permission.
 - `economy.operations.read`: own durable command/notification evidence with current original rights.
 - `economy.export`: canonical Economy export preview/command together with data_exchange.run.
-- `data_exchange.read`: list Data Exchange profiles and inspect run status.
+- data_exchange.read: discover context/sources and read profiles/history/previews/audit.
+- data_exchange.manage: create/update atomic Data Exchange profile configuration and templates.
+- data_exchange.schedule: inspect/create/update/pause supported export schedules.
+- data_exchange.delivery: configure approved targets and control verified delivery/read-back.
 - `data_exchange.run`: trigger implemented Data Exchange export profiles.
 - `data_exchange.download`: download generated Data Exchange files.
 - `data_exchange.import`: start import dry-runs for approved Data Exchange import targets.
@@ -957,24 +960,76 @@ operation evidence reports pending/processing/submitted/superseded/unknown, neve
 
 ## Data Exchange API
 
-Data Exchange API routes expose the implemented profile runtime for trusted automation.
+Full operational coverage is implemented on Dev (25 October 2026), under
+HR-2026-10-25-DATA-EXCHANGE-API. Human review, Main promotion and production deployment are separate;
+this section does not claim production availability. Swagger describes all 35 current operations.
 
-`GET /api/v1/data-exchange/profiles` returns configured profiles with direction, format, status, run
-count, and file count.
+### Access and discovery
 
-`POST /api/v1/data-exchange/profiles/{profile}/runs` triggers an export profile and returns the run
-and generated file ID. Import profiles must use dry-run and commit endpoints.
+An active actor needs current DataExchange and registered source permissions plus explicit token
+scopes. Existing tokens gain no new abilities. Use data_exchange.read for context, sources, fields,
+filters, profiles, history and reviewed previews; data_exchange.manage for profile composition/
+templates; data_exchange.run for export preview/execution; data_exchange.download for files;
+data_exchange.import and data_exchange.approve_import for manual preview/commit; and
+data_exchange.schedule/data_exchange.delivery for operations. Economy canonical/custom profiles
+also retain their Economy read/export scope and actor rights.
 
-`GET /api/v1/data-exchange/runs/{run}` returns run status, summary, error message, and generated file
-metadata.
+GET context, sources and profiles never initialize templates or execute business actions.
+POST profiles/templates explicitly initializes the existing clients or economy.orders template.
+Lists use page/per_page (maximum 100), profile_id where relevant, and documented status/search
+filters. GET imports/{preview} supports rows_offset/rows_limit (maximum 100). Unsupported keys,
+unsafe fields, raw SQL and arbitrary credential/filesystem inputs are rejected.
 
-`GET /api/v1/data-exchange/files/{file}/download` downloads a generated file from protected storage.
+### Profiles and export
 
-`POST /api/v1/data-exchange/imports/dry-run` accepts `profile_id` and uploaded `file` for CSV, JSON,
-or XLSX preview. The response includes valid/invalid row counts and row errors.
+1. GET /api/v1/data-exchange/context and sources; choose supported fields, output keys and filters.
+2. POST profiles with complete typed configuration and a fresh Idempotency-Key (8-200 characters).
+   GET profiles/{profile} returns exact saved configuration and a strong revision.
+3. PATCH profiles/{profile} with intended changes, a new key and If-Match from that revision.
+   Stale changes return 409; missing revision returns 428. Identical retries replay.
+4. GET profiles/{profile}/runs/preview and inspect row_count, format and preview_hash.
+5. POST profiles/{profile}/runs with preview_hash and a fresh Idempotency-Key. This also applies
+   to custom Economy profiles. The canonical Economy profile retains its owner preview/command
+   contract. Use the same key only for an identical retry.
+6. Read runs/{run}, files/{file} and files/{file}/download. Check status, size and checksum.
+   Failed runs remain failed results. A private file is not an invoice or automatic delivery.
 
-`POST /api/v1/data-exchange/imports/{preview}/commit` commits a valid preview through the
-module-approved import target. Previews with invalid rows are rejected.
+### Manual imports
+
+1. POST imports/dry-run with multipart profile_id and file (CSV, JSON, XLSX; up to 10 MiB and
+   10000 rows). An optional Idempotency-Key deduplicates the same upload.
+2. GET imports/{preview}; review normalized values, row errors and revision.
+3. Correct invalid rows with a new preview. Changes to the profile, mapping, target records or
+   provider authority invalidate review. Writes use the domain-owned import target.
+4. POST imports/{preview}/commit with a new key and If-Match from the reviewed preview.
+   Repeated/concurrent commits cannot apply writes twice. Read committed status and
+   summary.commit_run_id/commit counts. Tripletex-authoritative new Clients still use Client
+   creation rather than an import bypass.
+
+### Schedules, delivery and evidence
+
+GET/POST/PATCH schedules and delivery-targets expose exact configuration, revision and pause/
+reactivation. Active schedules require an active export profile, current approving operator and
+compatible target. Frequency/run_time use the installation timezone; weekdays use ISO 1-7.
+Automatic import pickup is unavailable and configuration is refused. Manual imports remain supported.
+
+Targets reference Integration-approved filesystem/credential references discoverable in context.
+An installation administrator configures these references before target creation. Never submit
+passwords, private keys or API tokens in DataExchange configuration.
+
+POST files/{file}/deliveries/preview with target_id returns file checksum and preview_hash.
+POST files/{file}/deliveries with target_id, preview_hash and Idempotency-Key requires separately
+enabled API delivery, which is off by default. Preview and inspection do not activate delivery.
+Read delivery-attempts/{attempt} and the returned operation_id. Only succeeded with verified=true
+means destination bytes were read back and matched. queued/writing/unknown are incomplete.
+For unknown, POST delivery-attempts/{attempt}/reconcile reads the frozen destination.
+Retry only failed attempts marked safe_to_retry=true, using POST delivery-attempts/{attempt}/retry
+with the original target_id, a fresh preview_hash and new key. Unreadable destinations remain
+unknown and cannot be blindly resent. Existing approved schedule delivery shares these checks.
+
+GET audit-events returns bounded authorized metadata. GET operations/{operation} requires the
+original actor and current original permissions/scopes; it hydrates current delivery status.
+Private filesystem configuration, credentials and raw exception payloads are excluded.
 
 ## Report API
 

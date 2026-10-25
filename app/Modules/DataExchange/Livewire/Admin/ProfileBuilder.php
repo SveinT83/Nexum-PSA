@@ -3,25 +3,38 @@
 namespace App\Modules\DataExchange\Livewire\Admin;
 
 use App\Modules\DataExchange\Models\DataExchangeProfile;
-use App\Modules\DataExchange\Support\DataExchangeFieldDefinition;
 use App\Modules\DataExchange\Support\DataExchangeSourceRegistry;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class ProfileBuilder extends Component
 {
+    #[\Livewire\Attributes\Locked]
     public ?int $profileId = null;
+
+    #[\Livewire\Attributes\Locked]
+    public ?string $revision = null;
+
     public string $name = '';
+
     public string $key = '';
+
     public string $direction = DataExchangeProfile::DIRECTION_EXPORT;
+
     public string $format = 'csv';
+
     public string $status = DataExchangeProfile::STATUS_DRAFT;
+
     public ?string $description = null;
+
     public ?string $sourceKey = null;
+
     public array $selectedFields = [];
+
     public array $fieldLabels = [];
+
     public array $fieldOutputKeys = [];
+
     public array $filters = [];
 
     public function mount(?DataExchangeProfile $profile = null): void
@@ -29,6 +42,7 @@ class ProfileBuilder extends Component
         if ($profile?->exists) {
             $profile->load(['sources', 'fields', 'filters']);
             $this->profileId = $profile->id;
+            $this->revision = \App\Modules\DataExchange\Support\DataExchangeRevision::of($profile);
             $this->name = $profile->name;
             $this->key = $profile->key;
             $this->direction = $profile->direction;
@@ -93,112 +107,34 @@ class ProfileBuilder extends Component
 
     public function save(DataExchangeSourceRegistry $sources): void
     {
-        abort_unless(auth()->user()?->can('data_exchange.manage'), 403);
-
-        $data = $this->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'key' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('data_exchange_profiles', 'key')->ignore($this->profileId),
-            ],
-            'direction' => ['required', Rule::in([DataExchangeProfile::DIRECTION_EXPORT, DataExchangeProfile::DIRECTION_IMPORT])],
-            'format' => ['required', Rule::in(['csv', 'xlsx', 'json'])],
-            'status' => ['required', Rule::in([DataExchangeProfile::STATUS_DRAFT, DataExchangeProfile::STATUS_ACTIVE, DataExchangeProfile::STATUS_PAUSED])],
-            'description' => ['nullable', 'string'],
-            'sourceKey' => ['required', 'string'],
-            'selectedFields' => ['required', 'array', 'min:1'],
-            'selectedFields.*' => ['required', 'string'],
-            'filters' => ['array'],
-            'filters.*.field_key' => ['nullable', 'string'],
-            'filters.*.operator' => ['nullable', 'string'],
-            'filters.*.value' => ['nullable', 'string'],
-            'filters.*.active' => ['boolean'],
-        ]);
-
-        $source = $sources->get($this->sourceKey);
-        abort_unless($source, 422, 'Unknown source.');
-
-        $availableFieldKeys = collect($this->direction === DataExchangeProfile::DIRECTION_IMPORT ? $source->importableFields() : $source->exportableFields())
-            ->map(fn (DataExchangeFieldDefinition $field): string => $field->key)
-            ->all();
-
-        foreach ($this->selectedFields as $fieldKey) {
-            abort_unless(in_array($fieldKey, $availableFieldKeys, true), 422, 'Selected field is not available for this profile direction.');
+        $fields = [];
+        foreach ($this->selectedFields as $key) {
+            $stateKey = $this->fieldStateKey($key);
+            $fields[] = ['field_key' => $key, 'output_key' => $this->fieldOutputKeys[$stateKey] ?? $key, 'label' => $this->fieldLabels[$stateKey] ?? null];
         }
-
-        $profile = $this->profileId
-            ? DataExchangeProfile::query()->findOrFail($this->profileId)
-            : new DataExchangeProfile(['created_by' => auth()->id()]);
-
-        $profile->forceFill([
-            'name' => $data['name'],
-            'key' => Str::slug($data['key'], '_'),
-            'direction' => $data['direction'],
-            'format' => $data['format'],
-            'status' => $data['status'],
-            'description' => $data['description'],
-            'settings' => array_merge(['retention_days' => 90], (array) $profile->settings),
-            'updated_by' => auth()->id(),
-        ])->save();
-
-        $this->profileId = $profile->id;
-        $profile->sources()->delete();
-        $profile->fields()->delete();
-        $profile->filters()->delete();
-        $profile->mappings()->delete();
-
-        $profileSource = $profile->sources()->create([
-            'source_key' => $this->sourceKey,
-            'alias' => Str::slug($source->label, '_'),
-            'sort_order' => 0,
-        ]);
-
-        foreach (array_values($this->selectedFields) as $index => $fieldKey) {
-            $field = $source->field($fieldKey);
-            $stateKey = $this->fieldStateKey($fieldKey);
-            $outputKey = $this->fieldOutputKeys[$stateKey] ?? $fieldKey;
-            $label = $this->fieldLabels[$stateKey] ?? $field?->label ?? $fieldKey;
-
-            $profile->fields()->create([
-                'profile_source_id' => $profileSource->id,
-                'source_key' => $this->sourceKey,
-                'field_key' => $fieldKey,
-                'output_key' => $outputKey,
-                'label' => $label,
-                'sort_order' => $index,
-                'active' => true,
-            ]);
-
-            $profile->mappings()->create([
-                'output_format' => $this->direction === DataExchangeProfile::DIRECTION_IMPORT ? 'import' : $this->format,
-                'mapping_key' => $fieldKey,
-                'source_expression' => $outputKey ?: $fieldKey,
-                'sort_order' => $index,
-                'active' => true,
-            ]);
-        }
-
-        foreach (array_values($this->filters) as $index => $filter) {
-            if (blank($filter['field_key'] ?? null)) {
-                continue;
+        $filters = collect($this->filters)->filter(fn ($f) => filled($f['field_key'] ?? null))->map(function ($f) {
+            if (($f['operator'] ?? null) === 'in' && ! is_array($f['value'] ?? null)) {
+                $f['value'] = array_values(array_filter(array_map('trim', explode(',', (string) ($f['value'] ?? ''))), fn ($v) => $v !== ''));
             }
 
-            $operator = $filter['operator'] ?: 'equals';
-            $value = $operator === 'in'
-                ? array_values(array_filter(array_map('trim', explode(',', (string) ($filter['value'] ?? '')))))
-                : ($filter['value'] ?? null);
+            return $f;
+        })->values()->all();
+        try {
+            $profile = app(\App\Modules\DataExchange\Actions\SaveDataExchangeProfile::class)->handle([
+                'name' => $this->name, 'key' => $this->key, 'direction' => $this->direction, 'format' => $this->format,
+                'status' => $this->status, 'description' => $this->description, 'source_key' => $this->sourceKey,
+                'fields' => $fields, 'filters' => $filters,
+            ], auth()->user(), $this->profileId ? DataExchangeProfile::findOrFail($this->profileId) : null, $this->revision);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $error) {
+            if ($error->getStatusCode() !== 409) {
+                throw $error;
+            }
+            $this->addError('revision', $error->getMessage());
 
-            $profile->filters()->create([
-                'profile_source_id' => $profileSource->id,
-                'field_key' => $filter['field_key'],
-                'operator' => $operator,
-                'value' => $value,
-                'sort_order' => $index,
-                'active' => (bool) ($filter['active'] ?? true),
-            ]);
+            return;
         }
+        $this->profileId = $profile->id;
+        $this->revision = \App\Modules\DataExchange\Support\DataExchangeRevision::of($profile);
 
         session()->flash('success', 'Data Exchange profile saved.');
         $this->redirectRoute('tech.admin.system.data-exchange.profiles.edit', $profile, navigate: false);
@@ -207,7 +143,7 @@ class ProfileBuilder extends Component
     public function render(DataExchangeSourceRegistry $sources)
     {
         $visibleSources = $sources->visibleFor(auth()->user());
-        $source = $this->sourceKey ? $sources->get($this->sourceKey) : null;
+        $source = $visibleSources->firstWhere('key', $this->sourceKey);
         $availableFields = $source
             ? ($this->direction === DataExchangeProfile::DIRECTION_IMPORT ? $source->importableFields() : $source->exportableFields())
             : [];

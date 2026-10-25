@@ -596,7 +596,8 @@ class EconomyApiParityTest extends TestCase
                 $copy->save();
             }
         }
-        $this->postJson('/api/v1/data-exchange/profiles/'.$custom->id.'/runs')->assertCreated()->assertJsonPath('data.status', 'succeeded');
+        $previewHash = $this->getJson('/api/v1/data-exchange/profiles/'.$custom->id.'/runs/preview')->assertOk()->json('data.preview_hash');
+        $this->postJson('/api/v1/data-exchange/profiles/'.$custom->id.'/runs', ['preview_hash' => $previewHash], ['Idempotency-Key' => 'custom-economy-export-001'])->assertCreated()->assertJsonPath('data.status', 'succeeded');
         $this->assertDatabaseCount('data_exchange_runs', 1);
         $this->assertDatabaseCount('data_exchange_files', 1);
         $this->assertSame('ready', $order->refresh()->status);

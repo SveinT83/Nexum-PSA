@@ -33,6 +33,7 @@ class DataExchangeImportController extends Controller
     {
         abort_unless(request()->user()?->can('data_exchange.view'), 403);
 
+        \App\Modules\DataExchange\Support\DataExchangeAuthority::runtime($preview->profile, request()->user(), 'view');
         $preview->load(['profile', 'creator', 'committer']);
 
         return view('dataexchange::Admin.imports.show', [
@@ -44,6 +45,7 @@ class DataExchangeImportController extends Controller
     {
         abort_unless($request->user()?->can('data_exchange.approve_import'), 403);
 
+        \App\Modules\DataExchange\Support\DataExchangeRevision::match($preview->fresh(), $request->input('revision'), true);
         $commit->handle($preview, $request->user());
 
         return redirect()->route('tech.admin.system.data-exchange.imports.show', $preview)

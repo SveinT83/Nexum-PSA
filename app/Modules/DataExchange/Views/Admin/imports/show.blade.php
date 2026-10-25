@@ -48,6 +48,7 @@
         @can('data_exchange.approve_import')
             <form method="POST" action="{{ route('tech.admin.system.data-exchange.imports.commit', $preview) }}" class="mb-3" onsubmit="return confirm('Commit this import preview?')">
                 @csrf
+                <input type="hidden" name="revision" value="{{ \App\Modules\DataExchange\Support\DataExchangeRevision::of($preview) }}">
                 <button type="submit" class="btn btn-primary btn-sm">
                     <i class="bi bi-check2-circle" aria-hidden="true"></i>
                     Commit import

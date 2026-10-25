@@ -10,9 +10,9 @@ use Illuminate\Database\Eloquent\Model;
 class DataExchangeSourceDefinition
 {
     /**
-     * @param array<int, DataExchangeFieldDefinition> $fields
-     * @param array<int, array<string, mixed>> $relations
-     * @param array<int, string> $filters
+     * @param  array<int, DataExchangeFieldDefinition>  $fields
+     * @param  array<int, array<string, mixed>>  $relations
+     * @param  array<int, string>  $filters
      */
     public function __construct(
         public string $key,
@@ -28,6 +28,7 @@ class DataExchangeSourceDefinition
         private ?Closure $exporter = null,
         private ?Closure $importPreviewer = null,
         private ?Closure $importCommitter = null,
+        private ?Closure $importRevisioner = null,
     ) {}
 
     /**
@@ -99,7 +100,7 @@ class DataExchangeSourceDefinition
     }
 
     /**
-     * @param array<int, array<string, mixed>> $rows
+     * @param  array<int, array<string, mixed>>  $rows
      * @return array{rows: array<int, array<string, mixed>>, errors: array<int, array<string>>, summary: array<string, mixed>}
      */
     public function previewImportRows(DataExchangeProfile $profile, array $rows, array $mapping, ?User $actor = null): array
@@ -121,7 +122,7 @@ class DataExchangeSourceDefinition
     }
 
     /**
-     * @param array<int, array<string, mixed>> $previewRows
+     * @param  array<int, array<string, mixed>>  $previewRows
      * @return array<string, mixed>
      */
     public function commitImportRows(DataExchangeProfile $profile, array $previewRows, ?User $actor = null): array
@@ -139,8 +140,13 @@ class DataExchangeSourceDefinition
     }
 
     /**
-     * @param array<int, DataExchangeFieldDefinition> $fields
+     * @param  array<int, DataExchangeFieldDefinition>  $fields
      */
+    public function importRevision(): ?string
+    {
+        return $this->importRevisioner ? ($this->importRevisioner)() : null;
+    }
+
     public function withFields(array $fields): self
     {
         return new self(
@@ -157,6 +163,7 @@ class DataExchangeSourceDefinition
             exporter: $this->exporter,
             importPreviewer: $this->importPreviewer,
             importCommitter: $this->importCommitter,
+            importRevisioner: $this->importRevisioner,
         );
     }
 }

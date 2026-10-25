@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-25",
+  "pages": [
+    {
+      "id": 515,
+      "revision": 5,
+      "full_source_match": true,
+      "book_id": 339,
+      "chapter_id": 513
+    },
+    {
+      "id": 449,
+      "revision": 131,
+      "scoped_edits_match": true,
+      "unrelated_content_preserved": true,
+      "book_id": 339,
+      "chapter_id": 374
+    }
+  ],
+  "access": {
+    "pages_inherit": true,
+    "chapters_inherit": true,
+    "book_inherits": true,
+    "employee_role_id": 2,
+    "employee_external_group": "/staff-internal",
+    "book_chapter_page_view_all": true,
+    "permissions_expanded": false
+  },
+  "employee_openwebui_retrieval_verified": false
+}
