@@ -1,0 +1,73 @@
+{
+    "api_management": {
+        "id": 3,
+        "scoped_economy_section_match": true,
+        "visibility": "internal",
+        "status": "published",
+        "unrelated_native_text_preserved": true,
+        "full_source_match_claimed": false
+    },
+    "articles": [
+        {
+            "id": 23,
+            "slug": "economy-api",
+            "source_match": true,
+            "visibility": "internal",
+            "status": "published",
+            "source_sha256": "8d528cea90988ec48850576eea1b7cf68150c1ec3a5b3e7374bc614057b39c7b",
+            "published_revision_id": 42,
+            "sync_status": "pending_push"
+        },
+        {
+            "id": 25,
+            "slug": "economy-orders",
+            "source_match": true,
+            "visibility": "internal",
+            "status": "published",
+            "source_sha256": "20d557e4cb812f4fd31941b52ff8f23784ccc1512631f6242648550efe674846",
+            "published_revision_id": 44,
+            "sync_status": "pending_push"
+        },
+        {
+            "id": 26,
+            "slug": "economy-settings",
+            "source_match": true,
+            "visibility": "internal",
+            "status": "published",
+            "source_sha256": "edb635df57f1b612739c8c21362f2ffc3434e0908395ce299644668de4578c9f",
+            "published_revision_id": 45,
+            "sync_status": "pending_push"
+        },
+        {
+            "id": 24,
+            "slug": "economy-orders-plan",
+            "source_match": true,
+            "visibility": "internal",
+            "status": "published",
+            "source_sha256": "a3748944d58cf9282bfeb1c09e2c070e316f1cd887845d8b531ee4aef2b9cc53",
+            "published_revision_id": 43,
+            "sync_status": "pending_push"
+        },
+        {
+            "id": 21,
+            "slug": "customer-portal-overview",
+            "source_match": true,
+            "visibility": "internal",
+            "status": "published",
+            "source_sha256": "2198f65cbfb3196efd247a67abf105e68a0f090e78376fa368c5a1887ccaeca9",
+            "published_revision_id": 40,
+            "sync_status": "pending_push"
+        },
+        {
+            "id": 22,
+            "slug": "data-exchange-overview",
+            "source_match": true,
+            "visibility": "internal",
+            "status": "published",
+            "source_sha256": "179bdb0327bae454151393251495c99f33dc5cb3cce6f007f6466ed9698f26eb",
+            "published_revision_id": 41,
+            "sync_status": "pending_push"
+        }
+    ],
+    "external_publication": "Actual BookStack pages separately published\/read back using the personal connector; native pending_push metadata alone is not publication evidence."
+}

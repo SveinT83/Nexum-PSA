@@ -66,7 +66,7 @@ class EconomyModuleTest extends TestCase
     }
 
     #[Test]
-    public function tech_user_can_open_economy_orders_and_defaults_are_created(): void
+    public function tech_user_can_open_economy_orders_without_persisting_defaults(): void
     {
         $this->actingAs($this->tech)
             ->get(route('tech.economy.orders.index'))
@@ -79,10 +79,7 @@ class EconomyModuleTest extends TestCase
             ->assertSee('period_end')
             ->assertSee('Generate orders');
 
-        $this->assertDatabaseHas('economy_settings', [
-            'create_orders_from_closed_ticket_time' => true,
-            'create_orders_from_picked_ticket_costs' => true,
-        ]);
+        $this->assertDatabaseCount('economy_settings', 0);
     }
 
     #[Test]
@@ -258,6 +255,19 @@ class EconomyModuleTest extends TestCase
             'vat_amount' => 50,
             'total_inc_vat' => 250,
         ]);
+
+        // Financial correction must not reverse picking, repick stock or retarget a moved Ticket.
+        $line = EconomyOrderLine::query()->where('source_type', $costEntry->getMorphClass())->where('source_id', $costEntry->id)->firstOrFail();
+        $movements = \Illuminate\Support\Facades\DB::table('storage_movements')->count();
+        $ticket->update(['client_id' => Client::create(['name' => 'Moved operational client', 'active' => true])->id]);
+        app(\App\Modules\Economy\Actions\DeleteEconomyOrder::class)->handle($line->economy_order_id, $line->id);
+        $this->assertSame('pending', $costEntry->refresh()->billing_status);
+        $this->assertSame('picked', $costEntry->status);
+        $summary = app(GenerateOrders::class)->handle(actor: $this->tech);
+        $this->assertSame(1, $summary['lines_created']);
+        $this->assertSame($client->id, EconomyOrderLine::firstOrFail()->client_id);
+        $this->assertDatabaseHas('storage_items', ['id' => $item->id, 'qty_on_hand' => 3, 'qty_reserved' => 0]);
+        $this->assertSame($movements, \Illuminate\Support\Facades\DB::table('storage_movements')->count());
     }
 
     #[Test]
@@ -740,6 +750,7 @@ class EconomyModuleTest extends TestCase
             'rate_currency' => 'NOK',
         ]);
 
+        $this->tech->givePermissionTo('economy.generate_orders');
         Sanctum::actingAs($this->tech, ['economy.create']);
 
         $this->postJson('/api/v1/economy/orders/generate', [

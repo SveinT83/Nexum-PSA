@@ -20789,9 +20789,27 @@
                 "tags": [
                     "Economy"
                 ],
-                "summary": "List economy orders",
-                "operationId": "getEconomyOrders",
+                "summary": "GET Economy orders",
+                "description": "Scope: economy.read. Current actor policy: economy.order_manage. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull1",
                 "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    },
                     {
                         "name": "q",
                         "in": "query",
@@ -20817,8 +20835,254 @@
                         "name": "period_start",
                         "in": "query",
                         "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "period_end",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/EconomyOrder"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/components/schemas/EconomyPageMeta"
+                                        },
+                                        "links": {
+                                            "$ref": "#/components/schemas/EconomyPageLinks"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/orders/context": {
+            "get": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "GET Economy orders/context",
+                "description": "Scope: economy.read. Current actor policy: economy.order_manage. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull2",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/EconomyContext"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/orders/generate/preview": {
+            "get": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "GET Economy orders/generate/preview",
+                "description": "Scope: economy.create. Current actor policy: economy.generate_orders. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull3",
+                "parameters": [
+                    {
+                        "name": "period_start",
+                        "in": "query",
+                        "schema": {
                             "type": "string",
-                            "format": "date"
+                            "format": "date",
+                            "nullable": true
                         }
                     },
                     {
@@ -20826,13 +21090,97 @@
                         "in": "query",
                         "schema": {
                             "type": "string",
-                            "format": "date"
+                            "format": "date",
+                            "nullable": true
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Paginated order list"
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/EconomyGenerationPreview"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -20847,33 +21195,119 @@
                 "tags": [
                     "Economy"
                 ],
-                "summary": "Generate economy orders from billable ticket data",
-                "operationId": "generateEconomyOrders",
+                "summary": "POST Economy orders/generate",
+                "description": "Scope: economy.create. Current actor policy: economy.generate_orders. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull4",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "requestBody": {
+                    "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "properties": {
-                                    "period_start": {
-                                        "type": "string",
-                                        "format": "date"
-                                    },
-                                    "period_end": {
-                                        "type": "string",
-                                        "format": "date"
-                                    }
-                                },
-                                "type": "object"
+                                "$ref": "#/components/schemas/EconomyGenerationInput"
                             }
                         }
                     }
                 },
                 "responses": {
                     "201": {
-                        "description": "Generation summary"
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyGenerationCommand"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -20888,21 +21322,106 @@
                 "tags": [
                     "Economy"
                 ],
-                "summary": "View an economy order",
-                "operationId": "getEconomyOrder",
+                "summary": "GET Economy orders/{order}",
+                "description": "Scope: economy.read. Current actor policy: economy.order_manage. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull5",
                 "parameters": [
                     {
                         "name": "order",
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "minimum": 1
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Order"
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/EconomyOrder"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -20915,24 +21434,271 @@
                 "tags": [
                     "Economy"
                 ],
-                "summary": "Delete an empty draft or ready economy order",
-                "operationId": "deleteEconomyOrder",
+                "summary": "DELETE Economy orders/{order}",
+                "description": "Scope: economy.delete. Current actor policy: economy.delete_orders. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull12",
                 "parameters": [
                     {
                         "name": "order",
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EconomyEmptyInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyDeletionCommand"
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "Legacy delete without Idempotency-Key returns no body."
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/orders/{order}/lines": {
+            "get": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "GET Economy orders/{order}/lines",
+                "description": "Scope: economy.read. Current actor policy: economy.order_manage. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull6",
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
                         }
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "Deleted"
+                    "200": {
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/EconomyLine"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/components/schemas/EconomyPageMeta"
+                                        },
+                                        "links": {
+                                            "$ref": "#/components/schemas/EconomyPageLinks"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Invalid order state"
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -20947,24 +21713,128 @@
                 "tags": [
                     "Economy"
                 ],
-                "summary": "Mark an economy order ready",
-                "operationId": "markEconomyOrderReady",
+                "summary": "POST Economy orders/{order}/ready",
+                "description": "Scope: economy.update. Current actor policy: economy.order_manage. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull7",
                 "parameters": [
                     {
                         "name": "order",
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EconomyEmptyInput"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Updated order"
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyOrderCommand"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Invalid order state"
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -20979,24 +21849,524 @@
                 "tags": [
                     "Economy"
                 ],
-                "summary": "Move a ready economy order back to draft",
-                "operationId": "markEconomyOrderDraft",
+                "summary": "POST Economy orders/{order}/draft",
+                "description": "Scope: economy.update. Current actor policy: economy.order_manage. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull8",
                 "parameters": [
                     {
                         "name": "order",
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EconomyEmptyInput"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Updated order"
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyOrderCommand"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Invalid order state"
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/orders/{order}/invoiced": {
+            "post": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "POST Economy orders/{order}/invoiced",
+                "description": "Scope: economy.update. Current actor policy: economy.order_manage. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull9",
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EconomyEmptyInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyOrderCommand"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/orders/{order}/portal-visibility/preview": {
+            "post": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "POST Economy orders/{order}/portal-visibility/preview",
+                "description": "Scope: economy.update. Current actor policy: economy.order_manage. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull10",
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EconomyVisibilityPreviewInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/EconomyVisibilityPreview"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/orders/{order}/portal-visibility": {
+            "post": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "POST Economy orders/{order}/portal-visibility",
+                "description": "Scope: economy.update. Current actor policy: economy.order_manage. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull11",
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EconomyVisibilityInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyOrderCommand"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -21011,15 +22381,17 @@
                 "tags": [
                     "Economy"
                 ],
-                "summary": "Delete an economy order line and unlock the source record",
-                "operationId": "deleteEconomyOrderLine",
+                "summary": "DELETE Economy orders/{order}/lines/{line}",
+                "description": "Scope: economy.delete. Current actor policy: economy.delete_orders. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull13",
                 "parameters": [
                     {
                         "name": "order",
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "minimum": 1
                         }
                     },
                     {
@@ -21027,21 +22399,1290 @@
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EconomyEmptyInput"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Updated order or order deletion result"
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyDeletionCommand"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Invalid order state"
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
                     {
                         "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/settings": {
+            "get": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "GET Economy settings",
+                "description": "Scope: economy.settings.read. Current actor policy: economy.manage_settings (current delegated Admin-page policy). Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull14",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/EconomySettings"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "PATCH Economy settings",
+                "description": "Scope: economy.settings.update. Current actor policy: economy.manage_settings (current delegated Admin-page policy). Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull15",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EconomySettingsInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomySettingsCommand"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/operations/{operation}": {
+            "get": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "GET Economy operations/{operation}",
+                "description": "Scope: economy.operations.read. Current actor policy: original operation permission; same actor only. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull16",
+                "parameters": [
+                    {
+                        "name": "operation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/EconomyOperation"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/exports/preview": {
+            "get": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "GET Economy exports/preview",
+                "description": "Scope: economy.export AND data_exchange.run. Current actor policy: economy.view AND data_exchange.run. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull17",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/EconomyExportPreview"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/exports": {
+            "post": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "POST Economy exports",
+                "description": "Scope: economy.export AND data_exchange.run. Current actor policy: economy.view AND data_exchange.run. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull18",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EconomyExportInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyExportCommand"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/exports/{run}": {
+            "get": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "GET Economy exports/{run}",
+                "description": "Scope: economy.read AND data_exchange.read. Current actor policy: economy.view AND data_exchange.view. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull19",
+                "parameters": [
+                    {
+                        "name": "run",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/EconomyExportRun"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/portal/orders": {
+            "get": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "GET Economy portal/orders",
+                "description": "Scope: existing portal session. Current actor policy: current active membership/contact/client; explicitly published; site excluded. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull20",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/EconomyCustomerOrder"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/components/schemas/EconomyPageMeta"
+                                        },
+                                        "links": {
+                                            "$ref": "#/components/schemas/EconomyPageLinks"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "EconomyPortalSession": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/portal/orders/context": {
+            "get": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "GET Economy portal/orders/context",
+                "description": "Scope: existing portal session. Current actor policy: current active membership/contact/client. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull21",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/EconomyPortalContext"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "EconomyPortalSession": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/portal/orders/{order}": {
+            "get": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "GET Economy portal/orders/{order}",
+                "description": "Scope: existing portal session. Current actor policy: current active membership/contact/client; published; site excluded. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull22",
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/EconomyCustomerOrder"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "EconomyPortalSession": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/portal/orders/{order}/lines": {
+            "get": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "GET Economy portal/orders/{order}/lines",
+                "description": "Scope: existing portal session. Current actor policy: current active membership/contact/client; published; site excluded. Unknown fields are rejected. Context/preview reads are pure. New command results include replay/operation evidence. No provider or runtime activation.",
+                "operationId": "economyFull23",
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; notification submission is separate from inbox receipt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/EconomyCustomerLine"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/components/schemas/EconomyPageMeta"
+                                        },
+                                        "links": {
+                                            "$ref": "#/components/schemas/EconomyPageLinks"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or token authority denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Record, parent or portal scope unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale revision/preview or conflicting idempotency key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Strict input or unsupported state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Fresh If-Match required for this new mutation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required additive Economy migration unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EconomyError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "EconomyPortalSession": []
                     }
                 ]
             }
@@ -67934,6 +70575,1491 @@
                 },
                 "type": "object"
             },
+            "EconomyError": {
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "errors": {
+                        "properties": {},
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyTotals": {
+                "properties": {
+                    "subtotal_ex_vat": {
+                        "type": "number"
+                    },
+                    "vat_amount": {
+                        "type": "number"
+                    },
+                    "total_inc_vat": {
+                        "type": "number"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyLineTotals": {
+                "properties": {
+                    "line_total_ex_vat": {
+                        "type": "number"
+                    },
+                    "vat_rate": {
+                        "type": "number",
+                        "nullable": true
+                    },
+                    "vat_amount": {
+                        "type": "number",
+                        "nullable": true
+                    },
+                    "total_inc_vat": {
+                        "type": "number"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyStoredTotals": {
+                "properties": {
+                    "subtotal_ex_vat": {
+                        "type": "string"
+                    },
+                    "vat_amount": {
+                        "type": "string"
+                    },
+                    "total_inc_vat": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyCustomerLine": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "work_date": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "line_type": {
+                        "type": "string"
+                    },
+                    "reference": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "type": "number"
+                    },
+                    "unit": {
+                        "type": "string"
+                    },
+                    "unit_price_ex_vat": {
+                        "type": "number",
+                        "nullable": true
+                    },
+                    "line_total_ex_vat": {
+                        "type": "number"
+                    },
+                    "vat_rate": {
+                        "type": "number",
+                        "nullable": true
+                    },
+                    "vat_amount": {
+                        "type": "number",
+                        "nullable": true
+                    },
+                    "total_inc_vat": {
+                        "type": "number"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "effective_totals": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/EconomyLineTotals"
+                            }
+                        ],
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyFinancialMetadata": {
+                "properties": {
+                    "covered_minutes": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "included_minutes": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "contract_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "contract_item_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "included_minutes_snapshot": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "used_before_minutes_snapshot": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "registered_minutes": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "overused_minutes": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "ticket_key": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "rate_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "contract_item_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "provider_family": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "item_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "item_sku": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "rate_amount_ex_vat_per_hour": {
+                        "type": "number",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyLine": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "work_date": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "line_type": {
+                        "type": "string"
+                    },
+                    "reference": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "type": "number"
+                    },
+                    "unit": {
+                        "type": "string"
+                    },
+                    "unit_price_ex_vat": {
+                        "type": "number",
+                        "nullable": true
+                    },
+                    "line_total_ex_vat": {
+                        "type": "number"
+                    },
+                    "vat_rate": {
+                        "type": "number",
+                        "nullable": true
+                    },
+                    "vat_amount": {
+                        "type": "number",
+                        "nullable": true
+                    },
+                    "total_inc_vat": {
+                        "type": "number"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "effective_totals": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/EconomyLineTotals"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "economy_order_id": {
+                        "type": "integer"
+                    },
+                    "client_id": {
+                        "type": "integer"
+                    },
+                    "source_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "source_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "ticket_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "ticket": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "ticket_key": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": false
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "metadata": {
+                        "$ref": "#/components/schemas/EconomyFinancialMetadata"
+                    },
+                    "decimals": {
+                        "properties": {
+                            "quantity": {
+                                "type": "string"
+                            },
+                            "unit_price_ex_vat": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "line_total_ex_vat": {
+                                "type": "string"
+                            },
+                            "vat_rate": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "vat_amount": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "total_inc_vat": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyCustomerOrder": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "order_number": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "client_id": {
+                        "type": "integer"
+                    },
+                    "client": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "period_start": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "period_end": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "ready",
+                            "approved",
+                            "exported",
+                            "manual_invoiced",
+                            "cancelled"
+                        ]
+                    },
+                    "status_label": {
+                        "type": "string"
+                    },
+                    "subtotal_ex_vat": {
+                        "type": "number"
+                    },
+                    "vat_amount": {
+                        "type": "number"
+                    },
+                    "total_inc_vat": {
+                        "type": "number"
+                    },
+                    "effective_totals": {
+                        "$ref": "#/components/schemas/EconomyTotals"
+                    },
+                    "currencies": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "currency_conversion": {
+                        "type": "boolean"
+                    },
+                    "lines_count": {
+                        "type": "integer"
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/EconomyCustomerLine"
+                        }
+                    },
+                    "lines_truncated": {
+                        "type": "boolean"
+                    },
+                    "lines_url": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyOrder": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "order_number": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "client_id": {
+                        "type": "integer"
+                    },
+                    "client": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "period_start": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "period_end": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "ready",
+                            "approved",
+                            "exported",
+                            "manual_invoiced",
+                            "cancelled"
+                        ]
+                    },
+                    "status_label": {
+                        "type": "string"
+                    },
+                    "subtotal_ex_vat": {
+                        "type": "number"
+                    },
+                    "vat_amount": {
+                        "type": "number"
+                    },
+                    "total_inc_vat": {
+                        "type": "number"
+                    },
+                    "effective_totals": {
+                        "$ref": "#/components/schemas/EconomyTotals"
+                    },
+                    "currencies": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "currency_conversion": {
+                        "type": "boolean"
+                    },
+                    "lines_count": {
+                        "type": "integer"
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/EconomyLine"
+                        }
+                    },
+                    "lines_truncated": {
+                        "type": "boolean"
+                    },
+                    "lines_url": {
+                        "type": "string"
+                    },
+                    "revision": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "minLength": 64
+                    },
+                    "portal_visible": {
+                        "type": "boolean"
+                    },
+                    "portal_visible_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "portal_visible_by": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "updated_by": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "updated_by_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "stored_totals": {
+                        "$ref": "#/components/schemas/EconomyStoredTotals"
+                    },
+                    "links": {
+                        "properties": {
+                            "self": {
+                                "type": "string"
+                            },
+                            "mark_ready": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "mark_draft": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "available_actions": {
+                        "properties": {
+                            "mark_ready": {
+                                "type": "boolean"
+                            },
+                            "mark_draft": {
+                                "type": "boolean"
+                            },
+                            "mark_invoiced": {
+                                "type": "boolean"
+                            },
+                            "portal_visibility": {
+                                "type": "boolean"
+                            },
+                            "delete_order": {
+                                "type": "boolean"
+                            },
+                            "delete_lines": {
+                                "type": "boolean"
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "generated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "ready_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "approved_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "exported_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "cancelled_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyPageMeta": {
+                "properties": {
+                    "current_page": {
+                        "type": "integer"
+                    },
+                    "last_page": {
+                        "type": "integer"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "total": {
+                        "type": "integer"
+                    },
+                    "revision": {
+                        "type": "string"
+                    },
+                    "stats": {
+                        "properties": {
+                            "draft": {
+                                "type": "integer"
+                            },
+                            "ready": {
+                                "type": "integer"
+                            },
+                            "approved": {
+                                "type": "integer"
+                            },
+                            "exported": {
+                                "type": "integer"
+                            },
+                            "manual_invoiced": {
+                                "type": "integer"
+                            },
+                            "cancelled": {
+                                "type": "integer"
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyPageLinks": {
+                "properties": {
+                    "next": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "prev": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomySettingsInput": {
+                "properties": {
+                    "create_orders_from_resolved_ticket_time": {
+                        "type": "boolean"
+                    },
+                    "create_orders_from_closed_ticket_time": {
+                        "type": "boolean"
+                    },
+                    "include_unresolved_ticket_time_in_period_close": {
+                        "type": "boolean"
+                    },
+                    "create_orders_from_picked_ticket_costs": {
+                        "type": "boolean"
+                    },
+                    "auto_pick_ticket_costs_on_resolved_or_closed_ticket": {
+                        "type": "boolean"
+                    },
+                    "time_order_line_grouping": {
+                        "type": "string",
+                        "enum": [
+                            "per_entry"
+                        ]
+                    },
+                    "order_line_text_format": {
+                        "type": "string",
+                        "enum": [
+                            "ticket_date_text"
+                        ]
+                    },
+                    "order_prefix": {
+                        "type": "string",
+                        "maxLength": 20
+                    },
+                    "default_vat_rate": {
+                        "type": "number",
+                        "nullable": true,
+                        "maximum": 100,
+                        "minimum": 0
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomySettings": {
+                "properties": {
+                    "create_orders_from_resolved_ticket_time": {
+                        "type": "boolean"
+                    },
+                    "create_orders_from_closed_ticket_time": {
+                        "type": "boolean"
+                    },
+                    "include_unresolved_ticket_time_in_period_close": {
+                        "type": "boolean"
+                    },
+                    "create_orders_from_picked_ticket_costs": {
+                        "type": "boolean"
+                    },
+                    "auto_pick_ticket_costs_on_resolved_or_closed_ticket": {
+                        "type": "boolean"
+                    },
+                    "time_order_line_grouping": {
+                        "type": "string",
+                        "enum": [
+                            "per_entry"
+                        ]
+                    },
+                    "order_line_text_format": {
+                        "type": "string",
+                        "enum": [
+                            "ticket_date_text"
+                        ]
+                    },
+                    "order_prefix": {
+                        "type": "string",
+                        "maxLength": 20
+                    },
+                    "default_vat_rate": {
+                        "type": "string"
+                    },
+                    "revision": {
+                        "type": "string"
+                    },
+                    "persisted": {
+                        "type": "boolean"
+                    },
+                    "enums": {
+                        "properties": {
+                            "time_order_line_grouping": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "order_line_text_format": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "null_vat_behavior": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyEmptyInput": {
+                "properties": {},
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyGenerationInput": {
+                "properties": {
+                    "period_start": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "period_end": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "preview_hash": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "minLength": 64
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyVisibilityPreviewInput": {
+                "required": [
+                    "portal_visible"
+                ],
+                "properties": {
+                    "portal_visible": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyVisibilityInput": {
+                "required": [
+                    "portal_visible",
+                    "preview_hash"
+                ],
+                "properties": {
+                    "portal_visible": {
+                        "type": "boolean"
+                    },
+                    "preview_hash": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "minLength": 64
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyExportInput": {
+                "required": [
+                    "preview_hash"
+                ],
+                "properties": {
+                    "preview_hash": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "minLength": 64
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyGenerationPreview": {
+                "properties": {
+                    "period_start": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "period_end": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "scope": {
+                        "type": "string",
+                        "enum": [
+                            "installation"
+                        ]
+                    },
+                    "candidate_counts": {
+                        "properties": {
+                            "ticket_time": {
+                                "type": "integer"
+                            },
+                            "ticket_costs": {
+                                "type": "integer"
+                            },
+                            "quick_timebank_overuse": {
+                                "type": "integer"
+                            },
+                            "confirmed_billing_periods": {
+                                "type": "integer"
+                            },
+                            "confirmed_subscriptions": {
+                                "type": "integer"
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "candidate_client_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "candidate_clients_count": {
+                        "type": "integer"
+                    },
+                    "clients_truncated": {
+                        "type": "boolean"
+                    },
+                    "counts_are": {
+                        "type": "string"
+                    },
+                    "preview_hash": {
+                        "type": "string"
+                    },
+                    "settings_revision": {
+                        "type": "string"
+                    },
+                    "external_invoice_or_stock_action": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyGenerationSummary": {
+                "properties": {
+                    "orders_touched": {
+                        "type": "integer"
+                    },
+                    "sources_reused": {
+                        "type": "integer"
+                    },
+                    "lines_created": {
+                        "type": "integer"
+                    },
+                    "lines_updated": {
+                        "type": "integer"
+                    },
+                    "time_entries_seen": {
+                        "type": "integer"
+                    },
+                    "time_entries_ordered": {
+                        "type": "integer"
+                    },
+                    "time_entries_waiting_for_contract": {
+                        "type": "integer"
+                    },
+                    "cost_entries_seen": {
+                        "type": "integer"
+                    },
+                    "cost_entries_ordered": {
+                        "type": "integer"
+                    },
+                    "quick_timebank_entries_seen": {
+                        "type": "integer"
+                    },
+                    "quick_timebank_entries_ordered": {
+                        "type": "integer"
+                    },
+                    "cloudfactory_periods_seen": {
+                        "type": "integer"
+                    },
+                    "cloudfactory_periods_ordered": {
+                        "type": "integer"
+                    },
+                    "affected_order_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "created_line_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "affected_line_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyVisibilityPreview": {
+                "properties": {
+                    "order_id": {
+                        "type": "integer"
+                    },
+                    "portal_visible": {
+                        "type": "boolean"
+                    },
+                    "requested_visible": {
+                        "type": "boolean"
+                    },
+                    "client_id": {
+                        "type": "integer"
+                    },
+                    "notification_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "audience": {
+                        "type": "string"
+                    },
+                    "revision": {
+                        "type": "string"
+                    },
+                    "preview_hash": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyDeletion": {
+                "properties": {
+                    "deleted_order": {
+                        "type": "boolean"
+                    },
+                    "order_id": {
+                        "type": "integer"
+                    },
+                    "deleted_line_id": {
+                        "type": "integer",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyNotificationStatus": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "processing",
+                            "submitted",
+                            "superseded",
+                            "unknown"
+                        ]
+                    },
+                    "recipients": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "error_code": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyExportPreview": {
+                "properties": {
+                    "profile_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "profile_key": {
+                        "type": "string"
+                    },
+                    "profile_exists": {
+                        "type": "boolean"
+                    },
+                    "format": {
+                        "type": "string"
+                    },
+                    "row_count": {
+                        "type": "integer"
+                    },
+                    "preview_hash": {
+                        "type": "string"
+                    },
+                    "default_statuses": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "uses_configured_filters": {
+                        "type": "boolean"
+                    },
+                    "configured_delivery_targets": {
+                        "type": "integer"
+                    },
+                    "delivery_will_be_dispatched": {
+                        "type": "boolean"
+                    },
+                    "order_state_will_change": {
+                        "type": "boolean"
+                    },
+                    "result_is": {
+                        "type": "string"
+                    },
+                    "profile_initialization": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyExportFile": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "filename": {
+                        "type": "string"
+                    },
+                    "format": {
+                        "type": "string"
+                    },
+                    "size_bytes": {
+                        "type": "integer"
+                    },
+                    "checksum": {
+                        "type": "string"
+                    },
+                    "retention_until": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "download_url": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyExportRun": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "profile": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "key": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "trigger_type": {
+                        "type": "string"
+                    },
+                    "summary": {
+                        "properties": {
+                            "rows": {
+                                "type": "integer"
+                            },
+                            "format": {
+                                "type": "string"
+                            },
+                            "file_id": {
+                                "type": "integer"
+                            },
+                            "filename": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "error_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "files": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/EconomyExportFile"
+                        }
+                    },
+                    "order_state_changed": {
+                        "type": "boolean"
+                    },
+                    "provider_invoice_created": {
+                        "type": "boolean"
+                    },
+                    "delivery_dispatched": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyContext": {
+                "properties": {
+                    "statuses": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "sort_fields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "period_defaults": {
+                        "properties": {
+                            "period_start": {
+                                "type": "string",
+                                "format": "date",
+                                "nullable": true
+                            },
+                            "period_end": {
+                                "type": "string",
+                                "format": "date",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "generation_scope": {
+                        "type": "string"
+                    },
+                    "is_invoice_provider": {
+                        "type": "boolean"
+                    },
+                    "currency_conversion": {
+                        "type": "boolean"
+                    },
+                    "capabilities": {
+                        "properties": {
+                            "manual_invoiced": {
+                                "type": "boolean"
+                            },
+                            "portal_visibility": {
+                                "type": "boolean"
+                            },
+                            "settings": {
+                                "type": "boolean"
+                            },
+                            "data_exchange_export": {
+                                "type": "boolean"
+                            },
+                            "arbitrary_order_or_line_create": {
+                                "type": "boolean"
+                            },
+                            "invoice_send": {
+                                "type": "boolean"
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "owner_apis": {
+                        "properties": {
+                            "rates": {
+                                "type": "string"
+                            },
+                            "units": {
+                                "type": "string"
+                            },
+                            "source_time_and_cost": {
+                                "type": "string"
+                            },
+                            "export_files": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "new_mutation_headers": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyPortalContext": {
+                "properties": {
+                    "client": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "client_level_orders_available": {
+                        "type": "boolean"
+                    },
+                    "explicit_publication_required": {
+                        "type": "boolean"
+                    },
+                    "can_edit": {
+                        "type": "boolean"
+                    },
+                    "is_invoice_or_payment_request": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyOrderCommand": {
+                "properties": {
+                    "operation_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    },
+                    "notification_intents": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/EconomyOrder"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomySettingsCommand": {
+                "properties": {
+                    "operation_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    },
+                    "notification_intents": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/EconomySettings"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyGenerationCommand": {
+                "properties": {
+                    "operation_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    },
+                    "notification_intents": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    "data": {
+                        "properties": {
+                            "summary": {
+                                "$ref": "#/components/schemas/EconomyGenerationSummary"
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyDeletionCommand": {
+                "properties": {
+                    "operation_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    },
+                    "notification_intents": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    "data": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/EconomyDeletion"
+                            },
+                            {
+                                "$ref": "#/components/schemas/EconomyOrder"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyExportCommand": {
+                "properties": {
+                    "operation_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    },
+                    "notification_intents": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/EconomyExportRun"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "EconomyOperation": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "operation": {
+                        "type": "string"
+                    },
+                    "result": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/EconomyOrderCommand"
+                            },
+                            {
+                                "$ref": "#/components/schemas/EconomySettingsCommand"
+                            },
+                            {
+                                "$ref": "#/components/schemas/EconomyGenerationCommand"
+                            },
+                            {
+                                "$ref": "#/components/schemas/EconomyDeletionCommand"
+                            },
+                            {
+                                "$ref": "#/components/schemas/EconomyExportCommand"
+                            }
+                        ]
+                    },
+                    "notification_status": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/EconomyNotificationStatus"
+                        }
+                    },
+                    "inbox_delivery_verified": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
             "EmailApiResult": {
                 "properties": {
                     "data": {
@@ -76238,6 +80364,12 @@
                 "type": "http",
                 "bearerFormat": "JWT",
                 "scheme": "bearer"
+            },
+            "EconomyPortalSession": {
+                "type": "apiKey",
+                "description": "Use the existing Nexum login session cookie; its name is installation-configured. Staff PATs do not establish portal identity.",
+                "name": "installation_session_cookie",
+                "in": "cookie"
             }
         }
     },
@@ -76272,7 +80404,7 @@
         },
         {
             "name": "Economy",
-            "description": "API endpoints for internal economy order preparation."
+            "description": "Complete current order preparation operations. Token scope AND current actor/domain rights apply. No provider invoice/payment engine. New writes require durable idempotency and fresh revision/preview; legacy writes enforce supplied headers."
         },
         {
             "name": "Knowledge",

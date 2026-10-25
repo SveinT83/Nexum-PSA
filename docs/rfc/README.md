@@ -55,3 +55,5 @@ Drafts:
 - `2026-07-04-sales-quotes-cpq.md`
 - `2026-07-04-servicevisit-field-service-execution.md`
 - `2026-07-04-technician-notes.md`
+
+- [Approved: Full Economy browser/API coverage](2026-10-25-economy-full-api-parity.md) (Done On Dev; HR-2026-10-25-ECONOMY-API Reviewed)

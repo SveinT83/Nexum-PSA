@@ -17,12 +17,14 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DataExchangeController extends Controller
 {
-    public function profiles(): JsonResponse
+    public function profiles(Request $request): JsonResponse
     {
         $profiles = DataExchangeProfile::query()
             ->withCount(['runs', 'files'])
             ->orderBy('name')
             ->get()
+            ->filter(fn (DataExchangeProfile $profile) => \App\Modules\Economy\Support\EconomyDataExchangeAccess::allowed($request, $profile, 'read'))
+            ->values()
             ->map(fn (DataExchangeProfile $profile): array => [
                 'id' => $profile->id,
                 'key' => $profile->key,
@@ -39,6 +41,11 @@ class DataExchangeController extends Controller
 
     public function trigger(Request $request, DataExchangeProfile $profile, RunDataExchangeExport $export): JsonResponse
     {
+        \App\Modules\Economy\Support\EconomyDataExchangeAccess::check($request, $profile, 'run');
+        if (\App\Modules\Economy\Support\EconomyDataExchangeAccess::isEconomy($profile) && $profile->key === 'economy_orders_export') {
+
+            return response()->json(app(\App\Modules\Economy\Actions\EconomyExportWorkflow::class)->command($request), 201);
+        }
         $run = $export->handle($profile, $request->user(), 'api');
         $file = $run->files()->latest()->first();
 
@@ -52,9 +59,13 @@ class DataExchangeController extends Controller
         ], 201);
     }
 
-    public function run(DataExchangeRun $run): JsonResponse
+    public function run(Request $request, DataExchangeRun $run): JsonResponse
     {
+        \App\Modules\Economy\Support\EconomyDataExchangeAccess::check($request, DataExchangeProfile::withTrashed()->find($run->profile_id), 'read');
         $run->load(['profile', 'files']);
+        if (\App\Modules\Economy\Support\EconomyDataExchangeAccess::isEconomy(DataExchangeProfile::withTrashed()->findOrFail($run->profile_id))) {
+            return response()->json(['data' => \App\Modules\Economy\Actions\EconomyExportWorkflow::projection($run)]);
+        }
 
         return response()->json([
             'data' => [
@@ -80,8 +91,9 @@ class DataExchangeController extends Controller
         ]);
     }
 
-    public function download(DataExchangeFile $file): StreamedResponse
+    public function download(Request $request, DataExchangeFile $file): StreamedResponse
     {
+        \App\Modules\Economy\Support\EconomyDataExchangeAccess::check($request, DataExchangeProfile::withTrashed()->find($file->profile_id), 'download');
         abort_unless(Storage::disk($file->disk)->exists($file->path), 404);
 
         $file->forceFill(['downloaded_at' => now()])->save();

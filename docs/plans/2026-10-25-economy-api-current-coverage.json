@@ -1,0 +1,336 @@
+{
+  "date": "2026-10-25",
+  "source": "authoritative Dev",
+  "operations": 23,
+  "typed_schemas": 34,
+  "scoped_php_files": 40,
+  "syntax": "pass",
+  "pint": "pass",
+  "new_php_world_readable": true,
+  "method_path_contract_exact": true,
+  "runtime": [
+    {
+      "method": "POST",
+      "path": "/api/v1/economy/exports",
+      "name": "api.v1.economy.exports.store",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyExportController@store",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.export,data_exchange.run"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/exports/preview",
+      "name": "api.v1.economy.exports.preview",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyExportController@preview",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.export,data_exchange.run"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/exports/{run}",
+      "name": "api.v1.economy.exports.show",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyExportController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.read,data_exchange.read"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/operations/{operation}",
+      "name": "api.v1.economy.operations.show",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@operation",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.operations.read"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/orders",
+      "name": "api.v1.economy.orders.index",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@index",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.read"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/orders/context",
+      "name": "api.v1.economy.orders.context",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@context",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.read"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/economy/orders/generate",
+      "name": "api.v1.economy.orders.generate",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@generate",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.create"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/orders/generate/preview",
+      "name": "api.v1.economy.orders.generate.preview",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@generationPreview",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.create"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/orders/{order}",
+      "name": "api.v1.economy.orders.show",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.read"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/economy/orders/{order}",
+      "name": "api.v1.economy.orders.destroy",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@destroyOrder",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.delete"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/economy/orders/{order}/draft",
+      "name": "api.v1.economy.orders.draft",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@markDraft",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.update"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/economy/orders/{order}/invoiced",
+      "name": "api.v1.economy.orders.invoiced",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@markInvoiced",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.update"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/orders/{order}/lines",
+      "name": "api.v1.economy.orders.lines",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@lines",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.read"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/economy/orders/{order}/lines/{line}",
+      "name": "api.v1.economy.orders.lines.destroy",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@destroyLine",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.delete"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/economy/orders/{order}/portal-visibility",
+      "name": "api.v1.economy.orders.portal-visibility.update",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@visibility",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.update"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/economy/orders/{order}/portal-visibility/preview",
+      "name": "api.v1.economy.orders.portal-visibility.preview",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@visibilityPreview",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.update"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/economy/orders/{order}/ready",
+      "name": "api.v1.economy.orders.ready",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@markReady",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.update"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/portal/orders",
+      "name": "api.v1.economy.portal.orders.index",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\PortalEconomyController@index",
+      "middleware": [
+        "api",
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate:web",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/portal/orders/context",
+      "name": "api.v1.economy.portal.orders.context",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\PortalEconomyController@context",
+      "middleware": [
+        "api",
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate:web",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/portal/orders/{order}",
+      "name": "api.v1.economy.portal.orders.show",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\PortalEconomyController@show",
+      "middleware": [
+        "api",
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate:web",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/portal/orders/{order}/lines",
+      "name": "api.v1.economy.portal.orders.lines",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\PortalEconomyController@lines",
+      "middleware": [
+        "api",
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate:web",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/economy/settings",
+      "name": "api.v1.economy.settings.show",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@settings",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.settings.read"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/economy/settings",
+      "name": "api.v1.economy.settings.update",
+      "action": "App\\Modules\\Economy\\Controllers\\Api\\V1\\EconomyController@updateSettings",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiErrors",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiIds",
+        "App\\Modules\\Economy\\Http\\Middleware\\EconomyApiGuard",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:economy.settings.update"
+      ]
+    }
+  ],
+  "preserved_financial_customer_dependency": true
+}

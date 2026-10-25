@@ -13,36 +13,17 @@ class EconomySettingsController extends Controller
     public function index(EnsureEconomyDefaults $defaults): View
     {
         return view('economy::Admin.settings', [
-            'settings' => $defaults->handle(),
+            'settings' => $defaults->effective(),
         ]);
     }
 
     public function update(Request $request, EnsureEconomyDefaults $defaults): RedirectResponse
     {
-        $settings = $defaults->handle();
-        $data = $request->validate([
-            'create_orders_from_resolved_ticket_time' => 'nullable|boolean',
-            'create_orders_from_closed_ticket_time' => 'nullable|boolean',
-            'include_unresolved_ticket_time_in_period_close' => 'nullable|boolean',
-            'create_orders_from_picked_ticket_costs' => 'nullable|boolean',
-            'auto_pick_ticket_costs_on_resolved_or_closed_ticket' => 'nullable|boolean',
-            'time_order_line_grouping' => 'required|string|in:per_entry',
-            'order_line_text_format' => 'required|string|in:ticket_date_text',
-            'order_prefix' => 'required|string|max:20',
-            'default_vat_rate' => 'nullable|numeric|min:0|max:100',
-        ]);
-
-        foreach ([
-            'create_orders_from_resolved_ticket_time',
-            'create_orders_from_closed_ticket_time',
-            'include_unresolved_ticket_time_in_period_close',
-            'create_orders_from_picked_ticket_costs',
-            'auto_pick_ticket_costs_on_resolved_or_closed_ticket',
-        ] as $booleanField) {
-            $data[$booleanField] = $request->boolean($booleanField);
+        $data = $request->validate(\App\Modules\Economy\Actions\UpdateEconomySettings::rules(false));
+        foreach (\App\Modules\Economy\Actions\UpdateEconomySettings::BOOLEANS as $field) {
+            $data[$field] = $request->boolean($field);
         }
-
-        $settings->update($data);
+        app(\App\Modules\Economy\Actions\UpdateEconomySettings::class)->handle($data);
 
         return redirect()->route('tech.admin.settings.economy')
             ->with('success', 'Economy settings updated.');

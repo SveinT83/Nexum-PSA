@@ -1,0 +1,80 @@
+{
+    "migration": {
+        "id": 301,
+        "migration": "2026_10_25_160000_create_economy_command_records",
+        "batch": 24
+    },
+    "new_tables": {
+        "economy_write_mutex": {
+            "columns": 2,
+            "rows": 1
+        },
+        "economy_command_receipts": {
+            "columns": 7,
+            "rows": 0
+        },
+        "economy_source_owners": {
+            "columns": 5,
+            "rows": 0
+        },
+        "economy_notification_intents": {
+            "columns": 8,
+            "rows": 0
+        }
+    },
+    "native_mutex_timeout": true,
+    "economy_command_receipts_unique": true,
+    "economy_command_receipts_probe_rows": 1,
+    "economy_api_verify_receipts_removed": true,
+    "economy_source_owners_unique": true,
+    "economy_source_owners_probe_rows": 1,
+    "economy_api_verify_sources_removed": true,
+    "http": [
+        {
+            "path": "\/api\/v1\/economy\/orders",
+            "status": 200,
+            "has_data": true,
+            "sha256": "6e7a751e2c2f03935cf9f222b5a6a0768de2363bb60a94371043bfe7dd7199b7"
+        },
+        {
+            "path": "\/api\/v1\/economy\/orders\/context",
+            "status": 200,
+            "has_data": true,
+            "sha256": "4847656b74a047e9a496f3f608a5e45fdbc86678349035da59e9b51a02341455"
+        },
+        {
+            "path": "\/api\/v1\/economy\/settings",
+            "status": 200,
+            "has_data": true,
+            "sha256": "64fc8b7e2ae5ff5d338120e19acb7e8cb03c6ec88ca01b25c54ef8b291ed0e3b"
+        },
+        {
+            "path": "\/api\/v1\/economy\/orders\/generate\/preview",
+            "status": 200,
+            "has_data": true,
+            "sha256": "e1b2f091e0a9265a2a135a7d075cde139f18f2430c69ad2320d82a10b9b2ca17"
+        },
+        {
+            "path": "\/api\/v1\/economy\/exports\/preview",
+            "status": 200,
+            "has_data": true,
+            "sha256": "59fbddcfbaf5409b7616935590bf8aa19a18d16c0e9aba1dceba9b52da7870e2"
+        }
+    ],
+    "malformed_order_status": 404,
+    "anonymous_orders_status": 401,
+    "swagger_http_status": 200,
+    "swagger_exact_bytes": true,
+    "temporary_token_revoked": true,
+    "mutex_revision": 0,
+    "counts_after": {
+        "economy_settings": 1,
+        "economy_orders": 0,
+        "economy_order_lines": 0,
+        "ticket_time_entry_allocations": 0,
+        "cloudfactory_billing_periods": 0,
+        "economy_command_receipts": 0,
+        "economy_source_owners": 0,
+        "economy_notification_intents": 0
+    }
+}

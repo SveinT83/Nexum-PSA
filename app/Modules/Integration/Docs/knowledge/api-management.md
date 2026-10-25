@@ -150,10 +150,13 @@ Implemented scopes:
 - `commercial.read`: list and view commercial services, contracts, SLA policies, and time rates.
 - `commercial.create`: create commercial services, contracts, SLA policies, and time rates.
 - `commercial.update`: update commercial services, contracts, SLA policies, and time rates.
-- `economy.read`: list and view economy orders and generated order lines.
-- `economy.create`: generate economy orders from billable ticket time and picked ticket costs.
-- `economy.update`: move economy orders between draft and ready states.
-- `economy.delete`: delete empty economy orders and draft order lines.
+- `economy.read`: order/context/line reads; Economy export read also needs Data Exchange owner scopes.
+- `economy.create`: installation-wide all-source generation and read-only impact preview.
+- `economy.update`: ready/draft/manual-invoiced and explicit portal publication/hiding.
+- `economy.delete`: supported empty-order/draft-line deletion and source correction.
+- `economy.settings.read` / `economy.settings.update`: complete settings under current administrative permission.
+- `economy.operations.read`: own durable command/notification evidence with current original rights.
+- `economy.export`: canonical Economy export preview/command together with data_exchange.run.
 - `data_exchange.read`: list Data Exchange profiles and inspect run status.
 - `data_exchange.run`: trigger implemented Data Exchange export profiles.
 - `data_exchange.download`: download generated Data Exchange files.
@@ -388,12 +391,28 @@ Current API routes are under `/api/v1`:
 - `PUT /api/v1/commercial/time-rates/{rate}`
 - `PATCH /api/v1/commercial/time-rates/{rate}`
 - `GET /api/v1/economy/orders`
+- `GET /api/v1/economy/orders/context`
+- `GET /api/v1/economy/orders/generate/preview`
 - `POST /api/v1/economy/orders/generate`
 - `GET /api/v1/economy/orders/{order}`
+- `GET /api/v1/economy/orders/{order}/lines`
 - `POST /api/v1/economy/orders/{order}/ready`
 - `POST /api/v1/economy/orders/{order}/draft`
+- `POST /api/v1/economy/orders/{order}/invoiced`
+- `POST /api/v1/economy/orders/{order}/portal-visibility/preview`
+- `POST /api/v1/economy/orders/{order}/portal-visibility`
 - `DELETE /api/v1/economy/orders/{order}`
 - `DELETE /api/v1/economy/orders/{order}/lines/{line}`
+- `GET /api/v1/economy/settings`
+- `PATCH /api/v1/economy/settings`
+- `GET /api/v1/economy/operations/{operation}`
+- `GET /api/v1/economy/exports/preview`
+- `POST /api/v1/economy/exports`
+- `GET /api/v1/economy/exports/{run}`
+- `GET /api/v1/economy/portal/orders`
+- `GET /api/v1/economy/portal/orders/context`
+- `GET /api/v1/economy/portal/orders/{order}`
+- `GET /api/v1/economy/portal/orders/{order}/lines`
 - `GET /api/v1/data-exchange/profiles`
 - `POST /api/v1/data-exchange/profiles/{profile}/runs`
 - `GET /api/v1/data-exchange/runs/{run}`
@@ -907,21 +926,34 @@ Time rate create/update generates `slug` from `code`.
 
 ## Economy API
 
-Economy API routes expose internal order preparation for trusted automation and AI agents.
+The full current Economy browser/API surface is implemented on Dev under
+HR-2026-10-25-ECONOMY-API (human review pending). Main promotion and production deployment remain
+separate. Read the Economy API handbook article for the complete 23-operation contract and examples.
 
-The API does not create accounting invoices, send invoices, or export to external accounting
-systems. It manages the same draft economy orders that the technician Economy UI uses.
+Supported operations include staff order list/context/detail/lines, all-source generation and pure
+preview, ready/draft/manual-invoiced, portal publication/hiding and preview, supported deletion,
+complete Economy settings, durable own-operation evidence, Data Exchange export preview/run/read-back
+and customer-safe Portal list/context/detail/lines. Rates/Units remain Commercial-owned.
 
-`GET /api/v1/economy/orders` supports `q`, `status`, `client_id`, `period_start`, `period_end`, and
-`per_page`.
+Explicit scopes AND current active actor/domain/parent rights apply. Settings use the same delegated
+Economy Admin-page permission. New manual-invoiced/publication/settings require Idempotency-Key and
+If-Match; publication also uses a reviewed preview_hash. Export requires a reviewed preview_hash
+and key. Existing mutations remain compatible without headers but enforce supplied headers.
+Identical authorized retries replay durable results, including deletion; changed/stale input gives
+409. Unsupported fields are rejected. Reads/contexts/previews do not create defaults or records.
 
-`POST /api/v1/economy/orders/generate` runs the shared Economy order generation action for an
-optional date period and returns the generation summary.
+Staff results distinguish stored history from effective web display totals and include safe exact
+financial decimals, current publication/revision/actions and complete line paging. Generation
+reports actual created/updated/reused sources, preserving recorded financial client through Ticket
+moves and correction. No double billing or stock reversal is implied by generation/deletion.
 
-Draft orders can be marked ready. Ready orders can be moved back to draft.
-
-Empty draft or ready orders can be deleted. Draft order lines can be deleted, and deleting generated
-lines unlocks their ticket time or ticket cost source records for recalculation.
+Export reuses the canonical Data Exchange profile and secured owner run/file API. It produces files,
+not provider invoices, payment state or an automatic exported transition/delivery. Current Economy
+rights are rechecked on canonical owner profile/run/download routes too.
+Portal reads require existing browser-session membership/contact/client and explicit publication;
+site memberships remain excluded. Staff PATs do not establish customer identity. Customer output
+excludes internal sources/diagnostics/staff metadata. Notifications retain existing preferences;
+operation evidence reports pending/processing/submitted/superseded/unknown, never inbox receipt.
 
 ## Data Exchange API
 

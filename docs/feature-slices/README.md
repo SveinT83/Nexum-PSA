@@ -126,3 +126,12 @@ guide is delivered; no adapter, live tool connection or production activation is
 HR-2026-10-01-WORKDAY remains Pending for the combined pilot and Main/production review.
 
 - [Workday and Tripletex functional pilot](2026-10-05-workday-tripletex-functional-pilot.md) — Done On Dev for the bounded pilot; broader rollout review remains open.
+
+## Full Economy API - 25 October 2026
+
+- [2026-10-25-economy-api-01-foundation](2026-10-25-economy-api-01-foundation.md) - Done On Dev; HR-2026-10-25-ECONOMY-API Reviewed.
+- [2026-10-25-economy-api-02-reads-settings](2026-10-25-economy-api-02-reads-settings.md) - Done On Dev; HR-2026-10-25-ECONOMY-API Reviewed.
+- [2026-10-25-economy-api-03-generation-deletion](2026-10-25-economy-api-03-generation-deletion.md) - Done On Dev; HR-2026-10-25-ECONOMY-API Reviewed.
+- [2026-10-25-economy-api-04-status-portal](2026-10-25-economy-api-04-status-portal.md) - Done On Dev; HR-2026-10-25-ECONOMY-API Reviewed.
+- [2026-10-25-economy-api-05-export](2026-10-25-economy-api-05-export.md) - Done On Dev; HR-2026-10-25-ECONOMY-API Reviewed.
+- [2026-10-25-economy-api-06-verification](2026-10-25-economy-api-06-verification.md) - Done On Dev; HR-2026-10-25-ECONOMY-API Reviewed.

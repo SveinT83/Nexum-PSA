@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-25",
+  "pages": [
+    {
+      "id": 494,
+      "revision": 8,
+      "book_id": 339,
+      "chapter_id": 373,
+      "exact_body_match": true,
+      "draft": false,
+      "characters": 10923
+    },
+    {
+      "id": 390,
+      "revision": 11,
+      "book_id": 339,
+      "chapter_id": 373,
+      "exact_body_match": true,
+      "draft": false,
+      "characters": 7894
+    },
+    {
+      "id": 395,
+      "revision": 11,
+      "book_id": 339,
+      "chapter_id": 373,
+      "exact_body_match": true,
+      "draft": false,
+      "characters": 3022
+    },
+    {
+      "id": 514,
+      "revision": 3,
+      "book_id": 339,
+      "chapter_id": 512,
+      "exact_body_match": true,
+      "draft": false,
+      "characters": 5148
+    },
+    {
+      "id": 515,
+      "revision": 3,
+      "book_id": 339,
+      "chapter_id": 513,
+      "exact_body_match": true,
+      "draft": false,
+      "characters": 3768
+    },
+    {
+      "id": 449,
+      "revision": 129,
+      "book_id": 339,
+      "chapter_id": 374,
+      "exact_body_match": true,
+      "draft": false,
+      "characters": 55151
+    }
+  ],
+  "employee_scope": {
+    "role_id": 2,
+    "external_group": "/staff-internal",
+    "view_permissions": [
+      "book-view-all",
+      "chapter-view-all",
+      "page-view-all"
+    ],
+    "book": 339,
+    "inherited_chapters": [
+      373,
+      374,
+      512,
+      513
+    ],
+    "all_affected_pages_inherit": true,
+    "permissions_changed": false
+  },
+  "publication_path": "Existing personal BookStack connector; source and exact stored-content read-back independently verified.",
+  "api_management": "Only three Economy anchors changed; unrelated page/source differences preserved.",
+  "openwebui_retrieval_verified": false,
+  "native_pending_push_is_not_publication_evidence": true
+}

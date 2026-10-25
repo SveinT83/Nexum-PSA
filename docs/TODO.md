@@ -1,5 +1,30 @@
 # tdPSA Development TODO
 
+
+## Full Economy browser/API coverage (2026-10-25)
+
+Status: Done On Dev / Human Reviewed; authorized Main promotion in progress. Owner: Codex. Human reviewer/release owner: Svein Tore.
+Design approved in chat: "Godkjent. Kjør på". RFC: rfc/2026-10-25-economy-full-api-parity.md;
+accepted ADR: adr/2026-10-25-economy-api-commands-and-source-locking.md. All six slices Done On Dev.
+All E01-E14 current workflows have official APIs: 23 HTTP operations / 34 schemas, shared web/API
+behavior and current actor+token policy. Generation, all-source correction, publication/status,
+settings, Portal and Data Exchange canonical/custom profile ownership are verified. Durable replay,
+source financial-client preservation, pure reads, truthful totals/counters and native mutex are in place.
+Final Economy/DataExchange: 60 tests / 640 assertions; API admin: 5 / 313; broad affected: 384 / 4324;
+production-mode Swagger + Economy: 47 / 558 pass (overlapping sets). Forty scoped PHP files pass
+syntax/Pint. Native exact migration applied/read back batch 24; lock/unique probes and five trusted
+HTTP reads, 404/401 denials and exact Swagger read-back pass. No failed test is deferred.
+Six native source articles plus scoped API Management are verified. Six actual BookStack pages
+494/390/395/514/515/449 read back with inherited employee scope; no permission expansion.
+Employee OpenWebUI retrieval is separate and untested. Native pending_push is not publication evidence.
+HR-2026-10-25-ECONOMY-API Reviewed by Svein Tore, 2026-10-25: "Godkjent. Merge til main og foreslå neste domain som mangler api".
+Next (Codex): verify an isolated Main candidate and complete the explicitly authorized merge.
+Next (Svein Tore): separately authorize production rollout/activation. No production deployment,
+real customer billing/send, provider or scheduler activation occurred.
+Preserve shared dirty work and original GenerateOrders financial-customer dependency.
+Evidence: plans/2026-10-25-economy-api-verification.md and linked matrix/contract/evidence artifacts.
+Public editorial handoff retains explicit do-not-publish gates.
+
 ## Full Commercial browser/API coverage (2026-10-25)
 
 Status: Merged to Main / Human Reviewed (Svein Tore, 2026-10-25).

@@ -83,3 +83,37 @@ billing review:
 Generated files are visible from Admin -> Data Exchange with status, checksum, retention date, and
 download action. Future Tripletex and PowerOffice profiles should reuse Data Exchange profiles
 instead of adding a separate Economy export workflow.
+
+## Operational API parity on Dev (25 October 2026)
+
+The supported Economy workspace now has typed API equivalents for staff order list/detail/lines,
+generation, ready/unready/manual-invoiced, portal publication/hiding, settings, export and customer
+Portal reads. This addition is Dev-only pending HR-2026-10-25-ECONOMY-API, Main promotion and
+production deployment. See the Economy API article for exact paths, scopes and request headers.
+
+To prepare orders in the browser:
+
+1. Open Economy and choose the intended period for Generate orders. Review source time/cost and
+   the client before running generation. The operation is installation-wide for an authorized user.
+2. Open the generated order and check active lines, quantity/rate, VAT and totals. Mark ready only
+   when review is complete. Use Mark unready to move a ready order back to draft.
+3. Use Mark invoiced only after the separate invoicing work was completed. It sets manually
+   invoiced inside Nexum; it does not send an invoice or set external exported status.
+4. Choose Show in portal only when the order should be visible to active client-wide Portal
+   members. Hide from portal removes that visibility. Publication and state updates use the same
+   audit/notification behavior whether entered through the browser or API.
+5. For a correction, delete the draft line, correct the original source through its owner page,
+   then Generate orders again. Deleting the last draft line removes the empty order. Stock
+   movements and provider subscriptions are retained. Financial customer ownership survives a
+   Ticket move and line regeneration; do not use a Ticket move to reassign billing history.
+6. Export ready orders creates a Data Exchange file/run using the existing configured profile.
+   Open Data Exchange to inspect the actual result/checksum and download. A file is not evidence
+   of provider invoice submission or customer receipt. No external delivery is activated here.
+
+Repeated generation reports actual created/updated lines and reused sources without duplicate
+charges or spurious empty drafts. No-billing Ticket outcomes remain outside ordinary generation.
+Read-only pages/API previews do not create missing defaults or billing records.
+
+Staff/API stored history and effective display totals are explicitly separate. Legacy missing VAT
+uses the current fallback for display without rewriting historical stored amounts. No currency
+conversion occurs; mixed currencies must not be treated as a converted single-currency total.

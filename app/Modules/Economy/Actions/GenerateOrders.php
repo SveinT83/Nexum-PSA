@@ -27,38 +27,55 @@ class GenerateOrders
 
     public function handle(?CarbonInterface $periodStart = null, ?CarbonInterface $periodEnd = null, ?User $actor = null): array
     {
-        $settings = $this->defaults->handle();
-        $periodStart = ($periodStart ? Carbon::parse($periodStart) : now()->startOfMonth())->startOfDay();
-        $periodEnd = ($periodEnd ? Carbon::parse($periodEnd) : now()->endOfMonth())->endOfDay();
+        return app(\App\Modules\Economy\Support\EconomyMutex::class)->run(function () use ($periodStart, $periodEnd, $actor): array {
+            $settings = $this->defaults->handle();
+            $beforeRows = EconomyOrderLine::query()->get()->mapWithKeys(fn ($line) => [$line->id => $line->getRawOriginal()])->all();
+            $periodStart = ($periodStart ? Carbon::parse($periodStart) : now()->startOfMonth())->startOfDay();
+            $periodEnd = ($periodEnd ? Carbon::parse($periodEnd) : now()->endOfMonth())->endOfDay();
 
-        return DB::transaction(function () use ($settings, $periodStart, $periodEnd, $actor): array {
-            $summary = [
-                'orders_touched' => 0,
-                'lines_created' => 0,
-                'time_entries_seen' => 0,
-                'time_entries_ordered' => 0,
-                'time_entries_waiting_for_contract' => 0,
-                'cost_entries_seen' => 0,
-                'cost_entries_ordered' => 0,
-                'quick_timebank_entries_seen' => 0,
-                'quick_timebank_entries_ordered' => 0,
-                'cloudfactory_periods_seen' => 0,
-                'cloudfactory_periods_ordered' => 0,
-            ];
+            return DB::transaction(function () use ($settings, $periodStart, $periodEnd, $actor, $beforeRows): array {
+                $summary = [
+                    'orders_touched' => 0,
+                    'sources_reused' => 0,
+                    'lines_created' => 0,
+                    'time_entries_seen' => 0,
+                    'time_entries_ordered' => 0,
+                    'time_entries_waiting_for_contract' => 0,
+                    'cost_entries_seen' => 0,
+                    'cost_entries_ordered' => 0,
+                    'quick_timebank_entries_seen' => 0,
+                    'quick_timebank_entries_ordered' => 0,
+                    'cloudfactory_periods_seen' => 0,
+                    'cloudfactory_periods_ordered' => 0,
+                ];
 
-            if ($settings->create_orders_from_closed_ticket_time || $settings->create_orders_from_resolved_ticket_time || $settings->include_unresolved_ticket_time_in_period_close) {
-                $this->generateTimeLines($periodStart, $periodEnd, $actor, $settings, $summary);
-            }
+                if ($settings->create_orders_from_closed_ticket_time || $settings->create_orders_from_resolved_ticket_time || $settings->include_unresolved_ticket_time_in_period_close) {
+                    $this->generateTimeLines($periodStart, $periodEnd, $actor, $settings, $summary);
+                }
 
-            if ($settings->create_orders_from_picked_ticket_costs) {
-                $this->generateCostLines($periodStart, $periodEnd, $actor, $settings, $summary);
-            }
+                if ($settings->create_orders_from_picked_ticket_costs) {
+                    $this->generateCostLines($periodStart, $periodEnd, $actor, $settings, $summary);
+                }
 
-            $this->generateQuickTimebankLines($periodStart, $periodEnd, $actor, $settings, $summary);
-            $this->cloudFactoryBillingPeriods->handle($periodStart, $periodEnd);
-            $this->generateCloudFactoryLines($periodStart, $periodEnd, $actor, $settings, $summary);
+                $this->generateQuickTimebankLines($periodStart, $periodEnd, $actor, $settings, $summary);
+                $this->cloudFactoryBillingPeriods->handle($periodStart, $periodEnd);
+                $this->generateCloudFactoryLines($periodStart, $periodEnd, $actor, $settings, $summary);
 
-            return $summary;
+                $after = EconomyOrderLine::query()->get();
+                $created = $after->filter(fn ($line) => ! isset($beforeRows[$line->id]));
+                $changed = $after->filter(fn ($line) => ! isset($beforeRows[$line->id]) || $beforeRows[$line->id] !== $line->getRawOriginal());
+                $summary['lines_created'] = $created->count();
+                $summary['lines_updated'] = $changed->count() - $created->count();
+                $summary['orders_touched'] = $changed->pluck('economy_order_id')->unique()->count();
+                $summary['affected_order_ids'] = $changed->pluck('economy_order_id')->unique()->values()->all();
+                $summary['created_line_ids'] = $created->pluck('id')->values()->all();
+                $summary['affected_line_ids'] = $changed->pluck('id')->values()->all();
+                foreach (['ticket_time' => 'time_entries_ordered', 'ticket_cost' => 'cost_entries_ordered', 'quick_timebank_overuse' => 'quick_timebank_entries_ordered', 'cloudfactory_licence' => 'cloudfactory_periods_ordered'] as $type => $counter) {
+                    $summary[$counter] = $changed->where('line_type', $type)->count();
+                }
+
+                return $summary;
+            });
         });
     }
 
@@ -85,8 +102,12 @@ class GenerateOrders
                 return;
             }
 
-            $entry = $this->attachContractTimebankIfAvailable($entry);
-            $allocation = $this->allocateTimeEntry($entry, $periodStart, $periodEnd);
+            $recordedAllocation = $entry->allocation()->first();
+            // A cross-customer Ticket move must not retarget an existing financial allocation.
+            if (! $recordedAllocation || (int) $recordedAllocation->client_id === (int) $entry->ticket->client_id) {
+                $entry = $this->attachContractTimebankIfAvailable($entry);
+            }
+            $allocation = $recordedAllocation ?? $this->allocateTimeEntry($entry, $periodStart, $periodEnd);
 
             if ($allocation->billable_minutes <= 0) {
                 $entry->forceFill([
@@ -102,7 +123,15 @@ class GenerateOrders
                 return;
             }
 
-            $order = $this->draftOrder($entry->ticket->client_id, $periodStart, $periodEnd, $actor, $settings);
+            // An existing allocation is the recorded financial customer, including after a Ticket merge.
+            $billingClientId = \App\Modules\Economy\Support\EconomySourceOwner::client($entry->getMorphClass(), $entry->id, $allocation->client_id ?: $entry->ticket->client_id);
+            if (EconomyOrderLine::query()->where('source_type', $entry->getMorphClass())->where('source_id', $entry->id)->exists()) {
+                $entry->forceFill(['billing_status' => 'queued'])->save();
+                $summary['sources_reused']++;
+
+                return;
+            }
+            $order = $this->draftOrder($billingClientId, $periodStart, $periodEnd, $actor, $settings);
             $unitPrice = round($rate / 60, 4);
             $lineTotal = round($unitPrice * $allocation->billable_minutes, 2);
             $vatRate = $settings->default_vat_rate !== null ? (float) $settings->default_vat_rate : null;
@@ -115,7 +144,7 @@ class GenerateOrders
                 ],
                 [
                     'economy_order_id' => $order->id,
-                    'client_id' => $entry->ticket->client_id,
+                    'client_id' => $billingClientId,
                     'ticket_id' => $entry->ticket_id,
                     'work_date' => $entry->work_date,
                     'line_type' => 'ticket_time',
@@ -358,7 +387,7 @@ class GenerateOrders
             ->where('status', 'picked')
             ->where('billing_status', 'pending')
             ->whereBetween('created_at', [$periodStart, $periodEnd])
-            ->whereHas('ticket', fn ($query) => $query->whereNotNull('client_id'))
+            ->whereHas('ticket', fn ($query) => $query->whereNotNull('client_id')->where(fn ($q) => $q->whereNull('close_outcome')->orWhereNotIn('close_outcome', ['customer_declined', 'cancelled', 'no_sale'])))
             ->get()
             ->each(function (TicketCostEntry $entry) use ($periodStart, $periodEnd, $actor, $settings, &$summary): void {
                 $summary['cost_entries_seen']++;
@@ -368,7 +397,14 @@ class GenerateOrders
                     return;
                 }
 
-                $order = $this->draftOrder($entry->ticket->client_id, $periodStart, $periodEnd, $actor, $settings);
+                $billingClientId = \App\Modules\Economy\Support\EconomySourceOwner::client($entry->getMorphClass(), $entry->id, $entry->ticket->client_id);
+                if (EconomyOrderLine::query()->where('source_type', $entry->getMorphClass())->where('source_id', $entry->id)->exists()) {
+                    $entry->forceFill(['billing_status' => 'queued'])->save();
+                    $summary['sources_reused']++;
+
+                    return;
+                }
+                $order = $this->draftOrder($billingClientId, $periodStart, $periodEnd, $actor, $settings);
                 $lineTotal = round($unitPrice * $entry->quantity, 2);
                 $vatRate = $entry->storageItem?->vat_rate !== null
                     ? (float) $entry->storageItem->vat_rate
@@ -382,7 +418,7 @@ class GenerateOrders
                     ],
                     [
                         'economy_order_id' => $order->id,
-                        'client_id' => $entry->ticket->client_id,
+                        'client_id' => $billingClientId,
                         'ticket_id' => $entry->ticket_id,
                         'work_date' => $entry->created_at?->toDateString(),
                         'line_type' => 'ticket_cost',
@@ -431,7 +467,13 @@ class GenerateOrders
                     return;
                 }
 
-                $order = $this->draftOrder($entry->client_id, $periodStart, $periodEnd, $actor, $settings);
+                $billingClientId = \App\Modules\Economy\Support\EconomySourceOwner::client($entry->getMorphClass(), $entry->id, $entry->client_id);
+                if (EconomyOrderLine::query()->where('source_type', $entry->getMorphClass())->where('source_id', $entry->id)->exists()) {
+                    $summary['sources_reused']++;
+
+                    return;
+                }
+                $order = $this->draftOrder($billingClientId, $periodStart, $periodEnd, $actor, $settings);
                 $unitPrice = round($rate / 60, 4);
                 $lineTotal = round($unitPrice * $entry->overused_minutes, 2);
                 $vatRate = $settings->default_vat_rate !== null ? (float) $settings->default_vat_rate : null;
@@ -444,7 +486,7 @@ class GenerateOrders
                     ],
                     [
                         'economy_order_id' => $order->id,
-                        'client_id' => $entry->client_id,
+                        'client_id' => $billingClientId,
                         'ticket_id' => null,
                         'work_date' => $entry->work_date,
                         'line_type' => 'quick_timebank_overuse',
@@ -495,7 +537,6 @@ class GenerateOrders
             ->get()
             ->each(function (BillingPeriod $period) use ($periodStart, $periodEnd, $actor, $settings, &$summary): void {
                 $summary['cloudfactory_periods_seen']++;
-                $order = $this->draftOrder($period->client_id, $periodStart, $periodEnd, $actor, $settings);
                 $lineTotal = round((float) $period->quantity * (float) $period->unit_price_ex_vat, 2);
                 $vatRate = $settings->default_vat_rate !== null ? (float) $settings->default_vat_rate : null;
                 $vatAmount = $vatRate === null ? null : round($lineTotal * ($vatRate / 100), 2);
@@ -505,9 +546,13 @@ class GenerateOrders
                     ->first();
 
                 if ($line && $line->order?->status !== 'draft') {
+                    $summary['sources_reused']++;
+
                     return;
                 }
 
+                $billingClientId = \App\Modules\Economy\Support\EconomySourceOwner::client($period->getMorphClass(), $period->id, $period->client_id);
+                $order = $line ? $line->order : $this->draftOrder($billingClientId, $periodStart, $periodEnd, $actor, $settings);
                 $line ??= new EconomyOrderLine([
                     'source_type' => $period->getMorphClass(),
                     'source_id' => $period->id,
@@ -520,7 +565,7 @@ class GenerateOrders
 
                 $line->forceFill([
                     'economy_order_id' => $order->id,
-                    'client_id' => $period->client_id,
+                    'client_id' => $billingClientId,
                     'ticket_id' => null,
                     'work_date' => $period->period_start,
                     'line_type' => 'cloudfactory_licence',
@@ -555,6 +600,10 @@ class GenerateOrders
 
     private function timeEntryIsEligible(TicketTimeEntry $entry, $settings): bool
     {
+        if (in_array($entry->ticket?->close_outcome, ['customer_declined', 'cancelled', 'no_sale'], true)) {
+            return false;
+        }
+
         if ($settings->include_unresolved_ticket_time_in_period_close) {
             return true;
         }

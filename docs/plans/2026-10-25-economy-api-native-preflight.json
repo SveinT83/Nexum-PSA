@@ -1,0 +1,17 @@
+{
+    "driver": "mysql",
+    "counts_before": {
+        "economy_settings": 1,
+        "economy_orders": 0,
+        "economy_order_lines": 0,
+        "ticket_time_entry_allocations": 0,
+        "cloudfactory_billing_periods": 0
+    },
+    "new_tables_absent": {
+        "economy_write_mutex": true,
+        "economy_command_receipts": true,
+        "economy_source_owners": true,
+        "economy_notification_intents": true
+    },
+    "native_schema_backup": "\/tmp\/nexum-economy-api-20261025-originals\/native-schema-before.json"
+}
