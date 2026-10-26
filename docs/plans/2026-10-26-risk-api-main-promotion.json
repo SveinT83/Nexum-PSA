@@ -1,6 +1,6 @@
 {
   "date": "2026-10-26",
-  "status": "candidate_verified_merge_authorized",
+  "status": "merged_verified",
   "base_main": "3af91d5bce15c46cf3184d319cde148835297cd9",
   "branch": "codex/risk-api-parity-main-20261026",
   "human_review": "HR-2026-10-26-RISK-API Reviewed by Svein Tore",
@@ -35,5 +35,52 @@
     "php artisan optimize:clear",
     "php artisan l5-swagger:generate"
   ],
-  "recovery": "Preserve durable command tables and APP_KEY; nonempty receipt storage cannot be rolled back destructively."
+  "recovery": "Preserve durable command tables and APP_KEY; nonempty receipt storage cannot be rolled back destructively.",
+  "main_promotion": {
+    "pull_request": 321,
+    "url": "https://github.com/SveinT83/Nexum-PSA/pull/321",
+    "merge_sha": "bf5c7d0c608895031eea04aa9a65cfd7c8a7ba98",
+    "tree": "16ddb17317171f0da4aab4f2fa743f8e2c35a797",
+    "matches_tested_candidate": true,
+    "candidate_head": "85301ac21e8ab4c91ec2458c4b818c03e3763498",
+    "production_deployed": false
+  },
+  "main_handbook": {
+    "pages": [
+      {
+        "id": 447,
+        "revision": 8,
+        "name": "Risk Overview",
+        "main_verified": true
+      },
+      {
+        "id": 448,
+        "revision": 9,
+        "name": "Risk Settings",
+        "main_verified": true
+      },
+      {
+        "id": 640,
+        "revision": 3,
+        "name": "Risk API Support",
+        "main_verified": true
+      },
+      {
+        "id": 449,
+        "revision": 136,
+        "name": "Api Management",
+        "main_verified": true
+      }
+    ],
+    "inherited_staff_scope": true,
+    "permissions_changed": false,
+    "knowledge_exact": true
+  },
+  "website_editorial_main_state": {
+    "existing_item_updated": 1,
+    "status": "klar for vurdering",
+    "main": "merged",
+    "production": "not deployed",
+    "publication_gate": "Ikke publiser until separately authorized production deployment and verification"
+  }
 }

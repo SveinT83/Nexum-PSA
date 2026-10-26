@@ -1,6 +1,6 @@
 # Risk browser/API coverage matrix
 
-Status: Implemented and Verified on Dev / Human Reviewed by Svein Tore, 2026-10-26.
+Status: Verified on Dev / Merged to Main / Human Reviewed by Svein Tore, 2026-10-26.
 Date: 2026-10-26. Owner: Codex. Product/review owner: Svein Tore.
 Parent: ../rfc/2026-10-26-risk-full-api-parity.md.
 Baseline: 2026-10-26-risk-api-route-baseline.json.
@@ -80,7 +80,7 @@ incomplete existing validation, read-back, field visibility or actor checks.
 
 All rows are implemented and verified on Dev. See 2026-10-26-risk-api-verification.md
 and .json for native/HTTPS/PDF, exact method/schema and handbook evidence.
-HR-2026-10-26-RISK-API is Reviewed. Main/production require separate authorization.
+HR-2026-10-26-RISK-API is Reviewed. Main merged in PR #321; production remains separate.
 
 | Row | Named passing tests |
 | --- | --- |
@@ -100,3 +100,10 @@ HR-2026-10-26-RISK-API is Reviewed. Main/production require separate authorizati
 | R14 | `settings_patch_merges_full_put_validates_and_defaults_only_affect_future_records`; `superuser_can_update_risk_settings`; `context_and_lookups_are_pure_bounded_and_minimal` |
 | R15 | `every_operation_requires_its_scope_and_current_actor_permission`; `receipts_recheck_current_underlying_rights_and_token_ceiling`; `real_tokens_cannot_read_each_others_command_receipts` |
 | R16 | `every_registered_risk_api_method_has_an_exact_typed_contract`; `generated_swagger_contains_every_exact_method_and_response_schema`; `all_twenty_seven_success_contracts_match_real_operational_responses` |
+
+## Main promotion completed
+
+Main merge separately authorized by Svein Tore: "Ja", 2026-10-26.
+PR #321: https://github.com/SveinT83/Nexum-PSA/pull/321. Merge SHA: bf5c7d0c608895031eea04aa9a65cfd7c8a7ba98.
+Merged tree equals the tested isolated candidate. Production was not deployed.
+See ../plans/2026-10-26-risk-api-main-promotion.md for promotion/test/deployment evidence.

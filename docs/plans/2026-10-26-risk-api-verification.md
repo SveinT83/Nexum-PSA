@@ -2,7 +2,8 @@
 
 Status: Implemented and verified on authoritative Dev, 2026-10-26. Human review accepted by Svein Tore, 2026-10-26.
 Design approved by Svein Tore: "Godkjenner". Review: HR-2026-10-26-RISK-API.
-No commit, push, Main promotion or production migration/deployment occurred.
+At original Dev handoff no Main/production action had occurred. Main is now merged as
+recorded in the promotion section below; production remains separate.
 
 ## Delivered behavior
 
@@ -175,3 +176,11 @@ application tests were not rerun because application code was unchanged.
 The approval status was synced to Knowledge and published/read back independently in
 BookStack: 447/7, 448/8, 640/2 and 449/135. Original delivery test/native evidence above
 is retained as historical evidence. Website editorial input retains Main/production gates.
+
+## Main promotion verified after acceptance
+
+PR #321 merged: https://github.com/SveinT83/Nexum-PSA/pull/321
+Merge SHA: bf5c7d0c608895031eea04aa9a65cfd7c8a7ba98. Merged tree exactly equals the isolated tested candidate.
+Candidate verification: 26 Risk tests / 3246 assertions; 165 affected tests / 4878 assertions.
+38 PHP files pass syntax and Pint. Native scope/actor mapping and all 37 schemas match.
+No production migration/deployment, provider switch, queue restart or scheduler action occurred.

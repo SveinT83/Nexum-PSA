@@ -2,7 +2,7 @@
 
 ## Full Risk browser/API coverage (2026-10-26)
 
-Status: Done on Dev / Human Reviewed by Svein Tore, 2026-10-26.
+Status: Done on Dev / Merged to Main / Human Reviewed by Svein Tore, 2026-10-26.
 Owner/implementer: Codex. Design approver, human reviewer and release owner: Svein Tore.
 Approved concrete RFC: rfc/2026-10-26-risk-full-api-parity.md, "Godkjenner", 2026-10-26.
 All five Feature Slices and matrix R01-R16 are complete on Dev, including supported
@@ -22,9 +22,11 @@ personal publication is the actual handbook evidence. No permissions were expand
 Human review HR-2026-10-26-RISK-API: Reviewed on Svein Tore's "Godkjenner"
 after the completed Dev handoff. Original scenario boxes are retained without claiming
 individual witnessed executions.
-Remaining action (Svein Tore): explicitly authorize scoped Main promotion and
-production migration/deployment when ready. Review approval alone is not that instruction.
-No commit, push, Main merge or production deployment was performed.
+Main promotion: PR #321 merged at bf5c7d0c608895031eea04aa9a65cfd7c8a7ba98.
+The merged tree equals the isolated tested candidate. Main candidate: 26 Risk tests /
+3246 assertions and 165 affected tests / 4878 assertions; 38 PHP syntax/Pint checks pass.
+Remaining action (Svein Tore): explicitly authorize production migration/deployment
+when ready. No production deployment was performed.
 Preserve durable command receipts/APP_KEY on recovery. Domain-wide write locking
 deliberately prioritizes integrity; high-volume production performance is unmeasured.
 Prior Clients Main promotion is separate; unrelated Ticket/Task/Worklog/Calendar
@@ -33,8 +35,8 @@ work and shared dirty files remain unchanged.
 
 Main promotion authorized by Svein Tore on 2026-10-26: "Ja", in direct response
  to the explicit question to merge the approved Risk change to Main. Scoped candidate
- verification/promotion is In Progress. Production deployment remains unauthorized.
-
+ verification/promotion is complete in PR #321 (bf5c7d0c608895031eea04aa9a65cfd7c8a7ba98).
+Production deployment remains unauthorized.
 
 ## Full Clients browser/API coverage (2026-10-25)
 
