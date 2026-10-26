@@ -18,6 +18,8 @@ class SyncNAbleAlertsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public array $result = ['state' => 'skipped', 'observed' => 0];
+
     protected $integrationId;
 
     protected $assetId;
@@ -43,10 +45,11 @@ class SyncNAbleAlertsJob implements ShouldQueue
             return;
         }
 
-        $client = new NAbleRmmClient($integration);
+        $client = app(NAbleRmmClient::class, ['integration' => $integration]);
         $failingChecks = $client->listFailingChecks();
 
         if (isset($failingChecks['error'])) {
+            $this->result['state'] = 'failed';
             // Do not echo provider/client error strings: connection exceptions may contain
             // the query-string API key used by the upstream N-able endpoint.
             Log::error('N-able RMM SyncNAbleAlertsJob failed.', [
@@ -56,6 +59,7 @@ class SyncNAbleAlertsJob implements ShouldQueue
             return;
         }
 
+        $this->result['state'] = 'completed';
         $activeFingerprintsFromApi = [];
         $affectedAssetIds = [];
 
@@ -82,6 +86,7 @@ class SyncNAbleAlertsJob implements ShouldQueue
                 continue;
             }
 
+            $this->result['observed']++;
             $affectedAssetIds[] = $asset->id;
             $fingerprint = "nable:{$asset->id}:{$externalCheckId}";
             $activeFingerprintsFromApi[] = $fingerprint;

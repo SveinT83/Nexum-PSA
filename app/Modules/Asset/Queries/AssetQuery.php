@@ -32,6 +32,26 @@ class AssetQuery
         return $query->paginate(25)->withQueryString();
     }
 
+    /** Stateless API filtering reuses every browser filter and deterministic sort. */
+    public function paginateForApi(Request $request): LengthAwarePaginator
+    {
+        $request->validate([
+            'client_id' => 'sometimes|integer|exists:clients,id',
+            'work_context_id' => 'sometimes|integer|exists:work_contexts,id',
+            'context_type' => 'sometimes|in:client,internal',
+            'search' => 'sometimes|string|max:255', 'type' => 'sometimes|string|max:100',
+            'status' => 'sometimes|string|max:100', 'sensitivity_level' => 'sometimes|in:low,medium,high,ultra',
+            'criticality_level' => 'sometimes|in:low,medium,high,critical', 'has_alerts' => 'sometimes|boolean',
+            'sort' => 'sometimes|in:name,type,client_site,status,last_seen_at', 'direction' => 'sometimes|in:asc,desc',
+            'page' => 'sometimes|integer|min:1', 'per_page' => 'sometimes|integer|min:1|max:100',
+        ]);
+        $query = $this->baseDisplayQuery()->with('rmmLinks');
+        $this->applyRequestFilters($query, $request);
+        $this->applySorting($query, $request);
+
+        return $query->paginate($request->integer('per_page', 25))->withQueryString();
+    }
+
     private function baseDisplayQuery(): Builder
     {
         return Asset::query()->with(['client', 'workContext', 'site', 'user', 'vendorRelation']);
@@ -40,7 +60,7 @@ class AssetQuery
     private function applyClientContext(Builder $query, ?Client $client): void
     {
         if ($client && $client->exists) {
-            $query->where('client_id', $client->id);
+            $query->where('assets.client_id', $client->id);
         }
     }
 
@@ -55,7 +75,7 @@ class AssetQuery
         }
 
         if ($request->filled('client_id')) {
-            $query->where('client_id', $request->client_id);
+            $query->where('assets.client_id', $request->client_id);
         }
 
         if ($request->filled('context_type') && WorkContextType::isSupported($request->input('context_type'))) {
@@ -63,23 +83,23 @@ class AssetQuery
         }
 
         if ($request->filled('work_context_id')) {
-            $query->where('work_context_id', $request->integer('work_context_id'));
+            $query->where('assets.work_context_id', $request->integer('work_context_id'));
         }
 
         if ($request->filled('type')) {
-            $query->where('type', $request->type);
+            $query->where('assets.type', $request->type);
         }
 
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $query->where('assets.status', $request->status);
         }
 
         if ($request->filled('sensitivity_level')) {
-            $query->where('sensitivity_level', $request->string('sensitivity_level')->toString());
+            $query->where('assets.sensitivity_level', $request->string('sensitivity_level')->toString());
         }
 
         if ($request->filled('criticality_level')) {
-            $query->where('criticality_level', $request->string('criticality_level')->toString());
+            $query->where('assets.criticality_level', $request->string('criticality_level')->toString());
         }
 
         if ($request->boolean('has_alerts')) {
@@ -105,12 +125,12 @@ class AssetQuery
                 ->select('assets.*')
                 ->orderBy('clients.name', $direction)
                 ->orderBy('client_sites.name', $direction)
-                ->orderBy('assets.name');
+                ->orderBy('assets.name')->orderBy('assets.id');
 
             return;
         }
 
         $query->orderBy('assets.'.$sort, $direction)
-            ->orderBy('assets.name');
+            ->orderBy('assets.name')->orderBy('assets.id');
     }
 }

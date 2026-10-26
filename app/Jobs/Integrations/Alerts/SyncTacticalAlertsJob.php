@@ -17,6 +17,8 @@ class SyncTacticalAlertsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public array $result = ['state' => 'skipped', 'observed' => 0];
+
     protected $integrationId;
 
     protected $assetId;
@@ -52,7 +54,7 @@ class SyncTacticalAlertsJob implements ShouldQueue
             return;
         }
 
-        $client = new TacticalRmmClient($server, $apiKey);
+        $client = app(TacticalRmmClient::class, ['baseUrl' => $server, 'apiKey' => $apiKey]);
 
         if ($this->assetId) {
             $asset = Asset::find($this->assetId);
@@ -79,6 +81,11 @@ class SyncTacticalAlertsJob implements ShouldQueue
         }
 
         $checks = $client->getAgentChecks($rmmLink->external_id);
+        if (! $client->lastRequestSuccessful) {
+            $this->result['state'] = 'failed';
+            return;
+        }
+        if ($this->result['state'] !== 'failed') { $this->result['state'] = 'completed'; }
 
         foreach ($checks as $check) {
             $externalCheckId = $check['id'] ?? null;
@@ -86,6 +93,7 @@ class SyncTacticalAlertsJob implements ShouldQueue
                 continue;
             }
 
+            $this->result['observed']++;
             $fingerprint = "tactical:{$asset->id}:{$externalCheckId}";
 
             // Tactical RMM nests check results in a 'check_result' array

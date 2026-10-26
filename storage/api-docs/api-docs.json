@@ -19,19 +19,18 @@
         }
     ],
     "paths": {
-        "/api/v1/assets": {
+        "/api/v1/assets/context": {
             "get": {
                 "tags": [
                     "Assets"
                 ],
-                "summary": "Get list of assets",
-                "description": "Returns list of assets with pagination. Can be filtered by client_id or Work Context.",
-                "operationId": "getAssetList",
+                "summary": "context",
+                "description": "Scope assets.read; current actor rights asset.view. Provider execution requires a current preview, explicit confirmation and the default-off runtime switch. Browser and API share domain behavior.",
+                "operationId": "assetApiContextGet",
                 "parameters": [
                     {
-                        "name": "client_id",
+                        "name": "asset_id",
                         "in": "query",
-                        "description": "Filter assets by client ID",
                         "required": false,
                         "schema": {
                             "type": "integer"
@@ -40,10 +39,1606 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful operation"
+                        "description": "Exact authorized Asset result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiContextResponse"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthenticated"
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/assets/lookups/{kind}": {
+            "get": {
+                "tags": [
+                    "Assets"
+                ],
+                "summary": "lookups",
+                "description": "Scope assets.read; current actor rights asset.view. Provider execution requires a current preview, explicit confirmation and the default-off runtime switch. Browser and API share domain behavior.",
+                "operationId": "assetApiLookupsGet",
+                "parameters": [
+                    {
+                        "name": "kind",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "clients",
+                                "sites",
+                                "owners",
+                                "vendors"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "client_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Asset result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiLookupPage"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/assets/docs": {
+            "get": {
+                "tags": [
+                    "Assets"
+                ],
+                "summary": "docs",
+                "description": "Scope assets.read; current actor rights asset.view. Provider execution requires a current preview, explicit confirmation and the default-off runtime switch. Browser and API share domain behavior.",
+                "operationId": "assetApiDocsGet",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Asset result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiDocsResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/assets/settings": {
+            "get": {
+                "tags": [
+                    "Assets"
+                ],
+                "summary": "settings",
+                "description": "Scope assets.settings.read; current actor rights asset.manage_settings. Provider execution requires a current preview, explicit confirmation and the default-off runtime switch. Browser and API share domain behavior.",
+                "operationId": "assetApiSettingsGet",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Asset result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiSettingsResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Assets"
+                ],
+                "summary": "updateSettings",
+                "description": "Scope assets.settings.update; current actor rights asset.manage_settings. Provider execution requires a current preview, explicit confirmation and the default-off runtime switch. Browser and API share domain behavior.",
+                "operationId": "assetApiUpdateSettingsPut",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssetApiSettings"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Asset result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiSettingsResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/assets/alerts/summary": {
+            "get": {
+                "tags": [
+                    "Assets"
+                ],
+                "summary": "summary",
+                "description": "Scope assets.read; current actor rights asset.view. Provider execution requires a current preview, explicit confirmation and the default-off runtime switch. Browser and API share domain behavior.",
+                "operationId": "assetApiSummaryGet",
+                "parameters": [
+                    {
+                        "name": "client_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "asset_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Asset result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiAlertSummaryResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/assets/alerts": {
+            "get": {
+                "tags": [
+                    "Assets"
+                ],
+                "summary": "alerts",
+                "description": "Scope assets.read; current actor rights asset.view. Provider execution requires a current preview, explicit confirmation and the default-off runtime switch. Browser and API share domain behavior.",
+                "operationId": "assetApiAlertsGet",
+                "parameters": [
+                    {
+                        "name": "client_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "asset_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "resolved"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "unresolved_only",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Asset result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiAlertPage"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/assets/alerts/sync/preview": {
+            "post": {
+                "tags": [
+                    "Assets"
+                ],
+                "summary": "previewAlerts",
+                "description": "Scope assets.sync; current actor rights asset.view, asset.update. Provider execution requires a current preview, explicit confirmation and the default-off runtime switch. Browser and API share domain behavior.",
+                "operationId": "assetApiPreviewAlertsPost",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssetApiAlertPreviewInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Asset result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiProviderPreview"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/assets/alerts/sync": {
+            "post": {
+                "tags": [
+                    "Assets"
+                ],
+                "summary": "syncAlerts",
+                "description": "Scope assets.sync; current actor rights asset.view, asset.update. Provider execution requires a current preview, explicit confirmation and the default-off runtime switch. Browser and API share domain behavior.",
+                "operationId": "assetApiSyncAlertsPost",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssetApiAlertExecuteInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Asset result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiCommandResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/assets/rmm/preview": {
+            "post": {
+                "tags": [
+                    "Assets"
+                ],
+                "summary": "previewRmm",
+                "description": "Scope assets.sync; current actor rights asset.view, asset.update, integration.rmm_manage. Provider execution requires a current preview, explicit confirmation and the default-off runtime switch. Browser and API share domain behavior.",
+                "operationId": "assetApiPreviewRmmPost",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssetApiRmmPreviewInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Asset result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiProviderPreview"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/assets/rmm/sync": {
+            "post": {
+                "tags": [
+                    "Assets"
+                ],
+                "summary": "syncRmm",
+                "description": "Scope assets.sync; current actor rights asset.view, asset.update, integration.rmm_manage. Provider execution requires a current preview, explicit confirmation and the default-off runtime switch. Browser and API share domain behavior.",
+                "operationId": "assetApiSyncRmmPost",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssetApiRmmExecuteInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Asset result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiCommandResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/assets/operations/{operation}": {
+            "get": {
+                "tags": [
+                    "Assets"
+                ],
+                "summary": "operation",
+                "description": "Scope assets.read; current actor rights original operation rights. Provider execution requires a current preview, explicit confirmation and the default-off runtime switch. Browser and API share domain behavior.",
+                "operationId": "assetApiOperationGet",
+                "parameters": [
+                    {
+                        "name": "operation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Asset result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiOperationResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/assets": {
+            "get": {
+                "tags": [
+                    "Assets"
+                ],
+                "summary": "index",
+                "description": "Scope assets.read; current actor rights asset.view. Provider execution requires a current preview, explicit confirmation and the default-off runtime switch. Browser and API share domain behavior.",
+                "operationId": "assetApiIndexGet",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "client_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "work_context_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "context_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sensitivity_level",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "criticality_level",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "has_alerts",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Asset result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiRecordPage"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -56,79 +1651,111 @@
                 "tags": [
                     "Assets"
                 ],
-                "summary": "Create asset",
-                "description": "Creates an asset record. Manual Asset Settings provide defaults when optional type, ip_type, or status fields are omitted.",
-                "operationId": "createAsset",
+                "summary": "store",
+                "description": "Scope assets.create; current actor rights asset.create. Provider execution requires a current preview, explicit confirmation and the default-off runtime switch. Browser and API share domain behavior.",
+                "operationId": "assetApiStorePost",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    }
+                ],
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "name"
-                                ],
-                                "properties": {
-                                    "client_id": {
-                                        "type": "integer",
-                                        "nullable": true
-                                    },
-                                    "site_id": {
-                                        "type": "integer",
-                                        "nullable": true
-                                    },
-                                    "name": {
-                                        "type": "string"
-                                    },
-                                    "type": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "vendor": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "model": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "serial_number": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "mac_address": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "ip_address": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "hostname": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "status": {
-                                        "type": "string",
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
+                                "$ref": "#/components/schemas/AssetApiCreate"
                             }
                         }
                     }
                 },
                 "responses": {
                     "201": {
-                        "description": "Asset created"
+                        "description": "Exact authorized Asset result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiRecordResponse"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthenticated"
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Missing assets.create scope"
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -143,14 +1770,13 @@
                 "tags": [
                     "Assets"
                 ],
-                "summary": "Get asset information",
-                "description": "Returns detailed information for a specific asset",
-                "operationId": "getAssetById",
+                "summary": "show",
+                "description": "Scope assets.read; current actor rights asset.view. Provider execution requires a current preview, explicit confirmation and the default-off runtime switch. Browser and API share domain behavior.",
+                "operationId": "assetApiShowGet",
                 "parameters": [
                     {
                         "name": "asset",
                         "in": "path",
-                        "description": "ID of asset to return",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -159,13 +1785,84 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful operation"
+                        "description": "Exact authorized Asset result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiRecordResponse"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthenticated"
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Asset Not Found"
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -178,9 +1875,9 @@
                 "tags": [
                     "Assets"
                 ],
-                "summary": "Update asset",
-                "description": "Updates an asset record.",
-                "operationId": "replaceAsset",
+                "summary": "update",
+                "description": "Scope assets.update; current actor rights asset.update. Provider execution requires a current preview, explicit confirmation and the default-off runtime switch. Browser and API share domain behavior.",
+                "operationId": "assetApiUpdatePut",
                 "parameters": [
                     {
                         "name": "asset",
@@ -189,23 +1886,116 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssetApiPatch"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Asset updated"
+                        "description": "Exact authorized Asset result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiRecordResponse"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthenticated"
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Missing assets.update scope"
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Asset not found"
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -218,9 +2008,9 @@
                 "tags": [
                     "Assets"
                 ],
-                "summary": "Partially update asset",
-                "description": "Partially updates an asset record.",
-                "operationId": "patchAsset",
+                "summary": "update",
+                "description": "Scope assets.update; current actor rights asset.update. Provider execution requires a current preview, explicit confirmation and the default-off runtime switch. Browser and API share domain behavior.",
+                "operationId": "assetApiUpdatePatch",
                 "parameters": [
                     {
                         "name": "asset",
@@ -229,23 +2019,116 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssetApiPatch"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Asset updated"
+                        "description": "Exact authorized Asset result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiRecordResponse"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthenticated"
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Missing assets.update scope"
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Asset not found"
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, concurrency or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetApiError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -99502,6 +101385,1386 @@
                     }
                 },
                 "type": "object"
+            },
+            "AssetApiNamedRef": {
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiWorkContext": {
+                "required": [
+                    "id",
+                    "name",
+                    "type"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiRmmLink": {
+                "required": [
+                    "integration_id",
+                    "external_id"
+                ],
+                "properties": {
+                    "integration_id": {
+                        "type": "integer"
+                    },
+                    "external_id": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiRecord": {
+                "required": [
+                    "id",
+                    "client_id",
+                    "work_context_id",
+                    "site_id",
+                    "user_id",
+                    "vendor_id",
+                    "name",
+                    "type",
+                    "vendor",
+                    "model",
+                    "serial_number",
+                    "mac_address",
+                    "ip_address",
+                    "ip_type",
+                    "hostname",
+                    "source",
+                    "status",
+                    "sensitivity_level",
+                    "criticality_level",
+                    "last_seen_at",
+                    "created_at",
+                    "updated_at",
+                    "is_managed",
+                    "metadata",
+                    "rmm_links",
+                    "work_context",
+                    "revision",
+                    "links"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "client_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "work_context_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "site_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "vendor_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "vendor": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "model": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "serial_number": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "mac_address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "ip_address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "ip_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "hostname": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "source": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "sensitivity_level": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "criticality_level": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_seen_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_managed": {
+                        "type": "boolean"
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": true
+                    },
+                    "rmm_links": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AssetApiRmmLink"
+                        }
+                    },
+                    "work_context": {
+                        "$ref": "#/components/schemas/AssetApiWorkContext"
+                    },
+                    "revision": {
+                        "type": "string"
+                    },
+                    "links": {
+                        "required": [
+                            "self",
+                            "client"
+                        ],
+                        "properties": {
+                            "self": {
+                                "type": "string"
+                            },
+                            "client": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiRecordResponse": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/AssetApiRecord"
+                    },
+                    "operation_id": {
+                        "type": "string"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiPageLink": {
+                "required": [
+                    "url",
+                    "label",
+                    "active"
+                ],
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiPageMeta": {
+                "required": [
+                    "current_page",
+                    "from",
+                    "last_page",
+                    "links",
+                    "path",
+                    "per_page",
+                    "to",
+                    "total"
+                ],
+                "properties": {
+                    "current_page": {
+                        "type": "integer"
+                    },
+                    "from": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "last_page": {
+                        "type": "integer"
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AssetApiPageLink"
+                        }
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "to": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "total": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiRecordPage": {
+                "required": [
+                    "data",
+                    "links",
+                    "meta"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AssetApiRecord"
+                        }
+                    },
+                    "links": {
+                        "required": [
+                            "first",
+                            "last",
+                            "prev",
+                            "next"
+                        ],
+                        "properties": {
+                            "first": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "last": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "prev": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "next": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/AssetApiPageMeta"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiLookupPage": {
+                "required": [
+                    "data",
+                    "current_page",
+                    "first_page_url",
+                    "from",
+                    "last_page",
+                    "last_page_url",
+                    "links",
+                    "next_page_url",
+                    "path",
+                    "per_page",
+                    "prev_page_url",
+                    "to",
+                    "total"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AssetApiNamedRef"
+                        }
+                    },
+                    "current_page": {
+                        "type": "integer"
+                    },
+                    "first_page_url": {
+                        "type": "string"
+                    },
+                    "from": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "last_page": {
+                        "type": "integer"
+                    },
+                    "last_page_url": {
+                        "type": "string"
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AssetApiPageLink"
+                        }
+                    },
+                    "next_page_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "prev_page_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "to": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "total": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiSettings": {
+                "required": [
+                    "enabled_types",
+                    "default_type",
+                    "default_ip_type",
+                    "default_status"
+                ],
+                "properties": {
+                    "enabled_types": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "server",
+                                "pc",
+                                "laptop",
+                                "switch",
+                                "ap",
+                                "firewall",
+                                "mobile",
+                                "other"
+                            ]
+                        }
+                    },
+                    "default_type": {
+                        "type": "string"
+                    },
+                    "default_ip_type": {
+                        "type": "string",
+                        "enum": [
+                            "dhcp",
+                            "fixed"
+                        ]
+                    },
+                    "default_status": {
+                        "type": "string",
+                        "enum": [
+                            "unknown",
+                            "online",
+                            "offline",
+                            "warning",
+                            "in_service"
+                        ]
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiSettingsResponse": {
+                "required": [
+                    "data",
+                    "revision"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/AssetApiSettings"
+                    },
+                    "revision": {
+                        "type": "string"
+                    },
+                    "operation_id": {
+                        "type": "string"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiContext": {
+                "required": [
+                    "defaults",
+                    "types",
+                    "statuses",
+                    "ip_types",
+                    "sensitivity_levels",
+                    "criticality_levels",
+                    "sorts",
+                    "provider_execution_enabled",
+                    "related_tickets_supported"
+                ],
+                "properties": {
+                    "defaults": {
+                        "$ref": "#/components/schemas/AssetApiSettings"
+                    },
+                    "types": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "statuses": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "ip_types": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "sensitivity_levels": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "criticality_levels": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "sorts": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "provider_execution_enabled": {
+                        "type": "boolean"
+                    },
+                    "related_tickets_supported": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiContextResponse": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/AssetApiContext"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiDocsResponse": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "required": [
+                            "format",
+                            "content"
+                        ],
+                        "properties": {
+                            "format": {
+                                "type": "string",
+                                "enum": [
+                                    "markdown"
+                                ]
+                            },
+                            "content": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiAlert": {
+                "required": [
+                    "id",
+                    "asset_id",
+                    "integration_type",
+                    "external_check_id",
+                    "external_alert_id",
+                    "fingerprint",
+                    "title",
+                    "message",
+                    "status",
+                    "severity",
+                    "first_seen_at",
+                    "last_seen_at",
+                    "resolved_at",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "asset_id": {
+                        "type": "integer"
+                    },
+                    "integration_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "external_check_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "external_alert_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "fingerprint": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "message": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "severity": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "first_seen_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_seen_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "resolved_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiAlertPage": {
+                "required": [
+                    "data",
+                    "current_page",
+                    "first_page_url",
+                    "from",
+                    "last_page",
+                    "last_page_url",
+                    "links",
+                    "next_page_url",
+                    "path",
+                    "per_page",
+                    "prev_page_url",
+                    "to",
+                    "total"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AssetApiAlert"
+                        }
+                    },
+                    "current_page": {
+                        "type": "integer"
+                    },
+                    "first_page_url": {
+                        "type": "string"
+                    },
+                    "from": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "last_page": {
+                        "type": "integer"
+                    },
+                    "last_page_url": {
+                        "type": "string"
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AssetApiPageLink"
+                        }
+                    },
+                    "next_page_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "prev_page_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "to": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "total": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiAlertSummaryResponse": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "required": [
+                            "active_count",
+                            "resolved_last_day_count"
+                        ],
+                        "properties": {
+                            "active_count": {
+                                "type": "integer"
+                            },
+                            "resolved_last_day_count": {
+                                "type": "integer"
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiCreate": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "client_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "site_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "vendor_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "server",
+                            "pc",
+                            "laptop",
+                            "switch",
+                            "ap",
+                            "firewall",
+                            "mobile",
+                            "other"
+                        ]
+                    },
+                    "vendor": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "model": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "serial_number": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "mac_address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "ip_address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "ip_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "hostname": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "sensitivity_level": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "low",
+                            "medium",
+                            "high",
+                            "ultra"
+                        ]
+                    },
+                    "criticality_level": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "low",
+                            "medium",
+                            "high",
+                            "critical"
+                        ]
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiPatch": {
+                "required": [],
+                "properties": {
+                    "client_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "site_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "vendor_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "server",
+                            "pc",
+                            "laptop",
+                            "switch",
+                            "ap",
+                            "firewall",
+                            "mobile",
+                            "other"
+                        ]
+                    },
+                    "vendor": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "model": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "serial_number": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "mac_address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "ip_address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "ip_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "hostname": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "sensitivity_level": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "low",
+                            "medium",
+                            "high",
+                            "ultra"
+                        ]
+                    },
+                    "criticality_level": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "low",
+                            "medium",
+                            "high",
+                            "critical"
+                        ]
+                    },
+                    "source": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_seen_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_managed": {
+                        "type": "boolean"
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiProviderScope": {
+                "required": [
+                    "client_id",
+                    "site_id",
+                    "asset_id",
+                    "provider"
+                ],
+                "properties": {
+                    "client_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "site_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "asset_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "provider": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiProviderRef": {
+                "required": [
+                    "id",
+                    "type"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "rmm",
+                            "tactical_rmm"
+                        ]
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiProviderObservation": {
+                "required": [
+                    "asset_id",
+                    "provider",
+                    "state",
+                    "observed"
+                ],
+                "properties": {
+                    "asset_id": {
+                        "type": "integer"
+                    },
+                    "provider": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "completed",
+                            "skipped",
+                            "failed"
+                        ]
+                    },
+                    "observed": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiProviderResult": {
+                "required": [
+                    "state"
+                ],
+                "properties": {
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "running",
+                            "completed",
+                            "partial",
+                            "failed",
+                            "skipped",
+                            "unknown",
+                            "refused"
+                        ]
+                    },
+                    "scope": {
+                        "$ref": "#/components/schemas/AssetApiProviderScope"
+                    },
+                    "created": {
+                        "type": "integer"
+                    },
+                    "updated": {
+                        "type": "integer"
+                    },
+                    "errors": {
+                        "type": "integer"
+                    },
+                    "candidates": {
+                        "type": "integer"
+                    },
+                    "assets_considered": {
+                        "type": "integer"
+                    },
+                    "providers": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AssetApiProviderObservation"
+                        }
+                    },
+                    "reconciliation_required": {
+                        "type": "boolean"
+                    },
+                    "status": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiProviderPlan": {
+                "required": [
+                    "scope",
+                    "assets_considered",
+                    "providers",
+                    "preview_revision",
+                    "execution_enabled"
+                ],
+                "properties": {
+                    "scope": {
+                        "$ref": "#/components/schemas/AssetApiProviderScope"
+                    },
+                    "assets_considered": {
+                        "type": "integer"
+                    },
+                    "providers": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AssetApiProviderRef"
+                        }
+                    },
+                    "preview_revision": {
+                        "type": "string"
+                    },
+                    "execution_enabled": {
+                        "type": "boolean"
+                    },
+                    "inspection": {
+                        "$ref": "#/components/schemas/AssetApiProviderResult"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiProviderPreview": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/AssetApiProviderPlan"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiCommandResponse": {
+                "required": [
+                    "operation_id",
+                    "replayed",
+                    "state",
+                    "result",
+                    "reconciliation_required"
+                ],
+                "properties": {
+                    "operation_id": {
+                        "type": "string"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    },
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "running",
+                            "completed",
+                            "partial",
+                            "failed",
+                            "skipped",
+                            "unknown",
+                            "refused"
+                        ]
+                    },
+                    "result": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/AssetApiRecordResponse"
+                            },
+                            {
+                                "$ref": "#/components/schemas/AssetApiSettingsResponse"
+                            },
+                            {
+                                "$ref": "#/components/schemas/AssetApiProviderResult"
+                            }
+                        ]
+                    },
+                    "reconciliation_required": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiOperationResponse": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "required": [
+                            "id",
+                            "operation",
+                            "state",
+                            "result",
+                            "reconciliation_required",
+                            "created_at",
+                            "updated_at"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "operation": {
+                                "type": "string"
+                            },
+                            "state": {
+                                "type": "string"
+                            },
+                            "result": {
+                                "nullable": true,
+                                "oneOf": [
+                                    {
+                                        "$ref": "#/components/schemas/AssetApiRecordResponse"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/AssetApiSettingsResponse"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/AssetApiProviderResult"
+                                    }
+                                ]
+                            },
+                            "reconciliation_required": {
+                                "type": "boolean"
+                            },
+                            "created_at": {
+                                "type": "string"
+                            },
+                            "updated_at": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiError": {
+                "required": [
+                    "message"
+                ],
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiAlertPreviewInput": {
+                "required": [],
+                "properties": {
+                    "client_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "asset_id": {
+                        "type": "integer",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiAlertExecuteInput": {
+                "required": [
+                    "confirm",
+                    "preview_revision"
+                ],
+                "properties": {
+                    "client_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "asset_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "confirm": {
+                        "type": "boolean",
+                        "enum": [
+                            true
+                        ]
+                    },
+                    "preview_revision": {
+                        "type": "string",
+                        "maxLength": 200
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiRmmPreviewInput": {
+                "required": [
+                    "provider"
+                ],
+                "properties": {
+                    "client_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "asset_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "site_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "provider": {
+                        "type": "string",
+                        "enum": [
+                            "rmm",
+                            "tactical_rmm"
+                        ]
+                    },
+                    "inspect_provider": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "AssetApiRmmExecuteInput": {
+                "required": [
+                    "provider",
+                    "confirm",
+                    "preview_revision"
+                ],
+                "properties": {
+                    "client_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "asset_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "site_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "provider": {
+                        "type": "string",
+                        "enum": [
+                            "rmm",
+                            "tactical_rmm"
+                        ]
+                    },
+                    "confirm": {
+                        "type": "boolean",
+                        "enum": [
+                            true
+                        ]
+                    },
+                    "preview_revision": {
+                        "type": "string",
+                        "maxLength": 200
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
             }
         },
         "securitySchemes": {

@@ -1,0 +1,212 @@
+{
+  "operations": [
+    {
+      "method": "GET",
+      "path": "/api/v1/assets/context",
+      "action": "context",
+      "scope": "assets.read",
+      "permissions": [
+        "asset.view"
+      ],
+      "operation_id": "assetApiContextGet"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/assets/lookups/{kind}",
+      "action": "lookups",
+      "scope": "assets.read",
+      "permissions": [
+        "asset.view"
+      ],
+      "operation_id": "assetApiLookupsGet"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/assets/docs",
+      "action": "docs",
+      "scope": "assets.read",
+      "permissions": [
+        "asset.view"
+      ],
+      "operation_id": "assetApiDocsGet"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/assets/settings",
+      "action": "settings",
+      "scope": "assets.settings.read",
+      "permissions": [
+        "asset.manage_settings"
+      ],
+      "operation_id": "assetApiSettingsGet"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/assets/settings",
+      "action": "updateSettings",
+      "scope": "assets.settings.update",
+      "permissions": [
+        "asset.manage_settings"
+      ],
+      "operation_id": "assetApiUpdateSettingsPut"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/assets/alerts/summary",
+      "action": "summary",
+      "scope": "assets.read",
+      "permissions": [
+        "asset.view"
+      ],
+      "operation_id": "assetApiSummaryGet"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/assets/alerts",
+      "action": "alerts",
+      "scope": "assets.read",
+      "permissions": [
+        "asset.view"
+      ],
+      "operation_id": "assetApiAlertsGet"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/assets/alerts/sync/preview",
+      "action": "previewAlerts",
+      "scope": "assets.sync",
+      "permissions": [
+        "asset.view",
+        "asset.update"
+      ],
+      "operation_id": "assetApiPreviewAlertsPost"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/assets/alerts/sync",
+      "action": "syncAlerts",
+      "scope": "assets.sync",
+      "permissions": [
+        "asset.view",
+        "asset.update"
+      ],
+      "operation_id": "assetApiSyncAlertsPost"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/assets/rmm/preview",
+      "action": "previewRmm",
+      "scope": "assets.sync",
+      "permissions": [
+        "asset.view",
+        "asset.update",
+        "integration.rmm_manage"
+      ],
+      "operation_id": "assetApiPreviewRmmPost"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/assets/rmm/sync",
+      "action": "syncRmm",
+      "scope": "assets.sync",
+      "permissions": [
+        "asset.view",
+        "asset.update",
+        "integration.rmm_manage"
+      ],
+      "operation_id": "assetApiSyncRmmPost"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/assets/operations/{operation}",
+      "action": "operation",
+      "scope": "assets.read",
+      "permissions": [],
+      "operation_id": "assetApiOperationGet"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/assets",
+      "action": "index",
+      "scope": "assets.read",
+      "permissions": [
+        "asset.view"
+      ],
+      "operation_id": "assetApiIndexGet"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/assets",
+      "action": "store",
+      "scope": "assets.create",
+      "permissions": [
+        "asset.create"
+      ],
+      "operation_id": "assetApiStorePost"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/assets/{asset}",
+      "action": "show",
+      "scope": "assets.read",
+      "permissions": [
+        "asset.view"
+      ],
+      "operation_id": "assetApiShowGet"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/assets/{asset}",
+      "action": "update",
+      "scope": "assets.update",
+      "permissions": [
+        "asset.update"
+      ],
+      "operation_id": "assetApiUpdatePut"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/assets/{asset}",
+      "action": "update",
+      "scope": "assets.update",
+      "permissions": [
+        "asset.update"
+      ],
+      "operation_id": "assetApiUpdatePatch"
+    }
+  ],
+  "schemas": [
+    "AssetApiNamedRef",
+    "AssetApiWorkContext",
+    "AssetApiRmmLink",
+    "AssetApiRecord",
+    "AssetApiRecordResponse",
+    "AssetApiPageLink",
+    "AssetApiPageMeta",
+    "AssetApiRecordPage",
+    "AssetApiLookupPage",
+    "AssetApiSettings",
+    "AssetApiSettingsResponse",
+    "AssetApiContext",
+    "AssetApiContextResponse",
+    "AssetApiDocsResponse",
+    "AssetApiAlert",
+    "AssetApiAlertPage",
+    "AssetApiAlertSummaryResponse",
+    "AssetApiCreate",
+    "AssetApiPatch",
+    "AssetApiProviderScope",
+    "AssetApiProviderRef",
+    "AssetApiProviderObservation",
+    "AssetApiProviderResult",
+    "AssetApiProviderPlan",
+    "AssetApiProviderPreview",
+    "AssetApiCommandResponse",
+    "AssetApiOperationResponse",
+    "AssetApiError",
+    "AssetApiAlertPreviewInput",
+    "AssetApiAlertExecuteInput",
+    "AssetApiRmmPreviewInput",
+    "AssetApiRmmExecuteInput"
+  ]
+}

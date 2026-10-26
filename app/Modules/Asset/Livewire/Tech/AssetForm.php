@@ -5,12 +5,10 @@ namespace App\Modules\Asset\Livewire\Tech;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
-use App\Modules\Documentation\Models\Vendor;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Asset\Support\AssetSettings;
-use App\Modules\Asset\Support\AssetWorkContextPayload;
+use App\Modules\Documentation\Models\Vendor;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 /**
@@ -80,9 +78,13 @@ class AssetForm extends Component
     // =========================================================================
 
     public $clients = [];
+
     public $sites = [];
+
     public $users = [];
+
     public $vendors = [];
+
     public $assetTypes = [];
 
     /** @var Asset|null The asset model instance being edited */
@@ -95,11 +97,11 @@ class AssetForm extends Component
     /**
      * Component Initialization
      *
-     * @param Asset|null $asset Optional asset instance for editing
-     * @param int|null $client_id Initial client ID from request
-     * @param int|null $site_id Initial site ID from request
+     * @param  Asset|null  $asset  Optional asset instance for editing
+     * @param  int|null  $client_id  Initial client ID from request
+     * @param  int|null  $site_id  Initial site ID from request
      */
-    public function mount(Asset $asset = null, $client_id = null, $site_id = null)
+    public function mount(?Asset $asset = null, $client_id = null, $site_id = null)
     {
         $this->asset = $asset;
         $settings = app(AssetSettings::class);
@@ -113,7 +115,7 @@ class AssetForm extends Component
             $this->clients = Client::orderBy('name')->get();
             $this->vendors = Vendor::orderBy('name')->get();
         } catch (\Exception $e) {
-            Log::error('AssetForm mount error: ' . $e->getMessage());
+            Log::error('AssetForm mount error: '.$e->getMessage());
             $this->clients = collect();
             $this->vendors = collect();
         }
@@ -147,7 +149,7 @@ class AssetForm extends Component
      *
      * Refreshes the site and user collections when the client changes.
      *
-     * @param mixed $value The new client_id
+     * @param  mixed  $value  The new client_id
      */
     public function updatedClientId($value)
     {
@@ -156,11 +158,11 @@ class AssetForm extends Component
                 // Filter sites and users by the selected client so the asset
                 // cannot be assigned across client boundaries in the UI.
                 $this->sites = ClientSite::where('client_id', $value)->orderBy('name')->get();
-                $this->users = ClientUser::whereHas('site', function($q) use ($value) {
+                $this->users = ClientUser::whereHas('site', function ($q) use ($value) {
                     $q->where('client_id', $value);
                 })->orderBy('name')->get();
             } catch (\Exception $e) {
-                Log::error('AssetForm update client error: ' . $e->getMessage());
+                Log::error('AssetForm update client error: '.$e->getMessage());
                 $this->sites = collect();
                 $this->users = collect();
             }
@@ -184,41 +186,21 @@ class AssetForm extends Component
      */
     public function save()
     {
-        $validated = $this->validate([
-            'client_id' => 'nullable|exists:clients,id',
-            'site_id' => 'nullable|exists:client_sites,id',
-            'user_id' => 'nullable|exists:client_users,id',
-            'name' => 'required|string|max:255',
-            'type' => ['required', Rule::in(array_keys($this->assetTypes))],
-            'vendor_id' => 'nullable|exists:vendors,id',
-            'vendor' => 'nullable|string|max:255',
-            'model' => 'nullable|string|max:255',
-            'serial_number' => 'nullable|string|max:255',
-            'hostname' => 'nullable|string|max:255',
-            'ip_address' => 'nullable|ip',
-            'ip_type' => ['required', Rule::in(array_keys(AssetSettings::IP_TYPE_OPTIONS))],
-            'mac_address' => 'nullable|string|max:255',
-            'sensitivity_level' => ['nullable', Rule::in(Asset::SENSITIVITY_LEVELS)],
-            'criticality_level' => ['nullable', Rule::in(Asset::CRITICALITY_LEVELS)],
-        ]);
-        $validated = app(AssetWorkContextPayload::class)->normalize(
-            $validated,
-            $this->asset && $this->asset->exists ? $this->asset : null,
-            ! ($this->asset && $this->asset->exists),
-        );
-
-        if ($this->asset && $this->asset->exists) {
-            // Update existing record
-            $this->asset->update($validated);
-            session()->flash('success', 'Asset updated successfully.');
-            return redirect()->route('tech.assets.show', $this->asset->id);
-        } else {
-            // Create new record
-            $validated['status'] = app(AssetSettings::class)->get()['default_status'];
-            $asset = Asset::create($validated);
-            session()->flash('success', 'Asset created successfully.');
-            return redirect()->route('tech.assets.show', $asset->id);
+        $editing = $this->asset && $this->asset->exists;
+        $actor = auth()->user();
+        abort_unless($actor && app(\App\Http\Middleware\EnforceTechRoutePermission::class)->allowsActor(
+            $actor, $editing ? 'asset.update' : 'asset.create'), 403);
+        $payload = [];
+        foreach (\App\Modules\Asset\Actions\SaveManualAsset::FIELDS as $field) {
+            if ($field !== 'status') {
+                $payload[$field] = $this->{$field};
+            }
         }
+        $request = \Illuminate\Http\Request::create('/', 'POST', $payload);
+        $asset = app(\App\Modules\Asset\Actions\SaveManualAsset::class)->handle($request, $editing ? $this->asset : null);
+        session()->flash('success', $editing ? 'Asset updated successfully.' : 'Asset created successfully.');
+
+        return redirect()->route('tech.assets.show', $asset->id);
     }
 
     // =========================================================================

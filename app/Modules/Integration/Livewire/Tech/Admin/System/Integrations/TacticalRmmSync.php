@@ -34,6 +34,7 @@ class TacticalRmmSync extends Component
     public $isFetched = false;
     public $isFetching = false;
     public $targetSiteId = null;
+    public $targetClientId = null;
     public $processingItemName = '';
     public $cacheKey = '';
 
@@ -59,15 +60,10 @@ class TacticalRmmSync extends Component
             $actualParams = $params;
         }
 
+        $this->resetProgress();
         $this->syncType = $actualParams['type'] ?? 'assets_from';
         $this->targetSiteId = $actualParams['site_id'] ?? null;
-
-        Log::info('TacticalRmmSync: Targeted syncType set to', [
-            'syncType' => $this->syncType,
-            'targetSiteId' => $this->targetSiteId
-        ]);
-
-        $this->resetProgress();
+        $this->targetClientId = $actualParams['client_id'] ?? null;
         $this->showModal = true;
 
         $this->fetchCounts();
@@ -120,7 +116,7 @@ class TacticalRmmSync extends Component
                 $this->foundSitesCount = $sitesCount;
                 $this->foundAssetsCount = 0; // Reset just in case
             } elseif ($this->syncType === 'assets_from') {
-                $agents = $rmmClient->getAgents($this->targetSiteId);
+                $agents = $rmmClient->getAgents();
                 $this->foundAssetsCount = count($agents);
                 $this->foundClientsCount = 0; // Reset just in case
                 $this->foundSitesCount = 0; // Reset just in case
@@ -196,7 +192,7 @@ class TacticalRmmSync extends Component
         if (empty($this->itemsToProcess) && $this->offset === 0) {
             $rmmClient = new TacticalRmmClient($integration->server, $integration->getSecret('api_key'));
             if ($this->syncType === 'assets_from') {
-                $this->itemsToProcess = $rmmClient->getAgents($this->targetSiteId);
+                $this->itemsToProcess = $rmmClient->getAgents();
             } elseif ($this->syncType === 'clients_and_sites' || $this->syncType === 'clients_from' || $this->syncType === 'sites_from') {
                 $this->itemsToProcess = $rmmClient->getClients();
             }
@@ -291,6 +287,10 @@ class TacticalRmmSync extends Component
                     }
                 }
 
+                $mappedClient = $job->resolveClient($agentData, $integration);
+                $mappedSite = $job->resolveSite($agentData, $integration);
+                if (($this->targetClientId && (int) $mappedClient?->id !== (int) $this->targetClientId)
+                    || ($this->targetSiteId && (int) $mappedSite?->id !== (int) $this->targetSiteId)) { continue; }
                 $job->processAgent($agentData, $integration, $results);
             } catch (\Exception $e) {
                 $results['errors']++;
@@ -400,6 +400,7 @@ class TacticalRmmSync extends Component
         $this->isFetched = false;
         $this->isFetching = false;
         $this->targetSiteId = null;
+        $this->targetClientId = null;
         $this->processingItemName = '';
         $this->cacheKey = '';
         $this->foundClientsCount = 0;

@@ -1,5 +1,3 @@
-# Asset Settings
-
 Asset Settings controls the defaults used when technicians manually register assets.
 
 Open the settings from:
@@ -58,3 +56,13 @@ If no row exists, Nexum PSA uses safe defaults:
 - Default asset type: `Other`.
 - Default IP mode: `DHCP`.
 - Default manual status: `Unknown`.
+
+## API Administration (Dev, 2026-10-26)
+
+The verified Dev API uses GET `/api/v1/assets/settings` and PUT to the same URL.
+The token needs assets.settings.read or assets.settings.update respectively and its
+active owner still needs asset.manage_settings. Send enabled_types, default_type,
+default_ip_type and default_status together. Duplicate/unsupported types and a
+default outside enabled_types are rejected. Existing disabled types remain editable
+on their current Assets. Production deployment is separate; provider API execution
+stays default-off. Human scenario review is HR-2026-10-26-ASSETS-API (Pending).

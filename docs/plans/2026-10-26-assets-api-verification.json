@@ -1,0 +1,247 @@
+{
+  "date": "2026-10-26",
+  "dev_tests": {
+    "passed": 132,
+    "assertions": 1432
+  },
+  "main_candidate_tests": {
+    "passed": 133,
+    "assertions": 1444,
+    "base": "cb41582026166bfa7c2d51c545f5e16b67e99df6"
+  },
+  "php_syntax_files": 35,
+  "asset_pint_files": 28,
+  "native": {
+    "driver": "mysql",
+    "before": {
+      "assets": 0,
+      "alerts": 0,
+      "commands": 0,
+      "tokens": 0,
+      "settings": 0,
+      "contexts": 1
+    },
+    "migration_batch": 28,
+    "native_lock": true,
+    "native_unique": true,
+    "https": [
+      {
+        "path": "/api/v1/assets/context",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v1/assets?per_page=1",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v1/assets/lookups/clients?per_page=1",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v1/assets/lookups/sites",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v1/assets/lookups/owners",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v1/assets/lookups/vendors?per_page=1",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v1/assets/settings",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v1/assets/docs",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v1/assets/alerts?per_page=1",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v1/assets/alerts/summary",
+        "status": 200,
+        "json": true
+      }
+    ],
+    "anonymous_status": 401,
+    "missing_status": 404,
+    "swagger_status": 200,
+    "swagger_exact_bytes": true,
+    "swagger_operations": 17,
+    "swagger_schemas": 32,
+    "after": {
+      "assets": 0,
+      "alerts": 0,
+      "commands": 0,
+      "tokens": 0,
+      "settings": 0,
+      "contexts": 1
+    },
+    "counts_restored": true,
+    "provider_execution_enabled": false
+  },
+  "swagger": {
+    "asset_operations": 17,
+    "asset_schemas": 32,
+    "unrelated_paths_schemas_unchanged": true
+  },
+  "knowledge": {
+    "sync": {
+      "chapters": 1,
+      "articles": 3,
+      "skipped": 0,
+      "modules": [
+        "Asset"
+      ]
+    },
+    "articles": [
+      {
+        "id": 32,
+        "source_id": "assets/asset-api",
+        "exact_source": true,
+        "internal": true,
+        "published": true,
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 33,
+        "source_id": "assets/asset-settings",
+        "exact_source": true,
+        "internal": true,
+        "published": true,
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 34,
+        "source_id": "assets/rmm-alert-lifecycle",
+        "exact_source": true,
+        "internal": true,
+        "published": true,
+        "sync_status": "pending_push"
+      }
+    ],
+    "automatic_bookstack_sync_available": false,
+    "api_management_section_verified": true
+  },
+  "bookstack": {
+    "pages": [
+      {
+        "id": 452,
+        "revision": 2
+      },
+      {
+        "id": 440,
+        "revision": 6
+      },
+      {
+        "id": 453,
+        "revision": 2
+      },
+      {
+        "id": 501,
+        "revision": 2
+      },
+      {
+        "id": 502,
+        "revision": 2
+      },
+      {
+        "id": 542,
+        "revision": 2
+      },
+      {
+        "id": 449,
+        "revision": 138
+      },
+      {
+        "id": 641,
+        "revision": 1
+      }
+    ],
+    "exact_content_read_back": true,
+    "inherited_employee_scope_verified": true,
+    "permissions_changed": false,
+    "automatic_nexum_sync_configured": false,
+    "employee_openwebui_retrieval_verified": false
+  },
+  "changed_files": [
+    "app/Jobs/Integrations/Alerts/SyncNAbleAlertsJob.php",
+    "app/Jobs/Integrations/Alerts/SyncTacticalAlertsJob.php",
+    "app/Jobs/Integrations/TacticalRmm/SyncTacticalAssetsJob.php",
+    "app/Modules/Asset/Actions/ExecuteAssetCommand.php",
+    "app/Modules/Asset/Actions/ImportNableAssets.php",
+    "app/Modules/Asset/Actions/ImportTacticalAssets.php",
+    "app/Modules/Asset/Actions/SaveManualAsset.php",
+    "app/Modules/Asset/Actions/StoreAsset.php",
+    "app/Modules/Asset/Actions/SyncAssetAlerts.php",
+    "app/Modules/Asset/Actions/UpdateAsset.php",
+    "app/Modules/Asset/Actions/UpdateAssetSettings.php",
+    "app/Modules/Asset/Controllers/Admin/AssetSettingsController.php",
+    "app/Modules/Asset/Controllers/Api/V1/AssetController.php",
+    "app/Modules/Asset/Controllers/Api/V1/AssetProviderController.php",
+    "app/Modules/Asset/Controllers/Api/V1/AssetWorkspaceController.php",
+    "app/Modules/Asset/Docs/knowledge/asset-api.md",
+    "app/Modules/Asset/Docs/knowledge/asset-settings.md",
+    "app/Modules/Asset/Docs/knowledge/rmm-alert-lifecycle.md",
+    "app/Modules/Asset/Livewire/Tech/Alerts/AlertSyncProcessor.php",
+    "app/Modules/Asset/Livewire/Tech/AssetAlerts.php",
+    "app/Modules/Asset/Livewire/Tech/AssetForm.php",
+    "app/Modules/Asset/Models/AssetApiCommand.php",
+    "app/Modules/Asset/Queries/AssetQuery.php",
+    "app/Modules/Asset/README.md",
+    "app/Modules/Asset/Resources/Api/V1/AssetApiOpenApi.php",
+    "app/Modules/Asset/Resources/Api/V1/AssetResource.php",
+    "app/Modules/Asset/Support/AssetApiAccess.php",
+    "app/Modules/Asset/Support/AssetApiErrors.php",
+    "app/Modules/Asset/Support/AssetInput.php",
+    "app/Modules/Asset/Tests/Feature/AssetApiContractTest.php",
+    "app/Modules/Asset/Tests/Feature/AssetApiParityTest.php",
+    "app/Modules/Asset/Tests/Feature/AssetModuleTest.php",
+    "app/Modules/Asset/routes.php",
+    "app/Modules/Integration/Docs/knowledge/api-management.md",
+    "app/Modules/Integration/Livewire/Tech/Admin/System/Integrations/NAbleRmmSync.php",
+    "app/Modules/Integration/Livewire/Tech/Admin/System/Integrations/TacticalRmmSync.php",
+    "app/Modules/Integration/Support/ApiAbilityCatalog.php",
+    "app/Services/Integrations/TacticalRmm/TacticalRmmClient.php",
+    "config/assets-api.php",
+    "database/migrations/2026_10_26_020000_create_asset_api_commands.php",
+    "docs/TODO.md",
+    "docs/adr/2026-10-26-assets-api-commands-and-provider-scope.md",
+    "docs/human-review.md",
+    "docs/plans/2026-10-26-assets-api-contract.json",
+    "docs/plans/2026-10-26-assets-api-gap-matrix.md",
+    "docs/rfc/2026-10-26-assets-full-api-parity.md"
+  ],
+  "human_review": {
+    "id": "HR-2026-10-26-ASSETS-API",
+    "status": "Pending"
+  },
+  "main_promotion": "Candidate verified; not yet merged",
+  "production": "Not deployed",
+  "provider_execution_enabled": false,
+  "final_dev_asset_tests": {
+    "passed": 34,
+    "assertions": 444
+  },
+  "main_api_admin_tests": {
+    "passed": 10,
+    "assertions": 304
+  },
+  "final_main_asset_tests": {
+    "passed": 34,
+    "assertions": 444
+  }
+}

@@ -99,11 +99,19 @@ class SyncTacticalAssetsJob implements ShouldQueue
 
     public function processAgent($agentData, $integration, &$results)
     {
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($agentData, $integration, &$results) {
+            \Illuminate\Support\Facades\DB::table('asset_api_mutex')->where('id', 1)->lockForUpdate()->first();
+            return $this->processScopedAgent($agentData, $integration, $results);
+        });
+    }
+
+    private function processScopedAgent($agentData, $integration, &$results)
+    {
         // 1. Resolve Client & Sites (STRICT: ONLY use external_id from RMM Link)
         $localClient = $this->resolveClient($agentData, $integration);
         $localSite = $this->resolveSite($agentData, $integration);
 
-        if (!$localClient || !$localSite) {
+        if (!$localClient || !$localSite || (int) $localSite->client_id !== (int) $localClient->id) {
             $reason = !$localClient ? "Client mapping missing" : "Sites mapping missing";
             throw new \Exception($reason);
         }
@@ -125,8 +133,13 @@ class SyncTacticalAssetsJob implements ShouldQueue
                 ->first();
         }
 
+        if ($asset && (int) $asset->client_id !== (int) $localClient->id) {
+            throw new \RuntimeException('Provider Asset mapping belongs to another Client.');
+        }
+
         // 3. Map Data
         $assetData = $this->mapAgentToAssetData($agentData, $localClient, $localSite);
+        $assetData = app(\App\Modules\Asset\Support\AssetWorkContextPayload::class)->normalize($assetData, $asset, ! $asset);
 
         // 4. Save Asset
         if (!$asset) {

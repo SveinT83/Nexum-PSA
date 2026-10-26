@@ -1,6 +1,5 @@
 <?php
 
-use App\Modules\Asset\Controllers\Api\V1\AssetController as ApiAssetController;
 use App\Modules\Asset\Controllers\Admin\AssetSettingsController;
 use App\Modules\Asset\Controllers\Tech\AssetController;
 use Illuminate\Support\Facades\Route;
@@ -28,21 +27,73 @@ if (isset($tdpsaLoadingApiRoutes) && $tdpsaLoadingApiRoutes === true) {
     | `routes.php` file while still registering API endpoints under `/api/v1`.
     |
     */
-    Route::get('assets', [ApiAssetController::class, 'index'])
-        ->name('assets.index')
-        ->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.read');
+    Route::get('assets/context', [\App\Modules\Asset\Controllers\Api\V1\AssetWorkspaceController::class, 'context'])
+        ->name('assets.context')->defaults('asset_permissions', ['asset.view'])
+        ->middleware([\App\Modules\Asset\Support\AssetApiErrors::class, \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.read', \App\Modules\Asset\Support\AssetApiAccess::class]);
 
-    Route::post('assets', [ApiAssetController::class, 'store'])
-        ->name('assets.store')
-        ->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.create');
+    Route::get('assets/lookups/{kind}', [\App\Modules\Asset\Controllers\Api\V1\AssetWorkspaceController::class, 'lookups'])
+        ->name('assets.lookups')->defaults('asset_permissions', ['asset.view'])
+        ->middleware([\App\Modules\Asset\Support\AssetApiErrors::class, \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.read', \App\Modules\Asset\Support\AssetApiAccess::class]);
 
-    Route::get('assets/{asset}', [ApiAssetController::class, 'show'])
-        ->name('assets.show')
-        ->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.read');
+    Route::get('assets/docs', [\App\Modules\Asset\Controllers\Api\V1\AssetWorkspaceController::class, 'docs'])
+        ->name('assets.docs')->defaults('asset_permissions', ['asset.view'])
+        ->middleware([\App\Modules\Asset\Support\AssetApiErrors::class, \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.read', \App\Modules\Asset\Support\AssetApiAccess::class]);
 
-    Route::match(['put', 'patch'], 'assets/{asset}', [ApiAssetController::class, 'update'])
-        ->name('assets.update')
-        ->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.update');
+    Route::get('assets/settings', [\App\Modules\Asset\Controllers\Api\V1\AssetWorkspaceController::class, 'settings'])
+        ->name('assets.settings')->defaults('asset_permissions', ['asset.manage_settings'])
+        ->middleware([\App\Modules\Asset\Support\AssetApiErrors::class, \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.settings.read', \App\Modules\Asset\Support\AssetApiAccess::class]);
+
+    Route::put('assets/settings', [\App\Modules\Asset\Controllers\Api\V1\AssetWorkspaceController::class, 'updateSettings'])
+        ->name('assets.settings.update')->defaults('asset_permissions', ['asset.manage_settings'])
+        ->middleware([\App\Modules\Asset\Support\AssetApiErrors::class, \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.settings.update', \App\Modules\Asset\Support\AssetApiAccess::class]);
+
+    Route::get('assets/alerts/summary', [\App\Modules\Asset\Controllers\Api\V1\AssetWorkspaceController::class, 'summary'])
+        ->name('assets.alerts.summary')->defaults('asset_permissions', ['asset.view'])
+        ->middleware([\App\Modules\Asset\Support\AssetApiErrors::class, \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.read', \App\Modules\Asset\Support\AssetApiAccess::class]);
+
+    Route::get('assets/alerts', [\App\Modules\Asset\Controllers\Api\V1\AssetWorkspaceController::class, 'alerts'])
+        ->name('assets.alerts')->defaults('asset_permissions', ['asset.view'])
+        ->middleware([\App\Modules\Asset\Support\AssetApiErrors::class, \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.read', \App\Modules\Asset\Support\AssetApiAccess::class]);
+
+    Route::post('assets/alerts/sync/preview', [\App\Modules\Asset\Controllers\Api\V1\AssetProviderController::class, 'previewAlerts'])
+        ->name('assets.alerts.preview')->defaults('asset_permissions', ['asset.view', 'asset.update'])
+        ->middleware([\App\Modules\Asset\Support\AssetApiErrors::class, \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.sync', \App\Modules\Asset\Support\AssetApiAccess::class]);
+
+    Route::post('assets/alerts/sync', [\App\Modules\Asset\Controllers\Api\V1\AssetProviderController::class, 'syncAlerts'])
+        ->name('assets.alerts.sync')->defaults('asset_permissions', ['asset.view', 'asset.update'])
+        ->middleware([\App\Modules\Asset\Support\AssetApiErrors::class, \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.sync', \App\Modules\Asset\Support\AssetApiAccess::class]);
+
+    Route::post('assets/rmm/preview', [\App\Modules\Asset\Controllers\Api\V1\AssetProviderController::class, 'previewRmm'])
+        ->name('assets.rmm.preview')->defaults('asset_permissions', ['asset.view', 'asset.update', 'integration.rmm_manage'])
+        ->middleware([\App\Modules\Asset\Support\AssetApiErrors::class, \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.sync', \App\Modules\Asset\Support\AssetApiAccess::class]);
+
+    Route::post('assets/rmm/sync', [\App\Modules\Asset\Controllers\Api\V1\AssetProviderController::class, 'syncRmm'])
+        ->name('assets.rmm.sync')->defaults('asset_permissions', ['asset.view', 'asset.update', 'integration.rmm_manage'])
+        ->middleware([\App\Modules\Asset\Support\AssetApiErrors::class, \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.sync', \App\Modules\Asset\Support\AssetApiAccess::class]);
+
+    Route::get('assets/operations/{operation}', [\App\Modules\Asset\Controllers\Api\V1\AssetWorkspaceController::class, 'operation'])
+        ->name('assets.operations.show')->defaults('asset_permissions', [])
+        ->middleware([\App\Modules\Asset\Support\AssetApiErrors::class, \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.read', \App\Modules\Asset\Support\AssetApiAccess::class]);
+
+    Route::get('assets', [\App\Modules\Asset\Controllers\Api\V1\AssetController::class, 'index'])
+        ->name('assets.index')->defaults('asset_permissions', ['asset.view'])
+        ->middleware([\App\Modules\Asset\Support\AssetApiErrors::class, \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.read', \App\Modules\Asset\Support\AssetApiAccess::class]);
+
+    Route::post('assets', [\App\Modules\Asset\Controllers\Api\V1\AssetController::class, 'store'])
+        ->name('assets.store')->defaults('asset_permissions', ['asset.create'])
+        ->middleware([\App\Modules\Asset\Support\AssetApiErrors::class, \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.create', \App\Modules\Asset\Support\AssetApiAccess::class]);
+
+    Route::get('assets/{asset}', [\App\Modules\Asset\Controllers\Api\V1\AssetController::class, 'show'])
+        ->name('assets.show')->defaults('asset_permissions', ['asset.view'])
+        ->middleware([\App\Modules\Asset\Support\AssetApiErrors::class, \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.read', \App\Modules\Asset\Support\AssetApiAccess::class]);
+
+    Route::put('assets/{asset}', [\App\Modules\Asset\Controllers\Api\V1\AssetController::class, 'update'])
+        ->name('assets.update')->defaults('asset_permissions', ['asset.update'])
+        ->middleware([\App\Modules\Asset\Support\AssetApiErrors::class, \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.update', \App\Modules\Asset\Support\AssetApiAccess::class]);
+
+    Route::patch('assets/{asset}', [\App\Modules\Asset\Controllers\Api\V1\AssetController::class, 'update'])
+        ->name('assets.update.patch')->defaults('asset_permissions', ['asset.update'])
+        ->middleware([\App\Modules\Asset\Support\AssetApiErrors::class, \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.update', \App\Modules\Asset\Support\AssetApiAccess::class]);
 
     return;
 }
