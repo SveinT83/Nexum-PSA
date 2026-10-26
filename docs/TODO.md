@@ -2,7 +2,7 @@
 
 ## Full Assets browser/API coverage (2026-10-26)
 
-Status: Done On Dev / Main candidate verified; Main promotion in progress.
+Status: Done On Dev / Merged to Main in PR #324 / Human scenario review Pending.
 Owner: Codex. Product/release owner and named human reviewer: Svein Tore.
 Direct authorization: full existing-browser parity, Swagger and migration to MAIN.
 RFC: rfc/2026-10-26-assets-full-api-parity.md. All four sequential slices and
@@ -19,8 +19,10 @@ Human checklist HR-2026-10-26-ASSETS-API remains Pending. Main promotion was
 explicitly requested, without claiming human scenario review. Pending controlled
 provider/human checks block production release/activation. Provider API execution
 stays default-off and production has not been deployed. Preserve receipts/APP_KEY.
-Next action: finish scoped Main promotion/read-back, then Svein Tore performs the
-human checklist and separately authorizes production rollout/activation when ready.
+Main merge fc72a278c9e0d8c9773bd6eede1f4e94024a4158 is independently read back;
+the merged tree equals the tested candidate. No implementation/Main action remains.
+Next action (Svein Tore): perform the human checklist and separately authorize
+production rollout/provider activation when ready.
 Unrelated shared Dev work and existing WIP remain preserved.
 
 

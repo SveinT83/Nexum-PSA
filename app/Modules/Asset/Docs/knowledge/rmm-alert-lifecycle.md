@@ -84,3 +84,6 @@ Tactical transport is distinct from a verified empty feed. Partial/skipped/unkno
 operations must not be reported as successful synchronization. Runtime execution
 is disabled by default; production rollout and controlled provider checks remain
 separate from Dev tests. Human review: HR-2026-10-26-ASSETS-API (Pending).
+
+Main merge verified in PR #324 on 2026-10-26. Production rollout, provider
+activation and the pending human scenarios remain separate.

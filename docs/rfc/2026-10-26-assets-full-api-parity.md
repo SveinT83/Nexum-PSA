@@ -80,5 +80,5 @@ completed human scenario review or production deployment approval.
 
 All four slices and A01-A14 are Done On Dev. See the exact verification report/JSON.
 Dev migration batch 28 and isolated Main candidate verification are complete.
-Main promotion is authorized and being finalized. Human scenario review remains
+Main promotion is verified in PR #324 (fc72a278c9e0d8c9773bd6eede1f4e94024a4158). Human scenario review remains
 Pending under HR-2026-10-26-ASSETS-API; production/provider activation is separate.

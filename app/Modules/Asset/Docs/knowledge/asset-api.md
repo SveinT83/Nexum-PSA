@@ -2,8 +2,9 @@ The Assets API covers the supported Asset browser workflows: listing and filters
 manual registration/editing, classifications, ownership, alert tabs and summaries,
 settings and explicitly scoped RMM import/alert synchronization.
 
-Availability (2026-10-26): implemented and verified on Dev; scoped Main promotion
-is authorized and tracked in HR-2026-10-26-ASSETS-API. Production rollout is separate.
+Availability (2026-10-26): implemented and verified on Dev and merged to Main
+in PR #324. HR-2026-10-26-ASSETS-API tracks pending human scenario verification.
+Production rollout is separate.
 Provider API execution remains disabled by default. Human scenario review is pending.
 
 ## Access And Preparation

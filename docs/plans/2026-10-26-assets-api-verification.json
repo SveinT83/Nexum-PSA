@@ -175,7 +175,41 @@
     "inherited_employee_scope_verified": true,
     "permissions_changed": false,
     "automatic_nexum_sync_configured": false,
-    "employee_openwebui_retrieval_verified": false
+    "employee_openwebui_retrieval_verified": false,
+    "final_main_status_readback": [
+      {
+        "id": 452,
+        "revision": 3
+      },
+      {
+        "id": 440,
+        "revision": 7
+      },
+      {
+        "id": 453,
+        "revision": 3
+      },
+      {
+        "id": 501,
+        "revision": 3
+      },
+      {
+        "id": 502,
+        "revision": 3
+      },
+      {
+        "id": 542,
+        "revision": 3
+      },
+      {
+        "id": 641,
+        "revision": 2
+      },
+      {
+        "id": 449,
+        "revision": 139
+      }
+    ]
   },
   "changed_files": [
     "app/Jobs/Integrations/Alerts/SyncNAbleAlertsJob.php",
@@ -229,7 +263,15 @@
     "id": "HR-2026-10-26-ASSETS-API",
     "status": "Pending"
   },
-  "main_promotion": "Candidate verified; not yet merged",
+  "main_promotion": {
+    "pr": "https://github.com/SveinT83/Nexum-PSA/pull/324",
+    "merged": true,
+    "merge_sha": "fc72a278c9e0d8c9773bd6eede1f4e94024a4158",
+    "candidate_sha": "52928ebf517c007245cf3fb49f3e8a1407b787c5",
+    "candidate_tree": "355ddd4c58445433d7eb2dcef7d9533af42935a3",
+    "merged_tree": "355ddd4c58445433d7eb2dcef7d9533af42935a3",
+    "exact_tree_match": true
+  },
   "production": "Not deployed",
   "provider_execution_enabled": false,
   "final_dev_asset_tests": {
