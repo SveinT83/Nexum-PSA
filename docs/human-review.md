@@ -1,5 +1,46 @@
 # Human Review Register
 
+## HR-2026-10-26-ASSETS-API - Full Assets Browser/API Coverage
+
+Status: Pending human scenario verification. Date: 2026-10-26.
+Owner: Codex. Named reviewer and release owner: Svein Tore.
+Scope: approved RFC rfc/2026-10-26-assets-full-api-parity.md; matrix A01-A14,
+all supported browser reads/writes/actions/admin, 17 HTTP methods / 32 schemas.
+Svein Tore explicitly requested implementation, Swagger and migration to MAIN in
+this chat. That authorizes a scoped Main promotion; it does not claim the manual
+scenarios below were performed or mark this entry Reviewed. Pending checks block
+production release/provider activation, not the separately authorized Main packaging.
+
+Affected surfaces: Assets list/client-scoped list, Create/Edit, summary/outage/checks,
+alert sidebar and global/client summary; Admin > Assets > Asset settings; N-able and
+Tactical asset import dialogs; API keys and Assets Swagger.
+
+- [ ] Compare global/client list filters, sorting and paging between web and API.
+- [ ] Create an internal and client/site/owner Asset, edit classification/network
+  fields, retain a disabled legacy type, and verify the exact saved values.
+- [ ] Check create/update/view/settings scopes against two current user permission sets.
+- [ ] Save manual defaults in web/API and confirm the same validation/default behavior.
+- [ ] Compare Outage, Checks and active/resolved summaries with API results.
+- [ ] With controlled test integrations and explicit activation approval, preview
+  and execute one N-able and one Tactical import and one scoped alert sync;
+  check provider failure and exact Client/Site scope without touching another customer.
+- [ ] Repeat an explicit command key and confirm no duplicate Asset/provider request;
+  revoke rights and verify old receipt access is denied. Reconcile unknown claims manually.
+- [ ] Read updated employee handbook and Assets Swagger; confirm status is accurate
+  for the target installation and no credential/provider raw errors appear.
+
+Deployment: exact additive migration 2026_10_26_020000_create_asset_api_commands
+ran on Dev in batch 28. No business-row backfill or new worker/scheduler/build.
+Before any separately authorized production rollout, apply the migration, regenerate
+Swagger, refresh caches/opcache with umask 0002 and verify target web/API reads.
+ASSETS_API_PROVIDER_EXECUTION_ENABLED remains false. Preserve APP_KEY and receipts
+on recovery; long provider operations serialize Asset writes. Existing Integration
+rules/notifications may run on observed failures; no real provider action was activated.
+
+Automated/native/handbook/Main evidence: plans/2026-10-26-assets-api-verification.md
+and its JSON evidence. Named human review remains pending regardless of passing tests.
+
+
 ## HR-2026-10-26-RISK-API - Full Risk Browser/API Coverage
 
 Status: Reviewed. Human reviewer: Svein Tore. Approved: 2026-10-26.

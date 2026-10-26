@@ -12,7 +12,7 @@ The module covers:
 - Internal company-owned assets without a Client.
 - Asset detail pages.
 - Asset documentation view.
-- Asset API list and detail endpoints.
+- Full browser/API parity: manual writes, filters, context/lookups, alerts, settings and explicit provider actions.
 - Asset alert display and sync triggers.
 - Asset list cards rendered inside Client and Site screens.
 
@@ -95,3 +95,13 @@ Before moving the Asset models into the module, add one of these safeguards:
 - A Laravel morph map that preserves the stored polymorphic type.
 - A migration that updates all existing `client_rmm_links.linkable_type` values.
 - Compatibility code for both old and new class names during a transition period.
+
+## Full API Contract (2026-10-26)
+
+See Docs/knowledge/asset-api.md, the approved RFC and
+`docs/plans/2026-10-26-assets-api-gap-matrix.md`. The runtime/Swagger contract has
+17 methods and 32 typed schemas, covered by AssetApiContractTest. Run the exact
+additive command migration before code using write paths. No frontend build,
+new scheduler or worker activation is required. Provider API execution defaults off.
+Human review HR-2026-10-26-ASSETS-API is Pending; Main promotion was explicitly
+requested, while production deployment/provider activation require separate scope.

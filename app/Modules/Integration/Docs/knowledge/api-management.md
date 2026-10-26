@@ -434,6 +434,27 @@ Current API routes are under `/api/v1`:
 - `POST /api/v1/users/{user}/roles`
 - `POST /api/v1/users/{user}/invite`
 
+## Assets API
+
+Dev verification dated 2026-10-26 covers all supported Assets browser workflows:
+17 HTTP operations and 32 typed Swagger schemas. This includes complete filters,
+manual classification/ownership, context and Client/Site/owner/vendor lookups,
+alerts/checks/summary, settings and scoped RMM import/alert synchronization.
+Read the Asset API guide for exact steps and the generated Assets Swagger contract.
+
+Scopes: assets.read/create/update; new assets.settings.read/update and assets.sync.
+Every call also checks its active internal owner and matching current user rights.
+Existing keys are not widened. Manual writes support durable keyed replay and
+optional If-Match fencing. Provider execution requires preview_revision, confirm,
+an Idempotency-Key and the default-off ASSETS_API_PROVIDER_EXECUTION_ENABLED switch.
+GET assets/operations/{operation} rechecks the original actor/key/operation rights.
+Partial, skipped, running and unknown outcomes are explicit; interrupted execution
+is not automatically repeated. No secrets/raw provider exceptions are returned.
+
+Migration: 2026_10_26_020000_create_asset_api_commands (additive, no business backfill).
+Dev verified; scoped Main promotion explicitly authorized. Production rollout and
+provider activation remain separate; HR-2026-10-26-ASSETS-API is Pending.
+
 ## Contact Write API
 
 `GET /api/v1/contacts` supports lookup filters before an integration creates or updates a Contact:

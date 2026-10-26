@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Log;
 
 class TacticalRmmClient
 {
+    // Distinguish a verified empty feed from a failed or malformed request.
+    public bool $lastRequestSuccessful = false;
+
     protected string $baseUrl;
 
     protected string $apiKey;
@@ -99,6 +102,7 @@ class TacticalRmmClient
      */
     protected function get(string $endpoint): array
     {
+        $this->lastRequestSuccessful = false;
         try {
             $url = rtrim($this->baseUrl, '/').'/'.ltrim($endpoint, '/');
             Log::info('Tactical RMM API GET requesting: '.$url);
@@ -114,6 +118,7 @@ class TacticalRmmClient
                     'count' => is_array($data) ? count($data) : 'not an array',
                 ]);
 
+                $this->lastRequestSuccessful = is_array($data) && array_is_list($data);
                 return is_array($data) ? $data : [];
             }
 

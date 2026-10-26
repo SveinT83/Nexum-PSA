@@ -35,7 +35,7 @@ class AssetResource extends JsonResource
             'ip_type' => $this->ip_type,
             'hostname' => $this->hostname,
             'source' => $this->source,
-            'rmm_links' => $this->rmmLinks->map(function($link) {
+            'rmm_links' => $this->rmmLinks->map(function ($link) {
                 return [
                     'integration_id' => $link->integration_id,
                     'external_id' => $link->external_id,
@@ -43,6 +43,9 @@ class AssetResource extends JsonResource
             }),
             'is_managed' => (bool) $this->is_managed,
             'status' => $this->status,
+            'sensitivity_level' => $this->sensitivity_level,
+            'criticality_level' => $this->criticality_level,
+            'revision' => \App\Modules\Asset\Support\AssetInput::revision($this->resource->getAttributes()),
             'last_seen_at' => $this->last_seen_at,
             'metadata' => $this->metadata,
             'work_context' => $this->whenLoaded('workContext', fn () => [
@@ -55,7 +58,7 @@ class AssetResource extends JsonResource
             'links' => [
                 'self' => route('api.v1.assets.show', $this->id),
                 'client' => $this->client_id ? route('api.v1.clients.show', $this->client_id) : null,
-            ]
+            ],
         ];
     }
 }

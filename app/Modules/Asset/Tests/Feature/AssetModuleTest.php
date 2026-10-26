@@ -46,6 +46,7 @@ class AssetModuleTest extends TestCase
         $this->tech->givePermissionTo([
             'asset.view',
             'asset.create',
+            'asset.update',
             'asset.manage_settings',
         ]);
     }
