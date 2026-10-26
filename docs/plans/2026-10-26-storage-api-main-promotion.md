@@ -1,6 +1,6 @@
 # Storage Main promotion, 2026-10-26
 
-Status: Reviewed by Svein Tore; isolated Main candidate verified, ready to merge.
+Status: Reviewed by Svein Tore; merged to Main in PR #326; production unchanged.
 Reviewer and promotion owner: Svein Tore.
 Explicit approval: Godkjenner. Merg til main.
 Human-review entry: HR-2026-10-26-STORAGE-API, Reviewed.
@@ -32,3 +32,19 @@ The shared-Dev 615-test run additionally included the unrelated uncommitted Tick
 regression ticket_show_prioritizes_an_older_unresolved_task_over_recent_completed_tasks
 (63 assertions). It is not present on Main and is deliberately excluded from this
 Storage promotion; no test was skipped in the 614-test candidate run.
+
+## Independently Verified Main Merge
+
+PR: https://github.com/SveinT83/Nexum-PSA/pull/326
+Candidate commit: f4b0da9a90a590c9a9b75fc718754e8f804b4669
+Main merge: ea4d0ac96db5983103d1688aeef4cf8f87a833ca
+Tested and merged tree: 3581f2fb5aaafe44cbeb688bf368b333db17b771
+GitHub reports merged; a fresh origin fetch confirms exact tree equality.
+No GitHub status checks or Actions runs were configured for this PR head.
+Shared Dev branch remains Dev; unrelated dirty work and all four #286 files are
+preserved byte-for-byte. HR-2026-10-26-STORAGE-API is Reviewed by Svein Tore.
+No production deployment, provider activation, grants or external ordering occurred.
+Remaining owner action: separately authorize production rollout when desired;
+apply the one exact additive migration, normal caches and Swagger regeneration.
+Automatic handbook sync/source drift and #286 remainder retain their existing owners
+and follow-up entries. The employee handbook remains accurately labelled Dev-verified.

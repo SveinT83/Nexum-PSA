@@ -1022,6 +1022,10 @@ has explicitly approved.
 | HR-2026-08-25-002 | RoleSeeder Reconciliation and Permission Sync | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 
+Main promotion completed in PR #326 on 2026-10-26. Merge commit
+ ea4d0ac96db5983103d1688aeef4cf8f87a833ca; tested and merged trees match.
+The isolated candidate passes 614 tests / 7654 assertions, no failures/skips.
+Production rollout and provider activation remain separate authorizations.
 
 
 ### HR-2026-09-04-003: Vault Central Authorization, Access Groups, Collections, Step-Up, And Approvals
