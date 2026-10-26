@@ -2803,7 +2803,7 @@ class EmailModuleTest extends TestCase
         Livewire::actingAs($this->tech)
             ->test(MailWorkspace::class)
             ->call('selectPlacement', $placement->id)
-            ->assertDontSeeHtml('dropdown-toggle')
+            ->assertSeeHtml('aria-label="Conversation read actions"')
             ->assertSee('Mark as read')
             ->assertDontSee('Mark read on mail server')
             ->assertSee('Flag')
