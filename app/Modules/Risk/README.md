@@ -96,6 +96,6 @@ No frontend build, queue restart, provider switch or scheduler change is require
 Migration rollback refuses to drop nonempty command evidence. Recover by preserving tables and
 encryption key, resolving the application fault, then verifying receipts/current records.
 
-Implementation is Dev-only until Main promotion and production deployment. Human-review checklist
-HR-2026-10-26-RISK-API is Reviewed by Svein Tore (2026-10-26). Main/production
-remain separate authorization and verification steps.
+Implementation is verified on Dev and merged to Main in PR #321, bf5c7d0c608895031eea04aa9a65cfd7c8a7ba98.
+Human-review checklist HR-2026-10-26-RISK-API is Reviewed by Svein Tore (2026-10-26).
+Production migration/deployment and production read-back remain separate and were not performed.

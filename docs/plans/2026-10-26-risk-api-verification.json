@@ -1,7 +1,7 @@
 {
   "date": "2026-10-26",
   "environment": "authoritative Dev",
-  "status": "implemented_verified_dev_human_reviewed",
+  "status": "implemented_verified_main_human_reviewed",
   "review_id": "HR-2026-10-26-RISK-API",
   "operations": 27,
   "schemas": 37,
@@ -139,7 +139,6 @@
     "visual_pass": true
   },
   "unperformed": [
-    "Main commit/push/merge",
     "production migration/deployment",
     "employee OpenWebUI retrieval"
   ],
@@ -438,7 +437,7 @@
     "date": "2026-10-26",
     "acceptance": "Godkjenner",
     "scope": "delivered Dev Risk implementation",
-    "main_authorized": false,
+    "main_authorized": true,
     "production_authorized": false,
     "handbook_readback": [
       {
@@ -468,5 +467,52 @@
     ],
     "tests_rerun": false,
     "test_reason": "Documentation/status-only acceptance update; no application code changes."
+  },
+  "main_promotion": {
+    "pull_request": 321,
+    "url": "https://github.com/SveinT83/Nexum-PSA/pull/321",
+    "merge_sha": "bf5c7d0c608895031eea04aa9a65cfd7c8a7ba98",
+    "tree": "16ddb17317171f0da4aab4f2fa743f8e2c35a797",
+    "matches_tested_candidate": true,
+    "candidate_head": "85301ac21e8ab4c91ec2458c4b818c03e3763498",
+    "production_deployed": false
+  },
+  "main_handbook": {
+    "pages": [
+      {
+        "id": 447,
+        "revision": 8,
+        "name": "Risk Overview",
+        "main_verified": true
+      },
+      {
+        "id": 448,
+        "revision": 9,
+        "name": "Risk Settings",
+        "main_verified": true
+      },
+      {
+        "id": 640,
+        "revision": 3,
+        "name": "Risk API Support",
+        "main_verified": true
+      },
+      {
+        "id": 449,
+        "revision": 136,
+        "name": "Api Management",
+        "main_verified": true
+      }
+    ],
+    "inherited_staff_scope": true,
+    "permissions_changed": false,
+    "knowledge_exact": true
+  },
+  "website_editorial_main_state": {
+    "existing_item_updated": 1,
+    "status": "klar for vurdering",
+    "main": "merged",
+    "production": "not deployed",
+    "publication_gate": "Ikke publiser until separately authorized production deployment and verification"
   }
 }

@@ -1,6 +1,6 @@
 # RFC: Full Risk Browser/API Coverage
 
-Status: Implemented and Verified on Dev / Human Reviewed by Svein Tore, 2026-10-26.
+Status: Verified on Dev / Merged to Main / Human Reviewed by Svein Tore, 2026-10-26.
 Date: 2026-10-26. Owner: Codex.
 Product/design approver and human reviewer/release owner: Svein Tore.
 Change level: 3 - API, authorization, audit/workflow and additive command data.
@@ -358,3 +358,10 @@ This authorizes full Dev implementation, tests and exact additive Dev migration.
 That design approval did not mark human review complete. Separate human acceptance was
 later received from Svein Tore: "Godkjenner", 2026-10-26, after the Dev handoff.
 Main/production remain unauthorized by that review-only acceptance.
+
+## Main promotion completed
+
+Main merge separately authorized by Svein Tore: "Ja", 2026-10-26.
+PR #321: https://github.com/SveinT83/Nexum-PSA/pull/321. Merge SHA: bf5c7d0c608895031eea04aa9a65cfd7c8a7ba98.
+Merged tree equals the tested isolated candidate. Production was not deployed.
+See ../plans/2026-10-26-risk-api-main-promotion.md for promotion/test/deployment evidence.

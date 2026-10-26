@@ -2,10 +2,11 @@ Risk manages internal and Client-specific assessments, individual risk items and
 
 ## Availability
 
-The expanded API and the approval/history corrections described here are implemented on Dev
-as of 2026-10-26. Main promotion and production deployment have not been performed for this change.
-HR-2026-10-26-RISK-API was accepted by Svein Tore on 2026-10-26. Main and production
-promotion still require separate authorization and verification.
+The full Risk API and approved workflow corrections were verified on Dev and merged to Main
+on 2026-10-26 in PR #321. HR-2026-10-26-RISK-API is Reviewed by Svein Tore.
+Production deployment was not performed as part of this work; do not assume the expanded
+API is available there before separately authorized deployment and production verification.
+
 
 ## Open and create an assessment
 

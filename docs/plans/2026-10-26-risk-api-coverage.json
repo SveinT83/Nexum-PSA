@@ -1034,6 +1034,15 @@
     "generated_swagger_contains_every_exact_method_and_response_schema",
     "all_twenty_seven_success_contracts_match_real_operational_responses"
   ],
-  "main_status": "isolated candidate under verification",
-  "production_status": "not deployed"
+  "main_status": "merged",
+  "production_status": "not deployed",
+  "main_promotion": {
+    "pull_request": 321,
+    "url": "https://github.com/SveinT83/Nexum-PSA/pull/321",
+    "merge_sha": "bf5c7d0c608895031eea04aa9a65cfd7c8a7ba98",
+    "tree": "16ddb17317171f0da4aab4f2fa743f8e2c35a797",
+    "matches_tested_candidate": true,
+    "candidate_head": "85301ac21e8ab4c91ec2458c4b818c03e3763498",
+    "production_deployed": false
+  }
 }

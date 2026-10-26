@@ -1152,10 +1152,11 @@ calendar.
 
 ## Risk API
 
-The complete Risk workflow is implemented on Dev as of 2026-10-26: 27 HTTP operations cover
-assessment/item/history reads and writes, context, bounded lookups, approval, deletion, PDF and
-all six settings. Human review HR-2026-10-26-RISK-API is Reviewed by Svein Tore (2026-10-26).
-Main promotion and production deployment still require separate authorization.
+The complete Risk workflow is verified on Dev and merged to Main in PR #321 (2026-10-26):
+27 HTTP operations cover assessments, items, history, context/lookups, approval, deletion,
+PDF and all six settings. HR-2026-10-26-RISK-API is Reviewed by Svein Tore.
+Production deployment was not performed; expanded production availability requires separate
+authorization, the exact migration and verified deployment.
 
 Use **Risk API Support** in the Risk chapter for every method/path and the operational procedure.
 API Management only grants a token ceiling: current active employee rights, creator rules and

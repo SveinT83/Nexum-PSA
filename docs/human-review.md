@@ -5,7 +5,8 @@
 Status: Reviewed. Human reviewer: Svein Tore. Approved: 2026-10-26.
 Acceptance: Svein Tore stated "Godkjenner" in direct response to the completed Risk
 handoff and its request to approve HR-2026-10-26-RISK-API. This accepts the delivered
-Risk scope. It does not authorize Main commit/push/merge or production deployment.
+Risk scope. That acceptance alone did not authorize Main or production. Svein Tore later explicitly
+authorized Main merge ("Ja"); PR #321 is now merged. Production remains separate.
 Individual boxes are retained as the original checklist; no individually witnessed
 scenario execution is invented.
 Date: 2026-10-26. Implementation/planning owner: Codex.
@@ -14,8 +15,8 @@ Parent: rfc/2026-10-26-risk-full-api-parity.md (Approved: Svein Tore, "Godkjenne
 Scope: plans/2026-10-26-risk-api-gap-matrix.md, R01-R16;
 plans/2026-10-26-risk-api-route-baseline.json.
 Gate: the Risk human-review requirement is cleared by the named acceptance above.
-Main promotion and production migration/deployment/release still require explicit
-authorization and separate verification. The earlier RFC design approval is retained.
+Main promotion is completed in PR #321. Production migration/deployment/release still
+require explicit authorization and separate verification. The earlier RFC design approval is retained.
 
 Original accepted review scope (scenario boxes retained without claiming individual execution):
 
@@ -62,7 +63,7 @@ Later authorized deployment requires that exact migration, php artisan optimize:
 and php artisan l5-swagger:generate, followed by trusted HTTPS JSON/PDF/auth read-back.
 No frontend build, provider activation, queue restart or scheduler change is needed.
 Preserve command tables and APP_KEY on recovery; rollback refuses nonempty evidence.
-Human acceptance is recorded above; no Main/production promotion occurred. A single domain write lock trades throughput for
+Human acceptance is recorded above; Main promotion completed in PR #321. Production was not deployed. A single domain write lock trades throughput for
 integrity; production load behavior remains unmeasured.
 Risks: stale approval, lost/incorrect history, role/creator divergence, deleted-parent
 access, silently ignored fields and shared dirty-file overlap.
@@ -71,8 +72,8 @@ Reviewed on the explicit named acceptance above, independently of automated test
 
 Main promotion authorized by Svein Tore on 2026-10-26: "Ja", in direct response
  to the explicit question to merge the approved Risk change to Main. Scoped candidate
- verification/promotion is In Progress. Production deployment remains unauthorized.
-
+ verification/promotion is complete in PR #321 (bf5c7d0c608895031eea04aa9a65cfd7c8a7ba98).
+Production deployment remains unauthorized.
 
 ## HR-2026-10-25-CLIENTS-API - Full Clients Browser/API Coverage
 

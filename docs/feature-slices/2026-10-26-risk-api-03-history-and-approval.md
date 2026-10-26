@@ -1,6 +1,6 @@
 # Feature Slice: History, approval and guarded deletion
 
-Status: Done on Dev / Human Reviewed by Svein Tore, 2026-10-26
+Status: Done on Dev / Merged to Main / Human Reviewed by Svein Tore, 2026-10-26
 Date: 2026-10-26. Owner: Codex.
 Parent: ../rfc/2026-10-26-risk-full-api-parity.md (Approved by Svein Tore).
 Human review: HR-2026-10-26-RISK-API (Reviewed).
@@ -50,3 +50,10 @@ locking/concurrency, typed contracts, HTTPS/PDF and independent BookStack eviden
 26 Risk tests / 3246 assertions; affected regression batch 163 tests / 4923 assertions
 (overlapping suites, not additive totals). Exact migration applied on Dev as batch 27.
 Human review is accepted; no Main/production promotion is implied.
+
+## Main promotion completed
+
+Main merge separately authorized by Svein Tore: "Ja", 2026-10-26.
+PR #321: https://github.com/SveinT83/Nexum-PSA/pull/321. Merge SHA: bf5c7d0c608895031eea04aa9a65cfd7c8a7ba98.
+Merged tree equals the tested isolated candidate. Production was not deployed.
+See ../plans/2026-10-26-risk-api-main-promotion.md for promotion/test/deployment evidence.

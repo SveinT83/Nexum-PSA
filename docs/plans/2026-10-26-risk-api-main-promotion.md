@@ -1,6 +1,6 @@
 # Risk API Main promotion candidate
 
-Status: Candidate verified; Main merge explicitly authorized by Svein Tore on 2026-10-26.
+Status: Merged to Main and independently verified, 2026-10-26.
 Human review: HR-2026-10-26-RISK-API Reviewed.
 Production deployment and provider/runtime activation are not part of this authorization.
 
@@ -37,4 +37,20 @@ queue restart, scheduler change or provider activation is required.
 Preserve command tables and APP_KEY; rollback refuses nonempty command evidence.
 High-volume production load behavior remains unmeasured.
 
-The exact merged PR/SHA and final read-back will be recorded after GitHub confirms the merge.
+Merged PR: https://github.com/SveinT83/Nexum-PSA/pull/321
+Merge SHA: bf5c7d0c608895031eea04aa9a65cfd7c8a7ba98
+Merged tree: 16ddb17317171f0da4aab4f2fa743f8e2c35a797
+The merged tree equals the tested candidate tree. GitHub reports merged/closed; origin/main
+was fetched independently and matches this merge SHA. Production remains undeployed.
+
+## Current handbook and editorial state
+
+After Main merge, Risk Knowledge was synchronized and BookStack pages were updated
+and independently read back: Overview 447/8, Settings 448/9, API Support 640/3 and
+API Management 449/136. Existing employee inheritance remains intact; permissions
+were not changed. Native BookStack automation is unavailable; personal publication
+is the actual verified external result. Employee OpenWebUI retrieval is not claimed.
+One existing editorial queue item was updated: Main merged, production not deployed,
+with the explicit production/publication gate retained. No website content was published.
+All 2159 preflight dirty-file identities were checked; only this scoped Risk work changed.
+The authoritative Dev HEAD/index and unrelated work are preserved.
