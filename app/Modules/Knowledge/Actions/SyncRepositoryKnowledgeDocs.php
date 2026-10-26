@@ -231,6 +231,9 @@ class SyncRepositoryKnowledgeDocs
                 '04-sso-future-plan' => ['title' => 'Nextcloud SSO Future Plan', 'slug' => 'nextcloud-sso-future-plan'],
                 '05-talk-bot' => ['title' => 'Nextcloud Talk Bot', 'slug' => 'nextcloud-talk-bot'],
             ],
+            'sales' => [
+                'sales-api' => ['title' => 'Sales API', 'slug' => 'sales-api'],
+            ],
             'relationships' => [
                 'two-instance-test-plan' => ['title' => 'Nexum Relationship Two-Instance Test Plan', 'slug' => 'nexum-relationship-two-instance-test-plan'],
             ],
