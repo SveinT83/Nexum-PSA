@@ -288,7 +288,7 @@ class AssetApiParityTest extends TestCase
         $plan = $this->postJson('/api/v1/assets/alerts/sync/preview')->assertOk()->json('data');
         $body = ['confirm' => true, 'preview_revision' => $plan['preview_revision']];
         $this->withHeader('Idempotency-Key', 'provider-unknown-once');
-        $first = $this->postJson('/api/v1/assets/alerts/sync', $body)->assertOk()->assertJsonPath('state', 'unknown')->assertJsonPath('reconciliation_required', true);
+        $first = $this->postJson('/api/v1/assets/alerts/sync', $body)->assertOk()->assertJsonPath('state', 'unknown')->assertJsonPath('result.scope.asset_id', null)->assertJsonPath('reconciliation_required', true);
         $this->assertStringNotContainsString('sensitive-provider-response', $first->getContent());
         $this->postJson('/api/v1/assets/alerts/sync', $body)->assertOk()->assertJsonPath('replayed', true)->assertJsonPath('state', 'unknown');
     }

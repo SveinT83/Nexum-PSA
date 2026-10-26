@@ -23,9 +23,12 @@ invented workflows. Integration retains RMM routing and occurrence ownership.
 - Two new regression tests failed before the changes: context 404 and classification
   update/read-back missing. They pass after implementation.
 - Final affected Dev batch: 132 tests / 1432 assertions passed.
-- Independent origin/main candidate: 132 tests / 1432 assertions passed.
-- Final Dev Asset-only hardening rerun: 34 tests / 443 assertions passed.
-  Final candidate Asset-only rerun also passed 34 tests / 443 assertions.
+- Initial origin/main candidate: 132 tests / 1432 assertions passed.
+- Latest Main base cb41582, including the independent production-preflight fix:
+  133 tests / 1444 assertions passed. Final receipt-scope hardening then passed
+  the complete 34-test / 444-assertion Asset set.
+- Final Dev Asset-only hardening rerun: 34 tests / 444 assertions passed.
+  Final candidate Asset-only rerun also passed 34 tests / 444 assertions.
 - Main API/administration focused checks: 10 tests / 304 assertions passed (overlap).
 - Scoped syntax: 35 PHP files; Pint formatted/checked 28 Asset/config/migration PHP files.
   Existing shared legacy code was not broadly reformatted.
@@ -124,3 +127,15 @@ checklist remain pending before production release/provider activation.
 - docs/plans/2026-10-26-assets-api-contract.json
 - docs/plans/2026-10-26-assets-api-gap-matrix.md
 - docs/rfc/2026-10-26-assets-full-api-parity.md
+
+## Final Candidate Audit
+
+PR #324 includes only the explicit 49-path manifest relative to latest Main.
+The candidate Composer autoloader resolves its independent files, not shared Dev.
+The newest Main Knowledge metadata and Mail test corrections were preserved.
+Encrypted running/unknown provider claims retain requested scope for reconciliation.
+Dev HEAD/index were read back unchanged. No source implementation was made in the
+candidate: it packages code implemented and tested directly on authoritative Dev.
+The existing Pending HR-2026-09-03-004 Web Push Main/release gate remains unchanged;
+its unreviewed rollout is not part of this Assets promotion. RMM rule implementation
+HR-2026-08-25-014 is Reviewed; production activation is still separately gated.

@@ -33,7 +33,9 @@ class ExecuteAssetCommand
         $hash = hash('sha256', json_encode([$operation, $payload, $request->header('If-Match')], JSON_THROW_ON_ERROR));
         $tokenHash = hash('sha256', (string) ($actor->currentAccessToken()?->getKey() ?? 'session'));
         $keyHash = hash('sha256', $key ?? (string) Str::uuid());
-        $claimed = DB::transaction(function () use ($actor, $operation, $hash, $tokenHash, $keyHash, $provider, $action) {
+        $scope = ['client_id' => $request->integer('client_id') ?: null, 'site_id' => $request->integer('site_id') ?: null,
+            'asset_id' => $request->integer('asset_id') ?: null, 'provider' => $request->input('provider')];
+        $claimed = DB::transaction(function () use ($actor, $operation, $hash, $tokenHash, $keyHash, $provider, $action, $scope) {
             DB::table('asset_api_mutex')->where('id', 1)->lockForUpdate()->first();
             $existing = AssetApiCommand::where('actor_id', $actor->id)->where('token_hash', $tokenHash)->where('key_hash', $keyHash)->first();
             if ($existing) {
@@ -43,7 +45,8 @@ class ExecuteAssetCommand
             }
             $command = AssetApiCommand::create(['id' => (string) Str::uuid(), 'actor_id' => $actor->id,
                 'token_hash' => $tokenHash, 'key_hash' => $keyHash, 'operation' => $operation,
-                'request_hash' => $hash, 'state' => $provider ? 'running' : 'completed']);
+                'request_hash' => $hash, 'state' => $provider ? 'running' : 'completed',
+                'result' => $provider ? ['state' => 'running', 'scope' => $scope] : null]);
             if (! $provider) {
                 $command->result = $action();
                 $command->save();
@@ -64,7 +67,7 @@ class ExecuteAssetCommand
             } catch (\Throwable $error) {
                 // Remote work may already have happened. Never turn an ambiguous attempt into a retry.
                 $command->state = 'unknown';
-                $command->result = ['state' => 'unknown', 'reconciliation_required' => true];
+                $command->result = ['state' => 'unknown', 'scope' => $scope, 'reconciliation_required' => true];
                 report(new \RuntimeException('Asset provider execution ended without a verified result.'));
             }
             $command->save();

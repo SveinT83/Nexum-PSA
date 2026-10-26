@@ -5,8 +5,9 @@
     "assertions": 1432
   },
   "main_candidate_tests": {
-    "passed": 132,
-    "assertions": 1432
+    "passed": 133,
+    "assertions": 1444,
+    "base": "cb41582026166bfa7c2d51c545f5e16b67e99df6"
   },
   "php_syntax_files": 35,
   "asset_pint_files": 28,
@@ -233,7 +234,7 @@
   "provider_execution_enabled": false,
   "final_dev_asset_tests": {
     "passed": 34,
-    "assertions": 443
+    "assertions": 444
   },
   "main_api_admin_tests": {
     "passed": 10,
@@ -241,6 +242,6 @@
   },
   "final_main_asset_tests": {
     "passed": 34,
-    "assertions": 443
+    "assertions": 444
   }
 }

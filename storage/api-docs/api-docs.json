@@ -102438,6 +102438,7 @@
                     "state": {
                         "type": "string",
                         "enum": [
+                            "running",
                             "completed",
                             "partial",
                             "failed",

@@ -7,7 +7,8 @@ Owner: Codex. Product/release owner and named human reviewer: Svein Tore.
 Direct authorization: full existing-browser parity, Swagger and migration to MAIN.
 RFC: rfc/2026-10-26-assets-full-api-parity.md. All four sequential slices and
 matrix A01-A14 implemented. Contract: 17 HTTP operations / 32 typed schemas.
-Dev and independent Main candidate each pass 132 affected tests / 1432 assertions.
+Dev affected batch: 132 tests / 1432 assertions. Latest Main candidate: 133 / 1444;
+final Dev and Main Asset-only checks each pass 34 tests / 444 assertions.
 35 PHP syntax checks; 28 Asset/config/migration Pint checks. Exact Dev migration
 batch 28; native MySQL lock/uniqueness and ten trusted HTTPS reads verified.
 Knowledge and actual BookStack pages 452/440/453/501/502/542/641 plus scoped 449
