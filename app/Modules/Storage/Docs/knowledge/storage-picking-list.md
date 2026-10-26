@@ -104,3 +104,12 @@ Typical next steps:
 - Serial-, batch-, and expiry-controlled items must use a consuming flow that identifies the exact
   stock units. The generic Ticket Pick action deliberately refuses them.
 - The movement history on the item is the audit trail for what happened.
+
+## Full Storage API coverage (Dev, 2026-10-26)
+
+The Storage API guide documents the complete supported browser/API workflow,
+required token scopes and current user permissions, supplier lookup, inventory and
+incoming quantities, purchasing/receiving, picking, import review, profiles and
+settings. This update is verified on Dev; Main, production and named human review
+are separate gates. See **Storage Inventory -> Storage API guide** in the handbook and Swagger on the
+target installation. The separate Issue #286 numbering contract remains open.

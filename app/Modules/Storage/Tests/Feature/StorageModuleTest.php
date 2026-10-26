@@ -441,6 +441,7 @@ class StorageModuleTest extends TestCase
     #[Test]
     public function authenticated_api_user_can_manage_storage_inventory(): void
     {
+        $this->tech->givePermissionTo('storage.manage_settings');
         Sanctum::actingAs($this->tech, ['storage.read', 'storage.create', 'storage.update']);
 
         $warehouseResponse = $this->postJson(route('api.v1.storage.warehouses.store'), [

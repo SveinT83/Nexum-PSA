@@ -28,7 +28,9 @@ class SavePurchaseOrderRequest extends FormRequest
             ->all();
 
         $this->merge([
-            'po_number' => trim((string) $this->input('po_number', '')),
+            'po_number' => filled($this->input('po_number'))
+                ? trim((string) $this->input('po_number'))
+                : null,
             'vendor_ref' => filled($this->input('vendor_ref'))
                 ? trim((string) $this->input('vendor_ref'))
                 : null,
@@ -40,7 +42,9 @@ class SavePurchaseOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'po_number' => ['required', 'string', 'max:100'],
+            'po_number' => $this->isMethod('post')
+                ? ['nullable', 'string', 'max:100']
+                : ['sometimes', 'required', 'string', 'max:100'],
             'vendor_id' => ['required', 'integer', 'exists:vendors,id'],
             'deliver_to_warehouse_id' => ['required', 'integer', 'exists:storage_warehouses,id'],
             'status' => ['required', Rule::in(['draft', 'ordered'])],

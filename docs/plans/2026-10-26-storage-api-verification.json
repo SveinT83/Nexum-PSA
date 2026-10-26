@@ -1,0 +1,509 @@
+{
+  "date": "2026-10-26",
+  "status": "Done On Dev / Human Review Reviewed / Main promotion in progress / Production unchanged",
+  "authoritative_root": "/var/Projects/tdPSA",
+  "branch": "Dev",
+  "head_at_handoff": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "commit_push_main_or_production_performed": false,
+  "browser_routes": 64,
+  "http_operations": 78,
+  "typed_schemas": 132,
+  "baseline": {
+    "storage_tests": 257,
+    "assertions": 2778,
+    "http_operations": 27
+  },
+  "tests": {
+    "tests": 615,
+    "assertions": 7717,
+    "failures": 0,
+    "skipped": 0,
+    "storage_tests": 287,
+    "storage_assertions": 4556
+  },
+  "syntax_pint_files": 36,
+  "native": {
+    "driver": "mysql",
+    "independent_lock_enforced": true,
+    "replay_unique_enforced": true,
+    "rollback_atomic": true,
+    "encrypted_readback": true,
+    "migration_batch": 29,
+    "native_command_rows": 0,
+    "mutex_rows": 1,
+    "passed": true,
+    "probe_tables_removed": true
+  },
+  "https": {
+    "base_url": "https://dev.nexumpsa.eu",
+    "actor_id": 3,
+    "requests": [
+      {
+        "path": "context",
+        "status": 200,
+        "sha256": "3dfa3c4f2de6c7932005d519e05370c75d648294baa1e9c03aaf6d36f4491b11"
+      },
+      {
+        "path": "summary",
+        "status": 200,
+        "sha256": "89023c1ff0e701ae37a6d0c7548d6a305539966b32c5a2d583e05774a64f7381"
+      },
+      {
+        "path": "suppliers",
+        "status": 200,
+        "sha256": "67762e373ae008c05133d90d66524e760e2d4057e9107097cb0190e93bfc34b6"
+      },
+      {
+        "path": "items",
+        "status": 200,
+        "sha256": "9f7d1c5efcf7647937f516b31de0b2997966229ba15ade6511e7a5bf723dbe4a"
+      },
+      {
+        "path": "warehouses",
+        "status": 200,
+        "sha256": "de5a31d4df62d98289031c310e92be17d04a241818564f71e226e483962e63e9"
+      },
+      {
+        "path": "boxes",
+        "status": 200,
+        "sha256": "e164e61101f224df8498173723c901f6e86d8dbb304d446be289160ffbc4ed75"
+      },
+      {
+        "path": "picking",
+        "status": 200,
+        "sha256": "2ded4a88ad98916a3990e28dc7ca360455966462c4965167b8d0f5006a2b8cce"
+      },
+      {
+        "path": "supplier-orders",
+        "status": 200,
+        "sha256": "133bf50976820e4b1e43eaf620e98006680c7c275572f58bde5a700e1fd6cdb5"
+      },
+      {
+        "path": "receiving",
+        "status": 200,
+        "sha256": "2c757a0110a5c0765f9f1fdbea38da3a3fce1cc78ad0881a16d91ac5c51aadc4"
+      },
+      {
+        "path": "supplier-order-imports",
+        "status": 200,
+        "sha256": "4cc0a03a30144876e665e3f43d272659a0640d3bc27be01ff14eb2a133e94c88"
+      },
+      {
+        "path": "supplier-order-profiles",
+        "status": 200,
+        "sha256": "ee82944dbec03eb9d67585cd8fa7dfe121622691be54a4f3d886d39c5bb64bcd"
+      },
+      {
+        "path": "supplier-order-profiles/context",
+        "status": 200,
+        "sha256": "0971a3fba8be7f3f45410c4220a2837bd0dd85571ef26f79feb96a1188ce3418"
+      },
+      {
+        "path": "settings",
+        "status": 200,
+        "sha256": "f1fbc047027122c20da53255458265418d366eb9a374976edb16ea97c8b6f5d8"
+      },
+      {
+        "path": "automation-policy",
+        "status": 200,
+        "sha256": "dbbda457b105de2bf2254ce5b82bd808b6395bfe9041c6c7b2c389f0bb5af9ae"
+      },
+      {
+        "path": "lookups/items",
+        "status": 200,
+        "sha256": "152a589bce04617f365497cbeb47a620d156c7d0cf428a59bd679d17dd08c096"
+      },
+      {
+        "path": "rooms",
+        "status": 200,
+        "sha256": "39a9c118fd65604977a80bea9066292b19655de2908c7c9a39e60195a42d5365"
+      },
+      {
+        "path": "carriers",
+        "status": 200,
+        "sha256": "50e5ecc01524224be211bbcb1b8be707b015a496e2ed1af7552f1e4f57d7155e"
+      },
+      {
+        "path": "docs?topic=inventory",
+        "status": 200,
+        "sha256": "5359126984ca0daa3fefdfec675c5bdaf50521c8eb4ebcbb116533940dcb866b"
+      }
+    ],
+    "tls_verified": true,
+    "anonymous_denied": true,
+    "swagger_operations": 78,
+    "swagger_schemas": 132,
+    "swagger_exact_file_hash": true,
+    "ai_repair_enabled": false,
+    "automation_enabled": false,
+    "passed": true,
+    "temporary_token_removed": true
+  },
+  "final_guide_https": {
+    "base_url": "https://dev.nexumpsa.eu",
+    "actor_id": 3,
+    "requests": [
+      {
+        "path": "docs?topic=inventory",
+        "status": 200,
+        "sha256": "b39b26c3d1dc782c3e33cdbc423130b4e57a6ba77ac72b4394dbef1f054bd192"
+      }
+    ],
+    "tls_verified": true,
+    "guide_exact_source": true,
+    "complete_guide_present": true,
+    "anonymous_denied": true,
+    "own_operation_unknown_id_status": 404,
+    "swagger_operations": 78,
+    "swagger_schemas": 132,
+    "swagger_exact_file_hash": true,
+    "ai_repair_enabled": false,
+    "automation_enabled": false,
+    "passed": true,
+    "temporary_token_removed": true
+  },
+  "knowledge": {
+    "articles": [
+      {
+        "id": 35,
+        "slug": "storage-api",
+        "source_id": "storage/storage-api",
+        "sync_status": "pending_push",
+        "visibility": "internal",
+        "exact_source_match": true
+      },
+      {
+        "id": 36,
+        "slug": "storage-inventory",
+        "source_id": "storage/storage-inventory",
+        "sync_status": "pending_push",
+        "visibility": "internal",
+        "exact_source_match": true
+      },
+      {
+        "id": 37,
+        "slug": "storage-item-fields",
+        "source_id": "storage/storage-item-fields",
+        "sync_status": "pending_push",
+        "visibility": "internal",
+        "exact_source_match": true
+      },
+      {
+        "id": 38,
+        "slug": "storage-picking-list",
+        "source_id": "storage/storage-picking-list",
+        "sync_status": "pending_push",
+        "visibility": "internal",
+        "exact_source_match": true
+      },
+      {
+        "id": 39,
+        "slug": "storage-purchase-orders-receiving",
+        "source_id": "storage/storage-purchase-orders-receiving",
+        "sync_status": "pending_push",
+        "visibility": "internal",
+        "exact_source_match": true
+      },
+      {
+        "id": 40,
+        "slug": "storage-supplier-order-automation",
+        "source_id": "storage/storage-supplier-order-automation",
+        "sync_status": "pending_push",
+        "visibility": "internal",
+        "exact_source_match": true
+      },
+      {
+        "id": 41,
+        "slug": "storage-vendors-and-suppliers",
+        "source_id": "storage/storage-vendors-suppliers",
+        "sync_status": "pending_push",
+        "visibility": "internal",
+        "exact_source_match": true
+      },
+      {
+        "id": 3,
+        "slug": "api-management",
+        "source_id": "integrations/api-management",
+        "sync_status": "pending_push",
+        "visibility": "internal",
+        "exact_source_match": true
+      }
+    ],
+    "automatic_sync": {
+      "configured": false,
+      "status": null,
+      "two_way_sync_enabled": false
+    },
+    "passed": true
+  },
+  "bookstack": {
+    "pages": [
+      {
+        "id": 386,
+        "key": "storage-inventory",
+        "revision": 13,
+        "exact_readback": true,
+        "exact_full_source": true,
+        "prior_body_preserved": true,
+        "guide_embedded": true,
+        "book_id": 339,
+        "chapter_id": 371
+      },
+      {
+        "id": 391,
+        "key": "storage-item-fields",
+        "revision": 13,
+        "exact_readback": true,
+        "exact_full_source": true,
+        "prior_body_preserved": true,
+        "guide_embedded": false,
+        "book_id": 339,
+        "chapter_id": 371
+      },
+      {
+        "id": 397,
+        "key": "storage-picking-list",
+        "revision": 13,
+        "exact_readback": true,
+        "exact_full_source": true,
+        "prior_body_preserved": true,
+        "guide_embedded": false,
+        "book_id": 339,
+        "chapter_id": 371
+      },
+      {
+        "id": 550,
+        "key": "storage-purchase-orders-receiving",
+        "revision": 5,
+        "exact_readback": true,
+        "exact_full_source": true,
+        "prior_body_preserved": true,
+        "guide_embedded": false,
+        "book_id": 339,
+        "chapter_id": 371
+      },
+      {
+        "id": 551,
+        "key": "storage-supplier-order-automation",
+        "revision": 5,
+        "exact_readback": true,
+        "exact_full_source": false,
+        "prior_body_preserved": true,
+        "guide_embedded": false,
+        "book_id": 339,
+        "chapter_id": 371
+      },
+      {
+        "id": 423,
+        "key": "storage-vendors-suppliers",
+        "revision": 13,
+        "exact_readback": true,
+        "exact_full_source": true,
+        "prior_body_preserved": true,
+        "guide_embedded": false,
+        "book_id": 339,
+        "chapter_id": 371
+      },
+      {
+        "id": 449,
+        "key": "api-management",
+        "revision": 143,
+        "exact_readback": true,
+        "exact_full_source": false,
+        "prior_body_preserved": true,
+        "guide_embedded": false,
+        "book_id": 339,
+        "chapter_id": 374
+      }
+    ],
+    "guide": {
+      "embedded_page": 386,
+      "standalone_source": "app/Modules/Storage/Docs/knowledge/storage-api.md",
+      "full_text_verified": true
+    },
+    "permissions": {
+      "pages": [
+        {
+          "id": 386,
+          "inheriting": true,
+          "override_count": 0
+        },
+        {
+          "id": 391,
+          "inheriting": true,
+          "override_count": 0
+        },
+        {
+          "id": 397,
+          "inheriting": true,
+          "override_count": 0
+        },
+        {
+          "id": 550,
+          "inheriting": true,
+          "override_count": 0
+        },
+        {
+          "id": 551,
+          "inheriting": true,
+          "override_count": 0
+        },
+        {
+          "id": 423,
+          "inheriting": true,
+          "override_count": 0
+        },
+        {
+          "id": 449,
+          "inheriting": true,
+          "override_count": 0
+        }
+      ],
+      "viewer_role_id": 3,
+      "viewer_has_book_chapter_page_view": true,
+      "anonymous_inventory_redirect": {
+        "status": 302,
+        "location": "https://doc.tronderdata.no/login"
+      },
+      "permissions_changed": false,
+      "employee_openwebui_retrieval_tested": false
+    },
+    "connector_followup": {
+      "normal_create_search_rename_validation": "blocked by connector non-whitespace pattern",
+      "legacy_direct_credential_status": 401,
+      "publication_completed_via_existing_page": true
+    }
+  },
+  "issue_299": {
+    "state": "closed",
+    "state_reason": "completed",
+    "comment_id": 6427563741,
+    "url": "https://github.com/SveinT83/Nexum-PSA/issues/299"
+  },
+  "human_review": {
+    "id": "HR-2026-10-26-STORAGE-API",
+    "status": "Reviewed",
+    "reviewer": "Svein Tore",
+    "date": "2026-10-26",
+    "approval": "Godkjenner. Merg til main.",
+    "production_deployed": false
+  },
+  "protected_contributor_files": {
+    "app/Modules/Storage/Actions/AllocatePurchaseOrderNumber.php": "efaacd1c5c0fc3eb742f257186661b3365018040e3b7ca4a997485f843b5bcdd",
+    "app/Modules/Storage/Actions/StorePurchaseOrder.php": "e013d219eb608262875cc94c5ef75d10cf11b64505cd2edb7a0bc5aef9c173d1",
+    "app/Modules/Storage/Requests/Tech/SavePurchaseOrderRequest.php": "8af87bda9f1933b85e802f5c59ef50a7c32e51917cdcda789fc42aac9eae4f43",
+    "app/Modules/Storage/Views/Tech/Storage/purchase-orders/form.blade.php": "a1bf687eb935ab76f5b77d7c6a13bb0370577649e016309a2f40ca7833341b74"
+  },
+  "php_files": [
+    "app/Modules/Storage/routes.php",
+    "app/Modules/Storage/api.php",
+    "app/Modules/Storage/Actions/CreateSupplierOrderProfile.php",
+    "app/Modules/Storage/Actions/ExecuteStorageApiCommand.php",
+    "app/Modules/Storage/Actions/StorageApiWorkflow.php",
+    "app/Modules/Storage/Controllers/Admin/PurchaseOrderImportProfileController.php",
+    "app/Modules/Storage/Controllers/Api/V1/StorageController.php",
+    "app/Modules/Storage/Controllers/Api/V1/PurchaseOrderController.php",
+    "app/Modules/Storage/Controllers/Api/V1/StorageWorkflowController.php",
+    "app/Modules/Storage/Models/StorageApiCommand.php",
+    "app/Modules/Storage/Queries/StorageApiQuery.php",
+    "app/Modules/Storage/Queries/StorageIndexQuery.php",
+    "app/Modules/Storage/Resources/Api/V1/StorageItemResource.php",
+    "app/Modules/Storage/Resources/Api/V1/StorageBoxResource.php",
+    "app/Modules/Storage/Resources/Api/V1/PurchaseOrderLineResource.php",
+    "app/Modules/Storage/Resources/Api/V1/StorageApiOpenApi.php",
+    "app/Modules/Storage/Support/StorageApiAccess.php",
+    "app/Modules/Storage/Support/StorageApiErrors.php",
+    "app/Modules/Storage/Support/StorageApiInput.php",
+    "app/Modules/Storage/Support/StorageApiRevision.php",
+    "app/Modules/Storage/Support/SupplierOrderProfileDefaults.php",
+    "app/Modules/Storage/Tests/Feature/StorageFullApiTest.php",
+    "app/Modules/Storage/Tests/Feature/StorageApiContractTest.php",
+    "app/Modules/Storage/Tests/Feature/PurchaseOrderApiTest.php",
+    "app/Modules/Storage/Tests/Feature/StorageModuleTest.php",
+    "app/Modules/Integration/Support/ApiAbilityCatalog.php",
+    "config/storage_api.php",
+    "database/migrations/2026_10_26_030000_create_storage_api_commands.php",
+    "app/Modules/Storage/Queries/PurchaseOrderApiDetailQuery.php",
+    "app/Modules/Storage/Queries/PurchaseReceivingContextQuery.php",
+    "app/Modules/Storage/Controllers/Tech/PurchaseReceiptController.php",
+    "app/Modules/Storage/Queries/PurchaseOrderImportProfileIndexQuery.php",
+    "app/Modules/Storage/Tests/Feature/PurchaseOrderTicketScopeTest.php",
+    "app/Modules/Storage/Queries/PurchaseOrderFormQuery.php",
+    "app/Modules/Storage/Controllers/Tech/PurchaseOrderController.php",
+    "app/Modules/Storage/Tests/Unit/StorageApiTokenIdentityTest.php"
+  ],
+  "documentation_files": [
+    "docs/rfc/2026-10-26-storage-full-api-parity.md",
+    "docs/adr/2026-10-26-storage-api-commands-and-current-authority.md",
+    "docs/feature-slices/2026-10-26-storage-full-api-parity.md",
+    "docs/plans/2026-10-26-storage-api-coverage-matrix.md",
+    "docs/TODO.md",
+    "docs/human-review.md",
+    "app/Modules/Storage/Docs/knowledge/storage-supplier-order-automation.md",
+    "app/Modules/Storage/Docs/knowledge/storage-purchase-orders-receiving.md",
+    "app/Modules/Storage/Docs/knowledge/storage-inventory.md",
+    "app/Modules/Storage/Docs/knowledge/storage-picking-list.md",
+    "app/Modules/Storage/Docs/knowledge/storage-vendors-suppliers.md",
+    "app/Modules/Storage/Docs/knowledge/storage-api.md",
+    "app/Modules/Storage/Docs/knowledge/storage-item-fields.md",
+    "app/Modules/Integration/Docs/knowledge/api-management.md"
+  ],
+  "source_sha256": {
+    "app/Modules/Storage/routes.php": "19abb14beca5c51e710acf02d5c4ad6778cb6f794dee66b363aed51722250a72",
+    "app/Modules/Storage/api.php": "19c935ce2de6d98697d9652217c793f81cadde0de98386d38cea1aac71665c11",
+    "app/Modules/Storage/Actions/CreateSupplierOrderProfile.php": "2975f94cfa92124ac629157bde471e92af2e7ba545939f627e97115c7b5ec58e",
+    "app/Modules/Storage/Actions/ExecuteStorageApiCommand.php": "e428ebe03d1f3c51187486a3f44c584d2832db9fe86bcb756deb74189a95edc8",
+    "app/Modules/Storage/Actions/StorageApiWorkflow.php": "b5fa05acffd4ecefcb8966698941ede47644ba6324d13f2ad1a25ff34be6a4a0",
+    "app/Modules/Storage/Controllers/Admin/PurchaseOrderImportProfileController.php": "a758b978e0732a23ff55b60b5fa6c87c7f23b9f3e3fafc338acc3dddedc29d82",
+    "app/Modules/Storage/Controllers/Api/V1/StorageController.php": "c38532ee5595024a25ad562dfa18efd5a2e4b8e5703d944dd56eadd46ac7abcd",
+    "app/Modules/Storage/Controllers/Api/V1/PurchaseOrderController.php": "c559a1a3aa7b0acdae45f109ac0224688d524343ef834febfa2a24ce4ce97b41",
+    "app/Modules/Storage/Controllers/Api/V1/StorageWorkflowController.php": "70902117f605c7ae6929953086a68ad8d5b5b3e910949bae5ad393e31634ea0a",
+    "app/Modules/Storage/Models/StorageApiCommand.php": "7c77d27522755720fa36b6dbc52c9a18a27da249193d32c50cc6259b907d4c69",
+    "app/Modules/Storage/Queries/StorageApiQuery.php": "6e15a2ee60973fb24e9f67d04252ca9497b84d416f2742798829466d360927f3",
+    "app/Modules/Storage/Queries/StorageIndexQuery.php": "20d11b9160f4c666cc8fdaf976904b846406de5cf803091f75dbccd05e072dbd",
+    "app/Modules/Storage/Resources/Api/V1/StorageItemResource.php": "ee22b25e231b20046f535ee20562b9f1b24c0b2d8b765d1f10b2d39b246b6ece",
+    "app/Modules/Storage/Resources/Api/V1/StorageBoxResource.php": "82ac8f7090031bf7d572d152ce161b510f15c6116ad44a3e120400d7dfc11168",
+    "app/Modules/Storage/Resources/Api/V1/PurchaseOrderLineResource.php": "705bb0bbeb31cfa33cc35ba6890ed68aa561f67d13f2523d668496ddc18187a0",
+    "app/Modules/Storage/Resources/Api/V1/StorageApiOpenApi.php": "4bf3be8a3a06f871cae64a5fb00abb9824f752969d5342223ca9ab7987dc4138",
+    "app/Modules/Storage/Support/StorageApiAccess.php": "89ab449775459da09880a45dc00c9350929e355c7c64b0d5bc723fac76127ee1",
+    "app/Modules/Storage/Support/StorageApiErrors.php": "a1c8cd6ad80c0fd4c5647bd17b7bd11bd7c9cdb58d985cd56ef0fbb78f743e5c",
+    "app/Modules/Storage/Support/StorageApiInput.php": "1dd1f1becd78c65687ff755bb7251fc7e80e5e8758fe1a46c90a61e902f2d75c",
+    "app/Modules/Storage/Support/StorageApiRevision.php": "13d56c837a97b2094d233f5308f84f2fc47490b45b65b4abbb9d7667b4e1344b",
+    "app/Modules/Storage/Support/SupplierOrderProfileDefaults.php": "1083d513d2196c1c6243856c2dff7cc534aeae6c82fdabcce22906b2ed6fa7bb",
+    "app/Modules/Storage/Tests/Feature/StorageFullApiTest.php": "c8ae4a412b5bf788e3be2a30b6ef2ede30d5e806291904f95c7c67889a14170a",
+    "app/Modules/Storage/Tests/Feature/StorageApiContractTest.php": "2ad0ba64f700bad75b319319534b2c436253c0141c837251b074cf0dfc17f2f4",
+    "app/Modules/Storage/Tests/Feature/PurchaseOrderApiTest.php": "5bc1d925380bea5dbb608d9a5ef38d50a6346d56ca54ab84708b79c9bf39677d",
+    "app/Modules/Storage/Tests/Feature/StorageModuleTest.php": "7772f93f562c61d062da684ca68e807523ad4b70ceef285ef659eea1fcc42eba",
+    "app/Modules/Integration/Support/ApiAbilityCatalog.php": "78302364b2162e1150a87515985b7eb0c46d98cc9f5adad9a6bd2da885abb268",
+    "config/storage_api.php": "325b09fb161963121986f1de68675d86c3d9da6fb9bcfc2480befd2b719d2303",
+    "database/migrations/2026_10_26_030000_create_storage_api_commands.php": "bcf75173a32fa51b59198b11f2e1ae30a73efdcda34d39662e9fb45e9eeeab02",
+    "app/Modules/Storage/Queries/PurchaseOrderApiDetailQuery.php": "d59166e7f6d1489704a550ae3fae02987163c069ac35ffd24c8a255fcbcd90c1",
+    "app/Modules/Storage/Queries/PurchaseReceivingContextQuery.php": "c15a07c26b32eaaf2ed71bd97abd3863c87561906601bbeaaac0fe93442cdfce",
+    "app/Modules/Storage/Controllers/Tech/PurchaseReceiptController.php": "3ae06ea27bcfb23b11072564f9742f10e2eb85b2f4a0562d952bb0a386a185eb",
+    "app/Modules/Storage/Queries/PurchaseOrderImportProfileIndexQuery.php": "d5b650df11ea1733fa26503f3604b7dea33ed9b7a3ecb7afe2b4b294ae555fd7",
+    "app/Modules/Storage/Tests/Feature/PurchaseOrderTicketScopeTest.php": "fdcc2b8bbe3e78601134bca8cd142e7ab7ee38b6517306112d6422c6e204630a",
+    "app/Modules/Storage/Queries/PurchaseOrderFormQuery.php": "c8e1f6234cc0733ede019c5c45998053432f9055a4a0e286ed060f928d30eabf",
+    "app/Modules/Storage/Controllers/Tech/PurchaseOrderController.php": "52c61c80287c70a16a1f4e829edd8df85c303b2cc702d3a951c8a9a6431ca6d3",
+    "app/Modules/Storage/Tests/Unit/StorageApiTokenIdentityTest.php": "9e8f90af2e1681df6c98b5b729c3f0d49683fb204c7996141be75d124d84f0b2"
+  },
+  "website_handoff": {
+    "path": "C:\\Users\\svein\\Documents\\Innhold og synlighet\\Innhold og synlighet\\inputs\\nexum-psa\\nettsideoppdateringer.md",
+    "utf8_readback_verified": true,
+    "marker_count": 1,
+    "do_not_publish": true
+  },
+  "artifacts": {
+    "junit": "/tmp/storage-api-release-final-20261026.xml",
+    "log": "/tmp/storage-api-release-final-20261026.log",
+    "support": "/tmp/storage-full-api-20261026"
+  },
+  "limits": [
+    "Human scenarios are not approved by automated tests.",
+    "Live AI/provider execution and production performance are not exercised; API execution switches remain false.",
+    "Existing #286 numbering changes remain separate and byte-identical; a clean Main candidate must reconcile that dependency before promotion.",
+    "Existing source drift on BookStack 551/449 was preserved; only requested API sections were changed.",
+    "Dev automatic BookStack integration remains unconfigured/pending_push; actual requested handbook text was independently read back.",
+    "Employee OpenWebUI retrieval is not tested."
+  ],
+  "main_promotion_record": "docs/plans/2026-10-26-storage-api-main-promotion.md"
+}

@@ -1,5 +1,60 @@
 # tdPSA Development TODO
 
+## Full Storage browser/API coverage (2026-10-26)
+
+Status: Done On Dev / Reviewed by Svein Tore / Main promotion in progress / Production unchanged.
+Owner: Codex. Named human reviewer and release owner: Svein Tore.
+Direct authorization: full Storage API, "Kjør på", 2026-10-26.
+Approved RFC: rfc/2026-10-26-storage-full-api-parity.md.
+Accepted ADR: adr/2026-10-26-storage-api-commands-and-current-authority.md.
+All six sequential slices: feature-slices/2026-10-26-storage-full-api-parity.md.
+Coverage: 64 browser routes / 78 API HTTP operations / 132 typed schemas.
+Final complete affected Dev batch: 615 tests / 7717 assertions, no failures/skips;
+Storage subset 287 / 4556. All 36 scoped PHP files pass syntax/Pint.
+Exact runtime/Swagger mapping and actual HTTP response-schema checks pass.
+Exact additive migration installed on Dev in batch 29. Independent native MySQL
+locking/uniqueness/rollback/encrypted-readback probes pass and probe tables are removed.
+18 trusted HTTPS reads, anonymous denial and exact Swagger verified; final complete
+guide and own-operation lookup are read back over trusted HTTPS. Test tokens removed.
+Eight Knowledge sources are exact-read-back internal articles; actual BookStack
+386/391/397/550/551/423/449 updated and read back. The full API guide is embedded in
+Storage Inventory 386 due the connector create/rename validator defect. Existing
+access inheritance is preserved; anonymous Inventory access redirects to login.
+Source drift on 551/449 and unconfigured automatic sync are separately tracked below.
+Evidence: plans/2026-10-26-storage-api-verification.md/.json and coverage matrix.
+
+Issue #299 completed and closed with evidence; #286's four dirty contributor files
+remain byte-identical. A clean Main candidate must reconcile that existing numbering
+dependency; do not promote this file manifest blindly or scoop unrelated dirty work.
+Human acceptance and Main merge authorized by Svein Tore on 2026-10-26:
+Godkjenner. Merg til main. HR-2026-10-26-STORAGE-API is Reviewed.
+The isolated candidate includes the existing allocator, StorePurchaseOrder and
+SavePurchaseOrderRequest as the minimum dependency for optional-number API creation;
+the protected contributor files remain unchanged in shared Dev. The form change,
+number immutability and remaining #286 acceptance are outside this promotion.
+No production deployment, grants or provider/worker activation is authorized.
+Both API execution switches remain false. Next action: verify and merge the scoped
+Main candidate, then record exact PR/tree evidence. Production rollout remains separate.
+
+## BookStack connector validation and existing source drift (2026-10-26)
+
+Status: Follow-up / outside Storage API completion. Owner: MCP/Knowledge maintainer
+(Svein Tore). The connector rejects normal multi-character search/create/rename values
+against its non-whitespace pattern. Existing page body updates and read-back work.
+Storage's full API guide is therefore published and verified inside the existing
+Storage Inventory article (BookStack 386), with exact repository source content.
+No malformed placeholder page, token rotation, permission change or backend bypass
+was used. The old protected direct-API credential returns 401 at the current trusted
+hostname; it was not replaced or re-encrypted.
+Native Nexum BookStack integration is unconfigured on Dev, so local articles remain
+pending_push even though the requested handbook content is actually published.
+Current source/BookStack drift on automation 551 and API Management 449 predates this
+work; only the requested Storage API sections were updated, preserving unrelated text.
+Next: repair connector validation/credential ownership through its own approved work
+and reconcile the unrelated source drift before enabling broad automatic publication.
+Storage API handbook publication itself is verified and is not blocked by this item.
+
+
 ## Full Assets browser/API coverage (2026-10-26)
 
 Status: Done On Dev / Merged to Main in PR #324 / Human scenario review Pending.

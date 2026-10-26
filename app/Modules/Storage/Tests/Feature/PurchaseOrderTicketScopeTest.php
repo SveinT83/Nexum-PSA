@@ -34,6 +34,7 @@ class PurchaseOrderTicketScopeTest extends TestCase
         Permission::findOrCreate('ticket.view', 'web');
         $this->actor = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->actor->assignRole('Tech');
+        $this->actor->givePermissionTo('storage.purchase_view');
 
         $warehouse = Warehouse::query()->create([
             'name' => 'Scoped Warehouse',
@@ -109,6 +110,9 @@ class PurchaseOrderTicketScopeTest extends TestCase
             ->assertJsonPath('data.lines.0.metadata.vendor_order_sent', false);
 
         Sanctum::actingAs($this->actor, ['storage.purchase.read', 'tickets.read']);
+        $this->getJson(route('api.v1.storage.purchase-orders.show', $this->order))
+            ->assertOk()->assertJsonMissingPath('data.lines.0.ticket');
+        $this->actor->givePermissionTo('ticket.view');
 
         $this->getJson(route('api.v1.storage.purchase-orders.show', $this->order))
             ->assertOk()

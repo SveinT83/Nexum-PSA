@@ -18,7 +18,7 @@ class PurchaseOrderImportProfileIndexQuery
         'priority' => 'priority',
     ];
 
-    public function paginate(Request $request): LengthAwarePaginator
+    public function paginate(Request $request, int $perPage = 25): LengthAwarePaginator
     {
         $query = PurchaseOrderImportProfile::query()
             ->with(['vendor', 'activeVersion'])
@@ -74,6 +74,6 @@ class PurchaseOrderImportProfileIndexQuery
 
         $query->orderByDesc('id');
 
-        return $query->paginate(25)->withQueryString();
+        return $query->paginate($perPage)->withQueryString();
     }
 }
