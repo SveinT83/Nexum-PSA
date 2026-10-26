@@ -18,9 +18,7 @@ class StoreRiskAssessment
     public function __construct(
         private readonly RiskSettings $settings,
         private readonly ResolveWorkContext $workContexts,
-    )
-    {
-    }
+    ) {}
 
     /**
      * Persist the assessment and return the created model.
@@ -30,16 +28,26 @@ class StoreRiskAssessment
      */
     public function handle(array $data): RiskAssessment
     {
-        $data = $this->settings->assessmentDefaults($data);
+        return app(\App\Modules\Risk\Support\RiskMutation::class)->run('risk.create', null, function ($lockedAssessment) use ($data) {
 
-        return RiskAssessment::create([
-            'title' => $data['title'],
-            'description' => $data['description'] ?? null,
-            'status' => $data['status'],
-            'client_id' => $data['scope'] === 'internal' ? null : ($data['client_id'] ?? null),
-            'work_context_id' => $this->workContexts
-                ->fromClientId($data['scope'] === 'internal' ? null : ($data['client_id'] ?? null))
-                ->id,
-        ]);
+            $data = $this->settings->assessmentDefaults($data);
+            if (($data['scope'] ?? 'internal') === 'client' && ! \App\Models\Clients\Client::whereKey($data['client_id'] ?? null)->where('active', true)->exists()) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['client_id' => 'Select an active Client for client scope.']);
+            }
+            if (($data['scope'] ?? 'internal') === 'internal' && ! empty($data['client_id'])) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['client_id' => 'Internal scope must not include a Client.']);
+            }
+
+            return RiskAssessment::create([
+                'title' => $data['title'],
+                'description' => $data['description'] ?? null,
+                'status' => $data['status'],
+                'client_id' => $data['scope'] === 'internal' ? null : ($data['client_id'] ?? null),
+                'work_context_id' => $this->workContexts
+                    ->fromClientId($data['scope'] === 'internal' ? null : ($data['client_id'] ?? null))
+                    ->id,
+            ]);
+
+        });
     }
 }

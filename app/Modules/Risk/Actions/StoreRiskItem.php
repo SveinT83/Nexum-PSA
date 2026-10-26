@@ -19,9 +19,7 @@ use Illuminate\Support\Facades\DB;
  */
 class StoreRiskItem
 {
-    public function __construct(private readonly RiskSettings $settings)
-    {
-    }
+    public function __construct(private readonly RiskSettings $settings) {}
 
     /**
      * Create the item under the given assessment.
@@ -31,29 +29,39 @@ class StoreRiskItem
      */
     public function handle(RiskAssessment $assessment, array $data): RiskItem
     {
-        $data = $this->settings->itemDefaults($data);
+        return app(\App\Modules\Risk\Support\RiskMutation::class)->run('risk.update', $assessment->id, function ($lockedAssessment) use ($assessment, $data) {
+            $assessment = $lockedAssessment;
 
-        $item = DB::transaction(function () use ($assessment, $data) {
-            $item = new RiskItem($data);
-            $item->risk_assessment_id = $assessment->id;
-            $item->save();
-
-            RiskItemUpdate::create([
-                'risk_item_id' => $item->id,
-                'created_by' => Auth::id(),
-                'note' => 'Initial risk identified',
-                'status' => $item->status,
-                'likelihood' => $item->likelihood,
-                'impact' => $item->impact,
-            ]);
-
-            if ($assessment->status === 'new') {
-                $assessment->update(['status' => 'in_progress']);
+            $input = $data;
+            $data = $this->settings->itemDefaults($data);
+            // Explicit null clears the review date; omission uses the configured default.
+            if (array_key_exists('next_review_at', $input)) {
+                $data['next_review_at'] = $input['next_review_at'];
             }
 
-            return $item;
-        });
+            $item = DB::transaction(function () use ($assessment, $data) {
+                $item = new RiskItem($data);
+                $item->risk_assessment_id = $assessment->id;
+                $item->save();
 
-        return $item;
+                RiskItemUpdate::create([
+                    'risk_item_id' => $item->id,
+                    'created_by' => Auth::id(),
+                    'note' => 'Initial risk identified',
+                    'status' => $item->status,
+                    'likelihood' => $item->likelihood,
+                    'impact' => $item->impact,
+                ]);
+
+                if (in_array($assessment->status, ['new', 'approved'], true)) {
+                    $assessment->update(['status' => 'in_progress']);
+                }
+
+                return $item;
+            });
+
+            return $item;
+
+        });
     }
 }

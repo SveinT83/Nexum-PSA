@@ -1,0 +1,1039 @@
+{
+  "date": "2026-10-26",
+  "human_review": "HR-2026-10-26-RISK-API Reviewed",
+  "web_route_rows": 17,
+  "api_http_operations": 27,
+  "schemas": 37,
+  "browser_coverage": [
+    {
+      "browser_method": "GET|HEAD",
+      "browser_path": "/tech/admin/settings/risk",
+      "browser_name": "tech.admin.settings.risk",
+      "browser_action": "App\\Modules\\Risk\\Controllers\\Admin\\RiskSettingsController@edit",
+      "classification": "read",
+      "matrix_rows": [
+        "R14"
+      ],
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/risk/settings",
+          "operationId": "riskApiSettingsGet",
+          "scope": "risk.settings.read",
+          "request": null,
+          "response": "RiskApiSettingsResponse"
+        }
+      ],
+      "named_tests": [
+        "context_and_lookups_are_pure_bounded_and_minimal",
+        "settings_patch_merges_full_put_validates_and_defaults_only_affect_future_records",
+        "superuser_can_update_risk_settings"
+      ],
+      "readback_evidence": "RiskApiParityTest::all_twenty_seven_success_contracts_match_real_operational_responses; row-specific persistence/denial tests; native proof in verification.json"
+    },
+    {
+      "browser_method": "PUT",
+      "browser_path": "/tech/admin/settings/risk",
+      "browser_name": "tech.admin.settings.risk.update",
+      "browser_action": "App\\Modules\\Risk\\Controllers\\Admin\\RiskSettingsController@update",
+      "classification": "write",
+      "matrix_rows": [
+        "R14"
+      ],
+      "api": [
+        {
+          "method": "PUT",
+          "path": "/api/v1/risk/settings",
+          "operationId": "riskApiUpdateSettingsPut",
+          "scope": "risk.settings.update",
+          "request": "RiskApiSettingsPut",
+          "response": "RiskApiSettingsResponse"
+        },
+        {
+          "method": "PATCH",
+          "path": "/api/v1/risk/settings",
+          "operationId": "riskApiUpdateSettingsPatch",
+          "scope": "risk.settings.update",
+          "request": "RiskApiSettingsPatch",
+          "response": "RiskApiSettingsResponse"
+        }
+      ],
+      "named_tests": [
+        "context_and_lookups_are_pure_bounded_and_minimal",
+        "settings_patch_merges_full_put_validates_and_defaults_only_affect_future_records",
+        "superuser_can_update_risk_settings"
+      ],
+      "readback_evidence": "RiskApiParityTest::all_twenty_seven_success_contracts_match_real_operational_responses; row-specific persistence/denial tests; native proof in verification.json"
+    },
+    {
+      "browser_method": "GET|HEAD",
+      "browser_path": "/tech/risk",
+      "browser_name": "tech.risk.index",
+      "browser_action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@index",
+      "classification": "read",
+      "matrix_rows": [
+        "R01"
+      ],
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/risk/context",
+          "operationId": "riskApiContextGet",
+          "scope": "risk.read",
+          "request": null,
+          "response": "RiskApiContextResponse"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/risk/assessments",
+          "operationId": "riskApiAssessmentsGet",
+          "scope": "risk.read",
+          "request": null,
+          "response": "RiskApiAssessmentList"
+        }
+      ],
+      "named_tests": [
+        "reads_have_stable_paging_legacy_scope_and_conflict_validation"
+      ],
+      "readback_evidence": "RiskApiParityTest::all_twenty_seven_success_contracts_match_real_operational_responses; row-specific persistence/denial tests; native proof in verification.json"
+    },
+    {
+      "browser_method": "GET|HEAD",
+      "browser_path": "/tech/risk/create",
+      "browser_name": "tech.risk.create",
+      "browser_action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@create",
+      "classification": "read",
+      "matrix_rows": [
+        "R02",
+        "R03"
+      ],
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/risk/context",
+          "operationId": "riskApiContextGet",
+          "scope": "risk.read",
+          "request": null,
+          "response": "RiskApiContextResponse"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/risk/context/clients",
+          "operationId": "riskApiClientsGet",
+          "scope": "risk.read",
+          "request": null,
+          "response": "RiskApiClientLookup"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/risk/context/categories",
+          "operationId": "riskApiCategoriesGet",
+          "scope": "risk.read",
+          "request": null,
+          "response": "RiskApiCategoryLookup"
+        }
+      ],
+      "named_tests": [
+        "context_and_lookups_are_pure_bounded_and_minimal",
+        "metadata_patch_preserves_omission_and_rejects_ignored_or_invalid_inputs",
+        "risk_creation_uses_configured_defaults"
+      ],
+      "readback_evidence": "RiskApiParityTest::all_twenty_seven_success_contracts_match_real_operational_responses; row-specific persistence/denial tests; native proof in verification.json"
+    },
+    {
+      "browser_method": "DELETE",
+      "browser_path": "/tech/risk/destroy/{risk}",
+      "browser_name": "tech.risk.destroy",
+      "browser_action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@destroy",
+      "classification": "write",
+      "matrix_rows": [
+        "R10"
+      ],
+      "api": [
+        {
+          "method": "DELETE",
+          "path": "/api/v1/risk/assessments/{assessment}",
+          "operationId": "riskApiDestroyAssessmentDelete",
+          "scope": "risk.delete",
+          "request": "RiskApiEmpty",
+          "response": "RiskApiDeleteResponse"
+        }
+      ],
+      "named_tests": [
+        "all_twenty_seven_success_contracts_match_real_operational_responses",
+        "history_delete_requires_exact_creator_and_deletion_closes_all_child_paths"
+      ],
+      "readback_evidence": "RiskApiParityTest::all_twenty_seven_success_contracts_match_real_operational_responses; row-specific persistence/denial tests; native proof in verification.json"
+    },
+    {
+      "browser_method": "GET|HEAD",
+      "browser_path": "/tech/risk/edit/{risk}",
+      "browser_name": "tech.risk.edit",
+      "browser_action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@edit",
+      "classification": "read",
+      "matrix_rows": [
+        "R02",
+        "R05"
+      ],
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/risk/context/clients",
+          "operationId": "riskApiClientsGet",
+          "scope": "risk.read",
+          "request": null,
+          "response": "RiskApiClientLookup"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/risk/assessments/{assessment}",
+          "operationId": "riskApiShowAssessmentGet",
+          "scope": "risk.read",
+          "request": null,
+          "response": "RiskApiAssessmentResponse"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/risk/assessments/{assessment}/context",
+          "operationId": "riskApiAssessmentGet",
+          "scope": "risk.read",
+          "request": null,
+          "response": "RiskApiContextResponse"
+        }
+      ],
+      "named_tests": [
+        "context_and_lookups_are_pure_bounded_and_minimal",
+        "metadata_patch_preserves_omission_and_rejects_ignored_or_invalid_inputs"
+      ],
+      "readback_evidence": "RiskApiParityTest::all_twenty_seven_success_contracts_match_real_operational_responses; row-specific persistence/denial tests; native proof in verification.json"
+    },
+    {
+      "browser_method": "GET|HEAD",
+      "browser_path": "/tech/risk/items/{item}",
+      "browser_name": "tech.risk.items.show",
+      "browser_action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@showItem",
+      "classification": "read",
+      "matrix_rows": [
+        "R07"
+      ],
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/risk/items/{item}",
+          "operationId": "riskApiShowItemGet",
+          "scope": "risk.read",
+          "request": null,
+          "response": "RiskApiItemResponse"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/risk/items/{item}/context",
+          "operationId": "riskApiItemGet",
+          "scope": "risk.read",
+          "request": null,
+          "response": "RiskApiContextResponse"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/risk/items/{item}/updates",
+          "operationId": "riskApiUpdatesGet",
+          "scope": "risk.read",
+          "request": null,
+          "response": "RiskApiUpdateList"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/risk/updates/{update}",
+          "operationId": "riskApiShowUpdateGet",
+          "scope": "risk.read",
+          "request": null,
+          "response": "RiskApiUpdateResponse"
+        }
+      ],
+      "named_tests": [
+        "history_delete_requires_exact_creator_and_deletion_closes_all_child_paths",
+        "reads_have_stable_paging_legacy_scope_and_conflict_validation"
+      ],
+      "readback_evidence": "RiskApiParityTest::all_twenty_seven_success_contracts_match_real_operational_responses; row-specific persistence/denial tests; native proof in verification.json"
+    },
+    {
+      "browser_method": "PUT",
+      "browser_path": "/tech/risk/items/{item}",
+      "browser_name": "tech.risk.items.update",
+      "browser_action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@updateItem",
+      "classification": "write",
+      "matrix_rows": [
+        "R08"
+      ],
+      "api": [
+        {
+          "method": "PUT",
+          "path": "/api/v1/risk/items/{item}",
+          "operationId": "riskApiUpdateItemPut",
+          "scope": "risk.update",
+          "request": "RiskApiItemPatch",
+          "response": "RiskApiItemResponse"
+        },
+        {
+          "method": "PATCH",
+          "path": "/api/v1/risk/items/{item}",
+          "operationId": "riskApiUpdateItemPatch",
+          "scope": "risk.update",
+          "request": "RiskApiItemPatch",
+          "response": "RiskApiItemResponse"
+        }
+      ],
+      "named_tests": [
+        "creator_can_edit_risk_item",
+        "critical_fields_are_locked_when_history_exists",
+        "item_edit_rechecks_original_creator_and_rejects_locked_fields_atomically",
+        "normal_user_cannot_edit_risk_item_they_did_not_create"
+      ],
+      "readback_evidence": "RiskApiParityTest::all_twenty_seven_success_contracts_match_real_operational_responses; row-specific persistence/denial tests; native proof in verification.json"
+    },
+    {
+      "browser_method": "DELETE",
+      "browser_path": "/tech/risk/items/{item}",
+      "browser_name": "tech.risk.items.destroy",
+      "browser_action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@destroyItem",
+      "classification": "write",
+      "matrix_rows": [
+        "R10"
+      ],
+      "api": [
+        {
+          "method": "DELETE",
+          "path": "/api/v1/risk/items/{item}",
+          "operationId": "riskApiDestroyItemDelete",
+          "scope": "risk.delete",
+          "request": "RiskApiEmpty",
+          "response": "RiskApiDeleteResponse"
+        }
+      ],
+      "named_tests": [
+        "all_twenty_seven_success_contracts_match_real_operational_responses",
+        "history_delete_requires_exact_creator_and_deletion_closes_all_child_paths"
+      ],
+      "readback_evidence": "RiskApiParityTest::all_twenty_seven_success_contracts_match_real_operational_responses; row-specific persistence/denial tests; native proof in verification.json"
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/risk/items/{item}/updates",
+      "browser_name": "tech.risk.items.updates.store",
+      "browser_action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@storeItemUpdate",
+      "classification": "write",
+      "matrix_rows": [
+        "R09"
+      ],
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/risk/items/{item}/updates",
+          "operationId": "riskApiStoreItemUpdatePost",
+          "scope": "risk.update",
+          "request": "RiskApiUpdateCreate",
+          "response": "RiskApiUpdateResponse"
+        }
+      ],
+      "named_tests": [
+        "approval_requires_nonempty_addressed_items_and_never_restamps_a_replay",
+        "browser_permission_distinctions_and_owned_history_delete_work_for_technicians"
+      ],
+      "readback_evidence": "RiskApiParityTest::all_twenty_seven_success_contracts_match_real_operational_responses; row-specific persistence/denial tests; native proof in verification.json"
+    },
+    {
+      "browser_method": "GET|HEAD",
+      "browser_path": "/tech/risk/show/{risk}",
+      "browser_name": "tech.risk.show",
+      "browser_action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@show",
+      "classification": "read",
+      "matrix_rows": [
+        "R04"
+      ],
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/risk/assessments/{assessment}",
+          "operationId": "riskApiShowAssessmentGet",
+          "scope": "risk.read",
+          "request": null,
+          "response": "RiskApiAssessmentResponse"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/risk/assessments/{assessment}/context",
+          "operationId": "riskApiAssessmentGet",
+          "scope": "risk.read",
+          "request": null,
+          "response": "RiskApiContextResponse"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/risk/assessments/{assessment}/items",
+          "operationId": "riskApiItemsGet",
+          "scope": "risk.read",
+          "request": null,
+          "response": "RiskApiItemList"
+        }
+      ],
+      "named_tests": [
+        "all_twenty_seven_success_contracts_match_real_operational_responses"
+      ],
+      "readback_evidence": "RiskApiParityTest::all_twenty_seven_success_contracts_match_real_operational_responses; row-specific persistence/denial tests; native proof in verification.json"
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/risk/show/{risk}/approve",
+      "browser_name": "tech.risk.approve",
+      "browser_action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@approve",
+      "classification": "action",
+      "matrix_rows": [
+        "R12"
+      ],
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/risk/assessments/{assessment}/approve",
+          "operationId": "riskApiApprovePost",
+          "scope": "risk.approve",
+          "request": "RiskApiEmpty",
+          "response": "RiskApiAssessmentResponse"
+        }
+      ],
+      "named_tests": [
+        "approval_requires_nonempty_addressed_items_and_never_restamps_a_replay",
+        "new_actions_require_revision_and_key_and_detect_same_second_changes"
+      ],
+      "readback_evidence": "RiskApiParityTest::all_twenty_seven_success_contracts_match_real_operational_responses; row-specific persistence/denial tests; native proof in verification.json"
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/risk/show/{risk}/items",
+      "browser_name": "tech.risk.items.store",
+      "browser_action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@storeItem",
+      "classification": "write",
+      "matrix_rows": [
+        "R06"
+      ],
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/risk/assessments/{assessment}/items",
+          "operationId": "riskApiStoreItemPost",
+          "scope": "risk.create",
+          "request": "RiskApiItemCreate",
+          "response": "RiskApiItemResponse"
+        }
+      ],
+      "named_tests": [
+        "browser_permission_distinctions_and_owned_history_delete_work_for_technicians",
+        "risk_creation_uses_configured_defaults"
+      ],
+      "readback_evidence": "RiskApiParityTest::all_twenty_seven_success_contracts_match_real_operational_responses; row-specific persistence/denial tests; native proof in verification.json"
+    },
+    {
+      "browser_method": "GET|HEAD",
+      "browser_path": "/tech/risk/show/{risk}/pdf",
+      "browser_name": "tech.risk.pdf",
+      "browser_action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@exportPdf",
+      "classification": "read",
+      "matrix_rows": [
+        "R13"
+      ],
+      "api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/risk/assessments/{assessment}/pdf",
+          "operationId": "riskApiPdfGet",
+          "scope": "risk.read",
+          "request": null,
+          "response": "binary_pdf"
+        }
+      ],
+      "named_tests": [
+        "all_twenty_seven_success_contracts_match_real_operational_responses",
+        "pdf_returns_the_shared_binary_report_and_denies_deleted_parents"
+      ],
+      "readback_evidence": "RiskApiParityTest::all_twenty_seven_success_contracts_match_real_operational_responses; row-specific persistence/denial tests; native proof in verification.json"
+    },
+    {
+      "browser_method": "POST",
+      "browser_path": "/tech/risk/store",
+      "browser_name": "tech.risk.store",
+      "browser_action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@store",
+      "classification": "write",
+      "matrix_rows": [
+        "R03"
+      ],
+      "api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/risk/assessments",
+          "operationId": "riskApiStoreAssessmentPost",
+          "scope": "risk.create",
+          "request": "RiskApiAssessmentCreate",
+          "response": "RiskApiAssessmentResponse"
+        }
+      ],
+      "named_tests": [
+        "metadata_patch_preserves_omission_and_rejects_ignored_or_invalid_inputs",
+        "risk_creation_uses_configured_defaults"
+      ],
+      "readback_evidence": "RiskApiParityTest::all_twenty_seven_success_contracts_match_real_operational_responses; row-specific persistence/denial tests; native proof in verification.json"
+    },
+    {
+      "browser_method": "PUT",
+      "browser_path": "/tech/risk/update/{risk}",
+      "browser_name": "tech.risk.update",
+      "browser_action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@update",
+      "classification": "write",
+      "matrix_rows": [
+        "R05"
+      ],
+      "api": [
+        {
+          "method": "PUT",
+          "path": "/api/v1/risk/assessments/{assessment}",
+          "operationId": "riskApiUpdateAssessmentPut",
+          "scope": "risk.update",
+          "request": "RiskApiAssessmentPatch",
+          "response": "RiskApiAssessmentResponse"
+        },
+        {
+          "method": "PATCH",
+          "path": "/api/v1/risk/assessments/{assessment}",
+          "operationId": "riskApiUpdateAssessmentPatch",
+          "scope": "risk.update",
+          "request": "RiskApiAssessmentPatch",
+          "response": "RiskApiAssessmentResponse"
+        }
+      ],
+      "named_tests": [
+        "metadata_patch_preserves_omission_and_rejects_ignored_or_invalid_inputs"
+      ],
+      "readback_evidence": "RiskApiParityTest::all_twenty_seven_success_contracts_match_real_operational_responses; row-specific persistence/denial tests; native proof in verification.json"
+    },
+    {
+      "browser_method": "DELETE",
+      "browser_path": "/tech/risk/updates/{update}",
+      "browser_name": "tech.risk.updates.destroy",
+      "browser_action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@destroyUpdate",
+      "classification": "write",
+      "matrix_rows": [
+        "R11"
+      ],
+      "api": [
+        {
+          "method": "DELETE",
+          "path": "/api/v1/risk/updates/{update}",
+          "operationId": "riskApiDestroyUpdateDelete",
+          "scope": "risk.delete",
+          "request": "RiskApiEmpty",
+          "response": "RiskApiDeleteResponse"
+        }
+      ],
+      "named_tests": [
+        "browser_permission_distinctions_and_owned_history_delete_work_for_technicians",
+        "deleting_newest_nonnewest_and_last_history_reconciles_deterministically",
+        "deleting_update_resets_risk_item_state"
+      ],
+      "readback_evidence": "RiskApiParityTest::all_twenty_seven_success_contracts_match_real_operational_responses; row-specific persistence/denial tests; native proof in verification.json"
+    }
+  ],
+  "api_coverage": [
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/context",
+      "action": "context",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiContextResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskContextController",
+      "name": "api.v1.risk.context",
+      "operationId": "riskApiContextGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/context/clients",
+      "action": "clients",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiClientLookup",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskContextController",
+      "name": "api.v1.risk.context.clients",
+      "operationId": "riskApiClientsGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/context/categories",
+      "action": "categories",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiCategoryLookup",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskContextController",
+      "name": "api.v1.risk.context.categories",
+      "operationId": "riskApiCategoriesGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/settings",
+      "action": "settings",
+      "scope": "risk.settings.read",
+      "permissions": [
+        "risk.manage_settings"
+      ],
+      "request": null,
+      "response": "RiskApiSettingsResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.settings",
+      "operationId": "riskApiSettingsGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/risk/settings",
+      "action": "updateSettings",
+      "scope": "risk.settings.update",
+      "permissions": [
+        "risk.manage_settings"
+      ],
+      "request": "RiskApiSettingsPut",
+      "response": "RiskApiSettingsResponse",
+      "required_key": true,
+      "required_revision": true,
+      "controller": "RiskController",
+      "name": "api.v1.risk.updateSettings.put",
+      "operationId": "riskApiUpdateSettingsPut",
+      "status": 200,
+      "classification": "write"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/risk/settings",
+      "action": "updateSettings",
+      "scope": "risk.settings.update",
+      "permissions": [
+        "risk.manage_settings"
+      ],
+      "request": "RiskApiSettingsPatch",
+      "response": "RiskApiSettingsResponse",
+      "required_key": true,
+      "required_revision": true,
+      "controller": "RiskController",
+      "name": "api.v1.risk.updateSettings.patch",
+      "operationId": "riskApiUpdateSettingsPatch",
+      "status": 200,
+      "classification": "write"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/operations/{command}",
+      "action": "operation",
+      "scope": "risk.operations.read",
+      "permissions": [],
+      "request": null,
+      "response": "RiskApiOperationResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.operation",
+      "operationId": "riskApiOperationGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/assessments",
+      "action": "assessments",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiAssessmentList",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.assessments.index",
+      "operationId": "riskApiAssessmentsGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/risk/assessments",
+      "action": "storeAssessment",
+      "scope": "risk.create",
+      "permissions": [
+        "risk.create"
+      ],
+      "request": "RiskApiAssessmentCreate",
+      "response": "RiskApiAssessmentResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.assessments.store",
+      "operationId": "riskApiStoreAssessmentPost",
+      "status": 201,
+      "classification": "write"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/assessments/{assessment}",
+      "action": "showAssessment",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiAssessmentResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.assessments.show",
+      "operationId": "riskApiShowAssessmentGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/risk/assessments/{assessment}",
+      "action": "updateAssessment",
+      "scope": "risk.update",
+      "permissions": [
+        "risk.update"
+      ],
+      "request": "RiskApiAssessmentPatch",
+      "response": "RiskApiAssessmentResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.assessments.update",
+      "operationId": "riskApiUpdateAssessmentPut",
+      "status": 200,
+      "classification": "write"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/risk/assessments/{assessment}",
+      "action": "updateAssessment",
+      "scope": "risk.update",
+      "permissions": [
+        "risk.update"
+      ],
+      "request": "RiskApiAssessmentPatch",
+      "response": "RiskApiAssessmentResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.assessments.update",
+      "operationId": "riskApiUpdateAssessmentPatch",
+      "status": 200,
+      "classification": "write"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/risk/assessments/{assessment}",
+      "action": "destroyAssessment",
+      "scope": "risk.delete",
+      "permissions": [
+        "risk.delete"
+      ],
+      "request": "RiskApiEmpty",
+      "response": "RiskApiDeleteResponse",
+      "required_key": true,
+      "required_revision": true,
+      "controller": "RiskController",
+      "name": "api.v1.risk.destroyAssessment",
+      "operationId": "riskApiDestroyAssessmentDelete",
+      "status": 200,
+      "classification": "write"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/assessments/{assessment}/context",
+      "action": "assessment",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiContextResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskContextController",
+      "name": "api.v1.risk.assessment",
+      "operationId": "riskApiAssessmentGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/assessments/{assessment}/items",
+      "action": "items",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiItemList",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.items",
+      "operationId": "riskApiItemsGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/risk/assessments/{assessment}/items",
+      "action": "storeItem",
+      "scope": "risk.create",
+      "permissions": [
+        "risk.update"
+      ],
+      "request": "RiskApiItemCreate",
+      "response": "RiskApiItemResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.assessments.items.store",
+      "operationId": "riskApiStoreItemPost",
+      "status": 201,
+      "classification": "write"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/risk/assessments/{assessment}/approve",
+      "action": "approve",
+      "scope": "risk.approve",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": "RiskApiEmpty",
+      "response": "RiskApiAssessmentResponse",
+      "required_key": true,
+      "required_revision": true,
+      "controller": "RiskController",
+      "name": "api.v1.risk.approve",
+      "operationId": "riskApiApprovePost",
+      "status": 200,
+      "classification": "action"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/assessments/{assessment}/pdf",
+      "action": "pdf",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "binary_pdf",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.pdf",
+      "operationId": "riskApiPdfGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/items/{item}",
+      "action": "showItem",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiItemResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.items.show",
+      "operationId": "riskApiShowItemGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/risk/items/{item}",
+      "action": "updateItem",
+      "scope": "risk.update",
+      "permissions": [
+        "risk.update"
+      ],
+      "request": "RiskApiItemPatch",
+      "response": "RiskApiItemResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.items.update",
+      "operationId": "riskApiUpdateItemPut",
+      "status": 200,
+      "classification": "write"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/risk/items/{item}",
+      "action": "updateItem",
+      "scope": "risk.update",
+      "permissions": [
+        "risk.update"
+      ],
+      "request": "RiskApiItemPatch",
+      "response": "RiskApiItemResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.items.update",
+      "operationId": "riskApiUpdateItemPatch",
+      "status": 200,
+      "classification": "write"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/risk/items/{item}",
+      "action": "destroyItem",
+      "scope": "risk.delete",
+      "permissions": [
+        "risk.delete"
+      ],
+      "request": "RiskApiEmpty",
+      "response": "RiskApiDeleteResponse",
+      "required_key": true,
+      "required_revision": true,
+      "controller": "RiskController",
+      "name": "api.v1.risk.destroyItem",
+      "operationId": "riskApiDestroyItemDelete",
+      "status": 200,
+      "classification": "write"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/items/{item}/context",
+      "action": "item",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiContextResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskContextController",
+      "name": "api.v1.risk.item",
+      "operationId": "riskApiItemGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/items/{item}/updates",
+      "action": "updates",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiUpdateList",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.updates",
+      "operationId": "riskApiUpdatesGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/risk/items/{item}/updates",
+      "action": "storeItemUpdate",
+      "scope": "risk.update",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": "RiskApiUpdateCreate",
+      "response": "RiskApiUpdateResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.items.updates.store",
+      "operationId": "riskApiStoreItemUpdatePost",
+      "status": 201,
+      "classification": "write"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/updates/{update}",
+      "action": "showUpdate",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiUpdateResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.showUpdate",
+      "operationId": "riskApiShowUpdateGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/risk/updates/{update}",
+      "action": "destroyUpdate",
+      "scope": "risk.delete",
+      "permissions": [
+        "risk.delete"
+      ],
+      "request": "RiskApiEmpty",
+      "response": "RiskApiDeleteResponse",
+      "required_key": true,
+      "required_revision": true,
+      "controller": "RiskController",
+      "name": "api.v1.risk.destroyUpdate",
+      "operationId": "riskApiDestroyUpdateDelete",
+      "status": 200,
+      "classification": "write"
+    }
+  ],
+  "additional_cross_cutting_tests": [
+    "every_operation_requires_its_scope_and_current_actor_permission",
+    "receipts_recheck_current_underlying_rights_and_token_ceiling",
+    "real_tokens_cannot_read_each_others_command_receipts",
+    "every_registered_risk_api_method_has_an_exact_typed_contract",
+    "generated_swagger_contains_every_exact_method_and_response_schema",
+    "all_twenty_seven_success_contracts_match_real_operational_responses"
+  ],
+  "main_status": "isolated candidate under verification",
+  "production_status": "not deployed"
+}

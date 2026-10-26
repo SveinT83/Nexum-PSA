@@ -1,0 +1,382 @@
+{
+  "date": "2026-10-26",
+  "branch": "Dev",
+  "dev_head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "source": "authoritative Dev route registry; no record contents",
+  "web_route_rows": 17,
+  "api_route_rows": 8,
+  "api_http_operations": 10,
+  "routes": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/risk/assessments",
+      "name": "api.v1.risk.assessments.index",
+      "action": "App\\Modules\\Risk\\Controllers\\Api\\V1\\RiskController@assessments",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:risk.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/risk/assessments",
+      "name": "api.v1.risk.assessments.store",
+      "action": "App\\Modules\\Risk\\Controllers\\Api\\V1\\RiskController@storeAssessment",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:risk.create"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/risk/assessments/{assessment}",
+      "name": "api.v1.risk.assessments.show",
+      "action": "App\\Modules\\Risk\\Controllers\\Api\\V1\\RiskController@showAssessment",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:risk.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT|PATCH",
+      "uri": "api/v1/risk/assessments/{assessment}",
+      "name": "api.v1.risk.assessments.update",
+      "action": "App\\Modules\\Risk\\Controllers\\Api\\V1\\RiskController@updateAssessment",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:risk.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/risk/assessments/{assessment}/items",
+      "name": "api.v1.risk.assessments.items.store",
+      "action": "App\\Modules\\Risk\\Controllers\\Api\\V1\\RiskController@storeItem",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:risk.create"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/risk/items/{item}",
+      "name": "api.v1.risk.items.show",
+      "action": "App\\Modules\\Risk\\Controllers\\Api\\V1\\RiskController@showItem",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:risk.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT|PATCH",
+      "uri": "api/v1/risk/items/{item}",
+      "name": "api.v1.risk.items.update",
+      "action": "App\\Modules\\Risk\\Controllers\\Api\\V1\\RiskController@updateItem",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:risk.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/risk/items/{item}/updates",
+      "name": "api.v1.risk.items.updates.store",
+      "action": "App\\Modules\\Risk\\Controllers\\Api\\V1\\RiskController@storeItemUpdate",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:risk.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/risk",
+      "name": "tech.admin.settings.risk",
+      "action": "App\\Modules\\Risk\\Controllers\\Admin\\RiskSettingsController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/admin/settings/risk",
+      "name": "tech.admin.settings.risk.update",
+      "action": "App\\Modules\\Risk\\Controllers\\Admin\\RiskSettingsController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/risk",
+      "name": "tech.risk.index",
+      "action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/risk/create",
+      "name": "tech.risk.create",
+      "action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@create",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/risk/destroy/{risk}",
+      "name": "tech.risk.destroy",
+      "action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@destroy",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/risk/edit/{risk}",
+      "name": "tech.risk.edit",
+      "action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/risk/items/{item}",
+      "name": "tech.risk.items.show",
+      "action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@showItem",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/risk/items/{item}",
+      "name": "tech.risk.items.update",
+      "action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@updateItem",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/risk/items/{item}",
+      "name": "tech.risk.items.destroy",
+      "action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@destroyItem",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/risk/items/{item}/updates",
+      "name": "tech.risk.items.updates.store",
+      "action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@storeItemUpdate",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/risk/show/{risk}",
+      "name": "tech.risk.show",
+      "action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/risk/show/{risk}/approve",
+      "name": "tech.risk.approve",
+      "action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@approve",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/risk/show/{risk}/items",
+      "name": "tech.risk.items.store",
+      "action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@storeItem",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/risk/show/{risk}/pdf",
+      "name": "tech.risk.pdf",
+      "action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@exportPdf",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/risk/store",
+      "name": "tech.risk.store",
+      "action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/risk/update/{risk}",
+      "name": "tech.risk.update",
+      "action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/risk/updates/{update}",
+      "name": "tech.risk.updates.destroy",
+      "action": "App\\Modules\\Risk\\Controllers\\Tech\\RiskController@destroyUpdate",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    }
+  ],
+  "baseline_tests": {
+    "command": "HOME=/tmp php artisan test app/Modules/Risk/Tests/Feature/RiskSystemTest.php",
+    "passed": 9,
+    "assertions": 63,
+    "duration_seconds": 32.62,
+    "log": "/tmp/nexum-risk-api-20261026/baseline-tests.log"
+  },
+  "open_issue_search": {
+    "query": "repo:SveinT83/Nexum-PSA is:issue risk",
+    "open_matches": 0,
+    "date": "2026-10-26"
+  }
+}

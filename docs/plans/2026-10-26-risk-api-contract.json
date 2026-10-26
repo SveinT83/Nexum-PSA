@@ -1,0 +1,1978 @@
+{
+  "date": "2026-10-26",
+  "status": "implemented_verified_dev_human_reviewed",
+  "operations": [
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/context",
+      "action": "context",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiContextResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskContextController",
+      "name": "api.v1.risk.context",
+      "operationId": "riskApiContextGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/context/clients",
+      "action": "clients",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiClientLookup",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskContextController",
+      "name": "api.v1.risk.context.clients",
+      "operationId": "riskApiClientsGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/context/categories",
+      "action": "categories",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiCategoryLookup",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskContextController",
+      "name": "api.v1.risk.context.categories",
+      "operationId": "riskApiCategoriesGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/settings",
+      "action": "settings",
+      "scope": "risk.settings.read",
+      "permissions": [
+        "risk.manage_settings"
+      ],
+      "request": null,
+      "response": "RiskApiSettingsResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.settings",
+      "operationId": "riskApiSettingsGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/risk/settings",
+      "action": "updateSettings",
+      "scope": "risk.settings.update",
+      "permissions": [
+        "risk.manage_settings"
+      ],
+      "request": "RiskApiSettingsPut",
+      "response": "RiskApiSettingsResponse",
+      "required_key": true,
+      "required_revision": true,
+      "controller": "RiskController",
+      "name": "api.v1.risk.updateSettings.put",
+      "operationId": "riskApiUpdateSettingsPut",
+      "status": 200,
+      "classification": "write"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/risk/settings",
+      "action": "updateSettings",
+      "scope": "risk.settings.update",
+      "permissions": [
+        "risk.manage_settings"
+      ],
+      "request": "RiskApiSettingsPatch",
+      "response": "RiskApiSettingsResponse",
+      "required_key": true,
+      "required_revision": true,
+      "controller": "RiskController",
+      "name": "api.v1.risk.updateSettings.patch",
+      "operationId": "riskApiUpdateSettingsPatch",
+      "status": 200,
+      "classification": "write"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/operations/{command}",
+      "action": "operation",
+      "scope": "risk.operations.read",
+      "permissions": [],
+      "request": null,
+      "response": "RiskApiOperationResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.operation",
+      "operationId": "riskApiOperationGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/assessments",
+      "action": "assessments",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiAssessmentList",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.assessments.index",
+      "operationId": "riskApiAssessmentsGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/risk/assessments",
+      "action": "storeAssessment",
+      "scope": "risk.create",
+      "permissions": [
+        "risk.create"
+      ],
+      "request": "RiskApiAssessmentCreate",
+      "response": "RiskApiAssessmentResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.assessments.store",
+      "operationId": "riskApiStoreAssessmentPost",
+      "status": 201,
+      "classification": "write"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/assessments/{assessment}",
+      "action": "showAssessment",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiAssessmentResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.assessments.show",
+      "operationId": "riskApiShowAssessmentGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/risk/assessments/{assessment}",
+      "action": "updateAssessment",
+      "scope": "risk.update",
+      "permissions": [
+        "risk.update"
+      ],
+      "request": "RiskApiAssessmentPatch",
+      "response": "RiskApiAssessmentResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.assessments.update",
+      "operationId": "riskApiUpdateAssessmentPut",
+      "status": 200,
+      "classification": "write"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/risk/assessments/{assessment}",
+      "action": "updateAssessment",
+      "scope": "risk.update",
+      "permissions": [
+        "risk.update"
+      ],
+      "request": "RiskApiAssessmentPatch",
+      "response": "RiskApiAssessmentResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.assessments.update",
+      "operationId": "riskApiUpdateAssessmentPatch",
+      "status": 200,
+      "classification": "write"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/risk/assessments/{assessment}",
+      "action": "destroyAssessment",
+      "scope": "risk.delete",
+      "permissions": [
+        "risk.delete"
+      ],
+      "request": "RiskApiEmpty",
+      "response": "RiskApiDeleteResponse",
+      "required_key": true,
+      "required_revision": true,
+      "controller": "RiskController",
+      "name": "api.v1.risk.destroyAssessment",
+      "operationId": "riskApiDestroyAssessmentDelete",
+      "status": 200,
+      "classification": "write"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/assessments/{assessment}/context",
+      "action": "assessment",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiContextResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskContextController",
+      "name": "api.v1.risk.assessment",
+      "operationId": "riskApiAssessmentGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/assessments/{assessment}/items",
+      "action": "items",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiItemList",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.items",
+      "operationId": "riskApiItemsGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/risk/assessments/{assessment}/items",
+      "action": "storeItem",
+      "scope": "risk.create",
+      "permissions": [
+        "risk.update"
+      ],
+      "request": "RiskApiItemCreate",
+      "response": "RiskApiItemResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.assessments.items.store",
+      "operationId": "riskApiStoreItemPost",
+      "status": 201,
+      "classification": "write"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/risk/assessments/{assessment}/approve",
+      "action": "approve",
+      "scope": "risk.approve",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": "RiskApiEmpty",
+      "response": "RiskApiAssessmentResponse",
+      "required_key": true,
+      "required_revision": true,
+      "controller": "RiskController",
+      "name": "api.v1.risk.approve",
+      "operationId": "riskApiApprovePost",
+      "status": 200,
+      "classification": "action"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/assessments/{assessment}/pdf",
+      "action": "pdf",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "binary_pdf",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.pdf",
+      "operationId": "riskApiPdfGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/items/{item}",
+      "action": "showItem",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiItemResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.items.show",
+      "operationId": "riskApiShowItemGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/risk/items/{item}",
+      "action": "updateItem",
+      "scope": "risk.update",
+      "permissions": [
+        "risk.update"
+      ],
+      "request": "RiskApiItemPatch",
+      "response": "RiskApiItemResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.items.update",
+      "operationId": "riskApiUpdateItemPut",
+      "status": 200,
+      "classification": "write"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/risk/items/{item}",
+      "action": "updateItem",
+      "scope": "risk.update",
+      "permissions": [
+        "risk.update"
+      ],
+      "request": "RiskApiItemPatch",
+      "response": "RiskApiItemResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.items.update",
+      "operationId": "riskApiUpdateItemPatch",
+      "status": 200,
+      "classification": "write"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/risk/items/{item}",
+      "action": "destroyItem",
+      "scope": "risk.delete",
+      "permissions": [
+        "risk.delete"
+      ],
+      "request": "RiskApiEmpty",
+      "response": "RiskApiDeleteResponse",
+      "required_key": true,
+      "required_revision": true,
+      "controller": "RiskController",
+      "name": "api.v1.risk.destroyItem",
+      "operationId": "riskApiDestroyItemDelete",
+      "status": 200,
+      "classification": "write"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/items/{item}/context",
+      "action": "item",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiContextResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskContextController",
+      "name": "api.v1.risk.item",
+      "operationId": "riskApiItemGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/items/{item}/updates",
+      "action": "updates",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiUpdateList",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.updates",
+      "operationId": "riskApiUpdatesGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/risk/items/{item}/updates",
+      "action": "storeItemUpdate",
+      "scope": "risk.update",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": "RiskApiUpdateCreate",
+      "response": "RiskApiUpdateResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.items.updates.store",
+      "operationId": "riskApiStoreItemUpdatePost",
+      "status": 201,
+      "classification": "write"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/risk/updates/{update}",
+      "action": "showUpdate",
+      "scope": "risk.read",
+      "permissions": [
+        "risk.view"
+      ],
+      "request": null,
+      "response": "RiskApiUpdateResponse",
+      "required_key": false,
+      "required_revision": false,
+      "controller": "RiskController",
+      "name": "api.v1.risk.showUpdate",
+      "operationId": "riskApiShowUpdateGet",
+      "status": 200,
+      "classification": "read"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/risk/updates/{update}",
+      "action": "destroyUpdate",
+      "scope": "risk.delete",
+      "permissions": [
+        "risk.delete"
+      ],
+      "request": "RiskApiEmpty",
+      "response": "RiskApiDeleteResponse",
+      "required_key": true,
+      "required_revision": true,
+      "controller": "RiskController",
+      "name": "api.v1.risk.destroyUpdate",
+      "operationId": "riskApiDestroyUpdateDelete",
+      "status": 200,
+      "classification": "write"
+    }
+  ],
+  "schemas": {
+    "RiskApiOperation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        },
+        "replayed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "replayed"
+      ]
+    },
+    "RiskApiReference": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "name": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "RiskApiWorkContext": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "type": {
+          "type": "string",
+          "nullable": true
+        },
+        "name": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "name"
+      ]
+    },
+    "RiskApiResourceLinks": {
+      "type": "object",
+      "properties": {
+        "self": {
+          "type": "string"
+        },
+        "items": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "self"
+      ]
+    },
+    "RiskApiItemLinks": {
+      "type": "object",
+      "properties": {
+        "self": {
+          "type": "string"
+        },
+        "updates": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "self",
+        "updates"
+      ]
+    },
+    "RiskApiUpdate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "risk_item_id": {
+          "type": "integer"
+        },
+        "created_by": {
+          "type": "integer",
+          "nullable": true
+        },
+        "note": {
+          "type": "string",
+          "nullable": true
+        },
+        "likelihood": {
+          "type": "integer",
+          "nullable": true
+        },
+        "impact": {
+          "type": "integer",
+          "nullable": true
+        },
+        "score": {
+          "type": "integer",
+          "nullable": true
+        },
+        "status": {
+          "type": "string",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "risk_item_id",
+        "created_by",
+        "note",
+        "likelihood",
+        "impact",
+        "score",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "RiskApiItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "history_count": {
+          "type": "integer"
+        },
+        "original_creator_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "risk_assessment_id": {
+          "type": "integer"
+        },
+        "category_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "recommended_actions": {
+          "type": "string",
+          "nullable": true
+        },
+        "conclusion": {
+          "type": "string",
+          "nullable": true
+        },
+        "likelihood": {
+          "type": "integer"
+        },
+        "impact": {
+          "type": "integer"
+        },
+        "score": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "string"
+        },
+        "next_review_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "category": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "nullable": true
+            },
+            "name": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "nullable": true
+        },
+        "updates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/RiskApiUpdate"
+          }
+        },
+        "created_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "links": {
+          "$ref": "#/components/schemas/RiskApiItemLinks"
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "history_count",
+        "original_creator_id",
+        "risk_assessment_id",
+        "category_id",
+        "title",
+        "description",
+        "recommended_actions",
+        "conclusion",
+        "likelihood",
+        "impact",
+        "score",
+        "status",
+        "next_review_at",
+        "created_at",
+        "updated_at",
+        "links"
+      ]
+    },
+    "RiskApiAssessment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "approval_valid": {
+          "type": "boolean"
+        },
+        "is_approvable": {
+          "type": "boolean"
+        },
+        "items_count": {
+          "type": "integer"
+        },
+        "client_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "work_context_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "status": {
+          "type": "string"
+        },
+        "approved_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "approved_by": {
+          "type": "integer",
+          "nullable": true
+        },
+        "total_score": {
+          "type": "integer"
+        },
+        "max_possible_score": {
+          "type": "integer"
+        },
+        "risk_percentage": {
+          "type": "number"
+        },
+        "client": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "nullable": true
+            },
+            "name": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "nullable": true
+        },
+        "work_context": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "nullable": true
+            },
+            "type": {
+              "type": "string",
+              "nullable": true
+            },
+            "name": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "required": [
+            "id",
+            "type",
+            "name"
+          ],
+          "nullable": true
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/RiskApiItem"
+          }
+        },
+        "created_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "string",
+          "nullable": true
+        },
+        "links": {
+          "$ref": "#/components/schemas/RiskApiResourceLinks"
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "approval_valid",
+        "is_approvable",
+        "items_count",
+        "client_id",
+        "work_context_id",
+        "title",
+        "description",
+        "status",
+        "approved_at",
+        "approved_by",
+        "total_score",
+        "max_possible_score",
+        "risk_percentage",
+        "created_at",
+        "updated_at",
+        "links"
+      ]
+    },
+    "RiskApiAssessmentResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/RiskApiAssessment"
+        },
+        "operation": {
+          "$ref": "#/components/schemas/RiskApiOperation"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "RiskApiItemResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/RiskApiItem"
+        },
+        "operation": {
+          "$ref": "#/components/schemas/RiskApiOperation"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "RiskApiUpdateResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/RiskApiUpdate"
+        },
+        "operation": {
+          "$ref": "#/components/schemas/RiskApiOperation"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "RiskApiPaginationLink": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "nullable": true
+        },
+        "label": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "url",
+        "label",
+        "active"
+      ]
+    },
+    "RiskApiPaginationLinks": {
+      "type": "object",
+      "properties": {
+        "first": {
+          "type": "string"
+        },
+        "last": {
+          "type": "string"
+        },
+        "prev": {
+          "type": "string",
+          "nullable": true
+        },
+        "next": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [
+        "first",
+        "last",
+        "prev",
+        "next"
+      ]
+    },
+    "RiskApiPaginationMeta": {
+      "type": "object",
+      "properties": {
+        "current_page": {
+          "type": "integer"
+        },
+        "from": {
+          "type": "integer",
+          "nullable": true
+        },
+        "last_page": {
+          "type": "integer"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/RiskApiPaginationLink"
+          }
+        },
+        "path": {
+          "type": "string"
+        },
+        "per_page": {
+          "type": "integer"
+        },
+        "to": {
+          "type": "integer",
+          "nullable": true
+        },
+        "total": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "current_page",
+        "from",
+        "last_page",
+        "links",
+        "path",
+        "per_page",
+        "to",
+        "total"
+      ]
+    },
+    "RiskApiAssessmentList": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/RiskApiAssessment"
+          }
+        },
+        "links": {
+          "$ref": "#/components/schemas/RiskApiPaginationLinks"
+        },
+        "meta": {
+          "$ref": "#/components/schemas/RiskApiPaginationMeta"
+        }
+      },
+      "required": [
+        "data",
+        "links",
+        "meta"
+      ]
+    },
+    "RiskApiItemList": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/RiskApiItem"
+          }
+        },
+        "links": {
+          "$ref": "#/components/schemas/RiskApiPaginationLinks"
+        },
+        "meta": {
+          "$ref": "#/components/schemas/RiskApiPaginationMeta"
+        }
+      },
+      "required": [
+        "data",
+        "links",
+        "meta"
+      ]
+    },
+    "RiskApiUpdateList": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/RiskApiUpdate"
+          }
+        },
+        "links": {
+          "$ref": "#/components/schemas/RiskApiPaginationLinks"
+        },
+        "meta": {
+          "$ref": "#/components/schemas/RiskApiPaginationMeta"
+        }
+      },
+      "required": [
+        "data",
+        "links",
+        "meta"
+      ]
+    },
+    "RiskApiClientOption": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "RiskApiCategoryOption": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "type"
+      ]
+    },
+    "RiskApiClientLookup": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/RiskApiClientOption"
+          }
+        },
+        "current_page": {
+          "type": "integer"
+        },
+        "first_page_url": {
+          "type": "string"
+        },
+        "from": {
+          "type": "integer",
+          "nullable": true
+        },
+        "last_page": {
+          "type": "integer"
+        },
+        "last_page_url": {
+          "type": "string"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/RiskApiPaginationLink"
+          }
+        },
+        "next_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "path": {
+          "type": "string"
+        },
+        "per_page": {
+          "type": "integer"
+        },
+        "prev_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "to": {
+          "type": "integer",
+          "nullable": true
+        },
+        "total": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "data",
+        "current_page",
+        "first_page_url",
+        "from",
+        "last_page",
+        "last_page_url",
+        "links",
+        "next_page_url",
+        "path",
+        "per_page",
+        "prev_page_url",
+        "to",
+        "total"
+      ]
+    },
+    "RiskApiCategoryLookup": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/RiskApiCategoryOption"
+          }
+        },
+        "current_page": {
+          "type": "integer"
+        },
+        "first_page_url": {
+          "type": "string"
+        },
+        "from": {
+          "type": "integer",
+          "nullable": true
+        },
+        "last_page": {
+          "type": "integer"
+        },
+        "last_page_url": {
+          "type": "string"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/RiskApiPaginationLink"
+          }
+        },
+        "next_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "path": {
+          "type": "string"
+        },
+        "per_page": {
+          "type": "integer"
+        },
+        "prev_page_url": {
+          "type": "string",
+          "nullable": true
+        },
+        "to": {
+          "type": "integer",
+          "nullable": true
+        },
+        "total": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "data",
+        "current_page",
+        "first_page_url",
+        "from",
+        "last_page",
+        "last_page_url",
+        "links",
+        "next_page_url",
+        "path",
+        "per_page",
+        "prev_page_url",
+        "to",
+        "total"
+      ]
+    },
+    "RiskApiSettings": {
+      "type": "object",
+      "properties": {
+        "default_assessment_scope": {
+          "type": "string",
+          "enum": [
+            "internal",
+            "client"
+          ]
+        },
+        "default_assessment_status": {
+          "type": "string",
+          "enum": [
+            "new",
+            "open",
+            "in_progress"
+          ]
+        },
+        "default_item_likelihood": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "default_item_impact": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "default_item_status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "mitigated",
+            "accepted"
+          ]
+        },
+        "default_item_review_days": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3650
+        },
+        "revision": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "default_assessment_scope",
+        "default_assessment_status",
+        "default_item_likelihood",
+        "default_item_impact",
+        "default_item_status",
+        "default_item_review_days",
+        "revision"
+      ]
+    },
+    "RiskApiSettingsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/RiskApiSettings"
+        },
+        "operation": {
+          "$ref": "#/components/schemas/RiskApiOperation"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "RiskApiSettingsPut": {
+      "type": "object",
+      "properties": {
+        "default_assessment_scope": {
+          "type": "string",
+          "enum": [
+            "internal",
+            "client"
+          ]
+        },
+        "default_assessment_status": {
+          "type": "string",
+          "enum": [
+            "new",
+            "open",
+            "in_progress"
+          ]
+        },
+        "default_item_likelihood": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "default_item_impact": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "default_item_status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "mitigated",
+            "accepted"
+          ]
+        },
+        "default_item_review_days": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3650
+        }
+      },
+      "required": [
+        "default_assessment_scope",
+        "default_assessment_status",
+        "default_item_likelihood",
+        "default_item_impact",
+        "default_item_status",
+        "default_item_review_days"
+      ],
+      "additionalProperties": false
+    },
+    "RiskApiSettingsPatch": {
+      "type": "object",
+      "properties": {
+        "default_assessment_scope": {
+          "type": "string",
+          "enum": [
+            "internal",
+            "client"
+          ]
+        },
+        "default_assessment_status": {
+          "type": "string",
+          "enum": [
+            "new",
+            "open",
+            "in_progress"
+          ]
+        },
+        "default_item_likelihood": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "default_item_impact": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "default_item_status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "mitigated",
+            "accepted"
+          ]
+        },
+        "default_item_review_days": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3650
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "RiskApiDeleted": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "resource_type": {
+          "type": "string",
+          "enum": [
+            "assessment",
+            "item",
+            "update"
+          ]
+        },
+        "deleted": {
+          "type": "boolean"
+        },
+        "item": {
+          "$ref": "#/components/schemas/RiskApiItem"
+        }
+      },
+      "required": [
+        "id",
+        "resource_type",
+        "deleted"
+      ]
+    },
+    "RiskApiDeleteResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/RiskApiDeleted"
+        },
+        "operation": {
+          "$ref": "#/components/schemas/RiskApiOperation"
+        }
+      },
+      "required": [
+        "data",
+        "operation"
+      ]
+    },
+    "RiskApiOperationResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "completed"
+              ]
+            },
+            "resource_type": {
+              "type": "string",
+              "enum": [
+                "assessment",
+                "item",
+                "update",
+                "settings"
+              ]
+            },
+            "resource_id": {
+              "type": "integer",
+              "nullable": true
+            }
+          },
+          "required": [
+            "id",
+            "state",
+            "resource_type",
+            "resource_id"
+          ]
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "RiskApiAssessmentCreate": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "internal",
+            "client"
+          ]
+        },
+        "client_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "new",
+            "open",
+            "in_progress"
+          ]
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "additionalProperties": false
+    },
+    "RiskApiAssessmentPatch": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "internal",
+            "client"
+          ]
+        },
+        "client_id": {
+          "type": "integer",
+          "nullable": true
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "RiskApiItemCreate": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "recommended_actions": {
+          "type": "string",
+          "nullable": true
+        },
+        "conclusion": {
+          "type": "string",
+          "nullable": true
+        },
+        "category_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "likelihood": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "impact": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "mitigated",
+            "accepted"
+          ]
+        },
+        "next_review_at": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "additionalProperties": false
+    },
+    "RiskApiItemPatch": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "recommended_actions": {
+          "type": "string",
+          "nullable": true
+        },
+        "conclusion": {
+          "type": "string",
+          "nullable": true
+        },
+        "category_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "likelihood": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "impact": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "mitigated",
+            "accepted"
+          ]
+        },
+        "next_review_at": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "RiskApiUpdateCreate": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "mitigated",
+            "accepted"
+          ]
+        },
+        "likelihood": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1,
+          "maximum": 5
+        },
+        "impact": {
+          "type": "integer",
+          "nullable": true,
+          "minimum": 1,
+          "maximum": 5
+        },
+        "next_review_at": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "required": [
+        "note",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "RiskApiEmpty": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "RiskApiError": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "errors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "required": [
+        "message"
+      ]
+    },
+    "RiskApiCapability": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "ability": {
+          "type": "string"
+        },
+        "actor_authorized": {
+          "type": "boolean"
+        },
+        "token_authorized": {
+          "type": "boolean"
+        },
+        "record_checks_required": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "method",
+        "path",
+        "ability",
+        "actor_authorized",
+        "token_authorized",
+        "record_checks_required"
+      ]
+    },
+    "RiskApiContextResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "resource_type": {
+              "type": "string",
+              "enum": [
+                "global",
+                "assessment",
+                "item"
+              ]
+            },
+            "resource_id": {
+              "type": "integer",
+              "nullable": true
+            },
+            "revision": {
+              "type": "string",
+              "nullable": true
+            },
+            "defaults": {
+              "type": "object",
+              "properties": {
+                "assessment": {
+                  "type": "object",
+                  "properties": {
+                    "scope": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "scope",
+                    "status"
+                  ]
+                },
+                "item": {
+                  "type": "object",
+                  "properties": {
+                    "likelihood": {
+                      "type": "integer"
+                    },
+                    "impact": {
+                      "type": "integer"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "next_review_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "likelihood",
+                    "impact",
+                    "status",
+                    "next_review_at"
+                  ]
+                }
+              },
+              "required": [
+                "assessment",
+                "item"
+              ]
+            },
+            "options": {
+              "type": "object",
+              "properties": {
+                "scope": {
+                  "type": "object",
+                  "properties": {
+                    "internal": {
+                      "type": "string"
+                    },
+                    "client": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "internal",
+                    "client"
+                  ]
+                },
+                "assessment_status": {
+                  "type": "object",
+                  "properties": {
+                    "new": {
+                      "type": "string"
+                    },
+                    "open": {
+                      "type": "string"
+                    },
+                    "in_progress": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "new",
+                    "open",
+                    "in_progress"
+                  ]
+                },
+                "item_status": {
+                  "type": "object",
+                  "properties": {
+                    "open": {
+                      "type": "string"
+                    },
+                    "mitigated": {
+                      "type": "string"
+                    },
+                    "accepted": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "open",
+                    "mitigated",
+                    "accepted"
+                  ]
+                }
+              },
+              "required": [
+                "scope",
+                "assessment_status",
+                "item_status"
+              ]
+            },
+            "constraints": {
+              "type": "object",
+              "properties": {
+                "minimum_score_component": {
+                  "type": "integer"
+                },
+                "maximum_score_component": {
+                  "type": "integer"
+                },
+                "maximum_per_page": {
+                  "type": "integer"
+                },
+                "maximum_title_length": {
+                  "type": "integer"
+                },
+                "new_action_revision_required": {
+                  "type": "boolean"
+                },
+                "new_action_idempotency_required": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "minimum_score_component",
+                "maximum_score_component",
+                "maximum_per_page",
+                "maximum_title_length",
+                "new_action_revision_required",
+                "new_action_idempotency_required"
+              ]
+            },
+            "filters": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "sorts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "locked_fields": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "capabilities": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/RiskApiCapability"
+              }
+            },
+            "lookups": {
+              "type": "object",
+              "properties": {
+                "clients": {
+                  "type": "string"
+                },
+                "categories": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "clients",
+                "categories"
+              ]
+            }
+          },
+          "required": [
+            "resource_type",
+            "resource_id",
+            "revision",
+            "defaults",
+            "options",
+            "constraints",
+            "filters",
+            "sorts",
+            "locked_fields",
+            "capabilities",
+            "lookups"
+          ]
+        }
+      },
+      "required": [
+        "data"
+      ]
+    }
+  }
+}

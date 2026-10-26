@@ -1,68 +1,70 @@
-The Risk domain manages internal and client-specific risk assessments.
+Risk manages internal and Client-specific assessments, individual risk items and their history.
 
-Risk assessments group risk items. Each risk item stores a current snapshot and a history timeline.
-Likelihood and impact create the score, and item updates preserve the audit trail when risk state
-changes over time.
+## Availability
 
-Risk can be used for:
+The expanded API and the approval/history corrections described here are implemented on Dev
+as of 2026-10-26. Main promotion and production deployment have not been performed for this change.
+HR-2026-10-26-RISK-API was accepted by Svein Tore on 2026-10-26. Main and production
+promotion still require separate authorization and verification.
 
-- Internal operational risk.
-- Client-specific assessments.
-- Security reviews.
-- Project or service risk tracking.
+## Open and create an assessment
 
-Risk assessment routes live under `/tech/risk`.
+Prerequisite: an active technician account with Risk access. An API token never grants missing
+employee permissions.
 
-## Current Model
+1. Open **Risk** in the technician workspace, at /tech/risk.
+2. Select the internal or Client context. Open the assessment creation form.
+3. Enter the title and optional description. Select internal scope or an active Client.
+4. Save, then open the assessment detail page.
+5. Check the saved scope, title and status. New records use the configured Risk defaults.
 
-- **Risk Assessment** is the container for a risk analysis. It may be internal or linked to a Client.
-  Assessments also store `work_context_id` so internal and client-scoped risk can be filtered
-  consistently across reports and integrations.
-- **Risk Item** is the current snapshot of one identified risk.
-- **Risk Item Update** is the history timeline for score and status changes.
+An internal assessment has no Client. A Client-specific assessment must reference an active Client.
+The saved Work Context follows that selection. Browser lists use the active workspace context;
+API lists use explicit filters and never change the technician's workspace.
 
-Likelihood and impact are scored from 1 to 5. The current score is calculated as likelihood multiplied
-by impact.
+## Add and review risks
 
-Once a Risk Item has history, likelihood, impact, and status should be changed through the item update
-workflow rather than through descriptive item edits. This protects the audit trail.
+1. Open an assessment and add an item using its item form.
+2. Enter its title, category, description and recommended actions. Confirm likelihood and impact,
+   each from 1 to 5, and the next review date.
+3. Save. The item receives one initial history entry. Score equals likelihood multiplied by impact.
+4. Open the item and use **Add Update** to record a decision, new score or status.
+5. Inspect the timeline and current snapshot after saving.
 
-## API
+Use descriptive editing for title, description, recommended actions, conclusion, category and review
+date. Once history exists, changed likelihood, impact or status must use **Add Update**. A conflicting
+edit is rejected without saving the other fields. Saving unchanged hidden score fields remains valid.
+Only Superuser or the creator of the first remaining history entry may edit item details.
 
-Risk exposes API routes under `/api/v1/risk` for trusted integrations, reporting workflows, and future
-AI-assisted analysis.
+## Approval and subsequent changes
 
-Implemented scopes:
+Approval requires at least one active item and every active item must be **mitigated** or **accepted**.
+Open or unknown older statuses block approval until deliberately reviewed. Existing statuses are not
+automatically renamed or accepted.
 
-- `risk.read`: list and view risk assessments and risk items.
-- `risk.create`: create risk assessments and risk items.
-- `risk.update`: update risk assessments, risk items, and risk item history.
+Approve from the assessment detail page after checking all items. The saved approver and time describe
+that sign-off. Repeating an already current approval does not replace its time or author.
 
-Implemented routes:
+Adding, editing or deleting signed-off item/history content reopens the assessment to **in_progress**.
+The previous approval stamp remains historical evidence. API clients must inspect **approval_valid**
+and the current status before describing an assessment as currently approved.
 
-- `GET /api/v1/risk/assessments`
-- `GET /api/v1/risk/assessments/{assessment}`
-- `POST /api/v1/risk/assessments`
-- `PUT /api/v1/risk/assessments/{assessment}`
-- `PATCH /api/v1/risk/assessments/{assessment}`
-- `POST /api/v1/risk/assessments/{assessment}/items`
-- `GET /api/v1/risk/items/{item}`
-- `PUT /api/v1/risk/items/{item}`
-- `PATCH /api/v1/risk/items/{item}`
-- `POST /api/v1/risk/items/{item}/updates`
+## Delete with care
 
-API create and update operations use the same action classes as the Tech UI.
+- Assessment and item deletion requires Superuser and the current Risk delete permission.
+  These are soft deletions; no restore or force-delete workflow is added.
+- Deleting a history entry requires its exact creator or Superuser, plus Risk delete permission.
+  The current item snapshot is restored from the newest remaining entry, using time and ID order.
+- Deleting the final history entry leaves the current snapshot unchanged and an empty timeline.
+  It does not invent a replacement baseline or grant another employee ownership.
+- Item/history API paths become unavailable when their assessment or item has been deleted.
 
-Assessment list responses expose `work_context_id` and `work_context`. `GET /api/v1/risk/assessments`
-supports `client_id`, `work_context_id`, and `context_type` filters. `context_type=internal` returns
-assessments with the internal Work Context, while `context_type=client` returns client-scoped
-assessments.
+## Reports, API and troubleshooting
 
-Creating or updating an assessment with no `client_id` creates internal risk work. Supplying
-`client_id` resolves that Client's Work Context and keeps the existing client relation.
+Export PDF from the assessment detail page. Browser and API use the same report, category grouping,
+history and score thresholds: 16+ Critical, 10+ High, 5+ Medium, otherwise Low.
 
-`PUT` and `PATCH /api/v1/risk/items/{item}` are for descriptive fields such as title, description,
-recommended actions, conclusion, category, and next review date.
-
-`POST /api/v1/risk/items/{item}/updates` is the correct endpoint for changing likelihood, impact, and
-status after the item has been created.
+See **Risk API Support** for API keys, every endpoint, current rights, revision protection and replay.
+See **Risk Settings** for defaults. If approval is unavailable, inspect all active item statuses.
+If an item edit is denied, check its first remaining history creator and your current permissions.
+An old approval timestamp does not by itself mean the changed assessment is still signed off.

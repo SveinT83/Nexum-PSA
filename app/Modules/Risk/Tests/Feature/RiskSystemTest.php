@@ -188,11 +188,11 @@ class RiskSystemTest extends TestCase
             ->assertJsonPath('data.0.id', $assessmentId);
 
         $this->patchJson(route('api.v1.risk.items.update', $itemId), [
+            'title' => 'API Risk Item Updated', 'likelihood' => 5, 'impact' => 5,
+        ])->assertUnprocessable();
+        $this->patchJson(route('api.v1.risk.items.update', $itemId), [
             'title' => 'API Risk Item Updated',
-            'likelihood' => 5,
-            'impact' => 5,
-        ])
-            ->assertOk()
+        ])->assertOk()
             ->assertJsonPath('data.title', 'API Risk Item Updated')
             ->assertJsonPath('data.score', 12);
 
@@ -311,8 +311,8 @@ class RiskSystemTest extends TestCase
 
         $response = $this->put(route('tech.risk.items.update', $riskItem), [
             'title' => 'Updated Title',
-            'likelihood' => 2,
-            'impact' => 2,
+            'likelihood' => 1,
+            'impact' => 1,
             'status' => 'open',
         ]);
 
@@ -351,6 +351,9 @@ class RiskSystemTest extends TestCase
             'status' => 'accepted',
         ]);
 
+        $response->assertSessionHasErrors('likelihood');
+        $this->assertEquals('History Risk', $riskItem->fresh()->title);
+        $this->put(route('tech.risk.items.update', $riskItem), ['title' => 'New Title'])->assertSessionHas('success');
         $riskItem = $riskItem->fresh();
         $this->assertEquals('New Title', $riskItem->title);
         $this->assertEquals(2, $riskItem->likelihood);

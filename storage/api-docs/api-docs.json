@@ -59979,14 +59979,191 @@
                 "tags": [
                     "Risk"
                 ],
-                "summary": "Get list of risk assessments",
-                "operationId": "getRiskAssessmentList",
+                "summary": "assessments",
+                "description": "Scope risk.read; current actor rights risk.view; parent/owner checks remain authoritative.",
+                "operationId": "riskApiAssessmentsGet",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "scope",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "internal",
+                                "client"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "client_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "work_context_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "context_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "internal",
+                                "client"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "created_at",
+                                "updated_at",
+                                "title",
+                                "status"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Successful operation"
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiAssessmentList"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Missing risk.read scope"
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -59999,17 +60176,111 @@
                 "tags": [
                     "Risk"
                 ],
-                "summary": "Create risk assessment",
-                "operationId": "createRiskAssessment",
+                "summary": "storeAssessment",
+                "description": "Scope risk.create; current actor rights risk.create; parent/owner checks remain authoritative.",
+                "operationId": "riskApiStoreAssessmentPost",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RiskApiAssessmentCreate"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "201": {
-                        "description": "Assessment created"
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiAssessmentResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Missing risk.create scope"
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -60024,8 +60295,9 @@
                 "tags": [
                     "Risk"
                 ],
-                "summary": "Get risk assessment",
-                "operationId": "getRiskAssessmentById",
+                "summary": "showAssessment",
+                "description": "Scope risk.read; current actor rights risk.view; parent/owner checks remain authoritative.",
+                "operationId": "riskApiShowAssessmentGet",
                 "parameters": [
                     {
                         "name": "assessment",
@@ -60038,13 +60310,350 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful operation"
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiAssessmentResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Missing risk.read scope"
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Assessment not found"
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "updateAssessment",
+                "description": "Scope risk.update; current actor rights risk.update; parent/owner checks remain authoritative.",
+                "operationId": "riskApiUpdateAssessmentPut",
+                "parameters": [
+                    {
+                        "name": "assessment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RiskApiAssessmentPatch"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiAssessmentResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "destroyAssessment",
+                "description": "Scope risk.delete; current actor rights risk.delete; parent/owner checks remain authoritative.",
+                "operationId": "riskApiDestroyAssessmentDelete",
+                "parameters": [
+                    {
+                        "name": "assessment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RiskApiEmpty"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiDeleteResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -60057,8 +60666,9 @@
                 "tags": [
                     "Risk"
                 ],
-                "summary": "Update risk assessment",
-                "operationId": "updateRiskAssessment",
+                "summary": "updateAssessment",
+                "description": "Scope risk.update; current actor rights risk.update; parent/owner checks remain authoritative.",
+                "operationId": "riskApiUpdateAssessmentPatch",
                 "parameters": [
                     {
                         "name": "assessment",
@@ -60067,20 +60677,116 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RiskApiAssessmentPatch"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Assessment updated"
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiAssessmentResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Missing risk.update scope"
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Assessment not found"
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -60091,12 +60797,13 @@
             }
         },
         "/api/v1/risk/assessments/{assessment}/items": {
-            "post": {
+            "get": {
                 "tags": [
                     "Risk"
                 ],
-                "summary": "Create risk item",
-                "operationId": "createRiskItem",
+                "summary": "items",
+                "description": "Scope risk.read; current actor rights risk.view; parent/owner checks remain authoritative.",
+                "operationId": "riskApiItemsGet",
                 "parameters": [
                     {
                         "name": "assessment",
@@ -60105,17 +60812,239 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Risk item created"
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiItemList"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Missing risk.create scope"
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "storeItem",
+                "description": "Scope risk.create; current actor rights risk.update; parent/owner checks remain authoritative.",
+                "operationId": "riskApiStoreItemPost",
+                "parameters": [
+                    {
+                        "name": "assessment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RiskApiItemCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiItemResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -60130,8 +61059,9 @@
                 "tags": [
                     "Risk"
                 ],
-                "summary": "Get risk item",
-                "operationId": "getRiskItemById",
+                "summary": "showItem",
+                "description": "Scope risk.read; current actor rights risk.view; parent/owner checks remain authoritative.",
+                "operationId": "riskApiShowItemGet",
                 "parameters": [
                     {
                         "name": "item",
@@ -60144,13 +61074,350 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful operation"
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiItemResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Missing risk.read scope"
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Risk item not found"
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "updateItem",
+                "description": "Scope risk.update; current actor rights risk.update; parent/owner checks remain authoritative.",
+                "operationId": "riskApiUpdateItemPut",
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RiskApiItemPatch"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiItemResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "destroyItem",
+                "description": "Scope risk.delete; current actor rights risk.delete; parent/owner checks remain authoritative.",
+                "operationId": "riskApiDestroyItemDelete",
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RiskApiEmpty"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiDeleteResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -60163,8 +61430,9 @@
                 "tags": [
                     "Risk"
                 ],
-                "summary": "Update risk item details",
-                "operationId": "updateRiskItem",
+                "summary": "updateItem",
+                "description": "Scope risk.update; current actor rights risk.update; parent/owner checks remain authoritative.",
+                "operationId": "riskApiUpdateItemPatch",
                 "parameters": [
                     {
                         "name": "item",
@@ -60173,20 +61441,116 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RiskApiItemPatch"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Risk item updated"
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiItemResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Missing risk.update scope"
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Risk item not found"
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -60197,12 +61561,13 @@
             }
         },
         "/api/v1/risk/items/{item}/updates": {
-            "post": {
+            "get": {
                 "tags": [
                     "Risk"
                 ],
-                "summary": "Create risk item update",
-                "operationId": "createRiskItemUpdate",
+                "summary": "updates",
+                "description": "Scope risk.read; current actor rights risk.view; parent/owner checks remain authoritative.",
+                "operationId": "riskApiUpdatesGet",
                 "parameters": [
                     {
                         "name": "item",
@@ -60211,17 +61576,239 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Risk item update created"
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiUpdateList"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Missing risk.update scope"
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "storeItemUpdate",
+                "description": "Scope risk.update; current actor rights risk.view; parent/owner checks remain authoritative.",
+                "operationId": "riskApiStoreItemUpdatePost",
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RiskApiUpdateCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiUpdateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -75730,6 +77317,1504 @@
                 ],
                 "x-required-scopes": [
                     "workdays.write"
+                ]
+            }
+        },
+        "/api/v1/risk/context": {
+            "get": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "context",
+                "description": "Scope risk.read; current actor rights risk.view; parent/owner checks remain authoritative.",
+                "operationId": "riskApiContextGet",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiContextResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/risk/context/clients": {
+            "get": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "clients",
+                "description": "Scope risk.read; current actor rights risk.view; parent/owner checks remain authoritative.",
+                "operationId": "riskApiClientsGet",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiClientLookup"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/risk/context/categories": {
+            "get": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "categories",
+                "description": "Scope risk.read; current actor rights risk.view; parent/owner checks remain authoritative.",
+                "operationId": "riskApiCategoriesGet",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiCategoryLookup"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/risk/settings": {
+            "get": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "settings",
+                "description": "Scope risk.settings.read; current actor rights risk.manage_settings; parent/owner checks remain authoritative.",
+                "operationId": "riskApiSettingsGet",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiSettingsResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "updateSettings",
+                "description": "Scope risk.settings.update; current actor rights risk.manage_settings; parent/owner checks remain authoritative.",
+                "operationId": "riskApiUpdateSettingsPut",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RiskApiSettingsPut"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiSettingsResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "updateSettings",
+                "description": "Scope risk.settings.update; current actor rights risk.manage_settings; parent/owner checks remain authoritative.",
+                "operationId": "riskApiUpdateSettingsPatch",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RiskApiSettingsPatch"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiSettingsResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/risk/operations/{command}": {
+            "get": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "operation",
+                "description": "Scope risk.operations.read; current actor rights original command authority; parent/owner checks remain authoritative.",
+                "operationId": "riskApiOperationGet",
+                "parameters": [
+                    {
+                        "name": "command",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiOperationResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/risk/assessments/{assessment}/context": {
+            "get": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "assessment",
+                "description": "Scope risk.read; current actor rights risk.view; parent/owner checks remain authoritative.",
+                "operationId": "riskApiAssessmentGet",
+                "parameters": [
+                    {
+                        "name": "assessment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiContextResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/risk/assessments/{assessment}/approve": {
+            "post": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "approve",
+                "description": "Scope risk.approve; current actor rights risk.view; parent/owner checks remain authoritative.",
+                "operationId": "riskApiApprovePost",
+                "parameters": [
+                    {
+                        "name": "assessment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RiskApiEmpty"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiAssessmentResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/risk/assessments/{assessment}/pdf": {
+            "get": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "pdf",
+                "description": "Scope risk.read; current actor rights risk.view; parent/owner checks remain authoritative.",
+                "operationId": "riskApiPdfGet",
+                "parameters": [
+                    {
+                        "name": "assessment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Permitted Risk PDF",
+                        "content": {
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/risk/items/{item}/context": {
+            "get": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "item",
+                "description": "Scope risk.read; current actor rights risk.view; parent/owner checks remain authoritative.",
+                "operationId": "riskApiItemGet",
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiContextResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/risk/updates/{update}": {
+            "get": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "showUpdate",
+                "description": "Scope risk.read; current actor rights risk.view; parent/owner checks remain authoritative.",
+                "operationId": "riskApiShowUpdateGet",
+                "parameters": [
+                    {
+                        "name": "update",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiUpdateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "destroyUpdate",
+                "description": "Scope risk.delete; current actor rights risk.delete; parent/owner checks remain authoritative.",
+                "operationId": "riskApiDestroyUpdateDelete",
+                "parameters": [
+                    {
+                        "name": "update",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RiskApiEmpty"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized Risk result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiDeleteResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, revision or dependency refusal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiskApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
                 ]
             }
         }
@@ -94925,6 +98010,1492 @@
                                 "enum": [
                                     3
                                 ]
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiOperation": {
+                "required": [
+                    "id",
+                    "replayed"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiReference": {
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiWorkContext": {
+                "required": [
+                    "id",
+                    "type",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiResourceLinks": {
+                "required": [
+                    "self"
+                ],
+                "properties": {
+                    "self": {
+                        "type": "string"
+                    },
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiItemLinks": {
+                "required": [
+                    "self",
+                    "updates"
+                ],
+                "properties": {
+                    "self": {
+                        "type": "string"
+                    },
+                    "updates": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiUpdate": {
+                "required": [
+                    "id",
+                    "revision",
+                    "risk_item_id",
+                    "created_by",
+                    "note",
+                    "likelihood",
+                    "impact",
+                    "score",
+                    "status",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "revision": {
+                        "type": "string"
+                    },
+                    "risk_item_id": {
+                        "type": "integer"
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "note": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "likelihood": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "impact": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "score": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiItem": {
+                "required": [
+                    "id",
+                    "revision",
+                    "history_count",
+                    "original_creator_id",
+                    "risk_assessment_id",
+                    "category_id",
+                    "title",
+                    "description",
+                    "recommended_actions",
+                    "conclusion",
+                    "likelihood",
+                    "impact",
+                    "score",
+                    "status",
+                    "next_review_at",
+                    "created_at",
+                    "updated_at",
+                    "links"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "revision": {
+                        "type": "string"
+                    },
+                    "history_count": {
+                        "type": "integer"
+                    },
+                    "original_creator_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "risk_assessment_id": {
+                        "type": "integer"
+                    },
+                    "category_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "recommended_actions": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "conclusion": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "likelihood": {
+                        "type": "integer"
+                    },
+                    "impact": {
+                        "type": "integer"
+                    },
+                    "score": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "next_review_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "category": {
+                        "required": [
+                            "id",
+                            "name"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            "name": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "updates": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RiskApiUpdate"
+                        }
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "links": {
+                        "$ref": "#/components/schemas/RiskApiItemLinks"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiAssessment": {
+                "required": [
+                    "id",
+                    "revision",
+                    "approval_valid",
+                    "is_approvable",
+                    "items_count",
+                    "client_id",
+                    "work_context_id",
+                    "title",
+                    "description",
+                    "status",
+                    "approved_at",
+                    "approved_by",
+                    "total_score",
+                    "max_possible_score",
+                    "risk_percentage",
+                    "created_at",
+                    "updated_at",
+                    "links"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "revision": {
+                        "type": "string"
+                    },
+                    "approval_valid": {
+                        "type": "boolean"
+                    },
+                    "is_approvable": {
+                        "type": "boolean"
+                    },
+                    "items_count": {
+                        "type": "integer"
+                    },
+                    "client_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "work_context_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "approved_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "approved_by": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "total_score": {
+                        "type": "integer"
+                    },
+                    "max_possible_score": {
+                        "type": "integer"
+                    },
+                    "risk_percentage": {
+                        "type": "number"
+                    },
+                    "client": {
+                        "required": [
+                            "id",
+                            "name"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            "name": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "work_context": {
+                        "required": [
+                            "id",
+                            "type",
+                            "name"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            "type": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "name": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RiskApiItem"
+                        }
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "links": {
+                        "$ref": "#/components/schemas/RiskApiResourceLinks"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiAssessmentResponse": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/RiskApiAssessment"
+                    },
+                    "operation": {
+                        "$ref": "#/components/schemas/RiskApiOperation"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiItemResponse": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/RiskApiItem"
+                    },
+                    "operation": {
+                        "$ref": "#/components/schemas/RiskApiOperation"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiUpdateResponse": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/RiskApiUpdate"
+                    },
+                    "operation": {
+                        "$ref": "#/components/schemas/RiskApiOperation"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiPaginationLink": {
+                "required": [
+                    "url",
+                    "label",
+                    "active"
+                ],
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiPaginationLinks": {
+                "required": [
+                    "first",
+                    "last",
+                    "prev",
+                    "next"
+                ],
+                "properties": {
+                    "first": {
+                        "type": "string"
+                    },
+                    "last": {
+                        "type": "string"
+                    },
+                    "prev": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiPaginationMeta": {
+                "required": [
+                    "current_page",
+                    "from",
+                    "last_page",
+                    "links",
+                    "path",
+                    "per_page",
+                    "to",
+                    "total"
+                ],
+                "properties": {
+                    "current_page": {
+                        "type": "integer"
+                    },
+                    "from": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "last_page": {
+                        "type": "integer"
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RiskApiPaginationLink"
+                        }
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "to": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "total": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiAssessmentList": {
+                "required": [
+                    "data",
+                    "links",
+                    "meta"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RiskApiAssessment"
+                        }
+                    },
+                    "links": {
+                        "$ref": "#/components/schemas/RiskApiPaginationLinks"
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/RiskApiPaginationMeta"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiItemList": {
+                "required": [
+                    "data",
+                    "links",
+                    "meta"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RiskApiItem"
+                        }
+                    },
+                    "links": {
+                        "$ref": "#/components/schemas/RiskApiPaginationLinks"
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/RiskApiPaginationMeta"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiUpdateList": {
+                "required": [
+                    "data",
+                    "links",
+                    "meta"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RiskApiUpdate"
+                        }
+                    },
+                    "links": {
+                        "$ref": "#/components/schemas/RiskApiPaginationLinks"
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/RiskApiPaginationMeta"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiClientOption": {
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiCategoryOption": {
+                "required": [
+                    "id",
+                    "name",
+                    "type"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiClientLookup": {
+                "required": [
+                    "data",
+                    "current_page",
+                    "first_page_url",
+                    "from",
+                    "last_page",
+                    "last_page_url",
+                    "links",
+                    "next_page_url",
+                    "path",
+                    "per_page",
+                    "prev_page_url",
+                    "to",
+                    "total"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RiskApiClientOption"
+                        }
+                    },
+                    "current_page": {
+                        "type": "integer"
+                    },
+                    "first_page_url": {
+                        "type": "string"
+                    },
+                    "from": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "last_page": {
+                        "type": "integer"
+                    },
+                    "last_page_url": {
+                        "type": "string"
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RiskApiPaginationLink"
+                        }
+                    },
+                    "next_page_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "prev_page_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "to": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "total": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiCategoryLookup": {
+                "required": [
+                    "data",
+                    "current_page",
+                    "first_page_url",
+                    "from",
+                    "last_page",
+                    "last_page_url",
+                    "links",
+                    "next_page_url",
+                    "path",
+                    "per_page",
+                    "prev_page_url",
+                    "to",
+                    "total"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RiskApiCategoryOption"
+                        }
+                    },
+                    "current_page": {
+                        "type": "integer"
+                    },
+                    "first_page_url": {
+                        "type": "string"
+                    },
+                    "from": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "last_page": {
+                        "type": "integer"
+                    },
+                    "last_page_url": {
+                        "type": "string"
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RiskApiPaginationLink"
+                        }
+                    },
+                    "next_page_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "prev_page_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "to": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "total": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiSettings": {
+                "required": [
+                    "default_assessment_scope",
+                    "default_assessment_status",
+                    "default_item_likelihood",
+                    "default_item_impact",
+                    "default_item_status",
+                    "default_item_review_days",
+                    "revision"
+                ],
+                "properties": {
+                    "default_assessment_scope": {
+                        "type": "string",
+                        "enum": [
+                            "internal",
+                            "client"
+                        ]
+                    },
+                    "default_assessment_status": {
+                        "type": "string",
+                        "enum": [
+                            "new",
+                            "open",
+                            "in_progress"
+                        ]
+                    },
+                    "default_item_likelihood": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "default_item_impact": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "default_item_status": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "mitigated",
+                            "accepted"
+                        ]
+                    },
+                    "default_item_review_days": {
+                        "type": "integer",
+                        "maximum": 3650,
+                        "minimum": 1
+                    },
+                    "revision": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiSettingsResponse": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/RiskApiSettings"
+                    },
+                    "operation": {
+                        "$ref": "#/components/schemas/RiskApiOperation"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiSettingsPut": {
+                "required": [
+                    "default_assessment_scope",
+                    "default_assessment_status",
+                    "default_item_likelihood",
+                    "default_item_impact",
+                    "default_item_status",
+                    "default_item_review_days"
+                ],
+                "properties": {
+                    "default_assessment_scope": {
+                        "type": "string",
+                        "enum": [
+                            "internal",
+                            "client"
+                        ]
+                    },
+                    "default_assessment_status": {
+                        "type": "string",
+                        "enum": [
+                            "new",
+                            "open",
+                            "in_progress"
+                        ]
+                    },
+                    "default_item_likelihood": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "default_item_impact": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "default_item_status": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "mitigated",
+                            "accepted"
+                        ]
+                    },
+                    "default_item_review_days": {
+                        "type": "integer",
+                        "maximum": 3650,
+                        "minimum": 1
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "RiskApiSettingsPatch": {
+                "required": [],
+                "properties": {
+                    "default_assessment_scope": {
+                        "type": "string",
+                        "enum": [
+                            "internal",
+                            "client"
+                        ]
+                    },
+                    "default_assessment_status": {
+                        "type": "string",
+                        "enum": [
+                            "new",
+                            "open",
+                            "in_progress"
+                        ]
+                    },
+                    "default_item_likelihood": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "default_item_impact": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "default_item_status": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "mitigated",
+                            "accepted"
+                        ]
+                    },
+                    "default_item_review_days": {
+                        "type": "integer",
+                        "maximum": 3650,
+                        "minimum": 1
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "RiskApiDeleted": {
+                "required": [
+                    "id",
+                    "resource_type",
+                    "deleted"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "resource_type": {
+                        "type": "string",
+                        "enum": [
+                            "assessment",
+                            "item",
+                            "update"
+                        ]
+                    },
+                    "deleted": {
+                        "type": "boolean"
+                    },
+                    "item": {
+                        "$ref": "#/components/schemas/RiskApiItem"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiDeleteResponse": {
+                "required": [
+                    "data",
+                    "operation"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/RiskApiDeleted"
+                    },
+                    "operation": {
+                        "$ref": "#/components/schemas/RiskApiOperation"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiOperationResponse": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "required": [
+                            "id",
+                            "state",
+                            "resource_type",
+                            "resource_id"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "state": {
+                                "type": "string",
+                                "enum": [
+                                    "completed"
+                                ]
+                            },
+                            "resource_type": {
+                                "type": "string",
+                                "enum": [
+                                    "assessment",
+                                    "item",
+                                    "update",
+                                    "settings"
+                                ]
+                            },
+                            "resource_id": {
+                                "type": "integer",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiAssessmentCreate": {
+                "required": [
+                    "title"
+                ],
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "scope": {
+                        "type": "string",
+                        "enum": [
+                            "internal",
+                            "client"
+                        ]
+                    },
+                    "client_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "new",
+                            "open",
+                            "in_progress"
+                        ]
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "RiskApiAssessmentPatch": {
+                "required": [],
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "scope": {
+                        "type": "string",
+                        "enum": [
+                            "internal",
+                            "client"
+                        ]
+                    },
+                    "client_id": {
+                        "type": "integer",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "RiskApiItemCreate": {
+                "required": [
+                    "title"
+                ],
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "recommended_actions": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "conclusion": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "category_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "likelihood": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "impact": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "mitigated",
+                            "accepted"
+                        ]
+                    },
+                    "next_review_at": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "RiskApiItemPatch": {
+                "required": [],
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "recommended_actions": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "conclusion": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "category_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "likelihood": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "impact": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "mitigated",
+                            "accepted"
+                        ]
+                    },
+                    "next_review_at": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "RiskApiUpdateCreate": {
+                "required": [
+                    "note",
+                    "status"
+                ],
+                "properties": {
+                    "note": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "mitigated",
+                            "accepted"
+                        ]
+                    },
+                    "likelihood": {
+                        "type": "integer",
+                        "nullable": true,
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "impact": {
+                        "type": "integer",
+                        "nullable": true,
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "next_review_at": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "RiskApiEmpty": {
+                "required": [],
+                "properties": {},
+                "type": "object",
+                "additionalProperties": false
+            },
+            "RiskApiError": {
+                "required": [
+                    "message"
+                ],
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiCapability": {
+                "required": [
+                    "method",
+                    "path",
+                    "ability",
+                    "actor_authorized",
+                    "token_authorized",
+                    "record_checks_required"
+                ],
+                "properties": {
+                    "method": {
+                        "type": "string"
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "ability": {
+                        "type": "string"
+                    },
+                    "actor_authorized": {
+                        "type": "boolean"
+                    },
+                    "token_authorized": {
+                        "type": "boolean"
+                    },
+                    "record_checks_required": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "RiskApiContextResponse": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "required": [
+                            "resource_type",
+                            "resource_id",
+                            "revision",
+                            "defaults",
+                            "options",
+                            "constraints",
+                            "filters",
+                            "sorts",
+                            "locked_fields",
+                            "capabilities",
+                            "lookups"
+                        ],
+                        "properties": {
+                            "resource_type": {
+                                "type": "string",
+                                "enum": [
+                                    "global",
+                                    "assessment",
+                                    "item"
+                                ]
+                            },
+                            "resource_id": {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            "revision": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "defaults": {
+                                "required": [
+                                    "assessment",
+                                    "item"
+                                ],
+                                "properties": {
+                                    "assessment": {
+                                        "required": [
+                                            "scope",
+                                            "status"
+                                        ],
+                                        "properties": {
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "status": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "item": {
+                                        "required": [
+                                            "likelihood",
+                                            "impact",
+                                            "status",
+                                            "next_review_at"
+                                        ],
+                                        "properties": {
+                                            "likelihood": {
+                                                "type": "integer"
+                                            },
+                                            "impact": {
+                                                "type": "integer"
+                                            },
+                                            "status": {
+                                                "type": "string"
+                                            },
+                                            "next_review_at": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "options": {
+                                "required": [
+                                    "scope",
+                                    "assessment_status",
+                                    "item_status"
+                                ],
+                                "properties": {
+                                    "scope": {
+                                        "required": [
+                                            "internal",
+                                            "client"
+                                        ],
+                                        "properties": {
+                                            "internal": {
+                                                "type": "string"
+                                            },
+                                            "client": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "assessment_status": {
+                                        "required": [
+                                            "new",
+                                            "open",
+                                            "in_progress"
+                                        ],
+                                        "properties": {
+                                            "new": {
+                                                "type": "string"
+                                            },
+                                            "open": {
+                                                "type": "string"
+                                            },
+                                            "in_progress": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "item_status": {
+                                        "required": [
+                                            "open",
+                                            "mitigated",
+                                            "accepted"
+                                        ],
+                                        "properties": {
+                                            "open": {
+                                                "type": "string"
+                                            },
+                                            "mitigated": {
+                                                "type": "string"
+                                            },
+                                            "accepted": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "constraints": {
+                                "required": [
+                                    "minimum_score_component",
+                                    "maximum_score_component",
+                                    "maximum_per_page",
+                                    "maximum_title_length",
+                                    "new_action_revision_required",
+                                    "new_action_idempotency_required"
+                                ],
+                                "properties": {
+                                    "minimum_score_component": {
+                                        "type": "integer"
+                                    },
+                                    "maximum_score_component": {
+                                        "type": "integer"
+                                    },
+                                    "maximum_per_page": {
+                                        "type": "integer"
+                                    },
+                                    "maximum_title_length": {
+                                        "type": "integer"
+                                    },
+                                    "new_action_revision_required": {
+                                        "type": "boolean"
+                                    },
+                                    "new_action_idempotency_required": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "filters": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "sorts": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "locked_fields": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "capabilities": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/RiskApiCapability"
+                                }
+                            },
+                            "lookups": {
+                                "required": [
+                                    "clients",
+                                    "categories"
+                                ],
+                                "properties": {
+                                    "clients": {
+                                        "type": "string"
+                                    },
+                                    "categories": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
                             }
                         },
                         "type": "object"

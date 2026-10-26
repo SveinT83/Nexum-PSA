@@ -7,7 +7,6 @@ use App\Models\Clients\Client;
 use App\Models\Risk\RiskAssessment;
 use App\Models\Risk\RiskItem;
 use App\Models\Risk\RiskItemUpdate;
-use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Risk\Actions\ApproveRiskAssessment;
 use App\Modules\Risk\Actions\DeleteRiskItemUpdate;
 use App\Modules\Risk\Actions\StoreRiskAssessment;
@@ -17,8 +16,8 @@ use App\Modules\Risk\Actions\UpdateRiskAssessment;
 use App\Modules\Risk\Actions\UpdateRiskItem;
 use App\Modules\Risk\Queries\RiskAssessmentQuery;
 use App\Modules\Risk\Support\RiskSettings;
+use App\Modules\Taxonomy\Models\Category;
 use Dompdf\Dompdf;
-use Dompdf\Options;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -146,7 +145,7 @@ class RiskController extends Controller
             return redirect()->back()->with('error', 'You do not have permission to delete this risk assessment.');
         }
 
-        $risk->delete();
+        app(\App\Modules\Risk\Actions\DeleteRiskRecord::class)->handle($risk);
 
         return redirect()->route('tech.risk.index')
             ->with('success', 'Risk assessment deleted successfully.');
@@ -269,30 +268,7 @@ class RiskController extends Controller
      */
     public function exportPdf(RiskAssessment $risk): Response
     {
-        $risk->load(['items.category', 'items.updates.creator', 'client', 'workContext', 'approver']);
-
-        $groupedItems = $risk->items
-            ->groupBy(fn (RiskItem $item) => $item->category?->name ?? 'Uncategorized')
-            ->sortKeys();
-
-        $summary = $this->summaryFor($risk);
-
-        $options = new Options();
-        $options->set('isHtml5ParserEnabled', true);
-        $options->set('isRemoteEnabled', true);
-        $options->set('isFontSubsettingEnabled', true);
-        $options->set('chroot', public_path());
-
-        $dompdf = new Dompdf($options);
-        $dompdf->loadHtml(view('risk::Tech.pdf', compact('risk', 'groupedItems', 'summary'))->render());
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->render();
-
-        $filename = 'Risikoanalyse_'.str_replace(' ', '_', $risk->title).'_'.now()->format('Y-m-d').'.pdf';
-
-        return response($dompdf->output(), 200)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="'.$filename.'"');
+        return app(\App\Modules\Risk\Actions\RenderRiskPdf::class)->handle($risk);
     }
 
     /**
@@ -340,7 +316,7 @@ class RiskController extends Controller
         }
 
         $assessment = $item->assessment;
-        $item->delete();
+        app(\App\Modules\Risk\Actions\DeleteRiskRecord::class)->handle($item);
 
         return redirect()->route('tech.risk.show', $assessment)
             ->with('success', 'Risk item deleted successfully.');
@@ -390,21 +366,4 @@ class RiskController extends Controller
      * The thresholds mirror the badge logic on the RiskItem and RiskAssessment
      * models: 16+ critical, 10+ high, 5+ medium, otherwise low.
      */
-    private function summaryFor(RiskAssessment $risk): array
-    {
-        $avgScore = $risk->items->avg('score') ?? 0;
-
-        return [
-            'total' => $risk->items->count(),
-            'mitigated' => $risk->items->whereIn('status', ['mitigated', 'accepted'])->count(),
-            'open' => $risk->items->where('status', 'open')->count(),
-            'critical_areas' => $risk->items->where('score', '>=', 16)->pluck('category.name')->unique()->filter()->values()->all(),
-            'level' => match (true) {
-                $avgScore >= 16 => 'Critical',
-                $avgScore >= 10 => 'High',
-                $avgScore >= 5 => 'Medium',
-                default => 'Low',
-            },
-        ];
-    }
 }

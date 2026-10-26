@@ -3,37 +3,25 @@
 namespace App\Modules\Risk\Actions;
 
 use App\Models\Risk\RiskItemUpdate;
-use Illuminate\Support\Facades\DB;
+use App\Modules\Risk\Support\RiskMutation;
+use App\Modules\Risk\Support\RiskPolicy;
 
-/**
- * Deletes a risk item history row and repairs the parent item snapshot.
- *
- * RiskItem stores the current state for fast listing, while RiskItemUpdate
- * stores the audit trail. When one update is removed, the current state must be
- * synchronized from the newest remaining update or the UI will show stale
- * status/score information.
- */
+/** Removing history repairs the exact newest remaining snapshot, never fabricates a baseline. */
 class DeleteRiskItemUpdate
 {
-    /**
-     * Delete the update inside a transaction and resync status, likelihood, and
-     * impact from the latest remaining update.
-     */
     public function handle(RiskItemUpdate $update): void
     {
-        $item = $update->riskItem;
-
-        DB::transaction(function () use ($item, $update) {
+        $item = RiskPolicy::item($update->risk_item_id);
+        app(RiskMutation::class)->run('risk.delete', $item->risk_assessment_id, function ($assessment) use ($update, $item) {
+            $update = RiskPolicy::update($update->id);
+            RiskPolicy::deleteUpdate($update->created_by);
+            $item = RiskPolicy::item($item->id);
             $update->delete();
-
-            $latest = $item->updates()->latest()->first();
-
+            $latest = $item->updates()->reorder()->orderByDesc('created_at')->orderByDesc('id')->first();
             if ($latest) {
-                $item->status = $latest->status;
-                $item->likelihood = $latest->likelihood;
-                $item->impact = $latest->impact;
-                $item->save();
+                $item->update(['status' => $latest->status, 'likelihood' => $latest->likelihood, 'impact' => $latest->impact]);
             }
+            RiskMutation::reopen($assessment);
         });
     }
 }
