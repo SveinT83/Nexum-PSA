@@ -1,5 +1,68 @@
 # Human Review Register
 
+### HR-2026-10-26-STORAGE-API - Full Storage Browser/API Coverage
+
+Status: Reviewed
+Reviewer: Svein Tore
+Reviewed: 2026-10-26
+Approval: explicit user message, Godkjenner. Merg til main.
+Added: 2026-10-26
+Environment: Dev
+Owner: Codex. Named reviewer: Svein Tore.
+Related: docs/rfc/2026-10-26-storage-full-api-parity.md; Issue #299.
+Gate: human scenario acceptance blocks production release/provider activation.
+Main promotion requires explicit separate authorization. Automated tests do not
+complete this checklist.
+
+Scope: complete supported inventory, supplier lookup, purchasing, receiving,
+picking, import review and administrator policy/profile operations through APIs.
+Preserve #286 numbering contributor work and its separate unresolved criteria.
+
+- [ ] Search an active supplier, match/create an item, register an externally
+      placed order and read back supplier/order/line identities using API only.
+- [ ] Compare inventory incoming/on-hand/reserved/available, supplier details,
+      movement history, boxes and all relevant browser filters with API results.
+- [ ] Pick reserved ordinary stock; verify one movement, reservation/cost state
+      and correct Economy/Ticket effects; tracked-unit refusal remains honest.
+- [ ] Partial receiving, shipment/tracking, cancellations, close and eligible
+      reversal preserve immutable ledger and overage permissions.
+- [ ] Review import evidence, map/create item, correct/retry/finalize/reject;
+      preserve source, deduplication and actual queued versus finished state.
+- [ ] Administrator profile fixture/version validation, activation, rollback,
+      pause/retire/export/import and policy/default-warehouse changes match browser.
+- [ ] Current user/token rights, nested ownership, stale revisions, keyed replay
+      and provider-disabled/unknown outcomes behave as documented.
+- [ ] Verify trusted Swagger and actual published employee handbook/access.
+- [ ] Separately authorize any controlled provider scenario; default-off API
+      gates and existing worker/backlog settings must not be changed implicitly.
+
+Implementation verification (2026-10-26): Done On Dev. Final affected tests 615 / 7717
+(no failures/skips), including Storage 287 / 4556. 78 HTTP operations and 132 schemas
+match runtime/Swagger; actual successful response bodies are checked. 36 syntax/Pint
+checks, native MySQL lock/unique/rollback/encryption and trusted HTTPS read-back pass.
+Knowledge and actual handbook content/access are verified; the full guide is in
+BookStack Storage Inventory 386. Employee OpenWebUI retrieval remains untested.
+Source: docs/plans/2026-10-26-storage-api-verification.md and .json.
+
+Affected browser pages: /tech/storage, /tech/storage/items/{item}/edit,
+/tech/storage/boxes/{box}, /tech/storage/picking, /tech/storage/purchase-orders,
+/tech/storage/receiving, /tech/storage/supplier-order-imports and the Storage
+inventory, automation-policy and supplier-profile administration pages.
+
+Dev migration 2026_10_26_030000_create_storage_api_commands.php is installed in batch 29.
+Future approved deployment: apply only this exact additive migration, clear/rebuild
+the installation's normal route/config caches and generate Swagger. No frontend
+build, worker/scheduler activation or live provider test is required by this change.
+Preserve APP_KEY/command receipts on rollback. API AI repair and automation switches
+remain false. #286 numbering is a preserved separate dependency for a clean Main
+candidate; unrelated dirty changes must not be included accidentally.
+
+Human acceptance and Main promotion are explicitly approved by Svein Tore.
+Checkboxes above retain their original execution detail; no independently witnessed
+manual scenario execution or production deployment is inferred from approval.
+
+
+
 ## HR-2026-10-26-ASSETS-API - Full Assets Browser/API Coverage
 
 Status: Pending human scenario verification. Date: 2026-10-26.

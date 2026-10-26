@@ -440,3 +440,12 @@ Immediately before delivery, Nexum rechecks the active non-system user, current 
 permission, and exact current alert target. Lock-screen content identifies only an import exception
 or digest and links to the guarded Storage page. It does not expose Supplier identity, order numbers,
 line data, error details, source Email, attachment names, model/provider output, or credentials.
+
+## Full Storage API coverage (Dev, 2026-10-26)
+
+The Storage API guide documents the complete supported browser/API workflow,
+required token scopes and current user permissions, supplier lookup, inventory and
+incoming quantities, purchasing/receiving, picking, import review, profiles and
+settings. This update is verified on Dev; Main, production and named human review
+are separate gates. See **Storage Inventory -> Storage API guide** in the handbook and Swagger on the
+target installation. The separate Issue #286 numbering contract remains open.

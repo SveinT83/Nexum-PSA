@@ -50,11 +50,26 @@ class StorageIndexQuery
                 fn ($query, $supplierId) => $query->where('storage_items.primary_vendor_id', $supplierId)
             );
 
+        foreach (['sku', 'ean_number', 'status', 'box_id'] as $field) {
+            if (isset($filters[$field]) && $filters[$field] !== '') {
+                $query->where('storage_items.'.$field, $filters[$field]);
+            }
+        }
+
         $this->applySorting($query, $filters);
 
         return $query
             ->paginate($perPage)
             ->withQueryString();
+    }
+
+    public function withIncoming(Item $item): Item
+    {
+        $value = Item::query()->whereKey($item->id)
+            ->select(['qty_incoming' => $this->incomingQuantitySubquery()])->first();
+        $item->setAttribute('qty_incoming', (int) ($value?->qty_incoming ?? 0));
+
+        return $item;
     }
 
     /**

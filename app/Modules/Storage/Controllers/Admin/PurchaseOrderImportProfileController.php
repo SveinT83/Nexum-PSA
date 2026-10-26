@@ -28,8 +28,6 @@ use App\Modules\Storage\Requests\Admin\UpdatePurchaseOrderImportProfileMetadataR
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class PurchaseOrderImportProfileController extends Controller
@@ -63,35 +61,7 @@ class PurchaseOrderImportProfileController extends Controller
         CreateSupplierOrderProfileVersion $createVersion
     ): RedirectResponse {
         $data = $request->validated();
-        if (($data['definition']['match'] ?? null) !== $data['matching_scope']) {
-            throw ValidationException::withMessages([
-                'matching_scope' => 'Matching scope must exactly match the definition match block.',
-            ]);
-        }
-
-        $result = DB::transaction(function () use ($data, $request, $createVersion): array {
-            $profile = PurchaseOrderImportProfile::query()->create([
-                'vendor_id' => $data['vendor_id'] ?? null,
-                'name' => $data['name'],
-                'slug' => $data['slug'],
-                'description' => $data['description'] ?? null,
-                'lifecycle_state' => PurchaseOrderImportProfile::STATE_DRAFT,
-                'priority' => $data['priority'],
-                'matching_scope' => $data['matching_scope'],
-                'policy_overrides' => $data['policy_overrides'] ?? [],
-                'health_state' => 'unknown',
-                'created_by' => $request->user()->id,
-                'updated_by' => $request->user()->id,
-            ]);
-            $version = $createVersion->handle(
-                profile: $profile,
-                definition: $data['definition'],
-                source: 'manual',
-                actor: $request->user(),
-            );
-
-            return compact('profile', 'version');
-        });
+        $result = ['profile' => app(\App\Modules\Storage\Actions\CreateSupplierOrderProfile::class)->handle($data, $request->user())];
 
         return redirect()
             ->route('tech.admin.settings.storage.supplier-order-profiles.show', $result['profile'])
@@ -342,108 +312,6 @@ class PurchaseOrderImportProfileController extends Controller
      */
     private function defaultDefinition(): array
     {
-        return [
-            'schema_version' => 'storage.supplier_order_profile.v1',
-            'document_type' => 'supplier_order_confirmation',
-            'locale' => [
-                'language' => 'nb-NO',
-                'decimal_separator' => ',',
-                'thousands_separators' => [' ', '.', "\u{00A0}"],
-                'date_formats' => ['Y-m-d', 'd.m.Y'],
-            ],
-            'match' => [
-                'mailboxes' => ['INBOX'],
-                'recipients' => ['purchasing@example.no'],
-                'senders' => ['orders@supplier.example'],
-                'sender_domains' => ['supplier.example'],
-                'subject_markers' => ['order confirmation'],
-                'body_markers' => ['order number'],
-                'authenticated_supplier_domains' => ['supplier.example'],
-                'require_trusted_auth' => true,
-                'require_aligned' => true,
-            ],
-            'defaults' => [
-                'warehouse_id' => null,
-                'currency' => 'NOK',
-                'ordered_date_fallback' => 'received_at',
-            ],
-            'item_defaults' => [
-                'vat_rate' => null,
-                'has_serials' => false,
-                'track_batch' => false,
-                'expiry_enabled' => false,
-                'becomes_asset' => false,
-                'default_warranty_months' => null,
-                'lead_time_days' => 0,
-                'moq' => 1,
-            ],
-            'fields' => [
-                'external_order_number' => [
-                    'source' => 'label',
-                    'type' => 'string',
-                    'required' => true,
-                    'labels' => ['Order number', 'Ordrenummer'],
-                    'value_offset' => 0,
-                ],
-                'currency' => [
-                    'source' => 'fixed',
-                    'type' => 'currency',
-                    'required' => true,
-                    'value' => 'NOK',
-                ],
-            ],
-            'lines' => [
-                'max_matches' => 250,
-                'fields' => [
-                    'supplier_sku' => [
-                        'capture' => 'supplier_sku',
-                        'type' => 'string',
-                        'required' => true,
-                        'source_column' => 'supplier_sku',
-                    ],
-                    'description' => [
-                        'capture' => 'description',
-                        'type' => 'string',
-                        'required' => true,
-                        'source_column' => 'description',
-                    ],
-                    'quantity' => [
-                        'capture' => 'quantity',
-                        'type' => 'decimal',
-                        'required' => true,
-                        'source_column' => 'quantity',
-                    ],
-                    'unit_price' => [
-                        'capture' => 'unit_price',
-                        'type' => 'decimal',
-                        'required' => true,
-                        'source_column' => 'unit_price',
-                    ],
-                    'line_total' => [
-                        'capture' => 'line_total',
-                        'type' => 'decimal',
-                        'required' => true,
-                        'source_column' => 'line_total',
-                    ],
-                ],
-                'html_table' => [
-                    'header_aliases' => [
-                        'supplier_sku' => ['SKU', 'Item number', 'Varenummer'],
-                        'description' => ['Description', 'Beskrivelse'],
-                        'quantity' => ['Quantity', 'Antall'],
-                        'unit_price' => ['Unit price', 'Enhetspris'],
-                        'line_total' => ['Line total', 'Linjesum'],
-                    ],
-                    'required_columns' => ['supplier_sku', 'quantity', 'unit_price'],
-                ],
-            ],
-            'validation' => [
-                'required_fields' => ['external_order_number', 'currency'],
-                'amount_tolerance' => 0.01,
-                'max_lines' => 250,
-                'max_quantity' => 10000,
-                'max_order_total' => 1000000,
-            ],
-        ];
+        return app(\App\Modules\Storage\Support\SupplierOrderProfileDefaults::class)->definition();
     }
 }

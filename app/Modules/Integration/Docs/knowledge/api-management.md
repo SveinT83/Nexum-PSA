@@ -1382,3 +1382,16 @@ Production deployment is not verified; check the installation's deployed Swagger
 before using new routes. API provider writes remain independently disabled by default.
 Client archive/delete policy and new Contact portal invitation behavior are separate
 workstreams and are not enabled by this delivery.
+
+## Storage complete browser/API coverage (Dev, 2026-10-26)
+
+Storage has 78 supported HTTP operations covering inventory, safe canonical supplier
+lookup, supplier orders/shipments/receipts, picking, import resolution/execution,
+profiles and inventory/policy administration. Use **Storage Inventory -> Storage API guide** in the handbook for
+the end-to-end purchase workflow and Swagger for exact contracts. Both token scopes
+and current active internal-user permissions apply, including to legacy endpoints.
+New writes require keyed execution; operation results are durable, encrypted and
+restricted to the same actor/token with original rights rechecked. AI repair and
+API automation execution stay default-off and require explicit confirmation. A queued
+import or unknown provider result is not completion. This is a Dev-only update until
+separately promoted/deployed and reviewed under HR-2026-10-26-STORAGE-API.

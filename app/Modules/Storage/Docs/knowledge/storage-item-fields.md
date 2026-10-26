@@ -59,3 +59,12 @@ workflow when available.
 Master data rule:
 
 Vendors and suppliers are not created inline inside Storage item forms. They are created in Documentation because Assets, Storage, Commercial, and future purchase ordering all use the same `vendors` table.
+
+## Full Storage API coverage (Dev, 2026-10-26)
+
+The Storage API guide documents the complete supported browser/API workflow,
+required token scopes and current user permissions, supplier lookup, inventory and
+incoming quantities, purchasing/receiving, picking, import review, profiles and
+settings. This update is verified on Dev; Main, production and named human review
+are separate gates. See **Storage Inventory -> Storage API guide** in the handbook and Swagger on the
+target installation. The separate Issue #286 numbering contract remains open.

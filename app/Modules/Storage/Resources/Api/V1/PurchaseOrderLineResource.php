@@ -11,7 +11,11 @@ class PurchaseOrderLineResource extends JsonResource
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
-        $canReadTickets = $request->user()?->tokenCan('tickets.read') === true;
+        $canReadTickets = $request->user()?->tokenCan('tickets.read') === true
+            && \App\Modules\Storage\Support\StorageApiAccess::allows($request->user(), 'ticket.view');
+        if ($canReadTickets) {
+            \App\Modules\Storage\Support\StorageApiAccess::retainResponseAuthority($request, ['ticket.view'], ['tickets.read']);
+        }
         $metadata = $this->metadata;
         if (! $canReadTickets && is_array($metadata)) {
             $metadata = Arr::except($metadata, ['ticket_key', 'approved_quote_version_id']);

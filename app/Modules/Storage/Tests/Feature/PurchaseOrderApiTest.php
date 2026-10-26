@@ -42,6 +42,10 @@ class PurchaseOrderApiTest extends TestCase
         parent::setUp();
 
         $this->actor = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $this->actor->givePermissionTo([
+            'storage.purchase_view', 'storage.purchase_manage', 'storage.purchase_receive',
+            'storage.purchase_receive_overage', 'storage.purchase_reverse',
+        ]);
         $this->vendor = Vendor::query()->create([
             'name' => 'API Supplier',
             'vendor_code' => 'API-SUPPLIER',

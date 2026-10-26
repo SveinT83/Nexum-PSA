@@ -24,6 +24,7 @@ class StorePurchaseOrder
         private readonly SyncPurchaseOrderLines $syncLines,
         private readonly RefreshPurchaseOrderStatus $refreshStatus,
         private readonly EnsurePurchaseOrderSupplierIdentityAvailable $identityAvailable,
+        private readonly AllocatePurchaseOrderNumber $allocatePoNumber,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -33,7 +34,7 @@ class StorePurchaseOrder
         $data['currency'] = strtoupper((string) ($data['currency'] ?? 'NOK'));
 
         $validated = Validator::make($data, [
-            'po_number' => ['required', 'string', 'max:255', 'unique:storage_purchase_orders,po_number'],
+            'po_number' => ['nullable', 'string', 'max:255', 'unique:storage_purchase_orders,po_number'],
             'vendor_id' => ['required', 'integer', 'exists:vendors,id'],
             'deliver_to_warehouse_id' => ['required', 'integer', 'exists:storage_warehouses,id'],
             'status' => ['required', Rule::in([
@@ -82,7 +83,9 @@ class StorePurchaseOrder
                 : [];
 
             $attributes = [
-                'po_number' => trim($validated['po_number']),
+                'po_number' => filled($validated['po_number'] ?? null)
+                    ? trim($validated['po_number'])
+                    : 'pending-db-id-'.str()->uuid(),
                 'vendor_id' => $vendor->id,
                 'supplier_name_snapshot' => $vendor->name,
                 'deliver_to_warehouse_id' => $validated['deliver_to_warehouse_id'],
@@ -100,8 +103,14 @@ class StorePurchaseOrder
             ];
             try {
                 $purchaseOrder = PurchaseOrder::query()->create($attributes);
+                $purchaseOrder = $this->allocatePoNumber->handle(
+                    $purchaseOrder,
+                    $validated['po_number'] ?? null,
+                );
             } catch (QueryException $exception) {
                 EnsurePurchaseOrderSupplierIdentityAvailable::throwWhenConstraintWasRaced($exception);
+
+                throw $exception;
             }
 
             $this->syncLines->handle($purchaseOrder, $validated['lines'], $actor);

@@ -24,101 +24,34 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
-use OpenApi\Attributes as OA;
 
-#[OA\Tag(
-    name: 'Storage',
-    description: 'API endpoints for storage inventory, warehouses, boxes, and stock adjustments.'
-)]
 class StorageController extends Controller
 {
-    #[OA\Get(
-        path: '/api/v1/storage/items',
-        operationId: 'getStorageItemList',
-        description: 'Returns a paginated list of storage items. Use q, sku, ean_number, warehouse_id, box_id, and status to narrow results.',
-        summary: 'Get list of storage items',
-        security: [['bearerAuth' => []]],
-        tags: ['Storage'],
-        parameters: [
-            new OA\Parameter(name: 'q', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
-            new OA\Parameter(name: 'sku', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
-            new OA\Parameter(name: 'ean_number', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
-            new OA\Parameter(name: 'warehouse_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
-            new OA\Parameter(name: 'box_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
-            new OA\Parameter(name: 'status', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
-            new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Successful operation'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 403, description: 'Missing storage.read scope'),
-        ]
-    )]
     public function items(Request $request)
     {
-        $query = Item::query()
-            ->with(['warehouse', 'box'])
-            ->orderBy('name');
-
-        if ($request->filled('q')) {
-            $needle = trim((string) $request->input('q'));
-            $query->where(function ($inner) use ($needle): void {
-                $inner->where('name', 'like', '%'.$needle.'%')
-                    ->orWhere('sku', 'like', '%'.$needle.'%')
-                    ->orWhere('ean_number', 'like', '%'.$needle.'%')
-                    ->orWhere('manufacturer_part_number', 'like', '%'.$needle.'%');
-            });
+        \App\Modules\Storage\Support\StorageApiInput::allowed($request, [
+            'availability', 'q', 'warehouse_id', 'supplier_id', 'sort', 'direction',
+            'sku', 'ean_number', 'status', 'box_id', 'page', 'per_page',
+        ]);
+        $request->validate(['warehouse_id' => 'sometimes|integer|min:1', 'supplier_id' => 'sometimes|integer|min:1',
+            'box_id' => 'sometimes|integer|min:1', 'sku' => 'sometimes|string|max:100', 'ean_number' => 'sometimes|string|max:100', 'availability' => 'sometimes|in:all,should_order,in_stock,out_of_stock',
+            'q' => 'sometimes|string|max:255', 'status' => 'sometimes|in:active,inactive',
+            'sort' => 'sometimes|in:'.implode(',', \App\Modules\Storage\Queries\StorageIndexQuery::SORTABLE_COLUMNS),
+            'direction' => 'sometimes|in:asc,desc']);
+        $filters = $request->all() + ['availability' => 'all', 'sort' => 'item'];
+        if (isset($filters['sku'])) {
+            $filters['sku'] = Str::upper($filters['sku']);
         }
 
-        foreach (['sku', 'ean_number', 'status'] as $field) {
-            if ($request->filled($field)) {
-                $query->where($field, $field === 'sku' ? Str::upper((string) $request->input($field)) : $request->input($field));
-            }
-        }
-
-        foreach (['warehouse_id', 'box_id'] as $field) {
-            if ($request->filled($field)) {
-                $query->where($field, $request->integer($field));
-            }
-        }
-
-        return StorageItemResource::collection($query->paginate($request->integer('per_page') ?: 15));
+        return StorageItemResource::collection(app(\App\Modules\Storage\Queries\StorageIndexQuery::class)
+            ->paginate($filters, \App\Modules\Storage\Support\StorageApiInput::page($request)));
     }
 
-    #[OA\Get(
-        path: '/api/v1/storage/items/{item}',
-        operationId: 'getStorageItemById',
-        summary: 'Get storage item',
-        security: [['bearerAuth' => []]],
-        tags: ['Storage'],
-        parameters: [
-            new OA\Parameter(name: 'item', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Successful operation'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 403, description: 'Missing storage.read scope'),
-            new OA\Response(response: 404, description: 'Item not found'),
-        ]
-    )]
     public function showItem(Item $item)
     {
         return new StorageItemResource($this->loadItem($item));
     }
 
-    #[OA\Post(
-        path: '/api/v1/storage/items',
-        operationId: 'createStorageItem',
-        summary: 'Create storage item',
-        security: [['bearerAuth' => []]],
-        tags: ['Storage'],
-        responses: [
-            new OA\Response(response: 201, description: 'Item created'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 403, description: 'Missing storage.create scope'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
     public function storeItem(Request $request, StoreItem $storeItem)
     {
         $data = $this->validatedItem($request, null);
@@ -136,40 +69,6 @@ class StorageController extends Controller
             ->setStatusCode(201);
     }
 
-    #[OA\Put(
-        path: '/api/v1/storage/items/{item}',
-        operationId: 'replaceStorageItem',
-        summary: 'Update storage item',
-        security: [['bearerAuth' => []]],
-        tags: ['Storage'],
-        parameters: [
-            new OA\Parameter(name: 'item', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Item updated'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 403, description: 'Missing storage.update scope'),
-            new OA\Response(response: 404, description: 'Item not found'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
-    #[OA\Patch(
-        path: '/api/v1/storage/items/{item}',
-        operationId: 'patchStorageItem',
-        summary: 'Partially update storage item',
-        security: [['bearerAuth' => []]],
-        tags: ['Storage'],
-        parameters: [
-            new OA\Parameter(name: 'item', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Item updated'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 403, description: 'Missing storage.update scope'),
-            new OA\Response(response: 404, description: 'Item not found'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
     public function updateItem(
         Request $request,
         Item $item,
@@ -204,29 +103,23 @@ class StorageController extends Controller
         return new StorageItemResource($this->loadItem($item));
     }
 
-    #[OA\Post(
-        path: '/api/v1/storage/items/{item}/adjust',
-        operationId: 'adjustStorageItemStock',
-        summary: 'Adjust storage item stock',
-        security: [['bearerAuth' => []]],
-        tags: ['Storage'],
-        parameters: [
-            new OA\Parameter(name: 'item', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Stock adjusted'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 403, description: 'Missing storage.update scope'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
     public function adjustItem(Request $request, Item $item, AdjustItemStock $adjustItemStock)
     {
         $data = $request->validate([
-            'delta' => ['required', 'integer', 'not_in:0'],
+            'delta' => ['required_without:adjustment_mode', 'integer', 'not_in:0'],
+            'adjustment_mode' => ['sometimes', 'in:set,increase,decrease'],
+            'quantity' => ['required_with:adjustment_mode', 'integer', 'min:0'],
             'reason' => ['required', 'string', 'max:100'],
             'note' => ['nullable', 'string', 'max:1000'],
         ]);
+
+        if (isset($data['adjustment_mode'])) {
+            $data['delta'] = match ($data['adjustment_mode']) {
+                'set' => $data['quantity'] - $item->qty_on_hand,
+                'increase' => $data['quantity'],
+                'decrease' => -$data['quantity'],
+            };
+        }
 
         try {
             $item = $adjustItemStock->handle($item, (int) $data['delta'], $data['reason'], $data['note'] ?? null, $request->user());
@@ -237,24 +130,6 @@ class StorageController extends Controller
         return new StorageItemResource($this->loadItem($item));
     }
 
-    #[OA\Delete(
-        path: '/api/v1/storage/items/{item}',
-        operationId: 'deleteStorageItem',
-        description: 'Soft-deletes a storage item when on-hand quantity, reserved quantity, active reservations, and stock unit quantities are all zero.',
-        summary: 'Delete zero-stock storage item',
-        security: [['bearerAuth' => []]],
-        tags: ['Storage'],
-        parameters: [
-            new OA\Parameter(name: 'item', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 204, description: 'Item deleted'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 403, description: 'Missing storage.update scope'),
-            new OA\Response(response: 404, description: 'Item not found'),
-            new OA\Response(response: 422, description: 'Item still has stock or reservations'),
-        ]
-    )]
     public function destroyItem(Request $request, Item $item, DeleteItem $deleteItem)
     {
         try {
@@ -266,19 +141,9 @@ class StorageController extends Controller
         return response()->noContent();
     }
 
-    #[OA\Get(
-        path: '/api/v1/storage/warehouses',
-        operationId: 'getStorageWarehouseList',
-        summary: 'Get list of storage warehouses',
-        security: [['bearerAuth' => []]],
-        tags: ['Storage'],
-        responses: [
-            new OA\Response(response: 200, description: 'Successful operation'),
-            new OA\Response(response: 403, description: 'Missing storage.read scope'),
-        ]
-    )]
     public function warehouses(Request $request)
     {
+        $request->validate(['q' => 'sometimes|string|max:255', 'is_active' => 'sometimes|boolean']);
         $query = Warehouse::query()
             ->withCount(['items', 'boxes'])
             ->orderBy('name');
@@ -291,21 +156,13 @@ class StorageController extends Controller
             });
         }
 
-        return StorageWarehouseResource::collection($query->paginate($request->integer('per_page') ?: 15));
+        if ($request->has('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+
+        return StorageWarehouseResource::collection($query->paginate(\App\Modules\Storage\Support\StorageApiInput::page($request)));
     }
 
-    #[OA\Post(
-        path: '/api/v1/storage/warehouses',
-        operationId: 'createStorageWarehouse',
-        summary: 'Create storage warehouse',
-        security: [['bearerAuth' => []]],
-        tags: ['Storage'],
-        responses: [
-            new OA\Response(response: 201, description: 'Warehouse created'),
-            new OA\Response(response: 403, description: 'Missing storage.create scope'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
     public function storeWarehouse(Request $request, StoreWarehouse $storeWarehouse)
     {
         $warehouse = $storeWarehouse->handle($request->validate([
@@ -321,22 +178,6 @@ class StorageController extends Controller
             ->setStatusCode(201);
     }
 
-    #[OA\Patch(
-        path: '/api/v1/storage/warehouses/{warehouse}',
-        operationId: 'updateStorageWarehouse',
-        summary: 'Update storage warehouse',
-        security: [['bearerAuth' => []]],
-        tags: ['Storage'],
-        parameters: [
-            new OA\Parameter(name: 'warehouse', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Warehouse updated'),
-            new OA\Response(response: 403, description: 'Missing storage.update scope'),
-            new OA\Response(response: 404, description: 'Warehouse not found'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
     public function updateWarehouse(Request $request, Warehouse $warehouse)
     {
         $data = $request->validate([
@@ -356,19 +197,10 @@ class StorageController extends Controller
         return new StorageWarehouseResource($warehouse->loadCount(['items', 'boxes']));
     }
 
-    #[OA\Get(
-        path: '/api/v1/storage/boxes',
-        operationId: 'getStorageBoxList',
-        summary: 'Get list of storage boxes',
-        security: [['bearerAuth' => []]],
-        tags: ['Storage'],
-        responses: [
-            new OA\Response(response: 200, description: 'Successful operation'),
-            new OA\Response(response: 403, description: 'Missing storage.read scope'),
-        ]
-    )]
     public function boxes(Request $request)
     {
+        $request->validate(['q' => 'sometimes|string|max:255', 'warehouse_id' => 'sometimes|integer|min:1',
+            'status' => 'sometimes|in:in_stock,in_transit,loaned,at_customer,lost,retired']);
         $query = Box::query()
             ->with('warehouse')
             ->withCount('items')
@@ -389,21 +221,9 @@ class StorageController extends Controller
             }
         }
 
-        return StorageBoxResource::collection($query->paginate($request->integer('per_page') ?: 15));
+        return StorageBoxResource::collection($query->paginate(\App\Modules\Storage\Support\StorageApiInput::page($request)));
     }
 
-    #[OA\Post(
-        path: '/api/v1/storage/boxes',
-        operationId: 'createStorageBox',
-        summary: 'Create storage box',
-        security: [['bearerAuth' => []]],
-        tags: ['Storage'],
-        responses: [
-            new OA\Response(response: 201, description: 'Box created'),
-            new OA\Response(response: 403, description: 'Missing storage.create scope'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
     public function storeBox(Request $request, StoreBox $storeBox)
     {
         $box = $storeBox->handle($this->validatedBox($request, null), $request->user());
@@ -413,22 +233,6 @@ class StorageController extends Controller
             ->setStatusCode(201);
     }
 
-    #[OA\Patch(
-        path: '/api/v1/storage/boxes/{box}',
-        operationId: 'updateStorageBox',
-        summary: 'Update storage box',
-        security: [['bearerAuth' => []]],
-        tags: ['Storage'],
-        parameters: [
-            new OA\Parameter(name: 'box', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Box updated'),
-            new OA\Response(response: 403, description: 'Missing storage.update scope'),
-            new OA\Response(response: 404, description: 'Box not found'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
     public function updateBox(Request $request, Box $box)
     {
         $data = $this->validatedBox($request, $box);
@@ -625,7 +429,9 @@ class StorageController extends Controller
 
     private function loadItem(Item $item): Item
     {
-        return $item->load(['warehouse', 'box', 'primaryVendor', 'manufacturerVendor']);
+        $item->load(['warehouse', 'box', 'primaryVendor', 'manufacturerVendor', 'itemVendors.vendor', 'movements.actor']);
+
+        return app(\App\Modules\Storage\Queries\StorageIndexQuery::class)->withIncoming($item);
     }
 
     private function loadBox(Box $box): Box
