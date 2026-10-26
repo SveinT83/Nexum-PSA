@@ -1,5 +1,41 @@
 # tdPSA Development TODO
 
+## Full Risk browser/API coverage (2026-10-26)
+
+Status: Done on Dev / Human Reviewed by Svein Tore, 2026-10-26.
+Owner/implementer: Codex. Design approver, human reviewer and release owner: Svein Tore.
+Approved concrete RFC: rfc/2026-10-26-risk-full-api-parity.md, "Godkjenner", 2026-10-26.
+All five Feature Slices and matrix R01-R16 are complete on Dev, including supported
+reads/writes/actions, context, settings, PDF, approval, soft deletion and history deletion.
+Exact contract: 27 HTTP operations / 37 schemas.
+Evidence: plans/2026-10-26-risk-api-verification.md and .json.
+Final Risk suite: 26 tests / 3246 assertions. Affected regression batch:
+163 tests / 4923 assertions (overlapping suites; do not add these totals).
+Native MySQL lock/unique/concurrent approval, trusted HTTPS/Swagger and PDF checked.
+Exact additive migration applied on Dev: 2026_10_26_010000_create_risk_api_commands.php,
+batch 27. No business-row backfill. No provider/queue/scheduler activation.
+Risk Knowledge and actual BookStack pages 447/6, 448/7, 640/1 and API Management
+449/134 published/read back exactly; inherited staff-internal access verified.
+Native automatic BookStack integration remains unavailable/pending_push; the verified
+personal publication is the actual handbook evidence. No permissions were expanded.
+
+Human review HR-2026-10-26-RISK-API: Reviewed on Svein Tore's "Godkjenner"
+after the completed Dev handoff. Original scenario boxes are retained without claiming
+individual witnessed executions.
+Remaining action (Svein Tore): explicitly authorize scoped Main promotion and
+production migration/deployment when ready. Review approval alone is not that instruction.
+No commit, push, Main merge or production deployment was performed.
+Preserve durable command receipts/APP_KEY on recovery. Domain-wide write locking
+deliberately prioritizes integrity; high-volume production performance is unmeasured.
+Prior Clients Main promotion is separate; unrelated Ticket/Task/Worklog/Calendar
+work and shared dirty files remain unchanged.
+
+
+Main promotion authorized by Svein Tore on 2026-10-26: "Ja", in direct response
+ to the explicit question to merge the approved Risk change to Main. Scoped candidate
+ verification/promotion is In Progress. Production deployment remains unauthorized.
+
+
 ## Full Clients browser/API coverage (2026-10-25)
 
 Status: Implemented and verified on authoritative Dev / Human Reviewed / Merged to Main in PR #319.

@@ -1,0 +1,472 @@
+{
+  "date": "2026-10-26",
+  "environment": "authoritative Dev",
+  "status": "implemented_verified_dev_human_reviewed",
+  "review_id": "HR-2026-10-26-RISK-API",
+  "operations": 27,
+  "schemas": 37,
+  "risk_tests": {
+    "passed": 26,
+    "assertions": 3246,
+    "seconds": 73.76
+  },
+  "affected_regressions": {
+    "passed": 163,
+    "assertions": 4923,
+    "seconds": 484.83,
+    "overlaps_risk": true
+  },
+  "workflow_tests": {
+    "R01": [
+      "reads_have_stable_paging_legacy_scope_and_conflict_validation"
+    ],
+    "R02": [
+      "context_and_lookups_are_pure_bounded_and_minimal"
+    ],
+    "R03": [
+      "risk_creation_uses_configured_defaults",
+      "metadata_patch_preserves_omission_and_rejects_ignored_or_invalid_inputs"
+    ],
+    "R04": [
+      "all_twenty_seven_success_contracts_match_real_operational_responses"
+    ],
+    "R05": [
+      "metadata_patch_preserves_omission_and_rejects_ignored_or_invalid_inputs"
+    ],
+    "R06": [
+      "risk_creation_uses_configured_defaults",
+      "browser_permission_distinctions_and_owned_history_delete_work_for_technicians"
+    ],
+    "R07": [
+      "reads_have_stable_paging_legacy_scope_and_conflict_validation",
+      "history_delete_requires_exact_creator_and_deletion_closes_all_child_paths"
+    ],
+    "R08": [
+      "item_edit_rechecks_original_creator_and_rejects_locked_fields_atomically",
+      "critical_fields_are_locked_when_history_exists",
+      "creator_can_edit_risk_item",
+      "normal_user_cannot_edit_risk_item_they_did_not_create"
+    ],
+    "R09": [
+      "approval_requires_nonempty_addressed_items_and_never_restamps_a_replay",
+      "browser_permission_distinctions_and_owned_history_delete_work_for_technicians"
+    ],
+    "R10": [
+      "history_delete_requires_exact_creator_and_deletion_closes_all_child_paths",
+      "all_twenty_seven_success_contracts_match_real_operational_responses"
+    ],
+    "R11": [
+      "deleting_newest_nonnewest_and_last_history_reconciles_deterministically",
+      "deleting_update_resets_risk_item_state",
+      "browser_permission_distinctions_and_owned_history_delete_work_for_technicians"
+    ],
+    "R12": [
+      "approval_requires_nonempty_addressed_items_and_never_restamps_a_replay",
+      "new_actions_require_revision_and_key_and_detect_same_second_changes"
+    ],
+    "R13": [
+      "pdf_returns_the_shared_binary_report_and_denies_deleted_parents",
+      "all_twenty_seven_success_contracts_match_real_operational_responses"
+    ],
+    "R14": [
+      "settings_patch_merges_full_put_validates_and_defaults_only_affect_future_records",
+      "superuser_can_update_risk_settings",
+      "context_and_lookups_are_pure_bounded_and_minimal"
+    ],
+    "R15": [
+      "every_operation_requires_its_scope_and_current_actor_permission",
+      "receipts_recheck_current_underlying_rights_and_token_ceiling",
+      "real_tokens_cannot_read_each_others_command_receipts"
+    ],
+    "R16": [
+      "every_registered_risk_api_method_has_an_exact_typed_contract",
+      "generated_swagger_contains_every_exact_method_and_response_schema",
+      "all_twenty_seven_success_contracts_match_real_operational_responses"
+    ]
+  },
+  "source_files_changed": [
+    "app/Models/Risk/RiskAssessment.php",
+    "app/Models/Risk/RiskItem.php",
+    "app/Modules/Integration/Docs/knowledge/api-management.md",
+    "app/Modules/Integration/Support/ApiAbilityCatalog.php",
+    "app/Modules/Risk/Actions/ApproveRiskAssessment.php",
+    "app/Modules/Risk/Actions/DeleteRiskItemUpdate.php",
+    "app/Modules/Risk/Actions/DeleteRiskRecord.php",
+    "app/Modules/Risk/Actions/ExecuteRiskCommand.php",
+    "app/Modules/Risk/Actions/RenderRiskPdf.php",
+    "app/Modules/Risk/Actions/StoreRiskAssessment.php",
+    "app/Modules/Risk/Actions/StoreRiskItem.php",
+    "app/Modules/Risk/Actions/StoreRiskItemUpdate.php",
+    "app/Modules/Risk/Actions/UpdateRiskAssessment.php",
+    "app/Modules/Risk/Actions/UpdateRiskItem.php",
+    "app/Modules/Risk/Actions/UpdateRiskSettings.php",
+    "app/Modules/Risk/Controllers/Admin/RiskSettingsController.php",
+    "app/Modules/Risk/Controllers/Api/V1/RiskContextController.php",
+    "app/Modules/Risk/Controllers/Api/V1/RiskController.php",
+    "app/Modules/Risk/Controllers/Tech/RiskController.php",
+    "app/Modules/Risk/Docs/knowledge/risk-api-support.md",
+    "app/Modules/Risk/Docs/knowledge/risk-overview.md",
+    "app/Modules/Risk/Docs/knowledge/risk-settings.md",
+    "app/Modules/Risk/Http/Middleware/RiskApiErrors.php",
+    "app/Modules/Risk/Http/Middleware/RiskApiGuard.php",
+    "app/Modules/Risk/Models/RiskApiCommand.php",
+    "app/Modules/Risk/README.md",
+    "app/Modules/Risk/Resources/Api/V1/RiskApiOpenApi.php",
+    "app/Modules/Risk/Resources/Api/V1/RiskAssessmentResource.php",
+    "app/Modules/Risk/Resources/Api/V1/RiskItemResource.php",
+    "app/Modules/Risk/Resources/Api/V1/RiskItemUpdateResource.php",
+    "app/Modules/Risk/Support/RiskInput.php",
+    "app/Modules/Risk/Support/RiskMutation.php",
+    "app/Modules/Risk/Support/RiskMutex.php",
+    "app/Modules/Risk/Support/RiskPayload.php",
+    "app/Modules/Risk/Support/RiskPolicy.php",
+    "app/Modules/Risk/Support/RiskRead.php",
+    "app/Modules/Risk/Support/RiskRevision.php",
+    "app/Modules/Risk/Tests/Feature/RiskApiContractTest.php",
+    "app/Modules/Risk/Tests/Feature/RiskApiParityTest.php",
+    "app/Modules/Risk/Tests/Feature/RiskSystemTest.php",
+    "app/Modules/Risk/api.php",
+    "app/Modules/Risk/routes.php",
+    "database/migrations/2026_10_26_010000_create_risk_api_commands.php"
+  ],
+  "pdf_visual_review": {
+    "pages": 1,
+    "score": 6,
+    "level": "Medium",
+    "items": 1,
+    "addressed": 1,
+    "open": 0,
+    "visual_pass": true
+  },
+  "unperformed": [
+    "Main commit/push/merge",
+    "production migration/deployment",
+    "employee OpenWebUI retrieval"
+  ],
+  "deploy_commands": [
+    "php artisan migrate --path=database/migrations/2026_10_26_010000_create_risk_api_commands.php --force",
+    "php artisan optimize:clear",
+    "php artisan l5-swagger:generate"
+  ],
+  "runtime_actions": {
+    "frontend_build": false,
+    "queue_restart": false,
+    "scheduler_change": false,
+    "provider_activation": false
+  },
+  "native": {
+    "before": {
+      "assessments": 0,
+      "items": 0,
+      "updates": 0,
+      "receipts": 0,
+      "tokens": 0,
+      "settings": 0,
+      "contexts": 1
+    },
+    "migration_batch": 27,
+    "columns": [
+      "id",
+      "actor_key",
+      "operation",
+      "key_hash",
+      "request_hash",
+      "context",
+      "result",
+      "state",
+      "created_at",
+      "updated_at"
+    ],
+    "mutex_rows": 1,
+    "database_driver": "mysql",
+    "row_lock": true,
+    "unique_identity": true,
+    "http": [
+      {
+        "path": "/context",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/context/clients?per_page={id}",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/context/categories?per_page={id}",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/settings",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/assessments?per_page={id}",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/assessments/{id}",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/assessments/{id}/context",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/assessments/{id}/items",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/items/{id}",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/items/{id}/context",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/items/{id}/updates",
+        "status": 200,
+        "json": true
+      }
+    ],
+    "pdf": {
+      "status": 200,
+      "type": "application/pdf",
+      "magic": true,
+      "bytes": 6852
+    },
+    "anonymous_status": 401,
+    "missing_status": 404,
+    "concurrency_child_waited": true,
+    "concurrency_result": {
+      "status": 409,
+      "seconds": 1.560713,
+      "transport_ok": true
+    },
+    "concurrency_child_clean": true,
+    "concurrency_no_approval": true,
+    "concurrency_no_receipt": true,
+    "deleted_parent_child_status": 404,
+    "swagger_status": 200,
+    "swagger_exact_bytes": true,
+    "swagger_methods": 27,
+    "after": {
+      "assessments": 0,
+      "items": 0,
+      "updates": 0,
+      "receipts": 0,
+      "tokens": 0,
+      "settings": 0,
+      "contexts": 1
+    },
+    "restored_counts": true
+  },
+  "knowledge": {
+    "sync": {
+      "chapters": 1,
+      "articles": 3,
+      "skipped": 0,
+      "modules": [
+        "Risk"
+      ]
+    },
+    "articles": [
+      {
+        "id": 30,
+        "source_id": "risk/risk-overview",
+        "exact_source": true,
+        "internal": true,
+        "published": true,
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 31,
+        "source_id": "risk/risk-settings",
+        "exact_source": true,
+        "internal": true,
+        "published": true,
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 29,
+        "source_id": "risk/risk-api-support",
+        "exact_source": true,
+        "internal": true,
+        "published": true,
+        "sync_status": "pending_push"
+      }
+    ],
+    "automatic_bookstack_sync_available": false,
+    "api_management_section_verified": true
+  },
+  "bookstack": {
+    "readback": [
+      {
+        "id": 447,
+        "name": "Risk Overview",
+        "revision": 6,
+        "published": true,
+        "devOnly": true,
+        "htmlPresent": true
+      },
+      {
+        "id": 448,
+        "name": "Risk Settings",
+        "revision": 7,
+        "published": true,
+        "devOnly": true,
+        "htmlPresent": true
+      },
+      {
+        "id": 640,
+        "name": "Risk API Support",
+        "revision": 1,
+        "published": true,
+        "devOnly": true,
+        "htmlPresent": true
+      },
+      {
+        "id": 449,
+        "name": "Api Management",
+        "revision": 134,
+        "published": true,
+        "devOnly": true,
+        "htmlPresent": true
+      }
+    ],
+    "pages": [
+      {
+        "id": 447,
+        "name": "Risk Overview",
+        "revision": 6,
+        "slug": "risk-overview",
+        "published": true,
+        "rendered_html_nonempty": true,
+        "exact_source": true,
+        "url": "https://doc.tronderdata.no/books/nexum-psa/page/risk-overview"
+      },
+      {
+        "id": 448,
+        "name": "Risk Settings",
+        "revision": 7,
+        "slug": "risk-settings",
+        "published": true,
+        "rendered_html_nonempty": true,
+        "exact_source": true,
+        "url": "https://doc.tronderdata.no/books/nexum-psa/page/risk-settings"
+      },
+      {
+        "id": 640,
+        "name": "Risk API Support",
+        "revision": 1,
+        "slug": "risk-api-support",
+        "published": true,
+        "rendered_html_nonempty": true,
+        "exact_source": true,
+        "url": "https://doc.tronderdata.no/books/nexum-psa/page/risk-api-support"
+      },
+      {
+        "id": 449,
+        "name": "Api Management",
+        "revision": 134,
+        "slug": "api-management",
+        "published": true,
+        "rendered_html_nonempty": true,
+        "exact_source": true,
+        "url": "https://doc.tronderdata.no/books/nexum-psa/page/api-management"
+      }
+    ],
+    "permissionInheritanceVerified": true,
+    "employeeRoleId": 2,
+    "employeeGroup": "/staff-internal",
+    "employeeViewPermissions": [
+      "book-view-all",
+      "bookshelf-view-all",
+      "chapter-view-all",
+      "page-view-all",
+      "revision-view-all"
+    ],
+    "apiManagementOutsideRiskPreserved": true
+  },
+  "source_integrity": {
+    "syntax_files": 38,
+    "syntax_errors": [],
+    "scoped_diff_check_ok": true,
+    "scoped_diff_check_output": "",
+    "dev_head_unchanged": true,
+    "index_unchanged": true
+  },
+  "final_https": {
+    "http": [
+      {
+        "path": "/api/v1/risk/context",
+        "status": 200,
+        "json": true
+      },
+      {
+        "path": "/api/v1/risk/settings",
+        "status": 200,
+        "json": true
+      }
+    ],
+    "swagger_status": 200,
+    "swagger_exact_bytes": true,
+    "operations": 27,
+    "schemas": 37,
+    "counts_unchanged": true
+  },
+  "website_editorial_handoff": {
+    "items_added": 1,
+    "exact_readback": true,
+    "status": "klar for vurdering",
+    "publication_gate": "Ikke publiser until human review, Main, production deployment and production readback",
+    "item_id": "NEXUM-2026-10-26-RISK-API"
+  },
+  "human_review": {
+    "id": "HR-2026-10-26-RISK-API",
+    "status": "Reviewed",
+    "reviewer": "Svein Tore",
+    "date": "2026-10-26",
+    "acceptance": "Godkjenner",
+    "scope": "delivered Dev Risk implementation",
+    "main_authorized": false,
+    "production_authorized": false,
+    "handbook_readback": [
+      {
+        "id": 447,
+        "revision": 7,
+        "approval_read_back": true,
+        "main_production_separate": true
+      },
+      {
+        "id": 448,
+        "revision": 8,
+        "approval_read_back": true,
+        "main_production_separate": true
+      },
+      {
+        "id": 640,
+        "revision": 2,
+        "approval_read_back": true,
+        "main_production_separate": true
+      },
+      {
+        "id": 449,
+        "revision": 135,
+        "approval_read_back": true,
+        "main_production_separate": true
+      }
+    ],
+    "tests_rerun": false,
+    "test_reason": "Documentation/status-only acceptance update; no application code changes."
+  }
+}

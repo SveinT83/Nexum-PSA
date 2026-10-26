@@ -1152,19 +1152,23 @@ calendar.
 
 ## Risk API
 
-Risk API routes expose risk assessments, risk items, and item update history for trusted automation
-and future reporting/AI workflows.
+The complete Risk workflow is implemented on Dev as of 2026-10-26: 27 HTTP operations cover
+assessment/item/history reads and writes, context, bounded lookups, approval, deletion, PDF and
+all six settings. Human review HR-2026-10-26-RISK-API is Reviewed by Svein Tore (2026-10-26).
+Main promotion and production deployment still require separate authorization.
 
-`POST /api/v1/risk/assessments` creates assessments through `StoreRiskAssessment`.
+Use **Risk API Support** in the Risk chapter for every method/path and the operational procedure.
+API Management only grants a token ceiling: current active employee rights, creator rules and
+Superuser requirements also apply. Existing tokens are not automatically widened.
 
-`POST /api/v1/risk/assessments/{assessment}/items` creates a risk item through `StoreRiskItem`,
-including the initial history row.
+Scopes: risk.read, risk.create, risk.update, risk.approve, risk.delete, risk.settings.read,
+risk.settings.update and risk.operations.read. Approval, deletion and settings writes require a
+stable Idempotency-Key and the current revision in If-Match. Legacy ordinary CRUD accepts these
+headers optionally; retries without a key have no replay guarantee.
 
-`PUT` and `PATCH /api/v1/risk/items/{item}` update descriptive risk item fields. When item history
-exists, likelihood, impact, and status remain locked just like in the Tech UI.
-
-`POST /api/v1/risk/items/{item}/updates` creates a history update and synchronizes the current item
-snapshot for likelihood, impact, status, and next review date.
+Use Add Update for scoring/status after history exists. Approval requires a nonempty set of
+mitigated/accepted items; changed item/history content reopens the assessment. Check approval_valid,
+not just an old approval timestamp. Browser and API share these rules and PDF rendering.
 
 ## Email Inbox API
 

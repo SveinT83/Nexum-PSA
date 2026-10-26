@@ -24,32 +24,37 @@ class StoreRiskItemUpdate
      */
     public function handle(RiskItem $item, array $data): RiskItemUpdate
     {
-        return DB::transaction(function () use ($item, $data) {
-            $update = RiskItemUpdate::create([
-                'risk_item_id' => $item->id,
-                'created_by' => Auth::id(),
-                'note' => $data['note'],
-                'status' => $data['status'],
-                'likelihood' => $data['likelihood'] ?? $item->likelihood,
-                'impact' => $data['impact'] ?? $item->impact,
-            ]);
+        return app(\App\Modules\Risk\Support\RiskMutation::class)->run('risk.view', $item->risk_assessment_id, function ($lockedAssessment) use ($item, $data) {
+            $item = \App\Modules\Risk\Support\RiskPolicy::item($item->id);
 
-            $item->status = $update->status;
-            $item->likelihood = $update->likelihood;
-            $item->impact = $update->impact;
+            return DB::transaction(function () use ($item, $data) {
+                $update = RiskItemUpdate::create([
+                    'risk_item_id' => $item->id,
+                    'created_by' => Auth::id(),
+                    'note' => $data['note'],
+                    'status' => $data['status'],
+                    'likelihood' => $data['likelihood'] ?? $item->likelihood,
+                    'impact' => $data['impact'] ?? $item->impact,
+                ]);
 
-            if (array_key_exists('next_review_at', $data)) {
-                $item->next_review_at = $data['next_review_at'];
-            }
+                $item->status = $update->status;
+                $item->likelihood = $update->likelihood;
+                $item->impact = $update->impact;
 
-            $item->save();
+                if (array_key_exists('next_review_at', $data)) {
+                    $item->next_review_at = $data['next_review_at'];
+                }
 
-            $assessment = $item->assessment;
-            if (in_array($assessment->status, ['new', 'approved'], true)) {
-                $assessment->update(['status' => 'in_progress']);
-            }
+                $item->save();
 
-            return $update;
+                $assessment = $item->assessment;
+                if (in_array($assessment->status, ['new', 'approved'], true)) {
+                    $assessment->update(['status' => 'in_progress']);
+                }
+
+                return $update;
+            });
+
         });
     }
 }

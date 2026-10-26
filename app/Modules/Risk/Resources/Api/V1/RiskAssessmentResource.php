@@ -14,6 +14,10 @@ class RiskAssessmentResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'revision' => \App\Modules\Risk\Support\RiskRevision::of($this->resource),
+            'approval_valid' => \App\Modules\Risk\Support\RiskRead::approvalValid($this->resource),
+            'is_approvable' => $this->is_approvable,
+            'items_count' => $this->items->count(),
             'client_id' => $this->client_id,
             'work_context_id' => $this->work_context_id,
             'title' => $this->title,

@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-26",
+  "status": "candidate_verified_merge_authorized",
+  "base_main": "3af91d5bce15c46cf3184d319cde148835297cd9",
+  "branch": "codex/risk-api-parity-main-20261026",
+  "human_review": "HR-2026-10-26-RISK-API Reviewed by Svein Tore",
+  "main_authorization": "Svein Tore: Ja, following explicit merge Risk to Main question",
+  "production": "not deployed or authorized",
+  "candidate_tests": {
+    "risk": {
+      "passed": 26,
+      "assertions": 3246,
+      "seconds": 59.33
+    },
+    "affected": {
+      "passed": 165,
+      "assertions": 4878,
+      "seconds": 399.5
+    }
+  },
+  "php_syntax_files": 38,
+  "pint_files": 38,
+  "format_changes_semantically_identical": true,
+  "native_contract": {
+    "browser_route_rows": 17,
+    "api_methods": 27,
+    "schemas": 37,
+    "scopes_actor_rights_match": true
+  },
+  "static_swagger_non_risk_paths_preserved": true,
+  "scoped_extraction": "Only approved Risk source plus five catalogue abilities and Risk-only shared documentation sections.",
+  "untouched": "Shared authoritative Dev branch/index and unrelated dirty files; production; providers; queues; scheduler.",
+  "deploy_after_separate_production_authorization": [
+    "php artisan migrate --path=database/migrations/2026_10_26_010000_create_risk_api_commands.php --force",
+    "php artisan optimize:clear",
+    "php artisan l5-swagger:generate"
+  ],
+  "recovery": "Preserve durable command tables and APP_KEY; nonempty receipt storage cannot be rolled back destructively."
+}

@@ -1,5 +1,79 @@
 # Human Review Register
 
+## HR-2026-10-26-RISK-API - Full Risk Browser/API Coverage
+
+Status: Reviewed. Human reviewer: Svein Tore. Approved: 2026-10-26.
+Acceptance: Svein Tore stated "Godkjenner" in direct response to the completed Risk
+handoff and its request to approve HR-2026-10-26-RISK-API. This accepts the delivered
+Risk scope. It does not authorize Main commit/push/merge or production deployment.
+Individual boxes are retained as the original checklist; no individually witnessed
+scenario execution is invented.
+Date: 2026-10-26. Implementation/planning owner: Codex.
+Named human reviewer, design approver and release owner: Svein Tore.
+Parent: rfc/2026-10-26-risk-full-api-parity.md (Approved: Svein Tore, "Godkjenner", 2026-10-26).
+Scope: plans/2026-10-26-risk-api-gap-matrix.md, R01-R16;
+plans/2026-10-26-risk-api-route-baseline.json.
+Gate: the Risk human-review requirement is cleared by the named acceptance above.
+Main promotion and production migration/deployment/release still require explicit
+authorization and separate verification. The earlier RFC design approval is retained.
+
+Original accepted review scope (scenario boxes retained without claiming individual execution):
+
+- [ ] Compare web/API list, internal/Client/Work Context filters, legacy null
+  context, defaults, category options, paging and complete persisted read-back.
+  Expected: same permitted records and calculations; GET creates no state/session changes.
+- [ ] Create/edit an assessment and item, including configured defaults, initial
+  history, omission/null semantics and rejection of ignored lifecycle/scoring input.
+  Expected: one atomic graph, exact score/context, no duplicate effect on replay.
+- [ ] Exercise current actor/token rights, inactive/revoked users, first remaining
+  history creator versus Superuser, settings rights and foreign/deleted parents.
+  Expected: browser/API agree; token abilities alone never grant missing authority.
+- [ ] Append/delete newest/nonnewest/last history rows, including equal timestamps,
+  and inspect current item snapshot, owner capability, review date and approval validity.
+  Expected: deterministic remaining snapshot, honest empty timeline, no invented baseline.
+- [ ] Attempt approval of empty, open, unknown legacy and fully handled item sets,
+  then mutate the approved history and repeat/stale/replay the approval command.
+  Expected: only the approved RFC rule signs off current data; actor/time is truthful,
+  old stamps are not current sign-off, and race/replay does not create a second approval.
+- [ ] Soft-delete a disposable assessment/item and verify preserved history and
+  blocked alternate child reads; delete an owned update with exact recorded outcome.
+  Expected: no force-delete/cascade/restore feature or permission expansion.
+- [ ] Inspect a synthetic API/browser PDF and all six Risk settings, including
+  partial update, bounds and missing-row GET.
+  Expected: matching permitted report/summary and correct saved future defaults.
+- [ ] Inspect exact typed Swagger and operation-to-workflow/test evidence, native
+  row-lock/unique/concurrency and trusted HTTPS/auth/PDF checks, Knowledge and actual
+  BookStack content with inherited employee scope.
+  Expected: documented supported behavior is actually present and read back.
+
+Implementation evidence: plans/2026-10-26-risk-api-verification.md and .json.
+All R01-R16 are implemented: 27 operations / 37 schemas. Final Risk suite:
+26 passed / 3246 assertions; affected regression batch: 163 passed / 4923 assertions
+(overlapping suites, not additive totals). Native MySQL row lock/unique identity and
+concurrent child-change/approval rejection, trusted HTTPS/Swagger, rendered PDF and
+actual BookStack content/inherited employee scope are verified.
+BookStack: Risk Overview 447/6, Risk Settings 448/7, Risk API Support 640/1,
+API Management 449/134. Native Knowledge is exact/internal/published; automatic
+BookStack integration is unavailable, so actual personal publication was independently read back.
+No employee OpenWebUI retrieval claim is made.
+
+Migration applied only on Dev: 2026_10_26_010000_create_risk_api_commands.php, batch 27.
+Later authorized deployment requires that exact migration, php artisan optimize:clear
+and php artisan l5-swagger:generate, followed by trusted HTTPS JSON/PDF/auth read-back.
+No frontend build, provider activation, queue restart or scheduler change is needed.
+Preserve command tables and APP_KEY on recovery; rollback refuses nonempty evidence.
+Human acceptance is recorded above; no Main/production promotion occurred. A single domain write lock trades throughput for
+integrity; production load behavior remains unmeasured.
+Risks: stale approval, lost/incorrect history, role/creator divergence, deleted-parent
+access, silently ignored fields and shared dirty-file overlap.
+Reviewed on the explicit named acceptance above, independently of automated test results.
+
+
+Main promotion authorized by Svein Tore on 2026-10-26: "Ja", in direct response
+ to the explicit question to merge the approved Risk change to Main. Scoped candidate
+ verification/promotion is In Progress. Production deployment remains unauthorized.
+
+
 ## HR-2026-10-25-CLIENTS-API - Full Clients Browser/API Coverage
 
 Status: Reviewed. Human reviewer: Svein Tore. Approved: 2026-10-25.

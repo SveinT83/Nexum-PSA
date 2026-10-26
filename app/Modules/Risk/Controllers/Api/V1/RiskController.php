@@ -5,304 +5,251 @@ namespace App\Modules\Risk\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Risk\RiskAssessment;
 use App\Models\Risk\RiskItem;
+use App\Modules\Risk\Actions\ApproveRiskAssessment;
+use App\Modules\Risk\Actions\DeleteRiskItemUpdate;
+use App\Modules\Risk\Actions\DeleteRiskRecord;
+use App\Modules\Risk\Actions\ExecuteRiskCommand;
 use App\Modules\Risk\Actions\StoreRiskAssessment;
 use App\Modules\Risk\Actions\StoreRiskItem;
 use App\Modules\Risk\Actions\StoreRiskItemUpdate;
 use App\Modules\Risk\Actions\UpdateRiskAssessment;
 use App\Modules\Risk\Actions\UpdateRiskItem;
+use App\Modules\Risk\Actions\UpdateRiskSettings;
 use App\Modules\Risk\Resources\Api\V1\RiskAssessmentResource;
 use App\Modules\Risk\Resources\Api\V1\RiskItemResource;
 use App\Modules\Risk\Resources\Api\V1\RiskItemUpdateResource;
-use App\Modules\WorkContext\Support\WorkContextType;
+use App\Modules\Risk\Support\RiskInput;
+use App\Modules\Risk\Support\RiskPayload;
+use App\Modules\Risk\Support\RiskPolicy;
+use App\Modules\Risk\Support\RiskRead;
+use App\Modules\Risk\Support\RiskRevision;
+use App\Modules\Risk\Support\RiskSettings;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
-use OpenApi\Attributes as OA;
 
-#[OA\Tag(
-    name: 'Risk',
-    description: 'API endpoints for risk assessments, risk items, and risk item updates.'
-)]
+/** Typed transport adapter; authoritative state changes are shared with the browser. */
 class RiskController extends Controller
 {
-    #[OA\Get(
-        path: '/api/v1/risk/assessments',
-        operationId: 'getRiskAssessmentList',
-        summary: 'Get list of risk assessments',
-        security: [['bearerAuth' => []]],
-        tags: ['Risk'],
-        responses: [
-            new OA\Response(response: 200, description: 'Successful operation'),
-            new OA\Response(response: 403, description: 'Missing risk.read scope'),
-        ]
-    )]
-    public function assessments(Request $request)
+    public function assessments(Request $r)
     {
-        $query = RiskAssessment::query()
-            ->with(['client', 'workContext'])
-            ->withCount('items')
-            ->latest('updated_at');
+        $v = $r->validate(['q' => 'sometimes|string|max:255', 'scope' => 'sometimes|in:internal,client', 'client_id' => 'sometimes|integer|exists:clients,id', 'work_context_id' => 'sometimes|integer|exists:work_contexts,id', 'context_type' => 'sometimes|in:internal,client', 'status' => 'sometimes|string|max:50', 'sort' => 'sometimes|in:created_at,updated_at,title,status', 'direction' => 'sometimes|in:asc,desc']);
+        abort_if(($r->input('scope') === 'internal' || $r->input('context_type') === 'internal') && $r->filled('client_id'), 422, 'Internal filters cannot include a Client.');
+        abort_if($r->filled('scope') && $r->filled('context_type') && $r->input('scope') !== $r->input('context_type'), 422, 'Conflicting scope filters.');
+        if ($r->filled('work_context_id')) {
+            $ctx = \App\Modules\WorkContext\Models\WorkContext::findOrFail($r->integer('work_context_id'));
+            abort_if($r->filled('client_id') && (int) $ctx->client_id !== $r->integer('client_id'), 422, 'Conflicting Client and Work Context.');
+            foreach (['scope', 'context_type'] as $key) {
+                abort_if($r->filled($key) && $r->input($key) !== $ctx->type, 422, 'Conflicting Work Context type.');
+            }
+        }
+        $q = RiskAssessment::query()->with(['client', 'workContext', 'items']);
+        if ($r->filled('q')) {
+            $q->where(fn ($q) => $q->where('title', 'like', '%'.$v['q'].'%')->orWhere('description', 'like', '%'.$v['q'].'%'));
+        }
+        foreach (['client_id', 'work_context_id', 'status'] as $f) {
+            if ($r->filled($f)) {
+                $q->where($f, $v[$f]);
+            }
+        }
+        if ($r->input('scope') === 'internal') {
+            $q->whereNull('client_id');
+        }
+        if ($r->input('scope') === 'client') {
+            $q->whereNotNull('client_id');
+        }
+        if ($r->filled('context_type')) {
+            $q->whereHas('workContext', fn ($q) => $q->where('type', $v['context_type']));
+        }
+        $q->orderBy($v['sort'] ?? 'updated_at', $v['direction'] ?? 'desc')->orderBy('id');
 
-        if ($request->filled('q')) {
-            $needle = trim((string) $request->input('q'));
-            $query->where(function ($inner) use ($needle): void {
-                $inner->where('title', 'like', '%'.$needle.'%')
-                    ->orWhere('description', 'like', '%'.$needle.'%');
-            });
+        return RiskAssessmentResource::collection($q->paginate(RiskRead::size($r)));
+    }
+
+    public function showAssessment($assessment)
+    {
+        return new RiskAssessmentResource(RiskRead::assessment(RiskPolicy::assessment((int) $assessment)));
+    }
+
+    public function showItem($item)
+    {
+        return new RiskItemResource(RiskRead::item(RiskPolicy::item((int) $item)));
+    }
+
+    public function showUpdate($update)
+    {
+        return new RiskItemUpdateResource(RiskPolicy::update((int) $update));
+    }
+
+    public function items(Request $r, $assessment)
+    {
+        $parent = RiskPolicy::assessment((int) $assessment);
+
+        return RiskItemResource::collection($parent->items()->with(['category', 'assessment'])->orderBy('id')->paginate(RiskRead::size($r)));
+    }
+
+    public function updates(Request $r, $item)
+    {
+        $target = RiskPolicy::item((int) $item);
+
+        return RiskItemUpdateResource::collection($target->updates()->reorder()->orderBy('created_at')->orderBy('id')->paginate(RiskRead::size($r)));
+    }
+
+    private function command(Request $r, array $ctx, callable $callback, bool $required = false, int $status = 200)
+    {
+        $command = app(ExecuteRiskCommand::class)->handle($r, $ctx, $callback, $required);
+        $result = $command['result'];
+        $kind = $result['kind'];
+        if ($result['deleted'] ?? false) {
+            $data = ['id' => $result['id'], 'resource_type' => $kind, 'deleted' => true];
+            if (isset($result['item_id']) && RiskItem::whereKey($result['item_id'])->whereHas('assessment')->exists()) {
+                $data['item'] = (new RiskItemResource(RiskRead::item(RiskPolicy::item($result['item_id']))))->resolve($r);
+            }
+        } elseif ($kind === 'assessment') {
+            $data = (new RiskAssessmentResource(RiskRead::assessment(RiskPolicy::assessment($result['id']))))->resolve($r);
+        } elseif ($kind === 'item') {
+            $data = (new RiskItemResource(RiskRead::item(RiskPolicy::item($result['id']))))->resolve($r);
+        } elseif ($kind === 'update') {
+            $data = (new RiskItemUpdateResource(RiskPolicy::update($result['id'])))->resolve($r);
+        } else {
+            $data = app(RiskSettings::class)->get() + ['revision' => RiskRevision::of(null)];
         }
 
-        if ($request->filled('client_id')) {
-            $query->where('client_id', $request->integer('client_id'));
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
-        }
-
-        if ($request->filled('work_context_id')) {
-            $query->where('work_context_id', $request->integer('work_context_id'));
-        }
-
-        if ($request->filled('context_type') && WorkContextType::isSupported($request->input('context_type'))) {
-            $query->whereHas('workContext', fn ($context) => $context->where('type', $request->input('context_type')));
-        }
-
-        return RiskAssessmentResource::collection($query->paginate($request->integer('per_page') ?: 15));
+        return response()->json(['data' => $data, 'operation' => $command['operation']], $status);
     }
 
-    #[OA\Post(
-        path: '/api/v1/risk/assessments',
-        operationId: 'createRiskAssessment',
-        summary: 'Create risk assessment',
-        security: [['bearerAuth' => []]],
-        tags: ['Risk'],
-        responses: [
-            new OA\Response(response: 201, description: 'Assessment created'),
-            new OA\Response(response: 403, description: 'Missing risk.create scope'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
-    public function storeAssessment(Request $request, StoreRiskAssessment $storeAssessment)
+    public function storeAssessment(Request $r)
     {
-        $data = $this->validatedAssessment($request, creating: true);
-        $data['scope'] ??= filled($data['client_id'] ?? null) ? 'client' : 'internal';
+        return $this->command($r, ['kind' => 'settings', 'rule' => 'create'], function () use ($r) {
+            $record = app(StoreRiskAssessment::class)->handle(RiskPayload::assessment($r, true));
 
-        $assessment = $storeAssessment->handle($data);
-
-        return (new RiskAssessmentResource($this->loadAssessment($assessment)))
-            ->response()
-            ->setStatusCode(201);
+            return ['kind' => 'assessment', 'id' => $record->id];
+        }, false, 201);
     }
 
-    #[OA\Get(
-        path: '/api/v1/risk/assessments/{assessment}',
-        operationId: 'getRiskAssessmentById',
-        summary: 'Get risk assessment',
-        security: [['bearerAuth' => []]],
-        tags: ['Risk'],
-        parameters: [
-            new OA\Parameter(name: 'assessment', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Successful operation'),
-            new OA\Response(response: 403, description: 'Missing risk.read scope'),
-            new OA\Response(response: 404, description: 'Assessment not found'),
-        ]
-    )]
-    public function showAssessment(RiskAssessment $assessment)
+    public function updateAssessment(Request $r, $assessment)
     {
-        return new RiskAssessmentResource($this->loadAssessment($assessment));
+        return $this->command($r, ['kind' => 'assessment', 'id' => (int) $assessment], function () use ($r, $assessment) {
+            $record = RiskPolicy::assessment((int) $assessment);
+            RiskRevision::check($r, $record);
+            app(UpdateRiskAssessment::class)->handle($record, RiskPayload::assessment($r, false, $record));
+
+            return ['kind' => 'assessment', 'id' => $record->id];
+        });
     }
 
-    #[OA\Patch(
-        path: '/api/v1/risk/assessments/{assessment}',
-        operationId: 'updateRiskAssessment',
-        summary: 'Update risk assessment',
-        security: [['bearerAuth' => []]],
-        tags: ['Risk'],
-        parameters: [
-            new OA\Parameter(name: 'assessment', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Assessment updated'),
-            new OA\Response(response: 403, description: 'Missing risk.update scope'),
-            new OA\Response(response: 404, description: 'Assessment not found'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
-    public function updateAssessment(Request $request, RiskAssessment $assessment, UpdateRiskAssessment $updateAssessment)
+    public function storeItem(Request $r, $assessment)
     {
-        $data = array_merge($this->payloadFromAssessment($assessment), $this->validatedAssessment($request, creating: false));
-        $data['scope'] ??= filled($data['client_id'] ?? null) ? 'client' : 'internal';
+        return $this->command($r, ['kind' => 'assessment', 'id' => (int) $assessment], function () use ($r, $assessment) {
+            $parent = RiskPolicy::assessment((int) $assessment);
+            RiskRevision::check($r, $parent);
+            $item = app(StoreRiskItem::class)->handle($parent, RiskPayload::item($r, true));
 
-        $assessment = $updateAssessment->handle($assessment, $data);
-
-        return new RiskAssessmentResource($this->loadAssessment($assessment));
+            return ['kind' => 'item', 'id' => $item->id];
+        }, false, 201);
     }
 
-    #[OA\Post(
-        path: '/api/v1/risk/assessments/{assessment}/items',
-        operationId: 'createRiskItem',
-        summary: 'Create risk item',
-        security: [['bearerAuth' => []]],
-        tags: ['Risk'],
-        parameters: [
-            new OA\Parameter(name: 'assessment', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 201, description: 'Risk item created'),
-            new OA\Response(response: 403, description: 'Missing risk.create scope'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
-    public function storeItem(Request $request, RiskAssessment $assessment, StoreRiskItem $storeItem)
+    public function updateItem(Request $r, $item)
     {
-        Auth::setUser($request->user());
+        return $this->command($r, ['kind' => 'item', 'id' => (int) $item, 'rule' => 'edit_item'], function () use ($r, $item) {
+            $record = RiskPolicy::item((int) $item);
+            RiskRevision::check($r, $record);
+            app(UpdateRiskItem::class)->handle($record, RiskPayload::item($r, false), $record->updates()->exists());
 
-        $item = $storeItem->handle($assessment, $this->validatedItem($request, creating: true));
-
-        return (new RiskItemResource($this->loadItem($item)))
-            ->response()
-            ->setStatusCode(201);
+            return ['kind' => 'item', 'id' => $record->id];
+        });
     }
 
-    #[OA\Get(
-        path: '/api/v1/risk/items/{item}',
-        operationId: 'getRiskItemById',
-        summary: 'Get risk item',
-        security: [['bearerAuth' => []]],
-        tags: ['Risk'],
-        parameters: [
-            new OA\Parameter(name: 'item', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Successful operation'),
-            new OA\Response(response: 403, description: 'Missing risk.read scope'),
-            new OA\Response(response: 404, description: 'Risk item not found'),
-        ]
-    )]
-    public function showItem(RiskItem $item)
+    public function storeItemUpdate(Request $r, $item)
     {
-        return new RiskItemResource($this->loadItem($item));
+        return $this->command($r, ['kind' => 'item', 'id' => (int) $item], function () use ($r, $item) {
+            $record = RiskPolicy::item((int) $item);
+            RiskRevision::check($r, $record);
+            $update = app(StoreRiskItemUpdate::class)->handle($record, RiskPayload::history($r));
+
+            return ['kind' => 'update', 'id' => $update->id];
+        }, false, 201);
     }
 
-    #[OA\Patch(
-        path: '/api/v1/risk/items/{item}',
-        operationId: 'updateRiskItem',
-        summary: 'Update risk item details',
-        security: [['bearerAuth' => []]],
-        tags: ['Risk'],
-        parameters: [
-            new OA\Parameter(name: 'item', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Risk item updated'),
-            new OA\Response(response: 403, description: 'Missing risk.update scope'),
-            new OA\Response(response: 404, description: 'Risk item not found'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
-    public function updateItem(Request $request, RiskItem $item, UpdateRiskItem $updateItem)
+    public function approve(Request $r, $assessment)
     {
-        Auth::setUser($request->user());
+        RiskInput::only($r, []);
 
-        $data = array_merge($this->payloadFromItem($item), $this->validatedItem($request, creating: false));
-        $item = $updateItem->handle($item, $data, $item->updates()->exists());
+        return $this->command($r, ['kind' => 'assessment', 'id' => (int) $assessment], function () use ($r, $assessment) {
+            $record = RiskPolicy::assessment((int) $assessment);
+            RiskRevision::check($r, $record, true);
+            abort_unless(app(ApproveRiskAssessment::class)->handle($record), 409, 'Every item must be mitigated or accepted, and at least one item is required.');
 
-        return new RiskItemResource($this->loadItem($item));
+            return ['kind' => 'assessment', 'id' => $record->id];
+        }, true);
     }
 
-    #[OA\Post(
-        path: '/api/v1/risk/items/{item}/updates',
-        operationId: 'createRiskItemUpdate',
-        summary: 'Create risk item update',
-        security: [['bearerAuth' => []]],
-        tags: ['Risk'],
-        parameters: [
-            new OA\Parameter(name: 'item', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 201, description: 'Risk item update created'),
-            new OA\Response(response: 403, description: 'Missing risk.update scope'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
-    public function storeItemUpdate(Request $request, RiskItem $item, StoreRiskItemUpdate $storeUpdate)
+    public function destroyAssessment(Request $r, $assessment)
     {
-        Auth::setUser($request->user());
+        RiskInput::only($r, []);
 
-        $update = $storeUpdate->handle($item, $request->validate([
-            'note' => ['required', 'string'],
-            'status' => ['required', 'string', Rule::in(['open', 'mitigated', 'accepted'])],
-            'likelihood' => ['nullable', 'integer', 'min:1', 'max:5'],
-            'impact' => ['nullable', 'integer', 'min:1', 'max:5'],
-            'next_review_at' => ['nullable', 'date'],
-        ]));
+        return $this->command($r, ['kind' => 'assessment', 'id' => (int) $assessment, 'rule' => 'delete_assessment'], function () use ($r, $assessment) {
+            $record = RiskPolicy::assessment((int) $assessment);
+            RiskRevision::check($r, $record, true);
+            app(DeleteRiskRecord::class)->handle($record);
 
-        return (new RiskItemUpdateResource($update))
-            ->response()
-            ->setStatusCode(201);
+            return ['kind' => 'assessment', 'id' => $record->id, 'deleted' => true];
+        }, true);
     }
 
-    private function validatedAssessment(Request $request, bool $creating): array
+    public function destroyItem(Request $r, $item)
     {
-        return $request->validate([
-            'title' => [$creating ? 'required' : 'sometimes', 'string', 'max:255'],
-            'description' => ['sometimes', 'nullable', 'string'],
-            'scope' => ['sometimes', Rule::in(['internal', 'client'])],
-            'client_id' => ['sometimes', 'nullable', 'integer', Rule::exists('clients', 'id')],
-            'status' => ['sometimes', 'string', 'max:50'],
-        ]);
+        RiskInput::only($r, []);
+
+        return $this->command($r, ['kind' => 'item', 'id' => (int) $item, 'rule' => 'delete_item'], function () use ($r, $item) {
+            $record = RiskPolicy::item((int) $item);
+            RiskRevision::check($r, $record, true);
+            app(DeleteRiskRecord::class)->handle($record);
+
+            return ['kind' => 'item', 'id' => $record->id, 'deleted' => true];
+        }, true);
     }
 
-    private function validatedItem(Request $request, bool $creating): array
+    public function destroyUpdate(Request $r, $update)
     {
-        return $request->validate([
-            'title' => [$creating ? 'required' : 'sometimes', 'string', 'max:255'],
-            'description' => ['sometimes', 'nullable', 'string'],
-            'recommended_actions' => ['sometimes', 'nullable', 'string'],
-            'conclusion' => ['sometimes', 'nullable', 'string'],
-            'category_id' => ['sometimes', 'nullable', 'integer', Rule::exists('categories', 'id')],
-            'likelihood' => ['sometimes', 'integer', 'min:1', 'max:5'],
-            'impact' => ['sometimes', 'integer', 'min:1', 'max:5'],
-            'status' => ['sometimes', 'string', Rule::in(['open', 'mitigated', 'accepted'])],
-            'next_review_at' => ['sometimes', 'nullable', 'date'],
-        ]);
+        RiskInput::only($r, []);
+
+        return $this->command($r, ['kind' => 'update', 'id' => (int) $update, 'rule' => 'delete_update'], function () use ($r, $update) {
+            $record = RiskPolicy::update((int) $update);
+            RiskRevision::check($r, $record, true);
+            $result = ['kind' => 'update', 'id' => $record->id, 'item_id' => $record->risk_item_id, 'update_creator' => $record->created_by, 'deleted' => true];
+            app(DeleteRiskItemUpdate::class)->handle($record);
+
+            return $result;
+        }, true);
     }
 
-    private function payloadFromAssessment(RiskAssessment $assessment): array
+    public function settings()
     {
-        return [
-            'title' => $assessment->title,
-            'description' => $assessment->description,
-            'scope' => $assessment->client_id ? 'client' : 'internal',
-            'client_id' => $assessment->client_id,
-            'status' => $assessment->status,
-        ];
+        return response()->json(['data' => app(RiskSettings::class)->get() + ['revision' => RiskRevision::of(null)]]);
     }
 
-    private function payloadFromItem(RiskItem $item): array
+    public function updateSettings(Request $r)
     {
-        return [
-            'title' => $item->title,
-            'description' => $item->description,
-            'recommended_actions' => $item->recommended_actions,
-            'conclusion' => $item->conclusion,
-            'category_id' => $item->category_id,
-            'likelihood' => $item->likelihood,
-            'impact' => $item->impact,
-            'status' => $item->status,
-            'next_review_at' => $item->next_review_at?->format('Y-m-d'),
-        ];
+        return $this->command($r, ['kind' => 'settings'], function () use ($r) {
+            RiskRevision::check($r, null, true);
+            app(UpdateRiskSettings::class)->handle($r->all(), $r->isMethod('PATCH'));
+
+            return ['kind' => 'settings'];
+        }, true);
     }
 
-    private function loadAssessment(RiskAssessment $assessment): RiskAssessment
+    public function pdf(Request $r, $assessment)
     {
-        return $assessment->load(['client', 'workContext', 'items.category', 'items.updates']);
+        RiskInput::only($r, []);
+
+        return app(\App\Modules\Risk\Actions\RenderRiskPdf::class)->handle(RiskPolicy::assessment((int) $assessment));
     }
 
-    private function loadItem(RiskItem $item): RiskItem
+    public function operation(Request $r, $command)
     {
-        return $item->load(['assessment.client', 'assessment.workContext', 'category', 'updates']);
+        $row = \App\Modules\Risk\Models\RiskApiCommand::findOrFail($command);
+        abort_unless(hash_equals($row->actor_key, ExecuteRiskCommand::actorKey($r)), 404);
+        RiskPolicy::context($row->context, $row->result);
+
+        return response()->json(['data' => ['id' => $row->id, 'state' => $row->state, 'resource_type' => $row->result['kind'], 'resource_id' => $row->result['id'] ?? null]]);
     }
 }

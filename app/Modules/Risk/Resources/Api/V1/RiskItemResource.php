@@ -14,6 +14,9 @@ class RiskItemResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'revision' => \App\Modules\Risk\Support\RiskRevision::of($this->resource),
+            'history_count' => $this->updates()->count(),
+            'original_creator_id' => $this->original_state?->created_by,
             'risk_assessment_id' => $this->risk_assessment_id,
             'category_id' => $this->category_id,
             'title' => $this->title,

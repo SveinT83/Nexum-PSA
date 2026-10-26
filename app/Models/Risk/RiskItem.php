@@ -61,6 +61,7 @@ class RiskItem extends Model
         if ($this->score >= 5) {
             return 'text-bg-warning'; // Medium
         }
+
         return 'text-bg-success'; // Low
     }
 
@@ -77,7 +78,7 @@ class RiskItem extends Model
      */
     public function updates(): HasMany
     {
-        return $this->hasMany(RiskItemUpdate::class)->orderBy('created_at', 'asc');
+        return $this->hasMany(RiskItemUpdate::class)->orderBy('created_at', 'asc')->orderBy('id', 'asc');
     }
 
     /**

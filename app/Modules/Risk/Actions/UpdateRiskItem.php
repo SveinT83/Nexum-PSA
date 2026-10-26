@@ -3,59 +3,45 @@
 namespace App\Modules\Risk\Actions;
 
 use App\Models\Risk\RiskItem;
+use App\Modules\Risk\Support\RiskMutation;
+use App\Modules\Risk\Support\RiskPolicy;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
-/**
- * Updates descriptive fields on a risk item.
- *
- * This action protects the audit trail. Once an item has RiskItemUpdate rows,
- * likelihood, impact, and status are removed from the update payload and must
- * be changed through StoreRiskItemUpdate instead.
- */
+/** Shared owner authorization and explicit immutable-scoring validation under the parent lock. */
 class UpdateRiskItem
 {
-    /**
-     * Update the item and create a history note when descriptive fields change.
-     *
-     * The generated note is intentionally simple and stable because tests and
-     * users rely on it as the audit log description for non-scoring edits.
-     */
     public function handle(RiskItem $item, array $data, bool $hasUpdates): RiskItem
     {
-        if ($hasUpdates) {
-            unset($data['likelihood'], $data['impact'], $data['status']);
-        }
+        return app(RiskMutation::class)->run('risk.update', $item->risk_assessment_id, function ($assessment) use ($item, $data) {
+            $item = RiskPolicy::item($item->id);
+            RiskPolicy::editItem($item);
+            if ($item->updates()->exists()) {
+                foreach (['likelihood', 'impact', 'status'] as $field) {
+                    if (array_key_exists($field, $data) && $data[$field] !== null && (string) $data[$field] !== (string) $item->$field) {
+                        throw ValidationException::withMessages([$field => 'Use Add Update to change historical scoring or status.']);
+                    }
+                    unset($data[$field]);
+                }
+            }
+            $before = $item->only(['title', 'description', 'recommended_actions', 'conclusion', 'category_id', 'likelihood', 'impact', 'status']);
+            $oldDate = $item->next_review_at?->format('Y-m-d');
+            $item->update($data);
+            $changes = [];
+            foreach ($before as $key => $value) {
+                if ($value != $item->$key) {
+                    $changes[] = str_replace('_', ' ', ucfirst($key));
+                }
+            }
+            if ($oldDate !== $item->next_review_at?->format('Y-m-d')) {
+                $changes[] = 'Next review';
+            }
+            if ($changes) {
+                $item->updates()->create(['created_by' => Auth::id(), 'note' => 'Risk item details updated: '.implode(', ', $changes), 'status' => $item->status, 'likelihood' => $item->likelihood, 'impact' => $item->impact]);
+                RiskMutation::reopen($assessment);
+            }
 
-        $oldValues = $item->only(['title', 'description', 'recommended_actions', 'conclusion', 'category_id']);
-        $item->update($data);
-
-        $changes = [];
-        if ($oldValues['title'] !== $item->title) {
-            $changes[] = 'Title';
-        }
-        if ($oldValues['description'] !== $item->description) {
-            $changes[] = 'Description';
-        }
-        if ($oldValues['recommended_actions'] !== $item->recommended_actions) {
-            $changes[] = 'Recommended Actions';
-        }
-        if ($oldValues['conclusion'] !== $item->conclusion) {
-            $changes[] = 'Conclusion';
-        }
-        if ($oldValues['category_id'] != $item->category_id) {
-            $changes[] = 'Category';
-        }
-
-        if ($changes !== []) {
-            $item->updates()->create([
-                'created_by' => Auth::id(),
-                'note' => 'Risk item details updated: '.implode(', ', $changes),
-                'likelihood' => $item->likelihood,
-                'impact' => $item->impact,
-                'status' => $item->status,
-            ]);
-        }
-
-        return $item;
+            return $item->fresh();
+        });
     }
 }

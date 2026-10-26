@@ -59,6 +59,7 @@ class RiskAssessment extends Model
         if ($max === 0) {
             return 0;
         }
+
         return round(($this->total_score / $max) * 100, 1);
     }
 
@@ -91,9 +92,9 @@ class RiskAssessment extends Model
         if ($averageScore >= 5) {
             return 'text-bg-warning'; // Medium
         }
+
         return 'text-bg-success'; // Low
     }
-
 
     /**
      * Check if the assessment is ready for approval.
@@ -105,7 +106,7 @@ class RiskAssessment extends Model
             return false;
         }
 
-        return $this->items->where('status', 'open')->count() === 0;
+        return $this->items->every(fn (RiskItem $item) => in_array($item->status, ['mitigated', 'accepted'], true));
     }
 
     /**
