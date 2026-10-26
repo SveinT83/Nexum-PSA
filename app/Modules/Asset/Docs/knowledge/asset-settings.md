@@ -66,3 +66,6 @@ default_ip_type and default_status together. Duplicate/unsupported types and a
 default outside enabled_types are rejected. Existing disabled types remain editable
 on their current Assets. Production deployment is separate; provider API execution
 stays default-off. Human scenario review is HR-2026-10-26-ASSETS-API (Pending).
+
+Main merge verified in PR #324 on 2026-10-26. Production rollout, provider
+activation and the pending human scenarios remain separate.

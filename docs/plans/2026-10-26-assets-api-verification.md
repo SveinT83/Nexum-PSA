@@ -139,3 +139,24 @@ candidate: it packages code implemented and tested directly on authoritative Dev
 The existing Pending HR-2026-09-03-004 Web Push Main/release gate remains unchanged;
 its unreviewed rollout is not part of this Assets promotion. RMM rule implementation
 HR-2026-08-25-014 is Reviewed; production activation is still separately gated.
+
+## Main Promotion Verified
+
+PR #324: https://github.com/SveinT83/Nexum-PSA/pull/324
+Merge SHA: fc72a278c9e0d8c9773bd6eede1f4e94024a4158
+Tested candidate: 52928ebf517c007245cf3fb49f3e8a1407b787c5
+Complete candidate/merged tree: 355ddd4c58445433d7eb2dcef7d9533af42935a3
+
+GitHub reports merged and a fresh origin/main fetch agrees. The complete merge tree
+is exactly the tested candidate tree. No production migration/deployment, provider
+activation or real provider command was performed. HR-2026-10-26-ASSETS-API remains
+Pending; named human scenario review is still required before production release.
+The website editorial item NEXUM-2026-10-26-ASSETS-API is recorded with an explicit
+do-not-publish gate. Dev HEAD/index and unrelated dirty work remain preserved.
+
+The completed Main status is also published/read back exactly in BookStack:
+452/3, 440/7, 453/3, 501/3, 502/3, 542/3, 641/2 and 449/139. Native Knowledge
+read-back was repeated with the completed Main status. Human review stays Pending.
+The scoped generated Swagger artifact and this verification report/JSON are also
+part of the changed-file manifest. Documentation-only merge records do not alter
+the application test results above.

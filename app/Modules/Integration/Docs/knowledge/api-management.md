@@ -452,7 +452,7 @@ Partial, skipped, running and unknown outcomes are explicit; interrupted executi
 is not automatically repeated. No secrets/raw provider exceptions are returned.
 
 Migration: 2026_10_26_020000_create_asset_api_commands (additive, no business backfill).
-Dev verified; scoped Main promotion explicitly authorized. Production rollout and
+Verified on Dev and merged to Main in PR #324. Production rollout and
 provider activation remain separate; HR-2026-10-26-ASSETS-API is Pending.
 
 ## Contact Write API

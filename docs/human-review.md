@@ -41,6 +41,10 @@ Automated/native/handbook/Main evidence: plans/2026-10-26-assets-api-verificatio
 and its JSON evidence. Named human review remains pending regardless of passing tests.
 
 
+Main promotion verified: PR #324, merge fc72a278c9e0d8c9773bd6eede1f4e94024a4158.
+The merged tree equals the isolated tested candidate 355ddd4c58445433d7eb2dcef7d9533af42935a3.
+Main promotion does not mark the manual scenarios Reviewed; production remains separate.
+
 ## HR-2026-10-26-RISK-API - Full Risk Browser/API Coverage
 
 Status: Reviewed. Human reviewer: Svein Tore. Approved: 2026-10-26.
