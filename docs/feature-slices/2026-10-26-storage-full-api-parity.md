@@ -105,5 +105,8 @@ Dev: 615 tests / 7717 assertions, Storage 287 / 4556, 78 HTTP operations / 132 s
 The additive Dev migration is batch 29. Eight internal Knowledge sources and seven
 actual BookStack pages are verified; the complete guide is in Inventory 386.
 Human review is approved. The unconfigured automatic sync and separate existing
-source drift remain recorded. Main promotion is authorized and under verification;
+source drift remain recorded. Main promotion is complete in PR #326;
 production/provider activation remain separate gates. See docs/plans/2026-10-26-storage-api-verification.md and .json.
+
+Main promotion completed in PR #326, ea4d0ac96db5983103d1688aeef4cf8f87a833ca.
+Candidate tests: 614 / 7654; tested/merged trees match. Production remains unchanged.

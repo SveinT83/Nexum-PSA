@@ -2,7 +2,7 @@
 
 ## Full Storage browser/API coverage (2026-10-26)
 
-Status: Done On Dev / Reviewed by Svein Tore / Main promotion in progress / Production unchanged.
+Status: Done On Dev / Reviewed by Svein Tore / Merged to Main in PR #326 / Production unchanged.
 Owner: Codex. Named human reviewer and release owner: Svein Tore.
 Direct authorization: full Storage API, "Kjør på", 2026-10-26.
 Approved RFC: rfc/2026-10-26-storage-full-api-parity.md.
@@ -33,8 +33,10 @@ SavePurchaseOrderRequest as the minimum dependency for optional-number API creat
 the protected contributor files remain unchanged in shared Dev. The form change,
 number immutability and remaining #286 acceptance are outside this promotion.
 No production deployment, grants or provider/worker activation is authorized.
-Both API execution switches remain false. Next action: verify and merge the scoped
-Main candidate, then record exact PR/tree evidence. Production rollout remains separate.
+Both API execution switches remain false. Main merge ea4d0ac96db5983103d1688aeef4cf8f87a833ca is independently verified;
+the merged tree equals the tested candidate. Candidate tests: 614 / 7654, no skips.
+Evidence: plans/2026-10-26-storage-api-main-promotion.md. No Main action remains.
+Next action (Svein Tore): separately authorize production rollout when desired.
 
 ## BookStack connector validation and existing source drift (2026-10-26)
 

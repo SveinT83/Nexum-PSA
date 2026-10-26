@@ -1,6 +1,6 @@
 # Storage API Verification And Handoff
 
-Status: **Done On Dev. Reviewed by Svein Tore. Main promotion in progress; production unchanged.**
+Status: **Done On Dev. Reviewed by Svein Tore. Main merged in PR #326; production unchanged.**
 Date: 2026-10-26. Implementation owner: Codex. Named reviewer/release owner: Svein Tore.
 Authoritative source: /var/Projects/tdPSA on Dev. Any Windows copy of this report is a reading snapshot.
 
@@ -246,3 +246,7 @@ Svein Tore approved the human-review entry and Main merge on 2026-10-26.
 The preceding Dev metrics remain the original implementation checkpoint.
 See plans/2026-10-26-storage-api-main-promotion.md for isolated candidate tests,
 numbering dependency scope and exact merge/tree evidence. Production is unchanged.
+
+Main merge verified: PR #326, ea4d0ac96db5983103d1688aeef4cf8f87a833ca.
+Isolated Main candidate: 614 tests / 7654 assertions; exact merged tree equality.
+No production rollout or provider activation. See the Main promotion record.

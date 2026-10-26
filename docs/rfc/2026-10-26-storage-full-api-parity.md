@@ -153,3 +153,6 @@ only the existing allocator/action/request prerequisite; the contributor's form 
 and the remaining #286 acceptance stay separate. Shared Dev contributor files are
 byte-identical. Production/provider activation remains unauthorized.
 Current promotion evidence: docs/plans/2026-10-26-storage-api-main-promotion.md.
+
+Main promotion completed in PR #326, ea4d0ac96db5983103d1688aeef4cf8f87a833ca.
+Candidate tests: 614 / 7654; tested/merged trees match. Production remains unchanged.
