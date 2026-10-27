@@ -7,7 +7,6 @@ use App\Models\Core\User;
 use App\Modules\UserManagement\Models\InviteToken;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
 /**
@@ -26,9 +25,9 @@ class AcceptInviteController extends Controller
      */
     public function show(string $token): View
     {
-        $inviteToken = InviteToken::where('token', $token)->first();
-
-        if (! $inviteToken || ! $inviteToken->isValid()) {
+        try {
+            $inviteToken = app(\App\Modules\UserManagement\Actions\AcceptUserInvitation::class)->inspect($token);
+        } catch (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
             return view('usermanagement::invite.expired');
         }
 
@@ -56,17 +55,11 @@ class AcceptInviteController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        $user = $inviteToken->user;
-
-        // Set password and activate the user
-        $user->update([
-            'password' => Hash::make($validated['password']),
-            'status' => User::STATUS_ACTIVE,
-            'email_verified_at' => now(),
-        ]);
-
-        // Mark token as used
-        $inviteToken->markUsed();
+        $user = app(\App\Modules\UserManagement\Actions\AcceptUserInvitation::class)->handle($token, $validated['password']);
+        if ($user->status === User::STATUS_PENDING) {
+            return redirect()->route('login')->with('status', 'Your password has been saved. An administrator must approve your account activation before you can sign in.');
+        }
+        abort_unless($user->isActive(), 403);
 
         // Log the user in
         auth()->login($user);

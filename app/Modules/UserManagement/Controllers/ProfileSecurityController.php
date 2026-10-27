@@ -6,7 +6,6 @@ use App\Actions\Fortify\UpdateUserPassword;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
@@ -35,7 +34,7 @@ class ProfileSecurityController extends Controller
             'twoFactorEnabled' => $twoFactorEnabled,
             'twoFactorConfirmed' => $twoFactorConfirmed,
             'twoFactorSetupKey' => $twoFactorEnabled && ! $twoFactorConfirmed
-                ? Crypt::decryptString($user->two_factor_secret)
+                ? \Laravel\Fortify\Fortify::currentEncrypter()->decrypt($user->two_factor_secret)
                 : null,
             'twoFactorIssuer' => config('app.name', 'Nexum PSA'),
             'twoFactorAccountName' => $user->email,
@@ -67,14 +66,7 @@ class ProfileSecurityController extends Controller
 
         $user = $request->user();
 
-        // Verify the provided code against the stored secret
-        if (! $user->verifyTwoFactorCode($request->input('code'))) {
-            return back()->withErrors(['code' => 'The provided two-factor code is invalid.']);
-        }
-
-        $user->forceFill([
-            'two_factor_confirmed_at' => now(),
-        ])->save();
+        app(\App\Modules\UserManagement\Actions\ConfirmUserTwoFactor::class)->handle($user, $request->input('code'));
 
         return redirect()->route('tech.profile.security')
             ->with('status', 'two-factor-confirmed');

@@ -61,7 +61,7 @@ class PermissionManagementController extends Controller
 
     public function permissionsDestroy(int $id): RedirectResponse
     {
-        Permission::findOrFail($id)->delete();
+        app(\App\Modules\UserManagement\Actions\DeleteUserPermission::class)->handle(Permission::findOrFail($id));
 
         return redirect()->route('tech.admin.user_management.permissions.index')
             ->with('success', 'Permission deleted successfully.');

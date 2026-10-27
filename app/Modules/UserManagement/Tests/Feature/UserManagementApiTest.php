@@ -8,7 +8,6 @@ use App\Modules\UserManagement\Models\InviteToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
-use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -40,7 +39,8 @@ class UserManagementApiTest extends TestCase
         $techRole = Role::where('name', 'Tech')->firstOrFail();
         $salesRole = Role::where('name', 'Sales')->firstOrFail();
 
-        Sanctum::actingAs($this->admin, ['users.read', 'users.create', 'users.update']);
+        \Illuminate\Support\Facades\Auth::forgetGuards();
+        $this->withToken($this->admin->createToken('User API regression', ['users.read', 'users.create', 'users.update'])->plainTextToken);
 
         $this->getJson('/api/v1/users/roles')
             ->assertOk()
@@ -115,7 +115,8 @@ class UserManagementApiTest extends TestCase
         $pending = User::factory()->create(['status' => User::STATUS_PENDING]);
         $active = User::factory()->create(['status' => User::STATUS_ACTIVE]);
 
-        Sanctum::actingAs($this->admin, ['users.update']);
+        \Illuminate\Support\Facades\Auth::forgetGuards();
+        $this->withToken($this->admin->createToken('User API regression', ['users.update'])->plainTextToken);
 
         $this->postJson("/api/v1/users/{$pending->id}/invite")
             ->assertOk()
@@ -133,7 +134,8 @@ class UserManagementApiTest extends TestCase
     {
         $user = User::factory()->create(['status' => User::STATUS_PENDING]);
 
-        Sanctum::actingAs($this->admin, ['users.read']);
+        \Illuminate\Support\Facades\Auth::forgetGuards();
+        $this->withToken($this->admin->createToken('User API regression', ['users.read'])->plainTextToken);
 
         $this->postJson("/api/v1/users/{$user->id}/status", [
             'status' => User::STATUS_ACTIVE,

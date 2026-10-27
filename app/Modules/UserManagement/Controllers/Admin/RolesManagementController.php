@@ -63,7 +63,7 @@ class RolesManagementController extends Controller
 
     public function rolesDestroy(int $id): RedirectResponse
     {
-        Role::findOrFail($id)->delete();
+        app(\App\Modules\UserManagement\Actions\DeleteUserRole::class)->handle(Role::findOrFail($id));
 
         return redirect()->route('tech.admin.user_management.roles.index')
             ->with('success', 'Role deleted successfully');

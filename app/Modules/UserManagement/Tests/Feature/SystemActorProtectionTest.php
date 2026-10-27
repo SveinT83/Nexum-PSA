@@ -6,7 +6,6 @@ use App\Models\Core\User;
 use App\Modules\Storage\Actions\SupplierOrderAutomationActor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -53,7 +52,8 @@ class SystemActorProtectionTest extends TestCase
     public function system_actor_is_hidden_and_immutable_through_the_user_api(): void
     {
         $actor = app(SupplierOrderAutomationActor::class)->resolve();
-        Sanctum::actingAs($this->admin, ['users.read', 'users.update']);
+        \Illuminate\Support\Facades\Auth::forgetGuards();
+        $this->withToken($this->admin->createToken('System actor API regression', ['users.read', 'users.update'])->plainTextToken);
 
         $this->getJson('/api/v1/users?q=Nexum%20Supplier%20Order%20Automation')
             ->assertOk()

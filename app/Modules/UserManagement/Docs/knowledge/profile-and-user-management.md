@@ -261,3 +261,12 @@ view/register/confirm permissions. In-app is selected by default; Email and Web 
 opt-in and configured channels/devices. Turn all channels off to disable reminders. These choices
 do not change working hours, calendar plans or actual confirmed time. See the Workday reminder
 guide for timing, absence handling and Snooze.
+
+## UserManagement API
+
+The full current workflow is available through typed UserManagement API operations on Dev.
+It includes own profile/avatar/preferences, user lifecycle, role/permission administration,
+MFA policy, invitations and session-bound local security/SSO. API abilities always narrow
+the account's current ordinary permissions. See [User Management API](user-management-api.md)
+for exact steps, concurrency/retry rules, local verification and deployment availability.
+Production deployment and provider/authentication activation remain separate.

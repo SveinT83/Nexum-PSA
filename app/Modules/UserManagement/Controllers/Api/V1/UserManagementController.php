@@ -12,6 +12,7 @@ use App\Modules\UserManagement\Actions\UpdateUserStatus;
 use App\Modules\UserManagement\Models\UserProfile;
 use App\Modules\UserManagement\Resources\Api\V1\UserResource;
 use App\Modules\UserManagement\Resources\Api\V1\UserRoleResource;
+use App\Modules\UserManagement\Security\Support\UserSecurityAuthCutover;
 use App\Modules\UserManagement\Support\UserProfileData;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,6 +28,8 @@ use Spatie\Permission\Models\Role;
 )]
 class UserManagementController extends Controller
 {
+    public function __construct(private readonly UserSecurityAuthCutover $securityCutover) {}
+
     /*
     |--------------------------------------------------------------------------
     | User Management API
@@ -37,17 +40,12 @@ class UserManagementController extends Controller
     |
     */
 
-    #[OA\Get(path: '/api/v1/users', operationId: 'getUsers', summary: 'List users', security: [['bearerAuth' => []]], tags: ['Users'], parameters: [
-        new OA\Parameter(name: 'q', in: 'query', schema: new OA\Schema(type: 'string')),
-        new OA\Parameter(name: 'status', in: 'query', schema: new OA\Schema(type: 'string')),
-        new OA\Parameter(name: 'role', in: 'query', schema: new OA\Schema(type: 'string')),
-    ], responses: [new OA\Response(response: 200, description: 'Paginated user list')])]
     public function index(Request $request): AnonymousResourceCollection
     {
         $validated = $request->validate([
             'q' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', Rule::in([User::STATUS_PENDING, User::STATUS_ACTIVE, User::STATUS_DISABLED])],
-            'role' => ['nullable', 'string', 'max:255'],
+            'role' => ['nullable', 'string', 'max:255', Rule::exists('roles', 'name')->where('guard_name', 'web')],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
@@ -72,7 +70,6 @@ class UserManagementController extends Controller
         return UserResource::collection($users);
     }
 
-    #[OA\Get(path: '/api/v1/users/roles', operationId: 'getUserRoles', summary: 'List roles for user assignment', security: [['bearerAuth' => []]], tags: ['Users'], responses: [new OA\Response(response: 200, description: 'Role list')])]
     public function roles(): AnonymousResourceCollection
     {
         $roles = Role::query()
@@ -91,22 +88,27 @@ class UserManagementController extends Controller
         return UserRoleResource::collection($roles);
     }
 
-    #[OA\Post(path: '/api/v1/users', operationId: 'createUser', summary: 'Create a user', security: [['bearerAuth' => []]], tags: ['Users'], responses: [new OA\Response(response: 201, description: 'User created'), new OA\Response(response: 422, description: 'Validation error')])]
     public function store(Request $request, StoreUser $storeUser): JsonResponse
     {
+        $this->denyProtectedBearerMutationAfterCutover();
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:'.(new User)->getTable().',email'],
             'status' => ['nullable', Rule::in([User::STATUS_PENDING, User::STATUS_ACTIVE, User::STATUS_DISABLED])],
-            'role_id' => ['nullable', 'integer', 'exists:roles,id'],
+            'role_id' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('roles', 'id')->where('guard_name', 'web')],
             'role_ids' => ['nullable', 'array'],
-            'role_ids.*' => ['integer', 'exists:roles,id'],
+            'role_ids.*' => ['integer', 'distinct', \Illuminate\Validation\Rule::exists('roles', 'id')->where('guard_name', 'web')],
         ]);
 
         $roleIds = collect($validated['role_ids'] ?? [])
             ->when(isset($validated['role_id']), fn ($roles) => $roles->push($validated['role_id']))
             ->unique()
             ->values();
+
+        if ($roleIds->isNotEmpty()) {
+            \App\Modules\UserManagement\Support\UserManagementApiAccess::authorize($request->user(), ['user.manage_roles']);
+        }
 
         $user = $storeUser->handle([
             'name' => $validated['name'],
@@ -116,7 +118,7 @@ class UserManagementController extends Controller
         ]);
 
         if ($roleIds->count() > 1) {
-            $user->syncRoles(Role::query()->whereIn('id', $roleIds)->get());
+            app(SyncUserRoles::class)->handle($user, Role::query()->whereIn('id', $roleIds)->get());
         }
 
         return UserResource::make($this->loadUser($user))
@@ -124,23 +126,27 @@ class UserManagementController extends Controller
             ->setStatusCode(201);
     }
 
-    #[OA\Get(path: '/api/v1/users/{user}', operationId: 'getUser', summary: 'View a user', security: [['bearerAuth' => []]], tags: ['Users'], parameters: [new OA\Parameter(name: 'user', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'User')])]
     public function show(User $user): UserResource
     {
         $this->ensureHumanUser($user);
+        $this->profileFor($user);
 
         return UserResource::make($this->loadUser($user));
     }
 
-    #[OA\Patch(path: '/api/v1/users/{user}', operationId: 'updateUser', summary: 'Update a user profile', security: [['bearerAuth' => []]], tags: ['Users'], parameters: [new OA\Parameter(name: 'user', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'User updated'), new OA\Response(response: 422, description: 'Validation error')])]
     public function update(Request $request, User $user, UpdateUserProfile $updateUserProfile): UserResource
     {
+        $this->denyProtectedBearerMutationAfterCutover();
+
         $this->ensureHumanUser($user);
         $profile = $this->profileFor($user);
 
         $validated = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique((new User)->getTable(), 'email')->ignore($user->id)],
+            'avatar' => ['nullable', 'image', 'max:2048'],
+            'work_phone' => ['nullable', 'string', 'max:50'],
+            'private_phone' => ['nullable', 'string', 'max:50'],
             'phone_work' => ['nullable', 'string', 'max:50'],
             'phone_private' => ['nullable', 'string', 'max:50'],
             'timezone' => ['sometimes', 'required', 'timezone'],
@@ -165,16 +171,23 @@ class UserManagementController extends Controller
             'remove_avatar' => false,
         ], $validated);
 
+        foreach (['work_phone' => 'phone_work', 'private_phone' => 'phone_private'] as $canonical => $alias) {
+            if (array_key_exists($canonical, $validated)) {
+                $payload[$alias] = $validated[$canonical];
+            }
+        }
+
         $payload['remove_avatar'] = $request->boolean('remove_avatar');
 
-        $updateUserProfile->handle($user, $payload);
+        $updateUserProfile->handle($user, $payload, $request->file('avatar'));
 
         return UserResource::make($this->loadUser($user->refresh()));
     }
 
-    #[OA\Post(path: '/api/v1/users/{user}/status', operationId: 'updateUserStatus', summary: 'Update user status', security: [['bearerAuth' => []]], tags: ['Users'], parameters: [new OA\Parameter(name: 'user', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'User status updated'), new OA\Response(response: 422, description: 'Validation error')])]
     public function updateStatus(Request $request, User $user, UpdateUserStatus $updateUserStatus): UserResource
     {
+        $this->denyProtectedBearerMutationAfterCutover();
+
         $this->ensureHumanUser($user);
         $validated = $request->validate([
             'status' => ['required', Rule::in([User::STATUS_PENDING, User::STATUS_ACTIVE, User::STATUS_DISABLED])],
@@ -185,13 +198,14 @@ class UserManagementController extends Controller
         return UserResource::make($this->loadUser($user->refresh()));
     }
 
-    #[OA\Post(path: '/api/v1/users/{user}/roles', operationId: 'updateUserRoles', summary: 'Replace user roles', security: [['bearerAuth' => []]], tags: ['Users'], parameters: [new OA\Parameter(name: 'user', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'User roles updated'), new OA\Response(response: 422, description: 'Validation error')])]
     public function updateRoles(Request $request, User $user, SyncUserRoles $syncUserRoles): UserResource
     {
+        $this->denyProtectedBearerMutationAfterCutover();
+
         $this->ensureHumanUser($user);
         $validated = $request->validate([
             'role_ids' => ['nullable', 'array'],
-            'role_ids.*' => ['integer', 'exists:roles,id'],
+            'role_ids.*' => ['integer', 'distinct', \Illuminate\Validation\Rule::exists('roles', 'id')->where('guard_name', 'web')],
         ]);
 
         $roles = Role::query()
@@ -203,7 +217,6 @@ class UserManagementController extends Controller
         return UserResource::make($this->loadUser($user->refresh()));
     }
 
-    #[OA\Post(path: '/api/v1/users/{user}/invite', operationId: 'sendUserInvite', summary: 'Send or resend a user invite', security: [['bearerAuth' => []]], tags: ['Users'], parameters: [new OA\Parameter(name: 'user', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'Invite queued'), new OA\Response(response: 422, description: 'Only pending users can receive invites')])]
     public function sendInvite(User $user, SendUserInvite $sendUserInvite): JsonResponse
     {
         $this->ensureHumanUser($user);
@@ -214,6 +227,7 @@ class UserManagementController extends Controller
         return response()->json([
             'data' => [
                 'message' => "Invitation sent to {$user->email}.",
+                'delivery_status' => 'queued',
                 'user' => UserResource::make($this->loadUser($user->refresh())),
             ],
         ]);
@@ -230,6 +244,18 @@ class UserManagementController extends Controller
         ]);
     }
 
+    private function denyProtectedBearerMutationAfterCutover(): void
+    {
+        if ($this->securityCutover->isEnforced()) {
+            if (! request()->hasSession() || request()->bearerToken() || ! \Illuminate\Support\Facades\Auth::guard('web')->check()) {
+                throw new \Illuminate\Http\Exceptions\HttpResponseException(response()->json(['message' => 'protected_mutation_denied'], 403));
+            }
+            \App\Modules\UserManagement\Support\UserManagementApiAccess::session(request());
+            // A real first-party session still executes the existing protected owner action.
+            // Bearer requests can never manufacture its session-bound execution context.
+        }
+    }
+
     private function ensureHumanUser(User $user): void
     {
         abort_if($user->isSystemActor(), 404);
@@ -237,20 +263,6 @@ class UserManagementController extends Controller
 
     private function profileFor(User $user): UserProfile
     {
-        $profile = UserProfile::query()->firstOrCreate(
-            ['user_id' => $user->id],
-            [
-                'work_phone' => $user->phone_work,
-                'private_phone' => $user->phone_private,
-                'timezone' => config('app.timezone', 'UTC'),
-                'working_hours' => UserProfileData::defaultWorkingHours(),
-            ]
-        );
-
-        if (empty($profile->working_hours)) {
-            $profile->forceFill(['working_hours' => UserProfileData::defaultWorkingHours()])->save();
-        }
-
-        return $profile;
+        return app(\App\Modules\UserManagement\Actions\EnsureUserProfile::class)->handle($user);
     }
 }

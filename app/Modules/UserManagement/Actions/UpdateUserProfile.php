@@ -22,14 +22,22 @@ class UpdateUserProfile
     */
     public function handle(User $user, array $data, ?UploadedFile $avatar = null): UserProfile
     {
-        return DB::transaction(function () use ($user, $data, $avatar) {
-            $user->newQuery()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+        $created = [];
+        try {
+            return DB::transaction(function () use ($user, $data, $avatar, &$created) {
+                $user->newQuery()->whereKey($user->id)->lockForUpdate()->firstOrFail();
 
-            return $this->persist($user, $data, $avatar);
-        });
+                return $this->persist($user, $data, $avatar, $created);
+            });
+        } catch (\Throwable $error) {
+            foreach ($created as $path) {
+                Storage::disk('public')->delete($path);
+            }
+            throw $error;
+        }
     }
 
-    private function persist(User $user, array $data, ?UploadedFile $avatar): UserProfile
+    private function persist(User $user, array $data, ?UploadedFile $avatar, array &$created): UserProfile
     {
         $profile = UserProfile::query()->firstOrCreate(
             ['user_id' => $user->id],
@@ -57,17 +65,21 @@ class UpdateUserProfile
             'profile_notes' => $data['profile_notes'] ?? null,
         ];
 
-        if (! empty($data['remove_avatar']) && filled($profile->avatar_path)) {
-            Storage::disk('public')->delete($profile->avatar_path);
+        $oldAvatar = $profile->avatar_path;
+        if (! empty($data['remove_avatar'])) {
             $payload['avatar_path'] = null;
         }
-
         if ($avatar) {
-            if (filled($profile->avatar_path)) {
-                Storage::disk('public')->delete($profile->avatar_path);
-            }
-
             $payload['avatar_path'] = $avatar->store('user-avatars', 'public');
+            $created[] = $payload['avatar_path'];
+            // The API's enclosing command transaction also owns rollback compensation.
+            if (request()->attributes->get('um_command_transaction')) {
+                request()->attributes->set('um_created_avatars', array_merge(
+                    request()->attributes->get('um_created_avatars', []), [$payload['avatar_path']]));
+            }
+        }
+        if (array_key_exists('avatar_path', $payload) && $oldAvatar && $oldAvatar !== $payload['avatar_path']) {
+            DB::afterCommit(fn () => Storage::disk('public')->delete($oldAvatar));
         }
 
         $profile->forceFill($payload)->save();

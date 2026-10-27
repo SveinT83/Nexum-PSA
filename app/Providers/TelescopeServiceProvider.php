@@ -46,6 +46,14 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
                 return false;
             }
 
+            // API enrollment material, OIDC capabilities and invitation URLs are not telemetry.
+            if ($entry->type === \Laravel\Telescope\EntryType::REQUEST && is_string($action)
+                && (str_contains($action, 'UserManagement\\Controllers\\Api\\V1\\SecurityApiController@')
+                    || str_contains($action, 'UserManagement\\Controllers\\Api\\V1\\PublicIdentityApiController@')
+                    || str_contains($action, 'UserManagement\\Controllers\\Api\\V1\\SsoApiController@'))) {
+                return false;
+            }
+
             if (($entry->type === \Laravel\Telescope\EntryType::REQUEST && in_array($action, [
                 'Laravel\\Fortify\\Http\\Controllers\\RecoveryCodeController@index',
                 'Laravel\\Fortify\\Http\\Controllers\\TwoFactorQrCodeController@show',
