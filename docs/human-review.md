@@ -30,9 +30,8 @@ Existing HR-2026-08-24-002 remains Reviewed; no previous review is reopened.
 
 Expected: full supported operational parity with exact typed results and unchanged
 consent, suppression, evergreen sequencing and delivery claim invariants.
-Deploy: planned additive encrypted command schema, exact filename to be finalized only
-after approved implementation, regenerated Swagger, normal caches and worker restart
-if job code changes. No new scheduler cadence or frontend build is planned.
+Deploy: exact additive migration database/migrations/2026_10_27_060000_create_marketing_api_commands.php,
+regenerated Swagger, normal caches and worker restart if changed job code is deployed. No new scheduler cadence or frontend build is planned.
 Recovery/risks: scope-only token compatibility, PII, stale/concurrent audience changes,
 external URL fetches and ambiguous SMTP. Preserve APP_KEY, receipts and delivery history;
 disable new API entry/provider execution on failure and reconcile unknown outcomes.

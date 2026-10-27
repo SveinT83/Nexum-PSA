@@ -17,8 +17,9 @@ RFC: rfc/2026-10-27-marketing-full-api-parity.md. ADR and six slices are linked 
 Evidence: plans/2026-10-27-marketing-api-verification.md/.json and coverage matrix.
 Existing campaign-view contributor fix, shared Dev work and staged index are preserved.
 The first shared-Dev broad snapshot encountered concurrent UserManagement/Contact/Email
-failures; selected reruns pass 9 / 51, while two unmerged Contact API tests remain owned
-by that active workstream. The isolated Main candidate excludes those changes.
+failures; selected reruns passed 9 / 51. Contact is now merged upstream and passes
+in the later isolated affected batch (233 tests / 3687 assertions). The earlier shared
+Dev snapshot is not a current whole-Dev pass claim.
 Next action (Codex): perform the explicitly authorized
 scoped Main merge. HR-2026-10-27-MARKETING-API remains Pending; no manual check is
 inferred. Production deployment, provider execution and worker/scheduler activation are
