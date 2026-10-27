@@ -1,5 +1,45 @@
 # tdPSA Development TODO
 
+## Full Warroom browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Human Review Reviewed / Main Merge Authorized / Candidate In Progress.
+Owner: Codex; approver and human reviewer: Svein Tore.
+Request: full current Warroom API support. Approval: "Ja godkjent", 2026-10-27.
+RFC: rfc/2026-10-27-warroom-full-api-parity.md (Approved).
+ADR: adr/2026-10-27-warroom-api-projections-and-settings.md (Accepted).
+Four sequential slices: feature-slices/2026-10-27-warroom-full-api-parity.md (Done).
+All 4 current browser operations, overdue variant and embedded actions are mapped
+to 7 typed API operations / 25 schemas with runtime/scope/test/HTTPS read-back evidence.
+Includes source-authorized Dashboard/My Day, private Calendar and ordinary mailbox
+scope, complete totals/bounded previews, all settings, stale browser/API protection,
+encrypted replay/receipts and actual current-actor/token checks.
+Final complete Warroom suite: 31 tests / 619 assertions. Other passing groups:
+343/5934, 189/1773, 45/807; overlapping runs must not be added. No failed/skipped check.
+Native MySQL rollback/replay and concurrent 200/412 with 705 ms wait passed.
+All seven HTTPS operations and published Swagger were independently read back.
+Exact additive warroom_api_commands/mutex migration applied on Dev only.
+Evidence: plans/2026-10-27-warroom-api-verification.md and contract/coverage/native/
+HTTPS/Knowledge/handbook/cleanup JSON files. Contributor work remains preserved.
+Three native sources match published/internal Knowledge. BookStack 443/444 exact
+content and existing employee scope verified; API reference lives in page 443.
+Automatic native BookStack sync remains unconfigured/unchanged. Before future
+enablement, integration owner must reconcile source/page mappings and avoid pushing
+unrelated pending content. Current manual publication is complete and verified.
+OpenWebUI employee retrieval was not tested and is a separate claim.
+HR-2026-10-27-WARROOM-API is Reviewed by Svein Tore, 2026-10-27:
+"Godkjenner" explicitly accepts the completed Dev scope and checklist. This does
+not authorize commit/push, Main promotion or production deployment.
+No commit/push, Main/production promotion, grants, provider or queue activation.
+Next action (Svein Tore/release owner): separately authorize any desired scoped
+promotion/deployment and verify its actual target. No implementation remains open. One public-safe website handoff item was read back, "Ikke publiser".
+No open Warroom Issue was found; historical #183/#202/#208 were not changed.
+
+
+Main promotion approval (Svein Tore, 2026-10-27): "Vi skal bare få alt merger til main først nå. Det er godkjent".
+Codex packages the existing verified Warroom scope from latest Main; no new product work.
+This supersedes earlier statements that Main promotion is unauthorized; production is separate.
+
+
 ## Full UserManagement browser/API coverage (2026-10-27)
 
 Status: Done On Dev / Verified / Merged to Main in PR #353 / Production not deployed.

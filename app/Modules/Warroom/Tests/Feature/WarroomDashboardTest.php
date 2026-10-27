@@ -31,7 +31,7 @@ class WarroomDashboardTest extends TestCase
 
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole('Tech');
-        $this->tech->givePermissionTo('warroom.view');
+        $this->tech->givePermissionTo(['warroom.view', 'ticket.view', 'asset.view', 'calendar.view', 'knowledge.view']);
     }
 
     #[Test]
@@ -231,6 +231,7 @@ class WarroomDashboardTest extends TestCase
 
         $this->actingAs($this->tech)
             ->put(route('tech.admin.settings.warroom.update'), [
+                'revision' => app(\App\Modules\Warroom\Actions\SaveWarroomSettings::class)->snapshot()['revision'],
                 'due_soon_hours' => 12,
                 'inbox_recent_hours' => 48,
                 'latest_tickets_limit' => 4,

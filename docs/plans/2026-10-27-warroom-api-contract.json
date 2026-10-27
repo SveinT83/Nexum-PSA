@@ -1,0 +1,130 @@
+{
+    "browser_routes": [
+        {
+            "method": "GET",
+            "uri": "\/tech\/admin\/settings\/warroom",
+            "name": "tech.admin.settings.warroom"
+        },
+        {
+            "method": "PUT",
+            "uri": "\/tech\/admin\/settings\/warroom",
+            "name": "tech.admin.settings.warroom.update"
+        },
+        {
+            "method": "GET",
+            "uri": "\/tech\/dashboard",
+            "name": "tech.dashboard"
+        },
+        {
+            "method": "GET",
+            "uri": "\/tech\/my-day",
+            "name": "tech.my-day.index"
+        }
+    ],
+    "api_operations": [
+        {
+            "method": "GET",
+            "uri": "\/api\/v1\/warroom\/context",
+            "name": "api.v1.warroom.context",
+            "ability": "warroom.read",
+            "permission": "warroom.view",
+            "operation_id": "warroomContext",
+            "schema": "WarroomApiContext",
+            "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        },
+        {
+            "method": "GET",
+            "uri": "\/api\/v1\/warroom\/dashboard",
+            "name": "api.v1.warroom.dashboard",
+            "ability": "warroom.read",
+            "permission": "warroom.view",
+            "operation_id": "warroomDashboard",
+            "schema": "WarroomApiDashboard",
+            "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        },
+        {
+            "method": "GET",
+            "uri": "\/api\/v1\/warroom\/my-day",
+            "name": "api.v1.warroom.my-day",
+            "ability": "warroom.read",
+            "permission": "warroom.view",
+            "operation_id": "warroomMyDay",
+            "schema": "WarroomApiMyDay",
+            "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        },
+        {
+            "method": "GET",
+            "uri": "\/api\/v1\/warroom\/my-day\/overdue",
+            "name": "api.v1.warroom.my-day.overdue",
+            "ability": "warroom.read",
+            "permission": "warroom.view",
+            "operation_id": "warroomOverdue",
+            "schema": "WarroomApiOverdue",
+            "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        },
+        {
+            "method": "GET",
+            "uri": "\/api\/v1\/warroom\/settings",
+            "name": "api.v1.warroom.settings.show",
+            "ability": "warroom.settings.read",
+            "permission": "warroom.manage_settings",
+            "operation_id": "warroomSettings",
+            "schema": "WarroomApiSettingsSnapshot",
+            "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        },
+        {
+            "method": "PUT",
+            "uri": "\/api\/v1\/warroom\/settings",
+            "name": "api.v1.warroom.settings.update",
+            "ability": "warroom.settings.manage",
+            "permission": "warroom.manage_settings",
+            "operation_id": "warroomUpdateSettings",
+            "schema": "WarroomApiSettingsResult",
+            "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        },
+        {
+            "method": "GET",
+            "uri": "\/api\/v1\/warroom\/operations\/{command}",
+            "name": "api.v1.warroom.operations.show",
+            "ability": "warroom.settings.manage",
+            "permission": "warroom.manage_settings",
+            "operation_id": "warroomOperation",
+            "schema": "WarroomApiCommand",
+            "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        }
+    ],
+    "schemas": [
+        "WarroomApiSettings",
+        "WarroomApiSectionOptions",
+        "WarroomApiSourceStates",
+        "WarroomApiPersonalSourceStates",
+        "WarroomApiSections",
+        "WarroomApiAction",
+        "WarroomApiContext",
+        "WarroomApiMetric",
+        "WarroomApiDashboardTicket",
+        "WarroomApiAlert",
+        "WarroomApiDashboardEvent",
+        "WarroomApiIntegration",
+        "WarroomApiNextAction",
+        "WarroomApiSystem",
+        "WarroomApiDashboard",
+        "WarroomApiTicket",
+        "WarroomApiTask",
+        "WarroomApiEvent",
+        "WarroomApiOverdueItem",
+        "WarroomApiOverdue",
+        "WarroomApiMyDay",
+        "WarroomApiSettingsSnapshot",
+        "WarroomApiSettingsResult",
+        "WarroomApiCommand",
+        "WarroomApiError"
+    ],
+    "catalog_abilities": [
+        "warroom.read",
+        "warroom.settings.read",
+        "warroom.settings.manage"
+    ],
+    "temporary_verification_tokens_remaining": 0,
+    "migration_installed": true
+}

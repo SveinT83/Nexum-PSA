@@ -1,0 +1,439 @@
+{
+  "status": "Verified on authoritative Dev; human review Reviewed by Svein Tore, 2026-10-27; no Main/production promotion",
+  "date": "2026-10-27",
+  "baseline": {
+    "browser_operations": 4,
+    "read": 3,
+    "write": 1,
+    "api_operations": 0,
+    "tests_passed": 15,
+    "assertions": 103
+  },
+  "browser_rows": [
+    {
+      "id": "W01",
+      "surface": "GET tech/dashboard",
+      "route": "tech.dashboard",
+      "classification": "read",
+      "behavior": "All configured pulse, operations, Storage warning, tickets, alerts, Calendar, integration/system health, lanes and next actions; source-authorized projection.",
+      "runtime_coverage_verified": true,
+      "api": "GET /dashboard; GET /context",
+      "tests": [
+        "WarroomApiParityTest::warroom_only_access_never_discloses_cross_domain_counts_rows_or_links",
+        "WarroomApiParityTest::calendar_detail_masking_and_calendar_membership_are_shared_by_dashboard_and_my_day",
+        "WarroomApiParityTest::mailbox_metrics_use_read_only_current_content_scope_and_never_return_provider_errors",
+        "WarroomApiParityTest::hidden_and_unavailable_sources_are_distinct_from_authorized_empty_results"
+      ],
+      "operations": [
+        {
+          "method": "GET",
+          "uri": "/api/v1/warroom/context",
+          "name": "api.v1.warroom.context",
+          "ability": "warroom.read",
+          "permission": "warroom.view",
+          "operation_id": "warroomContext",
+          "schema": "WarroomApiContext",
+          "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        },
+        {
+          "method": "GET",
+          "uri": "/api/v1/warroom/dashboard",
+          "name": "api.v1.warroom.dashboard",
+          "ability": "warroom.read",
+          "permission": "warroom.view",
+          "operation_id": "warroomDashboard",
+          "schema": "WarroomApiDashboard",
+          "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        }
+      ],
+      "read_back": [
+        {
+          "operation": "get /api/v1/warroom/context",
+          "status": 200,
+          "schema_valid": true,
+          "no_store": true
+        },
+        {
+          "operation": "get /api/v1/warroom/dashboard",
+          "status": 200,
+          "schema_valid": true,
+          "no_store": true
+        }
+      ]
+    },
+    {
+      "id": "W02",
+      "surface": "GET tech/my-day",
+      "route": "tech.my-day.index",
+      "classification": "read",
+      "behavior": "Own open tickets/tasks/events; total counts before 8/8/12 previews; unread and timezone/window; source-domain actions and Workday shortcuts.",
+      "runtime_coverage_verified": true,
+      "api": "GET /my-day; GET /context",
+      "tests": [
+        "WarroomApiParityTest::personal_totals_precede_caps_and_overdue_pagination_matches_the_same_scope",
+        "WarroomApiParityTest::calendar_detail_masking_and_calendar_membership_are_shared_by_dashboard_and_my_day"
+      ],
+      "operations": [
+        {
+          "method": "GET",
+          "uri": "/api/v1/warroom/context",
+          "name": "api.v1.warroom.context",
+          "ability": "warroom.read",
+          "permission": "warroom.view",
+          "operation_id": "warroomContext",
+          "schema": "WarroomApiContext",
+          "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        },
+        {
+          "method": "GET",
+          "uri": "/api/v1/warroom/my-day",
+          "name": "api.v1.warroom.my-day",
+          "ability": "warroom.read",
+          "permission": "warroom.view",
+          "operation_id": "warroomMyDay",
+          "schema": "WarroomApiMyDay",
+          "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        }
+      ],
+      "read_back": [
+        {
+          "operation": "get /api/v1/warroom/context",
+          "status": 200,
+          "schema_valid": true,
+          "no_store": true
+        },
+        {
+          "operation": "get /api/v1/warroom/my-day",
+          "status": 200,
+          "schema_valid": true,
+          "no_store": true
+        }
+      ]
+    },
+    {
+      "id": "W03",
+      "surface": "GET tech/my-day?focus=overdue",
+      "route": "tech.my-day.index",
+      "classification": "read variant",
+      "behavior": "Shared exact combined overdue scope and full total; stable bounded pagination; no another-user work.",
+      "runtime_coverage_verified": true,
+      "api": "GET /my-day?focus=overdue; GET /my-day/overdue",
+      "tests": [
+        "WarroomApiParityTest::personal_totals_precede_caps_and_overdue_pagination_matches_the_same_scope"
+      ],
+      "operations": [
+        {
+          "method": "GET",
+          "uri": "/api/v1/warroom/my-day",
+          "name": "api.v1.warroom.my-day",
+          "ability": "warroom.read",
+          "permission": "warroom.view",
+          "operation_id": "warroomMyDay",
+          "schema": "WarroomApiMyDay",
+          "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        },
+        {
+          "method": "GET",
+          "uri": "/api/v1/warroom/my-day/overdue",
+          "name": "api.v1.warroom.my-day.overdue",
+          "ability": "warroom.read",
+          "permission": "warroom.view",
+          "operation_id": "warroomOverdue",
+          "schema": "WarroomApiOverdue",
+          "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        }
+      ],
+      "read_back": [
+        {
+          "operation": "get /api/v1/warroom/my-day",
+          "status": 200,
+          "schema_valid": true,
+          "no_store": true
+        },
+        {
+          "operation": "get /api/v1/warroom/my-day/overdue",
+          "status": 200,
+          "schema_valid": true,
+          "no_store": true
+        }
+      ]
+    },
+    {
+      "id": "W04",
+      "surface": "GET tech/admin/settings/warroom",
+      "route": "tech.admin.settings.warroom",
+      "classification": "read",
+      "behavior": "All six numeric fields, nine section choices, current enabled_sections and revision; native settings manager.",
+      "runtime_coverage_verified": true,
+      "api": "GET /settings",
+      "tests": [
+        "WarroomApiParityTest::a_settings_only_native_manager_does_not_need_dashboard_access"
+      ],
+      "operations": [
+        {
+          "method": "GET",
+          "uri": "/api/v1/warroom/settings",
+          "name": "api.v1.warroom.settings.show",
+          "ability": "warroom.settings.read",
+          "permission": "warroom.manage_settings",
+          "operation_id": "warroomSettings",
+          "schema": "WarroomApiSettingsSnapshot",
+          "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        }
+      ],
+      "read_back": [
+        {
+          "operation": "get /api/v1/warroom/settings",
+          "status": 200,
+          "schema_valid": true,
+          "no_store": true
+        }
+      ]
+    },
+    {
+      "id": "W05",
+      "surface": "PUT tech/admin/settings/warroom",
+      "route": "tech.admin.settings.warroom.update",
+      "classification": "write",
+      "behavior": "Shared validation/atomic settings persistence; exact read-back; singleton lock/If-Match/idempotency and current authority on replay.",
+      "runtime_coverage_verified": true,
+      "api": "PUT /settings; GET /operations/{command}",
+      "tests": [
+        "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted",
+        "WarroomApiParityTest::browser_revision_cannot_overwrite_a_newer_api_save",
+        "WarroomApiParityTest::transaction_failure_rolls_back_settings_generation_and_receipt",
+        "WarroomApiParityTest::missing_settings_tables_return_controlled_service_unavailability",
+        "WarroomApiParityTest::receipt_lookup_and_replay_require_the_original_token_and_current_native_right"
+      ],
+      "operations": [
+        {
+          "method": "PUT",
+          "uri": "/api/v1/warroom/settings",
+          "name": "api.v1.warroom.settings.update",
+          "ability": "warroom.settings.manage",
+          "permission": "warroom.manage_settings",
+          "operation_id": "warroomUpdateSettings",
+          "schema": "WarroomApiSettingsResult",
+          "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        },
+        {
+          "method": "GET",
+          "uri": "/api/v1/warroom/operations/{command}",
+          "name": "api.v1.warroom.operations.show",
+          "ability": "warroom.settings.manage",
+          "permission": "warroom.manage_settings",
+          "operation_id": "warroomOperation",
+          "schema": "WarroomApiCommand",
+          "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        }
+      ],
+      "read_back": [
+        {
+          "operation": "put /api/v1/warroom/settings",
+          "status": 200,
+          "schema_valid": true,
+          "no_store": true
+        },
+        {
+          "operation": "get /api/v1/warroom/operations/{command}",
+          "status": 200,
+          "schema_valid": true,
+          "no_store": true
+        }
+      ]
+    },
+    {
+      "id": "W06",
+      "surface": "Embedded cards, lanes and source links",
+      "route": "embedded",
+      "classification": "navigation/action discovery",
+      "behavior": "Authorized capabilities and exact filters/destination; source writes stay domain-owned, not duplicated as Warroom CRUD.",
+      "runtime_coverage_verified": true,
+      "api": "GET /context; source domain APIs",
+      "tests": [
+        "WarroomApiParityTest::enabled_workday_shortcuts_are_discoverable_with_the_same_own_permissions",
+        "WarroomApiParityTest::warroom_only_access_never_discloses_cross_domain_counts_rows_or_links"
+      ],
+      "operations": [
+        {
+          "method": "GET",
+          "uri": "/api/v1/warroom/context",
+          "name": "api.v1.warroom.context",
+          "ability": "warroom.read",
+          "permission": "warroom.view",
+          "operation_id": "warroomContext",
+          "schema": "WarroomApiContext",
+          "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        },
+        {
+          "method": "GET",
+          "uri": "/api/v1/warroom/my-day",
+          "name": "api.v1.warroom.my-day",
+          "ability": "warroom.read",
+          "permission": "warroom.view",
+          "operation_id": "warroomMyDay",
+          "schema": "WarroomApiMyDay",
+          "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+        }
+      ],
+      "read_back": [
+        {
+          "operation": "get /api/v1/warroom/context",
+          "status": 200,
+          "schema_valid": true,
+          "no_store": true
+        },
+        {
+          "operation": "get /api/v1/warroom/my-day",
+          "status": 200,
+          "schema_valid": true,
+          "no_store": true
+        }
+      ]
+    }
+  ],
+  "completion_requires": [
+    "runtime routes",
+    "OpenAPI",
+    "actor and token authority",
+    "tests",
+    "exact read-back",
+    "BookStack read-back"
+  ],
+  "human_review": "HR-2026-10-27-WARROOM-API: Reviewed by Svein Tore, 2026-10-27 (Godkjenner); promotion/deployment separately unauthorized",
+  "verified_operations": [
+    {
+      "method": "GET",
+      "uri": "/api/v1/warroom/context",
+      "name": "api.v1.warroom.context",
+      "ability": "warroom.read",
+      "permission": "warroom.view",
+      "operation_id": "warroomContext",
+      "schema": "WarroomApiContext",
+      "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+    },
+    {
+      "method": "GET",
+      "uri": "/api/v1/warroom/dashboard",
+      "name": "api.v1.warroom.dashboard",
+      "ability": "warroom.read",
+      "permission": "warroom.view",
+      "operation_id": "warroomDashboard",
+      "schema": "WarroomApiDashboard",
+      "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+    },
+    {
+      "method": "GET",
+      "uri": "/api/v1/warroom/my-day",
+      "name": "api.v1.warroom.my-day",
+      "ability": "warroom.read",
+      "permission": "warroom.view",
+      "operation_id": "warroomMyDay",
+      "schema": "WarroomApiMyDay",
+      "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+    },
+    {
+      "method": "GET",
+      "uri": "/api/v1/warroom/my-day/overdue",
+      "name": "api.v1.warroom.my-day.overdue",
+      "ability": "warroom.read",
+      "permission": "warroom.view",
+      "operation_id": "warroomOverdue",
+      "schema": "WarroomApiOverdue",
+      "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+    },
+    {
+      "method": "GET",
+      "uri": "/api/v1/warroom/settings",
+      "name": "api.v1.warroom.settings.show",
+      "ability": "warroom.settings.read",
+      "permission": "warroom.manage_settings",
+      "operation_id": "warroomSettings",
+      "schema": "WarroomApiSettingsSnapshot",
+      "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+    },
+    {
+      "method": "PUT",
+      "uri": "/api/v1/warroom/settings",
+      "name": "api.v1.warroom.settings.update",
+      "ability": "warroom.settings.manage",
+      "permission": "warroom.manage_settings",
+      "operation_id": "warroomUpdateSettings",
+      "schema": "WarroomApiSettingsResult",
+      "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+    },
+    {
+      "method": "GET",
+      "uri": "/api/v1/warroom/operations/{command}",
+      "name": "api.v1.warroom.operations.show",
+      "ability": "warroom.settings.manage",
+      "permission": "warroom.manage_settings",
+      "operation_id": "warroomOperation",
+      "schema": "WarroomApiCommand",
+      "success_test": "WarroomApiParityTest::every_operation_returns_a_typed_result_and_settings_replay_is_exact_and_encrypted"
+    }
+  ],
+  "schemas": [
+    "WarroomApiSettings",
+    "WarroomApiSectionOptions",
+    "WarroomApiSourceStates",
+    "WarroomApiPersonalSourceStates",
+    "WarroomApiSections",
+    "WarroomApiAction",
+    "WarroomApiContext",
+    "WarroomApiMetric",
+    "WarroomApiDashboardTicket",
+    "WarroomApiAlert",
+    "WarroomApiDashboardEvent",
+    "WarroomApiIntegration",
+    "WarroomApiNextAction",
+    "WarroomApiSystem",
+    "WarroomApiDashboard",
+    "WarroomApiTicket",
+    "WarroomApiTask",
+    "WarroomApiEvent",
+    "WarroomApiOverdueItem",
+    "WarroomApiOverdue",
+    "WarroomApiMyDay",
+    "WarroomApiSettingsSnapshot",
+    "WarroomApiSettingsResult",
+    "WarroomApiCommand",
+    "WarroomApiError"
+  ],
+  "final_domain_tests": {
+    "passed": 31,
+    "assertions": 619,
+    "failures": 0,
+    "skips": 0
+  },
+  "runtime_browser_routes": [
+    {
+      "method": "GET",
+      "uri": "/tech/admin/settings/warroom",
+      "name": "tech.admin.settings.warroom"
+    },
+    {
+      "method": "PUT",
+      "uri": "/tech/admin/settings/warroom",
+      "name": "tech.admin.settings.warroom.update"
+    },
+    {
+      "method": "GET",
+      "uri": "/tech/dashboard",
+      "name": "tech.dashboard"
+    },
+    {
+      "method": "GET",
+      "uri": "/tech/my-day",
+      "name": "tech.my-day.index"
+    }
+  ],
+  "human_acceptance": {
+    "reviewer": "Svein Tore",
+    "date": "2026-10-27",
+    "approval": "Godkjenner",
+    "verified_source_hashes_unchanged": 28,
+    "main_authorized": false,
+    "production_authorized": false
+  }
+}

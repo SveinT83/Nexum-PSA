@@ -15,8 +15,14 @@
 @endsection
 
 @section('content')
+    <!-- Unavailable authorized sources are not rendered as healthy empty queues. -->
+    @foreach($warroom['sources'] as $source => $state)
+        @if($state === 'unavailable')
+            <div class="alert alert-warning py-2" role="status">{{ ucfirst($source) }} data is unavailable.</div>
+        @endif
+    @endforeach
     <!-- Warroom pulse -->
-    @if($settings->sectionEnabled($warroom['settings'], 'pulse'))
+    @if($warroom['sections']['pulse'] === 'available')
         <div class="row g-2 mb-3">
             @foreach($warroom['pulse'] as $metric)
                 <div class="col-12 col-md-6 col-xl-3">
@@ -64,7 +70,7 @@
     <!-- Main operations grid -->
     <div class="row g-3">
         <div class="col-12 col-xl-8">
-            @if($settings->sectionEnabled($warroom['settings'], 'tickets'))
+            @if($warroom['sections']['tickets'] === 'available')
                 <div class="card mb-3">
                     <div class="card-header py-2 d-flex align-items-center justify-content-between">
                         <h2 class="h6 mb-0">Ticket Fireline</h2>
@@ -87,7 +93,7 @@
                             <tbody>
                                 @forelse($warroom['latest_tickets'] as $ticket)
                                     @php
-                                        $due = $ticket->resolve_due_at ? \Illuminate\Support\Carbon::parse($ticket->resolve_due_at) : null;
+                                        $due = $ticket->resolve_due_at ? \Illuminate\Support\Carbon::parse($ticket->resolve_due_at, 'UTC')->timezone(config('app.timezone')) : null;
                                         $isOverdue = $due && $due->isPast();
                                     @endphp
                                     <tr>
@@ -129,7 +135,7 @@
             @endif
 
             <div class="row g-3">
-                @if($settings->sectionEnabled($warroom['settings'], 'asset_alerts'))
+                @if($warroom['sections']['asset_alerts'] === 'available')
                     <div class="col-12 col-lg-6">
                     <div class="card h-100">
                         <div class="card-header py-2 d-flex align-items-center justify-content-between">
@@ -159,7 +165,7 @@
                     </div>
                 @endif
 
-                @if($settings->sectionEnabled($warroom['settings'], 'calendar'))
+                @if($warroom['sections']['calendar'] === 'available')
                     <div class="col-12 col-lg-6">
                     <div class="card h-100">
                         <div class="card-header py-2 d-flex align-items-center justify-content-between">
@@ -173,7 +179,7 @@
                         <div class="list-group list-group-flush">
                             @forelse($warroom['calendar_events'] as $event)
                                 @php
-                                    $startsAt = $event->starts_at ? \Illuminate\Support\Carbon::parse($event->starts_at) : null;
+                                    $startsAt = $event->starts_at ? \Illuminate\Support\Carbon::parse($event->starts_at)->timezone(config('app.timezone')) : null;
                                 @endphp
                                 <div class="list-group-item py-2">
                                     <div class="d-flex justify-content-between gap-2">
@@ -195,7 +201,7 @@
         </div>
 
         <div class="col-12 col-xl-4">
-            @if($settings->sectionEnabled($warroom['settings'], 'domain_radar'))
+            @if($warroom['sections']['domain_radar'] === 'available')
                 <div class="card mb-3">
                     <div class="card-header py-2">
                         <h2 class="h6 mb-0">Domain Radar</h2>
@@ -216,7 +222,7 @@
                 </div>
             @endif
 
-            @if($settings->sectionEnabled($warroom['settings'], 'integrations'))
+            @if($warroom['sections']['integrations'] === 'available')
                 <div class="card">
                 <div class="card-header py-2 d-flex align-items-center justify-content-between">
                     <h2 class="h6 mb-0">Integration Health</h2>
@@ -231,12 +237,12 @@
                         <div class="list-group-item py-2">
                             <div class="d-flex justify-content-between gap-2">
                                 <div class="fw-semibold text-truncate">{{ $integration->name ?? $integration->type ?? 'Integration' }}</div>
-                                <span class="badge text-bg-{{ $integration->is_healthy ? 'success' : 'warning' }}">
-                                    {{ $integration->is_healthy ? 'Healthy' : 'Attention' }}
+                                <span class="badge text-bg-{{ !$integration->has_error && $integration->is_healthy ? 'success' : 'warning' }}">
+                                    {{ $integration->is_healthy === null && !$integration->has_error ? 'Unknown' : (!$integration->has_error && $integration->is_healthy ? 'Healthy' : 'Attention') }}
                                 </span>
                             </div>
                             <div class="small text-muted text-truncate">
-                                {{ $integration->last_error ?: ($integration->last_sync_at ? 'Synced '.\Illuminate\Support\Carbon::parse($integration->last_sync_at)->diffForHumans() : 'No sync recorded') }}
+                                {{ $integration->has_error ? 'Attention required' : ($integration->last_sync_at ? 'Synced '.\Illuminate\Support\Carbon::parse($integration->last_sync_at)->diffForHumans() : 'No sync recorded') }}
                             </div>
                         </div>
                     @empty
@@ -253,25 +259,14 @@
     @include('warroom::Tech.partials._sidebar')
 
     <!-- Warroom lanes -->
-    @if($settings->sectionEnabled($warroom['settings'], 'lanes'))
+    @if($warroom['sections']['lanes'] === 'available')
         <div class="card mb-3">
         <div class="card-header py-2">
             <h2 class="h6 mb-0">Warroom Lanes</h2>
         </div>
         <div class="list-group list-group-flush">
-            @php
-                $lanes = [
-                    ['label' => 'Ticket command', 'route' => 'tech.tickets.index', 'icon' => 'bi-ticket-detailed'],
-                    ['label' => 'Client operations', 'route' => 'tech.clients.index', 'icon' => 'bi-buildings'],
-                    ['label' => 'Assets', 'route' => 'tech.assets.index', 'icon' => 'bi-hdd-network'],
-                    ['label' => 'Mail', 'route' => 'tech.mail.index', 'icon' => 'bi-inbox'],
-                    ['label' => 'Economy', 'route' => 'tech.economy.orders.index', 'icon' => 'bi-receipt'],
-                    ['label' => 'Knowledge', 'route' => 'tech.knowledge.index', 'icon' => 'bi-journal-text'],
-                    ['label' => 'My Day', 'route' => 'tech.my-day.index', 'icon' => 'bi-calendar2-check'],
-                ];
-            @endphp
-            @foreach($lanes as $lane)
-                <a href="{{ Route::has($lane['route']) ? route($lane['route']) : '#' }}" class="list-group-item list-group-item-action py-2">
+            @foreach($warroom['lanes'] as $lane)
+                <a href="{{ $lane['href'] }}" class="list-group-item list-group-item-action py-2">
                     <i class="bi {{ $lane['icon'] }} me-2" aria-hidden="true"></i>{{ $lane['label'] }}
                 </a>
             @endforeach
@@ -302,60 +297,40 @@
 
 @section('rightbar')
     <!-- System health -->
-    @if($settings->sectionEnabled($warroom['settings'], 'system_health'))
+    @if($warroom['sections']['system_health'] === 'available')
         <div class="card mb-3">
         <div class="card-header py-2">
             <h2 class="h6 mb-0">System Health</h2>
         </div>
         <div class="card-body py-2">
-            <div class="d-flex justify-content-between small mb-2">
-                <span>Integrations</span>
-                <span class="fw-semibold">{{ $warroom['system']['integrations_total'] }}</span>
-            </div>
-            <div class="progress mb-3" role="progressbar" aria-label="Integration health">
-                @php
-                    $totalIntegrations = max(1, $warroom['system']['integrations_total']);
-                    $healthyWidth = max(0, 100 - round(($warroom['system']['integrations_unhealthy'] / $totalIntegrations) * 100));
-                @endphp
-                <div class="progress-bar bg-success" style="width: {{ $healthyWidth }}%"></div>
-            </div>
-
-            <div class="d-flex justify-content-between small mb-2">
-                <span>Nextcloud active</span>
-                <span class="fw-semibold">{{ $warroom['system']['nextcloud_active'] }}</span>
-            </div>
-            <div class="d-flex justify-content-between small mb-2">
-                <span>Nextcloud warnings</span>
-                <span class="badge text-bg-{{ $warroom['system']['nextcloud_warnings'] ? 'warning' : 'success' }}">
-                    {{ $warroom['system']['nextcloud_warnings'] }}
-                </span>
-            </div>
-            <div class="d-flex justify-content-between small">
-                <span>Notification channels</span>
-                <span class="fw-semibold">{{ $warroom['system']['notification_channels'] }}</span>
-            </div>
+            @foreach($warroom['system'] as $key => $count)
+                <div class="d-flex justify-content-between small mb-2">
+                    <span>{{ ucwords(str_replace('_', ' ', $key)) }}</span>
+                    <span class="fw-semibold">{{ $count }}</span>
+                </div>
+            @endforeach
+            @if(($warroom['system']['integrations_total'] ?? 0) > 0)
+                @php($healthyWidth = max(0, 100 - round($warroom['system']['integrations_unhealthy'] / $warroom['system']['integrations_total'] * 100)))
+                <div class="progress" role="progressbar" aria-label="Integration health" aria-valuenow="{{ $healthyWidth }}" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar bg-success" style="width: {{ $healthyWidth }}%"></div>
+                </div>
+            @endif
         </div>
     </div>
     @endif
 
-    @if($settings->sectionEnabled($warroom['settings'], 'next_actions'))
+    @if($warroom['sections']['next_actions'] === 'available')
         <div class="card">
         <div class="card-header py-2">
             <h2 class="h6 mb-0">Next Actions</h2>
         </div>
         <div class="list-group list-group-flush">
-            <div class="list-group-item py-2">
-                <div class="fw-semibold">Clear SLA pressure</div>
-                <div class="small text-muted">Start with overdue and due-today tickets.</div>
-            </div>
-            <div class="list-group-item py-2">
-                <div class="fw-semibold">Triage inbox drift</div>
-                <div class="small text-muted">Convert unlinked messages into tickets or archive noise.</div>
-            </div>
-            <div class="list-group-item py-2">
-                <div class="fw-semibold">Check integrations</div>
-                <div class="small text-muted">Resolve unhealthy syncs before customer-facing work.</div>
-            </div>
+            @foreach($warroom['next_actions'] as $action)
+                <a href="{{ $action['href'] }}" class="list-group-item list-group-item-action py-2">
+                    <div class="fw-semibold">{{ $action['title'] }}</div>
+                    <div class="small text-muted">{{ $action['description'] }}</div>
+                </a>
+            @endforeach
         </div>
     </div>
     @endif

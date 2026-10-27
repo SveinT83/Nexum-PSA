@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-27",
+  "publication_method": "Connected BookStack page updates; authoritative source first; exact content read-back",
+  "pages": [
+    {
+      "id": 443,
+      "source": "warroom-overview.md",
+      "name": "Warroom Overview",
+      "revision_count": 6,
+      "updated_at": "2026-10-27T20:23:48.000000Z",
+      "exact_markdown_match": true,
+      "permissions_inherit_unchanged": true
+    },
+    {
+      "id": 444,
+      "source": "warroom-settings.md",
+      "name": "Warroom Settings",
+      "revision_count": 4,
+      "updated_at": "2026-10-27T20:14:23.000000Z",
+      "exact_markdown_match": true,
+      "permissions_inherit_unchanged": true
+    }
+  ],
+  "api_reference": {
+    "source": "warroom-api.md",
+    "published_in_page": 443,
+    "section": "Warroom API reference",
+    "standalone_page_created": false,
+    "reason": "Connector creation/search schema rejects valid normal text; existing pages updated successfully"
+  },
+  "employee_access": {
+    "role": "Editor",
+    "external_auth_id": "/staff-internal",
+    "global_permissions": [
+      "book-view-all",
+      "chapter-view-all",
+      "page-view-all"
+    ],
+    "permissions": "Existing page/chapter inheritance and book roles preserved; no grant changes"
+  },
+  "native_automatic_sync": "Unconfigured and unchanged; actual publication above is verified independently of pending_push metadata",
+  "openwebui_retrieval": "Not tested"
+}

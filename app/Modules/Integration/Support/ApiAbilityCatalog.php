@@ -14,6 +14,9 @@ class ApiAbilityCatalog
      * Access mode is deliberately explicit so progressive read scopes do not depend on their name.
      */
     private const ACCESS_MODES = [
+        'warroom.read' => self::ACCESS_READ,
+        'warroom.settings.read' => self::ACCESS_READ,
+        'warroom.settings.manage' => self::ACCESS_WRITE,
         'nextcloud.connections.read' => self::ACCESS_READ,
         'nextcloud.connections.write' => self::ACCESS_WRITE,
         'nextcloud.credentials.write' => self::ACCESS_WRITE,
@@ -316,6 +319,9 @@ class ApiAbilityCatalog
     ];
 
     private const ABILITIES = [
+        'warroom.read' => ['label' => 'Read Warroom and My Day', 'description' => 'Read authorized operational summaries and personal queues; source rights remain authoritative.', 'domain' => 'Warroom'],
+        'warroom.settings.read' => ['label' => 'Read Warroom settings', 'description' => 'Read global dashboard settings with native settings management permission.', 'domain' => 'Warroom'],
+        'warroom.settings.manage' => ['label' => 'Update Warroom settings', 'description' => 'Update global dashboard settings and read own command results with current native settings authority.', 'domain' => 'Warroom'],
         'nextcloud.connections.read' => ['label' => 'Connections read', 'description' => 'Current native and target rights required; provider execution additionally needs explicit consent and its runtime gate.', 'domain' => 'Nextcloud'],
         'nextcloud.connections.write' => ['label' => 'Connections write', 'description' => 'Current native and target rights required; provider execution additionally needs explicit consent and its runtime gate.', 'domain' => 'Nextcloud'],
         'nextcloud.credentials.write' => ['label' => 'Credentials write', 'description' => 'Current native and target rights required; provider execution additionally needs explicit consent and its runtime gate.', 'domain' => 'Nextcloud'],
