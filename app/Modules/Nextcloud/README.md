@@ -458,3 +458,18 @@ Unsupported recurrence is retained/skipped; provider-only single-event projectio
 No delete propagation, sharing changes, user/group imports or file reads occur in scheduled runs.
 Migration: 2026_10_22_180000_create_nextcloud_calendar_sync_states.php (two additive lease tables).
 See docs/rfc/2026-10-22-nextcloud-calendar-automatic-sync.md and the verification report.
+
+## Full operational API (2026-10-27)
+
+Availability: verified on Dev; production deployment remains separate.
+Production availability is not established by this work. New provider execution stays disabled
+by default; the already approved production work-calendar pilot is a separate operation.
+
+The official API covers current connection setup, credential rotation, scoped user/group/
+calendar/folder mappings, folder browsing/matching, full manual sync, diagnostics and Talk bot
+configuration/tests. Existing calendar-only operations and signed Talk webhook remain available.
+Read the full API guide for scopes, exact request/result contracts and safe retry procedures.
+API grants require the caller's current native rights; they do not grant administrator access.
+
+Full contract: `Docs/knowledge/06-full-api-guide.md`. Current target: 50 HTTP operations
+(36 full-domain additions plus 14 compatible calendar operations), 47 new concrete schemas.

@@ -1,7 +1,7 @@
 # Lead Intelligence API Verification
 
 Date: 2026-10-27. Authoritative source/runtime: /var/Projects/tdPSA (Dev).
-Status: Done On Dev; final Main candidate verified; authorized merge pending.
+Status: Done On Dev / Merged To Main in PR #343 / Human Scenario Review Pending.
 Authorization: Svein Tore, "Godkjenner og merge til main"; RFC Approved / ADR Accepted.
 
 ## Current Result
@@ -14,8 +14,7 @@ No new deletion/cancellation/crawl/email feature is claimed.
 Final domain suite: 52 tests / 474 assertions, no failures/skips, 99.86 seconds.
 Prior narrower 49/458 and 2/8 are overlapping and must not be added to this final total.
 Knowledge source-sync regression: 1 test / 6 assertions passes.
-Twenty-nine scoped PHP files pass Pint/syntax before final guard/test formatting;
-final full lint checks are repeated before packaging.
+All 29 scoped PHP files pass syntax; scoped Pint and whitespace checks pass.
 
 Native MySQL: exact additive migration 2026_10_27_040000_create_lead_intelligence_api_commands
 applied/read back on Dev, batch 35. Independent lock contention, unique replay key,
@@ -26,8 +25,8 @@ API external execution stays false. No business backfill or live provider/custom
 write, worker/scheduler activation or production migration/deployment occurred.
 
 Existing native Knowledge articles 52 and 3 match the affected source content and
-remain internal. Actual BookStack 496 revision 3 matches the full Overview/API guide;
-449 revision 153 contains the exact scoped catalog addition. Existing page/chapter
+remain internal. Actual BookStack 496 revision 4 matches the full Overview/API guide;
+449 revision 160 contains the exact scoped catalog addition. Existing page/chapter
 inheritance and parent access were read; no permissions changed. Automatic native
 pending_push is not external publication proof; actual BookStack was read separately.
 Employee OpenWebUI retrieval and real provider execution remain untested/separate.
@@ -78,3 +77,17 @@ revocation/replay and provider reconciliation. No existing reviewed history was 
 Evidence: coverage matrix/contract/files, native-evidence.json, knowledge-evidence.json
 and bookstack-evidence.json in this plans directory. Shared Dev HEAD/index and all five
 pre-existing #280 badge views are preserved; unrelated contributor work is not packaged.
+
+## Verified Main Promotion
+
+PR #343: https://github.com/SveinT83/Nexum-PSA/pull/343
+Merge commit: e42ecddb42a52e1b41931975e4760cf250e157cc.
+Whole tree: d65bf3c88356992667dc5154c79686527fef0e3f, exactly the verified candidate tree.
+Final head: 039e1659f99eb5f0bcb9bcd13bedd6efadbfaaf0; parent Main ce004cf7.
+Later Intake-only Main additions, additive scope catalog and route registration were
+retained; exact 17 Lead routes/guards and canonical Lead schemas were rechecked.
+No Client/Contact/Marketing/Tripletex behavior changed after the affected candidate batch.
+GitHub merged=true and a fresh strict SSH git fetch/read-back independently confirm it.
+The follow-up changes status/docs only and requires no repeated application suite.
+No Main action remains. Svein Tore owns the pending manual checklist and any separately
+authorized production migration/deployment/provider pilot. API external execution stays off.

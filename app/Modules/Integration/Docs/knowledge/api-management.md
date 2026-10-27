@@ -16,6 +16,22 @@ flagged for review but are never changed automatically.
 Coordinator tokens are created from AI Privacy & Coordinator Governance. They bind to an approved
 workload, contain read abilities only, expire, and are policy-checked on every request.
 
+
+## Contact API extension on Dev - 27 October 2026
+
+The Contact domain exposes 19 typed HTTP operations for supported Contact browser workflows.
+Current native Contact rights are required in addition to token abilities. New abilities are
+contacts.settings.read, contacts.settings.manage, contacts.portal_invite and contacts.operations.read.
+No existing key, connector or human role receives these abilities automatically. Existing POST
+contacts remains an upsert requiring both contacts.create and contacts.update; explicit reuse
+preserves existing person/consent fields. Full parameter and response contracts are in Swagger.
+Repair/invitation execution uses an exact actor/token/action/body/state-bound preview, If-Match,
+Idempotency-Key and encrypted operation receipts. Receipt reads recheck original user/token rights.
+Contact API invitations default off; enabling them is a separate installation decision, with
+queued/unknown delivery reported truthfully. Refer to Contact Domain Overview for numbered steps.
+This is Dev availability; Main promotion and production rollout are separate verification claims.
+
+
 ## Internal Model Workloads
 
 An internal model workload is the governed execution boundary for a Nexum feature that needs strict
@@ -1480,8 +1496,23 @@ Provider/AI/discovery execution from APIs defaults off. Unknown commands require
 reconciliation; queued is not completed research. Clients owns provider numbering,
 Contact owns identity/bridge, and Marketing suppression/exclusions remain authoritative.
 Full operator/API instructions are in Lead Intelligence Overview (BookStack page 496).
-Status: implemented/verified on Dev; Main promotion authorized and pending verification;
+Status: implemented/verified on Dev and merged to Main in PR #343;
 production unchanged. HR-2026-10-27-LEAD-INTELLIGENCE-API manual scenarios remain Pending.
+
+## Full CustomField API Support (Dev Extension)
+
+The approved CustomField extension has seven typed operations for filtered definition
+discovery, full configuration/context, create/update/activate/deactivate, soft delete
+and own encrypted command read-back. See **Custom Field API** for exact steps, headers,
+all 11 types and owning-domain value operations. Its production deployment is separate.
+
+Scopes: custom-fields.read, custom-fields.create, custom-fields.update,
+custom-fields.delete and custom-fields.operations.read. Configuration also needs the
+active internal user's native customfield.manage_settings permission. Discovery for
+other actors is restricted by owning-domain view and current field visibility.
+Mutation commands require Idempotency-Key; update/delete require If-Match. Replays
+and receipts recheck current rights and original token ability. Definition rights
+do not grant Client/Site/Ticket value access or activate Ticket write/rule gates.
 
 ## Marketing full API coverage (2026-10-27)
 

@@ -21,6 +21,9 @@ require app_path('Modules/Integration/routes.php');
 unset($tdpsaLoadingCloudFactoryPublicRoutes);
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
+    $bookingPublicApiRoutes = true;
+    require app_path('Modules/Booking/routes.php');
+    unset($bookingPublicApiRoutes);
 
     // Sales owns its exact public quote capability and existing portal-session API branches.
     $intakePublicApiRoutes = true;
@@ -63,6 +66,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         // Module API routes
         // ------------------------------------------------------------------------------------------
         $tdpsaLoadingApiRoutes = true;
+        require app_path('Modules/Booking/routes.php');
         require app_path('Modules/Asset/routes.php');
         require app_path('Modules/UserManagement/routes.php');
         require app_path('Modules/Workday/routes.php');

@@ -22,7 +22,8 @@ class CustomFieldDefinitionResource extends JsonResource
         $registry = app(CustomFieldModelRegistry::class);
 
         return [
-            'id' => $this->id,
+            'id' => (int) $this->id,
+            'revision' => \App\Modules\CustomField\Support\CustomFieldRevision::of($this->resource),
             'model' => $registry->labelFor($this->model_type),
             'model_type' => $this->model_type,
             'key' => $this->key,
@@ -38,8 +39,8 @@ class CustomFieldDefinitionResource extends JsonResource
             'unique_per_model' => $this->unique_per_model,
             'required' => $this->required,
             'admin_only' => $this->admin_only,
-            'view_permission' => $this->view_permission,
-            'edit_permission' => $this->edit_permission,
+            'view_permission' => \App\Modules\CustomField\Support\CustomFieldApiAccess::manager($request->user()) ? $this->view_permission : null,
+            'edit_permission' => \App\Modules\CustomField\Support\CustomFieldApiAccess::manager($request->user()) ? $this->edit_permission : null,
             'active' => $this->active,
             'links' => [
                 'self' => route('api.v1.custom-fields.show', $this->resource),

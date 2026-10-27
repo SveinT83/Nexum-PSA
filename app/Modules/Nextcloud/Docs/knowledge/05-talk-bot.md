@@ -74,3 +74,23 @@ check:
 - Conversation token.
 - Talk bot enablement inside the conversation.
 - Server support for the Talk Bot API capability.
+
+## Official API configuration and test (2026-10-27)
+
+Availability: Dev implementation; production deployment and live sends remain separate.
+
+1. Read `/api/v1/nextcloud/connections/{connection}/talk-bot` for safe configuration markers.
+2. PATCH the same URL with the required `nextcloud.talk.write` grant and native connection
+   rights. A supplied secret also requires `nextcloud.credentials.write`; omission preserves it.
+3. For a separately authorized test, confirm the exact connection/default conversation.
+4. POST `/talk-bot/test` with `confirm: true`, the connection ETag and an idempotency key.
+   This requires native Talk rights, `nextcloud.talk.execute`, `nextcloud.providers.execute`
+   and an enabled API provider-execution switch. API availability alone never turns it on.
+5. Read the operation receipt. `acknowledged` contains the provider message ID and reference;
+   `delivery_verified: false` means recipient receipt has not been proven.
+
+HTTP success with an OCS failure is not success. Unknown remote outcomes stay `unknown` and
+are never resent with the same key. Inspect the actual provider conversation before retrying
+with a new intent. Raw remote errors and shared secrets are not exposed. The independent signed
+inbound webhook and Notification-owned channel preferences remain in their existing domains.
+The proposed multi-destination service-user setup in Issue #205 is a separate feature.

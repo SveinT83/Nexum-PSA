@@ -1,0 +1,32 @@
+{
+  "pull_request": 339,
+  "url": "https://github.com/SveinT83/Nexum-PSA/pull/339",
+  "merge_commit": "8006d0558079bfd8466978761d73a80ed340fa8a",
+  "merge_tree": "b629d4a6d02b2949df320a3506df9b29951f2308",
+  "verified_candidate": {
+    "head": "5d3e0d7ee2de68282dcfecbf78cc702e822d01ac",
+    "tree": "a5e31f832521765bb99c2689e85dbcfc4295e0ae",
+    "base": "f91acc9045794ac4ede80a336f80974c17ab9bc4",
+    "broad_tests": 189,
+    "broad_assertions": 2513,
+    "compatibility_tests": 48,
+    "compatibility_assertions": 740,
+    "final_contract_passed": true,
+    "booking_calendar_runtime_unchanged_since_functional_run": true,
+    "non_booking_swagger_preserved": true
+  },
+  "application_payload_matches_candidate": true,
+  "additional_inherited_docs_only": [
+    "docs/TODO.md",
+    "docs/feature-slices/2026-10-27-custom-field-full-api-parity.md",
+    "docs/human-review.md",
+    "docs/plans/2026-10-27-custom-field-api-coverage-matrix.json",
+    "docs/plans/2026-10-27-custom-field-api-coverage-matrix.md",
+    "docs/plans/2026-10-27-custom-field-api-main-promotion.md",
+    "docs/plans/2026-10-27-custom-field-api-verification.json",
+    "docs/plans/2026-10-27-custom-field-api-verification.md",
+    "docs/rfc/2026-10-27-custom-field-full-api-parity.md"
+  ],
+  "present_in_current_main": true,
+  "production_deployed": false
+}

@@ -12,9 +12,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class BookingRequest extends Model
 {
     public const STATUS_REQUESTED = 'requested';
+
     public const STATUS_CONFIRMED = 'confirmed';
+
     public const STATUS_DECLINED = 'declined';
+
     public const STATUS_CANCELLED = 'cancelled';
+
     public const STATUS_SPAM = 'spam';
 
     protected $fillable = [

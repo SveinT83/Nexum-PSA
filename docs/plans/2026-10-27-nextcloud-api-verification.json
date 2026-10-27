@@ -1,0 +1,214 @@
+{
+  "date": "2026-10-27",
+  "status": "Done On Dev / isolated Main verified; merge authorized",
+  "coverage": {
+    "browser_rows": 19,
+    "embedded_workflows": 8,
+    "http_operations": 50,
+    "new_operations": 36,
+    "legacy_operations": 14,
+    "new_schemas": 47
+  },
+  "tests": {
+    "dev_affected": {
+      "passed": 373,
+      "assertions": 13899
+    },
+    "candidate_affected": {
+      "passed": 391,
+      "assertions": 14397
+    },
+    "dev_final_domain": {
+      "passed": 121,
+      "assertions": 6518
+    },
+    "candidate_final_domain": {
+      "passed": 121,
+      "assertions": 6518
+    },
+    "final_http_tests_each": {
+      "passed": 14,
+      "assertions": 4956
+    },
+    "totals_overlap": true
+  },
+  "native": {
+    "migration": true,
+    "db_driver": "mysql",
+    "native_lock_exclusion": true,
+    "encrypted_read_back": true,
+    "native_unique_replay": true,
+    "probe_rolled_back": true,
+    "provider_execution_enabled": false,
+    "synthetic_create_read_back": true,
+    "synthetic_deleted_and_replayed": true,
+    "anonymous_denied": true,
+    "https": [
+      {
+        "path": "/api/v1/nextcloud/connections",
+        "status": 200,
+        "count": 0
+      },
+      {
+        "path": "/api/v1/nextcloud/context?kind=clients&per_page=1",
+        "status": 200,
+        "etag": true
+      },
+      {
+        "path": "/api/v1/nextcloud/connections/1",
+        "status": 200,
+        "etag": true
+      },
+      {
+        "path": "/api/v1/nextcloud/connections/1/context?kind=sites&per_page=1",
+        "status": 200,
+        "etag": true
+      },
+      {
+        "path": "/api/v1/nextcloud/connections/1/users",
+        "status": 200,
+        "etag": true
+      },
+      {
+        "path": "/api/v1/nextcloud/connections/1/groups",
+        "status": 200,
+        "etag": true
+      },
+      {
+        "path": "/api/v1/nextcloud/connections/1/calendars",
+        "status": 200,
+        "etag": true
+      },
+      {
+        "path": "/api/v1/nextcloud/connections/1/folders",
+        "status": 200,
+        "etag": true
+      },
+      {
+        "path": "/api/v1/nextcloud/connections/1/talk-bot",
+        "status": 200,
+        "etag": true
+      },
+      {
+        "path": "/api/v1/nextcloud/connections/1/attempts",
+        "status": 200,
+        "etag": true
+      }
+    ],
+    "temporary_token_revoked": true
+  },
+  "handbook": {
+    "date": "2026-10-27",
+    "pages": [
+      {
+        "id": 417,
+        "revision": 5,
+        "updated_at": "2026-10-27T19:37:51.000000Z",
+        "exact_requested_content_read_back": true,
+        "permissions_inherit": true
+      },
+      {
+        "id": 419,
+        "revision": 4,
+        "updated_at": "2026-10-27T19:19:11.000000Z",
+        "exact_requested_content_read_back": true,
+        "permissions_inherit": true
+      },
+      {
+        "id": 420,
+        "revision": 9,
+        "updated_at": "2026-10-27T19:19:17.000000Z",
+        "exact_requested_content_read_back": true,
+        "permissions_inherit": true
+      },
+      {
+        "id": 425,
+        "revision": 5,
+        "updated_at": "2026-10-27T19:19:24.000000Z",
+        "exact_requested_content_read_back": true,
+        "permissions_inherit": true
+      },
+      {
+        "id": 449,
+        "revision": 156,
+        "updated_at": "2026-10-27T19:19:48.000000Z",
+        "exact_requested_content_read_back": true,
+        "permissions_inherit": true
+      }
+    ],
+    "full_guide_embedded_in_page": 417,
+    "create_page_blocker": "Connector rejects ordinary name/markdown strings against its non-whitespace pattern; existing page edits work.",
+    "existing_employee_scope": {
+      "editor_role_id": 2,
+      "external_auth_id": "/staff-internal",
+      "page_view_all": true,
+      "book_view_all": true,
+      "book_chapter_page_inheritance": true,
+      "permissions_changed": false
+    },
+    "employee_openwebui_retrieval": "Not tested",
+    "native_queue_is_publication_proof": false
+  },
+  "migration": "2026_10_27_030000_create_nextcloud_api_commands.php",
+  "human_review": {
+    "id": "HR-2026-10-27-NEXTCLOUD-API",
+    "status": "Pending",
+    "main_merge_authorized_with_pending_scenarios": true,
+    "production_authorized": false
+  },
+  "shared_test_conflict": "An in-progress UserManagement error-handler method mismatch affected the first broad run. It was fixed by its owning work; rerun passed all 373 without editing or packaging that work.",
+  "candidate_reconciled_base": "13dc4ef4d4ab0474515522fb3131dbe6d198c624",
+  "knowledge": {
+    "articles": [
+      {
+        "id": 55,
+        "source": "01-overview.md",
+        "exact": true,
+        "visibility": "internal",
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 56,
+        "source": "02-admin-setup.md",
+        "exact": true,
+        "visibility": "internal",
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 57,
+        "source": "03-users-groups-calendars.md",
+        "exact": true,
+        "visibility": "internal",
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 58,
+        "source": "04-sso-future-plan.md",
+        "exact": true,
+        "visibility": "internal",
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 59,
+        "source": "05-talk-bot.md",
+        "exact": true,
+        "visibility": "internal",
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 60,
+        "source": "06-full-api-guide.md",
+        "exact": true,
+        "visibility": "internal",
+        "sync_status": "pending_push"
+      }
+    ],
+    "count": 6
+  },
+  "execution_time_revocation": "Fresh actor/token checks repeat after mutex wait, before provider dispatch and result disclosure; regression passes.",
+  "final_reconciled_domain": {
+    "passed": 121,
+    "assertions": 6518,
+    "all_http_operations": 50
+  }
+}

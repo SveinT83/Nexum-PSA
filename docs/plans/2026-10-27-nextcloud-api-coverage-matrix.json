@@ -1,0 +1,1938 @@
+{
+  "status": "Done On Dev / isolated Main verified / merge authorized",
+  "date": "2026-10-27",
+  "root": "/var/Projects/tdPSA",
+  "branch": "Dev",
+  "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "proposed_api_prefix": "/api/v1/nextcloud",
+  "browser_rows": [
+    {
+      "id": "NC01",
+      "browser": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/admin/system/nextcloud",
+        "name": "tech.admin.nextcloud.connections.index",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@index",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "index",
+      "classification": "read",
+      "proposed_api": "GET /connections; GET /context",
+      "baseline": "Missing general list/context; calendar list is partial",
+      "proposed_scope": "nextcloud.connections.read",
+      "slice": 1,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/context",
+          "controller": "ConnectionController@context",
+          "scopes": [
+            "nextcloud.connections.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiContextResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections",
+          "controller": "ConnectionController@index",
+          "scopes": [
+            "nextcloud.connections.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiConnectionPageResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/context",
+          "controller": "ConnectionController@context",
+          "scopes": [
+            "nextcloud.connections.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiContextResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC02",
+      "browser": {
+        "domain": null,
+        "method": "DELETE",
+        "uri": "tech/admin/system/nextcloud/calendar-mappings/{mapping}",
+        "name": "tech.admin.nextcloud.calendar-mappings.destroy",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@destroyCalendarMapping",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "destroyCalendarMapping",
+      "classification": "write",
+      "proposed_api": "Existing DELETE /calendar/connections/{connection}/mappings/{mapping}",
+      "baseline": "Existing shared action; exact connection/owner check",
+      "proposed_scope": "nextcloud.calendar.mapping",
+      "slice": 2,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "DELETE",
+          "path": "/api/v1/nextcloud/connections/{connection}/calendars/{calendarMapping}",
+          "controller": "MappingController@deleteCalendar",
+          "scopes": [
+            "nextcloud.mappings.write"
+          ],
+          "native_permissions": [
+            "nextcloud.sync"
+          ],
+          "response_schema": "NextcloudApiDeletedResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC03",
+      "browser": {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/admin/system/nextcloud/connections",
+        "name": "tech.admin.nextcloud.connections.store",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@store",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "store",
+      "classification": "write",
+      "proposed_api": "POST /connections",
+      "baseline": "Missing",
+      "proposed_scope": "nextcloud.connections.write + conditional credentials.write",
+      "slice": 1,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/nextcloud/connections",
+          "controller": "ConnectionController@store",
+          "scopes": [
+            "nextcloud.connections.write"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiConnectionResponse",
+          "http_statuses": [
+            201
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC04",
+      "browser": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/admin/system/nextcloud/connections/{connection}",
+        "name": "tech.admin.nextcloud.connections.show",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@show",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "show",
+      "classification": "read",
+      "proposed_api": "GET /connections/{connection}; GET .../context",
+      "baseline": "Missing complete detail/lookups/general logs",
+      "proposed_scope": "nextcloud.connections.read",
+      "slice": 1,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/context",
+          "controller": "ConnectionController@context",
+          "scopes": [
+            "nextcloud.connections.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiContextResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}",
+          "controller": "ConnectionController@show",
+          "scopes": [
+            "nextcloud.connections.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiConnectionResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/context",
+          "controller": "ConnectionController@context",
+          "scopes": [
+            "nextcloud.connections.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiContextResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/users",
+          "controller": "MappingController@users",
+          "scopes": [
+            "nextcloud.mappings.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiUserMappingPageResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/groups",
+          "controller": "MappingController@groups",
+          "scopes": [
+            "nextcloud.mappings.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiGroupMappingPageResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/calendars",
+          "controller": "MappingController@calendars",
+          "scopes": [
+            "nextcloud.mappings.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiCalendarMappingPageResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/folders",
+          "controller": "MappingController@folders",
+          "scopes": [
+            "nextcloud.folders.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiFolderMappingPageResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/files",
+          "controller": "ProviderController@files",
+          "scopes": [
+            "nextcloud.folders.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiFilesResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "PATCH",
+          "path": "/api/v1/nextcloud/connections/{connection}/folders",
+          "controller": "ProviderController@folders",
+          "scopes": [
+            "nextcloud.folders.write"
+          ],
+          "native_permissions": [
+            "nextcloud.folder_manage"
+          ],
+          "response_schema": "NextcloudApiConnectionResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/attempts",
+          "controller": "ProviderController@attempts",
+          "scopes": [
+            "nextcloud.connections.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiAttemptPageResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/talk-bot",
+          "controller": "ProviderController@talk",
+          "scopes": [
+            "nextcloud.talk.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiTalkResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/operations/{operation}",
+          "controller": "OperationController@show",
+          "scopes": [
+            "nextcloud.operations.read"
+          ],
+          "native_permissions": [],
+          "response_schema": "NextcloudApiOperationResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC05",
+      "browser": {
+        "domain": null,
+        "method": "PATCH",
+        "uri": "tech/admin/system/nextcloud/connections/{connection}",
+        "name": "tech.admin.nextcloud.connections.update",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@update",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "update",
+      "classification": "write",
+      "proposed_api": "PATCH /connections/{connection}",
+      "baseline": "Missing; preserve absent PATCH fields",
+      "proposed_scope": "nextcloud.connections.write + conditional credentials.write",
+      "slice": 1,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "PATCH",
+          "path": "/api/v1/nextcloud/connections/{connection}",
+          "controller": "ConnectionController@update",
+          "scopes": [
+            "nextcloud.connections.write"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiConnectionResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC06",
+      "browser": {
+        "domain": null,
+        "method": "DELETE",
+        "uri": "tech/admin/system/nextcloud/connections/{connection}",
+        "name": "tech.admin.nextcloud.connections.destroy",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@destroy",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "destroy",
+      "classification": "write",
+      "proposed_api": "DELETE /connections/{connection}",
+      "baseline": "Missing",
+      "proposed_scope": "nextcloud.connections.write",
+      "slice": 1,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "DELETE",
+          "path": "/api/v1/nextcloud/connections/{connection}",
+          "controller": "ConnectionController@destroy",
+          "scopes": [
+            "nextcloud.connections.write"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiDeletedResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC07",
+      "browser": {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/admin/system/nextcloud/connections/{connection}/calendars",
+        "name": "tech.admin.nextcloud.connections.calendars.store",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@storeCalendarMapping",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "storeCalendarMapping",
+      "classification": "write",
+      "proposed_api": "Existing POST /calendar/connections/{connection}/mappings",
+      "baseline": "Existing shared action; verify exact browser fields/eligibility",
+      "proposed_scope": "nextcloud.calendar.mapping",
+      "slice": 2,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/calendars",
+          "controller": "MappingController@calendars",
+          "scopes": [
+            "nextcloud.mappings.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiCalendarMappingPageResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/nextcloud/connections/{connection}/calendars",
+          "controller": "MappingController@storeCalendar",
+          "scopes": [
+            "nextcloud.mappings.write"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiCalendarMappingResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/calendars/{calendarMapping}",
+          "controller": "MappingController@showCalendar",
+          "scopes": [
+            "nextcloud.mappings.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiCalendarMappingResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC08",
+      "browser": {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/admin/system/nextcloud/connections/{connection}/check",
+        "name": "tech.admin.nextcloud.connections.check",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@check",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "check",
+      "classification": "action",
+      "proposed_api": "POST /connections/{connection}/health",
+      "baseline": "Calendar health exists; general scope missing",
+      "proposed_scope": "nextcloud.health",
+      "slice": 4,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/nextcloud/connections/{connection}/health",
+          "controller": "ProviderController@health",
+          "scopes": [
+            "nextcloud.health"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiHealthResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC09",
+      "browser": {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/admin/system/nextcloud/connections/{connection}/folders",
+        "name": "tech.admin.nextcloud.connections.folders.store",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@storeFolderMapping",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "storeFolderMapping",
+      "classification": "write",
+      "proposed_api": "POST /connections/{connection}/folders",
+      "baseline": "Missing",
+      "proposed_scope": "nextcloud.folders.write",
+      "slice": 2,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/folders",
+          "controller": "MappingController@folders",
+          "scopes": [
+            "nextcloud.folders.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiFolderMappingPageResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/nextcloud/connections/{connection}/folders",
+          "controller": "MappingController@storeFolder",
+          "scopes": [
+            "nextcloud.folders.write"
+          ],
+          "native_permissions": [
+            "nextcloud.folder_manage"
+          ],
+          "response_schema": "NextcloudApiFolderMappingResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/folders/{folderMapping}",
+          "controller": "MappingController@showFolder",
+          "scopes": [
+            "nextcloud.folders.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiFolderMappingResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC10",
+      "browser": {
+        "domain": null,
+        "method": "PATCH",
+        "uri": "tech/admin/system/nextcloud/connections/{connection}/folders",
+        "name": "tech.admin.nextcloud.connections.folders.update",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@updateFolders",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "updateFolders",
+      "classification": "write",
+      "proposed_api": "PATCH /connections/{connection}/folders",
+      "baseline": "Missing root/documents selection",
+      "proposed_scope": "nextcloud.folders.write",
+      "slice": 3,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "PATCH",
+          "path": "/api/v1/nextcloud/connections/{connection}/folders",
+          "controller": "ProviderController@folders",
+          "scopes": [
+            "nextcloud.folders.write"
+          ],
+          "native_permissions": [
+            "nextcloud.folder_manage"
+          ],
+          "response_schema": "NextcloudApiConnectionResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC11",
+      "browser": {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/admin/system/nextcloud/connections/{connection}/folders/auto-match",
+        "name": "tech.admin.nextcloud.connections.folders.auto_match",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@autoMatchClientFolders",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "autoMatchClientFolders",
+      "classification": "action",
+      "proposed_api": "POST .../folders/auto-match/preview and /apply",
+      "baseline": "Missing; deterministic/AI with local mapping writes",
+      "proposed_scope": "nextcloud.folders.write + existing AI execution authority",
+      "slice": 3,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/nextcloud/connections/{connection}/folders/auto-match/preview",
+          "controller": "ProviderController@previewMatch",
+          "scopes": [
+            "nextcloud.folders.write"
+          ],
+          "native_permissions": [
+            "nextcloud.folder_manage"
+          ],
+          "response_schema": "NextcloudApiMatchPreviewResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/nextcloud/connections/{connection}/folders/auto-match/apply",
+          "controller": "ProviderController@applyMatch",
+          "scopes": [
+            "nextcloud.folders.write"
+          ],
+          "native_permissions": [
+            "nextcloud.folder_manage"
+          ],
+          "response_schema": "NextcloudApiMatchResultResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC12",
+      "browser": {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/admin/system/nextcloud/connections/{connection}/groups",
+        "name": "tech.admin.nextcloud.connections.groups.store",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@storeGroupMapping",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "storeGroupMapping",
+      "classification": "write",
+      "proposed_api": "POST /connections/{connection}/groups",
+      "baseline": "Missing; roles/client context/direction",
+      "proposed_scope": "nextcloud.mappings.write",
+      "slice": 2,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/groups",
+          "controller": "MappingController@groups",
+          "scopes": [
+            "nextcloud.mappings.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiGroupMappingPageResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/nextcloud/connections/{connection}/groups",
+          "controller": "MappingController@storeGroup",
+          "scopes": [
+            "nextcloud.mappings.write"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiGroupMappingResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/groups/{groupMapping}",
+          "controller": "MappingController@showGroup",
+          "scopes": [
+            "nextcloud.mappings.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiGroupMappingResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC13",
+      "browser": {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/admin/system/nextcloud/connections/{connection}/sync",
+        "name": "tech.admin.nextcloud.connections.sync",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@sync",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "sync",
+      "classification": "action",
+      "proposed_api": "POST /connections/{connection}/sync; preview and attempts",
+      "baseline": "Calendar-only sync does not implement full sync",
+      "proposed_scope": "nextcloud.sync + conditional providers.execute",
+      "slice": 4,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/nextcloud/connections/{connection}/sync/preview",
+          "controller": "ProviderController@previewSync",
+          "scopes": [
+            "nextcloud.sync"
+          ],
+          "native_permissions": [
+            "nextcloud.sync"
+          ],
+          "response_schema": "NextcloudApiSyncPreviewResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/nextcloud/connections/{connection}/sync",
+          "controller": "ProviderController@sync",
+          "scopes": [
+            "nextcloud.sync",
+            "nextcloud.providers.execute"
+          ],
+          "native_permissions": [
+            "nextcloud.sync"
+          ],
+          "response_schema": "NextcloudApiAttemptResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/attempts",
+          "controller": "ProviderController@attempts",
+          "scopes": [
+            "nextcloud.connections.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiAttemptPageResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/attempts/{attempt}",
+          "controller": "ProviderController@attempt",
+          "scopes": [
+            "nextcloud.connections.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiAttemptResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC14",
+      "browser": {
+        "domain": null,
+        "method": "PATCH",
+        "uri": "tech/admin/system/nextcloud/connections/{connection}/talk-bot",
+        "name": "tech.admin.nextcloud.connections.update-talk-bot",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@updateTalkBot",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "updateTalkBot",
+      "classification": "write",
+      "proposed_api": "PATCH /connections/{connection}/talk-bot",
+      "baseline": "Missing",
+      "proposed_scope": "nextcloud.talk.write + conditional credentials.write",
+      "slice": 4,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/talk-bot",
+          "controller": "ProviderController@talk",
+          "scopes": [
+            "nextcloud.talk.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiTalkResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "PATCH",
+          "path": "/api/v1/nextcloud/connections/{connection}/talk-bot",
+          "controller": "ProviderController@updateTalk",
+          "scopes": [
+            "nextcloud.talk.write"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiTalkResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC15",
+      "browser": {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/admin/system/nextcloud/connections/{connection}/test-talk-bot",
+        "name": "tech.admin.nextcloud.connections.test-talk-bot",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@testTalkBot",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "testTalkBot",
+      "classification": "action",
+      "proposed_api": "POST /connections/{connection}/talk-bot/test",
+      "baseline": "Missing",
+      "proposed_scope": "nextcloud.talk.execute + providers.execute",
+      "slice": 4,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "POST",
+          "path": "/api/v1/nextcloud/connections/{connection}/talk-bot/test",
+          "controller": "ProviderController@testTalk",
+          "scopes": [
+            "nextcloud.talk.execute",
+            "nextcloud.providers.execute"
+          ],
+          "native_permissions": [
+            "nextcloud.talk_manage"
+          ],
+          "response_schema": "NextcloudApiTalkResultResponse",
+          "http_statuses": [
+            202,
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC16",
+      "browser": {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/admin/system/nextcloud/connections/{connection}/users",
+        "name": "tech.admin.nextcloud.connections.users.store",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@storeUserMapping",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "storeUserMapping",
+      "classification": "write",
+      "proposed_api": "POST /connections/{connection}/users",
+      "baseline": "Missing; all skip/map/import branches",
+      "proposed_scope": "nextcloud.mappings.write",
+      "slice": 2,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/users",
+          "controller": "MappingController@users",
+          "scopes": [
+            "nextcloud.mappings.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiUserMappingPageResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/nextcloud/connections/{connection}/users",
+          "controller": "MappingController@storeUser",
+          "scopes": [
+            "nextcloud.mappings.write"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiUserMappingResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/nextcloud/connections/{connection}/users/{userMapping}",
+          "controller": "MappingController@showUser",
+          "scopes": [
+            "nextcloud.mappings.read"
+          ],
+          "native_permissions": [
+            "nextcloud.connection_manage"
+          ],
+          "response_schema": "NextcloudApiUserMappingResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC17",
+      "browser": {
+        "domain": null,
+        "method": "DELETE",
+        "uri": "tech/admin/system/nextcloud/folder-mappings/{mapping}",
+        "name": "tech.admin.nextcloud.folder-mappings.destroy",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@destroyFolderMapping",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "destroyFolderMapping",
+      "classification": "write",
+      "proposed_api": "DELETE /connections/{connection}/folders/{mapping}",
+      "baseline": "Missing",
+      "proposed_scope": "nextcloud.folders.write",
+      "slice": 2,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "DELETE",
+          "path": "/api/v1/nextcloud/connections/{connection}/folders/{folderMapping}",
+          "controller": "MappingController@deleteFolder",
+          "scopes": [
+            "nextcloud.folders.write"
+          ],
+          "native_permissions": [
+            "nextcloud.folder_manage"
+          ],
+          "response_schema": "NextcloudApiDeletedResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC18",
+      "browser": {
+        "domain": null,
+        "method": "DELETE",
+        "uri": "tech/admin/system/nextcloud/group-mappings/{mapping}",
+        "name": "tech.admin.nextcloud.group-mappings.destroy",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@destroyGroupMapping",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "destroyGroupMapping",
+      "classification": "write",
+      "proposed_api": "DELETE /connections/{connection}/groups/{mapping}",
+      "baseline": "Missing",
+      "proposed_scope": "nextcloud.mappings.write",
+      "slice": 2,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "DELETE",
+          "path": "/api/v1/nextcloud/connections/{connection}/groups/{groupMapping}",
+          "controller": "MappingController@deleteGroup",
+          "scopes": [
+            "nextcloud.mappings.write"
+          ],
+          "native_permissions": [
+            "nextcloud.user_mapping_manage"
+          ],
+          "response_schema": "NextcloudApiDeletedResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    },
+    {
+      "id": "NC19",
+      "browser": {
+        "domain": null,
+        "method": "DELETE",
+        "uri": "tech/admin/system/nextcloud/user-mappings/{mapping}",
+        "name": "tech.admin.nextcloud.user-mappings.destroy",
+        "action": "App\\Modules\\Nextcloud\\Controllers\\Admin\\NextcloudConnectionController@destroyUserMapping",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "action": "destroyUserMapping",
+      "classification": "write",
+      "proposed_api": "DELETE /connections/{connection}/users/{mapping}",
+      "baseline": "Missing",
+      "proposed_scope": "nextcloud.mappings.write",
+      "slice": 2,
+      "status": "Verified on Dev and isolated Main candidate",
+      "implementation": "Shared native actions and explicit typed API routes",
+      "verified_api": [
+        {
+          "method": "DELETE",
+          "path": "/api/v1/nextcloud/connections/{connection}/users/{userMapping}",
+          "controller": "MappingController@deleteUser",
+          "scopes": [
+            "nextcloud.mappings.write"
+          ],
+          "native_permissions": [
+            "nextcloud.user_mapping_manage"
+          ],
+          "response_schema": "NextcloudApiDeletedResponse",
+          "http_statuses": [
+            200
+          ],
+          "tests": "NextcloudApiParityTest / NextcloudApiContractTest"
+        }
+      ],
+      "verification": "Actual positive/negative/stale/replay HTTP checks, exact persisted read-back and schema validation passed."
+    }
+  ],
+  "embedded_workflows": [
+    {
+      "id": "NCE01",
+      "workflow": "Folder browser navigation and bounded live metadata",
+      "classification": "read",
+      "proposed_api": "GET /connections/{connection}/files?path=...; configured roots, feature checks and TLS",
+      "status": "Verified",
+      "tests": "NextcloudApiParityTest plus existing module/calendar/transport suites"
+    },
+    {
+      "id": "NCE02",
+      "workflow": "Scoped form choices and action availability",
+      "classification": "read",
+      "proposed_api": "GET /context and /connections/{connection}/context",
+      "status": "Verified",
+      "tests": "NextcloudApiParityTest plus existing module/calendar/transport suites"
+    },
+    {
+      "id": "NCE03",
+      "workflow": "General sync logs and exact attempts",
+      "classification": "read",
+      "proposed_api": "GET /connections/{connection}/attempts and /attempts/{attempt}; sanitized evidence",
+      "status": "Verified",
+      "tests": "NextcloudApiParityTest plus existing module/calendar/transport suites"
+    },
+    {
+      "id": "NCE04",
+      "workflow": "Mapping collection and exact item read-back",
+      "classification": "read",
+      "proposed_api": "GET .../{connection}/users|groups|folders and /{mapping}; existing calendar mapping reads",
+      "status": "Verified",
+      "tests": "NextcloudApiParityTest plus existing module/calendar/transport suites"
+    },
+    {
+      "id": "NCE05",
+      "workflow": "Full sync identity/contact/calendar effects",
+      "classification": "action",
+      "proposed_api": "General sync preview/execute/status, source-owned writes and leases",
+      "status": "Verified",
+      "tests": "NextcloudApiParityTest plus existing module/calendar/transport suites"
+    },
+    {
+      "id": "NCE06",
+      "workflow": "Scoped user skip, map existing and import",
+      "classification": "write",
+      "proposed_api": "All existing POST user-mapping payload branches and exact read-back",
+      "status": "Verified",
+      "tests": "NextcloudApiParityTest plus existing module/calendar/transport suites"
+    },
+    {
+      "id": "NCE07",
+      "workflow": "Write-only service/bot secret rotation",
+      "classification": "write",
+      "proposed_api": "Connection/Talk PATCH with additional credentials.write grant; omitted values unchanged",
+      "status": "Verified",
+      "tests": "NextcloudApiParityTest plus existing module/calendar/transport suites"
+    },
+    {
+      "id": "NCE08",
+      "workflow": "Own command receipt read-back",
+      "classification": "read",
+      "proposed_api": "GET /operations/{operation}; fresh actor/token/record checks",
+      "status": "Verified",
+      "tests": "NextcloudApiParityTest plus existing module/calendar/transport suites"
+    }
+  ],
+  "existing_calendar_api": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/nextcloud/calendar/connections",
+      "name": "api.v1.nextcloud.calendar.connections",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@connections",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:nextcloud.calendar.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/nextcloud/calendar/connections/{connection}",
+      "name": "api.v1.nextcloud.calendar.show",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:nextcloud.calendar.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nextcloud/calendar/connections/{connection}/activation",
+      "name": "api.v1.nextcloud.calendar.activation",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@activation",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:nextcloud.calendar.activate"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/nextcloud/calendar/connections/{connection}/attempts",
+      "name": "api.v1.nextcloud.calendar.attempts",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@attempts",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:nextcloud.calendar.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/nextcloud/calendar/connections/{connection}/attempts/{attempt}",
+      "name": "api.v1.nextcloud.calendar.attempt",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@attempt",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:nextcloud.calendar.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/nextcloud/calendar/connections/{connection}/conflicts",
+      "name": "api.v1.nextcloud.calendar.conflicts",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@conflicts",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:nextcloud.calendar.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nextcloud/calendar/connections/{connection}/conflicts/{conflict}/apply",
+      "name": "api.v1.nextcloud.calendar.conflict.apply",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarConflictController@apply",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:nextcloud.calendar.reconcile"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nextcloud/calendar/connections/{connection}/conflicts/{conflict}/preview",
+      "name": "api.v1.nextcloud.calendar.conflict.preview",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarConflictController@preview",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:nextcloud.calendar.reconcile"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nextcloud/calendar/connections/{connection}/health",
+      "name": "api.v1.nextcloud.calendar.health",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@health",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:nextcloud.calendar.health"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/nextcloud/calendar/connections/{connection}/mappings",
+      "name": "api.v1.nextcloud.calendar.mappings",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@mappings",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:nextcloud.calendar.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nextcloud/calendar/connections/{connection}/mappings",
+      "name": "api.v1.nextcloud.calendar.upsertMapping",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@upsertMapping",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:nextcloud.calendar.mapping"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "api/v1/nextcloud/calendar/connections/{connection}/mappings/{mapping}",
+      "name": "api.v1.nextcloud.calendar.removeMapping",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@removeMapping",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:nextcloud.calendar.mapping"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nextcloud/calendar/connections/{connection}/preview",
+      "name": "api.v1.nextcloud.calendar.preview",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@preview",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:nextcloud.calendar.preview"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nextcloud/calendar/connections/{connection}/sync",
+      "name": "api.v1.nextcloud.calendar.sync",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\Api\\V1\\CalendarOperationsController@sync",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:nextcloud.calendar.sync"
+      ],
+      "path": null
+    }
+  ],
+  "inbound_webhook": [
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/nextcloud/talk/webhook",
+      "name": "nextcloud.talk.webhook",
+      "action": "App\\Modules\\Nextcloud\\Controllers\\TalkWebhookController",
+      "middleware": [
+        "api"
+      ],
+      "path": null
+    }
+  ],
+  "notes": [
+    "Different surfaces, no inferred coverage percentage.",
+    "Proposed paths/scopes are not implemented catalog entries.",
+    "Preserve all 14 calendar API contracts and the signed webhook.",
+    "Issue #205 is separate new product scope; no implementation or provider write performed."
+  ],
+  "full_api_http_operations": 50,
+  "new_api_http_operations": 36,
+  "new_schemas": 47,
+  "successful_http_evidence": {
+    "full": {
+      "nextcloudApiConnectionStore": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/connections",
+        "status": 201,
+        "statuses": [
+          201
+        ]
+      },
+      "nextcloudApiConnectionIndex": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/connections",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiConnectionContextGlobal": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/context",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiConnectionContext": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/connections/{connection}/context",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiConnectionShow": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/connections/{connection}",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiConnectionUpdate": {
+        "method": "PATCH",
+        "path": "/api/v1/nextcloud/connections/{connection}",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiOperationShow": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/operations/{operation}",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiConnectionDestroy": {
+        "method": "DELETE",
+        "path": "/api/v1/nextcloud/connections/{connection}",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiMappingStoreUser": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/connections/{connection}/users",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiMappingUsers": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/connections/{connection}/users",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiMappingShowUser": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/connections/{connection}/users/{userMapping}",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiMappingDeleteUser": {
+        "method": "DELETE",
+        "path": "/api/v1/nextcloud/connections/{connection}/users/{userMapping}",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiMappingStoreGroup": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/connections/{connection}/groups",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiMappingGroups": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/connections/{connection}/groups",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiMappingShowGroup": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/connections/{connection}/groups/{groupMapping}",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiMappingDeleteGroup": {
+        "method": "DELETE",
+        "path": "/api/v1/nextcloud/connections/{connection}/groups/{groupMapping}",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiMappingStoreCalendar": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/connections/{connection}/calendars",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiMappingCalendars": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/connections/{connection}/calendars",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiMappingShowCalendar": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/connections/{connection}/calendars/{calendarMapping}",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiMappingDeleteCalendar": {
+        "method": "DELETE",
+        "path": "/api/v1/nextcloud/connections/{connection}/calendars/{calendarMapping}",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiMappingStoreFolder": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/connections/{connection}/folders",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiMappingFolders": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/connections/{connection}/folders",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiMappingShowFolder": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/connections/{connection}/folders/{folderMapping}",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiMappingDeleteFolder": {
+        "method": "DELETE",
+        "path": "/api/v1/nextcloud/connections/{connection}/folders/{folderMapping}",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiProviderTestTalk": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/connections/{connection}/talk-bot/test",
+        "status": 202,
+        "statuses": [
+          202,
+          200
+        ]
+      },
+      "nextcloudApiProviderTalk": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/connections/{connection}/talk-bot",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiProviderUpdateTalk": {
+        "method": "PATCH",
+        "path": "/api/v1/nextcloud/connections/{connection}/talk-bot",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiProviderFiles": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/connections/{connection}/files",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiProviderFolders": {
+        "method": "PATCH",
+        "path": "/api/v1/nextcloud/connections/{connection}/folders",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiProviderPreviewMatch": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/connections/{connection}/folders/auto-match/preview",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiProviderApplyMatch": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/connections/{connection}/folders/auto-match/apply",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiProviderHealth": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/connections/{connection}/health",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiProviderPreviewSync": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/connections/{connection}/sync/preview",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiProviderSync": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/connections/{connection}/sync",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiProviderAttempts": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/connections/{connection}/attempts",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      },
+      "nextcloudApiProviderAttempt": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/connections/{connection}/attempts/{attempt}",
+        "status": 200,
+        "statuses": [
+          200
+        ]
+      }
+    },
+    "legacy": {
+      "calendarParityCalendarOperationsControllerConnections": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/calendar/connections",
+        "status": 200
+      },
+      "calendarParityCalendarOperationsControllerShow": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/calendar/connections/{connection}",
+        "status": 200
+      },
+      "calendarParityCalendarOperationsControllerMappings": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/calendar/connections/{connection}/mappings",
+        "status": 200
+      },
+      "calendarParityCalendarOperationsControllerPreview": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/calendar/connections/{connection}/preview",
+        "status": 200
+      },
+      "calendarParityCalendarOperationsControllerActivation": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/calendar/connections/{connection}/activation",
+        "status": 200
+      },
+      "calendarParityCalendarOperationsControllerUpsertmapping": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/calendar/connections/{connection}/mappings",
+        "status": 200
+      },
+      "calendarParityCalendarOperationsControllerAttempts": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/calendar/connections/{connection}/attempts",
+        "status": 200
+      },
+      "calendarParityCalendarOperationsControllerSync": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/calendar/connections/{connection}/sync",
+        "status": 202
+      },
+      "calendarParityCalendarOperationsControllerAttempt": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/calendar/connections/{connection}/attempts/{attempt}",
+        "status": 200
+      },
+      "calendarParityCalendarConflictControllerPreview": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/calendar/connections/{connection}/conflicts/{conflict}/preview",
+        "status": 200
+      },
+      "calendarParityCalendarConflictControllerApply": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/calendar/connections/{connection}/conflicts/{conflict}/apply",
+        "status": 202
+      },
+      "calendarParityCalendarOperationsControllerConflicts": {
+        "method": "GET",
+        "path": "/api/v1/nextcloud/calendar/connections/{connection}/conflicts",
+        "status": 200
+      },
+      "calendarParityCalendarOperationsControllerRemovemapping": {
+        "method": "DELETE",
+        "path": "/api/v1/nextcloud/calendar/connections/{connection}/mappings/{mapping}",
+        "status": 200
+      },
+      "calendarParityCalendarOperationsControllerHealth": {
+        "method": "POST",
+        "path": "/api/v1/nextcloud/calendar/connections/{connection}/health",
+        "status": 200
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 # Lead Intelligence Browser/API Coverage Matrix
 
-Date: 2026-10-27. Status: Implemented and verified on Dev; Main candidate verified; merge authorized.
+Date: 2026-10-27. Status: Implemented and verified on Dev; merged to Main in PR #343; manual review/production remain separate.
 Authoritative Dev: /var/Projects/tdPSA; branch Dev; HEAD 36918edbcaae1ce7b1208ba34f84a3a1719f0e98.
 Baseline: 14 browser rows, 11 API operations, zero matching generated Swagger operations.
 Result: all current workflows; exact 17 HTTP operations / 47 typed schemas verified.

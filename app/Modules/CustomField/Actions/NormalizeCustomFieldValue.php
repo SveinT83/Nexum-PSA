@@ -32,13 +32,17 @@ class NormalizeCustomFieldValue
             return $this->emptyPayload();
         }
 
+        if ($definition->field_type !== CustomFieldDefinition::TYPE_MULTISELECT && ! is_scalar($value)) {
+            $this->fail($definition, 'must be a scalar value');
+        }
+
         return match ($definition->field_type) {
             CustomFieldDefinition::TYPE_NUMBER => $this->numberPayload($definition, $value),
             CustomFieldDefinition::TYPE_DATE => $this->datePayload($definition, $value),
             CustomFieldDefinition::TYPE_DATETIME => $this->dateTimePayload($definition, $value),
             CustomFieldDefinition::TYPE_SELECT => $this->selectPayload($definition, $value),
             CustomFieldDefinition::TYPE_MULTISELECT => $this->multiSelectPayload($definition, $value),
-            CustomFieldDefinition::TYPE_CHECKBOX => $this->checkboxPayload($value),
+            CustomFieldDefinition::TYPE_CHECKBOX => $this->checkboxPayload($definition, $value),
             CustomFieldDefinition::TYPE_EMAIL => $this->emailPayload($definition, $value),
             CustomFieldDefinition::TYPE_URL => $this->urlPayload($definition, $value),
             default => $this->textPayload((string) $value),
@@ -59,8 +63,9 @@ class NormalizeCustomFieldValue
 
     private function numberPayload(CustomFieldDefinition $definition, mixed $value): array
     {
-        if (! is_numeric($value)) {
-            $this->fail($definition, 'must be a number');
+        if (! is_numeric($value) || ! is_finite((float) $value) || abs((float) $value) >= 100000000000000
+            || round((float) $value, 6) !== (float) $value) {
+            $this->fail($definition, 'must be a finite number within decimal(20,6) precision');
         }
 
         return array_merge($this->emptyPayload(), [
@@ -71,7 +76,8 @@ class NormalizeCustomFieldValue
 
     private function datePayload(CustomFieldDefinition $definition, mixed $value): array
     {
-        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $value)) {
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $value)
+            || ! checkdate((int) substr((string) $value, 5, 2), (int) substr((string) $value, 8, 2), (int) substr((string) $value, 0, 4))) {
             $this->fail($definition, 'must be a date formatted as YYYY-MM-DD');
         }
 
@@ -110,6 +116,10 @@ class NormalizeCustomFieldValue
 
     private function multiSelectPayload(CustomFieldDefinition $definition, mixed $value): array
     {
+        if ((is_array($value) && (! array_is_list($value) || collect($value)->contains(fn ($item) => ! is_string($item))))
+            || (! is_array($value) && ! is_string($value))) {
+            $this->fail($definition, 'must contain a list of strings');
+        }
         $values = is_array($value) ? array_values(array_filter($value, fn ($item) => $item !== '')) : [(string) $value];
         $options = $definition->options ?? [];
 
@@ -127,9 +137,12 @@ class NormalizeCustomFieldValue
         ]);
     }
 
-    private function checkboxPayload(mixed $value): array
+    private function checkboxPayload(CustomFieldDefinition $definition, mixed $value): array
     {
-        $boolean = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
+        $boolean = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        if ($boolean === null) {
+            $this->fail($definition, 'must be a boolean');
+        }
 
         return array_merge($this->emptyPayload(), [
             'value_text' => $boolean ? '1' : '0',
