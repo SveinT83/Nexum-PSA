@@ -1,6 +1,6 @@
 # UserManagement API Verification
 
-Status: Verified on Dev and isolated Main candidate; authorized Main promotion in progress.
+Status: Verified on Dev and merged to Main in PR #353; production not deployed; human review Pending.
 Owner: Codex. Named reviewer/release owner: Svein Tore. Date: 2026-10-27.
 
 ## Current verified coverage

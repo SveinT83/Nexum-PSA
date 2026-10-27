@@ -2,7 +2,7 @@
 
 ## HR-2026-10-27-USERMANAGEMENT-API - Full UserManagement Browser/API Coverage
 
-Status: Pending / Dev implementation and tested Main promotion authorized, 2026-10-27.
+Status: Pending / Verified Dev and Main merge PR #353, 2026-10-27; manual scenarios are not reviewed.
 Owner: Codex. Named intended human reviewer/release owner: Svein Tore.
 Scope: approved rfc/2026-10-27-usermanagement-full-api-parity.md; all 49 browser rows,
 embedded role-permission actions, own profile/preferences, user administration,
@@ -34,6 +34,7 @@ HTTPS, exact handbook content and inherited employee access are verified. None o
 marks the scenario boxes Reviewed. Actual refs are in the Main promotion report.
 Final MFA/session regression: Dev 79 / 990; Main 185 passed / 2616 assertions with one existing optional provider skip; no failures/errors.
 Latest Main integration (including Marketing): 90 passed / 2496 assertions; one existing optional protected-provider skip, zero errors/failures.
+Main merge independently read back: 65ffcb5e0491f5782b6c8d2873a3894fc1680cc4; exact tested tree and all 65 owned files verified. Final combined privacy checks: 24 / 916. No production deployment.
 
 
 ## HR-2026-10-27-MARKETING-API - Full Marketing Browser/API Coverage

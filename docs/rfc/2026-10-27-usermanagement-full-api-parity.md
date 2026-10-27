@@ -1,6 +1,6 @@
 # RFC: Full UserManagement Browser/API Parity
 
-Status: Approved by Svein Tore, 2026-10-27. Implementation: Verified on Dev and isolated Main candidate; tested Main promotion in progress.
+Status: Approved by Svein Tore, 2026-10-27. Implementation: Verified on Dev and merged to Main in PR #353. Production not deployed.
 Date: 2026-10-27
 Owner: Codex. Product/release owner and intended human reviewer: Svein Tore.
 Change level: 3 - API, permissions and authentication integration.

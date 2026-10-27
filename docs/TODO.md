@@ -2,7 +2,7 @@
 
 ## Full UserManagement browser/API coverage (2026-10-27)
 
-Status: Done On Dev / Verified Main Candidate / Tested Main Promotion Authorized.
+Status: Done On Dev / Verified / Merged to Main in PR #353 / Production not deployed.
 Owner: Codex; product/release owner and named intended reviewer: Svein Tore.
 Authorization: "Godkjenner og merge til main", 2026-10-27.
 RFC: rfc/2026-10-27-usermanagement-full-api-parity.md (Approved).
@@ -21,10 +21,10 @@ employee assistant retrieval remain separate. No auth/Vault/provider activation 
 Evidence: plans/2026-10-27-usermanagement-api-verification.md/.json and coverage matrix.
 HR-2026-10-27-USERMANAGEMENT-API remains Pending; authorizes tested Main promotion while
 manual checks still gate production release/activation. Earlier SSO/manual gates persist.
-Next (Codex): merge only the scoped tested Main candidate after current-base read-back,
-preserving unrelated shared Dev work and separately owned protected security adapters.
+Next (Svein Tore): complete HR-2026-10-27-USERMANAGEMENT-API manual checks before a separately authorized production release. Shared Dev work and protected security adapters are preserved.
 Final MFA/session regression: Dev 79 / 990; Main 185 passed / 2616 assertions with one existing optional provider skip; no failures/errors.
 Latest Main integration (including Marketing): 90 passed / 2496 assertions; one existing optional protected-provider skip, zero errors/failures.
+Main merge independently read back: 65ffcb5e0491f5782b6c8d2873a3894fc1680cc4; exact tested tree and all 65 owned files verified. Final combined privacy checks: 24 / 916. No production deployment.
 
 
 ## Full Marketing browser/API coverage (2026-10-27)

@@ -1,6 +1,6 @@
 # Feature Slices: Full UserManagement API Parity
 
-Status: Done On Dev / parent RFC Approved; affected regression verified on Dev and Main candidate; Main promotion in progress. Date: 2026-10-27.
+Status: UM01-UM08 Done On Dev / Verified / Merged to Main in PR #353. Parent RFC Approved. Human review Pending; production not deployed.
 Parent: ../rfc/2026-10-27-usermanagement-full-api-parity.md
 Owner: Codex. Intended human reviewer: Svein Tore.
 

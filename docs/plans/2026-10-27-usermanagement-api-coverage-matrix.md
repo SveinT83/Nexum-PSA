@@ -1,6 +1,6 @@
 # UserManagement Browser/API Coverage
 
-Status: Implemented on Dev; final verification and authorized Main promotion in progress.
+Status: Verified on Dev and merged to Main in PR #353; production not deployed; human review Pending.
 
 All 49 original browser rows and embedded role-permission actions are explicitly mapped.
 Current contract: 55 API route rows / 56 HTTP operations excluding HEAD; 77 domain schemas
