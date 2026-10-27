@@ -1,7 +1,7 @@
 # CustomField API Verification
 
 Date: 2026-10-27. Owner: Codex. Authoritative implementation: Dev.
-Status: Done On Dev; final isolated Main candidate passes and is ready for the authorized merge.
+Status: Done On Dev / Merged To Main In PR #344 / Human Review Pending / Production unchanged.
 
 Seven HTTP operations and 19 typed schemas cover the four definition browser routes,
 all settings/types and the existing Client/Site/Ticket value workflows. Runtime
@@ -60,3 +60,8 @@ After preserving the newly merged Intake code and coordination records, the fina
 latest-Main CustomField/Knowledge contract batch passes 27 tests / 2042 assertions,
 no failures/errors/skips, using the dedicated Blade cache. All other Swagger paths
 and schema objects remain those of the frozen upstream Main parent.
+
+Main PR #344 is merged and independently fetched/read back at
+f91acc9045794ac4ede80a336f80974c17ab9bc4. Its tree
+1ab76e6194ade260d77317739fa6c9a463362303 exactly equals the verified candidate.
+Latest-parent contract/domain checks pass 27 / 2042. No Main action remains.

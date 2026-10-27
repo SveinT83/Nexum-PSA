@@ -25,3 +25,7 @@ including shared owner workflows and internal source publication; actual BookSta
 451/449 source/access read-back is verified. Seven HTTP operations / 19 schemas, native
 DB and trusted HTTPS pass. Tested Main promotion is authorized; final rebased interoperability
 checks pass 236 / 9264 with a dedicated view cache. HR-2026-10-27-CUSTOM-FIELD-API remains Pending; production unchanged.
+
+Main promotion completed in PR #344, independently verified at
+f91acc9045794ac4ede80a336f80974c17ab9bc4. The merged tree equals the tested candidate.
+No Main implementation action remains. Human review remains Pending; production unchanged.

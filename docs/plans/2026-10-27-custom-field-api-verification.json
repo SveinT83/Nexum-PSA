@@ -191,5 +191,14 @@
     "failures": 0,
     "errors": 0,
     "skipped": 0
+  },
+  "main_promotion": {
+    "pr": 344,
+    "url": "https://github.com/SveinT83/Nexum-PSA/pull/344",
+    "merge_sha": "f91acc9045794ac4ede80a336f80974c17ab9bc4",
+    "merged_tree": "1ab76e6194ade260d77317739fa6c9a463362303",
+    "tested_candidate_head": "b17113b4269767a0c3e2076d906819049eb06b00",
+    "tested_tree_exact": true,
+    "production": "Unchanged"
   }
 }
