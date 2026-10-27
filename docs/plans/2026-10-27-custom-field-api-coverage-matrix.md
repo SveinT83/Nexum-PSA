@@ -1,6 +1,6 @@
 # CustomField Browser/API Coverage Matrix
 
-Status: Done On Dev; final Dev 676 / 46696 passes; final isolated Main 236 / 9264 and scoped contracts 3 / 1481 pass; merge ready.
+Status: Done On Dev; final Dev 676 / 46696 passes; final isolated Main 236 / 9264 and scoped contracts 3 / 1481 pass; merged in Main PR #344 with exact verified-tree equality.
 Date: 2026-10-27. Owner: Codex.
 Parent: ../rfc/2026-10-27-custom-field-full-api-parity.md
 Exact existing runtime rows and source hashes: 2026-10-27-custom-field-api-baseline.json.

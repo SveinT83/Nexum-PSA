@@ -2,7 +2,7 @@
 
 ## HR-2026-10-27-CUSTOM-FIELD-API - Full CustomField Browser/API Coverage
 
-Status: Pending / Done On Dev and automated verification passed, 2026-10-27.
+Status: Pending / Done On Dev / Merged To Main In PR #344, 2026-10-27.
 Added: 2026-10-27. Owner: Codex. Intended human reviewer: Svein Tore.
 Scope: rfc/2026-10-27-custom-field-full-api-parity.md (Approved), all definition admin
 and existing Client/Site/Ticket value workflows. This human-review checklist gates
@@ -27,7 +27,10 @@ Automated evidence: final Dev 676 tests / 46696 assertions passed; isolated init
 Main features 572 / 7858 plus units 17 / 465. Seven success schemas, native database
 and trusted HTTPS checks pass. BookStack full sources/access are read back. No
 automated check marks a human scenario complete. Final rebased Main 236 / 9264 and
-scoped contracts 3 / 1481 pass without failures/skips. The authorized merge is ready.
+scoped contracts 3 / 1481 and latest-parent contracts 27 / 2042 pass without failures/skips.
+Main PR #344 is merged as f91acc9045794ac4ede80a336f80974c17ab9bc4; its tree equals
+the verified candidate. No Main gate remains for this promotion. Manual scenarios
+still require named human confirmation before production/release; none are marked done.
 
 ## HR-2026-10-27-LEAD-INTELLIGENCE-API - Full Lead Intelligence Browser/API Coverage
 

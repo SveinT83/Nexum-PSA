@@ -2,7 +2,7 @@
 
 ## Full CustomField browser/API coverage (2026-10-27)
 
-Status: Done On Dev / Verified Main Candidate Ready / Human Review Pending.
+Status: Done On Dev / Merged To Main In PR #344 / Human Review Pending / Production unchanged.
 Owner: Codex; approver/reviewer: Svein Tore. Request: CustomField 100% API support.
 RFC: rfc/2026-10-27-custom-field-full-api-parity.md (Approved).
 ADR: adr/2026-10-27-custom-field-api-authority-and-value-ownership.md (Accepted).
@@ -26,8 +26,13 @@ inheritance remains unchanged; employee OpenWebUI retrieval is untested. pending
 is not the evidence for this separate successful BookStack publication.
 Final rebased Main interoperability: 236 / 9264 passes with an isolated Blade cache;
 no failures/errors/skips. All other Main Swagger contracts are preserved.
-Next action (Codex): perform the explicitly authorized scoped Main merge and read back
-the exact merged revision/tree, then record completion.
+Main PR #344 is merged and independently read back:
+https://github.com/SveinT83/Nexum-PSA/pull/344
+Merge: f91acc9045794ac4ede80a336f80974c17ab9bc4.
+Merged tree 1ab76e6194ade260d77317739fa6c9a463362303 exactly equals the verified
+candidate. Final latest-parent contracts: 27 / 2042, no failures/errors/skips.
+No Main implementation action remains. Next owner/action (Svein Tore): perform the
+manual checklist and separately authorize production rollout when desired.
 No production deployment, provider activation, grants or real customer sends authorized.
 HR-2026-10-27-CUSTOM-FIELD-API remains Pending; manual definition administration,
 Client/Site/Ticket value and access/retry scenarios still require Svein Tore review
