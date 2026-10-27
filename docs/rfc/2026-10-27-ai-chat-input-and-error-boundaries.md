@@ -84,3 +84,22 @@ credential-management chat surface. Historical cleanup needs separate explicit a
 Svein Tore, 2026-10-27: "Fix alt og merge til main", following the concrete Issue audit.
 Main promotion is authorized after tests; human scenario review remains Pending and gates
 production rollout, not this explicitly requested tested merge.
+
+## Verified Implementation (2026-10-28)
+
+Both sequential slices are Done On Dev. Authoritative Dev: 101 tests / 1147 assertions;
+Mail/Task API consumers: 13 / 113; Task form consumers: 3 / 10. Scoped Main initial batch:
+101 / 1078, Mail: 12 / 108, Task: 3 / 10. After current Warroom reconciliation:
+132 / 1700. Final System/shared-catalog/production-Swagger delta: 54 / 711. These
+batches overlap and must not be added. All checks passed without failures/skips.
+16 scoped PHP files pass syntax/Pint. The independent read-only review's nested-field
+and pre-Send/deferred/poll snapshot bypasses were fixed and regression-tested; ordinary
+credential-status prose and typed Mail policy denial were retained. No full application
+suite or real external model request was performed.
+
+Native Knowledge 1/82 exactly match the two source articles. BookStack 541 revision 6
+contains the exact bounded section, independently read back; page and book access is
+unchanged. Employee OpenWebUI retrieval and physical browser/device checks are untested.
+Native pending_push is not a claim of native BookStack sync; Dev has no configured connector.
+PR #360 is the tested Main promotion. Production remains unchanged and the named
+human-review checklist remains Pending; Main authorization is not human scenario review.

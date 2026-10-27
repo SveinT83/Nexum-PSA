@@ -5,8 +5,11 @@
 Status: In Progress. Owner: Codex / Svein Tore. Direct authorization: "Fix alt og merge til main".
 Finish the audited Issues sequentially, preserve concurrent domain work and merge only scoped,
 verified candidates. #254 is already completed/merged/closed independently; do not redo it.
-Current primary implementation: #269/#278 under the approved RFC/ADR
-2026-10-27-ai-chat-input-and-error-boundaries, two sequential slices.
+#269/#278: both slices Done On Dev; verified scoped Main promotion in PR #360 is authorized.
+RFC/ADR: 2026-10-27-ai-chat-input-and-error-boundaries. Dev 101 / 1147 plus consumer
+13 / 113 and Task 3 / 10; reconciled Main 132 / 1700 and final 54 / 711; overlapping.
+Knowledge 1/82 and exact BookStack 541/6 read back, access unchanged. No full suite or
+real model send. Main merge read-back and remaining Issues continue sequentially.
 Human-review checklist HR-2026-10-27-AI-INPUT-ERRORS is Pending; tested Main merge is explicitly
 authorized, production scenario/release review remains separate. #262/#285 have independent
 active owners and are reconciled before promotion. #290 awaits actual recipient/provider/model
