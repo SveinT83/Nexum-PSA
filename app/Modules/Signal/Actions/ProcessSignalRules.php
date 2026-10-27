@@ -11,11 +11,18 @@ class ProcessSignalRules
 {
     private const SUCCESS_STATUSES = ['done', 'queued', 'skipped'];
 
-    public function __construct(private readonly ExecuteSignalAction $actions)
-    {
-    }
+    public function __construct(private readonly ExecuteSignalAction $actions) {}
 
     public function handle(Signal $signal): int
+    {
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($signal) {
+            Signal::whereKey($signal->id)->lockForUpdate()->firstOrFail();
+
+            return $this->handleLocked($signal);
+        });
+    }
+
+    private function handleLocked(Signal $signal): int
     {
         $executed = 0;
 
@@ -36,6 +43,15 @@ class ProcessSignalRules
     }
 
     public function retry(SignalRuleExecution $execution, bool $allActions = false): ?SignalRuleExecution
+    {
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($execution, $allActions) {
+            Signal::whereKey($execution->signal_id)->lockForUpdate()->firstOrFail();
+
+            return $this->retryLocked($execution->fresh(), $allActions);
+        });
+    }
+
+    private function retryLocked(SignalRuleExecution $execution, bool $allActions = false): ?SignalRuleExecution
     {
         $root = $execution->rootExecution()->loadMissing(['signal', 'rule', 'retries']);
         if (! $root->signal || ! $root->rule) {
@@ -86,6 +102,7 @@ class ProcessSignalRules
                     'status' => 'not_run',
                     'message' => 'Not run because an earlier action in this attempt failed.',
                 ];
+
                 continue;
             }
 

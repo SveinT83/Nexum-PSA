@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Clients\Client;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Signal\Actions\RecordSignal;
-use App\Modules\Signal\Resources\Api\V1\SignalResource;
+use App\Modules\Signal\Resources\Api\V1\SignalApiView;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -35,16 +35,20 @@ class SignalController extends Controller
 
         $subjectType = $data['subject_type'] ?? null;
         if ($subjectType === 'contact') {
-            $data['subject_type'] = (new Contact())->getMorphClass();
+            $data['subject_type'] = (new Contact)->getMorphClass();
         } elseif ($subjectType === 'client') {
-            $data['subject_type'] = (new Client())->getMorphClass();
+            $data['subject_type'] = (new Client)->getMorphClass();
         }
 
+        if ($request->boolean('process_rules', true)) {
+            \App\Modules\Signal\Support\SignalApiAccess::requireAbility($request, 'signals.actions.execute');
+        }
         $signal = $signals->handle($data, processRules: $request->boolean('process_rules', true))
             ->loadCount('executions');
 
         return response()->json([
-            'data' => (new SignalResource($signal))->resolve($request),
+            'data' => SignalApiView::signal($signal),
+            'executions' => $signal->executions()->orderBy('id')->get()->map(SignalApiView::execution(...))->all(),
         ], 201);
     }
 }

@@ -1427,3 +1427,21 @@ separate. New writes require Idempotency-Key; ETag/If-Match detects stale observ
 The API provider execution switch remains disabled by default. Use the Knowledge API guide and
 installation Swagger for exact endpoints and contracts. Knowledge is merged to Main in PR #331;
 production availability is separate. No permissions or integration policy were enabled here.
+
+## Signal API Extension (Dev Only, 2026-10-27)
+
+The full current-browser Signal API has 19 typed HTTP operations and 42 schemas,
+covering feed/search, details/related history, rule/settings administration, immutable
+execution history, preview and failed/full retry. See Signal Domain Overview for the
+complete operating guide and operation list. Native rights and explicit token abilities
+are both required. signals.create now needs signal.action.execute; rule processing
+also needs signals.actions.execute. External effects additionally need
+signals.providers.execute and the separate default-off Signal API execution switch.
+
+New mutations use Idempotency-Key; rule/settings updates and retry also require
+If-Match from the exact current resource/preview ETag. Own operation receipts are
+encrypted and remain bound to the original actor/token and current action/source
+authority. Queued is not delivered; ambiguous external outcomes require reconciliation.
+The exact Dev migration is 2026_10_27_030000_create_signal_api_commands.php.
+Human-review checklist HR-2026-10-27-SIGNAL-API is Pending. Main, production and
+provider/worker activation remain separate; this guide does not imply deployment.

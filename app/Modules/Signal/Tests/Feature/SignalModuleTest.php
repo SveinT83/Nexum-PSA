@@ -186,7 +186,10 @@ class SignalModuleTest extends TestCase
     public function authenticated_api_user_can_record_signal_with_create_scope(): void
     {
         $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
-        Sanctum::actingAs($user, ['signals.create']);
+        Permission::findOrCreate('signal.action.execute', 'web');
+        Permission::findOrCreate('ticket.create', 'web');
+        $user->givePermissionTo(['signal.action.execute', 'ticket.create']);
+        $this->withToken($user->createToken('Signal ingest', ['signals.create', 'signals.actions.execute'])->plainTextToken);
 
         $client = Client::factory()->create(['name' => 'QNAP Client']);
 

@@ -65,7 +65,7 @@ class SignalRuleDefinition
 
     public const ACTION_OPTIONAL_FIELDS = [
         'tag', 'signal_type', 'severity', 'confidence', 'summary', 'url', 'title',
-        'opportunity_title', 'opportunity_type', 'opportunity_status', 'actor_id', 'creator_id',
+        'opportunity_title', 'opportunity_type', 'opportunity_status', 'needs', 'actor_id', 'creator_id',
         'owner_id', 'assigned_to', 'probability_percent', 'estimated_value_ex_vat', 'activity_type',
         'activity_subject', 'activity_body', 'follow_up_minutes_from_now', 'next_follow_up_type',
         'next_follow_up_note', 'append_to_existing', 'create_if_missing', 'subject', 'description',

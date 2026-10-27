@@ -1,0 +1,300 @@
+{
+  "date": "2026-10-27",
+  "scope": "Full current Signal browser/API parity on authoritative Dev",
+  "approval": "Svein Tore: Godkjenner; concrete RFC approval, not human scenario acceptance or Main/production authorization.",
+  "browser_rows": 18,
+  "http_operations": 19,
+  "typed_schemas": 42,
+  "scoped_php_files": 25,
+  "tests": {
+    "signal_final": {
+      "tests": 62,
+      "assertions": 894,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "knowledge_source": {
+      "tests": 1,
+      "assertions": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "integration_remainder": {
+      "tests": 52,
+      "assertions": 267,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "completed_broad_non_signal_passes": 2144,
+    "broad_scope_note": "Completed broad groups plus final independent Signal rerun; not a whole-suite pass.",
+    "excluded_independent_provider_suites": [
+      "TripletexCustomerNumberTest",
+      "TripletexCustomerProfileTest",
+      "TripletexTimeSyncTest"
+    ],
+    "initial_signal_contract_failures": "Shared generated Swagger changed during the broad run; final independent Signal rerun covers all current code, typed HTTP results and repaired fixtures."
+  },
+  "http_success_contracts": {
+    "get /api/v1/signals/context": 200,
+    "get /api/v1/signals": 200,
+    "get /api/v1/signals/{signal}": 200,
+    "get /api/v1/signals/{signal}/executions": 200,
+    "get /api/v1/signals/{signal}/executions/{execution}": 200,
+    "get /api/v1/signals/rules/context": 200,
+    "get /api/v1/signals/lookups/{kind}": 200,
+    "get /api/v1/signals/rules": 200,
+    "get /api/v1/signals/rules/{rule}": 200,
+    "get /api/v1/signals/related/clients/{client}": 200,
+    "get /api/v1/signals/related/contacts/{contact}": 200,
+    "post /api/v1/signals": 201,
+    "get /api/v1/signals/operations/{operation}": 200,
+    "post /api/v1/signals/rules": 201,
+    "put /api/v1/signals/rules/{rule}": 200,
+    "get /api/v1/signals/settings": 200,
+    "put /api/v1/signals/settings": 200,
+    "post /api/v1/signals/{signal}/executions/{execution}/retry-preview": 200,
+    "post /api/v1/signals/{signal}/executions/{execution}/retry": 200
+  },
+  "native": {
+    "driver": "mysql",
+    "migration": {
+      "migration": "2026_10_27_030000_create_signal_api_commands",
+      "batch": 31
+    },
+    "encrypted_readback": true,
+    "database_replay_uniqueness": true,
+    "receipt_rollback": true,
+    "two_connection_retry_serialization": true,
+    "single_derived_effect": true,
+    "workers": [
+      {
+        "created_attempt": null,
+        "wait_seconds": 0.547
+      },
+      {
+        "created_attempt": 4,
+        "wait_seconds": 0.563
+      }
+    ],
+    "probe_cleanup": true
+  },
+  "https": {
+    "trusted_https": true,
+    "checks": [
+      {
+        "path": "/api/v1/signals",
+        "anonymous_status": 401
+      },
+      {
+        "path": "/api/v1/signals",
+        "status": 200,
+        "json_envelope": true,
+        "bytes": 74
+      },
+      {
+        "path": "/api/v1/signals/context",
+        "status": 200,
+        "json_envelope": true,
+        "bytes": 395
+      },
+      {
+        "path": "/api/v1/signals/rules",
+        "status": 200,
+        "json_envelope": true,
+        "bytes": 74
+      },
+      {
+        "path": "/api/v1/signals/rules/context",
+        "status": 200,
+        "json_envelope": true,
+        "bytes": 2373
+      },
+      {
+        "path": "/api/v1/signals/lookups/actors",
+        "status": 200,
+        "json_envelope": true,
+        "bytes": 102
+      },
+      {
+        "path": "/api/v1/signals/lookups/task-templates",
+        "status": 200,
+        "json_envelope": true,
+        "bytes": 74
+      },
+      {
+        "path": "/api/v1/signals/settings",
+        "status": 200,
+        "json_envelope": true,
+        "bytes": 1327
+      },
+      {
+        "path": "/api/v1/signals/related/clients/1",
+        "status": 200,
+        "json_envelope": true,
+        "bytes": 11
+      },
+      {
+        "path": "/api/v1/signals/related/contacts/1",
+        "status": 200,
+        "json_envelope": true,
+        "bytes": 11
+      },
+      {
+        "path": "/api/v1/signals/operations/{missing}",
+        "status": 404
+      },
+      {
+        "path": "/docs",
+        "status": 200,
+        "signal_operations": 19
+      }
+    ],
+    "temporary_token_removed": true,
+    "provider_switch_unchanged": true
+  },
+  "handbook": {
+    "date": "2026-10-27",
+    "pages": [
+      {
+        "id": 530,
+        "name": "Signal Domain Overview",
+        "body_exact_after_terminal_newline_normalization": true
+      },
+      {
+        "id": 449,
+        "name": "Api Management",
+        "requested_section_exact": true,
+        "prior_body_preserved": true,
+        "concurrent_knowledge_addition_preserved": true
+      }
+    ],
+    "publication_method": "Supported BookStack connector body updates; standalone API guide is included in existing Signal overview 530.",
+    "access": {
+      "page530": "inherits chapter 529",
+      "chapter529": "inherits book 339",
+      "page449": "inherits chapter 374",
+      "book339": "existing overrides and fallback inheritance preserved",
+      "employee_role": {
+        "id": 2,
+        "name": "Editor",
+        "global_read_permissions_verified": [
+          "book-view-all",
+          "chapter-view-all",
+          "page-view-all"
+        ]
+      },
+      "permissions_changed": false,
+      "employee_openwebui_retrieval_tested": false
+    },
+    "connector_search_blocker": "Multi-character query rejected by connector pattern validator; normal page listing and exact body updates/read-back succeeded.",
+    "native_sync_state": "pending_push; separate from actual BookStack publication evidence",
+    "final_intake_prefill_authority_section_read_back": true
+  },
+  "knowledge": {
+    "signal_summary": {
+      "chapters": 1,
+      "articles": 2,
+      "skipped": 0,
+      "modules": [
+        "Signal"
+      ]
+    },
+    "articles": [
+      {
+        "id": 47,
+        "source": "signals/signal-domain-overview",
+        "source_sha256": "5912707752cbb6b43acb0523c966d2d7ae1106ec38f91bc2e83ca14a7632d422",
+        "exact_body_readback": true,
+        "visibility": "internal",
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 46,
+        "source": "signals/signal-api-support",
+        "source_sha256": "bbd254d708d235d80e3e9bcfd0d63832ef1ebb69a4e8e17954a0543d4bce35a3",
+        "exact_body_readback": true,
+        "visibility": "internal",
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 3,
+        "source": "integrations/api-management",
+        "source_sha256": "70bb3271a9fa095576da598d4d930c25bb0e630e91a2f3ac05fe3f0d54de5333",
+        "exact_body_readback": true,
+        "visibility": "internal",
+        "sync_status": "pending_push"
+      }
+    ],
+    "note": "Native pending_push is not proof of BookStack publication; actual connector read-back is independent."
+  },
+  "human_review": {
+    "id": "HR-2026-10-27-SIGNAL-API",
+    "status": "Reviewed",
+    "reviewer": "Svein Tore",
+    "accepted": "Godkjenner og merge til main",
+    "date": "2026-10-27",
+    "production_authorized": false
+  },
+  "main_promotion_performed": false,
+  "production_deployment_performed": false,
+  "committed_or_pushed": false,
+  "provider_ai_worker_scheduler_activation_performed": false,
+  "website_handoff": "One public-safe item added/read back; do not publish before review and production availability.",
+  "files": [
+    "app/Modules/Integration/Docs/knowledge/api-management.md",
+    "app/Modules/Integration/Support/ApiAbilityCatalog.php",
+    "app/Modules/Knowledge/Tests/Feature/KnowledgeArticleTest.php",
+    "app/Modules/Signal/Actions/ExecuteSignalAction.php",
+    "app/Modules/Signal/Actions/ExecuteSignalApiCommand.php",
+    "app/Modules/Signal/Actions/ProcessSignalRules.php",
+    "app/Modules/Signal/Controllers/Api/V1/SignalController.php",
+    "app/Modules/Signal/Controllers/Api/V1/SignalWorkspaceController.php",
+    "app/Modules/Signal/Controllers/Tech/SignalController.php",
+    "app/Modules/Signal/Controllers/Tech/SignalRuleController.php",
+    "app/Modules/Signal/Controllers/Tech/SignalSettingsController.php",
+    "app/Modules/Signal/Docs/knowledge/signal-api-support.md",
+    "app/Modules/Signal/Docs/knowledge/signal-domain-overview.md",
+    "app/Modules/Signal/Models/SignalApiCommand.php",
+    "app/Modules/Signal/Queries/SignalFeed.php",
+    "app/Modules/Signal/README.md",
+    "app/Modules/Signal/Resources/Api/V1/SignalApiOpenApi.php",
+    "app/Modules/Signal/Resources/Api/V1/SignalApiView.php",
+    "app/Modules/Signal/Support/SignalApiAccess.php",
+    "app/Modules/Signal/Support/SignalApiExecutionPolicy.php",
+    "app/Modules/Signal/Support/SignalApiInput.php",
+    "app/Modules/Signal/Support/SignalRuleDefinition.php",
+    "app/Modules/Signal/Support/SignalRuleForm.php",
+    "app/Modules/Signal/Support/SignalSettingsForm.php",
+    "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+    "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+    "app/Modules/Signal/Tests/Feature/SignalModuleTest.php",
+    "app/Modules/Signal/api.php",
+    "app/Modules/Signal/routes.php",
+    "config/signal.php",
+    "database/migrations/2026_10_27_030000_create_signal_api_commands.php",
+    "docs/TODO.md",
+    "docs/adr/2026-10-27-signal-api-authority-and-retry-boundary.md",
+    "docs/feature-slices/2026-10-27-signal-full-api-parity.md",
+    "docs/human-review.md",
+    "docs/plans/2026-10-27-signal-api-baseline.md",
+    "docs/plans/2026-10-27-signal-api-completed-regression-groups.json",
+    "docs/plans/2026-10-27-signal-api-contract.json",
+    "docs/plans/2026-10-27-signal-api-coverage-matrix.json",
+    "docs/plans/2026-10-27-signal-api-coverage-matrix.md",
+    "docs/plans/2026-10-27-signal-api-handbook-evidence.json",
+    "docs/plans/2026-10-27-signal-api-https-evidence.json",
+    "docs/plans/2026-10-27-signal-api-human-review.md",
+    "docs/plans/2026-10-27-signal-api-knowledge-evidence.json",
+    "docs/plans/2026-10-27-signal-api-native-evidence.json",
+    "docs/plans/2026-10-27-signal-api-verification.json",
+    "docs/plans/2026-10-27-signal-api-verification.md",
+    "docs/rfc/2026-10-27-signal-full-api-parity.md"
+  ],
+  "shared_work_note": "Catalog and Knowledge test/source files contain other contributor changes. This task made only additive Signal scopes, one source-sync test section and the Signal handbook section. Do not promote whole shared-file diffs blindly.",
+  "final_scoped_whitespace_utf8_json_verified": true,
+  "intake_prefill_same_browser_rule_manager_authority_verified": true,
+  "main_promotion_authorized": true
+}

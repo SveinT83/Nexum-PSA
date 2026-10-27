@@ -1,0 +1,23 @@
+{
+    "driver": "mysql",
+    "migration": {
+        "migration": "2026_10_27_030000_create_signal_api_commands",
+        "batch": 31
+    },
+    "encrypted_readback": true,
+    "database_replay_uniqueness": true,
+    "receipt_rollback": true,
+    "two_connection_retry_serialization": true,
+    "single_derived_effect": true,
+    "workers": [
+        {
+            "created_attempt": null,
+            "wait_seconds": 0.547
+        },
+        {
+            "created_attempt": 4,
+            "wait_seconds": 0.563
+        }
+    ],
+    "probe_cleanup": true
+}
