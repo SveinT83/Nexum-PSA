@@ -30,6 +30,23 @@ class SyncDocumentationToRelationship
             throw ValidationException::withMessages(['documentation' => 'This documentation record does not belong to the relationship client.']);
         }
 
+        return app(ClaimRelationshipContentPush::class)->handle($relationship, $documentation, fn () => $this->send($documentation, $relationship));
+    }
+
+    private function send(Documentation $documentation, NexumRelationship $relationship): NexumSyncLink
+    {
+        if (! $relationship->isActive() || ! $relationship->supports(RelationshipCapability::DOCUMENTATION_SYNC)) {
+            throw ValidationException::withMessages(['relationship' => 'Documentation sync is not enabled for this relationship.']);
+        }
+
+        if ($documentation->scope_type === 'internal') {
+            throw ValidationException::withMessages(['documentation' => 'Internal documentation cannot be synced through a relationship.']);
+        }
+
+        if ($relationship->isProviderForClient() && (int) $documentation->client_id !== (int) $relationship->client_id) {
+            throw ValidationException::withMessages(['documentation' => 'This documentation record does not belong to the relationship client.']);
+        }
+
         $payload = $this->payload($documentation);
         $checksum = $this->checksum->handle($payload);
         $link = NexumSyncLink::query()->firstOrCreate(
@@ -50,11 +67,25 @@ class SyncDocumentationToRelationship
 
         if ($result['ok']) {
             $remote = $result['data']['data'] ?? $result['data'];
+            if (($remote['conflict'] ?? false) === true) {
+                $link->markConflict('Remote content requires conflict review.');
+
+                return $link->refresh();
+            }
+            if (empty($remote['remote_id']) && empty($remote['id'])) {
+                $link->forceFill(['sync_status' => 'unresolved', 'last_error' => 'Remote object identity was not verified.'])->save();
+
+                return $link->refresh();
+            }
             $link->markSynced([
                 'remote_id' => (string) ($remote['remote_id'] ?? $remote['id'] ?? $link->remote_id),
                 'remote_checksum' => $checksum,
                 'remote_updated_at' => $documentation->updated_at,
             ]);
+        }
+
+        if (! $result['ok'] && ($result['unresolved'] ?? false)) {
+            $link->forceFill(['sync_status' => 'unresolved', 'last_error' => 'Remote outcome requires reconciliation.'])->save();
         }
 
         return $link->refresh();

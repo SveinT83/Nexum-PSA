@@ -72,7 +72,13 @@ class ReceiveRelationshipKnowledgeArticle
             $article->forceFill($attributes)->save();
             $created = false;
         } else {
-            $article = Article::query()->create($attributes);
+            // Machine authentication is not a logged-in human. Attribute imported ownership
+            // to the configured local relationship creator, without impersonation or grants.
+            $ownerId = $relationship->created_by;
+            if (! $ownerId || ! \App\Models\Core\User::query()->whereKey($ownerId)->exists()) {
+                throw ValidationException::withMessages(['relationship' => 'A local relationship owner must be configured before receiving Knowledge.']);
+            }
+            $article = Article::query()->create($attributes + ['owner_id' => $ownerId, 'created_by' => $ownerId]);
             $created = true;
         }
 

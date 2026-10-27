@@ -1,0 +1,1238 @@
+{
+  "date": "2026-10-27",
+  "status": "Done On Dev / current Main candidate verified",
+  "runtime": "/var/Projects/tdPSA",
+  "branch": "Dev",
+  "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "browser_routes": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/relationships",
+      "name": "tech.admin.system.relationships.index",
+      "action": "App\\Modules\\Relationship\\Controllers\\Admin\\NexumRelationshipController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/relationships",
+      "name": "tech.admin.system.relationships.store",
+      "action": "App\\Modules\\Relationship\\Controllers\\Admin\\NexumRelationshipController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/relationships/create",
+      "name": "tech.admin.system.relationships.create",
+      "action": "App\\Modules\\Relationship\\Controllers\\Admin\\NexumRelationshipController@create",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/relationships/{relationship}",
+      "name": "tech.admin.system.relationships.show",
+      "action": "App\\Modules\\Relationship\\Controllers\\Admin\\NexumRelationshipController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "tech/admin/system/relationships/{relationship}",
+      "name": "tech.admin.system.relationships.update",
+      "action": "App\\Modules\\Relationship\\Controllers\\Admin\\NexumRelationshipController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/relationships/{relationship}/documentations/{documentation}/push",
+      "name": "tech.admin.system.relationships.documentations.push",
+      "action": "App\\Modules\\Relationship\\Controllers\\Admin\\NexumRelationshipController@pushDocumentation",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/relationships/{relationship}/edit",
+      "name": "tech.admin.system.relationships.edit",
+      "action": "App\\Modules\\Relationship\\Controllers\\Admin\\NexumRelationshipController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/relationships/{relationship}/knowledge/{article}/push",
+      "name": "tech.admin.system.relationships.knowledge.push",
+      "action": "App\\Modules\\Relationship\\Controllers\\Admin\\NexumRelationshipController@pushKnowledgeArticle",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/relationships/{relationship}/rotate-secrets",
+      "name": "tech.admin.system.relationships.rotate-secrets",
+      "action": "App\\Modules\\Relationship\\Controllers\\Admin\\NexumRelationshipController@rotateSecrets",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/tickets/{ticket}/relationships/escalate",
+      "name": "tech.tickets.relationships.escalate",
+      "action": "App\\Modules\\Relationship\\Controllers\\Tech\\TicketRelationshipController",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    }
+  ],
+  "signed_ingress": [
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nexum/relationships/documentation",
+      "name": "nexum.relationships.documentation.store",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\RelationshipDocumentationWebhookController",
+      "middleware": [
+        "api"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nexum/relationships/knowledge/articles",
+      "name": "nexum.relationships.knowledge.articles.store",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\RelationshipKnowledgeWebhookController",
+      "middleware": [
+        "api"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nexum/relationships/tickets",
+      "name": "nexum.relationships.tickets.store",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\RelationshipTicketWebhookController@store",
+      "middleware": [
+        "api"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nexum/relationships/tickets/{remoteTicketId}/messages",
+      "name": "nexum.relationships.tickets.messages.store",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\RelationshipTicketWebhookController@message",
+      "middleware": [
+        "api"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nexum/relationships/tickets/{remoteTicketId}/status",
+      "name": "nexum.relationships.tickets.status.store",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\RelationshipTicketWebhookController@status",
+      "middleware": [
+        "api"
+      ],
+      "path": null
+    }
+  ],
+  "ticket_operations": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/tickets/{ticket}/relationship-escalations",
+      "name": "api.v1.tickets.relationship-escalations.index",
+      "action": "App\\Modules\\Ticket\\Controllers\\Api\\V1\\TicketRelationshipApiController@index",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:tickets.relationships.read",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.view"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/tickets/{ticket}/relationship-escalations/{escalation}",
+      "name": "api.v1.tickets.relationship-escalations.show",
+      "action": "App\\Modules\\Ticket\\Controllers\\Api\\V1\\TicketRelationshipApiController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:tickets.relationships.read",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.view"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/tickets/{ticket}/relationship-links",
+      "name": "api.v1.tickets.relationship-links.index",
+      "action": "App\\Modules\\Ticket\\Controllers\\Api\\V1\\TicketRelationshipApiController@links",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:tickets.relationships.read",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.view"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/tickets/{ticket}/relationship-targets",
+      "name": "api.v1.tickets.relationship-targets.index",
+      "action": "App\\Modules\\Ticket\\Controllers\\Api\\V1\\TicketRelationshipApiController@targets",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.view",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:tickets.relationships.read",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:relationships.escalate"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/tickets/{ticket}/relationships/escalate",
+      "name": "api.v1.tickets.relationships.escalate",
+      "action": "App\\Modules\\Ticket\\Controllers\\Api\\V1\\TicketRelationshipApiController@escalate",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.view",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:tickets.relationships.escalate",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:relationships.escalate",
+        "App\\Modules\\Integration\\Http\\Middleware\\RejectUnsupportedDomainApiInput"
+      ],
+      "path": null
+    }
+  ],
+  "coverage": [
+    {
+      "id": "R01",
+      "method": "GET",
+      "browser_uri": "tech/admin/system/relationships",
+      "classification": "read",
+      "api_target": "GET /api/v1/relationships",
+      "acceptance": "List, pagination, client/vendor labels, counts and active/failing stats",
+      "status": "Implemented / positive HTTP and typed response verified"
+    },
+    {
+      "id": "R02",
+      "method": "GET",
+      "browser_uri": "tech/admin/system/relationships/create",
+      "classification": "read",
+      "api_target": "GET /api/v1/relationships/context; GET /api/v1/relationships/lookups",
+      "acceptance": "Defaults, enums and authorized active Client/Vendor/queue choices",
+      "status": "Implemented / positive HTTP and typed response verified"
+    },
+    {
+      "id": "R03",
+      "method": "POST",
+      "browser_uri": "tech/admin/system/relationships",
+      "classification": "write",
+      "api_target": "POST /api/v1/relationships",
+      "acceptance": "Create all supported fields, credential custody and exact receipt",
+      "status": "Implemented / positive HTTP and typed response verified"
+    },
+    {
+      "id": "R04",
+      "method": "GET",
+      "browser_uri": "tech/admin/system/relationships/{relationship}",
+      "classification": "read",
+      "api_target": "GET /api/v1/relationships/{relationship}; health; sync-links; sync-events; eligible-documentations; eligible-knowledge",
+      "acceptance": "Safe identity/settings/health, scoped history and eligible source catalogs",
+      "status": "Implemented / positive HTTP and typed response verified"
+    },
+    {
+      "id": "R05",
+      "method": "GET",
+      "browser_uri": "tech/admin/system/relationships/{relationship}/edit",
+      "classification": "read",
+      "api_target": "GET /api/v1/relationships/{relationship}/context",
+      "acceptance": "Current editable fields/options and opaque version; no credentials",
+      "status": "Implemented / positive HTTP and typed response verified"
+    },
+    {
+      "id": "R06",
+      "method": "PATCH",
+      "browser_uri": "tech/admin/system/relationships/{relationship}",
+      "classification": "write",
+      "api_target": "PATCH /api/v1/relationships/{relationship}",
+      "acceptance": "All form settings, pause/disable, omission preservation and preconditions",
+      "status": "Implemented / positive HTTP and typed response verified"
+    },
+    {
+      "id": "R07",
+      "method": "POST",
+      "browser_uri": "tech/admin/system/relationships/{relationship}/rotate-secrets",
+      "classification": "action",
+      "api_target": "POST /api/v1/relationships/{relationship}/rotate-secrets",
+      "acceptance": "Selected inbound/signing-secret rotation, one authorized generated inbound result",
+      "status": "Implemented / positive HTTP and typed response verified"
+    },
+    {
+      "id": "R08",
+      "method": "POST",
+      "browser_uri": "tech/admin/system/relationships/{relationship}/documentations/{documentation}/push",
+      "classification": "action",
+      "api_target": "POST /api/v1/relationships/{relationship}/documentations/{documentation}/preview; POST same /push",
+      "acceptance": "Exact eligible document/source/destination preview, guarded execution and outcome",
+      "status": "Implemented / positive HTTP and typed response verified"
+    },
+    {
+      "id": "R09",
+      "method": "POST",
+      "browser_uri": "tech/admin/system/relationships/{relationship}/knowledge/{article}/push",
+      "classification": "action",
+      "api_target": "POST /api/v1/relationships/{relationship}/knowledge/{article}/preview; POST same /push",
+      "acceptance": "Published/audience-authorized source, guarded execution, revision/conflict preservation",
+      "status": "Implemented / positive HTTP and typed response verified"
+    },
+    {
+      "id": "R10",
+      "method": "POST",
+      "browser_uri": "tech/tickets/{ticket}/relationships/escalate",
+      "classification": "action",
+      "api_target": "Existing Ticket target/escalate/receipt/link APIs",
+      "acceptance": "Published Ticket scope, active/capable destination, existing receipt/idempotency",
+      "status": "Implemented / positive HTTP and typed response verified"
+    }
+  ],
+  "source_sha256": {
+    "app/Modules/Relationship/Actions/AuthenticateNexumWebhook.php": "e12b25c32d5fb1b35a146b6a6da28a42bba2909d1a08fc9fc12b96c6019d838a",
+    "app/Modules/Relationship/Actions/EnsureRelationshipTicketQueue.php": "d2dbf5283bd5633a418549fceb08e456902765d413f68ec7381dd043a2799c32",
+    "app/Modules/Relationship/Actions/EscalateTicketToRelationship.php": "90bf694aef412813488ef337d0d0806807a7a6374dfa7100e71f626858b73c02",
+    "app/Modules/Relationship/Actions/NexumRelationshipHttpClient.php": "16597561e0539ced529910ce15ed86096c6e0faa01d1b48b61b43851a052227e",
+    "app/Modules/Relationship/Actions/ReceiveRelationshipDocumentation.php": "5916c220586d68144e0abefda5b96cbf660186568edc65bd380be6d2d5a07361",
+    "app/Modules/Relationship/Actions/ReceiveRelationshipKnowledgeArticle.php": "662168cbfdc399ddf35c9d5f9e6076d7a5537ef45e7b03586b504e6857d85d88",
+    "app/Modules/Relationship/Actions/ReceiveRelationshipTicket.php": "93292d9cbb3f37454ef9f0b136fa20148c099ca4116f55de4087371275ef3940",
+    "app/Modules/Relationship/Actions/ReceiveRelationshipTicketMessage.php": "aed5ecb5ce3c20deea5fc4b480ce051221b8c6efb8827cf166915177629ff03d",
+    "app/Modules/Relationship/Actions/ReceiveRelationshipTicketStatus.php": "53dd3d1f9a1b15184c21ff55b281df05bd3589cbf8fbe7f7524ecf1f1d4a41d4",
+    "app/Modules/Relationship/Actions/RecordSyncEvent.php": "70cfa7e1f8904ebb63e7b5884aa7ac2c758415ed761eec03853e49304502f4f3",
+    "app/Modules/Relationship/Actions/RelationshipContentChecksum.php": "1d74adb30c040a1e9285a1299ed20cd37c957f277269438bb350c4244078ff0f",
+    "app/Modules/Relationship/Actions/ResolveRelationshipTicketSyncLink.php": "1233e4b61fd4ebeda7b53f59071edafb62cd4df9d5377bf19537f8a9deb905f1",
+    "app/Modules/Relationship/Actions/SyncDocumentationToRelationship.php": "b6f1ede86b61b44bbcfcb663170664629fa563a4894ce651acf6add5fcc7a965",
+    "app/Modules/Relationship/Actions/SyncKnowledgeArticleToRelationship.php": "54b2a3bd23370c6ca163d6c91abeaa7c6566095ec1ab5c0c55211020520f71d2",
+    "app/Modules/Relationship/Actions/SyncTicketMessageToRelationship.php": "6494b4c721f34b92db71fd07b5d4aaa7448b9d886a33d94b3d4fbdcc7f2f7317",
+    "app/Modules/Relationship/Actions/SyncTicketStatusToRelationship.php": "6f3af3d42c41ca9125b0b185c0d90151de3ce82870fb2d44b276def0a942903d",
+    "app/Modules/Relationship/Controllers/Admin/NexumRelationshipController.php": "0542aacd61722613743a0d35963232ce89400672ff79648c930d28fc7d5f2406",
+    "app/Modules/Relationship/Controllers/Api/RelationshipDocumentationWebhookController.php": "1af73eabba4d5d81d4dd7fef98facaacc9fac91b209b263b7f1678ecf4ca9812",
+    "app/Modules/Relationship/Controllers/Api/RelationshipKnowledgeWebhookController.php": "85bdb1f0a89ce0d3e3222e67765c5614edaccc523430936d3b81f04303e92343",
+    "app/Modules/Relationship/Controllers/Api/RelationshipTicketWebhookController.php": "2d5e368af80ba5d21b8762f9f64a2c008eee52d19079e34f389c39978e58ebd0",
+    "app/Modules/Relationship/Controllers/Tech/TicketRelationshipController.php": "bc1a0e717bcd5a28bf5f36b74114d4508b1c6a5555a0b5b36a5a5036f61a0d33",
+    "app/Modules/Relationship/Docs/knowledge/nexum-relationships.md": "cf3e5bafbb3683f292a0c933b90965c0d6828d9ad003e88f1f79bdd1c6f07c2a",
+    "app/Modules/Relationship/Docs/knowledge/two-instance-test-plan.md": "c8036c3340db2d1291799067e615205a5aa050fbea718a038c7c789b486b9020",
+    "app/Modules/Relationship/Models/NexumRelationship.php": "d480bf2349d2aa79f270aeaadba61bff062697c77cb8d3f890f10df1c0c4b652",
+    "app/Modules/Relationship/Models/NexumSyncEvent.php": "3aed87fd14fe1d3cf2497555a311eac510575c4851189c44bda54cf4ae08d981",
+    "app/Modules/Relationship/Models/NexumSyncLink.php": "e8ad2a03015795b0ff2ab9c21ed89aafa0449d5b301a92cd325253589a6d9739",
+    "app/Modules/Relationship/README.md": "bd43f724e34b12d88cf4431d090d7db3eada03bf0f8d16405a9d589001784c78",
+    "app/Modules/Relationship/Support/RelationshipCapability.php": "5b36b24867b77e7b701aa789a9b2bf1e2c4b32942c34ec4fed3f0e55431fd737",
+    "app/Modules/Relationship/Support/RelationshipDirection.php": "3c240b547f79a5a7335f6ff7d666156c968505c4e9cc4e6d33d3f3ac2c288bb0",
+    "app/Modules/Relationship/Support/RelationshipHealthStatus.php": "c4f6ba4994ca15a448b4401d2dacecf460ceed7a91d50755eabe5a59bd8f69c4",
+    "app/Modules/Relationship/Support/RelationshipStatus.php": "1224d2b92474d10ddf0b8208b85948fa15f2854ffbe50aaeae60cc5de0fcb5ba",
+    "app/Modules/Relationship/Support/RelationshipType.php": "81ede10ed4d04163dd35a94bdda9fbdeeb3f2de7bb04c5dd954658090d0b069e",
+    "app/Modules/Relationship/Support/SyncStatus.php": "dc3c85847c15a7a724af16e76e663cdbffa39e78c9e78f8965e0f6e0e8a4df86",
+    "app/Modules/Relationship/Tests/Feature/RelationshipModuleTest.php": "a1db997c47847cb2072477d908ad306de069791ccd6c08be8e4d2c0210a90ffa",
+    "app/Modules/Relationship/Views/Admin/Relationships/form.blade.php": "9b1b9e88a6b6dcfa97e5f95b9b68c40c9b18dc017d3dc2b0217179513011657d",
+    "app/Modules/Relationship/Views/Admin/Relationships/index.blade.php": "44e286a97fd16ff5f86488eb91eee82ff555ae1711c66c8378159fab15209454",
+    "app/Modules/Relationship/Views/Admin/Relationships/show.blade.php": "b6c6718c7e9c0441442b08c9ae692aa3d537eb5e8b3c8a693ee29ecb25d19e1e",
+    "app/Modules/Relationship/Views/Tech/Tickets/panel.blade.php": "50d5176737f6f43864a8e336aa6d4beafb7e5decf5190d7d3d2fe676d30cef7f",
+    "app/Modules/Relationship/api-public.php": "b6778a08ebb9d5da49d94ec6807bd2a101219fb44f056fe0e528c92c2a8b6d3e",
+    "app/Modules/Relationship/routes.php": "05fec773e75cb6fd18bb1ac12edf521c77a7d0d5015d0ca47251f68eb0e9fbf1"
+  },
+  "api_routes": [
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nexum/relationships/documentation",
+      "name": "nexum.relationships.documentation.store",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\RelationshipDocumentationWebhookController",
+      "middleware": [
+        "api"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nexum/relationships/knowledge/articles",
+      "name": "nexum.relationships.knowledge.articles.store",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\RelationshipKnowledgeWebhookController",
+      "middleware": [
+        "api"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nexum/relationships/tickets",
+      "name": "nexum.relationships.tickets.store",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\RelationshipTicketWebhookController@store",
+      "middleware": [
+        "api"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nexum/relationships/tickets/{remoteTicketId}/messages",
+      "name": "nexum.relationships.tickets.messages.store",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\RelationshipTicketWebhookController@message",
+      "middleware": [
+        "api"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nexum/relationships/tickets/{remoteTicketId}/status",
+      "name": "nexum.relationships.tickets.status.store",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\RelationshipTicketWebhookController@status",
+      "middleware": [
+        "api"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships",
+      "name": "api.v1.relationships.1",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@index",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/relationships",
+      "name": "api.v1.relationships.4",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@store",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/context",
+      "name": "api.v1.relationships.2",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@context",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/lookups",
+      "name": "api.v1.relationships.3",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@lookups",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/operations",
+      "name": "api.v1.relationships.5",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@operations",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.operations.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/operations/{operation}",
+      "name": "api.v1.relationships.6",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@operation",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.operations.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}",
+      "name": "api.v1.relationships.7",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "api/v1/relationships/{relationship}",
+      "name": "api.v1.relationships.9",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@update",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}/context",
+      "name": "api.v1.relationships.8",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@context",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/relationships/{relationship}/documentations/{source}/preview",
+      "name": "api.v1.relationships.18",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@preview",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.sync"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/relationships/{relationship}/documentations/{source}/push",
+      "name": "api.v1.relationships.19",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@push",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.sync,relationships.providers.execute"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}/eligible-documentations",
+      "name": "api.v1.relationships.16",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@eligible",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.sync"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}/eligible-knowledge",
+      "name": "api.v1.relationships.17",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@eligible",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.sync"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}/health",
+      "name": "api.v1.relationships.11",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@health",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/relationships/{relationship}/knowledge/{source}/preview",
+      "name": "api.v1.relationships.20",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@preview",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.sync"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/relationships/{relationship}/knowledge/{source}/push",
+      "name": "api.v1.relationships.21",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@push",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.sync,relationships.providers.execute"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/relationships/{relationship}/rotate-secrets",
+      "name": "api.v1.relationships.10",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@rotate",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.manage,relationships.credentials.write"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}/sync-events",
+      "name": "api.v1.relationships.14",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@events",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}/sync-events/{event}",
+      "name": "api.v1.relationships.15",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@event",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}/sync-links",
+      "name": "api.v1.relationships.12",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@links",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}/sync-links/{link}",
+      "name": "api.v1.relationships.13",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@link",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.read"
+      ],
+      "path": null
+    }
+  ],
+  "success_contract_tests": {
+    "staff_operations": 21,
+    "signed_operations": 5,
+    "tests": "app/Modules/Relationship/Tests/Feature/RelationshipApiTest.php"
+  },
+  "native_database": {
+    "driver": "mysql",
+    "migration": true,
+    "encrypted": true,
+    "unique_replay": true,
+    "concurrent_lock_blocked": true,
+    "rolled_back": true,
+    "outbound_disabled": true
+  },
+  "handbook": {
+    "pages": [
+      510,
+      511
+    ],
+    "exact_source_readback": true,
+    "permissions": "Existing page/chapter/book inheritance preserved; Editor view rights verified; no grants.",
+    "native_dev_integration": "Not configured; publication/read-back used the connected BookStack plugin. Source sync alone is not publication."
+  },
+  "release_api_routes": [
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nexum/relationships/documentation",
+      "name": "nexum.relationships.documentation.store",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\RelationshipDocumentationWebhookController",
+      "middleware": [
+        "api"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nexum/relationships/knowledge/articles",
+      "name": "nexum.relationships.knowledge.articles.store",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\RelationshipKnowledgeWebhookController",
+      "middleware": [
+        "api"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nexum/relationships/tickets",
+      "name": "nexum.relationships.tickets.store",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\RelationshipTicketWebhookController@store",
+      "middleware": [
+        "api"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nexum/relationships/tickets/{remoteTicketId}/messages",
+      "name": "nexum.relationships.tickets.messages.store",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\RelationshipTicketWebhookController@message",
+      "middleware": [
+        "api"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/nexum/relationships/tickets/{remoteTicketId}/status",
+      "name": "nexum.relationships.tickets.status.store",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\RelationshipTicketWebhookController@status",
+      "middleware": [
+        "api"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships",
+      "name": "api.v1.relationships.1",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@index",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/relationships",
+      "name": "api.v1.relationships.4",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@store",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/context",
+      "name": "api.v1.relationships.2",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@context",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/lookups",
+      "name": "api.v1.relationships.3",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@lookups",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/operations",
+      "name": "api.v1.relationships.5",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@operations",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.operations.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/operations/{operation}",
+      "name": "api.v1.relationships.6",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@operation",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.operations.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}",
+      "name": "api.v1.relationships.7",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "api/v1/relationships/{relationship}",
+      "name": "api.v1.relationships.9",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@update",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}/context",
+      "name": "api.v1.relationships.8",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@context",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/relationships/{relationship}/documentations/{source}/preview",
+      "name": "api.v1.relationships.18",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@preview",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.sync"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/relationships/{relationship}/documentations/{source}/push",
+      "name": "api.v1.relationships.19",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@push",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.sync,relationships.providers.execute"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}/eligible-documentations",
+      "name": "api.v1.relationships.16",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@eligible",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.sync"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}/eligible-knowledge",
+      "name": "api.v1.relationships.17",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@eligible",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.sync"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}/health",
+      "name": "api.v1.relationships.11",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@health",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/relationships/{relationship}/knowledge/{source}/preview",
+      "name": "api.v1.relationships.20",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@preview",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.sync"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/relationships/{relationship}/knowledge/{source}/push",
+      "name": "api.v1.relationships.21",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@push",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.sync,relationships.providers.execute"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/relationships/{relationship}/rotate-secrets",
+      "name": "api.v1.relationships.10",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@rotate",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.manage,relationships.credentials.write"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}/sync-events",
+      "name": "api.v1.relationships.14",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@events",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}/sync-events/{event}",
+      "name": "api.v1.relationships.15",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@event",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}/sync-links",
+      "name": "api.v1.relationships.12",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@links",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/relationships/{relationship}/sync-links/{link}",
+      "name": "api.v1.relationships.13",
+      "action": "App\\Modules\\Relationship\\Controllers\\Api\\V1\\RelationshipController@link",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Relationship\\Support\\RelationshipApiAccess",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:relationships.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/tickets/{ticket}/relationship-escalations",
+      "name": "api.v1.tickets.relationship-escalations.index",
+      "action": "App\\Modules\\Ticket\\Controllers\\Api\\V1\\TicketRelationshipApiController@index",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:tickets.relationships.read",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.view"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/tickets/{ticket}/relationship-escalations/{escalation}",
+      "name": "api.v1.tickets.relationship-escalations.show",
+      "action": "App\\Modules\\Ticket\\Controllers\\Api\\V1\\TicketRelationshipApiController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:tickets.relationships.read",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.view"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/tickets/{ticket}/relationship-links",
+      "name": "api.v1.tickets.relationship-links.index",
+      "action": "App\\Modules\\Ticket\\Controllers\\Api\\V1\\TicketRelationshipApiController@links",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:tickets.relationships.read",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.view"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/tickets/{ticket}/relationship-targets",
+      "name": "api.v1.tickets.relationship-targets.index",
+      "action": "App\\Modules\\Ticket\\Controllers\\Api\\V1\\TicketRelationshipApiController@targets",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.view",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:tickets.relationships.read",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:relationships.escalate"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/tickets/{ticket}/relationships/escalate",
+      "name": "api.v1.tickets.relationships.escalate",
+      "action": "App\\Modules\\Ticket\\Controllers\\Api\\V1\\TicketRelationshipApiController@escalate",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.view",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:tickets.relationships.escalate",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:relationships.escalate",
+        "App\\Modules\\Integration\\Http\\Middleware\\RejectUnsupportedDomainApiInput"
+      ],
+      "path": null
+    }
+  ],
+  "total_http_operations": 31,
+  "schemas": 33,
+  "final_release_tests": {
+    "passed": 338,
+    "assertions": 7406
+  }
+}
