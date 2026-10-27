@@ -2,7 +2,7 @@
 
 ## HR-2026-10-27-INTAKE-API - Full Intake Browser/API Coverage
 
-Status: Pending / Dev implementation and tested Main merge authorized by Svein Tore, 2026-10-27.
+Status: Pending / Dev verified and merged to Main in PR #340, 2026-10-27.
 Added: 2026-10-27. Owner: Codex. Intended named human reviewer: Svein Tore.
 Scope: rfc/2026-10-27-intake-full-api-parity.md (Approved), 17 browser rows, public
 submission and all embedded form/review/routing workflows; 23 implemented HTTP operations / 38 typed schemas.
@@ -32,6 +32,7 @@ not verify the planned API. No manual scenario is marked complete. Main/producti
 remain unchanged; no commit/push or promotion is authorized by this entry.
 
 
+Main read-back: f8180e6efb696321f7bfa09863403ac11d840e33; tree 436b960755703d2ccbb4303e19cacc43c2371e05\nexactly equals the tested candidate. Automated evidence: Dev 912 / 48,851; initial\nMain candidate 760 / 9,773; final focused 70 / 1,180; refreshed Main compatibility\n247 / 7,518; no failures/skips. Production unchanged; no manual checkbox completed.\n
 ## HR-2026-10-27-NOTIFICATION-API - Full Notification Browser/API Coverage
 
 Status: In Review / Done On Dev and Merged to Main; production review remains open.

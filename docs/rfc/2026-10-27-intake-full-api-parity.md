@@ -5,7 +5,7 @@ Date: 2026-10-27
 Owner: Codex
 Approver / product owner: Svein Tore
 Classification: Level 3 (API, permission alignment, public submissions and cross-module routing)
-Implementation: Done On Dev, verified; scoped Main merge authorized separately.
+Implementation: Done On Dev and merged to Main in PR #340; production unchanged.
 Human review: HR-2026-10-27-INTAKE-API (planned, Pending).
 
 ## Context
@@ -193,3 +193,5 @@ Intake is this task's primary implementation; independent Knowledge/Signal work 
 Completed and tested on Dev: 23 operations / 38 schemas, all 17 browser rows. See
 plans/2026-10-27-intake-api-verification.md/.json for native HTTPS/MySQL, exact HTTP
 contracts, affected suites, handbook read-back and the Pending human-review gate.
+
+Main merge verified: f8180e6efb696321f7bfa09863403ac11d840e33; exact tested tree 436b960755703d2ccbb4303e19cacc43c2371e05.\n

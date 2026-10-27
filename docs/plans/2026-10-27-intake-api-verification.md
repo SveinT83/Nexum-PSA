@@ -1,7 +1,7 @@
 # Intake API Verification
 
 Date: 2026-10-27. Authoritative implementation: Dev /var/Projects/tdPSA.
-Status: Done On Dev; scoped Main promotion explicitly authorized and being finalized.
+Status: Done On Dev and merged to Main in PR #340.
 Production is not deployed. HR-2026-10-27-INTAKE-API remains Pending.
 
 ## Coverage And Tests
@@ -84,3 +84,6 @@ production deployment/release. The generated coverage JSON links operations to t
 ## Final Main Base Refresh
 
 Candidate refreshed onto Notification Main 7d8087e4851f823fc87eaeff2cd46ff84eb8b4b6. All existing\ncontracts and Notification implementation are preserved. Refreshed Intake/Notification/\nKnowledge/production-Swagger suite passed 247 tests / 7,518 assertions, no failures/skips.\nFinal exact Intake contract recheck passed 1 / 158. The generated schema only adds\nIntake: 23 operations / 38 schemas; every pre-existing contract is unchanged.\nPR: https://github.com/SveinT83/Nexum-PSA/pull/340.\n
+## Main Merge Read-Back
+
+PR #340 merged as f8180e6efb696321f7bfa09863403ac11d840e33. Its complete tree\n436b960755703d2ccbb4303e19cacc43c2371e05 exactly matches the tested candidate.\nProduction was not deployed and the human-review checklist remains Pending.\n
