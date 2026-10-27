@@ -47,3 +47,19 @@ flow.
 
 Sync results are stored as sync logs and the latest summary is stored on the connection.
 
+## API administration and safe changes (2026-10-27)
+
+Availability: Dev implementation; production deployment remains separate.
+
+1. Open `Admin -> System -> Nextcloud` to identify the exact connection and scope.
+2. Open API Management and select only the required Nextcloud abilities for the caller.
+3. Read `/api/v1/nextcloud/connections/{connection}` and retain its `ETag`.
+4. Send a new `Idempotency-Key` and that exact `If-Match` for a write. PATCH keeps omitted
+   fields, credentials and Talk configuration. Supplying a secret additionally needs
+   `nextcloud.credentials.write`; stored secrets are never returned.
+5. Read the exact resource and `/api/v1/nextcloud/operations/{operation_id}` afterward.
+
+A 412 means the connection/mappings changed: read again before creating another command.
+A 428 means the key or revision header is missing. Use the original identical key and payload
+for a lost response; never change the payload under an existing key. Credential/server/owner
+scope changes pause affected automatic calendar consent. Review targets before enabling again.

@@ -24,6 +24,10 @@ class NextcloudReadClient
 
         $this->throwUnlessSuccessful($response, 'capabilities');
 
+        if (! is_array($response->json('ocs.data.capabilities')) || ! in_array((int) ($response->json('ocs.meta.statuscode') ?? 100), [100, 200], true)) {
+            throw new RuntimeException('Nextcloud capabilities did not return a valid OCS result.');
+        }
+
         return $response->json('ocs.data.capabilities') ?? [];
     }
 

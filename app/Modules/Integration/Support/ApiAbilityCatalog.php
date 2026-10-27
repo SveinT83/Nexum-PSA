@@ -14,6 +14,21 @@ class ApiAbilityCatalog
      * Access mode is deliberately explicit so progressive read scopes do not depend on their name.
      */
     private const ACCESS_MODES = [
+        'nextcloud.connections.read' => self::ACCESS_READ,
+        'nextcloud.connections.write' => self::ACCESS_WRITE,
+        'nextcloud.credentials.write' => self::ACCESS_WRITE,
+        'nextcloud.folders.read' => self::ACCESS_READ,
+        'nextcloud.folders.write' => self::ACCESS_WRITE,
+        'nextcloud.health' => self::ACCESS_WRITE,
+        'nextcloud.mappings.read' => self::ACCESS_READ,
+        'nextcloud.mappings.write' => self::ACCESS_WRITE,
+        'nextcloud.operations.read' => self::ACCESS_READ,
+        'nextcloud.providers.execute' => self::ACCESS_WRITE,
+        'nextcloud.sync' => self::ACCESS_WRITE,
+        'nextcloud.talk.execute' => self::ACCESS_WRITE,
+        'nextcloud.talk.read' => self::ACCESS_READ,
+        'nextcloud.talk.write' => self::ACCESS_WRITE,
+
         'booking.read' => self::ACCESS_READ,
         'booking.settings.write' => self::ACCESS_WRITE,
         'booking.requests.review' => self::ACCESS_WRITE,
@@ -281,6 +296,21 @@ class ApiAbilityCatalog
     ];
 
     private const ABILITIES = [
+        'nextcloud.connections.read' => ['label' => 'Connections read', 'description' => 'Current native and target rights required; provider execution additionally needs explicit consent and its runtime gate.', 'domain' => 'Nextcloud'],
+        'nextcloud.connections.write' => ['label' => 'Connections write', 'description' => 'Current native and target rights required; provider execution additionally needs explicit consent and its runtime gate.', 'domain' => 'Nextcloud'],
+        'nextcloud.credentials.write' => ['label' => 'Credentials write', 'description' => 'Current native and target rights required; provider execution additionally needs explicit consent and its runtime gate.', 'domain' => 'Nextcloud'],
+        'nextcloud.folders.read' => ['label' => 'Folders read', 'description' => 'Current native and target rights required; provider execution additionally needs explicit consent and its runtime gate.', 'domain' => 'Nextcloud'],
+        'nextcloud.folders.write' => ['label' => 'Folders write', 'description' => 'Current native and target rights required; provider execution additionally needs explicit consent and its runtime gate.', 'domain' => 'Nextcloud'],
+        'nextcloud.health' => ['label' => 'Health', 'description' => 'Current native and target rights required; provider execution additionally needs explicit consent and its runtime gate.', 'domain' => 'Nextcloud'],
+        'nextcloud.mappings.read' => ['label' => 'Mappings read', 'description' => 'Current native and target rights required; provider execution additionally needs explicit consent and its runtime gate.', 'domain' => 'Nextcloud'],
+        'nextcloud.mappings.write' => ['label' => 'Mappings write', 'description' => 'Current native and target rights required; provider execution additionally needs explicit consent and its runtime gate.', 'domain' => 'Nextcloud'],
+        'nextcloud.operations.read' => ['label' => 'Operations read', 'description' => 'Current native and target rights required; provider execution additionally needs explicit consent and its runtime gate.', 'domain' => 'Nextcloud'],
+        'nextcloud.providers.execute' => ['label' => 'Providers execute', 'description' => 'Current native and target rights required; provider execution additionally needs explicit consent and its runtime gate.', 'domain' => 'Nextcloud'],
+        'nextcloud.sync' => ['label' => 'Sync', 'description' => 'Current native and target rights required; provider execution additionally needs explicit consent and its runtime gate.', 'domain' => 'Nextcloud'],
+        'nextcloud.talk.execute' => ['label' => 'Talk execute', 'description' => 'Current native and target rights required; provider execution additionally needs explicit consent and its runtime gate.', 'domain' => 'Nextcloud'],
+        'nextcloud.talk.read' => ['label' => 'Talk read', 'description' => 'Current native and target rights required; provider execution additionally needs explicit consent and its runtime gate.', 'domain' => 'Nextcloud'],
+        'nextcloud.talk.write' => ['label' => 'Talk write', 'description' => 'Current native and target rights required; provider execution additionally needs explicit consent and its runtime gate.', 'domain' => 'Nextcloud'],
+
         'booking.read' => ['label' => 'Read Booking', 'description' => 'Read permitted Booking workspace, context and requests.', 'domain' => 'Booking'],
         'booking.settings.write' => ['label' => 'Configure Booking', 'description' => 'Create/update/toggle Booking settings with native permission.', 'domain' => 'Booking'],
         'booking.requests.review' => ['label' => 'Review Booking requests', 'description' => 'Confirm or decline through native Booking and Calendar actions.', 'domain' => 'Booking'],
