@@ -519,6 +519,62 @@ class StructuredAiWorkloadExecutorTest extends TestCase
     }
 
     #[Test]
+    public function cost_limit_compares_the_last_decimal_without_float_rounding(): void
+    {
+        [, , $workload] = $this->governedInternalWorkload();
+        Http::fake([
+            'https://api.openai.test/v1/chat/completions' => Http::response([
+                'id' => 'req_budget_exceeded',
+                'model' => 'gpt-4.1-mini',
+                'choices' => [[
+                    'finish_reason' => 'stop',
+                    'message' => ['content' => json_encode([
+                        'schema_version' => 'storage.supplier_order_extraction.v1',
+                        'data' => ['decision' => 'extracted', 'order_number' => '9900000001'],
+                    ])],
+                ]],
+                'usage' => [
+                    'prompt_tokens' => 100,
+                    'completion_tokens' => 20,
+                    'total_tokens' => 120,
+                    'cost' => '99999999999.000000000001',
+                    'currency' => 'USD',
+                ],
+            ]),
+        ]);
+        $base = $this->request($workload, (string) Str::uuid());
+        $request = new StructuredAiWorkloadRequest(
+            workloadSlug: $base->workloadSlug,
+            requestSchemaVersion: $base->requestSchemaVersion,
+            responseSchemaVersion: $base->responseSchemaVersion,
+            operation: $base->operation,
+            input: $base->input,
+            allowedInputFields: $base->allowedInputFields,
+            responseDataSchema: $base->responseDataSchema,
+            executionContext: $base->executionContext,
+            configuredIdentifiers: $base->configuredIdentifiers,
+            timeoutSeconds: $base->timeoutSeconds,
+            maxOutputTokens: $base->maxOutputTokens,
+            maxProviderReportedCost: '99999999999.000000000000',
+            costCurrency: 'USD',
+        );
+
+        $result = app(RunsStructuredAiWorkloads::class)->execute($request);
+
+        $this->assertSame(StructuredAiWorkloadStatus::Invalid, $result->status);
+        $this->assertSame('provider_cost_limit_exceeded', $result->reasonCode);
+        $this->assertSame('99999999999.000000000001', $result->metadata->providerReportedCost);
+        $this->assertSame('USD', $result->metadata->costCurrency);
+        $event = AiAccessEvent::query()->findOrFail($result->metadata->accessEventId);
+        $this->assertSame('invalid', $event->decision);
+        $this->assertSame('provider_cost_limit_exceeded', $event->reason_code);
+        $this->assertSame(422, $event->http_status);
+        $this->assertSame(0, $event->result_count);
+        $this->assertArrayNotHasKey('input', $event->sanitized_filters ?? []);
+        $this->assertArrayNotHasKey('subject_id', $event->sanitized_filters ?? []);
+    }
+
+    #[Test]
     public function configured_cost_limit_fails_closed_when_provider_cost_is_unknown(): void
     {
         [, , $workload] = $this->governedInternalWorkload();
@@ -534,6 +590,41 @@ class StructuredAiWorkloadExecutorTest extends TestCase
                     ])],
                 ]],
                 'usage' => ['prompt_tokens' => 100, 'completion_tokens' => 20, 'total_tokens' => 120],
+            ]),
+        ]);
+        $base = $this->request($workload, (string) Str::uuid());
+        $request = new StructuredAiWorkloadRequest(
+            workloadSlug: $base->workloadSlug, requestSchemaVersion: $base->requestSchemaVersion,
+            responseSchemaVersion: $base->responseSchemaVersion, operation: $base->operation,
+            input: $base->input, allowedInputFields: $base->allowedInputFields,
+            responseDataSchema: $base->responseDataSchema, executionContext: $base->executionContext,
+            configuredIdentifiers: $base->configuredIdentifiers, timeoutSeconds: $base->timeoutSeconds,
+            maxOutputTokens: $base->maxOutputTokens, maxProviderReportedCost: '1.0000', costCurrency: 'USD',
+        );
+
+        $result = app(RunsStructuredAiWorkloads::class)->execute($request);
+
+        $this->assertSame(StructuredAiWorkloadStatus::Invalid, $result->status);
+        $this->assertSame('provider_cost_unavailable', $result->reasonCode);
+        $this->assertSame('invalid', AiAccessEvent::query()->findOrFail($result->metadata->accessEventId)->decision);
+    }
+
+    #[Test]
+    public function subscale_reported_cost_is_unknown_instead_of_rounding_below_the_budget(): void
+    {
+        [, , $workload] = $this->governedInternalWorkload();
+        Http::fake([
+            'https://api.openai.test/v1/chat/completions' => Http::response([
+                'id' => 'req_budget_unknown',
+                'model' => 'gpt-4.1-mini',
+                'choices' => [[
+                    'finish_reason' => 'stop',
+                    'message' => ['content' => json_encode([
+                        'schema_version' => 'storage.supplier_order_extraction.v1',
+                        'data' => ['decision' => 'extracted', 'order_number' => '9900000001'],
+                    ])],
+                ]],
+                'usage' => ['prompt_tokens' => 100, 'completion_tokens' => 20, 'total_tokens' => 120, 'cost' => '1.0000000000001', 'currency' => 'USD'],
             ]),
         ]);
         $base = $this->request($workload, (string) Str::uuid());

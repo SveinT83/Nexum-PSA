@@ -20,6 +20,20 @@ if (($tdpsaLoadingCloudFactoryPublicRoutes ?? false) === true) {
     return;
 }
 
+// API module loader selects only these Integration-owned read routes.
+if (($tdpsaLoadingAiTelemetryApiRoutes ?? false) === true) {
+    Route::middleware(\App\Modules\Integration\Http\Middleware\RequireAiTelemetryAccess::class)
+        ->prefix('integrations/ai')->name('integrations.ai.')->group(function () {
+            Route::get('telemetry', [\App\Modules\Integration\Controllers\Api\V1\AiTelemetryController::class, 'index'])
+                ->defaults('ai_telemetry_fields', ['domain', 'feature', 'execution_id', 'page', 'per_page'])->name('telemetry.index');
+            Route::get('telemetry/{event}', [\App\Modules\Integration\Controllers\Api\V1\AiTelemetryController::class, 'show'])
+                ->whereUuid('event')->defaults('ai_telemetry_fields', [])->name('telemetry.show');
+            Route::get('rate-cards', [\App\Modules\Integration\Controllers\Api\V1\AiTelemetryController::class, 'rateCards'])
+                ->defaults('ai_telemetry_fields', ['page', 'per_page'])->name('rate-cards.index');
+        });
+    return;
+}
+
 // Client-authorized customer lookup returns only the fields needed for explicit selection.
 Route::get('/clients/tripletex/customers', [\App\Modules\Integration\Controllers\Admin\TripletexCustomerController::class, 'lookup'])
     ->middleware('throttle:20,1')->name('clients.tripletex.lookup');

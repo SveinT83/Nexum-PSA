@@ -39,7 +39,7 @@ final class AiModelUsage
         $totalTokens = self::firstInteger($usage, ['total_tokens']);
 
         if ($totalTokens === null && $inputTokens !== null && $outputTokens !== null) {
-            $totalTokens = $inputTokens + $outputTokens;
+            $totalTokens = $inputTokens <= PHP_INT_MAX - $outputTokens ? $inputTokens + $outputTokens : null;
         }
 
         $cachedInputTokens = self::firstInteger($usage, [
@@ -106,7 +106,7 @@ final class AiModelUsage
         $inputTokens = self::firstInteger($payload, ['prompt_eval_count']);
         $outputTokens = self::firstInteger($payload, ['eval_count']);
         $totalTokens = $inputTokens !== null && $outputTokens !== null
-            ? $inputTokens + $outputTokens
+            ? ($inputTokens <= PHP_INT_MAX - $outputTokens ? $inputTokens + $outputTokens : null)
             : null;
         $providerTiming = self::withoutNulls([
             'total_duration_ns' => self::firstInteger($payload, ['total_duration']),
@@ -172,28 +172,12 @@ final class AiModelUsage
 
     private static function firstInteger(array $source, array $paths): ?int
     {
-        $value = self::firstValue($source, $paths);
-
-        if (! is_numeric($value) || (float) $value < 0) {
-            return null;
-        }
-
-        return (int) $value;
+        return AiCostDecimal::integer(self::firstValue($source, $paths));
     }
 
     private static function firstDecimal(array $source, array $paths): ?string
     {
-        $value = self::firstValue($source, $paths);
-
-        if (! is_numeric($value) || (float) $value < 0) {
-            return null;
-        }
-
-        if (is_int($value) || (is_string($value) && ! str_contains(strtolower($value), 'e'))) {
-            return trim((string) $value);
-        }
-
-        return rtrim(rtrim(number_format((float) $value, 12, '.', ''), '0'), '.');
+        return AiCostDecimal::reported(self::firstValue($source, $paths));
     }
 
     private static function firstValue(array $source, array $paths): mixed

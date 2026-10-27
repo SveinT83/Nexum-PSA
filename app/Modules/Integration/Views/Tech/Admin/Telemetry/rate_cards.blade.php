@@ -67,9 +67,9 @@
                         @foreach($card->rates as $rate)
                             <tr>
                                 <td>{{ $rate->metric }}</td>
-                                <td class="text-end">${{ number_format($rate->rate, 6) }}</td>
+                                <td class="text-end">{{ $rate->rate }} {{ $card->currency }}</td>
                                 <td class="text-end">{{ number_format($rate->unit_quantity) }}</td>
-                                <td class="text-end">${{ number_format(($rate->rate / $rate->unit_quantity) * 1000000, 4) }}</td>
+                                <td class="text-end">{{ $rate->unit_quantity > 0 ? (string) \Brick\Math\BigDecimal::of($rate->rate)->multipliedBy(1000000)->dividedBy($rate->unit_quantity, 12, \Brick\Math\RoundingMode::HalfUp) : 'Unknown' }} {{ $card->currency }}</td>
                             </tr>
                         @endforeach
                     </tbody>

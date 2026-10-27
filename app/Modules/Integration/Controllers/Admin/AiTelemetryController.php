@@ -5,37 +5,20 @@ namespace App\Modules\Integration\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Modules\Integration\Models\AiModelRateCard;
 use App\Modules\Integration\Models\AiModelUsageEvent;
+use App\Modules\Integration\Services\AiTelemetryRead;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class AiTelemetryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = AiModelUsageEvent::query()
-            ->with(['agent', 'provider'])
-            ->latest();
-
-        if ($request->filled('domain')) {
-            $query->where('domain', $request->domain);
-        }
-
-        if ($request->filled('feature')) {
-            $query->where('feature_key', $request->feature);
-        }
-
-        $stats = [
-            'total_tokens' => AiModelUsageEvent::sum('total_tokens'),
-            'total_cost' => AiModelUsageEvent::sum('effective_cost'),
-            'by_domain' => AiModelUsageEvent::query()
-                ->select('domain', DB::raw('SUM(total_tokens) as tokens'), DB::raw('SUM(effective_cost) as cost'))
-                ->groupBy('domain')
-                ->get(),
-        ];
+        $read = app(AiTelemetryRead::class);
+        $query = $read->query($request);
 
         return view('integration::Tech.Admin.Telemetry.index', [
-            'events' => $query->paginate(50),
-            'stats' => $stats,
+            'events' => (clone $query)->with(['agent', 'provider'])->latest()->orderBy('id')
+                ->paginate((int) $request->input('per_page', 50))->withQueryString(),
+            'stats' => $read->summary($query),
         ]);
     }
 

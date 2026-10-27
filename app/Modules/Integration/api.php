@@ -4,6 +4,10 @@ use App\Modules\Integration\Controllers\Api\V1\BookStackSyncController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 
+$tdpsaLoadingAiTelemetryApiRoutes = true;
+require __DIR__.'/routes.php';
+unset($tdpsaLoadingAiTelemetryApiRoutes);
+
 Route::get('integrations/book-stack/status', [BookStackSyncController::class, 'status'])
     ->name('integrations.book-stack.status')
     ->middleware(CheckAbilities::class.':integration.bookstack.read');

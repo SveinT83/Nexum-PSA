@@ -1,5 +1,27 @@
 # Human Review Register
 
+## HR-2026-10-28-AI-COST-EVIDENCE - Truthful AI Usage And Cost
+
+Status: Pending. Owner: Codex. Intended named reviewer: Svein Tore.
+Scope: Issue #277 and RFC/ADR 2026-10-28-truthful-ai-cost-evidence / ai-cost-source-and-decimal-contract.
+Tested Main merge is explicitly authorized. This checklist gates production rollout/release;
+passing tests or Main merge never mark these human scenarios Reviewed.
+
+- [ ] In Admin > Integrations > AI > Telemetry, compare synthetic reported zero, a tiny reported
+  amount, estimated cost and unknown cost. Expect distinct source states, no unknown-as-zero.
+- [ ] Compare mixed currencies and known/unknown attempts: separate currency subtotals and explicit
+  partial/unknown indicators, no silent FX or cross-currency grand total.
+- [ ] Filter/list/detail and the three token-protected read APIs show the same precise evidence;
+  a token cannot grant native access, and pagination/unknown fields are enforced.
+- [ ] Controlled fallback retains both attempts once; a configured strict reported-cost cap denies
+  unknown/mismatched currency and precision-boundary overages without treating them as free.
+- [ ] Review exact migration/backup, retained historical uncertainty and rollback refusal on lossy
+  shrink. Confirm handbook steps, production readiness and existing provider settings.
+
+Deploy: expand only two cost columns to decimal(24,12), normal cache/Swagger refresh. No source
+backfill, queue/scheduler activation, FX, provider grant or customer billing. Protect backups and
+retain cost/audit provenance on rollback; review risks of historical ambiguity and large report sets.
+
 ## HR-2026-10-27-AI-INPUT-ERRORS - AI Chat Credentials And Safe Failures
 
 Status: Pending. Owner: Codex. Intended human reviewer: Svein Tore.

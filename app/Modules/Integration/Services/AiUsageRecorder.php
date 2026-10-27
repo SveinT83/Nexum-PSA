@@ -4,6 +4,7 @@ namespace App\Modules\Integration\Services;
 
 use App\Modules\Integration\Models\AiAgent;
 use App\Modules\Integration\Models\AiModelUsageEvent;
+use App\Modules\Integration\Support\AiCostDecimal;
 use App\Modules\Integration\Support\AiExecutionContext;
 use App\Modules\Integration\Support\AiModelResult;
 use Carbon\CarbonInterface;
@@ -66,31 +67,31 @@ class AiUsageRecorder
             'audio_input_tokens' => $usage->audioInputTokens,
             'audio_output_tokens' => $usage->audioOutputTokens,
             'usage_source' => $usage->source,
-            'provider_reported_cost' => $usage->providerReportedCost,
-            'cost_currency' => $usage->costCurrency,
+            'provider_reported_cost' => AiCostDecimal::stored(AiCostDecimal::reported($usage->providerReportedCost)),
+            'cost_currency' => AiCostDecimal::currency($usage->costCurrency),
             'provider_timing' => $usage->providerTiming ?: null,
             'non_token_usage' => $usage->nonTokenUsage ?: null,
             'provider_usage' => $usage->providerUsage ?: null,
-            ...$this->calculateCosts($agent, $result),
+            ...$this->calculateCosts($agent, $result, $requestedModel),
         ]);
     }
 
-    private function calculateCosts(AiAgent $agent, AiModelResult $result): array
+    private function calculateCosts(AiAgent $agent, AiModelResult $result, string $requestedModel): array
     {
-        if (! $result->successful || ! $agent->provider) {
-            return [];
-        }
-
-        $calc = $this->costCalculator->calculate(
+        $calc = $agent->provider ? $this->costCalculator->calculate(
             $result->usage,
             $agent->provider,
-            $result->actualModel ?: $agent->model ?: $agent->provider->default_model
-        );
+            $result->actualModel ?: $requestedModel
+        ) : ['total_cost' => null, 'currency' => null, 'source' => 'unknown', 'pricing_snapshot' => null];
+        // A failed attempt can still carry reported charges or measurable consumed usage.
+        $reported = AiCostDecimal::stored(AiCostDecimal::reported($result->usage->providerReportedCost));
 
         return [
             'calculated_cost' => $calc['total_cost'],
-            'effective_cost' => $result->usage->providerReportedCost ?: $calc['total_cost'],
-            'cost_source' => $calc['source'],
+            'effective_cost' => $reported ?? $calc['total_cost'],
+            'cost_currency' => $reported !== null
+                ? AiCostDecimal::currency($result->usage->costCurrency) : $calc['currency'],
+            'cost_source' => $reported !== null ? 'provider_reported' : $calc['source'],
             'pricing_snapshot' => $calc['pricing_snapshot'],
         ];
     }

@@ -173,7 +173,7 @@ class StructuredAiWorkloadExecutor implements RunsStructuredAiWorkloads
             return 'provider_cost_currency_mismatch';
         }
 
-        return (float) $result->usage->providerReportedCost > (float) $request->maxProviderReportedCost
+        return \Brick\Math\BigDecimal::of($result->usage->providerReportedCost)->isGreaterThan($request->maxProviderReportedCost)
             ? 'provider_cost_limit_exceeded'
             : null;
     }
