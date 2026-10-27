@@ -23,7 +23,12 @@ use Tests\TestCase;
 
 class CalendarOperationsApiTest extends TestCase
 {
+    use \App\Modules\Nextcloud\Tests\AssertsNextcloudApiSchema;
     use RefreshDatabase;
+
+    private array $document;
+
+    private static array $observedContracts = [];
 
     private User $actor;
 
@@ -320,5 +325,29 @@ class CalendarOperationsApiTest extends TestCase
         $this->resources[$this->collection.'duplicate.ics'] = $this->resources[$href];
         $this->postJson($path.'/preview', ['resolution' => 'keep_remote'])->assertConflict();
         Http::assertNotSent(fn ($request) => $request->method() === 'PUT');
+    }
+
+    public function call($method, $uri, $parameters = [], $cookies = [], $files = [], $server = [], $content = null)
+    {
+        $response = parent::call($method, $uri, $parameters, $cookies, $files, $server, $content);
+        if (str_contains((string) $uri, '/api/v1/nextcloud/') && $response->status() < 300) {
+            $this->document = json_decode(file_get_contents(getenv('NEXTCLOUD_API_SWAGGER_PATH') ?: storage_path('api-docs/api-docs.json')), true, 512, JSON_THROW_ON_ERROR);
+            $route = \Illuminate\Support\Facades\Route::getRoutes()->match(\Illuminate\Http\Request::create($uri, $method));
+            $op = $this->document['paths']['/'.$route->uri()][strtolower($method)];
+            $schema = $op['responses'][$response->status()]['content']['application/json']['schema'] ?? null;
+            $this->assertIsArray($schema, 'Legacy successful HTTP status lacks a typed contract.');
+            $this->schema(json_decode($response->getContent()), $schema, 'response');
+            self::$observedContracts[$op['operationId']] = ['method' => $method, 'path' => '/'.$route->uri(), 'status' => $response->status()];
+        }
+
+        return $response;
+    }
+
+    public static function tearDownAfterClass(): void
+    {
+        if ($path = getenv('NEXTCLOUD_API_LEGACY_COVERAGE_PATH')) {
+            file_put_contents($path, json_encode(self::$observedContracts, JSON_PRETTY_PRINT));
+        }
+        parent::tearDownAfterClass();
     }
 }

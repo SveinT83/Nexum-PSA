@@ -22,48 +22,65 @@ class AutoMatchClientFolders
     public function __construct(
         private readonly NextcloudReadClient $client,
         private readonly AiModelExecutor $executor,
-    ) {
-    }
+    ) {}
 
     public function handle(NextcloudConnection $connection): array
     {
         if (! $connection->root_folder) {
-            return [
-                'matched' => 0,
-                'deterministic' => 0,
-                'ai' => 0,
-                'ai_used' => false,
-                'message' => 'Choose a client root folder before running Auto match.',
-                'status' => 'warning',
-            ];
+            return ['matched' => 0, 'deterministic' => 0, 'ai' => 0, 'ai_used' => false, 'message' => 'Choose a client root folder before running Auto match.', 'status' => 'warning'];
         }
+        $proposal = $this->propose($connection);
 
-        $folders = collect($this->client->files($connection, $connection->root_folder))
-            ->where('type', 'folder')
-            ->values();
+        return $this->apply($connection, $proposal['matches']);
+    }
 
+    /** Read/AI phase is separate so API apply never calls the model twice. */
+    public function propose(NextcloudConnection $connection): array
+    {
+        abort_unless($connection->scope === NextcloudConnection::SCOPE_GLOBAL, 422, 'Auto match requires the global client folder context.');
+        abort_unless($connection->root_folder, 422, 'Choose a client root folder first.');
+        $folders = collect($this->client->files($connection, $connection->root_folder))->where('type', 'folder')->values();
         $clients = $this->unmappedClients($connection);
-        $unmappedFolders = $this->unmappedFolders($connection, $folders);
-        $deterministicMatches = $this->deterministicMatches($clients, $unmappedFolders);
-        $deterministicCount = $this->storeMatches($connection, $deterministicMatches);
+        $unmapped = $this->unmappedFolders($connection, $folders);
+        $direct = $this->deterministicMatches($clients, $unmapped)->map(fn ($m) => $m + ['matched_by' => 'direct']);
+        $clients = $clients->reject(fn ($c) => $direct->contains('client_id', $c->id))->values();
+        $unmapped = $unmapped->reject(fn ($f) => $direct->contains('remote_path', $f['path']))->values();
+        $ai = $clients->isNotEmpty() && $unmapped->isNotEmpty() ? $this->aiMatches($clients, $unmapped) : collect();
 
-        $clients = $this->unmappedClients($connection);
-        $unmappedFolders = $this->unmappedFolders($connection, $folders);
-        $aiMatches = $clients->isNotEmpty() && $unmappedFolders->isNotEmpty()
-            ? $this->aiMatches($clients, $unmappedFolders)
-            : collect();
-        $aiCount = $this->storeMatches($connection, $aiMatches, true);
+        return ['matches' => $direct->concat($ai->map(fn ($m) => $m + ['matched_by' => 'ai']))->values()->all()];
+    }
 
-        $matched = $deterministicCount + $aiCount;
+    public function apply(NextcloudConnection $connection, array $matches): array
+    {
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($connection, $matches) {
+            $connection = NextcloudConnection::lockForUpdate()->findOrFail($connection->id);
+            abort_unless($connection->scope === NextcloudConnection::SCOPE_GLOBAL, 422);
+            $usedClients = [];
+            $usedPaths = [];
+            $direct = 0;
+            $ai = 0;
+            foreach ($matches as $match) {
+                $path = \App\Modules\Nextcloud\Support\NextcloudApiInput::path($match['remote_path']);
+                $client = (int) $match['client_id'];
+                abort_unless(Client::whereKey($client)->exists(), 422);
+                abort_if(in_array($client, $usedClients, true) || in_array($path, $usedPaths, true), 409, 'Duplicate mapping proposal.');
+                abort_if($connection->folderMappings()->where('purpose', 'client_files')->where(function ($q) use ($client, $path) {
+                    $q->where('mappable_id', $client)->orWhere('remote_path', $path);
+                })->exists(), 409, 'A client or path was mapped after preview.');
+                $this->storeMatches($connection, collect([['client_id' => $client, 'remote_path' => $path]]), $match['matched_by'] === 'ai');
+                $usedClients[] = $client;
+                $usedPaths[] = $path;
+                if ($match['matched_by'] === 'ai') {
+                    $ai++;
+                } else {
+                    $direct++;
+                }
+            }
+            $matched = $direct + $ai;
 
-        return [
-            'matched' => $matched,
-            'deterministic' => $deterministicCount,
-            'ai' => $aiCount,
-            'ai_used' => $aiMatches !== null && $aiMatches->isNotEmpty(),
-            'message' => "Auto match completed. {$matched} client folders matched ({$deterministicCount} direct, {$aiCount} by AI).",
-            'status' => $matched > 0 ? 'success' : 'info',
-        ];
+            return ['matched' => $matched, 'deterministic' => $direct, 'ai' => $ai, 'ai_used' => $ai > 0,
+                'message' => "Auto match completed. {$matched} client folders matched ({$direct} direct, {$ai} by AI).", 'status' => $matched > 0 ? 'success' : 'info'];
+        });
     }
 
     private function unmappedClients(NextcloudConnection $connection): Collection
@@ -95,18 +112,18 @@ class AutoMatchClientFolders
 
     private function deterministicMatches(Collection $clients, Collection $folders): Collection
     {
-        $folderLookup = $folders
-            ->mapWithKeys(fn (array $folder) => [$this->matchKey($folder['name']) => $folder])
-            ->filter(fn (array $folder, string $key) => $key !== '');
+        $groups = $folders->groupBy(fn ($f) => $this->matchKey($f['name']));
+        $clientGroups = $clients->groupBy(fn ($c) => $this->matchKey($c->name));
 
-        return $clients
-            ->map(function (Client $client) use ($folderLookup): ?array {
-                $folder = $folderLookup[$this->matchKey($client->name)] ?? null;
+        return $clients->map(function (Client $client) use ($groups, $clientGroups): ?array {
+            $key = $this->matchKey($client->name);
+            $candidates = $groups->get($key, collect());
+            if ($key === '' || $candidates->count() !== 1 || $clientGroups->get($key, collect())->count() !== 1) {
+                return null;
+            }
 
-                return $folder ? ['client_id' => $client->id, 'remote_path' => $folder['path']] : null;
-            })
-            ->filter()
-            ->values();
+            return ['client_id' => $client->id, 'remote_path' => $candidates->first()['path']];
+        })->filter()->values();
     }
 
     private function aiMatches(Collection $clients, Collection $folders): Collection

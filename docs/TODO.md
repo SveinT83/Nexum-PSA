@@ -1,5 +1,27 @@
 # tdPSA Development TODO
 
+## Full Nextcloud browser/API coverage (2026-10-27)
+
+Status: Done On Dev / isolated Main candidate verified / Main merge authorized, pending recording.
+Owner: Codex. RFC/Main authorizer and human-review/privacy owner: Svein Tore.
+Approved RFC: rfc/2026-10-27-nextcloud-full-api-parity.md; accepted ADR and five completed slices.
+All 19 browser rows and eight embedded workflows: 50 HTTP operations (36 new + 14 calendar)
+and 47 new concrete schemas. All 50 successful HTTP results match Swagger. Native/token/tenant,
+local atomic receipts/audit, stale/replay/deleted-target and provider uncertainty verified.
+Dev affected 373/13899; Main candidate 332/8889; final domain 120/6460 on both (overlap).
+Exact additive Dev migration installed; native MySQL lock/unique/encryption/rollback and
+trusted HTTPS pass. Synthetic inactive API object deleted/replayed; temporary token revoked.
+Six Knowledge source articles and actual BookStack 417/419/420/425 plus scoped 449 read back.
+Full guide embedded in 417 because connector create validation is broken; no ACL expansion.
+Native pending_push/employee AI retrieval and existing unrelated source drift remain distinct.
+Evidence: plans/2026-10-27-nextcloud-api-verification.md/.json and full coverage matrix.
+HR-2026-10-27-NEXTCLOUD-API remains Pending; Main merge is explicitly authorized with its
+manual scenarios open. Production release/provider activation require separate authorization.
+Existing calendar pilot checklist remains In Review; no wider targets or historical cleanup.
+Issue #205 remains open and separate from current-browser API parity. Preserve contributor work.
+Next action (Codex): record the verified scoped PR/Main merge and independent read-back.
+Future production owner/action (Svein Tore): complete manual review and authorize rollout.
+
 ## Full Signal browser/API coverage (2026-10-27)
 
 Status: Done On Dev / Reviewed by Svein Tore / Merged to Main in PR #334 / Production unchanged.

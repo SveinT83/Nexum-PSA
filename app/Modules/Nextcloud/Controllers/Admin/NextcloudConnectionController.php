@@ -19,10 +19,8 @@ use App\Modules\Nextcloud\Models\NextcloudFolderMapping;
 use App\Modules\Nextcloud\Models\NextcloudGroupMapping;
 use App\Modules\Nextcloud\Models\NextcloudUserMapping;
 use App\Modules\Nextcloud\Services\NextcloudReadClient;
-use App\Modules\Nextcloud\Services\NextcloudTalkClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Spatie\Permission\Models\Role;
 use Throwable;
@@ -144,62 +142,21 @@ class NextcloudConnectionController extends Controller
     /**
      * Update Talk Bot configuration only (separate form on show page).
      */
-    public function updateTalkBot(Request $request, NextcloudConnection $connection): RedirectResponse
+    public function updateTalkBot(Request $request, NextcloudConnection $connection)
     {
-        $data = $request->validate([
-            'talk_bot_id' => ['nullable', 'integer'],
-            'talk_bot_secret' => ['nullable', 'string', 'max:500'],
-            'talk_default_conversation_token' => ['nullable', 'string', 'max:64'],
-            'talk_bot_features' => ['nullable', 'array'],
-            'talk_bot_features.*' => ['string', Rule::in(['reaction', 'no-setup'])],
-        ]);
+        app(\App\Modules\Nextcloud\Actions\ManageNextcloudConfiguration::class)->updateTalkBot($request, $connection);
 
-        $connection->talk_bot_id = isset($data['talk_bot_id']) && $data['talk_bot_id'] !== ''
-            ? (int) $data['talk_bot_id']
-            : null;
-
-        if (! empty($data['talk_bot_secret']) && $data['talk_bot_secret'] !== str_repeat('•', 8)) {
-            $connection->talk_bot_secret = $data['talk_bot_secret'];
-        }
-
-        $connection->talk_default_conversation_token = ($data['talk_default_conversation_token'] ?? '') !== ''
-            ? $data['talk_default_conversation_token']
-            : null;
-        $connection->talk_bot_features = $data['talk_bot_features'] ?? [];
-        $connection->save();
-
-        return redirect()
-            ->route('tech.admin.nextcloud.connections.show', $connection)
-            ->with('success', 'Talk Bot settings saved.');
+        return redirect()->route('tech.admin.nextcloud.connections.show', $connection)->with('success', 'Talk Bot settings saved.');
     }
 
-    /**
-     * Send a test message via the Talk Bot API.
-     */
     public function testTalkBot(NextcloudConnection $connection)
     {
-        if (! $connection->hasTalkBot()) {
-            return response()->json(['success' => false, 'error' => 'Talk bot is not configured for this connection.']);
-        }
-
-        $talkClient = app(NextcloudTalkClient::class);
-        $conversationToken = $connection->talk_default_conversation_token;
-
-        if (empty($conversationToken)) {
-            return response()->json(['success' => false, 'error' => 'No default conversation token set.']);
-        }
-
         try {
-            $talkClient->sendBotMessage(
-                $connection,
-                $conversationToken,
-                '🔔 Test message from Nexum — Talk bot integration is working!',
-                ['referenceId' => 'nexum-test-'.time()]
-            );
+            $result = app(\App\Modules\Nextcloud\Actions\TestNextcloudTalkBot::class)->handle($connection, 'nexum-test-'.\Illuminate\Support\Str::uuid());
 
-            return response()->json(['success' => true]);
-        } catch (\Throwable $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+            return response()->json(['success' => true, 'data' => $result]);
+        } catch (\Throwable) {
+            return response()->json(['success' => false, 'error' => 'Talk test did not return a verified acknowledgement.']);
         }
     }
 
@@ -220,188 +177,21 @@ class NextcloudConnectionController extends Controller
             ->with($log->status === 'success' ? 'success' : 'warning', $message);
     }
 
-    public function storeUserMapping(Request $request, NextcloudConnection $connection): RedirectResponse
+    public function storeUserMapping(Request $request, NextcloudConnection $connection)
     {
-        if ($connection->scope !== NextcloudConnection::SCOPE_GLOBAL) {
-            return $this->storeClientUserMapping($request, $connection);
-        }
-
-        $data = $request->validate([
-            'remote_user_id' => ['required', 'string', 'max:255'],
-            'remote_username' => ['nullable', 'string', 'max:255'],
-            'remote_email' => ['nullable', 'email', 'max:255'],
-            'user_id' => ['nullable', 'integer', 'exists:'.(new User)->getTable().',id'],
-            'client_user_id' => ['nullable', 'integer', 'exists:client_users,id'],
-            'identity_type' => ['required', Rule::in(['technician', 'client_contact', 'portal_user', 'external'])],
-        ]);
-
-        $clientUser = null;
-        if ($data['identity_type'] === 'client_contact') {
-            $clientUser = ClientUser::query()->findOrFail($data['client_user_id'] ?? 0);
-        } else {
-            abort_if(! ($data['user_id'] ?? null), 422, 'A Nexum user is required for this identity type.');
-        }
-
-        NextcloudUserMapping::query()->updateOrCreate(
-            ['connection_id' => $connection->id, 'remote_user_id' => $data['remote_user_id']],
-            [
-                'user_id' => $clientUser ? null : $data['user_id'],
-                'remote_username' => $data['remote_username'] ?? $data['remote_user_id'],
-                'remote_email' => $data['remote_email'] ?? null,
-                'identity_type' => $data['identity_type'],
-                'identity_model_type' => $clientUser ? ClientUser::class : null,
-                'identity_model_id' => $clientUser?->id,
-                'is_active' => true,
-                'metadata' => $clientUser ? ['client_id' => $clientUser->site?->client_id] : null,
-            ]
-        );
-
+        app(\App\Modules\Nextcloud\Actions\ManageNextcloudConfiguration::class)->storeUserMapping($request, $connection);
         if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Nextcloud user mapping saved.',
-            ]);
+            return response()->json(['success' => true, 'message' => 'Nextcloud user mapping saved.']);
         }
 
         return back()->with('success', 'Nextcloud user mapping saved.');
     }
 
-    public function storeGroupMapping(Request $request, NextcloudConnection $connection): RedirectResponse
+    public function storeGroupMapping(Request $request, NextcloudConnection $connection)
     {
-        $isGlobal = $connection->scope === NextcloudConnection::SCOPE_GLOBAL;
-
-        $data = $request->validate([
-            'remote_group_id' => ['required', 'string', 'max:255'],
-            'remote_group_name' => ['nullable', 'string', 'max:255'],
-            'role_id' => [$isGlobal ? 'required' : 'nullable', 'integer', 'exists:roles,id'],
-            'client_id' => ['nullable', 'integer', 'exists:clients,id'],
-            'client_role' => [$isGlobal ? 'nullable' : 'required', Rule::in(array_keys($this->clientRoleOptions()))],
-            'sync_mode' => ['required', Rule::in(['preview_only', 'nextcloud_to_nexum', 'nexum_to_nextcloud'])],
-            'is_managed' => ['nullable', 'boolean'],
-        ]);
-
-        $clientId = $isGlobal ? ($data['client_id'] ?? null) : $connection->client_id;
-
-        NextcloudGroupMapping::query()->updateOrCreate(
-            ['connection_id' => $connection->id, 'remote_group_id' => $data['remote_group_id']],
-            [
-                'role_id' => $isGlobal ? $data['role_id'] : null,
-                'client_id' => $clientId,
-                'client_role' => $data['client_role'] ?? null,
-                'remote_group_name' => $data['remote_group_name'] ?? $data['remote_group_id'],
-                'sync_mode' => $data['sync_mode'],
-                'is_managed' => (bool) ($data['is_managed'] ?? false),
-                'is_active' => true,
-            ]
-        );
+        app(\App\Modules\Nextcloud\Actions\ManageNextcloudConfiguration::class)->storeGroupMapping($request, $connection);
 
         return back()->with('success', 'Nextcloud group mapping saved.');
-    }
-
-    private function storeClientUserMapping(Request $request, NextcloudConnection $connection): RedirectResponse
-    {
-        abort_if(! $connection->client_id, 422, 'Client-scoped Nextcloud connections must be linked to a client before users can be mapped.');
-
-        $data = $request->validate([
-            'remote_user_id' => ['required', 'string', 'max:255'],
-            'remote_username' => ['nullable', 'string', 'max:255'],
-            'remote_email' => ['nullable', 'email', 'max:255'],
-            'client_user_id' => ['nullable', 'integer', 'exists:client_users,id'],
-            'mapping_action' => ['required', Rule::in(['skip', 'map_existing', 'import'])],
-            'client_role' => ['nullable', Rule::in(array_keys($this->clientRoleOptions()))],
-        ]);
-
-        if ($data['mapping_action'] === 'skip') {
-            NextcloudUserMapping::query()->updateOrCreate(
-                ['connection_id' => $connection->id, 'remote_user_id' => $data['remote_user_id']],
-                [
-                    'user_id' => null,
-                    'remote_username' => $data['remote_username'] ?? $data['remote_user_id'],
-                    'remote_email' => $data['remote_email'] ?? (filter_var($data['remote_user_id'], FILTER_VALIDATE_EMAIL) ? $data['remote_user_id'] : null),
-                    'identity_type' => 'client_contact',
-                    'identity_model_type' => null,
-                    'identity_model_id' => null,
-                    'is_active' => false,
-                    'metadata' => [
-                        'client_id' => $connection->client_id,
-                        'mapping_action' => 'skip',
-                    ],
-                ]
-            );
-
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Nextcloud user left unmapped.',
-                ]);
-            }
-
-            return back()->with('success', 'Nextcloud user left unmapped.');
-        }
-
-        $clientRole = $data['client_role'] ?? 'contact';
-
-        if ($data['mapping_action'] === 'map_existing') {
-            $clientUser = ClientUser::query()
-                ->whereKey($data['client_user_id'] ?? 0)
-                ->whereHas('site', fn ($query) => $query->where('client_id', $connection->client_id))
-                ->firstOrFail();
-        } else {
-            abort_if(! $connection->client_site_id, 422, 'Set a default import site on the Nextcloud connection before importing client users.');
-
-            $site = ClientSite::query()
-                ->whereKey($connection->client_site_id)
-                ->where('client_id', $connection->client_id)
-                ->firstOrFail();
-            $email = $data['remote_email'] ?: (filter_var($data['remote_user_id'], FILTER_VALIDATE_EMAIL) ? $data['remote_user_id'] : null);
-
-            // Imported users are client contacts only; they are not Nexum technicians.
-            $clientUser = $email
-                ? ClientUser::query()
-                    ->where('email', $email)
-                    ->whereHas('site', fn ($query) => $query->where('client_id', $connection->client_id))
-                    ->first()
-                : null;
-
-            $clientUser ??= ClientUser::query()->create([
-                'client_site_id' => $site->id,
-                'name' => $data['remote_username'] ?: $data['remote_user_id'],
-                'email' => $email,
-                'role' => $clientRole,
-                'active' => true,
-            ]);
-
-            if ($clientUser->role !== $clientRole) {
-                $clientUser->forceFill(['role' => $clientRole])->save();
-            }
-        }
-
-        NextcloudUserMapping::query()->updateOrCreate(
-            ['connection_id' => $connection->id, 'remote_user_id' => $data['remote_user_id']],
-            [
-                'user_id' => null,
-                'remote_username' => $data['remote_username'] ?? $data['remote_user_id'],
-                'remote_email' => $data['remote_email'] ?? (filter_var($data['remote_user_id'], FILTER_VALIDATE_EMAIL) ? $data['remote_user_id'] : null),
-                'identity_type' => 'client_contact',
-                'identity_model_type' => ClientUser::class,
-                'identity_model_id' => $clientUser->id,
-                'is_active' => true,
-                'metadata' => [
-                    'client_id' => $connection->client_id,
-                    'client_role' => $clientRole,
-                    'mapping_action' => $data['mapping_action'],
-                ],
-            ]
-        );
-
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Nextcloud client user mapping saved.',
-            ]);
-        }
-
-        return back()->with('success', 'Nextcloud client user mapping saved.');
     }
 
     public function storeCalendarMapping(Request $request, NextcloudConnection $connection): RedirectResponse
@@ -411,50 +201,18 @@ class NextcloudConnectionController extends Controller
         return back()->with('success', 'Nextcloud calendar mapping saved.');
     }
 
-    public function updateFolders(Request $request, NextcloudConnection $connection): RedirectResponse
+    public function updateFolders(Request $request, NextcloudConnection $connection)
     {
-        $data = $request->validate([
-            'folder_type' => ['required', Rule::in(['root', 'documents'])],
-            'remote_path' => ['required', 'string', 'max:500'],
-        ]);
+        app(\App\Modules\Nextcloud\Actions\ManageNextcloudConfiguration::class)->updateFolders($request, $connection);
 
-        $field = $data['folder_type'] === 'root' ? 'root_folder' : 'documents_folder';
-        $connection->forceFill([$field => $this->normalizeFolderPath($data['remote_path'])])->save();
-
-        return redirect()
-            ->route('tech.admin.nextcloud.connections.show', $connection)
-            ->with('success', ucfirst($data['folder_type']).' folder saved.');
+        return redirect()->route('tech.admin.nextcloud.connections.show', $connection)->with('success', 'Folder saved.');
     }
 
-    public function storeFolderMapping(Request $request, NextcloudConnection $connection): RedirectResponse
+    public function storeFolderMapping(Request $request, NextcloudConnection $connection)
     {
-        $isGlobal = $connection->scope === NextcloudConnection::SCOPE_GLOBAL;
-        $data = $request->validate([
-            'client_id' => [$isGlobal ? 'required' : 'nullable', 'integer', 'exists:clients,id'],
-            'purpose' => ['required', Rule::in(['client_files', 'client_documents'])],
-            'remote_path' => ['required', 'string', 'max:500'],
-        ]);
+        app(\App\Modules\Nextcloud\Actions\ManageNextcloudConfiguration::class)->storeFolderMapping($request, $connection);
 
-        $clientId = $isGlobal ? $data['client_id'] : $connection->client_id;
-        abort_if(! $clientId, 422, 'Client folder mappings require a client context.');
-
-        NextcloudFolderMapping::query()->updateOrCreate(
-            [
-                'connection_id' => $connection->id,
-                'mappable_type' => Client::class,
-                'mappable_id' => $clientId,
-                'purpose' => $isGlobal ? $data['purpose'] : 'client_documents',
-            ],
-            [
-                'remote_path' => $this->normalizeFolderPath($data['remote_path']),
-                'is_active' => true,
-                'auto_created' => false,
-            ]
-        );
-
-        return redirect()
-            ->route('tech.admin.nextcloud.connections.show', $connection)
-            ->with('success', 'Client folder mapping saved.');
+        return redirect()->route('tech.admin.nextcloud.connections.show', $connection)->with('success', 'Client folder mapping saved.');
     }
 
     public function autoMatchClientFolders(NextcloudConnection $connection, AutoMatchClientFolders $autoMatch): RedirectResponse
@@ -498,31 +256,7 @@ class NextcloudConnectionController extends Controller
 
     private function validated(Request $request, ?NextcloudConnection $connection = null): array
     {
-        return $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'scope' => ['required', Rule::in([NextcloudConnection::SCOPE_GLOBAL, NextcloudConnection::SCOPE_CLIENT, NextcloudConnection::SCOPE_SITE])],
-            'mode' => ['required', Rule::in([NextcloudConnection::MODE_READ_ONLY, NextcloudConnection::MODE_SYNC, NextcloudConnection::MODE_MANAGED])],
-            'client_id' => ['nullable', 'integer', 'exists:clients,id'],
-            'client_site_id' => ['nullable', 'integer', 'exists:client_sites,id'],
-            'is_default' => ['nullable', 'boolean'],
-            'is_active' => ['nullable', 'boolean'],
-            'base_url' => ['required', 'url', 'max:255'],
-            'admin_url' => ['nullable', 'url', 'max:255'],
-            'root_folder' => ['nullable', 'string', 'max:255'],
-            'documents_folder' => ['nullable', 'string', 'max:255'],
-            'sync_interval_minutes' => ['required', 'integer', 'min:1', 'max:1440'],
-            'service_username' => ['nullable', 'string', 'max:255'],
-            'service_password' => [$connection ? 'nullable' : 'nullable', 'string', 'max:1000'],
-            'allow_user_credentials' => ['nullable', 'boolean'],
-            'calendar_sync_enabled' => ['nullable', 'boolean'],
-            'file_browser_enabled' => ['nullable', 'boolean'],
-            'users_groups_read_enabled' => ['nullable', 'boolean'],
-            'talk_bot_id' => ['nullable', 'integer'],
-            'talk_bot_secret' => ['nullable', 'string', 'max:500'],
-            'talk_default_conversation_token' => ['nullable', 'string', 'max:64'],
-            'talk_bot_features' => ['nullable', 'array'],
-            'talk_bot_features.*' => ['string', Rule::in(['reaction', 'no-setup'])],
-        ]);
+        return app(\App\Modules\Nextcloud\Actions\ValidateNextcloudConnection::class)->handle($request, $connection);
     }
 
     private function normalizeFolderPath(?string $path): string

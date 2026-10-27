@@ -1446,3 +1446,13 @@ The exact Dev migration is 2026_10_27_030000_create_signal_api_commands.php.
 Human-review checklist HR-2026-10-27-SIGNAL-API is Reviewed. The source is merged
 to Main in PR #334. Production deployment and provider/worker activation remain
 separate; this guide does not imply production availability.
+
+## Nextcloud operational API (2026-10-27)
+
+Availability: Dev implementation; production deployment is separate. Nextcloud has full-domain
+connection/mapping/folder/sync/Talk operations alongside the compatible calendar-only API.
+Use the narrow Nextcloud scopes in API Management plus the caller's current native rights.
+Credentials additionally require `nextcloud.credentials.write`; new provider writes require
+`nextcloud.providers.execute`, explicit reviewed targets and the default-off API runtime switch.
+Read the connection ETag, use If-Match and Idempotency-Key, then read the exact resource/receipt.
+The Nextcloud full API guide describes all operations, errors, safe retries and availability.
