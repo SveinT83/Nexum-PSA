@@ -8,7 +8,7 @@ use App\Modules\Relationship\Controllers\Api\V1\RelationshipController;
 use Illuminate\Support\Facades\Route;
 
 if (($relationshipPublicApiRoutes ?? false) === true) {
-    Route::prefix('v1/nexum/relationships')
+    Route::middleware(\App\Modules\Relationship\Support\RelationshipApiPrivacy::class)->prefix('v1/nexum/relationships')
         ->name('nexum.relationships.')
         ->group(function (): void {
             Route::post('tickets', [RelationshipTicketWebhookController::class, 'store'])

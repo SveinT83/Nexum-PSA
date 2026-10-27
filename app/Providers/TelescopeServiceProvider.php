@@ -23,6 +23,9 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
         $isLocal = $this->app->environment('local');
 
         Telescope::filter(function (IncomingEntry $entry) use ($isLocal) {
+            if (! \App\Modules\Relationship\Support\RelationshipTelemetryRedactor::sanitize($entry)) {
+                return false;
+            }
             if (\App\Modules\Notification\Support\NotificationPrivacy::matches(request())) {
                 return false;
             }
