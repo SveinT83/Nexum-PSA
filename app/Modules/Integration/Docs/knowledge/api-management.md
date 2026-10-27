@@ -1513,3 +1513,18 @@ other actors is restricted by owning-domain view and current field visibility.
 Mutation commands require Idempotency-Key; update/delete require If-Match. Replays
 and receipts recheck current rights and original token ability. Definition rights
 do not grant Client/Site/Ticket value access or activate Ticket write/rule gates.
+
+## UserManagement operational API
+
+UserManagement now has typed current-browser coverage on Dev: user lifecycle, own profile
+and avatar, preferences, role/permission administration, MFA policy, invitation capabilities
+and existing session-bound SSO/local security. Use users.context.read for native capability
+discovery and the narrow users.profile/preferences/roles/permissions/settings/invite/operations
+abilities for each operation. Legacy users.read/create/update remain compatible but also
+require current native user permissions. Security material and SSO changes require a real
+first-party session and existing local verification; a bearer key cannot replace that proof.
+New ordinary writes use Idempotency-Key and record ETags/If-Match, with owned operation
+read-back and explicit unknown-outcome reconciliation. Invitation queued is not inbox delivery.
+See the User Management API guide in the employee handbook (Profile And User Management)
+and Swagger's UserManagement group. Main/production deployment and provider activation
+remain separate; verify the installed release before use.

@@ -1,5 +1,38 @@
 # Human Review Register
 
+## HR-2026-10-27-USERMANAGEMENT-API - Full UserManagement Browser/API Coverage
+
+Status: Pending / Dev implementation and tested Main promotion authorized, 2026-10-27.
+Owner: Codex. Named intended human reviewer/release owner: Svein Tore.
+Scope: approved rfc/2026-10-27-usermanagement-full-api-parity.md; all 49 browser rows,
+embedded role-permission actions, own profile/preferences, user administration,
+local factors/MFA policy, invitations and session-bound SSO protocol.
+Svein Tore authorized "Godkjenner og merge til main" before implementation.
+This permits tested Main promotion with these manual scenarios Pending; it does
+not complete any scenario or authorize production release/auth/provider activation.
+
+- [ ] Compare create/profile/avatar/status/invite and own profile/preferences/work-plan with web.
+- [ ] Exercise role/permission CRUD and membership with separate native and token rights.
+- [ ] Verify password/TOTP/recovery and SSO linking/settings require existing local assurance.
+- [ ] Compare invite expiry/single-use acceptance and protected privileged activation.
+- [ ] Revoke rights, use stale requests/replay keys and verify no duplicate effects or leaked data.
+- [ ] Verify Swagger and actual employee handbook content/access and deployed availability.
+
+Expected: complete current workflow parity with exact typed read-back and no extra authority.
+Deploy: exact additive receipt schema and cache/Swagger actions must be finalized and tested;
+no business backfill, role grants, auth cutover or runtime activation. Preserve receipts/APP_KEY.
+Risks: role changes invalidate live authority; credentials must not enter durable receipt/audit;
+unknown provider/mail outcomes require reconciliation. Test results remain separate from review.
+
+
+
+Automated evidence: Dev 236 / 3120 and final changes 26 / 907; isolated Main 184 passed /
+2590 assertions, one pre-existing optional protected-provider skip, plus final 37 / 975.
+All 56 HTTP method responses match Swagger on both runtimes; native MySQL, trusted
+HTTPS, exact handbook content and inherited employee access are verified. None of this
+marks the scenario boxes Reviewed. Actual refs are in the Main promotion report.
+
+
 ## HR-2026-10-27-NEXTCLOUD-API - Full Nextcloud Browser/API Coverage
 
 Status: Pending / implementation and tested Main merge authorized by Svein Tore, 2026-10-27.

@@ -1,5 +1,31 @@
 # tdPSA Development TODO
 
+## Full UserManagement browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Verified Main Candidate / Tested Main Promotion Authorized.
+Owner: Codex; product/release owner and named intended reviewer: Svein Tore.
+Authorization: "Godkjenner og merge til main", 2026-10-27.
+RFC: rfc/2026-10-27-usermanagement-full-api-parity.md (Approved).
+ADR: adr/2026-10-27-usermanagement-api-authority-and-sensitive-boundary.md (Accepted).
+UM01-UM08: feature-slices/2026-10-27-usermanagement-full-api-parity.md (Done On Dev).
+All 49 browser rows/embedded role-permission actions map to 56 typed HTTP operations;
+77 domain schemas plus existing Calendar/Work Plan contracts. All 56 success responses
+are schema-checked. Final Dev affected batch PASS 236 / 3120; final changes 26 / 907. Isolated Main
+candidate: 184 passed / 2590 assertions, one existing optional protected-provider skip;
+final changed-flow checks PASS 37 / 975. No failures/errors remain.
+Exact additive migration ran on Dev in batch 42; native encryption/uniqueness/rollback/
+mutex tests pass and probe tables are gone. Trusted HTTPS/Swagger and anonymous denial
+pass; temporary tokens removed. Five exact internal Knowledge sources and actual BookStack
+517/384/449 are read back; employee Viewer inheritance preserved. Native pending_push and
+employee assistant retrieval remain separate. No auth/Vault/provider activation or production.
+Evidence: plans/2026-10-27-usermanagement-api-verification.md/.json and coverage matrix.
+HR-2026-10-27-USERMANAGEMENT-API remains Pending; authorizes tested Main promotion while
+manual checks still gate production release/activation. Earlier SSO/manual gates persist.
+Next (Codex): merge only the scoped tested Main candidate after current-base read-back,
+preserving unrelated shared Dev work and separately owned protected security adapters.
+
+
+
 ## Full Nextcloud browser/API coverage (2026-10-27)
 
 Status: Done On Dev / Merged To Main in PR #338 / production unchanged.

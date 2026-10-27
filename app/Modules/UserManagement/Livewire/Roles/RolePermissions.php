@@ -2,8 +2,6 @@
 
 namespace App\Modules\UserManagement\Livewire\Roles;
 
-use App\Modules\Email\Services\EmailLiveAuthorityCoordinator;
-use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -30,21 +28,11 @@ class RolePermissions extends Component
 
     public function togglePermission(string $permissionName): void
     {
-        DB::transaction(function () use ($permissionName): void {
-            $role = Role::query()->lockForUpdate()->findOrFail($this->roleId);
-            if ($permissionName === 'email.inbox_view') {
-                app(EmailLiveAuthorityCoordinator::class)->prepareRoleContentMutation((int) $role->id);
-            }
-
-            if (in_array($permissionName, $this->selectedPermissions, true)) {
-                $role->revokePermissionTo($permissionName);
-                $this->selectedPermissions = array_values(array_diff($this->selectedPermissions, [$permissionName]));
-            } else {
-                $role->givePermissionTo($permissionName);
-                $this->selectedPermissions[] = $permissionName;
-            }
-        }, 3);
-        $this->role = Role::with('permissions')->findOrFail($this->roleId);
+        // Read current membership under the shared action; stale UI state cannot invert it twice.
+        $this->role = app(\App\Modules\UserManagement\Actions\SetRolePermission::class)->handle(
+            Role::findOrFail($this->roleId), $permissionName,
+            ! Role::findOrFail($this->roleId)->hasPermissionTo($permissionName));
+        $this->selectedPermissions = $this->role->permissions->pluck('name')->all();
 
         session()->flash('message', 'Permissions updated successfully.');
     }

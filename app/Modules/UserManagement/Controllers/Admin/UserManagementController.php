@@ -15,7 +15,6 @@ use App\Modules\UserManagement\Menus\SideBar\UserManagementMenu;
 use App\Modules\UserManagement\Models\UserProfile;
 use App\Modules\UserManagement\Queries\RoleQuery;
 use App\Modules\UserManagement\Queries\UserQuery;
-use App\Modules\UserManagement\Support\UserProfileData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -70,12 +69,16 @@ class UserManagementController extends Controller
 
     public function store(Request $request, StoreUser $action): RedirectResponse
     {
-        $action->handle($request->validate([
+        $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:'.(new User)->getTable().',email',
             'role' => 'nullable|exists:roles,id',
             'status' => 'nullable|in:'.implode(',', [User::STATUS_PENDING, User::STATUS_ACTIVE, User::STATUS_DISABLED]),
-        ]));
+        ]);
+        if (! empty($data['role'])) {
+            \App\Modules\UserManagement\Support\UserManagementApiAccess::authorize($request->user()->fresh(), ['user.manage_roles']);
+        }
+        $action->handle($data);
 
         return redirect()->route('tech.admin.user_management.index')
             ->with('success', 'User created successfully.');
@@ -167,20 +170,6 @@ class UserManagementController extends Controller
 
     private function profileFor(User $user): UserProfile
     {
-        $profile = UserProfile::query()->firstOrCreate(
-            ['user_id' => $user->id],
-            [
-                'work_phone' => $user->phone_work,
-                'private_phone' => $user->phone_private,
-                'timezone' => config('app.timezone', 'UTC'),
-                'working_hours' => UserProfileData::defaultWorkingHours(),
-            ]
-        );
-
-        if (empty($profile->working_hours)) {
-            $profile->forceFill(['working_hours' => UserProfileData::defaultWorkingHours()])->save();
-        }
-
-        return $profile;
+        return app(\App\Modules\UserManagement\Actions\EnsureUserProfile::class)->handle($user);
     }
 }

@@ -102,6 +102,19 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
+        // UserManagement owns these API errors: debug traces and credential-bearing exceptions
+        // must not reach API clients or generic exception telemetry.
+        $exceptions->report(function (\Throwable $error) {
+            if (\App\Modules\UserManagement\Support\UserManagementApiPrivacy::matches(request())) {
+                \Illuminate\Support\Facades\Log::error('UserManagement API operation failed.', ['exception_class' => get_class($error)]);
+
+                return false;
+            }
+        });
+        $exceptions->render(function (\Throwable $error, \Illuminate\Http\Request $request) {
+            return \App\Modules\UserManagement\Support\UserManagementApiPrivacy::render($error, $request);
+        });
+
         $exceptions->shouldRenderJsonWhen(function ($request, Throwable $e) {
             if ($request->is('api/*')) {
                 return true;

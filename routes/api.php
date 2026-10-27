@@ -25,6 +25,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     require app_path('Modules/Booking/routes.php');
     unset($bookingPublicApiRoutes);
 
+    $userManagementPublicApiRoutes = true;
+    require app_path('Modules/UserManagement/routes.php');
+    unset($userManagementPublicApiRoutes);
+
     // Sales owns its exact public quote capability and existing portal-session API branches.
     $intakePublicApiRoutes = true;
     require app_path('Modules/Intake/routes.php');

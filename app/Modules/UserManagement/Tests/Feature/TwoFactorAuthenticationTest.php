@@ -4,7 +4,6 @@ namespace App\Modules\UserManagement\Tests\Feature;
 
 use App\Models\Core\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
 use PHPUnit\Framework\Attributes\Test;
@@ -78,13 +77,15 @@ class TwoFactorAuthenticationTest extends TestCase
         app(EnableTwoFactorAuthentication::class)($user);
         $user->refresh();
 
-        $setupKey = Crypt::decryptString($user->two_factor_secret);
+        $setupKey = \Laravel\Fortify\Fortify::currentEncrypter()->decrypt($user->two_factor_secret);
 
         $this->actingAs($user)
             ->get(route('tech.profile.security'))
             ->assertOk()
             ->assertSee('Show TOTP code')
-            ->assertSee($setupKey);
+            ->assertSee($setupKey)
+            ->assertDontSee('s:16:');
+        $this->assertMatchesRegularExpression('/^[A-Z2-7]+$/', $setupKey);
     }
 
     #[Test]

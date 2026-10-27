@@ -46,6 +46,7 @@
         <!-- --------------------------------------------- -->
         <div class="row mt-3">
             <div class="col-md-6">
+                @if(\App\Modules\UserManagement\Support\UserManagementApiAccess::allows(auth()->user(), 'user.manage_roles'))
                 <x-forms.select name="role" labelName="Role" :options="$roles" :selected="old('role')" >
 
                     <!-- --------------------------------------------- -->
@@ -58,6 +59,9 @@
                     @endforeach
 
                 </x-forms.select>
+                @else
+                    <p class="text-muted small mb-0">A role manager can assign a role after this user is created.</p>
+                @endif
             </div>
 
             <div class="col-md-6">

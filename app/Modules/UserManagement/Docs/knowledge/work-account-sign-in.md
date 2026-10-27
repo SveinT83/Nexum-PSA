@@ -80,3 +80,12 @@ second Nexum code, local password MFA/recovery, sensitive operations and revocat
 The original HR-2026-10-05-SSO retains its remaining checks. Employee assistant retrieval
 is a separate verification claim. Contact the administrator if a fresh work-account
 login still asks for an extra local login code; retain local 2FA for password fallback.
+
+## API access to the same work-account flow
+
+The typed UserManagement API provides own linked-account status, protocol discovery,
+login/link handoff, callback result, unlink/logout and redacted provider settings.
+It retains the same first-party session, local password/factor verification, issuer/subject,
+nonce/state/PKCE and session revocation. An administrative bearer scope cannot substitute
+for the signed-in employee's local proof. See [User Management API](user-management-api.md).
+Availability is verified on Dev; this does not authorize provider or production activation.

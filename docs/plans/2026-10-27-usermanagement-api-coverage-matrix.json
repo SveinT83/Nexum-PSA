@@ -1,0 +1,2423 @@
+{
+  "date": "2026-10-27",
+  "branch": "Dev",
+  "status": "Implemented on Dev; final verification and authorized Main promotion in progress",
+  "browser_rows": 49,
+  "api_route_rows": 12,
+  "api_http_operations": 13,
+  "browser": [
+    {
+      "id": "U01",
+      "method": "GET|HEAD",
+      "uri": "invite/{token}",
+      "name": "invite.accept",
+      "action": "App\\Modules\\UserManagement\\Controllers\\AcceptInviteController@show",
+      "middleware": [
+        "web"
+      ],
+      "slice": "UM06",
+      "kind": "read",
+      "baseline": "Missing typed domain API",
+      "required": "Invitation capability inspection/acceptance; preserve single-use, expiry and guarded activation. Public and authenticated aliases share the same action.",
+      "api_operations": [
+        {
+          "name": "users.invitations.show",
+          "path": "/api/v1/users/invitations/{token}",
+          "methods": [
+            "GET"
+          ],
+          "defaults": []
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U02",
+      "method": "POST",
+      "uri": "invite/{token}",
+      "name": "invite.accept.post",
+      "action": "App\\Modules\\UserManagement\\Controllers\\AcceptInviteController@store",
+      "middleware": [
+        "web"
+      ],
+      "slice": "UM06",
+      "kind": "action",
+      "baseline": "Missing typed domain API",
+      "required": "Invitation capability inspection/acceptance; preserve single-use, expiry and guarded activation. Public and authenticated aliases share the same action.",
+      "api_operations": [
+        {
+          "name": "users.invitations.accept",
+          "path": "/api/v1/users/invitations/{token}",
+          "methods": [
+            "POST"
+          ],
+          "defaults": []
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U03",
+      "method": "POST",
+      "uri": "sso/backchannel",
+      "name": "sso.backchannel",
+      "action": "App\\Modules\\UserManagement\\Controllers\\SsoController@backchannel",
+      "middleware": [
+        "web",
+        "Illuminate\\Routing\\Middleware\\ThrottleRequests:60,1"
+      ],
+      "slice": "UM05",
+      "kind": "action",
+      "baseline": "Missing typed domain API",
+      "required": "SSO status, link/unlink/logout and OIDC login/callback/backchannel; preserve browser/session binding, PKCE, exact issuer/subject and fresh local verification.",
+      "api_operations": [
+        {
+          "name": "users.auth.sso.backchannel",
+          "path": "/api/v1/users/auth/sso/backchannel",
+          "methods": [
+            "POST"
+          ],
+          "defaults": []
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U04",
+      "method": "GET|HEAD",
+      "uri": "sso/callback",
+      "name": "sso.callback",
+      "action": "App\\Modules\\UserManagement\\Controllers\\SsoController@callback",
+      "middleware": [
+        "web",
+        "Illuminate\\Routing\\Middleware\\ThrottleRequests:20,1"
+      ],
+      "slice": "UM05",
+      "kind": "read",
+      "baseline": "Missing typed domain API",
+      "required": "SSO status, link/unlink/logout and OIDC login/callback/backchannel; preserve browser/session binding, PKCE, exact issuer/subject and fresh local verification.",
+      "api_operations": [
+        {
+          "name": "users.auth.sso.callback",
+          "path": "/api/v1/users/auth/sso/callback",
+          "methods": [
+            "GET"
+          ],
+          "defaults": []
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U05",
+      "method": "GET|HEAD",
+      "uri": "sso/login",
+      "name": "sso.login",
+      "action": "App\\Modules\\UserManagement\\Controllers\\SsoController@start",
+      "middleware": [
+        "web",
+        "Illuminate\\Routing\\Middleware\\ThrottleRequests:10,1"
+      ],
+      "slice": "UM05",
+      "kind": "read",
+      "baseline": "Missing typed domain API",
+      "required": "SSO status, link/unlink/logout and OIDC login/callback/backchannel; preserve browser/session binding, PKCE, exact issuer/subject and fresh local verification.",
+      "api_operations": [
+        {
+          "name": "users.auth.sso",
+          "path": "/api/v1/users/auth/sso",
+          "methods": [
+            "GET"
+          ],
+          "defaults": []
+        },
+        {
+          "name": "users.auth.sso.start",
+          "path": "/api/v1/users/auth/sso/start",
+          "methods": [
+            "POST"
+          ],
+          "defaults": []
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U06",
+      "method": "GET|HEAD",
+      "uri": "tech/admin/user_management",
+      "name": "tech.admin.user_management.index",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\UserManagementController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM01",
+      "kind": "read",
+      "baseline": "Partial",
+      "required": "Existing user API is partial: enforce current native rights, typed context/results, complete profile/avatar payload and protected-writer compatibility.",
+      "api_operations": [
+        {
+          "name": "users.index",
+          "path": "/api/v1/users",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.view"
+            ],
+            "um_fields": [
+              "q",
+              "status",
+              "role",
+              "per_page",
+              "page"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.read"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U07",
+      "method": "GET|HEAD",
+      "uri": "tech/admin/user_management/2fa-settings",
+      "name": "tech.admin.user_management.2fa-settings",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\TwoFactorSettingsController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM04",
+      "kind": "read",
+      "baseline": "Missing typed domain API",
+      "required": "Local password, TOTP setup/confirm/disable/recovery or role enforcement; preserve existing UserSecurity cutover and factor boundaries.",
+      "api_operations": [
+        {
+          "name": "users.settings.2fa",
+          "path": "/api/v1/users/administration/2fa-settings",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_2fa"
+            ],
+            "um_session": false,
+            "um_fields": [],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "policy",
+            "um_revision_required": true,
+            "um_ability": "users.settings.read"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U08",
+      "method": "POST",
+      "uri": "tech/admin/user_management/2fa-settings",
+      "name": "tech.admin.user_management.2fa-settings.update",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\TwoFactorSettingsController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM04",
+      "kind": "action",
+      "baseline": "Missing typed domain API",
+      "required": "Local password, TOTP setup/confirm/disable/recovery or role enforcement; preserve existing UserSecurity cutover and factor boundaries.",
+      "api_operations": [
+        {
+          "name": "users.settings.2fa.update",
+          "path": "/api/v1/users/administration/2fa-settings",
+          "methods": [
+            "PATCH"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_2fa"
+            ],
+            "um_session": false,
+            "um_fields": [
+              "enforce_two_factor",
+              "enforce_two_factor_roles"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "policy",
+            "um_revision_required": true,
+            "um_ability": "users.settings.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U09",
+      "method": "GET|HEAD",
+      "uri": "tech/admin/user_management/create",
+      "name": "tech.admin.user_management.create",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\UserManagementController@create",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM01",
+      "kind": "read",
+      "baseline": "Partial",
+      "required": "Existing user API is partial: enforce current native rights, typed context/results, complete profile/avatar payload and protected-writer compatibility.",
+      "api_operations": [
+        {
+          "name": "users.context",
+          "path": "/api/v1/users/context",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_fields": [],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.context.read"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U10",
+      "method": "GET|HEAD",
+      "uri": "tech/admin/user_management/permissions",
+      "name": "tech.admin.user_management.permissions.index",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\PermissionManagementController@permissionsIndex",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM03",
+      "kind": "read",
+      "baseline": "Missing typed domain API",
+      "required": "Role/permission CRUD and form discovery; include embedded RolePermissions Livewire search/toggle and Email authority invalidation.",
+      "api_operations": [
+        {
+          "name": "users.admin.permissions",
+          "path": "/api/v1/users/administration/permissions",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_permissions"
+            ],
+            "um_fields": [
+              "q"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.permissions.read"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U11",
+      "method": "GET|HEAD",
+      "uri": "tech/admin/user_management/permissions/create",
+      "name": "tech.admin.user_management.permissions.create",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\PermissionManagementController@permissionsCreate",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM03",
+      "kind": "read",
+      "baseline": "Missing typed domain API",
+      "required": "Role/permission CRUD and form discovery; include embedded RolePermissions Livewire search/toggle and Email authority invalidation.",
+      "api_operations": [
+        {
+          "name": "users.admin.permissions.store",
+          "path": "/api/v1/users/administration/permissions",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_permissions"
+            ],
+            "um_fields": [
+              "name"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.permissions.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U12",
+      "method": "DELETE",
+      "uri": "tech/admin/user_management/permissions/destroy/{id}",
+      "name": "tech.admin.user_management.permissions.destroy",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\PermissionManagementController@permissionsDestroy",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM03",
+      "kind": "write",
+      "baseline": "Missing typed domain API",
+      "required": "Role/permission CRUD and form discovery; include embedded RolePermissions Livewire search/toggle and Email authority invalidation.",
+      "api_operations": [
+        {
+          "name": "users.admin.permissions.destroy",
+          "path": "/api/v1/users/administration/permissions/{permission}",
+          "methods": [
+            "DELETE"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_permissions"
+            ],
+            "um_fields": [],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "permission",
+            "um_revision_required": true,
+            "um_ability": "users.permissions.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U13",
+      "method": "GET|HEAD",
+      "uri": "tech/admin/user_management/permissions/edit/{id}",
+      "name": "tech.admin.user_management.permissions.edit",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\PermissionManagementController@permissionsEdit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM03",
+      "kind": "read",
+      "baseline": "Missing typed domain API",
+      "required": "Role/permission CRUD and form discovery; include embedded RolePermissions Livewire search/toggle and Email authority invalidation.",
+      "api_operations": [
+        {
+          "name": "users.admin.permissions.show",
+          "path": "/api/v1/users/administration/permissions/{permission}",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_permissions"
+            ],
+            "um_fields": [],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "permission",
+            "um_revision_required": true,
+            "um_ability": "users.permissions.read"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U14",
+      "method": "POST",
+      "uri": "tech/admin/user_management/permissions/store",
+      "name": "tech.admin.user_management.permissions.store",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\PermissionManagementController@permissionsStore",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM03",
+      "kind": "action",
+      "baseline": "Missing typed domain API",
+      "required": "Role/permission CRUD and form discovery; include embedded RolePermissions Livewire search/toggle and Email authority invalidation.",
+      "api_operations": [
+        {
+          "name": "users.admin.permissions.store",
+          "path": "/api/v1/users/administration/permissions",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_permissions"
+            ],
+            "um_fields": [
+              "name"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.permissions.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U15",
+      "method": "POST",
+      "uri": "tech/admin/user_management/permissions/update/{id}",
+      "name": "tech.admin.user_management.permissions.update",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\PermissionManagementController@permissionsUpdate",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM03",
+      "kind": "action",
+      "baseline": "Missing typed domain API",
+      "required": "Role/permission CRUD and form discovery; include embedded RolePermissions Livewire search/toggle and Email authority invalidation.",
+      "api_operations": [
+        {
+          "name": "users.admin.permissions.update",
+          "path": "/api/v1/users/administration/permissions/{permission}",
+          "methods": [
+            "PATCH"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_permissions"
+            ],
+            "um_fields": [
+              "name"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "permission",
+            "um_revision_required": true,
+            "um_ability": "users.permissions.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U16",
+      "method": "GET|HEAD",
+      "uri": "tech/admin/user_management/roles",
+      "name": "tech.admin.user_management.roles.index",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\RolesManagementController@rolesIndex",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM03",
+      "kind": "read",
+      "baseline": "Missing typed domain API",
+      "required": "Role/permission CRUD and form discovery; include embedded RolePermissions Livewire search/toggle and Email authority invalidation.",
+      "api_operations": [
+        {
+          "name": "users.admin.roles",
+          "path": "/api/v1/users/administration/roles",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_roles"
+            ],
+            "um_fields": [
+              "q"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.roles.read"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U17",
+      "method": "GET|HEAD",
+      "uri": "tech/admin/user_management/roles/create",
+      "name": "tech.admin.user_management.roles.create",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\RolesManagementController@rolesCreate",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM03",
+      "kind": "read",
+      "baseline": "Missing typed domain API",
+      "required": "Role/permission CRUD and form discovery; include embedded RolePermissions Livewire search/toggle and Email authority invalidation.",
+      "api_operations": [
+        {
+          "name": "users.admin.roles",
+          "path": "/api/v1/users/administration/roles",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_roles"
+            ],
+            "um_fields": [
+              "q"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.roles.read"
+          }
+        },
+        {
+          "name": "users.admin.roles.store",
+          "path": "/api/v1/users/administration/roles",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_roles"
+            ],
+            "um_fields": [
+              "name"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.roles.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U18",
+      "method": "DELETE",
+      "uri": "tech/admin/user_management/roles/destroy/{id}",
+      "name": "tech.admin.user_management.roles.destroy",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\RolesManagementController@rolesDestroy",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM03",
+      "kind": "write",
+      "baseline": "Missing typed domain API",
+      "required": "Role/permission CRUD and form discovery; include embedded RolePermissions Livewire search/toggle and Email authority invalidation.",
+      "api_operations": [
+        {
+          "name": "users.admin.roles.destroy",
+          "path": "/api/v1/users/administration/roles/{role}",
+          "methods": [
+            "DELETE"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_roles"
+            ],
+            "um_fields": [],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "role",
+            "um_revision_required": true,
+            "um_ability": "users.roles.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U19",
+      "method": "GET|HEAD",
+      "uri": "tech/admin/user_management/roles/edit/{id}",
+      "name": "tech.admin.user_management.roles.edit",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\RolesManagementController@rolesEdit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM03",
+      "kind": "read",
+      "baseline": "Missing typed domain API",
+      "required": "Role/permission CRUD and form discovery; include embedded RolePermissions Livewire search/toggle and Email authority invalidation.",
+      "api_operations": [
+        {
+          "name": "users.admin.roles.show",
+          "path": "/api/v1/users/administration/roles/{role}",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_roles"
+            ],
+            "um_fields": [],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "role",
+            "um_revision_required": true,
+            "um_ability": "users.roles.read"
+          }
+        },
+        {
+          "name": "users.admin.roles.permission-options",
+          "path": "/api/v1/users/administration/roles/{role}/permission-options",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_roles"
+            ],
+            "um_fields": [
+              "q"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "role",
+            "um_revision_required": true,
+            "um_ability": "users.roles.read"
+          }
+        },
+        {
+          "name": "users.admin.roles.permission",
+          "path": "/api/v1/users/administration/roles/{role}/permissions/{permission}",
+          "methods": [
+            "PUT"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_roles"
+            ],
+            "um_fields": [
+              "enabled"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "role",
+            "um_revision_required": true,
+            "um_ability": "users.roles.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U20",
+      "method": "POST",
+      "uri": "tech/admin/user_management/roles/store",
+      "name": "tech.admin.user_management.roles.store",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\RolesManagementController@rolesStore",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM03",
+      "kind": "action",
+      "baseline": "Missing typed domain API",
+      "required": "Role/permission CRUD and form discovery; include embedded RolePermissions Livewire search/toggle and Email authority invalidation.",
+      "api_operations": [
+        {
+          "name": "users.admin.roles.store",
+          "path": "/api/v1/users/administration/roles",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_roles"
+            ],
+            "um_fields": [
+              "name"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.roles.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U21",
+      "method": "POST",
+      "uri": "tech/admin/user_management/roles/update/{id}",
+      "name": "tech.admin.user_management.roles.update",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\RolesManagementController@rolesUpdate",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM03",
+      "kind": "action",
+      "baseline": "Missing typed domain API",
+      "required": "Role/permission CRUD and form discovery; include embedded RolePermissions Livewire search/toggle and Email authority invalidation.",
+      "api_operations": [
+        {
+          "name": "users.admin.roles.update",
+          "path": "/api/v1/users/administration/roles/{role}",
+          "methods": [
+            "PATCH"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_roles"
+            ],
+            "um_fields": [
+              "name"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "role",
+            "um_revision_required": true,
+            "um_ability": "users.roles.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U22",
+      "method": "GET|HEAD",
+      "uri": "tech/admin/user_management/sso",
+      "name": "tech.admin.user_management.sso",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\SsoSettingsController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "slice": "UM05",
+      "kind": "read",
+      "baseline": "Missing typed domain API",
+      "required": "Provider settings and verified discovery; shared validation/reauthentication, secret redaction and session invalidation.",
+      "api_operations": [
+        {
+          "name": "users.settings.sso",
+          "path": "/api/v1/users/administration/sso",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_2fa"
+            ],
+            "um_session": false,
+            "um_fields": [],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.settings.read"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U23",
+      "method": "POST",
+      "uri": "tech/admin/user_management/sso",
+      "name": "tech.admin.user_management.sso.update",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\SsoSettingsController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "Illuminate\\Routing\\Middleware\\ThrottleRequests:5,1"
+      ],
+      "slice": "UM05",
+      "kind": "action",
+      "baseline": "Missing typed domain API",
+      "required": "Provider settings and verified discovery; shared validation/reauthentication, secret redaction and session invalidation.",
+      "api_operations": [
+        {
+          "name": "users.settings.sso.update",
+          "path": "/api/v1/users/administration/sso",
+          "methods": [
+            "PATCH"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_2fa"
+            ],
+            "um_session": true,
+            "um_fields": [
+              "issuer",
+              "client_id",
+              "client_secret",
+              "enabled",
+              "current_password",
+              "code"
+            ],
+            "um_owner_replay": true,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.settings.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U24",
+      "method": "POST",
+      "uri": "tech/admin/user_management/store",
+      "name": "tech.admin.user_management.store",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\UserManagementController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM01",
+      "kind": "action",
+      "baseline": "Partial",
+      "required": "Existing user API is partial: enforce current native rights, typed context/results, complete profile/avatar payload and protected-writer compatibility.",
+      "api_operations": [
+        {
+          "name": "users.store",
+          "path": "/api/v1/users",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.create"
+            ],
+            "um_fields": [
+              "name",
+              "email",
+              "status",
+              "role_id",
+              "role_ids"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": false,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.create"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U25",
+      "method": "GET|HEAD",
+      "uri": "tech/admin/user_management/users/{user}",
+      "name": "tech.admin.user_management.show",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\UserManagementController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM01",
+      "kind": "read",
+      "baseline": "Partial",
+      "required": "Existing user API is partial: enforce current native rights, typed context/results, complete profile/avatar payload and protected-writer compatibility.",
+      "api_operations": [
+        {
+          "name": "users.show",
+          "path": "/api/v1/users/{user}",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.view"
+            ],
+            "um_fields": [],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "user",
+            "um_revision_required": true,
+            "um_ability": "users.read"
+          }
+        },
+        {
+          "name": "users.context",
+          "path": "/api/v1/users/context",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_fields": [],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.context.read"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U26",
+      "method": "POST",
+      "uri": "tech/admin/user_management/users/{user}/profile",
+      "name": "tech.admin.user_management.profile.update",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\UserManagementController@updateProfile",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM01",
+      "kind": "action",
+      "baseline": "Partial",
+      "required": "Existing user API is partial: enforce current native rights, typed context/results, complete profile/avatar payload and protected-writer compatibility.",
+      "api_operations": [
+        {
+          "name": "users.update",
+          "path": "/api/v1/users/{user}",
+          "methods": [
+            "PUT",
+            "PATCH"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.update"
+            ],
+            "um_fields": [
+              "name",
+              "email",
+              "work_phone",
+              "private_phone",
+              "phone_work",
+              "phone_private",
+              "timezone",
+              "working_hours",
+              "availability_notes",
+              "profile_notes",
+              "avatar",
+              "remove_avatar"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": false,
+            "um_target": "user",
+            "um_revision_required": false,
+            "um_ability": "users.update"
+          }
+        },
+        {
+          "name": "users.avatar.update",
+          "path": "/api/v1/users/{user}/avatar",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.update"
+            ],
+            "um_fields": [
+              "avatar",
+              "remove_avatar"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "user",
+            "um_revision_required": true,
+            "um_ability": "users.update"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U27",
+      "method": "POST",
+      "uri": "tech/admin/user_management/users/{user}/roles",
+      "name": "tech.admin.user_management.roles.update-user",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\UserManagementController@updateRoles",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM01",
+      "kind": "action",
+      "baseline": "Partial",
+      "required": "Existing user API is partial: enforce current native rights, typed context/results, complete profile/avatar payload and protected-writer compatibility.",
+      "api_operations": [
+        {
+          "name": "users.roles.update",
+          "path": "/api/v1/users/{user}/roles",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.manage_roles"
+            ],
+            "um_fields": [
+              "role_ids"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": false,
+            "um_target": "user",
+            "um_revision_required": false,
+            "um_ability": "users.update"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U28",
+      "method": "POST",
+      "uri": "tech/admin/user_management/{user}/invite",
+      "name": "tech.admin.user_management.invite.send",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\UserManagementController@sendInvite",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM01",
+      "kind": "action",
+      "baseline": "Partial",
+      "required": "Existing user API is partial: enforce current native rights, typed context/results, complete profile/avatar payload and protected-writer compatibility.",
+      "api_operations": [
+        {
+          "name": "users.invitations.send",
+          "path": "/api/v1/users/{user}/invitations",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.invite"
+            ],
+            "um_fields": [],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "user",
+            "um_revision_required": true,
+            "um_ability": "users.invite.execute"
+          }
+        },
+        {
+          "name": "users.invite.send",
+          "path": "/api/v1/users/{user}/invite",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.invite"
+            ],
+            "um_fields": [],
+            "um_owner_replay": false,
+            "um_key_required": false,
+            "um_target": "user",
+            "um_revision_required": false,
+            "um_ability": "users.update"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U29",
+      "method": "POST",
+      "uri": "tech/admin/user_management/{user}/status",
+      "name": "tech.admin.user_management.status.update",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Admin\\UserManagementController@updateStatus",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "slice": "UM01",
+      "kind": "action",
+      "baseline": "Partial",
+      "required": "Existing user API is partial: enforce current native rights, typed context/results, complete profile/avatar payload and protected-writer compatibility.",
+      "api_operations": [
+        {
+          "name": "users.status.update",
+          "path": "/api/v1/users/{user}/status",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [
+              "user.update"
+            ],
+            "um_fields": [
+              "status"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": false,
+            "um_target": "user",
+            "um_revision_required": false,
+            "um_ability": "users.update"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U30",
+      "method": "GET|HEAD",
+      "uri": "tech/invite/{token}",
+      "name": "tech.invite.accept",
+      "action": "App\\Modules\\UserManagement\\Controllers\\AcceptInviteController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "slice": "UM06",
+      "kind": "read",
+      "baseline": "Missing typed domain API",
+      "required": "Invitation capability inspection/acceptance; preserve single-use, expiry and guarded activation. Public and authenticated aliases share the same action.",
+      "api_operations": [
+        {
+          "name": "users.invitations.show",
+          "path": "/api/v1/users/invitations/{token}",
+          "methods": [
+            "GET"
+          ],
+          "defaults": []
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U31",
+      "method": "POST",
+      "uri": "tech/invite/{token}",
+      "name": "tech.invite.accept.post",
+      "action": "App\\Modules\\UserManagement\\Controllers\\AcceptInviteController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "slice": "UM06",
+      "kind": "action",
+      "baseline": "Missing typed domain API",
+      "required": "Invitation capability inspection/acceptance; preserve single-use, expiry and guarded activation. Public and authenticated aliases share the same action.",
+      "api_operations": [
+        {
+          "name": "users.invitations.accept",
+          "path": "/api/v1/users/invitations/{token}",
+          "methods": [
+            "POST"
+          ],
+          "defaults": []
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U32",
+      "method": "GET|HEAD",
+      "uri": "tech/profile",
+      "name": "tech.profile.index",
+      "action": "App\\Modules\\UserManagement\\Controllers\\ProfileController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "slice": "UM02",
+      "kind": "read",
+      "baseline": "Partial",
+      "required": "Own profile/avatar read/update and current integration/view status; do not implement the placeholder future personal integration systems.",
+      "api_operations": [
+        {
+          "name": "users.me.profile",
+          "path": "/api/v1/users/me/profile",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_fields": [],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "me",
+            "um_revision_required": true,
+            "um_ability": "users.profile.read"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U33",
+      "method": "PATCH",
+      "uri": "tech/profile",
+      "name": "tech.profile.update",
+      "action": "App\\Modules\\UserManagement\\Controllers\\ProfileController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "slice": "UM02",
+      "kind": "write",
+      "baseline": "Partial",
+      "required": "Own profile/avatar read/update and current integration/view status; do not implement the placeholder future personal integration systems.",
+      "api_operations": [
+        {
+          "name": "users.me.profile.update",
+          "path": "/api/v1/users/me/profile",
+          "methods": [
+            "PATCH"
+          ],
+          "defaults": {
+            "um_fields": [
+              "name",
+              "email",
+              "work_phone",
+              "private_phone",
+              "phone_work",
+              "phone_private",
+              "timezone",
+              "working_hours",
+              "availability_notes",
+              "profile_notes",
+              "avatar",
+              "remove_avatar"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "me",
+            "um_revision_required": true,
+            "um_ability": "users.profile.update"
+          }
+        },
+        {
+          "name": "users.me.avatar.update",
+          "path": "/api/v1/users/me/profile/avatar",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_fields": [
+              "avatar",
+              "remove_avatar"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "me",
+            "um_revision_required": true,
+            "um_ability": "users.profile.update"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U34",
+      "method": "GET|HEAD",
+      "uri": "tech/profile/integrations",
+      "name": "tech.profile.integrations",
+      "action": "App\\Modules\\UserManagement\\Controllers\\ProfileController@integrations",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "slice": "UM02",
+      "kind": "read",
+      "baseline": "Partial",
+      "required": "Own profile/avatar read/update and current integration/view status; do not implement the placeholder future personal integration systems.",
+      "api_operations": [
+        {
+          "name": "users.me.shell",
+          "path": "/api/v1/users/me/shell",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_fields": [],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.profile.read"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U35",
+      "method": "GET|HEAD",
+      "uri": "tech/profile/preferences",
+      "name": "tech.profile.preferences",
+      "action": "App\\Modules\\UserManagement\\Controllers\\ProfilePreferencesController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "slice": "UM02",
+      "kind": "read",
+      "baseline": "Partial",
+      "required": "Full personal preferences including theme; Calendar display API alone is partial coverage.",
+      "api_operations": [
+        {
+          "name": "users.me.preferences",
+          "path": "/api/v1/users/me/preferences",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_fields": [],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "preferences",
+            "um_revision_required": true,
+            "um_ability": "users.preferences.read"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U36",
+      "method": "PATCH",
+      "uri": "tech/profile/preferences",
+      "name": "tech.profile.preferences.update",
+      "action": "App\\Modules\\UserManagement\\Controllers\\ProfilePreferencesController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "slice": "UM02",
+      "kind": "write",
+      "baseline": "Partial",
+      "required": "Full personal preferences including theme; Calendar display API alone is partial coverage.",
+      "api_operations": [
+        {
+          "name": "users.me.preferences.update",
+          "path": "/api/v1/users/me/preferences",
+          "methods": [
+            "PATCH"
+          ],
+          "defaults": {
+            "um_fields": [
+              "timezone",
+              "default_calendar_view",
+              "workday_start",
+              "workday_end",
+              "theme"
+            ],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "preferences",
+            "um_revision_required": true,
+            "um_ability": "users.preferences.update"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U37",
+      "method": "GET|HEAD",
+      "uri": "tech/profile/security",
+      "name": "tech.profile.security",
+      "action": "App\\Modules\\UserManagement\\Controllers\\ProfileSecurityController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "slice": "UM04",
+      "kind": "read",
+      "baseline": "Missing typed domain API",
+      "required": "Local password, TOTP setup/confirm/disable/recovery or role enforcement; preserve existing UserSecurity cutover and factor boundaries.",
+      "api_operations": [
+        {
+          "name": "users.security",
+          "path": "/api/v1/users/me/security",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_permissions": [],
+            "um_session": true,
+            "um_fields": [],
+            "um_owner_replay": true,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.security.read"
+          }
+        },
+        {
+          "name": "users.security.material",
+          "path": "/api/v1/users/me/security/material",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [],
+            "um_session": true,
+            "um_fields": [
+              "current_password",
+              "code"
+            ],
+            "um_owner_replay": true,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.security.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U38",
+      "method": "POST",
+      "uri": "tech/profile/security/2fa/confirm",
+      "name": "tech.profile.security.2fa.confirm",
+      "action": "App\\Modules\\UserManagement\\Controllers\\ProfileSecurityController@confirm",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "slice": "UM04",
+      "kind": "action",
+      "baseline": "Missing typed domain API",
+      "required": "Local password, TOTP setup/confirm/disable/recovery or role enforcement; preserve existing UserSecurity cutover and factor boundaries.",
+      "api_operations": [
+        {
+          "name": "users.security.confirm",
+          "path": "/api/v1/users/me/security/2fa/confirm",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [],
+            "um_session": true,
+            "um_fields": [
+              "current_password",
+              "code"
+            ],
+            "um_owner_replay": true,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.security.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U39",
+      "method": "POST",
+      "uri": "tech/profile/security/2fa/disable",
+      "name": "tech.profile.security.2fa.disable",
+      "action": "App\\Modules\\UserManagement\\Controllers\\ProfileSecurityController@disable",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "slice": "UM04",
+      "kind": "action",
+      "baseline": "Missing typed domain API",
+      "required": "Local password, TOTP setup/confirm/disable/recovery or role enforcement; preserve existing UserSecurity cutover and factor boundaries.",
+      "api_operations": [
+        {
+          "name": "users.security.disable",
+          "path": "/api/v1/users/me/security/2fa/disable",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [],
+            "um_session": true,
+            "um_fields": [
+              "current_password",
+              "code"
+            ],
+            "um_owner_replay": true,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.security.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U40",
+      "method": "POST",
+      "uri": "tech/profile/security/2fa/enable",
+      "name": "tech.profile.security.2fa.enable",
+      "action": "App\\Modules\\UserManagement\\Controllers\\ProfileSecurityController@enable",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "slice": "UM04",
+      "kind": "action",
+      "baseline": "Missing typed domain API",
+      "required": "Local password, TOTP setup/confirm/disable/recovery or role enforcement; preserve existing UserSecurity cutover and factor boundaries.",
+      "api_operations": [
+        {
+          "name": "users.security.enable",
+          "path": "/api/v1/users/me/security/2fa/enable",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [],
+            "um_session": true,
+            "um_fields": [
+              "current_password",
+              "code"
+            ],
+            "um_owner_replay": true,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.security.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U41",
+      "method": "POST",
+      "uri": "tech/profile/security/password",
+      "name": "tech.profile.security.password",
+      "action": "App\\Modules\\UserManagement\\Controllers\\ProfileSecurityController@updatePassword",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "slice": "UM04",
+      "kind": "action",
+      "baseline": "Missing typed domain API",
+      "required": "Local password, TOTP setup/confirm/disable/recovery or role enforcement; preserve existing UserSecurity cutover and factor boundaries.",
+      "api_operations": [
+        {
+          "name": "users.security.password",
+          "path": "/api/v1/users/me/security/password",
+          "methods": [
+            "PATCH"
+          ],
+          "defaults": {
+            "um_permissions": [],
+            "um_session": true,
+            "um_fields": [
+              "current_password",
+              "password",
+              "password_confirmation"
+            ],
+            "um_owner_replay": true,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.security.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U42",
+      "method": "POST",
+      "uri": "tech/profile/security/recovery-codes",
+      "name": "tech.profile.security.recovery-codes",
+      "action": "App\\Modules\\UserManagement\\Controllers\\ProfileSecurityController@regenerateRecoveryCodes",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "slice": "UM04",
+      "kind": "action",
+      "baseline": "Missing typed domain API",
+      "required": "Local password, TOTP setup/confirm/disable/recovery or role enforcement; preserve existing UserSecurity cutover and factor boundaries.",
+      "api_operations": [
+        {
+          "name": "users.security.recovery",
+          "path": "/api/v1/users/me/security/recovery-codes",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [],
+            "um_session": true,
+            "um_fields": [
+              "current_password",
+              "code"
+            ],
+            "um_owner_replay": true,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.security.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U43",
+      "method": "GET|HEAD",
+      "uri": "tech/profile/view",
+      "name": "tech.profile.view",
+      "action": "App\\Modules\\UserManagement\\Controllers\\ProfileController@viewPreferences",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "slice": "UM02",
+      "kind": "read",
+      "baseline": "Partial",
+      "required": "Own profile/avatar read/update and current integration/view status; do not implement the placeholder future personal integration systems.",
+      "api_operations": [
+        {
+          "name": "users.me.shell",
+          "path": "/api/v1/users/me/shell",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_fields": [],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.profile.read"
+          }
+        },
+        {
+          "name": "users.me.preferences",
+          "path": "/api/v1/users/me/preferences",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_fields": [],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": "preferences",
+            "um_revision_required": true,
+            "um_ability": "users.preferences.read"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U44",
+      "method": "GET|HEAD",
+      "uri": "tech/profile/work-account",
+      "name": "tech.profile.sso",
+      "action": "App\\Modules\\UserManagement\\Controllers\\SsoController@profile",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "slice": "UM05",
+      "kind": "read",
+      "baseline": "Missing typed domain API",
+      "required": "SSO status, link/unlink/logout and OIDC login/callback/backchannel; preserve browser/session binding, PKCE, exact issuer/subject and fresh local verification.",
+      "api_operations": [
+        {
+          "name": "users.sso",
+          "path": "/api/v1/users/me/work-account",
+          "methods": [
+            "GET"
+          ],
+          "defaults": {
+            "um_permissions": [],
+            "um_session": false,
+            "um_fields": [],
+            "um_owner_replay": false,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.sso.read"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U45",
+      "method": "POST",
+      "uri": "tech/profile/work-account/link",
+      "name": "tech.profile.sso.link",
+      "action": "App\\Modules\\UserManagement\\Controllers\\SsoController@link",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "Illuminate\\Routing\\Middleware\\ThrottleRequests:5,1"
+      ],
+      "slice": "UM05",
+      "kind": "action",
+      "baseline": "Missing typed domain API",
+      "required": "SSO status, link/unlink/logout and OIDC login/callback/backchannel; preserve browser/session binding, PKCE, exact issuer/subject and fresh local verification.",
+      "api_operations": [
+        {
+          "name": "users.sso.link",
+          "path": "/api/v1/users/me/work-account/link",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [],
+            "um_session": true,
+            "um_fields": [
+              "current_password",
+              "code"
+            ],
+            "um_owner_replay": true,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.sso.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U46",
+      "method": "POST",
+      "uri": "tech/profile/work-account/logout",
+      "name": "tech.profile.sso.logout",
+      "action": "App\\Modules\\UserManagement\\Controllers\\SsoController@logout",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "slice": "UM05",
+      "kind": "action",
+      "baseline": "Missing typed domain API",
+      "required": "SSO status, link/unlink/logout and OIDC login/callback/backchannel; preserve browser/session binding, PKCE, exact issuer/subject and fresh local verification.",
+      "api_operations": [
+        {
+          "name": "users.sso.logout",
+          "path": "/api/v1/users/me/work-account/logout",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [],
+            "um_session": true,
+            "um_fields": [],
+            "um_owner_replay": true,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.sso.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U47",
+      "method": "POST",
+      "uri": "tech/profile/work-account/unlink",
+      "name": "tech.profile.sso.unlink",
+      "action": "App\\Modules\\UserManagement\\Controllers\\SsoController@unlink",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "Illuminate\\Routing\\Middleware\\ThrottleRequests:5,1"
+      ],
+      "slice": "UM05",
+      "kind": "action",
+      "baseline": "Missing typed domain API",
+      "required": "SSO status, link/unlink/logout and OIDC login/callback/backchannel; preserve browser/session binding, PKCE, exact issuer/subject and fresh local verification.",
+      "api_operations": [
+        {
+          "name": "users.sso.unlink",
+          "path": "/api/v1/users/me/work-account/unlink",
+          "methods": [
+            "POST"
+          ],
+          "defaults": {
+            "um_permissions": [],
+            "um_session": true,
+            "um_fields": [
+              "current_password",
+              "code"
+            ],
+            "um_owner_replay": true,
+            "um_key_required": true,
+            "um_target": null,
+            "um_revision_required": false,
+            "um_ability": "users.sso.write"
+          }
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U48",
+      "method": "GET|HEAD",
+      "uri": "tech/profile/work-plan",
+      "name": "tech.profile.work-plan",
+      "action": "App\\Modules\\UserManagement\\Controllers\\WorkPlanController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Modules\\UserManagement\\Http\\Middleware\\EnsureEmployeeWorkPlan"
+      ],
+      "slice": "UM02",
+      "kind": "read",
+      "baseline": "Partial",
+      "required": "Existing own work-plan read/update API; retain employee scope and concurrency rules.",
+      "api_operations": [
+        {
+          "name": "users.work-plan.show",
+          "path": "/api/v1/users/me/work-plan",
+          "methods": [
+            "GET"
+          ],
+          "defaults": []
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    },
+    {
+      "id": "U49",
+      "method": "PATCH",
+      "uri": "tech/profile/work-plan",
+      "name": "tech.profile.work-plan.update",
+      "action": "App\\Modules\\UserManagement\\Controllers\\WorkPlanController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Modules\\UserManagement\\Http\\Middleware\\EnsureEmployeeWorkPlan"
+      ],
+      "slice": "UM02",
+      "kind": "write",
+      "baseline": "Partial",
+      "required": "Existing own work-plan read/update API; retain employee scope and concurrency rules.",
+      "api_operations": [
+        {
+          "name": "users.work-plan.update",
+          "path": "/api/v1/users/me/work-plan",
+          "methods": [
+            "PATCH"
+          ],
+          "defaults": []
+        }
+      ],
+      "implementation": "Implemented on Dev; final integrated verification in progress"
+    }
+  ],
+  "api_baseline": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/users",
+      "name": "api.v1.users.index",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Api\\V1\\UserManagementController@index",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:users.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/users",
+      "name": "api.v1.users.store",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Api\\V1\\UserManagementController@store",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:users.create"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/users/me/calendar-preferences",
+      "name": "api.v1.users.calendar-preferences.show",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Api\\V1\\CalendarPreferencesController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:users.calendar-preferences.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "api/v1/users/me/calendar-preferences",
+      "name": "api.v1.users.calendar-preferences.update",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Api\\V1\\CalendarPreferencesController@update",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:users.calendar-preferences.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/users/me/work-plan",
+      "name": "api.v1.users.work-plan.show",
+      "action": "App\\Modules\\UserManagement\\Controllers\\WorkPlanController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\UserManagement\\Http\\Middleware\\EnsureEmployeeWorkPlan",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:users.work-plan.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "api/v1/users/me/work-plan",
+      "name": "api.v1.users.work-plan.update",
+      "action": "App\\Modules\\UserManagement\\Controllers\\WorkPlanController@update",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "App\\Modules\\UserManagement\\Http\\Middleware\\EnsureEmployeeWorkPlan",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:users.work-plan.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/users/roles",
+      "name": "api.v1.users.roles.index",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Api\\V1\\UserManagementController@roles",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:users.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/users/{user}",
+      "name": "api.v1.users.show",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Api\\V1\\UserManagementController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:users.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT|PATCH",
+      "uri": "api/v1/users/{user}",
+      "name": "api.v1.users.update",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Api\\V1\\UserManagementController@update",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:users.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/users/{user}/invite",
+      "name": "api.v1.users.invite.send",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Api\\V1\\UserManagementController@sendInvite",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:users.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/users/{user}/roles",
+      "name": "api.v1.users.roles.update",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Api\\V1\\UserManagementController@updateRoles",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:users.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/users/{user}/status",
+      "name": "api.v1.users.status.update",
+      "action": "App\\Modules\\UserManagement\\Controllers\\Api\\V1\\UserManagementController@updateStatus",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:users.update"
+      ],
+      "path": null
+    }
+  ],
+  "embedded_actions": [
+    {
+      "owner": "Livewire/Roles/RolePermissions.php",
+      "actions": [
+        "mount",
+        "search",
+        "togglePermission"
+      ],
+      "required": "Explicit API operation, current user.manage_roles authority, exact role permissions read-back, shared EmailLiveAuthorityCoordinator and stale-write protection.",
+      "api_operations": [
+        "users.admin.roles.show",
+        "users.admin.roles.permission-options",
+        "users.admin.roles.permission"
+      ]
+    }
+  ],
+  "source_hashes": {
+    "app/Modules/UserManagement/routes.php": "299ca0eb4fdd676273f557f4a645c1dabfe45e07433516bcb9b7b8d20c0d0707",
+    "app/Modules/UserManagement/api.php": "350fc1a4400df92d8d150bf226d5714457a7d3d69216b60350ee58d85ed690ad",
+    "app/Modules/UserManagement/Notifications/UserInvited.php": "00f3bc198f86cdc7a2a28e627a67d288ecb55e568f97e6faf4f8f988e9825f60",
+    "app/Modules/UserManagement/Queries/UserQuery.php": "a40c95a942e7c15b458f178f31be00d7d392e82856ec0e024fda07b0dab161da",
+    "app/Modules/UserManagement/Queries/RoleQuery.php": "1f022b911971afce7b05f3d0b21f95fabeac92626e40e552544f79fea64b571c",
+    "app/Modules/UserManagement/Queries/PermissionQuery.php": "a2fef23595caea0a4122e7e0e8032bad87d436e3c5ed9f83ca97901ccdeb8113",
+    "app/Modules/UserManagement/Security/Auth/NexumFortifyAuthenticator.php": "0a52205dc228a1710a0ad15548dec7eacdf6d75c56c27e5a688103d53e491a82",
+    "app/Modules/UserManagement/Security/Auth/CurrentWebVaultActorContextProvider.php": "34d20a91007a9f62f881260dc1e8c051134c0ea216ebd7f68d0cecaa58b60cc6",
+    "app/Modules/UserManagement/Security/Auth/ExternalNextcloudHmacSessionStarter.php": "18fa998f26fb0f9a86aa3183904d83b19bee93f79735ead3a2e15232a2027729",
+    "app/Modules/UserManagement/Security/Auth/NexumUserSecurityProvider.php": "f17ee94e0f261604e67d3ad6a0b788799ca8b3a86b237152d554a6808152e921",
+    "app/Modules/UserManagement/Security/Auth/UserSecurityVerifiedLoginActorContext.php": "2ed13f9c3e0ca3db29fd087944a60a6779e720a6e291834b40877be0ff8cc41f",
+    "app/Modules/UserManagement/Security/Data/UserSecurityAuthenticationInvocation.php": "d6f38c0da68736390d1325d4424ff0ded9d3c4c57a93d9a911331bf7bb31a8e5",
+    "app/Modules/UserManagement/Security/Data/VaultStepUpCredentialResult.php": "523154694c35d3d525f95d9ebae6e2b1e730322bb94cd8ae580c01dedf178ba1",
+    "app/Modules/UserManagement/Security/Enums/VaultStepUpProofKind.php": "c47ef918932922e6420da6c5983a3cec8ef6a557ebba3be08082ac5d770041c2",
+    "app/Modules/UserManagement/Security/Enums/SystemActorBootstrapPurpose.php": "1a12152b699bbec0942ea591d9f195d9de0f17df7f6f3adbfc2ab68815d53c0b",
+    "app/Modules/UserManagement/Security/Enums/TwoFactorGenerationState.php": "670105d2c9109ca8117f0dce3753100bbad8ebdcc5ead4ef1d21417ab0d6e038",
+    "app/Modules/UserManagement/Security/Enums/UserSecurityExecutionStage.php": "b02934c4b4136f4ea2bd49ae87735dc18155ed5db66d76dd19f82b659b15000e",
+    "app/Modules/UserManagement/Security/Enums/VaultStepUpDenialReason.php": "b84a901be433d383b432f58b89da05199c8cf35da1fa72391ff6c22bfa5305d4",
+    "app/Modules/UserManagement/Security/Enums/UserSecuritySubjectKind.php": "e7221811176dbf3d83759c783970351cba94e6a482403c03ef071eddb4a912c7",
+    "app/Modules/UserManagement/Security/Enums/RememberTokenTriggerKind.php": "b830b3158816fecabaf9d22ef5f8a778cd01d545d89a26b705a80494c6dde7f2",
+    "app/Modules/UserManagement/Security/Enums/UserSecurityFlowKind.php": "3c3060ac77824090edd669ea0d66dfe83e3d015b49ac4763f0651d0b5b949f40",
+    "app/Modules/UserManagement/Security/Services/DatabaseUserAdministrationSecurityMutationBoundary.php": "0180b500b897fbbcf8cc9cd4b8d1b776fbfebcf8d2182bd7d50d093b1de6bdb4",
+    "app/Modules/UserManagement/Security/Services/DatabaseAccountSecurityMutationBoundary.php": "3336b9e128616d10a2904bfb7397b037890362e4ae04e70414f6678c4d1f974d",
+    "app/Modules/UserManagement/Security/Services/DatabaseTwoFactorChallenge.php": "c75b5f1f8b6f97d043c3c9ee60b96a2c64d3db0860a1a52940c1582385ba3d90",
+    "app/Modules/UserManagement/Security/Services/DatabasePendingTwoFactorMutationBoundary.php": "ede09a800ca759056dbc67557ededa37de1560cdb8e1b8050b0211ea1d5f4886",
+    "app/Modules/UserManagement/Security/Services/DatabaseUserSecurityExecutionDispatcher.php": "2e137b964241d4862606abb1ba8e130de205bbcfb06edb7cdd99a9ecc87b976b",
+    "app/Modules/UserManagement/Security/Services/DatabaseAuthenticationSecurityMutationBoundary.php": "f6249b76895bb6b644d4cad6da3516b57406676da8e9b6b2370340a87bfeb956",
+    "app/Modules/UserManagement/Security/Services/CutoverAccountSecurityMutationBoundary.php": "0d1b1ccf91e423946e4b5dac77f60a28861fe79af1cb9717ce35554920089aeb",
+    "app/Modules/UserManagement/Security/Services/DatabaseVaultStepUpCredentialVerifier.php": "96436985dc3a902b3990fb48a4b22845fdcc628120721ba6eb414802bae4d802",
+    "app/Modules/UserManagement/Security/Services/DatabaseRecoveryCodeMutationBoundary.php": "676a8f66c5bea56414781d3c802c3b5101cd4932ca610d5b0a0219436d601885",
+    "app/Modules/UserManagement/Security/Contracts/EnforcedUserAdministrationSecurityMutationBoundary.php": "e52502b3def4d3643a316f97feca591f068b2e87cf39e82617b146f480ee6334",
+    "app/Modules/UserManagement/Security/Contracts/VerifiesVaultStepUpCredentials.php": "321efce40000f3812142bd578b8a9f394af28b553426c0eb17ace834cacca5be",
+    "app/Modules/UserManagement/Security/Contracts/EnforcedAccountSecurityMutationBoundary.php": "64be857898449be56b4596b8de807d06cceab25dc628f07f91b5bc4061e61a9d",
+    "app/Modules/UserManagement/Security/Contracts/AccountSecurityMutationBoundary.php": "7fa2f03bd503dc3e2d904fb03f27bd768781e16260345cf718dd188c3555a848",
+    "app/Modules/UserManagement/Security/Contracts/AuthenticationSecurityMutationBoundary.php": "b524c4c9dd6445d8fe9079fa86697ccffbd86bd7003a058bc3d85e9e95a472c6",
+    "app/Modules/UserManagement/Security/Support/PersistedUserSecurityValueParser.php": "191c66fce0c784816d3dd81528df9c14323139d563fd7e5b0289d4a3b74777a9",
+    "app/Modules/UserManagement/Security/Support/UserSecurityAuthenticationContext.php": "003af391128581bdec07d493775d14a1991772bf764849b117d83f5e71ded29a",
+    "app/Modules/UserManagement/Security/Support/VaultTotpCounterMatcher.php": "b53148c6efa1979de92190d28a3342339607b5edc7bcc450a14c6dee2085be54",
+    "app/Modules/UserManagement/Security/Support/LegacyUserSecurityMutationGuard.php": "4ac3c45235782c7312cca6a913dc5d04d7e0d1acd0bba46662eda443f6a72cf8",
+    "app/Modules/UserManagement/Security/Support/UserSecurityAuthCutover.php": "6526a3c690de8531a65dbdd730bcb1c313f81b5a072e1a25a51800365c01efb4",
+    "app/Modules/UserManagement/Security/Exceptions/UserSecurityMutationDenied.php": "fe1f7bbe78fc98c880c448a005c193f02a0f56ded3b97724e86a8cc01fc79385",
+    "app/Modules/UserManagement/Security/Exceptions/UserSecurityMutationNotRequired.php": "644418c4949932f61fa549059f9afea8847a5d7309a944cd56d36ba779e6e25b",
+    "app/Modules/UserManagement/Livewire/Roles/RolePermissions.php": "142e0c2681fe28054b3d107cb260ccb9412ee301c6245c42cb7dafba5b746057",
+    "app/Modules/UserManagement/Models/UserProfile.php": "5ed1761da1eb07b1e01c417a6d6644a8ff0fec572c456584c15b641c017f3092",
+    "app/Modules/UserManagement/Models/InviteToken.php": "2ac5133d234ae85661324ba4ba3a76c78ce24c654481314dff35df3afda48412",
+    "app/Modules/UserManagement/Models/UserPreference.php": "a4bd88ff1a36c88bd9867d435dd4759b0ec4a1fe12daae65f575e0bc3aaf23f6",
+    "app/Modules/UserManagement/Sso/SsoAccess.php": "a5f4bb5156a6a543aa5ea878ac6fe42e5bf1991be8d54697e723bf0596acf240",
+    "app/Modules/UserManagement/Sso/SsoReauthenticationFailed.php": "41a9a7acebf4baffce667a5ab0c6c4d546e6b3be1d68195fa8857a845b02e598",
+    "app/Modules/UserManagement/Sso/SsoSessions.php": "66ffc0b200be7d66c861a4d2042313eb5e375ee29032bc278120939314d5d62d",
+    "app/Modules/UserManagement/Sso/SsoMiddleware.php": "f3c35bfad03001fe302fb7ddcdfb9204a75956d89b9679f0eb7f3bb5a0abe239",
+    "app/Modules/UserManagement/Sso/OidcClient.php": "1fe6eed50f19a92227f494001fda011c86dc7494d39fe76c927651d99e278a8e",
+    "app/Modules/UserManagement/Sso/SsoSettings.php": "583e0efbf4551ed90488d9955b1971e4f695036b9552f739dac71586eed61947",
+    "app/Modules/UserManagement/Sso/SsoProvider.php": "c9f02b9bb3e8fa2e8ed360d9dc6725de69a4485d91769cb06796f9a3b00af68d",
+    "app/Modules/UserManagement/Sso/SsoFailure.php": "7d2b25dab661da8249eb60d60f6fd29fb9dcedd62a2b83903a5f6c459f47bc01",
+    "app/Modules/UserManagement/Sso/SsoFlow.php": "f786691ea3034371e4d0c8697864eba81e0f39f941d804f1bf5ce27525048bd2",
+    "app/Modules/UserManagement/Jobs/SendUserInviteEmail.php": "3875910c953f41c3724793a6f847b2f67f0aa70df9e3d014d3e7ca25efc05dad",
+    "app/Modules/UserManagement/Actions/GenerateGuardedRecoveryCodes.php": "e50e8a98021eb625341d617382ad3fcd5a86fd4c937ae0492984a4c8c40dfa1c",
+    "app/Modules/UserManagement/Actions/StoreUser.php": "cd7f18ed8c14fb88ad5deb10cb37bdd78a9f25db7218ad52779f97612dd61922",
+    "app/Modules/UserManagement/Actions/SendUserInvite.php": "764b8c68c025375701efe2876168c7f6e03efb005990f650b45e933756411581",
+    "app/Modules/UserManagement/Actions/SyncUserRoles.php": "7c1704f06b21141ea05681523f456ea799b4b20221d258dcab86c14aa0835af9",
+    "app/Modules/UserManagement/Actions/UpdatePermission.php": "8b13436ee925100e6eb598055eaecdff6150cede848cb300c91ff8827c9519de",
+    "app/Modules/UserManagement/Actions/UpdateUserProfile.php": "4a093a805d4c6437b0eb6a594868852cc0ac9f33446e7ed0cea03ab6ba6f22c2",
+    "app/Modules/UserManagement/Actions/UserWorkPlan.php": "c9aa27c3528c06bcd293c924516f12615ed23b70b2079061bc4654c23287ef45",
+    "app/Modules/UserManagement/Actions/EnsureSystemActor.php": "780b548b9139c21bddaf12b2518167788b2a4e08f7c6b375177fcdfc2f71e118",
+    "app/Modules/UserManagement/Actions/DisableGuardedTwoFactorAuthentication.php": "c933cde0c405e3a2dba6a1b4725c859c4e15a88a41549f07ceaa006ee463abf6",
+    "app/Modules/UserManagement/Actions/UpdateRole.php": "d6032756e2328e2258ad979be90ffc0efca0fe9d8808927cc3c358eb0371a047",
+    "app/Modules/UserManagement/Actions/UpdateUserStatus.php": "2d583057a89a6bed08843246bbaab5ac02bd3741a90af7c3d9bbe8e947a0828b",
+    "app/Modules/UserManagement/Actions/UpdateUserPreferences.php": "2a3e304c5ceea62e20b9daca44718f668d4cc2f1e9b93b0930b774ea275a7fbe",
+    "app/Modules/UserManagement/Actions/EnableGuardedTwoFactorAuthentication.php": "e8d722ad75af701ed106495cbda52154fc9f12012a7f4264051ff359af1b1e04",
+    "app/Modules/UserManagement/Actions/BackfillUserProfiles.php": "2e58a73a7c3ef15221144a8c25d88ecd04df7252fb427a4b1d80aeb0bcdee789",
+    "app/Modules/UserManagement/Actions/StoreRole.php": "a817169a95ec36092c043dea1bc8f3c58270a80cea92a3653445f82af53941e4",
+    "app/Modules/UserManagement/Actions/StorePermission.php": "71d211ea73b82680a48141b6b4ed3572e91b86a0072bc34ae49d0587ef4af34b",
+    "app/Modules/UserManagement/Actions/RedirectWithGuardedTwoFactorChallenge.php": "021019b966933f00a32ba126dca5a07b4815e77f312b62eba59a0e8e705c343c",
+    "app/Modules/UserManagement/Http/Middleware/EnsureEmployeeWorkPlan.php": "039ca53e109a0d5ce65bc30190238d60a648491e73ce16f83abc8e650d78bf14",
+    "app/Modules/UserManagement/Views/invite/expired.blade.php": "7d08518183c0f4aea6875588194f0bdaaf896b10d6aee120176c81532f6f3c1c",
+    "app/Modules/UserManagement/Views/invite/accept.blade.php": "ca615d186a3ff92bad906c69a19b5f4f7c6a239822ad47427421ed7db141a944",
+    "app/Modules/UserManagement/Views/Livewire/Roles/role-permissions.blade.php": "6d2bc291670fd627fe00e3472276a7b6cfa36e683a568fe6083edb1e6e67ca53",
+    "app/Modules/UserManagement/Views/Admin/show.blade.php": "717a2b8e6032e53ed6ec143b8214760819ae64586f74fb119c54f79ddf6636a5",
+    "app/Modules/UserManagement/Views/Admin/form.blade.php": "a0b6ef74c750c5c2230c1fed67766870ffe62491f09a3c74a2e5120932381c48",
+    "app/Modules/UserManagement/Views/Admin/index.blade.php": "ac2d00979047f4aaba8d24c92ed1d285473e496ac9af27dc49d29a5bc6f5bc99",
+    "app/Modules/UserManagement/Views/Admin/sso.blade.php": "34dc4bef9b5eabbc5b92dc8f7a4ce38feb755bc0423b795218a7ea1f6fbdb560",
+    "app/Modules/UserManagement/Views/Admin/two-factor-settings.blade.php": "49c7eca4eed2ab7008448d5de4a1a5bb79bfea470932912fb983198f35981674",
+    "app/Modules/UserManagement/Views/Admin/Permissions/form.blade.php": "4ebb43aedb29f0a0c7a78e7fa1bc1e45e2c2bde9eddcd138c76a01ec1e6d731c",
+    "app/Modules/UserManagement/Views/Admin/Permissions/index.blade.php": "98423cdae2e9e6ae70b19232cf602796e6d1aa1cac561c8b09adc7bdaadc88e5",
+    "app/Modules/UserManagement/Views/Admin/Roles/form.blade.php": "6b3f5070d12e3ba5eb203cb36b4a1a80da6b2b1484cdab4587b2e9d02395113d",
+    "app/Modules/UserManagement/Views/Admin/Roles/index.blade.php": "9b4939babddd01c63d18a8a231c744c1c8b7bacdf5c94dba7627fcdd69ac1782",
+    "app/Modules/UserManagement/Views/profile/index.blade.php": "5c0ab0a471d58d60c189593138eb6aff498b098cf14adb48b83bf7be33498e74",
+    "app/Modules/UserManagement/Views/profile/security.blade.php": "a5afd9c750b0487a6ba142416764939b9eefa138f4543ed45215366cb43acb75",
+    "app/Modules/UserManagement/Views/profile/preferences.blade.php": "c043a06d9839849808e8de9ce9a9960d78d037d2e362714c7a19669cfe73638a",
+    "app/Modules/UserManagement/Views/profile/work-plan.blade.php": "821ffb72ae964a67d76e570688c5683985e8aa0894ee321658f03d931e353780",
+    "app/Modules/UserManagement/Views/profile/integrations.blade.php": "a428b83c0bd45f1fef1b156104749063666b7aef8e9007d3b0a1fc2c591f6d71",
+    "app/Modules/UserManagement/Views/profile/view.blade.php": "e3265a944d8d9cdf6481ba1cd4dc43a80620f15613e8b7eb033fdf4d033b0ff7",
+    "app/Modules/UserManagement/Views/profile/sso.blade.php": "5d5685a072a9bd0413b7921fe5527a397bb069eaaa9ef821c75ed4c66eaa8321",
+    "app/Modules/UserManagement/Views/profile/partials/work-plan-block.blade.php": "521e60da5ee5f3c12f4b4cb6cd175c16fbaf6a6e2194b7b455751997b33caac4",
+    "app/Modules/UserManagement/Views/profile/partials/sidebar.blade.php": "03044295c089595062181c33ee9057248d6494b495e48696ff12b1146c377464",
+    "app/Modules/UserManagement/Resources/Api/V1/WorkPlanOpenApi.php": "532944e1a139549ad9ef31ed86f551962c1a3ef50f4a1d39273dca14ea8c08b4",
+    "app/Modules/UserManagement/Resources/Api/V1/UserResource.php": "6cff89668f983ccf7e6e4b5e2407b1b27e07eb5b7fc76187571669c870d057df",
+    "app/Modules/UserManagement/Resources/Api/V1/UserRoleResource.php": "9a769de09a73a55141de9d4d7cb99f7fd6050ab2def147ef0dea484af165d6ec",
+    "app/Modules/UserManagement/Providers/SsoServiceProvider.php": "aac8128a9f1f5701a8bd0df2af7f738c24832c844d66e7fca9065758b3d872e0",
+    "app/Modules/UserManagement/Providers/UserSecurityServiceProvider.php": "957831c3088d65fa1b71db40dcc5e61d61d5c71fea38132798984d30d997101b",
+    "app/Modules/UserManagement/Events/RecoveryCodesChanged.php": "86217e69513a8a72fd12fe112f658b814f3de8dc3a15548aadba27a0bbf69d8d",
+    "app/Modules/UserManagement/Tests/Unit/VaultTotpCounterMatcherTest.php": "abedac287dbc5c6af3f619f5dedcb2c4e0d25ed1b44519b073b05a1d0bb97522",
+    "app/Modules/UserManagement/Tests/Unit/DatabaseVaultStepUpCredentialVerifierTest.php": "9b65501c2a98c259ccaecbf426590e00d6cbf67eb06a23597fc55fe9ad3d48ca",
+    "app/Modules/UserManagement/Tests/Unit/DatabaseUserSecurityExecutionDispatcherTest.php": "9530358eb7afcf3f4ef8f1f229cccfcc334f2c9963ba34479bcbca851487d6dd",
+    "app/Modules/UserManagement/Tests/Unit/UserSecurityAuthenticationContextTest.php": "c78219dced047a63227a3afd82e2cdbb7427d62e91c21a85b203e06dfc712e64",
+    "app/Modules/UserManagement/Tests/Unit/UserSecurityAuthCutoverTest.php": "04ed1b7ce84404342d2b94c444574d5c5e4bac2ed0dd1e806536da13820427b0",
+    "app/Modules/UserManagement/Tests/Unit/PersistedUserSecurityValueParserTest.php": "93fff9034219601ab64aaa9f77053b51772c3c427abca04881e6901c906bae3a",
+    "app/Modules/UserManagement/Tests/Unit/CurrentWebVaultActorContextProviderTest.php": "a5cc02403a7b0eece634cb9fcfc5d927566774ba74800e1312889a7eedec394c",
+    "app/Modules/UserManagement/Tests/Unit/NexumUserSecurityProviderTest.php": "caed20c6d9e64277cd98afb57230aa6c7c6b48e91c776c3cc055f1b59b5d81d7",
+    "app/Modules/UserManagement/Tests/Unit/VaultStepUpCredentialResultTest.php": "66d680016f948bb3253bdc568c070f5c3e5ecdd79ed94782f2fff6e9f001cf16",
+    "app/Modules/UserManagement/Tests/Unit/UserSecurityVerifiedLoginActorContextTest.php": "e352734793d2203adf5cb0d039cd5c41e625aa9d59470d1dd4e5c56adaa4a7ce",
+    "app/Modules/UserManagement/Tests/Feature/EnsureSystemActorSecurityCutoverTest.php": "b0e4c99c99de3db2bcc97555cbd87424d6f5bce8ff169d021660952343bb32f5",
+    "app/Modules/UserManagement/Tests/Feature/FortifyUserSecurityActionsTest.php": "7259debbeaabc1974299e1b071f0aa30c600cc8dc857dc002949463b0892d0c4",
+    "app/Modules/UserManagement/Tests/Feature/InviteAcceptanceSecurityBoundaryTest.php": "3eacdeceaaa8507e76be39aaf92cdbb81b9988f1ea180ae98d95557aa1dc0a25",
+    "app/Modules/UserManagement/Tests/Feature/StoreUserSecurityCutoverTest.php": "5d55668dad3586266883d8b20b2a6880fda4f56b1b061169c2a8bf060e17e78a",
+    "app/Modules/UserManagement/Tests/Feature/UserPreferencesTest.php": "f88990f6f02288e225a02d15af2d2fdb0015b3e42adf59090ae30c109b477c99",
+    "app/Modules/UserManagement/Tests/Feature/AccountSecurityCutoverBoundaryTest.php": "f796573650010bcb8df4c5f1e3d90432d396f8b2844f896938b3697d87a01df3",
+    "app/Modules/UserManagement/Tests/Feature/UserManagementAdminTest.php": "db74087ea180f68d8373b729dfc51c416ae34f835ff7b6a0490839c7eed9da6d",
+    "app/Modules/UserManagement/Tests/Feature/SystemActorProtectionTest.php": "566b36e1ed3efd3b1c2813af34a9c75570256b466d44c43bce57ebcb200147b2",
+    "app/Modules/UserManagement/Tests/Feature/UserInviteTest.php": "e2ce193cf9cf550ad2135379a32cb19833a573744f41511ab06a076bf0efb74b",
+    "app/Modules/UserManagement/Tests/Feature/ExternalNextcloudHmacSessionStarterTest.php": "ac506216ee1727ba67d2c2513b74581b9db86d451c52c9a5264e0137effc8a65",
+    "app/Modules/UserManagement/Tests/Feature/UpdateUserProfileSecurityBoundaryTest.php": "20fb546da51bcc578ccdff24ef7c59b0dc7499202b47459b0595abdcb5213236",
+    "app/Modules/UserManagement/Tests/Feature/GuardedTwoFactorEntryTest.php": "b9029409ee1ba80804d289ed34ccfa23faf34fdbf3c970653ddea05dba717d50",
+    "app/Modules/UserManagement/Tests/Feature/BootstrapAdminCommandTest.php": "934b6192049037633e30d1ca2dc4ed965462862985494cbd4f13c0e6ace589ba",
+    "app/Modules/UserManagement/Tests/Feature/UserProfileBackfillTest.php": "d7e193eff4ac9986eebd7be9e30f6f1164baf548a9b72eb8cb749191db5f1646",
+    "app/Modules/UserManagement/Tests/Feature/InternalSsoTest.php": "d918513e99f74d29de87a8f1d76f241aacbe7e10aabaa4a853db9cb695224d07",
+    "app/Modules/UserManagement/Tests/Feature/TwoFactorAuthenticationTest.php": "316f048d7798f76d86d5f50243854da7a93d4dc86318c769fbc7e4b275ccf0ed",
+    "app/Modules/UserManagement/Tests/Feature/UserManagementApiTest.php": "c8a8668560a054401ec036ff0063a945903bb8f1d83e9e08c62ac9f36b240f86",
+    "app/Modules/UserManagement/Tests/Feature/UserWorkPlanTest.php": "713d6dc54a4cdb52f238bff56094d26c445bfb2b127344af049ca400aa92fbce",
+    "app/Modules/UserManagement/Controllers/WorkPlanController.php": "53e3afb866d3f7e62916f4b676781610144f77c2145178c33d52b1d53b996d11",
+    "app/Modules/UserManagement/Controllers/ProfileController.php": "2e117d4082db552de1df47a2796ecf2e4e799f217a7bb0d4df8d21783cc9d7cd",
+    "app/Modules/UserManagement/Controllers/ProfileSecurityController.php": "4067af86822da32039da1e656ae2a8188ef42e29584867d3625a663fa52abef2",
+    "app/Modules/UserManagement/Controllers/AcceptInviteController.php": "88b40d345d5cae3805b8ae9e8e0042d2380615b40fe3067bd6a94332af2454cc",
+    "app/Modules/UserManagement/Controllers/SsoController.php": "4931c6e27a4203028c2285900bd5b0f412928d12b3b09cefa6c371a478436b06",
+    "app/Modules/UserManagement/Controllers/GuardedTwoFactorSessionController.php": "1f9c9ae93beb99447dc2479e45ae062b160e47b59e2e2657631fc2786b0d064e",
+    "app/Modules/UserManagement/Controllers/ProfilePreferencesController.php": "74327b093e6c56c158080cbe59da2c4de666f3ea6978469afec892bee91f2759",
+    "app/Modules/UserManagement/Controllers/Admin/TwoFactorSettingsController.php": "1112c5e64ae5dc8a7d472423208d4e90848d7d865b014eae90b1d21f1e5a4b44",
+    "app/Modules/UserManagement/Controllers/Admin/PermissionManagementController.php": "898c24699f57db021b4af76812dc53946cef1c04b4c22405b78b6db8b940b08b",
+    "app/Modules/UserManagement/Controllers/Admin/UserManagementController.php": "4192e1127ca3a30bd2cfcd1771df36e88a0373b06ea2a12ef1d7295364967e7c",
+    "app/Modules/UserManagement/Controllers/Admin/RolesManagementController.php": "995875220b1ce30eabce78df3f7e1703ee2a8a530854009db9ea2494e4102a77",
+    "app/Modules/UserManagement/Controllers/Admin/SsoSettingsController.php": "a44c2469a5883aa20dafbd09f5513c43901de65827f997bde625a2bec1d33aed",
+    "app/Modules/UserManagement/Controllers/Api/V1/CalendarPreferencesController.php": "98a892bd0dce55b1fb0c36127801774048ea1f3058a25ee4b37c69bf22d49448",
+    "app/Modules/UserManagement/Controllers/Api/V1/UserManagementController.php": "6be64ad1949f46853710382db4b9f106d886e73da3601d802a4f10cee99f6c00",
+    "app/Modules/UserManagement/Support/UserProfileData.php": "0fa30c4d135ec030e787d8b23212da6c291a86e77202180d628ca80e26c2ae67",
+    "app/Modules/UserManagement/Menus/SideBar/UserManagementMenu.php": "b401243e66c0b595955571dcf7f4805e6b9a54d0a1766fec0df49f412e0b1132"
+  },
+  "current_api_route_rows": 55,
+  "current_api_http_operations": 56,
+  "cross_domain_workflows": [
+    {
+      "owner": "Calendar",
+      "workflow": "Work-plan block creation/update/cancel/series actions embedded in the Work Plan view",
+      "evidence": "Existing Calendar API contracts and UserWorkPlanTest remain retained; weekly plan API does not replace their owner."
+    },
+    {
+      "owner": "Notification / Integration",
+      "workflow": "Profile links to notifications and API key administration",
+      "evidence": "Existing domain APIs retain their own rights; no token/notification ownership is moved into UserManagement."
+    }
+  ]
+}

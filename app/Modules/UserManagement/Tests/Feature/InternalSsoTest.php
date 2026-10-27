@@ -17,6 +17,7 @@ use Tests\TestCase;
 
 class InternalSsoTest extends TestCase
 {
+    use \App\Modules\UserManagement\Tests\Support\ValidatesUserManagementApiResponses;
     use RefreshDatabase;
 
     private const ISSUER = 'https://identity.example.test/realms/staff';
@@ -662,5 +663,60 @@ class InternalSsoTest extends TestCase
         DB::table('user_management')->where('id', $user->id)->increment('auth_security_epoch');
         $this->get(route('tech.profile.sso'))->assertRedirect(route('login'));
         $this->assertGuest();
+    }
+
+    private function apiClaims(User $user, array $parameters): void
+    {
+        $this->token = $this->sign(['iss' => self::ISSUER, 'aud' => 'nexum', 'sub' => 'employee-'.$user->id,
+            'sid' => 'keycloak-session-'.$user->id, 'nonce' => $parameters['nonce'], 'iat' => time(), 'exp' => time() + 300]);
+    }
+
+    private function apiResponse(string $method, string $path, array $data = [])
+    {
+        $response = $this->json($method, '/api/v1/'.$path, $data);
+        $this->validateApiResponse($method, $path, $response);
+
+        return $response;
+    }
+
+    public function test_typed_api_oidc_start_callback_status_logout_and_signed_backchannel(): void
+    {
+        config(['sanctum.stateful' => ['nexum.example.test']]);
+        $this->withHeaders(['Origin' => 'https://nexum.example.test']);
+        $user = $this->employee();
+        $this->apiResponse('GET', 'users/auth/sso')->assertOk()->assertJsonPath('data.available', true);
+        $start = $this->apiResponse('POST', 'users/auth/sso/start')->assertOk()->json('data');
+        parse_str(parse_url($start['authorization_url'], PHP_URL_QUERY), $parameters);
+        $this->apiClaims($user, $parameters);
+        $this->apiResponse('GET', 'users/auth/sso/callback?'.http_build_query(['state' => $parameters['state'], 'code' => 'synthetic-code']))
+            ->assertOk()->assertJsonPath('data.authenticated', true);
+        $this->apiResponse('GET', 'users/me/work-account')->assertOk()->assertJsonPath('data.linked', true);
+        $this->apiResponse('POST', 'users/me/work-account/logout')->assertOk()->assertJsonPath('data.logged_out', true);
+        $claims = ['iss' => self::ISSUER, 'aud' => 'nexum', 'sid' => 'keycloak-session-'.$user->id,
+            'iat' => time(), 'jti' => 'typed-api-backchannel',
+            'events' => ['http://schemas.openid.net/event/backchannel-logout' => (object) []]];
+        $token = $this->sign($claims);
+        $this->apiResponse('POST', 'users/auth/sso/backchannel', ['logout_token' => $token])->assertOk()->assertJsonPath('data.accepted', true);
+        $this->apiResponse('POST', 'users/auth/sso/backchannel', ['logout_token' => $token])->assertConflict();
+    }
+
+    public function test_typed_api_link_unlink_and_provider_settings_preserve_explicit_local_verification(): void
+    {
+        config(['sanctum.stateful' => ['nexum.example.test']]);
+        $this->withHeaders(['Origin' => 'https://nexum.example.test']);
+        $user = $this->employee(false);
+        $user->givePermissionTo('user.manage_2fa');
+        $this->actingAs($user, 'web');
+        $this->apiResponse('POST', 'users/me/work-account/link', ['current_password' => 'wrong-password'])->assertForbidden();
+        $start = $this->apiResponse('POST', 'users/me/work-account/link', ['current_password' => 'local-password'])->assertOk()->json('data');
+        parse_str(parse_url($start['authorization_url'], PHP_URL_QUERY), $parameters);
+        $this->apiClaims($user, $parameters);
+        $this->apiResponse('GET', 'users/auth/sso/callback?'.http_build_query(['state' => $parameters['state'], 'code' => 'synthetic-code']))->assertOk();
+        $this->apiResponse('POST', 'users/me/work-account/unlink', ['current_password' => 'local-password'])->assertOk()->assertJsonPath('data.linked', false);
+        $this->apiResponse('GET', 'users/administration/sso')->assertOk()->assertDontSee('synthetic-client-secret');
+        $this->apiResponse('PATCH', 'users/administration/sso', ['issuer' => self::ISSUER, 'client_id' => 'nexum',
+            'current_password' => 'local-password', 'enabled' => true])->assertOk()->assertJsonPath('data.revision', 2);
+        $this->assertDatabaseCount('user_management_api_commands', 0);
+        $this->assertSame('synthetic-client-secret', $this->provider->fresh()->client_secret);
     }
 }

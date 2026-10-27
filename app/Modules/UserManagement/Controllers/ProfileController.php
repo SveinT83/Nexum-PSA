@@ -5,7 +5,6 @@ namespace App\Modules\UserManagement\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\UserManagement\Actions\UpdateUserProfile;
 use App\Modules\UserManagement\Models\UserProfile;
-use App\Modules\UserManagement\Support\UserProfileData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -74,20 +73,6 @@ class ProfileController extends Controller
 
     private function profileFor($user): UserProfile
     {
-        $profile = UserProfile::query()->firstOrCreate(
-            ['user_id' => $user->id],
-            [
-                'work_phone' => $user->phone_work,
-                'private_phone' => $user->phone_private,
-                'timezone' => config('app.timezone', 'UTC'),
-                'working_hours' => UserProfileData::defaultWorkingHours(),
-            ]
-        );
-
-        if (empty($profile->working_hours)) {
-            $profile->forceFill(['working_hours' => UserProfileData::defaultWorkingHours()])->save();
-        }
-
-        return $profile;
+        return app(\App\Modules\UserManagement\Actions\EnsureUserProfile::class)->handle($user);
     }
 }

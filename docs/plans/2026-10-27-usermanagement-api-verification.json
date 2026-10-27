@@ -1,0 +1,262 @@
+{
+  "native-evidence": {
+    "driver": "mysql",
+    "encrypted_readback": true,
+    "unique_replay": true,
+    "rollback": true,
+    "mutex_contention": true,
+    "migration_batch": 42,
+    "probe_tables_removed": true
+  },
+  "https-evidence": {
+    "trusted_https": true,
+    "requests": [
+      {
+        "path": "/api/v1/users",
+        "status": 200,
+        "no_store": true
+      },
+      {
+        "path": "/api/v1/users/roles",
+        "status": 200,
+        "no_store": true
+      },
+      {
+        "path": "/api/v1/users/context",
+        "status": 200,
+        "no_store": true
+      },
+      {
+        "path": "/api/v1/users/me/profile",
+        "status": 200,
+        "no_store": true
+      },
+      {
+        "path": "/api/v1/users/me/preferences",
+        "status": 200,
+        "no_store": true
+      },
+      {
+        "path": "/api/v1/users/me/shell",
+        "status": 200,
+        "no_store": true
+      },
+      {
+        "path": "/api/v1/users/administration/roles",
+        "status": 200,
+        "no_store": true
+      },
+      {
+        "path": "/api/v1/users/administration/permissions",
+        "status": 200,
+        "no_store": true
+      },
+      {
+        "path": "/api/v1/users/administration/2fa-settings",
+        "status": 200,
+        "no_store": true
+      },
+      {
+        "path": "/api/v1/users/me/work-account",
+        "status": 200,
+        "no_store": true
+      },
+      {
+        "path": "/api/v1/users/3",
+        "status": 200,
+        "no_store": true
+      }
+    ],
+    "anonymous_status": 401,
+    "public_discovery_status": 200,
+    "published_swagger": true,
+    "temporary_token_removed": true
+  },
+  "knowledge-evidence": {
+    "summary": {
+      "chapters": 1,
+      "articles": 4,
+      "skipped": 0,
+      "modules": [
+        "UserManagement"
+      ]
+    },
+    "articles": [
+      {
+        "id": 3,
+        "slug": "api-management",
+        "visibility": "internal",
+        "status": "published",
+        "sync_status": "pending_push",
+        "source_matches": true,
+        "published_revision_id": 168
+      },
+      {
+        "id": 69,
+        "slug": "profile-and-user-management",
+        "visibility": "internal",
+        "status": "published",
+        "sync_status": "pending_push",
+        "source_matches": true,
+        "published_revision_id": 164
+      },
+      {
+        "id": 70,
+        "slug": "user-management-api",
+        "visibility": "internal",
+        "status": "published",
+        "sync_status": "pending_push",
+        "source_matches": true,
+        "published_revision_id": 171
+      },
+      {
+        "id": 71,
+        "slug": "work-account-sign-in",
+        "visibility": "internal",
+        "status": "published",
+        "sync_status": "pending_push",
+        "source_matches": true,
+        "published_revision_id": 166
+      },
+      {
+        "id": 72,
+        "slug": "work-plan",
+        "visibility": "internal",
+        "status": "published",
+        "sync_status": "pending_push",
+        "source_matches": true,
+        "published_revision_id": 167
+      }
+    ]
+  },
+  "http-coverage-summary": {
+    "http_operations": 56,
+    "successful_schema_checked": 56,
+    "missing": []
+  },
+  "handbook": {
+    "pages": [
+      {
+        "id": 517,
+        "name": "User Management API",
+        "updated_at": "2026-10-27T19:43:19.000000Z",
+        "revision_count": 3,
+        "content_verified": true,
+        "chapter_id": 368,
+        "book_id": 339,
+        "permissions_changed": false
+      },
+      {
+        "id": 384,
+        "name": "Profile And User Management",
+        "updated_at": "2026-10-27T19:43:22.000000Z",
+        "revision_count": 6,
+        "content_verified": true,
+        "chapter_id": 368,
+        "book_id": 339,
+        "permissions_changed": false
+      },
+      {
+        "id": 449,
+        "name": "Api Management",
+        "updated_at": "2026-10-27T19:43:26.000000Z",
+        "revision_count": 158,
+        "content_verified": true,
+        "chapter_id": 374,
+        "book_id": 339,
+        "permissions_changed": false
+      }
+    ],
+    "employee_scope": "Page 517/384 and chapter 368 inherit book 339; Viewer role has book/chapter/page-view-all. No permission changed.",
+    "assistant_retrieval_tested": false,
+    "native_sync_status": "pending_push; no integration activation",
+    "source_drift": "Pre-existing unrelated profile/API page text retained; only owned sections changed. Main API guide 517 matches repository source."
+  },
+  "status": "Verified on Dev and isolated Main candidate; authorized promotion in progress; production unchanged.",
+  "test_batches": {
+    "dev-final-tests.xml": {
+      "tests": 236,
+      "assertions": 3120,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time": 651.682132
+    },
+    "dev-last-tests.xml": {
+      "tests": 26,
+      "assertions": 907,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time": 47.647903
+    },
+    "main-tests.xml": {
+      "tests": 185,
+      "assertions": 2590,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "time": 158.383246
+    },
+    "main-final-tests.xml": {
+      "tests": 37,
+      "assertions": 975,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time": 41.561299
+    }
+  },
+  "deployment": {
+    "migration": "2026_10_27_030000_create_user_management_api_commands.php",
+    "dev_batch": 42,
+    "business_backfill": false,
+    "provider_auth_activation": false,
+    "production_deployment": false,
+    "queue_scheduler_change": false,
+    "frontend_build": false
+  },
+  "human_review": {
+    "id": "HR-2026-10-27-USERMANAGEMENT-API",
+    "status": "Pending",
+    "tested_main_merge_authorized": true,
+    "production_gate": true
+  },
+  "http_coverage": {
+    "dev": {
+      "operations": 56,
+      "successful_schema_checked": 56
+    },
+    "main": {
+      "operations": 56,
+      "successful_schema_checked": 56
+    }
+  },
+  "swagger_overlay": {
+    "operations": 56,
+    "domain_schemas": 77,
+    "reachable_shared_schemas": 7,
+    "non_user_operations_preserved": true,
+    "non_user_schemas_preserved": true,
+    "user_operations_equal_tested_generated_document": true
+  },
+  "candidate_catalog": {
+    "new_abilities": 17,
+    "runtime_semantics_unchanged": true,
+    "duplicate_keys_removed": true
+  },
+  "candidate_isolation": {
+    "app_base_path_explicit": true,
+    "owned_controller_reflection_verified": true,
+    "protected_adapter_promoted": false,
+    "dev_generated_vendor_unchanged": true
+  },
+  "known_skips": [
+    "Main: one pre-existing optional protected UserSecurity provider test; provider is a separate uninstalled/unactivated release. Current browser/API workflows are exercised."
+  ],
+  "resolved_verification_events": [
+    "Initial mock-bearer and serialized-key expectations repaired; final Dev broad suite is green.",
+    "A transient concurrent Warroom migration edit interrupted one fresh test setup; source syntax was independently valid and the exact rerun passed.",
+    "Candidate Composer autoload files were privately detached/regenerated, then APP_BASE_PATH was pinned and controller paths checked; no shared Dev vendor file changed."
+  ]
+}
