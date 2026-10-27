@@ -1,0 +1,207 @@
+{
+  "status": "Done On Dev; final Main candidate verified; authorized promotion pending",
+  "date": "2026-10-27",
+  "protected_operations": 42,
+  "api_rows": 37,
+  "staff_browser_rows": 28,
+  "public_capability_rows": 3,
+  "typed_schemas": 62,
+  "all_success_methods": [
+    "delete /api/v1/marketing/campaigns/{campaign}/emails/{email}",
+    "delete /api/v1/marketing/lists/{list}",
+    "delete /api/v1/marketing/lists/{list}/contacts/{contact}",
+    "get /api/v1/marketing/campaigns",
+    "get /api/v1/marketing/campaigns/{campaign}",
+    "get /api/v1/marketing/campaigns/{campaign}/content-sources",
+    "get /api/v1/marketing/campaigns/{campaign}/context",
+    "get /api/v1/marketing/campaigns/{campaign}/events",
+    "get /api/v1/marketing/campaigns/{campaign}/recipients",
+    "get /api/v1/marketing/context/campaigns",
+    "get /api/v1/marketing/context/lists",
+    "get /api/v1/marketing/dashboard",
+    "get /api/v1/marketing/lists",
+    "get /api/v1/marketing/lists/{list}",
+    "get /api/v1/marketing/lists/{list}/context",
+    "get /api/v1/marketing/lists/{list}/members",
+    "get /api/v1/marketing/lookups/{kind}",
+    "get /api/v1/marketing/operations/{operation}",
+    "get /api/v1/marketing/settings",
+    "patch /api/v1/marketing/campaigns/{campaign}",
+    "patch /api/v1/marketing/campaigns/{campaign}/emails/{email}",
+    "patch /api/v1/marketing/campaigns/{campaign}/schedule",
+    "patch /api/v1/marketing/lists/{list}",
+    "patch /api/v1/marketing/settings",
+    "post /api/v1/marketing/campaigns",
+    "post /api/v1/marketing/campaigns/{campaign}/actions/preview",
+    "post /api/v1/marketing/campaigns/{campaign}/ai-plan",
+    "post /api/v1/marketing/campaigns/{campaign}/approve",
+    "post /api/v1/marketing/campaigns/{campaign}/content-sources/wordpress",
+    "post /api/v1/marketing/campaigns/{campaign}/emails",
+    "post /api/v1/marketing/campaigns/{campaign}/emails/ai-draft",
+    "post /api/v1/marketing/campaigns/{campaign}/emails/preview",
+    "post /api/v1/marketing/campaigns/{campaign}/emails/{email}/test-send",
+    "post /api/v1/marketing/campaigns/{campaign}/send-due",
+    "post /api/v1/marketing/lists",
+    "post /api/v1/marketing/lists/{list}/contacts",
+    "post /api/v1/marketing/lists/{list}/refresh",
+    "put /api/v1/marketing/campaigns/{campaign}",
+    "put /api/v1/marketing/campaigns/{campaign}/emails/{email}",
+    "put /api/v1/marketing/campaigns/{campaign}/schedule",
+    "put /api/v1/marketing/lists/{list}",
+    "put /api/v1/marketing/settings"
+  ],
+  "dev_marketing_tests": {
+    "passed": 87,
+    "assertions": 1931,
+    "failures": 0,
+    "skips": 0
+  },
+  "candidate_broad_tests": {
+    "passed": 488,
+    "assertions": 7469,
+    "failures": 0,
+    "skips": 0,
+    "base": "be28f77d16f29e662b7b8585b27971e9c1e62438",
+    "later_main_changes": "documentation/status only, incorporated before final check"
+  },
+  "native": {
+    "driver": "mysql",
+    "native_mutex": true,
+    "native_unique_replay": true,
+    "encrypted_storage": true,
+    "exact_decryption": true,
+    "rollback": true,
+    "probe_rows_retained": 0,
+    "host": "dev.nexumpsa.eu",
+    "api_provider_enabled": false
+  },
+  "trusted_https": {
+    "trusted_https": true,
+    "reads": [
+      {
+        "path": "/dashboard",
+        "status": 200
+      },
+      {
+        "path": "/context/lists",
+        "status": 200
+      },
+      {
+        "path": "/context/campaigns",
+        "status": 200
+      },
+      {
+        "path": "/lists",
+        "status": 200
+      },
+      {
+        "path": "/campaigns",
+        "status": 200
+      },
+      {
+        "path": "/settings",
+        "status": 200
+      },
+      {
+        "path": "/lookups/templates?per_page=1",
+        "status": 200
+      }
+    ],
+    "anonymous_status": 401,
+    "swagger_operations": 42,
+    "temporary_token_deleted_on_exit": true,
+    "provider_switch": false
+  },
+  "knowledge": {
+    "articles": [
+      {
+        "id": 53,
+        "source": "marketing/marketing-api",
+        "exact_body": true,
+        "visibility": "internal",
+        "status": "published",
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 54,
+        "source": "marketing/marketing-domain-overview",
+        "exact_body": true,
+        "visibility": "internal",
+        "status": "published",
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 3,
+        "source": "integrations/api-management",
+        "exact_body": true,
+        "visibility": "internal",
+        "status": "published",
+        "sync_status": "pending_push"
+      }
+    ],
+    "bookstack_claim": "Actual page 449 content is verified separately, not by pending_push",
+    "employee_assistant_retrieval": "not tested"
+  },
+  "bookstack": {
+    "page_id": 449,
+    "book_id": 339,
+    "chapter_id": 374,
+    "full_marketing_guide_exact_readback": true,
+    "page_and_chapter_inherit": true,
+    "book_inherits_with_existing_documentation_role_overrides": true,
+    "employee_editor_role": 2,
+    "employee_viewer_role": 3,
+    "employee_system_permissions_verified": [
+      "book-view-all",
+      "chapter-view-all",
+      "page-view-all"
+    ],
+    "permissions_changed": false,
+    "standalone_page_creation_blocker": "Connector rejects multi-character name/markdown against pattern \\\\S; complete guide published in existing API Management 449.",
+    "employee_openwebui_retrieval": "not tested"
+  },
+  "human_review": {
+    "id": "HR-2026-10-27-MARKETING-API",
+    "status": "Pending",
+    "main_authorization": "Godkjenner og merge til main, Svein Tore 2026-10-27",
+    "production_gate": true
+  },
+  "shared_dev_broad_snapshot": {
+    "passed": 490,
+    "failed": 24,
+    "assertions": 7857,
+    "root": "Concurrent unmerged UserManagement privacy method and Contact/Email fixtures; not Marketing regressions",
+    "latest_targeted_recheck": {
+      "passed": 9,
+      "assertions": 51
+    },
+    "current_contact_recheck": "Two unrelated unmerged Contact API tests still failing; owned by active Contact workstream, excluded from the tested Main candidate"
+  },
+  "production_deployed": false,
+  "runtime_provider_enabled": false,
+  "deployment": [
+    "exact migration 2026_10_27_060000_create_marketing_api_commands.php",
+    "normal caches and Swagger",
+    "worker restart if changed job code is deployed"
+  ],
+  "risks": [
+    "Native permission/token compatibility tightening",
+    "Existing unkeyed compatibility does not guarantee safe retries",
+    "Unknown external outcomes require reconciliation; no automatic resend"
+  ],
+  "preserved_contributor_view": "586fbd7bc9fa2b0202ddb3881868482cfebf3a9ff79bae4bde5b7d80dd0b0331",
+  "candidate_final_marketing_tests": {
+    "passed": 87,
+    "assertions": 1931,
+    "failures": 0,
+    "skips": 0
+  },
+  "extra_regressions": [
+    "populated safe sender/contact lookups and nullable historical fields",
+    "sanitized actual AI DTO shapes",
+    "typed heterogeneous/unknown/rejected own-operation results",
+    "local API/browser rollback after Laravel-rendered errors",
+    "debug response redaction",
+    "HEAD purity and public unsubscribe"
+  ]
+}

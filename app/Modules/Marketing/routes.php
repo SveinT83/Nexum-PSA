@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 
 if (($marketingApiRoutes ?? false) === true) {
-    Route::middleware([\App\Modules\Marketing\Support\MarketingApiAccess::class, \App\Modules\Marketing\Actions\ExecuteMarketingApiCommand::class])->group(function (): void {
+    Route::middleware([\App\Modules\Marketing\Support\MarketingApiErrors::class, \App\Modules\Marketing\Support\MarketingApiAccess::class, \App\Modules\Marketing\Actions\ExecuteMarketingApiCommand::class])->group(function (): void {
         Route::get('marketing/lists', [ApiList::class, 'index'])
             ->name('marketing.lists.index')
             ->middleware(CheckAbilities::class.':marketing.read')
@@ -110,6 +110,7 @@ if (($marketingApiRoutes ?? false) === true) {
             ->defaults('marketing_ability', 'marketing.campaigns.update')
             ->defaults('marketing_permissions', ['marketing.campaign.edit'])
             ->defaults('marketing_fields', ['prompt'])
+            ->middleware(CheckAbilities::class.':marketing.providers.execute')
             ->defaults('marketing_provider', true);
 
         Route::match(['put', 'patch'], 'marketing/campaigns/{campaign}/schedule', [ApiCampaign::class, 'updateSchedule'])
@@ -132,6 +133,7 @@ if (($marketingApiRoutes ?? false) === true) {
             ->defaults('marketing_ability', 'marketing.campaigns.update')
             ->defaults('marketing_permissions', ['marketing.campaign.edit'])
             ->defaults('marketing_fields', ['campaign_email_id', 'prompt', 'email_name', 'email_subject', 'body_html', 'body_text'])
+            ->middleware(CheckAbilities::class.':marketing.providers.execute')
             ->defaults('marketing_provider', true);
 
         Route::match(['put', 'patch'], 'marketing/campaigns/{campaign}/emails/{email}', [ApiCampaign::class, 'updateEmail'])
@@ -147,6 +149,7 @@ if (($marketingApiRoutes ?? false) === true) {
             ->defaults('marketing_ability', 'marketing.campaigns.update')
             ->defaults('marketing_permissions', ['marketing.campaign.edit'])
             ->defaults('marketing_fields', ['test_to_email', 'test_to_name', 'email_name', 'email_subject', 'body_html', 'body_text'])
+            ->middleware(CheckAbilities::class.':marketing.providers.execute')
             ->defaults('marketing_provider', true);
 
         Route::delete('marketing/campaigns/{campaign}/emails/{email}', [ApiCampaign::class, 'destroyEmail'])
@@ -169,6 +172,7 @@ if (($marketingApiRoutes ?? false) === true) {
             ->defaults('marketing_ability', 'marketing.campaigns.send')
             ->defaults('marketing_permissions', ['marketing.campaign.send'])
             ->defaults('marketing_fields', [])
+            ->middleware(CheckAbilities::class.':marketing.providers.execute')
             ->defaults('marketing_provider', true);
 
         Route::get('marketing/settings', [ApiSettings::class, 'show'])
@@ -262,6 +266,7 @@ if (($marketingApiRoutes ?? false) === true) {
             ->defaults('marketing_ability', 'marketing.campaigns.update')
             ->defaults('marketing_permissions', ['marketing.campaign.edit'])
             ->defaults('marketing_fields', ['wordpress_url', 'limit'])
+            ->middleware(CheckAbilities::class.':marketing.providers.execute')
             ->defaults('marketing_provider', true)
             ->defaults('marketing_key_required', true);
 

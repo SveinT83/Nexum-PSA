@@ -163,6 +163,12 @@ class MarketingWorkspaceController extends Controller
     {
         abort_unless(in_array($campaign->status, ['draft', 'paused', 'approved', 'active'], true), 422, 'Campaign content sources cannot be changed in this state.');
         $data = $request->validate(['wordpress_url' => ['required', 'url', 'max:2048'], 'limit' => ['sometimes', 'integer', 'min:1', 'max:10']]);
+        try {
+            app(\App\Modules\Marketing\Support\MarketingPublicUrl::class)->options($data['wordpress_url']);
+        } catch (\RuntimeException $error) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['wordpress_url' => $error->getMessage()]);
+        }
+        $request->attributes->set('marketing_provider_started', true);
         $count = app(PullWordPressContentSources::class)->handle($campaign, $data['wordpress_url'], $data['limit'] ?? 5);
 
         return response()->json(['data' => ['fetched_count' => $count, 'sources' => $campaign->contentSources()->where('status', 'active')->orderBy('id')->get()->map->only(['id', 'title', 'source_url', 'excerpt', 'content_html', 'published_at', 'fetched_at'])]]);

@@ -76,6 +76,72 @@ class MarketingApiParityTest extends TestCase
     }
 
     #[Test]
+    public function unexpected_local_errors_are_rolled_back_and_do_not_disclose_debug_payloads(): void
+    {
+        config(['app.debug' => true]);
+        $this->mock(\App\Modules\Marketing\Actions\ResolveMarketingListMembers::class, fn ($mock) => $mock->shouldReceive('handle')->twice()->andThrow(new \RuntimeException('synthetic-private-provider-detail')));
+        $before = MarketingList::count();
+        $response = $this->postJson($this->url('/lists'), ['name' => 'Rolled back', 'audience_type' => 'manual_contacts'])->assertStatus(503)->assertDontSee('synthetic-private-provider-detail')->assertDontSee('trace');
+        $this->assertSame($before, MarketingList::count());
+        $this->assertSame(0, MarketingApiCommand::count());
+        $this->actingAs($this->actor)->post(route('tech.marketing.lists.store'), ['name' => 'Browser rollback', 'audience_type' => 'manual_contacts'])->assertStatus(500);
+        $this->assertSame($before, MarketingList::count());
+    }
+
+    #[Test]
+    public function rejected_provider_input_has_a_typed_own_operation_receipt_without_transmission(): void
+    {
+        config(['marketing.api_provider_execution_enabled' => true]);
+        $email = $this->email();
+        $this->mock(SendMarketingCampaignEmailTest::class, fn ($mock) => $mock->shouldNotReceive('handle'));
+        $rejected = $this->postJson($this->url('/campaigns/'.$this->campaign->id.'/emails/'.$email->id.'/test-send'), [])->assertUnprocessable();
+        $this->getJson($this->url('/operations/'.$rejected->json('operation_id')))->assertOk()->assertJsonPath('data.state', 'rejected')->assertJsonStructure(['data' => ['result' => ['errors' => ['test_to_email']]]]);
+    }
+
+    #[Test]
+    public function populated_sender_contact_lookups_and_distinct_receipts_keep_typed_safe_results(): void
+    {
+        $account = \App\Modules\Email\Models\EmailAccount::create(['address' => 'sender@example.test', 'description' => 'Sender', 'from_name' => 'Marketing', 'is_active' => true, 'defaults_for' => ['marketing'], 'smtp_secret' => \Illuminate\Support\Facades\Crypt::encryptString('synthetic-test-secret')]);
+        $this->mock(\App\Modules\Email\Services\DefaultEmailAccountResolver::class, fn ($mock) => $mock->shouldReceive('forScope')->with('marketing')->andReturn($account));
+        $contact = \App\Modules\Contact\Models\Contact::create(['type' => 'person', 'status' => 'active', 'display_name' => 'Choice', 'do_not_email' => false, 'marketing_consent' => true]);
+        $contact->emails()->create(['email' => 'choice@example.test', 'is_primary' => true]);
+        $this->campaign->forceFill(['email_account_id' => $account->id, 'batch_size' => 23])->save();
+        $this->getJson($this->url('/lookups/accounts'))->assertOk()->assertJsonPath('data.0.address', 'sender@example.test')->assertDontSee('synthetic-test-secret')->assertDontSee('smtp_secret');
+        $this->getJson($this->url('/lookups/contacts'))->assertOk()->assertJsonPath('data.0.emails.0.email', 'choice@example.test');
+        $this->getJson($this->url('/dashboard'))->assertOk()->assertJsonPath('data.sender.id', $account->id);
+        $this->getJson($this->url('/campaigns'))->assertOk()->assertJsonPath('data.0.batch_size', 23);
+        $this->getJson($this->url('/campaigns/'.$this->campaign->id))->assertOk()->assertJsonPath('data.email_account.id', $account->id);
+        $this->email();
+        $this->postJson($this->url('/campaigns/'.$this->campaign->id.'/approve'))->assertOk();
+        $this->getJson($this->url('/campaigns/'.$this->campaign->id))->assertOk()->assertJsonPath('data.approved_by', $this->actor->id);
+        $this->getJson($this->url('/campaigns'))->assertOk()->assertJsonPath('data.0.approved_by', $this->actor->id);
+        $result = $this->patchJson($this->url('/settings'), ['default_batch_size' => 34])->assertOk();
+        $this->getJson($this->url('/operations/'.$result->json('operation_id')))->assertOk()->assertJsonPath('data.result.data.default_batch_size', 34);
+    }
+
+    #[Test]
+    public function public_unsubscribe_preserves_contact_opt_out_and_suppression_without_staff_auth(): void
+    {
+        $contact = \App\Modules\Contact\Models\Contact::create(['type' => 'person', 'status' => 'active', 'display_name' => 'Unsubscribe fixture', 'do_not_email' => false, 'marketing_consent' => true]);
+        $member = $this->list->members()->create(['source_type' => 'contact', 'source_id' => $contact->id, 'contact_id' => $contact->id, 'email' => 'unsubscribe@example.test', 'status' => 'eligible']);
+        $email = $this->email();
+        $recipient = $this->campaign->recipients()->create(['marketing_campaign_email_id' => $email->id, 'marketing_list_member_id' => $member->id, 'contact_id' => $contact->id, 'email' => 'unsubscribe@example.test', 'status' => 'sent', 'tracking_token' => (string) \Illuminate\Support\Str::uuid()]);
+        $this->get(route('marketing.unsubscribe', $recipient->tracking_token))->assertOk()->assertSee('unsubscribed');
+        $this->assertTrue($contact->fresh()->do_not_email);
+        $this->assertFalse($contact->fresh()->marketing_consent);
+        $this->assertNotNull(app(\App\Modules\Marketing\Actions\MarketingSuppressionGuard::class)->reasonForTarget('unsubscribe@example.test', $contact->id));
+        $this->assertSame(0, MarketingApiCommand::count());
+    }
+
+    #[Test]
+    public function head_reads_are_pure_and_do_not_create_command_receipts(): void
+    {
+        $this->json('HEAD', $this->url('/dashboard'))->assertOk();
+        $this->json('HEAD', $this->url('/campaigns/'.$this->campaign->id))->assertOk();
+        $this->assertSame(0, MarketingApiCommand::count());
+    }
+
+    #[Test]
     public function superuser_context_uses_the_same_current_fallback_as_web_without_direct_grants(): void
     {
         $this->actor->syncPermissions([]);
@@ -269,7 +335,8 @@ class MarketingApiParityTest extends TestCase
         $this->mock(SendMarketingCampaignEmailTest::class, fn ($mock) => $mock->shouldReceive('handle')->once()->andThrow(new \RuntimeException('Ambiguous provider result')));
         $url = $this->url('/campaigns/'.$this->campaign->id.'/emails/'.$email->id.'/test-send');
         $etag = $this->getJson($this->url('/campaigns/'.$this->campaign->id))->headers->get('ETag');
-        $this->withHeader('Idempotency-Key', 'unknown-test-send')->withHeader('If-Match', $etag)->postJson($url, ['test_to_email' => 'test@example.test'])->assertAccepted()->assertJsonPath('data.state', 'unknown');
+        $first = $this->withHeader('Idempotency-Key', 'unknown-test-send')->withHeader('If-Match', $etag)->postJson($url, ['test_to_email' => 'test@example.test'])->assertAccepted()->assertJsonPath('data.state', 'unknown');
+        $this->getJson($this->url('/operations/'.$first->json('operation_id')))->assertOk()->assertJsonPath('data.state', 'unknown');
         $this->postJson($url, ['test_to_email' => 'test@example.test'])->assertAccepted()->assertJsonPath('replayed', true);
     }
 
@@ -301,9 +368,9 @@ class MarketingApiParityTest extends TestCase
     public function ai_actions_return_editable_suggestions_without_campaign_writes(): void
     {
         config(['marketing.api_provider_execution_enabled' => true]);
-        $this->mock(DraftMarketingCampaignPlanWithAi::class, fn ($mock) => $mock->shouldReceive('handle')->once()->andReturn(['emails' => [['name' => 'Proposed']]]));
-        $this->mock(DraftMarketingCampaignEmailWithAi::class, fn ($mock) => $mock->shouldReceive('handle')->once()->andReturn(['email_subject' => 'Suggested subject', 'body_html' => '<p>Draft</p>']));
-        $this->postJson($this->url('/campaigns/'.$this->campaign->id.'/ai-plan'), ['prompt' => 'Propose campaign'])->assertOk()->assertJsonPath('data.emails.0.name', 'Proposed');
+        $this->mock(DraftMarketingCampaignPlanWithAi::class, fn ($mock) => $mock->shouldReceive('handle')->once()->andReturn(['campaign_name' => 'Proposed campaign', 'campaign_description' => 'Suggested plan', 'emails' => [['email_name' => 'Proposed', 'email_subject' => 'Subject', 'delay_minutes' => 0, 'body_html' => '<p>Draft</p>', 'body_text' => 'Draft']]]));
+        $this->mock(DraftMarketingCampaignEmailWithAi::class, fn ($mock) => $mock->shouldReceive('handle')->once()->andReturn(['email_name' => 'Suggestion', 'email_subject' => 'Suggested subject', 'body_html' => '<p>Draft</p>', 'body_text' => 'Draft']));
+        $this->postJson($this->url('/campaigns/'.$this->campaign->id.'/ai-plan'), ['prompt' => 'Propose campaign'])->assertOk()->assertJsonPath('data.emails.0.email_name', 'Proposed');
         $this->postJson($this->url('/campaigns/'.$this->campaign->id.'/emails/ai-draft'), ['prompt' => 'Propose email'])->assertOk()->assertJsonPath('data.email_subject', 'Suggested subject');
         $this->assertSame(0, $this->campaign->emails()->count());
     }

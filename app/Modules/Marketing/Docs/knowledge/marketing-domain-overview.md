@@ -493,7 +493,7 @@ administration URLs or expose tracking tokens in API results.
 - 409: inspect command-key conflict or the disabled API execution switch before another attempt.
 - 412/428: re-read the ETag and supply the required key/precondition deliberately.
 - 422: inspect declared input fields/enums and known workflow validation; repeat fields are prohibited.
-- 503: the exact additive Marketing migration is missing; do not run every pending migration in shared Dev.
+- 503: check the exact Marketing migration and infrastructure health, then read command state before retrying. Do not expose debug traces or run every pending migration in shared Dev.
 
 Deployment needs `2026_10_27_060000_create_marketing_api_commands.php`, generated Swagger,
 normal caches and worker restart if deployed job code changed. Preserve APP_KEY, command

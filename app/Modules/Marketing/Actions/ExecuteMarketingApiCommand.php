@@ -21,7 +21,7 @@ class ExecuteMarketingApiCommand
         abort_if($unknown !== [], 422, 'Unknown Marketing input fields: '.implode(', ', $unknown));
         $request->validate(['page' => ['sometimes', 'integer', 'min:1'], 'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'q' => ['sometimes', 'nullable', 'string', 'max:255'], 'include_recipients' => ['sometimes', 'boolean']]);
-        if ($request->isMethod('get') || ($rules['marketing_preview'] ?? false)) {
+        if (in_array($request->method(), ['GET', 'HEAD'], true) || ($rules['marketing_preview'] ?? false)) {
             $response = $next($request);
             if ($etag = MarketingApiState::etag($request)) {
                 $response->headers->set('ETag', $etag);
@@ -71,7 +71,18 @@ class ExecuteMarketingApiCommand
                 $response = $next($request);
                 // Provider controllers cannot prove that an exception preceded transmission.
                 if ($response->getStatusCode() >= 400) {
-                    $this->unknown($command);
+                    if ($request->attributes->get('marketing_provider_started', false)) {
+                        $this->unknown($command);
+                    } else {
+                        $result = $command->result;
+                        $decoded = json_decode($response->getContent(), true) ?: [];
+                        $result['status'] = $response->getStatusCode();
+                        $result['body'] = ['message' => 'Marketing provider request was rejected before execution.'];
+                        if (! empty($decoded['errors'])) {
+                            $result['body']['errors'] = $decoded['errors'];
+                        }
+                        $command->forceFill(['state' => 'rejected', 'result' => $result])->save();
+                    }
                 } else {
                     $this->complete($command, $response, $request);
                 }

@@ -22,14 +22,19 @@ class MarketingMutationLock
 
     public function handle(Request $request, Closure $next)
     {
-        if ($request->isMethod('get')) {
+        if (in_array($request->method(), ['GET', 'HEAD'], true)) {
             return $next($request);
         }
 
         return DB::transaction(function () use ($request, $next) {
             self::lock($request);
 
-            return $next($request);
+            $response = $next($request);
+            if ($response->getStatusCode() >= 400) {
+                throw new \Illuminate\Http\Exceptions\HttpResponseException($response);
+            }
+
+            return $response;
         });
     }
 }

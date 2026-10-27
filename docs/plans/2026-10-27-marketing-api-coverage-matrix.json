@@ -3,7 +3,7 @@
   "runtime": "/var/Projects/tdPSA",
   "branch": "Dev",
   "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
-  "status": "Draft RFC; existing runtime inventory only",
+  "status": "Done On Dev / Main candidate verified / human scenarios Pending / production unchanged",
   "staff_rows": 28,
   "public_rows": 3,
   "api_route_rows": 24,
@@ -26,7 +26,14 @@
       "classification": "action",
       "api_target": "GET /marketing/c/{token}/{url}",
       "baseline": "Existing public token capability; preserve URLs/behavior and document/test separately. No bearer replacement.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M02",
@@ -44,7 +51,14 @@
       "classification": "action",
       "api_target": "GET /marketing/o/{token}",
       "baseline": "Existing public token capability; preserve URLs/behavior and document/test separately. No bearer replacement.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M03",
@@ -62,7 +76,14 @@
       "classification": "action",
       "api_target": "GET /marketing/unsubscribe/{token}",
       "baseline": "Existing public token capability; preserve URLs/behavior and document/test separately. No bearer replacement.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M04",
@@ -85,7 +106,14 @@
       "classification": "read",
       "api_target": "GET /api/v1/marketing/settings",
       "baseline": "Partial: settings/options exist; safe current Marketing sender summary absent.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M05",
@@ -108,7 +136,14 @@
       "classification": "write",
       "api_target": "PUT|PATCH /api/v1/marketing/settings",
       "baseline": "Existing write; native admin/settings authority and complete contract still to verify.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M06",
@@ -130,7 +165,14 @@
       "classification": "read",
       "api_target": "GET /api/v1/marketing/dashboard",
       "baseline": "Missing dashboard summaries, sender status, due recipients and recent events.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M07",
@@ -152,7 +194,14 @@
       "classification": "read",
       "api_target": "GET /api/v1/marketing/campaigns",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M08",
@@ -174,7 +223,14 @@
       "classification": "write",
       "api_target": "POST /api/v1/marketing/campaigns",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M09",
@@ -196,7 +252,14 @@
       "classification": "read",
       "api_target": "GET /api/v1/marketing/context/campaigns",
       "baseline": "Missing lists, safe active sender accounts, defaults and schedule choices.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M10",
@@ -218,7 +281,14 @@
       "classification": "read",
       "api_target": "GET /api/v1/marketing/campaigns/{campaign}",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI. Missing content-source/interest summary, template/preview context, safe AI availability and independently paginated queue.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M11",
@@ -240,7 +310,14 @@
       "classification": "action",
       "api_target": "POST /api/v1/marketing/campaigns/{campaign}/ai-plan",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M12",
@@ -262,7 +339,14 @@
       "classification": "action",
       "api_target": "POST /api/v1/marketing/campaigns/{campaign}/approve",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M13",
@@ -284,7 +368,14 @@
       "classification": "action",
       "api_target": "POST /api/v1/marketing/campaigns/{campaign}/content-sources/wordpress",
       "baseline": "Missing WordPress pull and exact persisted content-source read-back.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M14",
@@ -306,7 +397,14 @@
       "classification": "write",
       "api_target": "POST /api/v1/marketing/campaigns/{campaign}/emails",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M15",
@@ -328,7 +426,14 @@
       "classification": "action",
       "api_target": "POST /api/v1/marketing/campaigns/{campaign}/emails/ai-draft",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M16",
@@ -350,7 +455,14 @@
       "classification": "action",
       "api_target": "POST /api/v1/marketing/campaigns/{campaign}/emails/preview",
       "baseline": "Missing authoritative unsaved/snapshot renderer; must not save, send or track.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M17",
@@ -372,7 +484,14 @@
       "classification": "write",
       "api_target": "PUT|PATCH /api/v1/marketing/campaigns/{campaign}/emails/{email}",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M18",
@@ -394,7 +513,14 @@
       "classification": "write",
       "api_target": "DELETE /api/v1/marketing/campaigns/{campaign}/emails/{email}",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M19",
@@ -416,7 +542,14 @@
       "classification": "write",
       "api_target": "POST /api/v1/marketing/campaigns/{campaign}/emails/{email}/test-send",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M20",
@@ -438,7 +571,14 @@
       "classification": "write",
       "api_target": "PUT|PATCH /api/v1/marketing/campaigns/{campaign}/schedule",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M21",
@@ -460,7 +600,14 @@
       "classification": "action",
       "api_target": "POST /api/v1/marketing/campaigns/{campaign}/send-due",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M22",
@@ -482,7 +629,14 @@
       "classification": "read",
       "api_target": "GET /api/v1/marketing/lists",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M23",
@@ -504,7 +658,14 @@
       "classification": "write",
       "api_target": "POST /api/v1/marketing/lists",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M24",
@@ -526,7 +687,14 @@
       "classification": "read",
       "api_target": "GET /api/v1/marketing/context/lists",
       "baseline": "Missing consent categories, tags, industry categories, eligible Contact and legacy choices.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M25",
@@ -548,7 +716,14 @@
       "classification": "read",
       "api_target": "GET /api/v1/marketing/lists/{list}",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M26",
@@ -570,7 +745,14 @@
       "classification": "write",
       "api_target": "PUT|PATCH /api/v1/marketing/lists/{list}",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M27",
@@ -592,7 +774,14 @@
       "classification": "write",
       "api_target": "DELETE /api/v1/marketing/lists/{list}",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M28",
@@ -614,7 +803,14 @@
       "classification": "action",
       "api_target": "POST /api/v1/marketing/lists/{list}/contacts",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M29",
@@ -636,7 +832,14 @@
       "classification": "action",
       "api_target": "DELETE /api/v1/marketing/lists/{list}/contacts/{contact}",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M30",
@@ -658,7 +861,14 @@
       "classification": "read",
       "api_target": "GET /api/v1/marketing/lists/{list}/context",
       "baseline": "Missing current criteria, addable contacts, selected labels, usage/deletion guards and choices.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     },
     {
       "id": "M31",
@@ -680,7 +890,14 @@
       "classification": "action",
       "api_target": "POST /api/v1/marketing/lists/{list}/refresh",
       "baseline": "Existing route; validate native rights, full payload, replay, errors and typed OpenAPI.",
-      "status": "Planned - not implemented/verified"
+      "status": "Implemented and verified on Dev; human scenario Pending",
+      "route_source": "app/Modules/Marketing/routes.php",
+      "tests": [
+        "app/Modules/Marketing/Tests/Feature/MarketingModuleTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiParityTest.php",
+        "app/Modules/Marketing/Tests/Feature/MarketingApiContractTest.php"
+      ],
+      "readback_evidence": "2026-10-27-marketing-api-verification.json"
     }
   ],
   "embedded_workflows": [
@@ -688,43 +905,50 @@
       "id": "ME01",
       "workflow": "Dashboard and campaigns index metrics",
       "target": "GET /api/v1/marketing/dashboard; GET /api/v1/marketing/campaigns",
-      "gap": "Dashboard missing; index totals/settings/context must match web."
+      "gap": "Dashboard missing; index totals/settings/context must match web.",
+      "status": "Implemented and verified on Dev"
     },
     {
       "id": "ME02",
       "workflow": "List forms, selected criteria and addable Contacts",
       "target": "GET /api/v1/marketing/context/lists; GET /api/v1/marketing/lists/{list}/context",
-      "gap": "Bounded searchable choices with same eligibility/exclusion and stable Contact/legacy identities."
+      "gap": "Bounded searchable choices with same eligibility/exclusion and stable Contact/legacy identities.",
+      "status": "Implemented and verified on Dev"
     },
     {
       "id": "ME03",
       "workflow": "Campaign form/editor, templates and unsaved preview variables",
       "target": "GET /api/v1/marketing/context/campaigns; GET /api/v1/marketing/campaigns/{campaign}/context; POST emails/preview",
-      "gap": "Safe active sender/template fields, schedule catalogs, current capabilities and exact-parent snapshots."
+      "gap": "Safe active sender/template fields, schedule catalogs, current capabilities and exact-parent snapshots.",
+      "status": "Implemented and verified on Dev"
     },
     {
       "id": "ME04",
       "workflow": "Campaign recipient queue and delivery progress",
       "target": "GET /api/v1/marketing/campaigns/{campaign}/recipients",
-      "gap": "Existing include_recipients is unbounded; add scoped pagination/filtering and exact delivery read-back."
+      "gap": "Existing include_recipients is unbounded; add scoped pagination/filtering and exact delivery read-back.",
+      "status": "Implemented and verified on Dev"
     },
     {
       "id": "ME05",
       "workflow": "Cached WordPress sources, events and interest summary",
       "target": "GET /api/v1/marketing/campaigns/{campaign}/content-sources; GET /api/v1/marketing/campaigns/{campaign}/events; GET /api/v1/marketing/campaigns/{campaign}",
-      "gap": "Content/interest absent from campaign API; restrict metadata and tracking capabilities."
+      "gap": "Content/interest absent from campaign API; restrict metadata and tracking capabilities.",
+      "status": "Implemented and verified on Dev"
     },
     {
       "id": "ME06",
       "workflow": "Existing API-only operations",
       "target": "PUT|PATCH campaigns/{campaign}; GET lists/{list}/members; PUT/PATCH aliases",
-      "gap": "Retain and verify every one of the 29 existing HTTP operations, not just browser matches."
+      "gap": "Retain and verify every one of the 29 existing HTTP operations, not just browser matches.",
+      "status": "Implemented and verified on Dev"
     },
     {
       "id": "ME07",
       "workflow": "Command/provider preview and own-operation read-back",
       "target": "POST /api/v1/marketing/campaigns/{campaign}/actions/preview; GET /api/v1/marketing/operations/{operation}",
-      "gap": "Planned durable actor/token-bound commands; cannot infer completion from queue or SMTP response."
+      "gap": "Planned durable actor/token-bound commands; cannot infer completion from queue or SMTP response.",
+      "status": "Implemented and verified on Dev"
     }
   ],
   "api_baseline": [
@@ -1112,5 +1336,623 @@
     "app/Modules/Marketing/api.php": "38fe37e0ea6dba3d410a3789c6dc9c81687bdf4ed30295334e148c1541305ae4",
     "app/Modules/Marketing/routes.php": "81a7825da9795229821ce41a3925999da28998c37b8469fbe2adba310d6985f0"
   },
-  "github": "Open issue search repo:SveinT83/Nexum-PSA is:issue is:open marketing returned no results. No external writes."
+  "github": "Open issue search repo:SveinT83/Nexum-PSA is:issue is:open marketing returned no results. No external writes.",
+  "current_api_route_rows": 37,
+  "current_api_http_operations": 42,
+  "typed_schema_count": 62,
+  "synthetic_success_methods": [
+    "delete /api/v1/marketing/campaigns/{campaign}/emails/{email}",
+    "delete /api/v1/marketing/lists/{list}",
+    "delete /api/v1/marketing/lists/{list}/contacts/{contact}",
+    "get /api/v1/marketing/campaigns",
+    "get /api/v1/marketing/campaigns/{campaign}",
+    "get /api/v1/marketing/campaigns/{campaign}/content-sources",
+    "get /api/v1/marketing/campaigns/{campaign}/context",
+    "get /api/v1/marketing/campaigns/{campaign}/events",
+    "get /api/v1/marketing/campaigns/{campaign}/recipients",
+    "get /api/v1/marketing/context/campaigns",
+    "get /api/v1/marketing/context/lists",
+    "get /api/v1/marketing/dashboard",
+    "get /api/v1/marketing/lists",
+    "get /api/v1/marketing/lists/{list}",
+    "get /api/v1/marketing/lists/{list}/context",
+    "get /api/v1/marketing/lists/{list}/members",
+    "get /api/v1/marketing/lookups/{kind}",
+    "get /api/v1/marketing/operations/{operation}",
+    "get /api/v1/marketing/settings",
+    "patch /api/v1/marketing/campaigns/{campaign}",
+    "patch /api/v1/marketing/campaigns/{campaign}/emails/{email}",
+    "patch /api/v1/marketing/campaigns/{campaign}/schedule",
+    "patch /api/v1/marketing/lists/{list}",
+    "patch /api/v1/marketing/settings",
+    "post /api/v1/marketing/campaigns",
+    "post /api/v1/marketing/campaigns/{campaign}/actions/preview",
+    "post /api/v1/marketing/campaigns/{campaign}/ai-plan",
+    "post /api/v1/marketing/campaigns/{campaign}/approve",
+    "post /api/v1/marketing/campaigns/{campaign}/content-sources/wordpress",
+    "post /api/v1/marketing/campaigns/{campaign}/emails",
+    "post /api/v1/marketing/campaigns/{campaign}/emails/ai-draft",
+    "post /api/v1/marketing/campaigns/{campaign}/emails/preview",
+    "post /api/v1/marketing/campaigns/{campaign}/emails/{email}/test-send",
+    "post /api/v1/marketing/campaigns/{campaign}/send-due",
+    "post /api/v1/marketing/lists",
+    "post /api/v1/marketing/lists/{list}/contacts",
+    "post /api/v1/marketing/lists/{list}/refresh",
+    "put /api/v1/marketing/campaigns/{campaign}",
+    "put /api/v1/marketing/campaigns/{campaign}/emails/{email}",
+    "put /api/v1/marketing/campaigns/{campaign}/schedule",
+    "put /api/v1/marketing/lists/{list}",
+    "put /api/v1/marketing/settings"
+  ],
+  "runtime_contract": [
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/marketing/lists",
+      "name": "api.v1.marketing.lists.index",
+      "ability": "marketing.read",
+      "native_permissions": [
+        "marketing.view"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "get": "api_v1_marketing_lists_index_get"
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/marketing/lists",
+      "name": "api.v1.marketing.lists.store",
+      "ability": "marketing.lists.manage",
+      "native_permissions": [
+        "marketing.list.manage"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "post": "api_v1_marketing_lists_store_post"
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/marketing/lists/{list}",
+      "name": "api.v1.marketing.lists.show",
+      "ability": "marketing.read",
+      "native_permissions": [
+        "marketing.view"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "get": "api_v1_marketing_lists_show_get"
+      }
+    },
+    {
+      "methods": [
+        "PUT",
+        "PATCH"
+      ],
+      "path": "/api/v1/marketing/lists/{list}",
+      "name": "api.v1.marketing.lists.update",
+      "ability": "marketing.lists.manage",
+      "native_permissions": [
+        "marketing.list.manage"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "put": "api_v1_marketing_lists_update_put",
+        "patch": "api_v1_marketing_lists_update_patch"
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/marketing/lists/{list}",
+      "name": "api.v1.marketing.lists.destroy",
+      "ability": "marketing.lists.manage",
+      "native_permissions": [
+        "marketing.list.manage"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "delete": "api_v1_marketing_lists_destroy_delete"
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/marketing/lists/{list}/members",
+      "name": "api.v1.marketing.lists.members.index",
+      "ability": "marketing.read",
+      "native_permissions": [
+        "marketing.view"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "get": "api_v1_marketing_lists_members_index_get"
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/marketing/lists/{list}/refresh",
+      "name": "api.v1.marketing.lists.refresh",
+      "ability": "marketing.lists.manage",
+      "native_permissions": [
+        "marketing.list.manage"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "post": "api_v1_marketing_lists_refresh_post"
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/marketing/lists/{list}/contacts",
+      "name": "api.v1.marketing.lists.contacts.add",
+      "ability": "marketing.lists.manage",
+      "native_permissions": [
+        "marketing.list.manage"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "post": "api_v1_marketing_lists_contacts_add_post"
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/marketing/lists/{list}/contacts/{contact}",
+      "name": "api.v1.marketing.lists.contacts.remove",
+      "ability": "marketing.lists.manage",
+      "native_permissions": [
+        "marketing.list.manage"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "delete": "api_v1_marketing_lists_contacts_remove_delete"
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/marketing/campaigns",
+      "name": "api.v1.marketing.campaigns.index",
+      "ability": "marketing.read",
+      "native_permissions": [
+        "marketing.view"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "get": "api_v1_marketing_campaigns_index_get"
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/marketing/campaigns",
+      "name": "api.v1.marketing.campaigns.store",
+      "ability": "marketing.campaigns.create",
+      "native_permissions": [
+        "marketing.campaign.create"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "post": "api_v1_marketing_campaigns_store_post"
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}",
+      "name": "api.v1.marketing.campaigns.show",
+      "ability": "marketing.read",
+      "native_permissions": [
+        "marketing.view"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "get": "api_v1_marketing_campaigns_show_get"
+      }
+    },
+    {
+      "methods": [
+        "PUT",
+        "PATCH"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}",
+      "name": "api.v1.marketing.campaigns.update",
+      "ability": "marketing.campaigns.update",
+      "native_permissions": [
+        "marketing.campaign.edit"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "put": "api_v1_marketing_campaigns_update_put",
+        "patch": "api_v1_marketing_campaigns_update_patch"
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}/ai-plan",
+      "name": "api.v1.marketing.campaigns.ai-plan",
+      "ability": "marketing.campaigns.update",
+      "native_permissions": [
+        "marketing.campaign.edit"
+      ],
+      "provider_guard": true,
+      "operations": {
+        "post": "api_v1_marketing_campaigns_ai_plan_post"
+      }
+    },
+    {
+      "methods": [
+        "PUT",
+        "PATCH"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}/schedule",
+      "name": "api.v1.marketing.campaigns.schedule.update",
+      "ability": "marketing.campaigns.update",
+      "native_permissions": [
+        "marketing.campaign.edit"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "put": "api_v1_marketing_campaigns_schedule_update_put",
+        "patch": "api_v1_marketing_campaigns_schedule_update_patch"
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}/emails",
+      "name": "api.v1.marketing.campaigns.emails.store",
+      "ability": "marketing.campaigns.update",
+      "native_permissions": [
+        "marketing.campaign.edit"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "post": "api_v1_marketing_campaigns_emails_store_post"
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}/emails/ai-draft",
+      "name": "api.v1.marketing.campaigns.emails.ai-draft",
+      "ability": "marketing.campaigns.update",
+      "native_permissions": [
+        "marketing.campaign.edit"
+      ],
+      "provider_guard": true,
+      "operations": {
+        "post": "api_v1_marketing_campaigns_emails_ai_draft_post"
+      }
+    },
+    {
+      "methods": [
+        "PUT",
+        "PATCH"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}/emails/{email}",
+      "name": "api.v1.marketing.campaigns.emails.update",
+      "ability": "marketing.campaigns.update",
+      "native_permissions": [
+        "marketing.campaign.edit"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "put": "api_v1_marketing_campaigns_emails_update_put",
+        "patch": "api_v1_marketing_campaigns_emails_update_patch"
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}/emails/{email}/test-send",
+      "name": "api.v1.marketing.campaigns.emails.test-send",
+      "ability": "marketing.campaigns.update",
+      "native_permissions": [
+        "marketing.campaign.edit"
+      ],
+      "provider_guard": true,
+      "operations": {
+        "post": "api_v1_marketing_campaigns_emails_test_send_post"
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}/emails/{email}",
+      "name": "api.v1.marketing.campaigns.emails.destroy",
+      "ability": "marketing.campaigns.update",
+      "native_permissions": [
+        "marketing.campaign.edit"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "delete": "api_v1_marketing_campaigns_emails_destroy_delete"
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}/approve",
+      "name": "api.v1.marketing.campaigns.approve",
+      "ability": "marketing.campaigns.approve",
+      "native_permissions": [
+        "marketing.campaign.approve"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "post": "api_v1_marketing_campaigns_approve_post"
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}/send-due",
+      "name": "api.v1.marketing.campaigns.send-due",
+      "ability": "marketing.campaigns.send",
+      "native_permissions": [
+        "marketing.campaign.send"
+      ],
+      "provider_guard": true,
+      "operations": {
+        "post": "api_v1_marketing_campaigns_send_due_post"
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/marketing/settings",
+      "name": "api.v1.marketing.settings.show",
+      "ability": "marketing.read",
+      "native_permissions": [
+        "marketing.settings.manage"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "get": "api_v1_marketing_settings_show_get"
+      }
+    },
+    {
+      "methods": [
+        "PUT",
+        "PATCH"
+      ],
+      "path": "/api/v1/marketing/settings",
+      "name": "api.v1.marketing.settings.update",
+      "ability": "marketing.settings.update",
+      "native_permissions": [
+        "marketing.settings.manage"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "put": "api_v1_marketing_settings_update_put",
+        "patch": "api_v1_marketing_settings_update_patch"
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/marketing/dashboard",
+      "name": "api.v1.marketing.dashboard",
+      "ability": "marketing.read",
+      "native_permissions": [
+        "marketing.view"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "get": "api_v1_marketing_dashboard_get"
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/marketing/context/lists",
+      "name": "api.v1.marketing.context.lists",
+      "ability": "marketing.context.read",
+      "native_permissions": [
+        "marketing.list.manage"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "get": "api_v1_marketing_context_lists_get"
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/marketing/lists/{list}/context",
+      "name": "api.v1.marketing.lists.context",
+      "ability": "marketing.context.read",
+      "native_permissions": [
+        "marketing.list.manage"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "get": "api_v1_marketing_lists_context_get"
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/marketing/context/campaigns",
+      "name": "api.v1.marketing.context.campaigns",
+      "ability": "marketing.context.read",
+      "native_permissions": [
+        "marketing.campaign.create"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "get": "api_v1_marketing_context_campaigns_get"
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}/context",
+      "name": "api.v1.marketing.campaigns.context",
+      "ability": "marketing.context.read",
+      "native_permissions": [
+        "marketing.campaign.edit"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "get": "api_v1_marketing_campaigns_context_get"
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/marketing/lookups/{kind}",
+      "name": "api.v1.marketing.lookups",
+      "ability": "marketing.context.read",
+      "native_permissions": [],
+      "provider_guard": false,
+      "operations": {
+        "get": "api_v1_marketing_lookups_get"
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}/recipients",
+      "name": "api.v1.marketing.campaigns.recipients",
+      "ability": "marketing.read",
+      "native_permissions": [
+        "marketing.view"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "get": "api_v1_marketing_campaigns_recipients_get"
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}/content-sources",
+      "name": "api.v1.marketing.campaigns.content-sources",
+      "ability": "marketing.read",
+      "native_permissions": [
+        "marketing.view"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "get": "api_v1_marketing_campaigns_content_sources_get"
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}/events",
+      "name": "api.v1.marketing.campaigns.events",
+      "ability": "marketing.read",
+      "native_permissions": [
+        "marketing.view"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "get": "api_v1_marketing_campaigns_events_get"
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}/emails/preview",
+      "name": "api.v1.marketing.campaigns.emails.preview",
+      "ability": "marketing.campaigns.update",
+      "native_permissions": [
+        "marketing.campaign.edit"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "post": "api_v1_marketing_campaigns_emails_preview_post"
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}/content-sources/wordpress",
+      "name": "api.v1.marketing.campaigns.content-sources.wordpress",
+      "ability": "marketing.campaigns.update",
+      "native_permissions": [
+        "marketing.campaign.edit"
+      ],
+      "provider_guard": true,
+      "operations": {
+        "post": "api_v1_marketing_campaigns_content_sources_wordpress_post"
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/marketing/campaigns/{campaign}/actions/preview",
+      "name": "api.v1.marketing.campaigns.actions.preview",
+      "ability": "marketing.campaigns.send",
+      "native_permissions": [
+        "marketing.campaign.send"
+      ],
+      "provider_guard": false,
+      "operations": {
+        "post": "api_v1_marketing_campaigns_actions_preview_post"
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/marketing/operations/{operation}",
+      "name": "api.v1.marketing.operations.show",
+      "ability": "marketing.operations.read",
+      "native_permissions": [],
+      "provider_guard": false,
+      "operations": {
+        "get": "api_v1_marketing_operations_show_get"
+      }
+    }
+  ],
+  "final_dev_tests": {
+    "passed": 87,
+    "assertions": 1931
+  },
+  "final_candidate_tests": {
+    "passed": 87,
+    "assertions": 1931
+  }
 }

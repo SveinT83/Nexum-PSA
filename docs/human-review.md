@@ -2,7 +2,7 @@
 
 ## HR-2026-10-27-MARKETING-API - Full Marketing Browser/API Coverage
 
-Status: Pending / Dev implementation and Main promotion authorized.
+Status: Pending / Dev implementation verified; Main promotion authorized.
 Added: 2026-10-27. Owner: Codex. Intended human reviewer/release owner: Svein Tore.
 Scope: rfc/2026-10-27-marketing-full-api-parity.md (Approved), MK01-MK06, all 28 staff
 browser routes, 3 public recipient capability routes and embedded/API-only workflows.
@@ -36,8 +36,14 @@ if job code changes. No new scheduler cadence or frontend build is planned.
 Recovery/risks: scope-only token compatibility, PII, stale/concurrent audience changes,
 external URL fetches and ambiguous SMTP. Preserve APP_KEY, receipts and delivery history;
 disable new API entry/provider execution on failure and reconcile unknown outcomes.
-Baseline verification: 65 existing Marketing tests / 811 assertions pass on Dev.
-No future API success, manual scenario execution or handbook publication is claimed.
+Automated evidence: 87 Marketing tests / 1931 assertions pass on Dev; 488 / 7469
+on the initial isolated affected Main candidate. All 42 successful API methods, native
+DB, exact Dev migration, HTTPS/Swagger and actual handbook 449 read-back are verified.
+Manual scenario boxes remain unchecked; this is not a claim that Svein executed them.
+
+Final candidate and Dev Marketing runs each pass 87 tests / 1931 assertions.
+Populated field/receipt contracts, rendered-error privacy and browser/API rollback
+are explicitly covered. Main promotion is ready; manual scenarios remain Pending.
 
 ## HR-2026-10-27-SIGNAL-API - Full Signal Browser/API Coverage
 

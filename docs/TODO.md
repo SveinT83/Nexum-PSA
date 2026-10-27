@@ -2,33 +2,32 @@
 
 ## Full Marketing browser/API coverage (2026-10-27)
 
-Status: In Progress on Dev / RFC Approved / Main Merge Authorized. Owner: Codex;
-product/release owner and intended reviewer: Svein Tore. Request: 100% Marketing API.
-Authoritative Dev inventory: 28 staff browser rows + 3 public tracking/unsubscribe
-capability rows; 24 API route rows / 29 HTTP operations excluding HEAD. Generated
-Swagger currently has zero Marketing paths. Existing Dev baseline passes 65 tests /
-811 assertions. These are baseline tests, not proof of future full API coverage.
-RFC: rfc/2026-10-27-marketing-full-api-parity.md (Approved).
-ADR: adr/2026-10-27-marketing-api-authority-and-delivery.md (Accepted).
-Slices: feature-slices/2026-10-27-marketing-full-api-parity.md (MK01-MK06, In Progress).
-Coverage/evidence: plans/2026-10-27-marketing-api-coverage-matrix.md/.json and
-plans/2026-10-27-marketing-api-baseline.md. All 31 browser rows and seven embedded /
-API-only workflow groups are mapped; retain every existing API method and alias.
-Scope includes dashboard/context/lookups, current campaign/list/email/settings
-operations, exact recipient/content/interest read-back, preview, WordPress/AI/provider
-boundaries, native plus token rights, durable replay, complete Swagger and handbook.
-Preserve existing evergreen delivery ledger, Contact consent/suppression and Email
-provider bindings. Public tracking URLs remain capabilities, not new bearer CRUD.
-Open Marketing issue search found no matches; no GitHub Issue/comment was created.
-Existing one-line campaign-view contributor fix and all unrelated dirty Dev work are
-preserved. Knowledge's active approved implementation, Signal/UserManagement plans
-and shared Integration/Swagger ownership remain independent; no second code workstream
-has started. Coordinate shared-file edits after approval rather than overwrite them.
-Authorization: Svein Tore, 2026-10-27, "Godkjenner og merge til main".
-Next action (Codex): implement/verify MK01-MK06 sequentially on authoritative Dev,
-then build/test and merge a scoped Main candidate. Manual scenarios remain Pending;
-Main promotion is explicitly authorized with that status, production/activation is not.
-Human-review checklist HR-2026-10-27-MARKETING-API tracks the independent release gate.
+Status: Done On Dev / Main Candidate Verification / Human Scenarios Pending / Production unchanged.
+Owner: Codex; product/release owner and intended reviewer: Svein Tore.
+Authorization: "Godkjenner og merge til main", 2026-10-27. RFC/ADR approved/accepted;
+all MK01-MK06 slices are implemented. Coverage: 28 staff browser rows + 3 public
+capabilities, seven embedded/API-only groups, 42 protected HTTP operations / 62 schemas.
+Dev: 87 tests / 1931 assertions. Initial clean Main affected candidate: 488 / 7469; final Marketing candidate: 87 / 1931, no failures/skips. Exact Dev
+migration, native MySQL locking/replay/encryption/rollback, trusted HTTPS and Swagger
+verified. Three internal Knowledge sources are exact-read-back; complete guide is
+published/read back in BookStack 449 with inherited employee access unchanged.
+New-page connector validation is separately blocked; the full existing-page handbook
+publication is verified. OpenWebUI retrieval is untested; pending_push is not that proof.
+RFC: rfc/2026-10-27-marketing-full-api-parity.md. ADR and six slices are linked there.
+Evidence: plans/2026-10-27-marketing-api-verification.md/.json and coverage matrix.
+Existing campaign-view contributor fix, shared Dev work and staged index are preserved.
+The first shared-Dev broad snapshot encountered concurrent UserManagement/Contact/Email
+failures; selected reruns pass 9 / 51, while two unmerged Contact API tests remain owned
+by that active workstream. The isolated Main candidate excludes those changes.
+Next action (Codex): perform the explicitly authorized
+scoped Main merge. HR-2026-10-27-MARKETING-API remains Pending; no manual check is
+inferred. Production deployment, provider execution and worker/scheduler activation are
+not authorized. API provider switch remains false. Production/release need human review.
+
+
+Final candidate and Dev Marketing runs each pass 87 tests / 1931 assertions.
+Populated field/receipt contracts, rendered-error privacy and browser/API rollback
+are explicitly covered. Main promotion is ready; manual scenarios remain Pending.
 
 ## Full Signal browser/API coverage (2026-10-27)
 

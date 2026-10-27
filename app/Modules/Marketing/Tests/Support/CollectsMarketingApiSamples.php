@@ -8,7 +8,7 @@ trait CollectsMarketingApiSamples
     public function call($method, $uri, $parameters = [], $cookies = [], $files = [], $server = [], $content = null)
     {
         $response = parent::call($method, $uri, $parameters, $cookies, $files, $server, $content);
-        if (str_contains($uri, '/api/v1/marketing') && $response->status() >= 200 && $response->status() < 300) {
+        if (strtoupper($method) !== 'HEAD' && str_contains($uri, '/api/v1/marketing') && $response->status() >= 200 && $response->status() < 300) {
             $route = app('router')->getRoutes()->match(\Illuminate\Http\Request::create($uri, $method));
             $document = json_decode(file_get_contents(getenv('MARKETING_API_CONTRACT_DOCUMENT') ?: storage_path('api-docs/api-docs.json')), true, 512, JSON_THROW_ON_ERROR);
             $contract = $document['paths']['/'.$route->uri()][strtolower($method)]['responses'][$response->status()] ?? null;
@@ -21,7 +21,7 @@ trait CollectsMarketingApiSamples
                 $this->assertSame([], $errors, $method.' /'.$route->uri().' response contract');
             }
         }
-        if (($path = getenv('MARKETING_API_CONTRACT_SAMPLES')) && str_contains($uri, '/api/v1/marketing') && $response->status() < 300) {
+        if (strtoupper($method) !== 'HEAD' && ($path = getenv('MARKETING_API_CONTRACT_SAMPLES')) && str_contains($uri, '/api/v1/marketing') && $response->status() < 300) {
             $route = app('router')->getRoutes()->match(\Illuminate\Http\Request::create($uri, $method));
             file_put_contents($path, json_encode(['method' => strtolower($method), 'path' => '/'.$route->uri(), 'status' => $response->status(),
                 'body' => $response->status() === 204 ? null : json_decode($response->getContent(), false), 'fields' => $route->defaults['marketing_fields'] ?? [], 'defaults' => $route->defaults], JSON_THROW_ON_ERROR)."\n", FILE_APPEND | LOCK_EX);

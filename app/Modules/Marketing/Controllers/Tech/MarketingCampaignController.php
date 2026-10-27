@@ -553,7 +553,7 @@ class MarketingCampaignController extends Controller
     {
         abort_if(! in_array($campaign->status, ['approved', 'active'], true), 422, 'Campaign must be approved before sending.');
 
-        SendDueMarketingCampaignEmails::dispatch($campaign->id)->onQueue('email');
+        SendDueMarketingCampaignEmails::dispatch($campaign->id)->onQueue('email')->afterCommit();
 
         return redirect()
             ->route('tech.marketing.campaigns.show', $campaign)

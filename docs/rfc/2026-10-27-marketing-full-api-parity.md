@@ -16,8 +16,8 @@ not approve the complete design below. The 2026-06-09 ownership ADR and approved
 
 All routes/actions and embedded form/detail workflows are mapped in
 ../plans/2026-10-27-marketing-api-coverage-matrix.md and .json. The full existing
-Marketing test baseline passes 65 tests / 811 assertions on Dev. No implementation,
-external provider call, real email send or production change is part of this plan.
+Marketing test baseline passes 65 tests / 811 assertions on Dev. The initial planning baseline performed no implementation or real provider send.
+Current verification is recorded in the linked Marketing verification artifacts.
 
 ## Goals
 
@@ -202,3 +202,12 @@ Approved by Svein Tore on 2026-10-27: "Godkjenner og merge til main".
 Implement and verify sequentially on authoritative Dev, then promote a scoped tested
 candidate to Main. Human scenario review remains Pending; this authorization permits
 Main promotion with those checks outstanding, not production rollout or activation.
+
+
+## Implementation And Verification
+
+All six slices are Done On Dev. Final Dev and Main candidate Marketing checks each
+pass 87 tests / 1931 assertions; the affected Main batch passes 488 / 7469. Native
+DB, trusted HTTPS, 42 operations / 62 schemas and actual BookStack 449 content/access
+are verified. Main promotion is explicitly authorized; production and human scenario
+review remain separate. See plans/2026-10-27-marketing-api-verification.md/.json.

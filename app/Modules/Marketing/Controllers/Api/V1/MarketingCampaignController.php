@@ -367,6 +367,7 @@ class MarketingCampaignController extends Controller
         }
 
         try {
+            $request->attributes->set('marketing_provider_started', true);
             $messageId = $sendTest->handle($campaign, $email, $request->user(), $payload);
         } catch (Throwable $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
@@ -401,6 +402,8 @@ class MarketingCampaignController extends Controller
         }
 
         try {
+            $request->attributes->set('marketing_provider_started', true);
+
             return response()->json(['data' => $draftEmail->handle($request->user(), $campaign, $email, $data)]);
         } catch (RuntimeException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
@@ -417,6 +420,8 @@ class MarketingCampaignController extends Controller
         ]);
 
         try {
+            $request->attributes->set('marketing_provider_started', true);
+
             return response()->json(['data' => $draftPlan->handle($request->user(), $campaign, $data)]);
         } catch (RuntimeException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
@@ -475,6 +480,7 @@ class MarketingCampaignController extends Controller
 
         $token = $request->user()->currentAccessToken();
         abort_unless($token && method_exists($token, 'getKey') && $token->getKey(), 403, 'API send jobs require a persistent bearer token.');
+        $request->attributes->set('marketing_provider_started', true);
         SendDueMarketingCampaignEmails::dispatch($campaign->id, [
             'actor_id' => $request->user()->id, 'token_id' => $token->getKey(),
             'operation_id' => $request->attributes->get('marketing_operation_id'),

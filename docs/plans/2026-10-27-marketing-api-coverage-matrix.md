@@ -1,9 +1,10 @@
 # Marketing Browser/API Coverage Matrix
 
-Status: Draft / awaiting approval; baseline evidence only.
+Status: Done On Dev / Main candidate under final verification / human scenarios Pending.
 Date: 2026-10-27. Runtime: `/var/Projects/tdPSA`, branch `Dev`.
 28 staff browser route rows + 3 public capability rows; 24 API route rows / 29 HTTP
-operations excluding HEAD. Generated Swagger currently contains zero Marketing paths.
+operations excluding HEAD. Baseline Swagger had zero Marketing paths. Current coverage: 42 protected HTTP
+operations, 62 typed schemas and the three preserved public tracking capabilities.
 Every existing API operation remains in scope, including both PUT and PATCH aliases.
 An existing route does not establish complete workflow, authorization or typed-contract parity.
 
@@ -65,3 +66,19 @@ module route, ability/native permission, shared action/query, typed request/succ
 schema, relevant positive/negative test and exact read-back. Record actual operation totals
 after implementation, not a projected 100% claim. Public tracking/unsubscribe are capabilities
 with their existing URLs and response media types, not authenticated admin CRUD endpoints.
+
+## Verified Implementation (2026-10-27)
+
+All 31 browser rows and seven embedded/API-only groups are implemented. The JSON retains
+initial gaps as historical baseline and records each current route/ability/native mapping,
+operation ID, test files and exact success-method evidence. 42/42 protected HTTP methods
+have successful synthetic payloads validated against the fixed published schema snapshot.
+Public pixel/click tests and positive unsubscribe/suppression regression preserve capability
+semantics. The standalone Marketing tests pass 87 / 1931 on Dev. Native MySQL mutex,
+uniqueness, encrypted read-back and rollback pass; exact Dev migration is installed.
+Seven trusted HTTPS reads, anonymous 401 and 42-operation Swagger are independently verified.
+Three Knowledge sources are exact-read-back internal published articles; full guide is
+published/read back in BookStack 449 with existing employee permissions unchanged.
+Standalone page creation is blocked by connector validation; existing-page publication
+is verified and is not a handbook-content blocker. OpenWebUI retrieval is untested.
+Main candidate broad tests: 488 / 7469 passed; final Marketing verification also passes 87 / 1931. Main/production and human scenario gates are separate.
