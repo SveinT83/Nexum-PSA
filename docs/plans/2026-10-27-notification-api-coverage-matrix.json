@@ -1,0 +1,1626 @@
+{
+  "date": "2026-10-27",
+  "state": "Verified On Dev; explicit Main promotion authorized; human scenario review remains In Review",
+  "root": "/var/Projects/tdPSA",
+  "branch": "Dev",
+  "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "counts": {
+    "notification_browser_rows": 14,
+    "customer_portal_browser_rows": 5,
+    "notification_api_http_operations": 30,
+    "workday_existing_api_http_operations": 4,
+    "notification_schemas": 39,
+    "related_workday_new_detail_operations": 1,
+    "baseline_notification_api_http_operations": 3
+  },
+  "browser_routes": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/notification-channels",
+      "name": "tech.admin.notification-channels.index",
+      "action": "App\\Modules\\Notification\\Controllers\\Admin\\NotificationChannelController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B12"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/notification-channels/web-push/devices",
+      "name": "tech.admin.notification-channels.web-push.devices.index",
+      "action": "App\\Modules\\Notification\\Controllers\\Admin\\WebPushDeviceController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B16"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/admin/notification-channels/web-push/devices/{subscription}",
+      "name": "tech.admin.notification-channels.web-push.devices.destroy",
+      "action": "App\\Modules\\Notification\\Controllers\\Admin\\WebPushDeviceController@destroy",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B17"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/admin/notification-channels/{channel}",
+      "name": "tech.admin.notification-channels.update",
+      "action": "App\\Modules\\Notification\\Controllers\\Admin\\NotificationChannelController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B14"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/notification-channels/{channel}/edit",
+      "name": "tech.admin.notification-channels.edit",
+      "action": "App\\Modules\\Notification\\Controllers\\Admin\\NotificationChannelController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B13"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/notification-channels/{channel}/test",
+      "name": "tech.admin.notification-channels.test",
+      "action": "App\\Modules\\Notification\\Controllers\\Admin\\NotificationChannelController@test",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B15"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/profile/notifications",
+      "name": "tech.profile.notifications",
+      "action": "App\\Modules\\Notification\\Controllers\\NotificationSettingsController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B05",
+        "W02"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/profile/notifications",
+      "name": "tech.profile.notifications.update",
+      "action": "App\\Modules\\Notification\\Controllers\\NotificationSettingsController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B06",
+        "W02"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/profile/notifications/open/{notification}",
+      "name": "tech.profile.notifications.open",
+      "action": "App\\Modules\\Notification\\Controllers\\NotificationOpenController",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B04",
+        "W04"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/profile/notifications/web-push/devices",
+      "name": "tech.profile.notifications.web-push.devices.index",
+      "action": "App\\Modules\\Notification\\Controllers\\WebPushSubscriptionController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B07"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/profile/notifications/web-push/devices",
+      "name": "tech.profile.notifications.web-push.devices.store",
+      "action": "App\\Modules\\Notification\\Controllers\\WebPushSubscriptionController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B08"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/profile/notifications/web-push/devices/current",
+      "name": "tech.profile.notifications.web-push.devices.current",
+      "action": "App\\Modules\\Notification\\Controllers\\WebPushSubscriptionController@current",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B09"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/profile/notifications/web-push/devices/{subscription}",
+      "name": "tech.profile.notifications.web-push.devices.destroy",
+      "action": "App\\Modules\\Notification\\Controllers\\WebPushSubscriptionController@destroy",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B10"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/profile/notifications/web-push/test",
+      "name": "tech.profile.notifications.web-push.test",
+      "action": "App\\Modules\\Notification\\Controllers\\WebPushSelfTestController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "Illuminate\\Routing\\Middleware\\ThrottleRequests:3,10"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B11"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "portal/notifications",
+      "name": "customer-portal.notifications.index",
+      "action": "App\\Modules\\CustomerPortal\\Controllers\\Portal\\CustomerPortalNotificationController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B18",
+        "B19"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "portal/notifications/preferences",
+      "name": "customer-portal.notifications.preferences.update",
+      "action": "App\\Modules\\CustomerPortal\\Controllers\\Portal\\CustomerPortalNotificationController@updatePreferences",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B20"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "portal/notifications/read-all",
+      "name": "customer-portal.notifications.read-all",
+      "action": "App\\Modules\\CustomerPortal\\Controllers\\Portal\\CustomerPortalNotificationController@markAllRead",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B21"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "portal/notifications/{notification}/open",
+      "name": "customer-portal.notifications.open",
+      "action": "App\\Modules\\CustomerPortal\\Controllers\\Portal\\CustomerPortalNotificationController@open",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B22"
+      ]
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "portal/notifications/{notification}/read",
+      "name": "customer-portal.notifications.read",
+      "action": "App\\Modules\\CustomerPortal\\Controllers\\Portal\\CustomerPortalNotificationController@markRead",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Modules\\CustomerPortal\\Middleware\\EnsureCustomerPortalAccess"
+      ],
+      "path": null,
+      "coverage_ids": [
+        "B21"
+      ]
+    }
+  ],
+  "existing_notification_api_routes": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/notifications",
+      "name": "api.v1.notifications.index",
+      "action": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController@index",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:notifications.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/notifications/read-all",
+      "name": "api.v1.notifications.read-all",
+      "action": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController@markAllRead",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:notifications.update"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/notifications/{notification}/read",
+      "name": "api.v1.notifications.read",
+      "action": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController@markRead",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:notifications.update"
+      ],
+      "path": null
+    }
+  ],
+  "related_workday_routes": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/workday-reminder-preferences",
+      "name": "api.v1.workday-reminder-preferences.show",
+      "action": "App\\Modules\\Workday\\Controllers\\Tech\\ReminderController@preferences",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:workday-reminders.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "api/v1/workday-reminder-preferences",
+      "name": "api.v1.workday-reminder-preferences.update",
+      "action": "App\\Modules\\Workday\\Controllers\\Tech\\ReminderController@updatePreferences",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:workday-reminders.write"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/workday-reminders",
+      "name": "api.v1.workday-reminders.index",
+      "action": "App\\Modules\\Workday\\Controllers\\Tech\\ReminderController@index",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:workday-reminders.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/workday-reminders/{id}/snooze",
+      "name": "api.v1.workday-reminders.snooze",
+      "action": "App\\Modules\\Workday\\Controllers\\Tech\\ReminderController@snooze",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:workday-reminders.write"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/workday-reminders/{id}/open",
+      "name": "tech.workday-reminders.open",
+      "action": "App\\Modules\\Workday\\Controllers\\Tech\\ReminderController@open",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/workday-reminders/{id}/snooze",
+      "name": "tech.workday-reminders.snooze",
+      "action": "App\\Modules\\Workday\\Controllers\\Tech\\ReminderController@snooze",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "B01",
+      "workflow": "Own list and recent bell",
+      "kind": "read",
+      "ability": "notifications.read",
+      "planned_api": "GET /api/v1/notifications",
+      "baseline": "Partial",
+      "source": "NotificationController@index; NotificationBell::loadNotifications",
+      "acceptance": "Shared visibility, bounded pagination, complete unread total and typed response",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "GET",
+          "path": "/api/v1/notifications",
+          "scope": "notifications.read",
+          "success_schema": "NotificationApiList"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/notifications/summary",
+          "scope": "notifications.read",
+          "success_schema": "NotificationApiSummary"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B02",
+      "workflow": "Own detail and target context",
+      "kind": "read",
+      "ability": "notifications.read",
+      "planned_api": "GET /api/v1/notifications/{notification}",
+      "baseline": "Missing",
+      "source": "NotificationOpenController; bell item",
+      "acceptance": "No read side effect or additional restricted source data",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "GET",
+          "path": "/api/v1/notifications/{notification}",
+          "scope": "notifications.read",
+          "success_schema": "NotificationApiRecordResponse"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B03",
+      "workflow": "Mark one/all read",
+      "kind": "write",
+      "ability": "notifications.update",
+      "planned_api": "POST /api/v1/notifications/{notification}/read; POST /api/v1/notifications/read-all",
+      "baseline": "Partial",
+      "source": "NotificationController; NotificationBell",
+      "acceptance": "Current visibility and exact persisted results; source work state unchanged",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "POST",
+          "path": "/api/v1/notifications/read-all",
+          "scope": "notifications.update",
+          "success_schema": "NotificationApiAcknowledgement"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/notifications/{notification}/read",
+          "scope": "notifications.update",
+          "success_schema": "NotificationApiRecordResponse"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B04",
+      "workflow": "Open own notification",
+      "kind": "action",
+      "ability": "notifications.update",
+      "planned_api": "POST /api/v1/notifications/{notification}/open",
+      "baseline": "Missing",
+      "source": "NotificationOpenController; NotificationBell::openNotification",
+      "acceptance": "Safe current target; inbound source acknowledgement stays separate",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "POST",
+          "path": "/api/v1/notifications/{notification}/open",
+          "scope": "notifications.update",
+          "success_schema": "NotificationApiOpen"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B05",
+      "workflow": "Internal preference/context form",
+      "kind": "read",
+      "ability": "notifications.preferences.read",
+      "planned_api": "GET /api/v1/notifications/preferences; GET /api/v1/notifications/context",
+      "baseline": "Missing",
+      "source": "NotificationSettingsController@show",
+      "acceptance": "Groups/defaults/support/readiness; Workday separately gated; webhook configured only",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "GET",
+          "path": "/api/v1/notifications/context",
+          "scope": "notifications.preferences.read",
+          "success_schema": "NotificationApiPreferences"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/notifications/preferences",
+          "scope": "notifications.preferences.read",
+          "success_schema": "NotificationApiPreferences"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B06",
+      "workflow": "Update own internal preferences",
+      "kind": "write",
+      "ability": "notifications.preferences.write",
+      "planned_api": "PUT /api/v1/notifications/preferences",
+      "baseline": "Missing",
+      "source": "NotificationSettingsController@update",
+      "acceptance": "Transactional validated batch; write-only credential URLs; no Workday bypass",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "PUT",
+          "path": "/api/v1/notifications/preferences",
+          "scope": "notifications.preferences.write",
+          "success_schema": "NotificationApiPreferences"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B07",
+      "workflow": "List own Web Push devices",
+      "kind": "read",
+      "ability": "notifications.devices.read",
+      "planned_api": "GET /api/v1/notifications/web-push/devices",
+      "baseline": "Missing",
+      "source": "WebPushSubscriptionController@index",
+      "acceptance": "public_id and safeSummary only",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "GET",
+          "path": "/api/v1/notifications/web-push/devices",
+          "scope": "notifications.devices.read",
+          "success_schema": "NotificationApiDevices"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B08",
+      "workflow": "Register own browser subscription",
+      "kind": "write",
+      "ability": "notifications.devices.write",
+      "planned_api": "POST /api/v1/notifications/web-push/devices",
+      "baseline": "Missing",
+      "source": "WebPushSubscriptionController@store",
+      "acceptance": "Direct consent workflow; secret input never echoed; unique ownership",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "POST",
+          "path": "/api/v1/notifications/web-push/devices",
+          "scope": "notifications.devices.write",
+          "success_schema": "NotificationApiDeviceResponse"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B09",
+      "workflow": "Resolve current device and touch last seen",
+      "kind": "action",
+      "ability": "notifications.devices.write",
+      "planned_api": "POST /api/v1/notifications/web-push/devices/current",
+      "baseline": "Missing",
+      "source": "WebPushSubscriptionController@current",
+      "acceptance": "POST retained because last_seen_at changes",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "POST",
+          "path": "/api/v1/notifications/web-push/devices/current",
+          "scope": "notifications.devices.write",
+          "success_schema": "NotificationApiDeviceResponse"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B10",
+      "workflow": "Revoke own device",
+      "kind": "write",
+      "ability": "notifications.devices.write",
+      "planned_api": "DELETE /api/v1/notifications/web-push/devices/{subscription}",
+      "baseline": "Missing",
+      "source": "WebPushSubscriptionController@destroy",
+      "acceptance": "Own public ID; exact removal and audit read-back",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "DELETE",
+          "path": "/api/v1/notifications/web-push/devices/{subscription}",
+          "scope": "notifications.devices.write",
+          "success_schema": "NotificationApiRemoved"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B11",
+      "workflow": "Generic own-device self-test",
+      "kind": "action",
+      "ability": "notifications.tests.execute",
+      "planned_api": "POST /api/v1/notifications/web-push/test",
+      "baseline": "Missing",
+      "source": "WebPushSelfTestController@store",
+      "acceptance": "Readiness, 3/10 throttle, command claim, 202 means queued",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "POST",
+          "path": "/api/v1/notifications/web-push/test",
+          "scope": "notifications.tests.execute",
+          "success_schema": "NotificationApiQueued"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B12",
+      "workflow": "Admin channel inventory",
+      "kind": "read",
+      "ability": "notifications.channels.read",
+      "planned_api": "GET /api/v1/notifications/channels",
+      "baseline": "Missing",
+      "source": "NotificationChannelController@index",
+      "acceptance": "Also native notification.manage_channels; safe readiness/counts",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "GET",
+          "path": "/api/v1/notifications/channels",
+          "scope": "notifications.channels.read",
+          "success_schema": "NotificationApiChannelList"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B13",
+      "workflow": "Admin channel edit context/detail",
+      "kind": "read",
+      "ability": "notifications.channels.read",
+      "planned_api": "GET /api/v1/notifications/channels/{channel}; GET /api/v1/notifications/channels/{channel}/context",
+      "baseline": "Missing",
+      "source": "NotificationChannelController@edit",
+      "acceptance": "Bounded native options and driver fields; no secret config echo",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "GET",
+          "path": "/api/v1/notifications/channels/{channel}/context",
+          "scope": "notifications.channels.read",
+          "success_schema": "NotificationApiChannelContext"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/notifications/channels/{channel}",
+          "scope": "notifications.channels.read",
+          "success_schema": "NotificationApiChannelResponse"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B14",
+      "workflow": "Admin channel update",
+      "kind": "write",
+      "ability": "notifications.channels.write",
+      "planned_api": "PUT /api/v1/notifications/channels/{channel}",
+      "baseline": "Missing",
+      "source": "NotificationChannelController@update",
+      "acceptance": "Native rights, driver allowlists, expected state, encrypted write-only secrets",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "PUT",
+          "path": "/api/v1/notifications/channels/{channel}",
+          "scope": "notifications.channels.write",
+          "success_schema": "NotificationApiChannelResponse"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B15",
+      "workflow": "Admin channel test",
+      "kind": "action",
+      "ability": "notifications.channels.test",
+      "planned_api": "POST /api/v1/notifications/channels/{channel}/test",
+      "baseline": "Missing",
+      "source": "NotificationChannelController@test",
+      "acceptance": "SMS dry_run/contact consent; Talk accepted != delivered; no blind replay",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "POST",
+          "path": "/api/v1/notifications/channels/{channel}/test",
+          "scope": "notifications.channels.test",
+          "success_schema": "NotificationApiTestOutcome"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B16",
+      "workflow": "Admin device inventory/search",
+      "kind": "read",
+      "ability": "notifications.devices.manage",
+      "planned_api": "GET /api/v1/notifications/admin/web-push/devices",
+      "baseline": "Missing",
+      "source": "Admin/WebPushDeviceController@index",
+      "acceptance": "Native manage_channels; safe target owner/device fields only",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "GET",
+          "path": "/api/v1/notifications/admin/web-push/devices",
+          "scope": "notifications.devices.manage",
+          "success_schema": "NotificationApiAdminDevices"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B17",
+      "workflow": "Admin device revocation",
+      "kind": "write",
+      "ability": "notifications.devices.manage",
+      "planned_api": "DELETE /api/v1/notifications/admin/web-push/devices/{subscription}",
+      "baseline": "Missing",
+      "source": "Admin/WebPushDeviceController@destroy",
+      "acceptance": "Native permission, public ID, audit and exact read-back",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "DELETE",
+          "path": "/api/v1/notifications/admin/web-push/devices/{subscription}",
+          "scope": "notifications.devices.manage",
+          "success_schema": "NotificationApiRemoved"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B18",
+      "workflow": "Portal list/detail/summary",
+      "kind": "read",
+      "ability": "notifications.portal.read",
+      "planned_api": "GET /api/v1/notifications/portal; GET /api/v1/notifications/portal/{notification}",
+      "baseline": "Missing",
+      "source": "CustomerPortalNotificationController@index",
+      "acceptance": "Native active portal context and portal-only copies; no internal payload",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "GET",
+          "path": "/api/v1/notifications/portal",
+          "scope": "notifications.portal.read",
+          "success_schema": "NotificationApiList"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/notifications/portal/summary",
+          "scope": "notifications.portal.read",
+          "success_schema": "NotificationApiSummary"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/notifications/portal/{notification}",
+          "scope": "notifications.portal.read",
+          "success_schema": "NotificationApiRecordResponse"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B19",
+      "workflow": "Portal preference context",
+      "kind": "read",
+      "ability": "notifications.portal.read",
+      "planned_api": "GET /api/v1/notifications/portal/preferences",
+      "baseline": "Missing",
+      "source": "CustomerPortalNotificationController@index",
+      "acceptance": "Portal audience and mail/database fields only",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "GET",
+          "path": "/api/v1/notifications/portal/preferences",
+          "scope": "notifications.portal.read",
+          "success_schema": "NotificationApiPreferences"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B20",
+      "workflow": "Portal preference update",
+      "kind": "write",
+      "ability": "notifications.portal.preferences.write",
+      "planned_api": "PUT /api/v1/notifications/portal/preferences",
+      "baseline": "Missing",
+      "source": "CustomerPortalNotificationController@updatePreferences",
+      "acceptance": "Same rows; unsupported channels remain disabled",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "PUT",
+          "path": "/api/v1/notifications/portal/preferences",
+          "scope": "notifications.portal.preferences.write",
+          "success_schema": "NotificationApiPreferences"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B21",
+      "workflow": "Portal mark one/all read",
+      "kind": "write",
+      "ability": "notifications.portal.update",
+      "planned_api": "POST /api/v1/notifications/portal/{notification}/read; POST /api/v1/notifications/portal/read-all",
+      "baseline": "Missing",
+      "source": "CustomerPortalNotificationController@markRead/@markAllRead",
+      "acceptance": "Other users and internal copies untouched",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "POST",
+          "path": "/api/v1/notifications/portal/read-all",
+          "scope": "notifications.portal.update",
+          "success_schema": "NotificationApiAcknowledgement"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/notifications/portal/{notification}/read",
+          "scope": "notifications.portal.update",
+          "success_schema": "NotificationApiRecordResponse"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "B22",
+      "workflow": "Portal open",
+      "kind": "action",
+      "ability": "notifications.portal.update",
+      "planned_api": "POST /api/v1/notifications/portal/{notification}/open",
+      "baseline": "Missing",
+      "source": "CustomerPortalNotificationController@open",
+      "acceptance": "Current portal-safe target and persisted acknowledgement",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "POST",
+          "path": "/api/v1/notifications/portal/{notification}/open",
+          "scope": "notifications.portal.update",
+          "success_schema": "NotificationApiOpen"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    },
+    {
+      "id": "W01",
+      "workflow": "Workday pending reminders",
+      "kind": "read",
+      "ability": "workday-reminders.read",
+      "planned_api": "GET /api/v1/workday-reminders",
+      "baseline": "Existing - verify",
+      "source": "Workday/ReminderController@index; bell",
+      "acceptance": "Existing own permission, eligibility, no coordinator",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "GET",
+          "path": "/api/v1/workday-reminders",
+          "scope": "workday-reminders.read"
+        }
+      ],
+      "test_evidence": [
+        "ReminderTest",
+        "ApiContractTest"
+      ]
+    },
+    {
+      "id": "W02",
+      "workflow": "Workday preference read/write",
+      "kind": "read/write",
+      "ability": "workday-reminders.read/write",
+      "planned_api": "GET and PUT /api/v1/workday-reminder-preferences",
+      "baseline": "Existing - verify",
+      "source": "Workday/ReminderController@preferences/@updatePreferences",
+      "acceptance": "Notification-owned shared preference action; no generic scope shortcut",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "GET/PUT",
+          "path": "/api/v1/workday-reminder-preferences",
+          "scope": "workday-reminders.read/write"
+        }
+      ],
+      "test_evidence": [
+        "ReminderTest",
+        "ApiContractTest"
+      ]
+    },
+    {
+      "id": "W03",
+      "workflow": "Workday snooze",
+      "kind": "action",
+      "ability": "workday-reminders.write",
+      "planned_api": "POST /api/v1/workday-reminders/{id}/snooze",
+      "baseline": "Existing - verify",
+      "source": "Workday/ReminderController@snooze; NotificationBell::snoozeWorkday",
+      "acceptance": "Current generation; retry does not extend snooze",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "POST",
+          "path": "/api/v1/workday-reminders/{id}/snooze",
+          "scope": "workday-reminders.write"
+        }
+      ],
+      "test_evidence": [
+        "ReminderTest",
+        "ApiContractTest"
+      ]
+    },
+    {
+      "id": "W04",
+      "workflow": "Workday reminder landing/open",
+      "kind": "read/action",
+      "ability": "workday-reminders.read/write",
+      "planned_api": "GET /api/v1/workday-reminders/{id}; explicit open via owning shared action",
+      "baseline": "Partial - verify",
+      "source": "Workday/ReminderController@open",
+      "acceptance": "Render-equivalent own context; separate explicit read acknowledgement",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "GET",
+          "path": "/api/v1/workday-reminders/{id}",
+          "scope": "workday-reminders.read"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/notifications/{notification}/open",
+          "scope": "notifications.update + workday-reminders.read/write"
+        }
+      ],
+      "test_evidence": [
+        "ReminderTest",
+        "ApiContractTest"
+      ]
+    },
+    {
+      "id": "X01",
+      "workflow": "Own command outcome read-back",
+      "kind": "read",
+      "ability": "notifications.operations.read",
+      "planned_api": "GET /api/v1/notifications/operations/{operation}",
+      "baseline": "Missing",
+      "source": "Planned Notification command receipt",
+      "acceptance": "Original actor/token and current object/native rights; sanitized result only",
+      "status": "Verified On Dev",
+      "runtime_operations": [
+        {
+          "method": "GET",
+          "path": "/api/v1/notifications/operations/{operation}",
+          "scope": "notifications.operations.read",
+          "success_schema": "NotificationApiOperation"
+        }
+      ],
+      "test_evidence": [
+        "NotificationApiParityTest::every_notification_http_operation_has_typed_success_and_exact_persisted_effects",
+        "NotificationApiContractTest::runtime_operations_scopes_path_parameters_and_swagger_contracts_match_exactly"
+      ]
+    }
+  ],
+  "completion_evidence_required": [
+    "runtime method/path",
+    "OpenAPI operation and request/success/error schemas",
+    "native and token rights",
+    "test name and assertion evidence",
+    "exact result and side-effect read-back",
+    "handbook publication/access read-back"
+  ],
+  "live_github": {
+    "closed_completed": [
+      257
+    ],
+    "separate_open": [
+      205,
+      258,
+      262
+    ],
+    "issue205_comments": 0
+  },
+  "contributor_preservation": {
+    "notification_files": 89,
+    "sha256_before_after_equal": true
+  },
+  "verification_report": "2026-10-27-notification-api-verification.md",
+  "current_api_operations": [
+    {
+      "method": "get",
+      "path": "notifications",
+      "name": "notifications.index",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+      "action": "index",
+      "ability": "notifications.read",
+      "fields": [
+        "page",
+        "per_page",
+        "unread"
+      ],
+      "defaults": {
+        "notification_legacy": true
+      },
+      "portal": false,
+      "response_schema": "NotificationApiList"
+    },
+    {
+      "method": "get",
+      "path": "notifications/summary",
+      "name": "notifications.summary",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+      "action": "summary",
+      "ability": "notifications.read",
+      "fields": [],
+      "defaults": {
+        "notification_legacy": true
+      },
+      "portal": false,
+      "response_schema": "NotificationApiSummary"
+    },
+    {
+      "method": "get",
+      "path": "notifications/context",
+      "name": "notifications.context",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationPreferencesController",
+      "action": "show",
+      "ability": "notifications.preferences.read",
+      "fields": [],
+      "defaults": {},
+      "portal": false,
+      "response_schema": "NotificationApiPreferences"
+    },
+    {
+      "method": "get",
+      "path": "notifications/preferences",
+      "name": "notifications.preferences.show",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationPreferencesController",
+      "action": "show",
+      "ability": "notifications.preferences.read",
+      "fields": [],
+      "defaults": {},
+      "portal": false,
+      "response_schema": "NotificationApiPreferences"
+    },
+    {
+      "method": "put",
+      "path": "notifications/preferences",
+      "name": "notifications.preferences.update",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationPreferencesController",
+      "action": "update",
+      "ability": "notifications.preferences.write",
+      "fields": [
+        "settings"
+      ],
+      "defaults": {},
+      "portal": false,
+      "response_schema": "NotificationApiPreferences",
+      "request_schema": "NotificationApiPreferencesInput"
+    },
+    {
+      "method": "get",
+      "path": "notifications/web-push/devices",
+      "name": "notifications.devices.index",
+      "controller": "App\\Modules\\Notification\\Controllers\\WebPushSubscriptionController",
+      "action": "index",
+      "ability": "notifications.devices.read",
+      "fields": [],
+      "defaults": {},
+      "portal": false,
+      "response_schema": "NotificationApiDevices"
+    },
+    {
+      "method": "post",
+      "path": "notifications/web-push/devices",
+      "name": "notifications.devices.store",
+      "controller": "App\\Modules\\Notification\\Controllers\\WebPushSubscriptionController",
+      "action": "store",
+      "ability": "notifications.devices.write",
+      "fields": [
+        "endpoint",
+        "keys",
+        "content_encoding"
+      ],
+      "defaults": {},
+      "portal": false,
+      "response_schema": "NotificationApiDeviceResponse",
+      "request_schema": "NotificationApiDeviceInput"
+    },
+    {
+      "method": "post",
+      "path": "notifications/web-push/devices/current",
+      "name": "notifications.devices.current",
+      "controller": "App\\Modules\\Notification\\Controllers\\WebPushSubscriptionController",
+      "action": "current",
+      "ability": "notifications.devices.write",
+      "fields": [
+        "endpoint"
+      ],
+      "defaults": {},
+      "portal": false,
+      "response_schema": "NotificationApiDeviceResponse",
+      "request_schema": "NotificationApiEndpointInput"
+    },
+    {
+      "method": "delete",
+      "path": "notifications/web-push/devices/{subscription}",
+      "name": "notifications.devices.destroy",
+      "controller": "App\\Modules\\Notification\\Controllers\\WebPushSubscriptionController",
+      "action": "destroy",
+      "ability": "notifications.devices.write",
+      "fields": [],
+      "defaults": {},
+      "portal": false,
+      "response_schema": "NotificationApiRemoved"
+    },
+    {
+      "method": "post",
+      "path": "notifications/web-push/test",
+      "name": "notifications.devices.test",
+      "controller": "App\\Modules\\Notification\\Controllers\\WebPushSelfTestController",
+      "action": "store",
+      "ability": "notifications.tests.execute",
+      "fields": [
+        "endpoint"
+      ],
+      "defaults": {
+        "notification_command": true,
+        "notification_external": true
+      },
+      "portal": false,
+      "response_schema": "NotificationApiQueued",
+      "request_schema": "NotificationApiEndpointInput"
+    },
+    {
+      "method": "get",
+      "path": "notifications/channels",
+      "name": "notifications.channels.index",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationAdministrationController",
+      "action": "index",
+      "ability": "notifications.channels.read",
+      "fields": [],
+      "defaults": {
+        "notification_admin": true
+      },
+      "portal": false,
+      "response_schema": "NotificationApiChannelList"
+    },
+    {
+      "method": "get",
+      "path": "notifications/channels/{channel}/context",
+      "name": "notifications.channels.context",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationAdministrationController",
+      "action": "context",
+      "ability": "notifications.channels.read",
+      "fields": [],
+      "defaults": {
+        "notification_admin": true
+      },
+      "portal": false,
+      "response_schema": "NotificationApiChannelContext"
+    },
+    {
+      "method": "get",
+      "path": "notifications/channels/{channel}",
+      "name": "notifications.channels.show",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationAdministrationController",
+      "action": "show",
+      "ability": "notifications.channels.read",
+      "fields": [],
+      "defaults": {
+        "notification_admin": true
+      },
+      "portal": false,
+      "response_schema": "NotificationApiChannelResponse"
+    },
+    {
+      "method": "put",
+      "path": "notifications/channels/{channel}",
+      "name": "notifications.channels.update",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationAdministrationController",
+      "action": "update",
+      "ability": "notifications.channels.write",
+      "fields": [
+        "is_enabled",
+        "config",
+        "secrets"
+      ],
+      "defaults": {
+        "notification_admin": true,
+        "notification_command": true,
+        "notification_if_match": true
+      },
+      "portal": false,
+      "response_schema": "NotificationApiChannelResponse",
+      "request_schema": "NotificationApiChannelInput"
+    },
+    {
+      "method": "post",
+      "path": "notifications/channels/{channel}/test",
+      "name": "notifications.channels.test",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationAdministrationController",
+      "action": "test",
+      "ability": "notifications.channels.test",
+      "fields": [
+        "test_contact_id",
+        "test_template_key"
+      ],
+      "defaults": {
+        "notification_admin": true,
+        "notification_command": true,
+        "notification_external": true
+      },
+      "portal": false,
+      "response_schema": "NotificationApiTestOutcome",
+      "request_schema": "NotificationApiChannelTestInput"
+    },
+    {
+      "method": "get",
+      "path": "notifications/admin/web-push/devices",
+      "name": "notifications.admin.devices.index",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationAdministrationController",
+      "action": "devices",
+      "ability": "notifications.devices.manage",
+      "fields": [
+        "search",
+        "page",
+        "per_page"
+      ],
+      "defaults": {
+        "notification_admin": true
+      },
+      "portal": false,
+      "response_schema": "NotificationApiAdminDevices"
+    },
+    {
+      "method": "delete",
+      "path": "notifications/admin/web-push/devices/{subscription}",
+      "name": "notifications.admin.devices.destroy",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationAdministrationController",
+      "action": "revoke",
+      "ability": "notifications.devices.manage",
+      "fields": [],
+      "defaults": {
+        "notification_admin": true,
+        "notification_command": true
+      },
+      "portal": false,
+      "response_schema": "NotificationApiRemoved"
+    },
+    {
+      "method": "get",
+      "path": "notifications/operations/{operation}",
+      "name": "notifications.operations.show",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationAdministrationController",
+      "action": "operation",
+      "ability": "notifications.operations.read",
+      "fields": [],
+      "defaults": {},
+      "portal": false,
+      "response_schema": "NotificationApiOperation"
+    },
+    {
+      "method": "post",
+      "path": "notifications/read-all",
+      "name": "notifications.read-all",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+      "action": "markAllRead",
+      "ability": "notifications.update",
+      "fields": [],
+      "defaults": {
+        "notification_legacy": true
+      },
+      "portal": false,
+      "response_schema": "NotificationApiAcknowledgement"
+    },
+    {
+      "method": "get",
+      "path": "notifications/{notification}",
+      "name": "notifications.show",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+      "action": "show",
+      "ability": "notifications.read",
+      "fields": [],
+      "defaults": {
+        "notification_legacy": true
+      },
+      "portal": false,
+      "response_schema": "NotificationApiRecordResponse"
+    },
+    {
+      "method": "post",
+      "path": "notifications/{notification}/read",
+      "name": "notifications.read",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+      "action": "markRead",
+      "ability": "notifications.update",
+      "fields": [],
+      "defaults": {
+        "notification_legacy": true
+      },
+      "portal": false,
+      "response_schema": "NotificationApiRecordResponse"
+    },
+    {
+      "method": "post",
+      "path": "notifications/{notification}/open",
+      "name": "notifications.open",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+      "action": "open",
+      "ability": "notifications.update",
+      "fields": [],
+      "defaults": {
+        "notification_legacy": true
+      },
+      "portal": false,
+      "response_schema": "NotificationApiOpen"
+    },
+    {
+      "method": "get",
+      "path": "notifications/portal",
+      "name": "notifications.portal.index",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+      "action": "index",
+      "ability": "notifications.portal.read",
+      "fields": [
+        "page",
+        "per_page",
+        "unread"
+      ],
+      "defaults": {
+        "notification_portal": true
+      },
+      "portal": true,
+      "response_schema": "NotificationApiList"
+    },
+    {
+      "method": "get",
+      "path": "notifications/portal/summary",
+      "name": "notifications.portal.summary",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+      "action": "summary",
+      "ability": "notifications.portal.read",
+      "fields": [],
+      "defaults": {
+        "notification_portal": true
+      },
+      "portal": true,
+      "response_schema": "NotificationApiSummary"
+    },
+    {
+      "method": "get",
+      "path": "notifications/portal/preferences",
+      "name": "notifications.portal.preferences.show",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationPreferencesController",
+      "action": "show",
+      "ability": "notifications.portal.read",
+      "fields": [],
+      "defaults": {
+        "notification_portal": true
+      },
+      "portal": true,
+      "response_schema": "NotificationApiPreferences"
+    },
+    {
+      "method": "put",
+      "path": "notifications/portal/preferences",
+      "name": "notifications.portal.preferences.update",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationPreferencesController",
+      "action": "update",
+      "ability": "notifications.portal.preferences.write",
+      "fields": [
+        "settings"
+      ],
+      "defaults": {
+        "notification_portal": true
+      },
+      "portal": true,
+      "response_schema": "NotificationApiPreferences",
+      "request_schema": "NotificationApiPortalPreferencesInput"
+    },
+    {
+      "method": "post",
+      "path": "notifications/portal/read-all",
+      "name": "notifications.portal.read-all",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+      "action": "markAllRead",
+      "ability": "notifications.portal.update",
+      "fields": [],
+      "defaults": {
+        "notification_portal": true
+      },
+      "portal": true,
+      "response_schema": "NotificationApiAcknowledgement"
+    },
+    {
+      "method": "get",
+      "path": "notifications/portal/{notification}",
+      "name": "notifications.portal.show",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+      "action": "show",
+      "ability": "notifications.portal.read",
+      "fields": [],
+      "defaults": {
+        "notification_portal": true
+      },
+      "portal": true,
+      "response_schema": "NotificationApiRecordResponse"
+    },
+    {
+      "method": "post",
+      "path": "notifications/portal/{notification}/read",
+      "name": "notifications.portal.read",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+      "action": "markRead",
+      "ability": "notifications.portal.update",
+      "fields": [],
+      "defaults": {
+        "notification_portal": true
+      },
+      "portal": true,
+      "response_schema": "NotificationApiRecordResponse"
+    },
+    {
+      "method": "post",
+      "path": "notifications/portal/{notification}/open",
+      "name": "notifications.portal.open",
+      "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+      "action": "open",
+      "ability": "notifications.portal.update",
+      "fields": [],
+      "defaults": {
+        "notification_portal": true
+      },
+      "portal": true,
+      "response_schema": "NotificationApiOpen"
+    }
+  ]
+}

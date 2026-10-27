@@ -355,3 +355,20 @@ See [Workday reminders](../../../Workday/Docs/knowledge/reminders.md) and the
 The receipt-based Workday emitter uses its own durable channel claims; it does not enter generic
 queued-notification retry after an ambiguous external submission. This does not change the
 existing Ticket, inbound Email or Storage emitters. Real inbox/device receipt needs pilot review.
+
+## Full Notification API parity (Dev verified, 2026-10-27)
+
+The official API covers personal preferences, Web Push devices, channel settings/tests
+and admin device management. See the Notification API guide for all typed paths/scopes,
+native rights and retry handling. The bell shows the actual unread total, with ten
+recent entries. Preferences save the whole validated submitted batch atomically.
+Guarded admin writes require an operation key/current state; credential inputs remain
+write-only. Talk HTTP success means accepted, with conversation delivery unverified.
+SMS remains dry-run. API tests default off and never configure VAPID/device consent,
+enable channels, start workers/schedulers or release a backlog automatically.
+
+In **Profile > Notifications**, explicitly register a supported HTTPS device and verify
+any separately authorized test on that device. Queued is not received. In **Admin >
+Notification channels**, read current settings before updates/tests and reconcile an
+unknown outcome before another send. #205/#258/#262 remain separate. Production rollout
+is not included; this section documents verified Dev behavior.

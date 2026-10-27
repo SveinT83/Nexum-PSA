@@ -77,3 +77,14 @@ The session-authenticated read APIs are /api/v1/economy/portal/orders, /context,
 and client/site rules. A staff bearer token cannot establish Portal identity. There is no customer
 edit, publication, payment action or new customer API-token issuance. Internal source metadata,
 staff identities and generation diagnostics are excluded. No permission expansion is required.
+
+## Notification API (2026-10-27)
+
+Verified on Dev; production rollout is separate. /api/v1/notifications/portal covers
+list/detail/summary, explicit open/read-one/read-all, and preferences GET/PUT.
+notifications.portal.read/update/preferences.write narrow native active contact,
+account and membership access. Optional membership_id must identify an active own
+membership. Internal copies/preferences are excluded; only portal Email/in-app choices
+can be changed. Open resolves a currently authorized same-origin customer/site target.
+See the Notification API guide for typed contracts/troubleshooting. The native
+**Customer Portal > Notifications** uses the same preference/open/read actions.

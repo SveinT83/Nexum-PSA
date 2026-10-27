@@ -145,5 +145,5 @@ need signals.providers.execute and the default-off config/signal.php switch.
 The exact additive migration is 2026_10_27_030000_create_signal_api_commands.php
 (Dev batch 31). Native MySQL verified encryption, replay uniqueness, rollback and
 two-connection retry serialization with one derived effect. Probe records were removed.
-Human review HR-2026-10-27-SIGNAL-API is Reviewed; Main promotion is authorized. Production remains separately authorized.
+Human review HR-2026-10-27-SIGNAL-API is Reviewed. Source is merged to Main in PR #334; production deployment remains separately authorized.
 No provider/AI/worker/scheduler activation or production deployment is inferred.
