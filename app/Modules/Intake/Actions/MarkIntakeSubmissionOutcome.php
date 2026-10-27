@@ -10,6 +10,12 @@ class MarkIntakeSubmissionOutcome
 {
     public function handle(IntakeSubmission $submission, string $status, ?User $actor = null, ?string $reason = null, array $metadata = []): IntakeSubmission
     {
+        return \App\Modules\Intake\Support\IntakeWorkflowLock::run(fn () => $this->execute($submission, $status, $actor, $reason, $metadata));
+    }
+
+    private function execute(IntakeSubmission $submission, string $status, ?User $actor = null, ?string $reason = null, array $metadata = []): IntakeSubmission
+    {
+        $submission->refresh();
         if (! array_key_exists($status, $this->allowedStatuses())) {
             throw ValidationException::withMessages([
                 'status' => 'Unsupported Intake submission outcome.',
@@ -24,6 +30,14 @@ class MarkIntakeSubmissionOutcome
             throw ValidationException::withMessages([
                 'status' => 'A routed submission can only be marked reviewed or archived.',
             ]);
+        }
+
+        if (! empty($metadata['duplicate_of_submission_id'])) {
+            $duplicateId = (int) $metadata['duplicate_of_submission_id'];
+            if ($status !== IntakeSubmission::STATUS_DUPLICATE || $duplicateId === $submission->id
+                || ! IntakeSubmission::whereKey($duplicateId)->exists()) {
+                throw ValidationException::withMessages(['duplicate_of_submission_id' => 'Choose another existing Intake submission for a duplicate outcome.']);
+            }
         }
 
         $before = [

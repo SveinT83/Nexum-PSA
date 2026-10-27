@@ -1,0 +1,409 @@
+{
+  "date": "2026-10-27",
+  "status": "done_on_dev_main_promotion_authorized",
+  "owner": "Codex",
+  "baseline": {
+    "browser_rows": 17,
+    "internal_rows": 14,
+    "public_rows": 3,
+    "api_operations": 0
+  },
+  "operations": [
+    {
+      "id": "IN01",
+      "method": "GET",
+      "path": "/api/v1/intake/context",
+      "ability": "intake.read",
+      "permission": "intake.view",
+      "behavior": "Workspace counts, capabilities and links",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN01",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::discovery_is_read_only_and_native_rights_and_scopes_are_independent",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN02",
+      "method": "GET",
+      "path": "/api/v1/intake/lookups/{kind}",
+      "ability": "intake.forms.write or intake.submissions.review",
+      "permission": "native management/review and related-record access",
+      "behavior": "Paged eligible owners, clients, services and link targets",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN02",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::narrow_manager_can_use_context_create_and_exact_readback_without_workspace_grant",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN03",
+      "method": "GET",
+      "path": "/api/v1/intake/forms",
+      "ability": "intake.read",
+      "permission": "intake.view",
+      "behavior": "Paged/filterable forms and submission counts",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN03",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::discovery_is_read_only_and_native_rights_and_scopes_are_independent",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN04",
+      "method": "GET",
+      "path": "/api/v1/intake/forms/context",
+      "ability": "intake.forms.write",
+      "permission": "intake.manage",
+      "behavior": "Create defaults, 10 field types, mappings, options and settings",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN04",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::narrow_manager_can_use_context_create_and_exact_readback_without_workspace_grant",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN05",
+      "method": "GET",
+      "path": "/api/v1/intake/forms/{form}",
+      "ability": "intake.read or intake.forms.write",
+      "permission": "intake.view or native edit context",
+      "behavior": "Form detail and all ordered field definitions; manage-only context follows native edit rights",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN05",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::narrow_manager_can_use_context_create_and_exact_readback_without_workspace_grant",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN06",
+      "method": "POST",
+      "path": "/api/v1/intake/forms",
+      "ability": "intake.forms.write",
+      "permission": "intake.manage",
+      "behavior": "Create form and fields atomically",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN06",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::create_update_toggle_and_receipt_are_idempotent_encrypted_and_revision_guarded",
+      "schema_validated_success_statuses": [
+        201
+      ]
+    },
+    {
+      "id": "IN07",
+      "method": "PUT",
+      "path": "/api/v1/intake/forms/{form}",
+      "ability": "intake.forms.write",
+      "permission": "intake.manage",
+      "behavior": "Full validated form and ordered-field replacement",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN07",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::create_update_toggle_and_receipt_are_idempotent_encrypted_and_revision_guarded",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN08",
+      "method": "POST",
+      "path": "/api/v1/intake/forms/{form}/toggle",
+      "ability": "intake.forms.write",
+      "permission": "intake.manage",
+      "behavior": "Publish/pause with stale-state protection and exact result",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN08",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::create_update_toggle_and_receipt_are_idempotent_encrypted_and_revision_guarded",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN09",
+      "method": "GET",
+      "path": "/api/v1/intake/submissions",
+      "ability": "intake.read",
+      "permission": "intake.view",
+      "behavior": "Paged review queue, statuses, form/client/date/search filters",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN09",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::queue_filters_and_all_link_lookups_are_typed_and_read_only",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN10",
+      "method": "GET",
+      "path": "/api/v1/intake/submissions/{submission}",
+      "ability": "intake.read or intake.submissions.review",
+      "permission": "intake.view or authorized action read-back",
+      "behavior": "Exact submission, snapshots, normalized fields and safe related links",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN10",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::review_outcomes_duplicate_validation_and_receipt_revocation_work",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN11",
+      "method": "GET",
+      "path": "/api/v1/intake/submissions/{submission}/events",
+      "ability": "intake.read",
+      "permission": "intake.view",
+      "behavior": "Paged audit history with authorized actor references",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN11",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::review_outcomes_duplicate_validation_and_receipt_revocation_work",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN12",
+      "method": "GET",
+      "path": "/api/v1/intake/submissions/{submission}/attachments",
+      "ability": "intake.read",
+      "permission": "intake.view",
+      "behavior": "Safe attachment metadata without disk/path",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN12",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::public_multipart_files_stay_private_and_download_checks_exact_submission_parent",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN13",
+      "method": "GET",
+      "path": "/api/v1/intake/submissions/{submission}/attachments/{attachment}",
+      "ability": "intake.attachments.read",
+      "permission": "intake.view",
+      "behavior": "Stream exact nested attachment; safe disposition, MIME and not-found behavior",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN13",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::public_multipart_files_stay_private_and_download_checks_exact_submission_parent",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN14",
+      "method": "POST",
+      "path": "/api/v1/intake/submissions/{submission}/reviewed",
+      "ability": "intake.submissions.review",
+      "permission": "intake.submission_review",
+      "behavior": "Mark reviewed, preserve routed status, actor/time/event",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN14",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::review_outcomes_duplicate_validation_and_receipt_revocation_work",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN15",
+      "method": "POST",
+      "path": "/api/v1/intake/submissions/{submission}/outcome",
+      "ability": "intake.submissions.review",
+      "permission": "intake.submission_review",
+      "behavior": "Spam/duplicate/rejected/archive, reason and validated duplicate reference",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN15",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::every_review_outcome_persists_audited_state_and_blocks_new_routing",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN16",
+      "method": "POST",
+      "path": "/api/v1/intake/submissions/{submission}/link-existing",
+      "ability": "intake.submissions.review",
+      "permission": "intake.submission_review and exact related-record access",
+      "behavior": "Link Client/Contact/Ticket/Task/Sales opportunity, preserve canonical bridge",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN16",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::existing_contact_and_target_links_use_exact_native_references",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN17",
+      "method": "POST",
+      "path": "/api/v1/intake/submissions/{submission}/route-sales",
+      "ability": "intake.submissions.route",
+      "permission": "intake.submission_review and owning-domain policy",
+      "behavior": "Sales routing including guarded optional Client/Contact creation",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN17",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::routing_uses_native_target_and_replay_never_creates_a_second_target",
+      "schema_validated_success_statuses": [
+        200,
+        202
+      ]
+    },
+    {
+      "id": "IN18",
+      "method": "POST",
+      "path": "/api/v1/intake/submissions/{submission}/route-ticket",
+      "ability": "intake.submissions.route",
+      "permission": "intake.submission_review and owning-domain policy",
+      "behavior": "Ticket routing, native defaults/rules/SLA/contact bridge",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN18",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::routing_uses_native_target_and_replay_never_creates_a_second_target",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN19",
+      "method": "POST",
+      "path": "/api/v1/intake/submissions/{submission}/route-task",
+      "ability": "intake.submissions.route",
+      "permission": "intake.submission_review and owning-domain policy",
+      "behavior": "Task routing, actor/form-owner fallback and matching context",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN19",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::routing_uses_native_target_and_replay_never_creates_a_second_target",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN20",
+      "method": "POST",
+      "path": "/api/v1/intake/previews",
+      "ability": "matching eventual write/action scope",
+      "permission": "same native rights as proposed command",
+      "behavior": "Non-mutating form/route/link/outcome preflight, target effects and revision",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN20",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::previews_do_not_write_and_stale_preview_revisions_cannot_execute",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN21",
+      "method": "GET",
+      "path": "/api/v1/intake/commands/{command}",
+      "ability": "matching originating command scope",
+      "permission": "fresh originating authority and exact actor/token ownership",
+      "behavior": "Encrypted durable command result, completed/skipped/unknown and exact read-back",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN21",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::receipts_are_bound_to_exact_actor_token_and_inactive_or_revoked_identity_is_denied",
+      "schema_validated_success_statuses": [
+        201,
+        200,
+        202
+      ]
+    },
+    {
+      "id": "IN22",
+      "method": "GET",
+      "path": "/api/v1/public/intake/forms/{form}",
+      "ability": "public",
+      "permission": "published/legacy-active form only",
+      "behavior": "Public-safe schema, conditional layout, upload rules and success text",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN22",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::every_field_type_can_be_configured_and_read_back",
+      "schema_validated_success_statuses": [
+        200
+      ]
+    },
+    {
+      "id": "IN23",
+      "method": "POST",
+      "path": "/api/v1/public/intake/forms/{form}/submissions",
+      "ability": "public",
+      "permission": "published form; same throttle/honeypot/validation",
+      "behavior": "JSON or multipart submission with generic safe acceptance and idempotency",
+      "status": "implemented_schema_validated_http_success",
+      "operationId": "intakeIN23",
+      "test": "app/Modules/Intake/Tests/Feature/IntakeApiParityTest.php::public_schema_acceptance_upload_replay_and_honeypot_never_expose_internal_data",
+      "schema_validated_success_statuses": [
+        202
+      ]
+    }
+  ],
+  "browser_map": {
+    "intake.forms.show": [
+      "IN22"
+    ],
+    "intake.forms.submit": [
+      "IN23"
+    ],
+    "intake.forms.thanks": [
+      "IN22",
+      "IN23"
+    ],
+    "tech.admin.system.intake.index": [
+      "IN01",
+      "IN03",
+      "IN09"
+    ],
+    "tech.admin.system.intake.forms.create": [
+      "IN02",
+      "IN04"
+    ],
+    "tech.admin.system.intake.forms.store": [
+      "IN06"
+    ],
+    "tech.admin.system.intake.forms.edit": [
+      "IN02",
+      "IN05"
+    ],
+    "tech.admin.system.intake.forms.update": [
+      "IN07"
+    ],
+    "tech.admin.system.intake.forms.toggle": [
+      "IN08"
+    ],
+    "tech.admin.system.intake.submissions.show": [
+      "IN10",
+      "IN11",
+      "IN12",
+      "IN02"
+    ],
+    "tech.admin.system.intake.submissions.reviewed": [
+      "IN14"
+    ],
+    "tech.admin.system.intake.submissions.outcome": [
+      "IN15"
+    ],
+    "tech.admin.system.intake.submissions.link-existing": [
+      "IN16"
+    ],
+    "tech.admin.system.intake.submissions.route-sales": [
+      "IN17"
+    ],
+    "tech.admin.system.intake.submissions.route-ticket": [
+      "IN18"
+    ],
+    "tech.admin.system.intake.submissions.route-task": [
+      "IN19"
+    ],
+    "tech.admin.system.intake.attachments.download": [
+      "IN13"
+    ]
+  },
+  "rfc": "docs/rfc/2026-10-27-intake-full-api-parity.md",
+  "human_review": "HR-2026-10-27-INTAKE-API",
+  "schemas": 38,
+  "readback": {
+    "native_https_mysql": "passed; exact create/read/replay/update, concurrent one effect and temporary fixture/token cleanup",
+    "public_https_swagger": "23 operations; other contracts unchanged",
+    "handbook": "BookStack 553 exact combined-source content; inherited access; no grant changes",
+    "human_review": "Pending; explicit tested Main merge authorized, not manual scenario confirmation",
+    "production": "not deployed"
+  }
+}

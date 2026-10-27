@@ -35,6 +35,8 @@ class IntakeModuleTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // Concurrent domain suites must not clean this suite's fake uploads.
+        \Illuminate\Support\Facades\ParallelTesting::resolveTokenUsing(fn () => 'intake-'.getmypid());
 
         $this->seed(PermissionSeeder::class);
 
@@ -669,6 +671,7 @@ class IntakeModuleTest extends TestCase
     #[Test]
     public function reviewer_can_close_submission_and_link_existing_records(): void
     {
+        $this->admin->givePermissionTo(['client.view', 'ticket.view']);
         $form = app(EnsureIntakeDefaults::class)->handle();
         $duplicateOf = IntakeSubmission::query()->create([
             'intake_form_id' => $form->id,

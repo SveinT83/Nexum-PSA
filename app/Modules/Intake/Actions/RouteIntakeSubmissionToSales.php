@@ -29,6 +29,12 @@ class RouteIntakeSubmissionToSales
 
     public function handle(IntakeSubmission $submission, bool $force = false, ?User $actor = null): ?SalesOpportunity
     {
+        return \App\Modules\Intake\Support\IntakeWorkflowLock::run(fn () => $this->execute($submission, $force, $actor));
+    }
+
+    private function execute(IntakeSubmission $submission, bool $force = false, ?User $actor = null): ?SalesOpportunity
+    {
+        $submission->refresh();
         $submission->loadMissing(['form', 'attachments', 'matchedClient.sites', 'matchedSite', 'matchedClientUser']);
 
         if ($submission->target_type === SalesOpportunity::class && $submission->target_id) {
@@ -43,6 +49,34 @@ class RouteIntakeSubmissionToSales
             return null;
         }
 
+        if (! $submission->matched_client_id && $submission->form?->auto_create_client
+            && request()->attributes->get('intake_api')
+            && app(\App\Modules\DataExchange\Services\TripletexCustomerNumbers::class)->connection()
+            && ! config('intake.api_provider_customer_creation_enabled')) {
+            $this->markSkipped($submission, 'API provider customer creation is disabled. Create or link a Client first.', [
+                'reason' => 'api_provider_customer_creation_disabled',
+            ], $actor);
+
+            return null;
+        }
+
+        // Provider customer intent must commit outside a routing transaction.
+        if (! $submission->matched_client_id && $submission->form?->auto_create_client) {
+            try {
+                [$client, $site] = $this->createClient($submission, $submission->normalized_payload ?: []);
+                $submission->forceFill(['matched_client_id' => $client->id, 'matched_site_id' => $site->id])->save();
+                $submission->unsetRelation('matchedClient')->unsetRelation('matchedSite');
+            } catch (\Throwable $error) {
+                report($error);
+                $this->markSkipped($submission, 'Client creation requires review in Clients before routing again.', [
+                    'reason' => 'client_creation_requires_reconciliation',
+                    'reconciliation_required' => true,
+                ], $actor);
+
+                return null;
+            }
+        }
+
         return DB::transaction(function () use ($submission, $actor): ?SalesOpportunity {
             $normalized = $submission->normalized_payload ?: [];
             $form = $submission->form;
@@ -53,10 +87,7 @@ class RouteIntakeSubmissionToSales
             $autoCreatedContact = false;
             $intakeMetadata = $this->payload->metadata($submission, IntakeForm::TARGET_SALES_LEAD);
 
-            if (! $client && $form?->auto_create_client) {
-                [$client, $site] = $this->createClient($submission, $normalized);
-                $autoCreatedClient = true;
-            }
+            $autoCreatedClient = ! empty($submission->routing_result['client_request_key']);
 
             if (! $client) {
                 $this->markSkipped($submission, 'No matched client and auto-create client is disabled.', [
@@ -146,22 +177,27 @@ class RouteIntakeSubmissionToSales
     private function createClient(IntakeSubmission $submission, array $normalized): array
     {
         $company = $this->stringValue($normalized['company_name'] ?? null) ?: $this->stringValue($normalized['contact_name'] ?? null) ?: 'Public inquiry '.$submission->id;
-        $client = Client::query()->create([
+        $requestKey = $submission->routing_result['client_request_key'] ?? (string) Str::uuid();
+        $submission->forceFill(['routing_result' => array_replace($submission->routing_result ?: [],
+            ['client_request_key' => $requestKey])])->save();
+        $authority = app(\App\Modules\DataExchange\Services\TripletexCustomerNumbers::class);
+        $attributes = [
             'name' => $company,
-            'client_number' => $this->suggestClientNumber->handle(),
             'org_no' => $this->stringValue($normalized['org_no'] ?? null) ?: null,
             'website' => $this->stringValue($normalized['website'] ?? null) ?: null,
-            'billing_email' => $this->stringValue($normalized['contact_email'] ?? null) ?: null,
-            'lead_temperature' => 3,
+            // The public contact address is not an explicit invoice address.
+            'billing_email' => null,
+            'lead_temperature' => 3, 'active' => true,
             'notes' => 'Created from public intake submission #'.$submission->id.'.',
-            'active' => true,
-        ]);
-
-        $site = ClientSite::query()->create([
-            'client_id' => $client->id,
-            'name' => 'Main Office',
-            'is_default' => true,
-        ]);
+        ];
+        if ($authority->connection()) {
+            $attributes += ['tripletex_number_mode' => true, 'tripletex_request_key' => $requestKey];
+        }
+        $client = app(\App\Modules\Clients\Actions\CreateClientRecord::class)->handle($attributes,
+            function (Client $created): void {
+                ClientSite::create(['client_id' => $created->id, 'name' => 'Main Office', 'is_default' => true]);
+            });
+        $site = $this->defaultSite($client);
 
         return [$client, $site];
     }
@@ -213,7 +249,7 @@ class RouteIntakeSubmissionToSales
     {
         $submission->forceFill([
             'status' => IntakeSubmission::STATUS_ROUTING_SKIPPED,
-            'routing_result' => $metadata + ['message' => $message],
+            'routing_result' => array_replace($submission->routing_result ?: [], $metadata + ['message' => $message]),
         ])->save();
 
         IntakeSubmissionEvent::query()->create([

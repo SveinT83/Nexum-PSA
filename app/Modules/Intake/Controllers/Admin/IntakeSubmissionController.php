@@ -53,8 +53,7 @@ class IntakeSubmissionController extends Controller
         Request $request,
         IntakeSubmission $submission,
         MarkIntakeSubmissionOutcome $markOutcome,
-    ): RedirectResponse
-    {
+    ): RedirectResponse {
         $markOutcome->handle($submission, IntakeSubmission::STATUS_REVIEWED, $request->user());
 
         return back()->with('success', 'Submission marked as reviewed.');
