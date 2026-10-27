@@ -1,5 +1,43 @@
 # tdPSA Development TODO
 
+## Full Documentation browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Reviewed by Svein Tore, 2026-10-27 / Main and production unchanged.
+Owner: Codex. Named reviewer/release owner: Svein Tore.
+Direct authorization: full current-browser API support in this chat, 2026-10-27.
+RFC: rfc/2026-10-27-documentation-full-api-parity.md (Approved).
+ADR: adr/2026-10-27-documentation-api-authority-and-revision-boundary.md (Accepted).
+Five sequential slices: feature-slices/2026-10-27-documentation-full-api-parity.md (Done On Dev).
+Coverage: all 30 browser rows (28 staff + 2 portal); 33 HTTP operations / 40 schemas.
+Final exact affected suite: 548 tests / 8201 assertions; no failures; 1 existing dedicated-MariaDB contract skip.
+Focused Documentation/portal/Storage API/Swagger batch: 103 / 3305; overlapping totals.
+All 33 successful HTTP operations match typed responses; exact runtime/Swagger set,
+37 PHP syntax/Pint, scoped whitespace, native MySQL and trusted HTTPS checks pass.
+Only the exact additive Documentation command migration ran on Dev (batch 30);
+no business backfill, real provider/customer publication, worker or scheduler activation.
+Current scopes and actor rights apply to legacy and new endpoints, including narrow
+edit/admin forms. Master data remains Documentation-owned and shared with Storage.
+Portal audience changes hide documents until explicitly published for the new scope.
+Five Knowledge sources and actual BookStack 503/504/547/423/449 are read back.
+Full guide is embedded in 503; existing connector validation/source drift remains in
+the separate follow-up below. Native pending_push is not BookStack publication proof.
+Staff access inheritance is preserved; employee OpenWebUI retrieval is untested.
+Evidence: plans/2026-10-27-documentation-api-verification.md/.json and coverage matrix.
+
+#275 remains open for immutable Documentation revisions, scoped approval/publication,
+freshness and rollback. This parity change adds no competing lifecycle or #276 sync model.
+Human-review checklist HR-2026-10-27-DOCUMENTATION-API is Reviewed. Svein Tore
+explicitly accepted the completed scope with "Godkjenner" on 2026-10-27.
+This satisfies the human-review gate only. Individual scenario executions are not
+invented, and commit/push/Main promotion/production deployment remain separate.
+Next owner/action (Svein Tore): separately authorize Main promotion when desired.
+No commit/push/merge/deploy was performed. Preserve the 1291-path dirty baseline and
+use the explicit scoped manifest for any future promotion; no unrelated work was reverted.
+
+Main promotion explicitly authorized by Svein Tore on 2026-10-27: "Merge til main".
+A scoped isolated candidate is under verification. Production deployment remains separate.
+
+
 ## Full Storage browser/API coverage (2026-10-26)
 
 Status: Done On Dev / Reviewed by Svein Tore / Merged to Main in PR #326 / Production unchanged.

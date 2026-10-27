@@ -46,3 +46,18 @@ incoming quantities, purchasing/receiving, picking, import review, profiles and
 settings. This update is verified on Dev; Main, production and named human review
 are separate gates. See **Storage Inventory -> Storage API guide** in the handbook and Swagger on the
 target installation. The separate Issue #286 numbering contract remains open.
+
+## Documentation master-data API (Dev, 2026-10-27)
+
+Documentation now exposes the canonical register at `/api/v1/documentation/vendors`
+and the supplier collection at `/api/v1/documentation/suppliers`. Use GET for search
+and detail, POST for creation, and PATCH `/vendors/{vendor}` for maintenance and
+deactivation. Role filters also support manufacturers. Storage lookup uses the same IDs.
+
+Required scopes are documentation.vendors.read/create/update with current
+documentation.view/create/update rights. Writes require a stable Idempotency-Key;
+read the exact record first and use its ETag in If-Match for changes. No purchase,
+stock or supplier-import provenance changes are caused by maintaining this register.
+See **Documentation Overview -> Documentation API guide** for the end-to-end steps.
+Main/production are unchanged. HR-2026-10-27-DOCUMENTATION-API was Reviewed
+by Svein Tore on 2026-10-27; promotion/deployment requires separate authorization.

@@ -1,0 +1,404 @@
+{
+  "status": "Done On Dev / Reviewed by Svein Tore / Main and production unchanged",
+  "date": "2026-10-27",
+  "authoritative_working_copy": "/var/Projects/tdPSA",
+  "branch": "Dev",
+  "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "baseline_browser_rows": 30,
+  "staff_browser_rows": 28,
+  "portal_browser_rows": 2,
+  "baseline_api_http_operations": 16,
+  "api_http_operations": 33,
+  "typed_schemas": 40,
+  "focused_tests": {
+    "passed": 103,
+    "assertions": 3305,
+    "failures": 0,
+    "skips": 0
+  },
+  "final_contract_check": [
+    "  \u2713 generated swagger exactly matches every runtime storage http operat\u2026 0.26s  ",
+    "",
+    "  Tests:    2 passed (1688 assertions)",
+    "  Duration: 0.94s",
+    ""
+  ],
+  "successful_http_operations": {
+    "get /api/v1/documentation/context": 200,
+    "get /api/v1/documentation/lookups/{kind}": 200,
+    "post /api/v1/documentation/suppliers": 201,
+    "post /api/v1/documentation/vendors": 201,
+    "get /api/v1/documentation/suppliers": 200,
+    "get /api/v1/documentation/vendors": 200,
+    "patch /api/v1/documentation/vendors/{vendor}": 200,
+    "get /api/v1/documentation/vendors/{vendor}": 200,
+    "get /api/v1/documentation/operations/{operation}": 200,
+    "post /api/v1/documentation/shipping-carriers": 201,
+    "post /api/v1/documentation/shipping-carriers/{shippingCarrier}/tracking-preview": 200,
+    "patch /api/v1/documentation/shipping-carriers/{shippingCarrier}": 200,
+    "get /api/v1/documentation/shipping-carriers": 200,
+    "get /api/v1/documentation/shipping-carriers/{shippingCarrier}": 200,
+    "post /api/v1/knowledge/documentations": 201,
+    "patch /api/v1/knowledge/documentations/{documentation}": 200,
+    "get /api/v1/knowledge/documentations/{documentation}": 200,
+    "delete /api/v1/knowledge/documentations/{documentation}": 204,
+    "post /api/v1/knowledge/documentation-categories": 201,
+    "put /api/v1/knowledge/documentation-categories/{category}": 200,
+    "get /api/v1/knowledge/documentation-categories/{category}": 200,
+    "post /api/v1/knowledge/documentation-templates": 201,
+    "put /api/v1/knowledge/documentation-templates/{documentationTemplate}": 200,
+    "get /api/v1/knowledge/documentation-templates": 200,
+    "get /api/v1/knowledge/documentation-templates/{documentationTemplate}": 200,
+    "post /api/v1/knowledge/documentations/{documentation}/portal-visibility": 200,
+    "get /api/v1/portal/documents": 200,
+    "get /api/v1/portal/documents/{documentation}": 200,
+    "get /api/v1/knowledge/documentations": 200,
+    "get /api/v1/knowledge/documentation-categories": 200,
+    "patch /api/v1/knowledge/documentation-categories/{category}": 200,
+    "patch /api/v1/knowledge/documentation-templates/{documentationTemplate}": 200,
+    "put /api/v1/knowledge/documentations/{documentation}": 200
+  },
+  "native_database": {
+    "encrypted_roundtrip": true,
+    "unique_replay_key": true,
+    "row_lock_excludes_second_writer": true,
+    "rollback_atomic": true,
+    "probe_table_removed": true
+  },
+  "https": [
+    {
+      "path": "/up",
+      "status": 200,
+      "expected": 200,
+      "tls_verified": true
+    },
+    {
+      "path": "/login",
+      "status": 200,
+      "expected": 200,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/documentation",
+      "status": 200,
+      "expected": 200,
+      "tls_verified": true
+    },
+    {
+      "path": "/docs",
+      "status": 200,
+      "expected": 200,
+      "tls_verified": true
+    },
+    {
+      "published_documentation_operations": 33,
+      "swagger_exact_file_hash": true
+    },
+    {
+      "path": "/api/v1/documentation/context",
+      "status": 401,
+      "expected": 401,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/v1/documentation/context",
+      "status": 200,
+      "expected": 200,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/v1/documentation/lookups/clients?per_page=1",
+      "status": 200,
+      "expected": 200,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/v1/documentation/operations/00000000-0000-0000-0000-000000000000",
+      "status": 404,
+      "expected": 404,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/v1/documentation/vendors?role=all&per_page=1",
+      "status": 200,
+      "expected": 200,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/v1/documentation/suppliers?per_page=1",
+      "status": 200,
+      "expected": 200,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/v1/documentation/shipping-carriers?per_page=1",
+      "status": 200,
+      "expected": 200,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/v1/knowledge/documentations?per_page=1",
+      "status": 200,
+      "expected": 200,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/v1/knowledge/documentation-categories?per_page=1",
+      "status": 200,
+      "expected": 200,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/v1/knowledge/documentation-templates?per_page=1",
+      "status": 200,
+      "expected": 200,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/v1/portal/documents",
+      "status": 403,
+      "expected": 403,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/v1/portal/documents",
+      "status": 401,
+      "expected": 401,
+      "tls_verified": true
+    },
+    {
+      "temporary_token_removed": true
+    }
+  ],
+  "knowledge_sources": [
+    {
+      "id": 42,
+      "slug": "documentation-overview",
+      "published_revision_id": 107,
+      "exact_source_readback": true,
+      "sync_status": "pending_push"
+    },
+    {
+      "id": 43,
+      "slug": "shipping-carriers",
+      "published_revision_id": 108,
+      "exact_source_readback": true,
+      "sync_status": "pending_push"
+    },
+    {
+      "id": 44,
+      "slug": "documentation-api",
+      "published_revision_id": 109,
+      "exact_source_readback": true,
+      "sync_status": "pending_push"
+    },
+    {
+      "id": 41,
+      "slug": "storage-vendors-and-suppliers",
+      "published_revision_id": 110,
+      "exact_source_readback": true,
+      "sync_status": "pending_push"
+    },
+    {
+      "id": 3,
+      "slug": "api-management",
+      "published_revision_id": 111,
+      "exact_source_readback": true,
+      "sync_status": "pending_push"
+    }
+  ],
+  "bookstack": [
+    {
+      "id": 503,
+      "revision": 7,
+      "exact": true,
+      "updated_at": "2026-10-27T14:59:53.000000Z",
+      "chars": 16099
+    },
+    {
+      "id": 504,
+      "revision": 3,
+      "exact": true,
+      "updated_at": "2026-10-27T14:59:57.000000Z",
+      "chars": 2653
+    },
+    {
+      "id": 547,
+      "revision": 3,
+      "exact": true,
+      "updated_at": "2026-10-27T15:00:00.000000Z",
+      "chars": 4809
+    },
+    {
+      "id": 423,
+      "revision": 15,
+      "exact": true,
+      "updated_at": "2026-10-27T15:00:03.000000Z",
+      "chars": 3255
+    },
+    {
+      "id": 449,
+      "revision": 145,
+      "exact": true,
+      "updated_at": "2026-10-27T15:00:07.000000Z",
+      "chars": 64682
+    }
+  ],
+  "employee_scope": {
+    "inherited_page_access_preserved": true,
+    "staff_internal_role_id": 2,
+    "staff_external_auth_group": "/staff-internal",
+    "staff_page_book_chapter_view_all": true,
+    "permission_writes": false,
+    "employee_openwebui_retrieval": "Not tested"
+  },
+  "dev_migration": {
+    "name": "2026_10_27_010000_create_documentation_api_commands",
+    "batch": 30,
+    "business_backfill": false
+  },
+  "main": "Not changed; not committed, pushed or merged",
+  "production": "Not changed",
+  "human_review": {
+    "id": "HR-2026-10-27-DOCUMENTATION-API",
+    "status": "Reviewed",
+    "reviewer": "Svein Tore",
+    "accepted_on": "2026-10-27",
+    "direct_confirmation": "Godkjenner",
+    "individual_scenarios_witnessed": false,
+    "remaining_authorization": [
+      "Production deployment"
+    ]
+  },
+  "limitations": [
+    "Current supported browser parity only; #275 immutable Documentation revision lifecycle remains open.",
+    "No real provider/AI action, SMTP delivery claim or worker/scheduler activation.",
+    "HTTP collection reads were verified on current Dev data; positive lifecycle tests use isolated SQLite.",
+    "Native MySQL probe verifies locking, uniqueness, encryption and rollback separately.",
+    "Native Knowledge articles remain pending_push; actual BookStack content was separately published and read back.",
+    "Optional all-Integration run stopped after 699 observed passing cases without errors because unrelated TripletexCustomerNumberTest rebuilds the database for 37 tests. Replaced by final exact affected suite; no all-Integration/full-repository pass is claimed."
+  ],
+  "preservation": {
+    "api_catalog_other_domains_unchanged": true,
+    "api_route_loader_other_domains_unchanged": true,
+    "non_documentation_swagger_operations_unchanged": true,
+    "non_documentation_swagger_schemas_unchanged": true,
+    "baseline_dirty_paths": 1291,
+    "unrelated_contributor_work": "Not overwritten"
+  },
+  "affected_tests": {
+    "passed": 548,
+    "assertions": 8201,
+    "failures": 0,
+    "skips": 1,
+    "skip_reason": "Existing SupplierOrderIdentityMariaDbContractTest: dedicated MariaDB identity contract credentials are not configured; Documentation native MySQL probes passed separately."
+  },
+  "scoped_manifest": [
+    "app/Modules/Documentation/Actions/ExecuteDocumentationApiCommand.php",
+    "app/Modules/Documentation/Actions/SaveShippingCarrier.php",
+    "app/Modules/Documentation/Actions/SaveVendor.php",
+    "app/Modules/Documentation/Actions/SetDocumentationPortalVisibility.php",
+    "app/Modules/Documentation/Actions/UpdateDocumentation.php",
+    "app/Modules/Documentation/Controllers/Api/V1/DocumentationCategoryController.php",
+    "app/Modules/Documentation/Controllers/Api/V1/DocumentationController.php",
+    "app/Modules/Documentation/Controllers/Api/V1/DocumentationTemplateController.php",
+    "app/Modules/Documentation/Controllers/Api/V1/DocumentationWorkspaceController.php",
+    "app/Modules/Documentation/Controllers/Api/V1/PortalDocumentationController.php",
+    "app/Modules/Documentation/Controllers/Api/V1/ShippingCarrierController.php",
+    "app/Modules/Documentation/Controllers/Api/V1/VendorController.php",
+    "app/Modules/Documentation/Controllers/Tech/DocumentationController.php",
+    "app/Modules/Documentation/Controllers/Tech/ShippingCarrierController.php",
+    "app/Modules/Documentation/Controllers/Tech/VendorController.php",
+    "app/Modules/Documentation/Docs/knowledge/documentation-api.md",
+    "app/Modules/Documentation/Docs/knowledge/documentation-overview.md",
+    "app/Modules/Documentation/Docs/knowledge/shipping-carriers.md",
+    "app/Modules/Documentation/Models/DocumentationApiCommand.php",
+    "app/Modules/Documentation/README.md",
+    "app/Modules/Documentation/Resources/Api/V1/DocumentationApiOpenApi.php",
+    "app/Modules/Documentation/Resources/Api/V1/DocumentationCategoryResource.php",
+    "app/Modules/Documentation/Resources/Api/V1/DocumentationResource.php",
+    "app/Modules/Documentation/Resources/Api/V1/DocumentationTemplateResource.php",
+    "app/Modules/Documentation/Resources/Api/V1/PortalDocumentationResource.php",
+    "app/Modules/Documentation/Resources/Api/V1/ShippingCarrierResource.php",
+    "app/Modules/Documentation/Resources/Api/V1/VendorResource.php",
+    "app/Modules/Documentation/Support/DocumentationApiAccess.php",
+    "app/Modules/Documentation/Support/DocumentationApiInput.php",
+    "app/Modules/Documentation/Support/DocumentationApiPayload.php",
+    "app/Modules/Documentation/Support/PortalDocumentationAccess.php",
+    "app/Modules/Documentation/Support/PortalDocumentationApiAccess.php",
+    "app/Modules/Documentation/Support/VendorData.php",
+    "app/Modules/Documentation/Tests/Feature/DocumentationApiContractTest.php",
+    "app/Modules/Documentation/Tests/Feature/DocumentationApiParityTest.php",
+    "app/Modules/Documentation/Tests/Feature/DocumentationModuleTest.php",
+    "app/Modules/Documentation/api.php",
+    "app/Modules/Documentation/routes.php",
+    "app/Modules/Integration/Docs/knowledge/api-management.md",
+    "app/Modules/Integration/Support/ApiAbilityCatalog.php",
+    "app/Modules/Storage/Docs/knowledge/storage-vendors-suppliers.md",
+    "database/migrations/2026_10_27_010000_create_documentation_api_commands.php",
+    "docs/TODO.md",
+    "docs/adr/2026-10-27-documentation-api-authority-and-revision-boundary.md",
+    "docs/feature-slices/2026-10-27-documentation-full-api-parity.md",
+    "docs/human-review.md",
+    "docs/plans/2026-10-27-documentation-api-coverage-matrix.json",
+    "docs/plans/2026-10-27-documentation-api-coverage-matrix.md",
+    "docs/plans/2026-10-27-documentation-api-verification.json",
+    "docs/plans/2026-10-27-documentation-api-verification.md",
+    "docs/rfc/2026-10-27-documentation-full-api-parity.md",
+    "routes/api.php",
+    "storage/api-docs/api-docs.json"
+  ],
+  "php_files": 37,
+  "php_lint_pint": "Passed",
+  "scoped_diff_check": "Passed",
+  "code_hashes": {
+    "app/Modules/Documentation/Actions/ExecuteDocumentationApiCommand.php": "85184ef19b0f252ad33de4eb3b3e4c9652f9a897be85d50adcdaaf8733f26d8a",
+    "app/Modules/Documentation/Actions/SaveShippingCarrier.php": "369c81343957c4d358dabf0c1105900599fbf1222068a4eb2cfbe0b8c9fdc3b6",
+    "app/Modules/Documentation/Actions/SaveVendor.php": "e95cdb988d00e700405a5b931ecad01990afe740f5f0471d85824c9b2e4f2c7d",
+    "app/Modules/Documentation/Actions/SetDocumentationPortalVisibility.php": "396b0ffd5873bd04e6a50e001865d2497f6ec9d6c85beb58382e6e91791b62ea",
+    "app/Modules/Documentation/Actions/UpdateDocumentation.php": "8ce02e560775134b9645237a734698eb9b31bbcf48540c31f5ac15d692f54a23",
+    "app/Modules/Documentation/Controllers/Api/V1/DocumentationCategoryController.php": "a53fd910792af70de56f0d7af4f5745e8d27000032ca7afa8ea7524258a9525f",
+    "app/Modules/Documentation/Controllers/Api/V1/DocumentationController.php": "65f639e54da92873f1564ee9a0c1519b49f4a72a0822d83a11ad0bca3c98d7e9",
+    "app/Modules/Documentation/Controllers/Api/V1/DocumentationTemplateController.php": "a181665f6fa9c1c0af700559d3f959fb8ef6735f39a976644a5d3211571e3402",
+    "app/Modules/Documentation/Controllers/Api/V1/DocumentationWorkspaceController.php": "d039ff2c8639a289a4b4a8bbdfecbe9c5847d12a955c835dd3196afb7ff0f855",
+    "app/Modules/Documentation/Controllers/Api/V1/PortalDocumentationController.php": "cebea0fbfa0772814cbe79ea66ecd5109d911de312306d88a0aaef40f02eaf30",
+    "app/Modules/Documentation/Controllers/Api/V1/ShippingCarrierController.php": "dd3be8cc1bbe1be50d10d6d344a9b3ed89631afa89a0991c4c92ef8f9241f7ec",
+    "app/Modules/Documentation/Controllers/Api/V1/VendorController.php": "a558b39e8282699daaafd1b2baf47d36e56be9965680171b3d22e928c1776a79",
+    "app/Modules/Documentation/Controllers/Tech/DocumentationController.php": "236c26fcb6be66befae4c53098908219d1d635e0bbdfdb90971b9c16c2ce475d",
+    "app/Modules/Documentation/Controllers/Tech/ShippingCarrierController.php": "353bf729989fdcdf1df5136918c92f2669a3414507626873bd1fec4dfa44f1e0",
+    "app/Modules/Documentation/Controllers/Tech/VendorController.php": "0eb0f56e7926cb573934aa17aa50ba83a393c7796d852134560dd99c22881fa3",
+    "app/Modules/Documentation/Models/DocumentationApiCommand.php": "eb5ec247273bc89f451753c49fffbae4e728c47350cd757f86316a2dd41f4b26",
+    "app/Modules/Documentation/Resources/Api/V1/DocumentationApiOpenApi.php": "d91996d145db0276635a186c6ebfb689db4ed8ec804c990d0eb1d7fa5c4210cf",
+    "app/Modules/Documentation/Resources/Api/V1/DocumentationCategoryResource.php": "d53516892059bedfd0836a31f01027aac384aba6154008086bf6f698b4989958",
+    "app/Modules/Documentation/Resources/Api/V1/DocumentationResource.php": "41f77bf1cc4c4602dca395875af0d3bbdb4d6034fbf6716544c1f89bd7f5e3c3",
+    "app/Modules/Documentation/Resources/Api/V1/DocumentationTemplateResource.php": "21b1e06b2af7ca7dc25884b4020796085be59517b121c198e724cc76a932110e",
+    "app/Modules/Documentation/Resources/Api/V1/PortalDocumentationResource.php": "a5db3390679e2d5ea73f521c8bd47f92690c76907a5d1d70716b6666510cc7d3",
+    "app/Modules/Documentation/Resources/Api/V1/ShippingCarrierResource.php": "059f0331c9dace1c1450cbbb7fd6a5250d17087d937d85ac9967284b1f21be8f",
+    "app/Modules/Documentation/Resources/Api/V1/VendorResource.php": "4005587785935709485bc34c62a764eb9b8921922c9625f4492564711db298fb",
+    "app/Modules/Documentation/Support/DocumentationApiAccess.php": "e670d06b30abd0c46673c636808fd86c164d7cd5f49049ba7fd8df92336901bb",
+    "app/Modules/Documentation/Support/DocumentationApiInput.php": "d3b43ca49a2d427465783dc2a78ff0c0a05e8286c085d69d24502b161ff9533f",
+    "app/Modules/Documentation/Support/DocumentationApiPayload.php": "810270e683c9bef33915cc138992faf1ef7d0155e1aebded30281c149e8767e8",
+    "app/Modules/Documentation/Support/PortalDocumentationAccess.php": "dd83859b8a64cd9e8329da9a8a72303f0b043f7e121efbc8f0b4300893efa5cf",
+    "app/Modules/Documentation/Support/PortalDocumentationApiAccess.php": "5fab0e1cdeaa6f24d753dddc55809b7890cf1fbc616921836a820d4b1e7691b1",
+    "app/Modules/Documentation/Support/VendorData.php": "f6c7c744e9387cdf1d95e7f10b2ce074d5478be874cda134fa2883075a23b78a",
+    "app/Modules/Documentation/Tests/Feature/DocumentationApiContractTest.php": "fdb24836b02d6d2cbacae6488b1b5e6ec9fe8192e88b2b0302d3cbb925d65d31",
+    "app/Modules/Documentation/Tests/Feature/DocumentationApiParityTest.php": "6ebb20fc54d5c3d0237d44069acd01f5551cb794bd5a3eb520db786c9c534dd0",
+    "app/Modules/Documentation/Tests/Feature/DocumentationModuleTest.php": "d0e54f0924bc0e480d4ac68f8cc3f232b6847d20c7440510293ed53808020fd5",
+    "app/Modules/Documentation/api.php": "aaee35e18bf1889c45a41b2fb12ea291f1601295e872a6413916e4239dd8533f",
+    "app/Modules/Documentation/routes.php": "545cea9d1b6543e1fb6bf17293c9561592240ad34b952f1168bfa03a006a8ff6",
+    "app/Modules/Integration/Support/ApiAbilityCatalog.php": "9c3e6c08b2466e421b6bcfecac319396eaa912a5525f27b6212a243bb869fb6f",
+    "database/migrations/2026_10_27_010000_create_documentation_api_commands.php": "37cbacff566e9b50d4afa1b206f019c50530e82321d314e0f39023be5a8c6c51",
+    "routes/api.php": "0fc808efb8eeacff3fb27e61be485e667882fce4b14e2f37cdcb049a4c7d4619"
+  },
+  "approval_update": {
+    "documentation_only": true,
+    "application_tests_rerun": false,
+    "reason": "No runtime changes"
+  },
+  "main_promotion": {
+    "authorization": "Merge til main",
+    "authorized_by": "Svein Tore",
+    "authorized_on": "2026-10-27",
+    "status": "Isolated candidate verification in progress"
+  }
+}

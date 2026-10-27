@@ -38,6 +38,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     require app_path('Modules/Clients/routes.php');
     unset($clientsPortalApiRoutes);
 
+    $documentationPortalApiRoutes = true;
+    require app_path('Modules/Documentation/routes.php');
+    unset($documentationPortalApiRoutes);
+
     // ------------------------------------------------------------------------------------------
     // Protected routes
     // ------------------------------------------------------------------------------------------

@@ -372,30 +372,13 @@ class DocumentationController extends Controller
             $scopeType = 'client';
         }
 
-        $documentation->update([
+        app(\App\Modules\Documentation\Actions\UpdateDocumentation::class)->handle($documentation, [
             'client_id' => $request->client_id,
             'site_id' => $request->site_id,
             'title' => $request->title,
             'scope_type' => $scopeType,
             'data_json' => $data,
         ]);
-
-        if ($documentation->isPortalVisible() && $documentation->client_id) {
-            $portalNotifications->handle(
-                type: 'portal_document_updated',
-                clientId: (int) $documentation->client_id,
-                siteId: $documentation->site_id ? (int) $documentation->site_id : null,
-                title: 'Document updated',
-                body: $documentation->title,
-                url: route('customer-portal.documents.show', $documentation),
-                sourceType: Documentation::class,
-                sourceId: $documentation->id,
-                clientWideVisibleToSiteMembers: true,
-                metadata: [
-                    'documentation_id' => $documentation->id,
-                ],
-            );
-        }
 
         return redirect()->route('tech.documentations.show', $documentation->id)
             ->with('success', 'Documentation updated successfully.');
@@ -426,52 +409,8 @@ class DocumentationController extends Controller
             'portal_visible' => ['required', 'boolean'],
         ]);
 
-        if ($request->boolean('portal_visible') && ! $documentation->client_id) {
-            return back()->withErrors(['portal_visible' => 'Only client-scoped documentation can be shown in the customer portal.']);
-        }
-
-        DB::transaction(function () use ($request, $documentation, $audit, $portalNotifications): void {
-            $wasVisible = $documentation->isPortalVisible();
-            $isVisible = $request->boolean('portal_visible');
-
-            $documentation->forceFill([
-                'portal_visible_at' => $isVisible ? ($documentation->portal_visible_at ?: now()) : null,
-                'portal_visible_by' => $isVisible ? $request->user()?->id : null,
-            ])->save();
-
-            $audit->handle(
-                $isVisible ? 'portal_documentation_visibility_enabled' : 'portal_documentation_visibility_disabled',
-                null,
-                $request->user(),
-                null,
-                $documentation->client,
-                $documentation->site,
-                [
-                    'documentation_id' => $documentation->id,
-                    'title' => $documentation->title,
-                    'scope_type' => $documentation->scope_type,
-                ],
-                $request,
-            );
-
-            if (! $wasVisible && $isVisible && $documentation->client_id) {
-                $portalNotifications->handle(
-                    type: 'portal_document_published',
-                    clientId: (int) $documentation->client_id,
-                    siteId: $documentation->site_id ? (int) $documentation->site_id : null,
-                    title: 'New document published',
-                    body: $documentation->title,
-                    url: route('customer-portal.documents.show', $documentation),
-                    sourceType: Documentation::class,
-                    sourceId: $documentation->id,
-                    clientWideVisibleToSiteMembers: true,
-                    metadata: [
-                        'documentation_id' => $documentation->id,
-                        'scope_type' => $documentation->scope_type,
-                    ],
-                );
-            }
-        });
+        app(\App\Modules\Documentation\Actions\SetDocumentationPortalVisibility::class)
+            ->handle($documentation, $request->boolean('portal_visible'), $request);
 
         return redirect()->route('tech.documentations.show', $documentation->refresh())
             ->with('success', $documentation->isPortalVisible() ? 'Documentation is visible in the customer portal.' : 'Documentation is hidden from the customer portal.');
@@ -486,7 +425,7 @@ class DocumentationController extends Controller
     public function destroy($id)
     {
         $documentation = Documentation::findOrFail($id);
-        $documentation->delete();
+        DB::transaction(fn () => Documentation::whereKey($documentation->id)->lockForUpdate()->firstOrFail()->delete());
 
         return redirect()->route('tech.documentations.index')
             ->with('success', 'Documentation deleted successfully.');

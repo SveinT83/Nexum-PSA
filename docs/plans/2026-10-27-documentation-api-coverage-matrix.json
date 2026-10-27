@@ -1,0 +1,1151 @@
+[
+  {
+    "id": "D01",
+    "browser_route": "customer-portal.documents.index",
+    "browser_path": "portal/documents",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "documentation.portal.index",
+        "path": "api/v1/portal/documents",
+        "methods": [
+          "GET"
+        ],
+        "ability": "documentation.portal.read",
+        "permissions": [],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Read; current account/contact/membership and visible client/site records.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D02",
+    "browser_route": "customer-portal.documents.show",
+    "browser_path": "portal/documents/{documentation}",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "documentation.portal.show",
+        "path": "api/v1/portal/documents/{documentation}",
+        "methods": [
+          "GET"
+        ],
+        "ability": "documentation.portal.read",
+        "permissions": [],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Read; safe captured fields and 404 outside membership scope.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D03",
+    "browser_route": "tech.context.set",
+    "browser_path": "tech/context/set",
+    "browser_methods": [
+      "POST"
+    ],
+    "operations": [
+      {
+        "route": "documentation.context",
+        "path": "api/v1/documentation/context",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.create",
+          "documentation.update",
+          "documentation.carrier_manage",
+          "documentation.manage_templates",
+          "system.settings_manage",
+          "taxonomy.manage_categories"
+        ]
+      },
+      {
+        "route": "documentation.lookups",
+        "path": "api/v1/documentation/lookups/{kind}",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": []
+      },
+      {
+        "route": "knowledge.documentations.index",
+        "path": "api/v1/knowledge/documentations",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [
+          "documentation.view"
+        ],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Action; explicit stateless filters replace mutable browser session context.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D04",
+    "browser_route": "tech.documentations.index",
+    "browser_path": "tech/documentations",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "knowledge.documentations.index",
+        "path": "api/v1/knowledge/documentations",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [
+          "documentation.view"
+        ],
+        "any_permissions": []
+      },
+      {
+        "route": "documentation.vendors.index",
+        "path": "api/v1/documentation/vendors",
+        "methods": [
+          "GET"
+        ],
+        "ability": "documentation.vendors.read",
+        "permissions": [
+          "documentation.view"
+        ],
+        "any_permissions": []
+      },
+      {
+        "route": "documentation.suppliers.index",
+        "path": "api/v1/documentation/suppliers",
+        "methods": [
+          "GET"
+        ],
+        "ability": "documentation.vendors.read",
+        "permissions": [
+          "documentation.view"
+        ],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Read; search, category/register aliases and internal/client/site filters.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D05",
+    "browser_route": "tech.documentations.create",
+    "browser_path": "tech/documentations/create",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "documentation.context",
+        "path": "api/v1/documentation/context",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.create",
+          "documentation.update",
+          "documentation.carrier_manage",
+          "documentation.manage_templates",
+          "system.settings_manage",
+          "taxonomy.manage_categories"
+        ]
+      },
+      {
+        "route": "documentation.lookups",
+        "path": "api/v1/documentation/lookups/{kind}",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": []
+      },
+      {
+        "route": "knowledge.documentation-categories.index",
+        "path": "api/v1/knowledge/documentation-categories",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "taxonomy.manage_categories"
+        ]
+      },
+      {
+        "route": "knowledge.documentation-templates.index",
+        "path": "api/v1/knowledge/documentation-templates",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.manage_templates"
+        ]
+      }
+    ],
+    "behavior": "Read form; explicit template choice, active schemas and client/site selection.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D06",
+    "browser_route": "tech.documentations.shipping-carriers.index",
+    "browser_path": "tech/documentations/shipping-carriers",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "documentation.shipping-carriers.index",
+        "path": "api/v1/documentation/shipping-carriers",
+        "methods": [
+          "GET"
+        ],
+        "ability": "documentation.carriers.read",
+        "permissions": [
+          "documentation.view"
+        ],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Read; search, lifecycle and bounded pagination.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D07",
+    "browser_route": "tech.documentations.shipping-carriers.create",
+    "browser_path": "tech/documentations/shipping-carriers/create",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "documentation.context",
+        "path": "api/v1/documentation/context",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.create",
+          "documentation.update",
+          "documentation.carrier_manage",
+          "documentation.manage_templates",
+          "system.settings_manage",
+          "taxonomy.manage_categories"
+        ]
+      },
+      {
+        "route": "documentation.lookups",
+        "path": "api/v1/documentation/lookups/{kind}",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Read form; tracking/lifecycle/verification defaults and minimal vendor lookup for narrow carrier managers.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D08",
+    "browser_route": "tech.documentations.shipping-carriers.store",
+    "browser_path": "tech/documentations/shipping-carriers",
+    "browser_methods": [
+      "POST"
+    ],
+    "operations": [
+      {
+        "route": "documentation.shipping-carriers.store",
+        "path": "api/v1/documentation/shipping-carriers",
+        "methods": [
+          "POST"
+        ],
+        "ability": "documentation.carriers.manage",
+        "permissions": [
+          "documentation.carrier_manage"
+        ],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Write; shared browser validator/action, no provider execution.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D09",
+    "browser_route": "tech.documentations.shipping-carriers.show",
+    "browser_path": "tech/documentations/shipping-carriers/{shippingCarrier}",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "documentation.shipping-carriers.show",
+        "path": "api/v1/documentation/shipping-carriers/{shippingCarrier}",
+        "methods": [
+          "GET"
+        ],
+        "ability": "documentation.carriers.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.carrier_manage"
+        ]
+      }
+    ],
+    "behavior": "Read; current carrier configuration and vendor relation.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D10",
+    "browser_route": "tech.documentations.shipping-carriers.edit",
+    "browser_path": "tech/documentations/shipping-carriers/{shippingCarrier}/edit",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "documentation.shipping-carriers.show",
+        "path": "api/v1/documentation/shipping-carriers/{shippingCarrier}",
+        "methods": [
+          "GET"
+        ],
+        "ability": "documentation.carriers.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.carrier_manage"
+        ]
+      },
+      {
+        "route": "documentation.context",
+        "path": "api/v1/documentation/context",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.create",
+          "documentation.update",
+          "documentation.carrier_manage",
+          "documentation.manage_templates",
+          "system.settings_manage",
+          "taxonomy.manage_categories"
+        ]
+      }
+    ],
+    "behavior": "Read edit form; current view or carrier management right.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D11",
+    "browser_route": "tech.documentations.shipping-carriers.update",
+    "browser_path": "tech/documentations/shipping-carriers/{shippingCarrier}",
+    "browser_methods": [
+      "PATCH"
+    ],
+    "operations": [
+      {
+        "route": "documentation.shipping-carriers.update",
+        "path": "api/v1/documentation/shipping-carriers/{shippingCarrier}",
+        "methods": [
+          "PATCH"
+        ],
+        "ability": "documentation.carriers.manage",
+        "permissions": [
+          "documentation.carrier_manage"
+        ],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Write; shared validation/persistence; historical shipment snapshots unchanged.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D12",
+    "browser_route": "tech.documentations.vendors.index",
+    "browser_path": "tech/documentations/vendors",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "documentation.vendors.index",
+        "path": "api/v1/documentation/vendors",
+        "methods": [
+          "GET"
+        ],
+        "ability": "documentation.vendors.read",
+        "permissions": [
+          "documentation.view"
+        ],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Read; canonical register with role, search and status filters.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D13",
+    "browser_route": "tech.documentations.vendors.create",
+    "browser_path": "tech/documentations/vendors/create",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "documentation.context",
+        "path": "api/v1/documentation/context",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.create",
+          "documentation.update",
+          "documentation.carrier_manage",
+          "documentation.manage_templates",
+          "system.settings_manage",
+          "taxonomy.manage_categories"
+        ]
+      }
+    ],
+    "behavior": "Read form; matching partner role defaults and typed fields.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D14",
+    "browser_route": "tech.documentations.vendors.store",
+    "browser_path": "tech/documentations/vendors",
+    "browser_methods": [
+      "POST"
+    ],
+    "operations": [
+      {
+        "route": "documentation.vendors.store",
+        "path": "api/v1/documentation/vendors",
+        "methods": [
+          "POST"
+        ],
+        "ability": "documentation.vendors.create",
+        "permissions": [
+          "documentation.create"
+        ],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Write; shared fixed validator/action; unique code and protected provenance.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D15",
+    "browser_route": "tech.documentations.vendors.show",
+    "browser_path": "tech/documentations/vendors/{vendor}",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "documentation.vendors.show",
+        "path": "api/v1/documentation/vendors/{vendor}",
+        "methods": [
+          "GET"
+        ],
+        "ability": "documentation.vendors.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.update"
+        ]
+      }
+    ],
+    "behavior": "Read detail/edit; all maintained fields and current view or update right.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D16",
+    "browser_route": "tech.documentations.vendors.edit",
+    "browser_path": "tech/documentations/vendors/{vendor}/edit",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "documentation.vendors.show",
+        "path": "api/v1/documentation/vendors/{vendor}",
+        "methods": [
+          "GET"
+        ],
+        "ability": "documentation.vendors.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.update"
+        ]
+      }
+    ],
+    "behavior": "Read detail/edit; all maintained fields and current view or update right.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D17",
+    "browser_route": "tech.documentations.vendors.update",
+    "browser_path": "tech/documentations/vendors/{vendor}",
+    "browser_methods": [
+      "PATCH"
+    ],
+    "operations": [
+      {
+        "route": "documentation.vendors.update",
+        "path": "api/v1/documentation/vendors/{vendor}",
+        "methods": [
+          "PATCH"
+        ],
+        "ability": "documentation.vendors.update",
+        "permissions": [
+          "documentation.update"
+        ],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Write; partial changes/deactivation; same supplier IDs in Storage.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D18",
+    "browser_route": "tech.documentations.suppliers.create",
+    "browser_path": "tech/documentations/suppliers/create",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "documentation.context",
+        "path": "api/v1/documentation/context",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.create",
+          "documentation.update",
+          "documentation.carrier_manage",
+          "documentation.manage_templates",
+          "system.settings_manage",
+          "taxonomy.manage_categories"
+        ]
+      }
+    ],
+    "behavior": "Read form; matching partner role defaults and typed fields.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D19",
+    "browser_route": "tech.documentations.suppliers.store",
+    "browser_path": "tech/documentations/suppliers",
+    "browser_methods": [
+      "POST"
+    ],
+    "operations": [
+      {
+        "route": "documentation.suppliers.store",
+        "path": "api/v1/documentation/suppliers",
+        "methods": [
+          "POST"
+        ],
+        "ability": "documentation.vendors.create",
+        "permissions": [
+          "documentation.create"
+        ],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Write; shared fixed validator/action; unique code and protected provenance.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D20",
+    "browser_route": "tech.documentations.suppliers.index",
+    "browser_path": "tech/documentations/suppliers",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "documentation.suppliers.index",
+        "path": "api/v1/documentation/suppliers",
+        "methods": [
+          "GET"
+        ],
+        "ability": "documentation.vendors.read",
+        "permissions": [
+          "documentation.view"
+        ],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Read; canonical register with role, search and status filters.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D21",
+    "browser_route": "tech.documentations.store",
+    "browser_path": "tech/documentations/create",
+    "browser_methods": [
+      "POST"
+    ],
+    "operations": [
+      {
+        "route": "knowledge.documentations.store",
+        "path": "api/v1/knowledge/documentations",
+        "methods": [
+          "POST"
+        ],
+        "ability": "knowledge.create",
+        "permissions": [
+          "documentation.create"
+        ],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Write; exact active template snapshot and validated scope.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D22",
+    "browser_route": "tech.documentations.show",
+    "browser_path": "tech/documentations/show/{documentation}",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "knowledge.documentations.show",
+        "path": "api/v1/knowledge/documentations/{documentation}",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.update"
+        ]
+      }
+    ],
+    "behavior": "Read; captured fields/content, scope and portal metadata.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D23",
+    "browser_route": "tech.documentations.portal-visibility.update",
+    "browser_path": "tech/documentations/{documentation}/portal-visibility",
+    "browser_methods": [
+      "POST"
+    ],
+    "operations": [
+      {
+        "route": "documentation.portal-visibility.update",
+        "path": "api/v1/knowledge/documentations/{documentation}/portal-visibility",
+        "methods": [
+          "POST"
+        ],
+        "ability": "documentation.portal.manage",
+        "permissions": [
+          "documentation.update"
+        ],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Action; shared visibility/audit/notification; internal refused.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D24",
+    "browser_route": "tech.documentations.edit",
+    "browser_path": "tech/documentations/edit/{documentation}",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "knowledge.documentations.show",
+        "path": "api/v1/knowledge/documentations/{documentation}",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.update"
+        ]
+      },
+      {
+        "route": "documentation.context",
+        "path": "api/v1/documentation/context",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.create",
+          "documentation.update",
+          "documentation.carrier_manage",
+          "documentation.manage_templates",
+          "system.settings_manage",
+          "taxonomy.manage_categories"
+        ]
+      },
+      {
+        "route": "documentation.lookups",
+        "path": "api/v1/documentation/lookups/{kind}",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Read edit form; update-only actors can inspect exact records without index rights.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D25",
+    "browser_route": "tech.documentations.update",
+    "browser_path": "tech/documentations/update/{documentation}",
+    "browser_methods": [
+      "PUT"
+    ],
+    "operations": [
+      {
+        "route": "knowledge.documentations.update",
+        "path": "api/v1/knowledge/documentations/{documentation}",
+        "methods": [
+          "PUT",
+          "PATCH"
+        ],
+        "ability": "knowledge.update",
+        "permissions": [
+          "documentation.update"
+        ],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Write; captured schema, normal portal update notification; scope changes hide until republished.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D26",
+    "browser_route": "tech.documentations.destroy",
+    "browser_path": "tech/documentations/destroy/{documentation}",
+    "browser_methods": [
+      "DELETE"
+    ],
+    "operations": [
+      {
+        "route": "knowledge.documentations.destroy",
+        "path": "api/v1/knowledge/documentations/{documentation}",
+        "methods": [
+          "DELETE"
+        ],
+        "ability": "knowledge.update",
+        "permissions": [
+          "documentation.delete"
+        ],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Write; soft delete and encrypted command read-back/replay.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D27",
+    "browser_route": "tech.admin.system.templatesManagement.index",
+    "browser_path": "tech/admin/system/templatesManagement",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "documentation.context",
+        "path": "api/v1/documentation/context",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.create",
+          "documentation.update",
+          "documentation.carrier_manage",
+          "documentation.manage_templates",
+          "system.settings_manage",
+          "taxonomy.manage_categories"
+        ]
+      }
+    ],
+    "behavior": "Read administrative navigation; exact form/system permissions, guarded destination links.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D28",
+    "browser_route": "tech.admin.system.templatesManagement.doc.index",
+    "browser_path": "tech/admin/system/templatesManagement/doc",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "knowledge.documentation-templates.index",
+        "path": "api/v1/knowledge/documentation-templates",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.manage_templates"
+        ]
+      },
+      {
+        "route": "knowledge.documentation-categories.index",
+        "path": "api/v1/knowledge/documentation-categories",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "taxonomy.manage_categories"
+        ]
+      }
+    ],
+    "behavior": "Read admin list; include_inactive needs the corresponding administration right.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D29",
+    "browser_route": "tech.admin.system.templatesManagement.doc.create",
+    "browser_path": "tech/admin/system/templatesManagement/doc/create",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "documentation.context",
+        "path": "api/v1/documentation/context",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.create",
+          "documentation.update",
+          "documentation.carrier_manage",
+          "documentation.manage_templates",
+          "system.settings_manage",
+          "taxonomy.manage_categories"
+        ]
+      },
+      {
+        "route": "knowledge.documentation-categories.index",
+        "path": "api/v1/knowledge/documentation-categories",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "taxonomy.manage_categories"
+        ]
+      },
+      {
+        "route": "knowledge.documentation-templates.store",
+        "path": "api/v1/knowledge/documentation-templates",
+        "methods": [
+          "POST"
+        ],
+        "ability": "knowledge.create",
+        "permissions": [
+          "documentation.manage_templates"
+        ],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Read form plus write; ordered field/layout array supports add/remove/reorder/save.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  },
+  {
+    "id": "D30",
+    "browser_route": "tech.admin.system.templatesManagement.doc.edit",
+    "browser_path": "tech/admin/system/templatesManagement/doc/edit/{id}",
+    "browser_methods": [
+      "GET"
+    ],
+    "operations": [
+      {
+        "route": "knowledge.documentation-templates.show",
+        "path": "api/v1/knowledge/documentation-templates/{documentationTemplate}",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "documentation.manage_templates"
+        ]
+      },
+      {
+        "route": "knowledge.documentation-categories.index",
+        "path": "api/v1/knowledge/documentation-categories",
+        "methods": [
+          "GET"
+        ],
+        "ability": "knowledge.read",
+        "permissions": [],
+        "any_permissions": [
+          "documentation.view",
+          "taxonomy.manage_categories"
+        ]
+      },
+      {
+        "route": "knowledge.documentation-templates.update",
+        "path": "api/v1/knowledge/documentation-templates/{documentationTemplate}",
+        "methods": [
+          "PUT",
+          "PATCH"
+        ],
+        "ability": "knowledge.update",
+        "permissions": [
+          "documentation.manage_templates"
+        ],
+        "any_permissions": []
+      }
+    ],
+    "behavior": "Read form plus write; exact category/template and ordered schema replacement.",
+    "tests": [
+      "DocumentationApiParityTest",
+      "DocumentationModuleTest",
+      "ShippingCarrierRegisterTest",
+      "CustomerPortalDocumentCenterTest"
+    ],
+    "readback": "Successful HTTP response-schema validation, persisted effects and negative authorization checks."
+  }
+]

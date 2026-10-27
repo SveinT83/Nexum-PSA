@@ -8,7 +8,6 @@ use App\Modules\Documentation\Models\Vendor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Illuminate\Validation\Rule;
 
 class VendorController extends Controller
 {
@@ -39,7 +38,7 @@ class VendorController extends Controller
             ->withQueryString();
 
         return view('documentation::Tech.vendors.index', [
-            'sidebarMenuItems' => (new DocumentationsMenu())->DocumentationsMenu(),
+            'sidebarMenuItems' => (new DocumentationsMenu)->DocumentationsMenu(),
             'vendors' => $vendors,
             'role' => $role,
             'search' => $search,
@@ -52,7 +51,7 @@ class VendorController extends Controller
     public function create(string $role = 'vendors'): View
     {
         return view('documentation::Tech.vendors.form', [
-            'sidebarMenuItems' => (new DocumentationsMenu())->DocumentationsMenu(),
+            'sidebarMenuItems' => (new DocumentationsMenu)->DocumentationsMenu(),
             'vendor' => new Vendor([
                 'is_vendor' => $role !== 'suppliers',
                 'is_supplier' => $role === 'suppliers',
@@ -68,7 +67,7 @@ class VendorController extends Controller
      */
     public function store(Request $request, string $role = 'vendors'): RedirectResponse
     {
-        $vendor = Vendor::create($this->validated($request, null, $role));
+        $vendor = app(\App\Modules\Documentation\Actions\SaveVendor::class)->handle($this->validated($request, null, $role));
 
         return redirect()->route('tech.documentations.vendors.show', $vendor)
             ->with('success', 'Vendor saved.');
@@ -80,7 +79,7 @@ class VendorController extends Controller
     public function show(Vendor $vendor): View
     {
         return view('documentation::Tech.vendors.show', [
-            'sidebarMenuItems' => (new DocumentationsMenu())->DocumentationsMenu(),
+            'sidebarMenuItems' => (new DocumentationsMenu)->DocumentationsMenu(),
             'vendor' => $vendor,
         ]);
     }
@@ -91,7 +90,7 @@ class VendorController extends Controller
     public function edit(Vendor $vendor): View
     {
         return view('documentation::Tech.vendors.form', [
-            'sidebarMenuItems' => (new DocumentationsMenu())->DocumentationsMenu(),
+            'sidebarMenuItems' => (new DocumentationsMenu)->DocumentationsMenu(),
             'vendor' => $vendor,
             'role' => $vendor->is_supplier && ! $vendor->is_vendor && ! $vendor->is_manufacturer ? 'suppliers' : 'vendors',
         ]);
@@ -102,7 +101,7 @@ class VendorController extends Controller
      */
     public function update(Request $request, Vendor $vendor): RedirectResponse
     {
-        $vendor->update($this->validated($request, $vendor));
+        app(\App\Modules\Documentation\Actions\SaveVendor::class)->handle($this->validated($request, $vendor), $vendor);
 
         return redirect()->route('tech.documentations.vendors.show', $vendor)
             ->with('success', 'Vendor updated.');
@@ -113,26 +112,6 @@ class VendorController extends Controller
      */
     private function validated(Request $request, ?Vendor $vendor = null, string $role = 'vendors'): array
     {
-        return $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'vendor_code' => ['nullable', 'string', 'max:255', Rule::unique('vendors', 'vendor_code')->ignore($vendor?->id)],
-            'org_no' => ['nullable', 'string', 'max:255'],
-            'url' => ['nullable', 'string', 'max:2048'],
-            'phone' => ['nullable', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'default_lead_time_days' => ['nullable', 'integer', 'min:0'],
-            'note' => ['nullable', 'string'],
-            'terms' => ['nullable', 'string'],
-            'is_vendor' => ['nullable', 'boolean'],
-            'is_supplier' => ['nullable', 'boolean'],
-            'is_manufacturer' => ['nullable', 'boolean'],
-            'is_active' => ['nullable', 'boolean'],
-        ]) + [
-            'default_lead_time_days' => 0,
-            'is_vendor' => $role !== 'suppliers',
-            'is_supplier' => $role === 'suppliers',
-            'is_manufacturer' => $role !== 'suppliers',
-            'is_active' => false,
-        ];
+        return app(\App\Modules\Documentation\Support\VendorData::class)->validated($request, $vendor, $role);
     }
 }

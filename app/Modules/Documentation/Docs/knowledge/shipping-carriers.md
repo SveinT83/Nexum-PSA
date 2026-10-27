@@ -82,3 +82,19 @@ every possible carrier is preconfigured.
 
 Carrier websites and tracking surfaces change. Reverify a profile when a link stops working, the
 carrier changes ownership, or a division moves to another tracking system.
+
+## Carrier API (Dev, 2026-10-27)
+
+Read/create/update carrier profiles through `/api/v1/documentation/shipping-carriers`.
+Reads and tracking preview require `documentation.carriers.read` plus
+`documentation.view`. Writes require `documentation.carriers.manage` plus
+`documentation.carrier_manage`, a stable Idempotency-Key, and preferably the
+current If-Match ETag. PATCH retains omitted values.
+
+POST `/{shippingCarrier}/tracking-preview` with tracking_number and optional direct_url
+returns only a safe browser link. It performs no network/provider request or write.
+The same HTTPS/host/template validation as web applies. Existing shipment snapshots
+stay unchanged. See **Documentation Overview -> Documentation API guide**.
+This addition is Dev-only. HR-2026-10-27-DOCUMENTATION-API was Reviewed by
+Svein Tore on 2026-10-27; Main/production promotion requires separate authorization.
+It does not activate carrier integrations.
