@@ -15,16 +15,16 @@
       "assertions": 13899
     },
     "candidate_affected": {
-      "passed": 332,
-      "assertions": 8889
+      "passed": 347,
+      "assertions": 13459
     },
     "dev_final_domain": {
-      "passed": 120,
-      "assertions": 6460
+      "passed": 121,
+      "assertions": 6518
     },
     "candidate_final_domain": {
-      "passed": 120,
-      "assertions": 6460
+      "passed": 121,
+      "assertions": 6518
     },
     "final_http_tests_each": {
       "passed": 14,
@@ -102,8 +102,8 @@
     "pages": [
       {
         "id": 417,
-        "revision": 4,
-        "updated_at": "2026-10-27T19:19:06.000000Z",
+        "revision": 5,
+        "updated_at": "2026-10-27T19:37:51.000000Z",
         "exact_requested_content_read_back": true,
         "permissions_inherit": true
       },
@@ -156,5 +156,54 @@
     "main_merge_authorized_with_pending_scenarios": true,
     "production_authorized": false
   },
-  "shared_test_conflict": "An in-progress UserManagement error-handler method mismatch affected the first broad run. It was fixed by its owning work; rerun passed all 373 without editing or packaging that work."
+  "shared_test_conflict": "An in-progress UserManagement error-handler method mismatch affected the first broad run. It was fixed by its owning work; rerun passed all 373 without editing or packaging that work.",
+  "candidate_reconciled_base": "7d8087e4851f823fc87eaeff2cd46ff84eb8b4b6",
+  "knowledge": {
+    "articles": [
+      {
+        "id": 55,
+        "source": "01-overview.md",
+        "exact": true,
+        "visibility": "internal",
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 56,
+        "source": "02-admin-setup.md",
+        "exact": true,
+        "visibility": "internal",
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 57,
+        "source": "03-users-groups-calendars.md",
+        "exact": true,
+        "visibility": "internal",
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 58,
+        "source": "04-sso-future-plan.md",
+        "exact": true,
+        "visibility": "internal",
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 59,
+        "source": "05-talk-bot.md",
+        "exact": true,
+        "visibility": "internal",
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 60,
+        "source": "06-full-api-guide.md",
+        "exact": true,
+        "visibility": "internal",
+        "sync_status": "pending_push"
+      }
+    ],
+    "count": 6
+  },
+  "execution_time_revocation": "Fresh actor/token checks repeat after mutex wait, before provider dispatch and result disclosure; regression passes."
 }

@@ -17,7 +17,12 @@ class NextcloudApiAccess
         $actor = $old ? User::query()->find($old->id) : null;
         abort_unless($actor && $actor->isActive() && ! $actor->isSystemActor()
             && ($actor->roles()->exists() || $actor->permissions()->exists()), 403, 'An active internal Nextcloud actor is required.');
-        $actor->withAccessToken($old->currentAccessToken());
+        $token = $old->currentAccessToken();
+        if ($token instanceof \Laravel\Sanctum\PersonalAccessToken) {
+            $token = $token->fresh();
+            abort_unless($token && (! $token->expires_at || $token->expires_at->isFuture()), 401, 'The API token is no longer active.');
+        }
+        $actor->withAccessToken($token);
         Auth::setUser($actor);
 
         return $actor;

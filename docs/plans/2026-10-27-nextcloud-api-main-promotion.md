@@ -6,7 +6,7 @@ Authorization: Godkjenner og merge til main, 2026-10-27.
 
 ## Candidate and scope
 
-Base: origin/main 7d37fcae6c9af68ff77787b4e4cec0ed5c99c972.
+Base: origin/main 7d8087e4851f823fc87eaeff2cd46ff84eb8b4b6, including Notification PR #336/#337.
 Branch: codex/nextcloud-api-20261027.
 Runtime worktree: /tmp/nexum-nextcloud-api-main-20261027.
 Ordinary implementation/runtime remains /var/Projects/tdPSA on Dev.
@@ -17,8 +17,8 @@ Unrelated shared Dev changes, index, branch and production environment are exclu
 ## Verification
 
 All 50 operations have actual successful typed HTTP evidence (36 new, 14 calendar),
-47 new schemas. Dev affected 373/13899; Main candidate 332/8889, no failures/skips.
-Final Nextcloud/Talk after scoped privacy handling: 120/6460 on each runtime.
+47 new schemas. Dev affected 373/13899; Main candidate 347/13459, no failures/skips.
+Final Nextcloud/Talk after scoped privacy handling: 121/6518 on each runtime.
 Final HTTP status evidence rerun: 14/4956 on each. These test sets overlap.
 Native MySQL locking/unique/encryption/rollback, exact Dev migration and trusted HTTPS
 pass. Synthetic inactive API object is deleted/read-back/replayed and token revoked.

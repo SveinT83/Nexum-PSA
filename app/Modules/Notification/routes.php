@@ -8,6 +8,39 @@ use App\Modules\Notification\Controllers\WebPushSelfTestController;
 use App\Modules\Notification\Controllers\WebPushSubscriptionController;
 use Illuminate\Support\Facades\Route;
 
+// Official typed APIs remain inside the owning domain route file.
+if (($notificationApiRoutes ?? false) || ($notificationPortalApiRoutes ?? false)) {
+    $portal = (bool) ($notificationPortalApiRoutes ?? false);
+    $routes = json_decode(file_get_contents(__DIR__.'/Support/api-manifest.json'), true, 512, JSON_THROW_ON_ERROR);
+    $register = function () use ($routes, $portal): void {
+        foreach ($routes as $definition) {
+            if ($definition['portal'] !== $portal) {
+                continue;
+            }
+            $route = Route::match([$definition['method']], $definition['path'], [$definition['controller'], $definition['action']])
+                ->name($definition['name'])
+                ->middleware(\App\Modules\Notification\Support\NotificationApiAccess::class)
+                ->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':'.$definition['ability'])
+                ->middleware(\App\Modules\Notification\Actions\ExecuteNotificationApiCommand::class)
+                ->defaults('notification_ability', $definition['ability'])
+                ->defaults('notification_fields', $definition['fields']);
+            foreach ($definition['defaults'] as $key => $value) {
+                $route->defaults($key, $value);
+            }
+            if ($definition['name'] === 'notifications.devices.test') {
+                $route->middleware('throttle:3,10');
+            }
+        }
+    };
+    if ($portal) {
+        Route::middleware(['web', 'auth:sanctum'])->group($register);
+    } else {
+        $register();
+    }
+
+    return;
+}
+
 /*
 |--------------------------------------------------------------------------
 | Notification Module Routes

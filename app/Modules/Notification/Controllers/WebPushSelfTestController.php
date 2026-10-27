@@ -16,6 +16,9 @@ class WebPushSelfTestController extends Controller
         ResolveWebPushSubscriptionRequest $request,
         WebPushReadiness $readiness,
     ): JsonResponse {
+        if ($request->routeIs('api.*')) {
+            abort_unless(config('notification-api.external_tests_enabled'), 503, 'Real Notification API tests are disabled.');
+        }
         if (! $readiness->isReady()) {
             return response()->json([
                 'message' => 'Web Push is not ready in this environment.',

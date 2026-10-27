@@ -8,7 +8,7 @@ Approved RFC: rfc/2026-10-27-nextcloud-full-api-parity.md; accepted ADR and five
 All 19 browser rows and eight embedded workflows: 50 HTTP operations (36 new + 14 calendar)
 and 47 new concrete schemas. All 50 successful HTTP results match Swagger. Native/token/tenant,
 local atomic receipts/audit, stale/replay/deleted-target and provider uncertainty verified.
-Dev affected 373/13899; Main candidate 332/8889; final domain 120/6460 on both (overlap).
+Dev affected 373/13899; Main candidate 347/13459; final domain 121/6518 on both (overlap).
 Exact additive Dev migration installed; native MySQL lock/unique/encryption/rollback and
 trusted HTTPS pass. Synthetic inactive API object deleted/replayed; temporary token revoked.
 Six Knowledge source articles and actual BookStack 417/419/420/425 plus scoped 449 read back.
@@ -21,6 +21,38 @@ Existing calendar pilot checklist remains In Review; no wider targets or histori
 Issue #205 remains open and separate from current-browser API parity. Preserve contributor work.
 Next action (Codex): record the verified scoped PR/Main merge and independent read-back.
 Future production owner/action (Svein Tore): complete manual review and authorize rollout.
+
+
+## Full Notification browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Merged to Main in PR #336 / Human Review In Review / Production unchanged.
+Owner: Codex; approver/release owner: Svein Tore. Authorization: "Godkjenner og merge til main".
+Approved RFC: rfc/2026-10-27-notification-full-api-parity.md; accepted ADR:
+adr/2026-10-27-notification-api-authority-and-delivery.md. Five slices Done On Dev.
+All 19 browser rows/embedded actions map to 30 Notification operations / 39 schemas,
+plus Workday landing detail and its existing four operations. Typed contracts, fresh
+native/token authority, portal/Workday isolation, shared side effects, secret-free
+context, encrypted claims/replay, atomic preferences and truthful test outcomes verified.
+Evidence: plans/2026-10-27-notification-api-verification.md/.json and coverage matrix.
+Dev 172 / 6615 broad, latest boundaries 47 / 4719, safety 6 / 39 (overlapping);
+isolated Main broad 174 / 6629 plus five Workday consumer contract cases / 347.
+No failures/skips deferred. Native MySQL locks/uniqueness/encryption/rollback, seven
+trusted HTTPS reads, anonymous denial and Swagger exact-read-back pass.
+Exact additive 2026_10_27_170000 migration ran on Dev only; API real tests remain off.
+Five native source articles and actual BookStack 516/383 plus scoped 514/449 additions
+are verified with existing employee access inheritance. Full Workday guide is embedded
+in 516 because connector page creation/search validation fails. Native pending_push
+is not publication proof; automatic sync/source drift stays in its existing follow-up.
+Human-review checklist HR-2026-10-27-NOTIFICATION-API: In Review. Main explicitly
+authorized; unchecked human scenarios still block production deployment/release.
+Main merge verified: https://github.com/SveinT83/Nexum-PSA/pull/336
+Commit f9efc4eee84e16984e4b6c44433ff9749dd8c2d2 has the exact tested tree 34d850b305f2efaba06d9155d33ecc21603538f3.
+No Main implementation action remains. Next (Svein Tore): complete named browser/device
+review before separately authorized production rollout.
+No real sends, role grants, VAPID, provider, worker/scheduler or backlog activation.
+Preserve shared Dev/index and all unrelated work. #257 stays closed; #205/#258/#262
+future capabilities remain separate. Employee OpenWebUI retrieval is not verified.
+
 
 ## Full Signal browser/API coverage (2026-10-27)
 

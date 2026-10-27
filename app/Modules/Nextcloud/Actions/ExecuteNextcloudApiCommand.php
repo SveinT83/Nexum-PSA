@@ -51,6 +51,13 @@ class ExecuteNextcloudApiCommand
         try {
             $claimed = DB::transaction(function () use ($request, $actor, $hash, $tokenHash, $keyHash, $external, $next, $permissions, $any, $abilities) {
                 abort_unless(DB::table('nextcloud_api_mutex')->where('id', 1)->lockForUpdate()->first(), 503, 'Nextcloud API mutex is not installed.');
+                // Authority may have changed while this request waited for the mutex.
+                $actor = NextcloudApiAccess::actor();
+                $request->setUserResolver(fn () => $actor);
+                NextcloudApiAccess::authorize($actor, $permissions);
+                foreach ($abilities as $ability) {
+                    abort_unless($actor->tokenCan($ability), 403);
+                }
                 $existing = NextcloudApiCommand::where('actor_id', $actor->id)->where('token_hash', $tokenHash)->where('key_hash', $keyHash)->first();
                 if ($existing) {
                     abort_unless(hash_equals($existing->request_hash, $hash), 409, 'Idempotency-Key was used for another Nextcloud request.');
@@ -91,6 +98,11 @@ class ExecuteNextcloudApiCommand
                 return ['replayed' => false, 'command' => $command];
             });
         } catch (\Throwable $error) {
+            if ($error instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface
+                || $error instanceof \Illuminate\Validation\ValidationException
+                || $error instanceof \Illuminate\Http\Exceptions\HttpResponseException) {
+                throw $error;
+            }
             // afterCommit queue publication may fail after the local transaction committed.
             // Retain the original key and make the ambiguous handoff explicit.
             $persisted = NextcloudApiCommand::where('actor_id', $actor->id)->where('token_hash', $tokenHash)
@@ -110,7 +122,9 @@ class ExecuteNextcloudApiCommand
         $command = $claimed['command'];
         if ($external && ! $claimed['replayed']) {
             try {
-                NextcloudApiAccess::authorize($request->user(), $permissions);
+                $actor = NextcloudApiAccess::actor();
+                $request->setUserResolver(fn () => $actor);
+                NextcloudApiAccess::authorize($actor, $permissions);
                 foreach ($abilities as $ability) {
                     abort_unless($request->user()->tokenCan($ability), 403);
                 }
@@ -137,6 +151,8 @@ class ExecuteNextcloudApiCommand
                 report(new \RuntimeException('Nextcloud provider command ended without a verified result.'));
             }
         }
+        $actor = NextcloudApiAccess::actor();
+        $request->setUserResolver(fn () => $actor);
         NextcloudApiAccess::authorize($actor, $command->result['permissions'] ?? []);
         foreach ($command->result['abilities'] ?? [] as $ability) {
             abort_unless($actor->tokenCan($ability), 403, 'The original result scope is required.');

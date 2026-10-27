@@ -1447,6 +1447,17 @@ Human-review checklist HR-2026-10-27-SIGNAL-API is Reviewed. The source is merge
 to Main in PR #334. Production deployment and provider/worker activation remain
 separate; this guide does not imply production availability.
 
+## Full Notification scopes (2026-10-27)
+
+Verified on Dev; production rollout is separate. See the Notification API guide for all
+30 operations and related Workday context. Own preferences/devices, explicit tests,
+channels, admin device revocation, portal actions and command outcome read-back have
+separate notifications.* abilities. Current native rights still apply; channel admin
+also requires notification.manage_channels. Real API tests default off. Queued/provider
+accepted does not prove delivery. Guarded writes use command keys/current channel state.
+Workday own/reminder scopes remain independent. Credential/device transport fields are
+write-only direct-form inputs and never assistant-discoverable inventory.
+
 ## Nextcloud operational API (2026-10-27)
 
 Availability: Dev implementation; production deployment is separate. Nextcloud has full-domain

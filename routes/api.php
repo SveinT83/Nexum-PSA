@@ -46,6 +46,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     require app_path('Modules/Documentation/routes.php');
     unset($documentationPortalApiRoutes);
 
+    $notificationPortalApiRoutes = true;
+    require app_path('Modules/Notification/routes.php');
+    unset($notificationPortalApiRoutes);
+
     // ------------------------------------------------------------------------------------------
     // Protected routes
     // ------------------------------------------------------------------------------------------

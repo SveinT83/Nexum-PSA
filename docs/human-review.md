@@ -37,11 +37,70 @@ proceed with these human scenarios Pending; no scenario is marked Reviewed. Prod
 release/deployment/provider activation are outside this permission.
 
 Automated implementation verification completed 2026-10-27: all 50 HTTP operations and 47
-new schemas; Dev affected 373/13899, isolated Main 332/8889, final domain 120/6460 on both.
+new schemas; Dev affected 373/13899, isolated Main 347/13459, final domain 121/6518 on both.
 Exact Dev migration/native locking/uniqueness/encryption/rollback and trusted HTTPS passed.
 Actual handbook pages/employee inheritance read back. New provider execution stays false.
 No named human scenario has been checked off; Main merge authorized with scenarios Pending.
 Evidence: plans/2026-10-27-nextcloud-api-verification.md/.json.
+
+
+## HR-2026-10-27-NOTIFICATION-API - Full Notification Browser/API Coverage
+
+Status: In Review / Done On Dev and Merged to Main; production review remains open.
+Date: 2026-10-27
+Owner: Codex. Intended named human reviewer/release owner: Svein Tore.
+Parent: rfc/2026-10-27-notification-full-api-parity.md (Approved).
+Scope: all 19 current browser route rows, embedded bell/profile behavior and Workday
+integration, own devices, admin channel/device actions, portal and typed API coverage.
+Svein Tore explicitly authorized the RFC and scoped Main merge on 2026-10-27:
+"Godkjenner og merge til main". Main promotion may proceed under that instruction
+once automated verification is complete. This is not completed manual scenario review;
+the unchecked checklist continues to block production deployment/release. Existing
+Workday/Email/Web Push/runtime human-review entries retain their independent status.
+
+- [ ] Compare list/detail/total unread, one/all acknowledgement and open through web/API.
+      Inbound Email source-read and operational Ticket/Email work state stay separate.
+- [ ] Verify current Workday filtering, own preferences/readiness, generation snooze,
+      reminder landing and coordinator denial; generic scopes cannot bypass own rights.
+- [ ] Compare grouped registry/preference defaults and transactional saves; unsupported
+      fields/types fail without partial changes and credential URLs stay write-only.
+- [ ] Register/list/resolve/revoke one controlled own browser device with explicit
+      consent; foreign subscriptions cannot transfer and inventories show no keys/endpoints.
+- [ ] Confirm throttled self-test reports queued; independently receive the controlled
+      test if separately authorized. No queued/HTTP-accepted response claims delivery.
+- [ ] With native manage_channels plus scopes, test existing channel form/update,
+      stale state, explicit Nextcloud selection, SMS dry_run/consent and safe results.
+      #205 destinations/#258 VAPID wizard are outside this parity update.
+- [ ] List/revoke an authorized admin device; ordinary actors and revoked admins fail.
+- [ ] Verify portal context/preferences/open/read-one/all with internal/foreign copies,
+      inactive contact/membership and unauthorized targets denied.
+- [ ] Retry the same operation key and simulate unknown outcomes/revoked access;
+      no duplicate notification or secret result is returned.
+- [ ] Review typed Swagger, exact route coverage and actual employee BookStack
+      guide/access; state Dev/Main/production availability separately.
+
+Expected: all supported current browser operations have equivalent scoped APIs with
+typed exact result/side-effect evidence and no expansion of native rights.
+Exact additive migration: 2026_10_27_170000_create_notification_api_commands.php.
+Only this migration is authorized on Dev under the approved RFC; native locking,
+uniqueness and encrypted receipt read-back must pass. Regenerate Swagger/clear caches. No secret migration or frontend build expected.
+Risks/recovery: preserve APP_KEY, device consent, canonical notifications and receipts;
+disable new entry points on failure and reconcile unknown sends before any retry.
+Automated evidence: isolated Main affected suite 174 tests / 6629 assertions plus
+five full Workday consumer-contract cases / 347; zero failures/skips. Dev broad
+172 / 6615 with final boundary and token reruns. Thirty Notification HTTP operations /
+39 schemas and one Workday detail have verified typed coverage. Native MySQL,
+trusted HTTPS, exact Swagger and actual BookStack 516/383/514/449 read-back pass.
+Full Workday guide is embedded and read back in 516. See the verification report.
+All manual checks remain unchecked; automated evidence is not human acceptance.
+Scoped Main promotion is explicitly authorized. Production, real sends and runtime
+activation remain separate; no employee/customer delivery is performed by this work.
+
+
+Main promotion independently verified: PR #336, commit f9efc4eee84e16984e4b6c44433ff9749dd8c2d2.
+The merged tree exactly equals the tested candidate. This merge does not complete
+any unchecked manual scenario. Production deployment/release remains blocked by
+this checklist and separate rollout authorization.
 
 ## HR-2026-10-27-SIGNAL-API - Full Signal Browser/API Coverage
 

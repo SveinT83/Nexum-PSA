@@ -353,4 +353,20 @@ class NextcloudApiParityTest extends TestCase
         $this->assertSame(0, NextcloudApiCommand::count());
         $this->assertSame(0, DB::table('activity_log')->where('log_name', 'nextcloud_api')->count());
     }
+
+    #[Test]
+    public function actor_revoked_while_waiting_for_the_mutex_cannot_commit_a_local_change(): void
+    {
+        $c = $this->cloud();
+        $revoked = false;
+        DB::listen(function ($query) use (&$revoked) {
+            if (! $revoked && str_contains($query->sql, 'nextcloud_api_mutex')) {
+                $revoked = true;
+                DB::table($this->actor->getTable())->where('id', $this->actor->id)->update(['status' => User::STATUS_DISABLED]);
+            }
+        });
+        $this->write('PATCH', $this->base($c), ['name' => 'Must never commit'], $c)->assertForbidden();
+        $this->assertSame(0, NextcloudApiCommand::count());
+        $this->assertNotSame('Must never commit', $c->fresh()->name);
+    }
 }
