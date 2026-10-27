@@ -1443,8 +1443,30 @@ If-Match from the exact current resource/preview ETag. Own operation receipts ar
 encrypted and remain bound to the original actor/token and current action/source
 authority. Queued is not delivered; ambiguous external outcomes require reconciliation.
 The exact Dev migration is 2026_10_27_030000_create_signal_api_commands.php.
-Human-review checklist HR-2026-10-27-SIGNAL-API is Pending. Main, production and
-provider/worker activation remain separate; this guide does not imply deployment.
+Human-review checklist HR-2026-10-27-SIGNAL-API is Reviewed. The source is merged
+to Main in PR #334. Production deployment and provider/worker activation remain
+separate; this guide does not imply production availability.
+
+## Full Notification scopes (2026-10-27)
+
+Verified on Dev; production rollout is separate. See the Notification API guide for all
+30 operations and related Workday context. Own preferences/devices, explicit tests,
+channels, admin device revocation, portal actions and command outcome read-back have
+separate notifications.* abilities. Current native rights still apply; channel admin
+also requires notification.manage_channels. Real API tests default off. Queued/provider
+accepted does not prove delivery. Guarded writes use command keys/current channel state.
+Workday own/reminder scopes remain independent. Credential/device transport fields are
+write-only direct-form inputs and never assistant-discoverable inventory.
+
+## Nextcloud operational API (2026-10-27)
+
+Availability: Dev implementation; production deployment is separate. Nextcloud has full-domain
+connection/mapping/folder/sync/Talk operations alongside the compatible calendar-only API.
+Use the narrow Nextcloud scopes in API Management plus the caller's current native rights.
+Credentials additionally require `nextcloud.credentials.write`; new provider writes require
+`nextcloud.providers.execute`, explicit reviewed targets and the default-off API runtime switch.
+Read the connection ETag, use If-Match and Idempotency-Key, then read the exact resource/receipt.
+The Nextcloud full API guide describes all operations, errors, safe retries and availability.
 
 ## Lead Intelligence Full API Coverage (2026-10-27)
 

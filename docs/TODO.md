@@ -23,9 +23,41 @@ package/verify an isolated scoped Main candidate and merge. Production remains s
 The human checklist stays Pending; design/Main approval is not scenario review.
 Other contributors' active work and five pre-existing badge views remain preserved.
 
+
+## Full Notification browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Merged to Main in PR #336 / Human Review In Review / Production unchanged.
+Owner: Codex; approver/release owner: Svein Tore. Authorization: "Godkjenner og merge til main".
+Approved RFC: rfc/2026-10-27-notification-full-api-parity.md; accepted ADR:
+adr/2026-10-27-notification-api-authority-and-delivery.md. Five slices Done On Dev.
+All 19 browser rows/embedded actions map to 30 Notification operations / 39 schemas,
+plus Workday landing detail and its existing four operations. Typed contracts, fresh
+native/token authority, portal/Workday isolation, shared side effects, secret-free
+context, encrypted claims/replay, atomic preferences and truthful test outcomes verified.
+Evidence: plans/2026-10-27-notification-api-verification.md/.json and coverage matrix.
+Dev 172 / 6615 broad, latest boundaries 47 / 4719, safety 6 / 39 (overlapping);
+isolated Main broad 174 / 6629 plus five Workday consumer contract cases / 347.
+No failures/skips deferred. Native MySQL locks/uniqueness/encryption/rollback, seven
+trusted HTTPS reads, anonymous denial and Swagger exact-read-back pass.
+Exact additive 2026_10_27_170000 migration ran on Dev only; API real tests remain off.
+Five native source articles and actual BookStack 516/383 plus scoped 514/449 additions
+are verified with existing employee access inheritance. Full Workday guide is embedded
+in 516 because connector page creation/search validation fails. Native pending_push
+is not publication proof; automatic sync/source drift stays in its existing follow-up.
+Human-review checklist HR-2026-10-27-NOTIFICATION-API: In Review. Main explicitly
+authorized; unchecked human scenarios still block production deployment/release.
+Main merge verified: https://github.com/SveinT83/Nexum-PSA/pull/336
+Commit f9efc4eee84e16984e4b6c44433ff9749dd8c2d2 has the exact tested tree 34d850b305f2efaba06d9155d33ecc21603538f3.
+No Main implementation action remains. Next (Svein Tore): complete named browser/device
+review before separately authorized production rollout.
+No real sends, role grants, VAPID, provider, worker/scheduler or backlog activation.
+Preserve shared Dev/index and all unrelated work. #257 stays closed; #205/#258/#262
+future capabilities remain separate. Employee OpenWebUI retrieval is not verified.
+
+
 ## Full Signal browser/API coverage (2026-10-27)
 
-Status: Done On Dev / Reviewed by Svein Tore / Main promotion In Progress / Production unchanged.
+Status: Done On Dev / Reviewed by Svein Tore / Merged to Main in PR #334 / Production unchanged.
 Owner: Codex. Reviewer/release owner: Svein Tore. RFC approved with Godkjenner.
 RFC rfc/2026-10-27-signal-full-api-parity.md is Approved; ADR is Accepted; all five
 sequential slices are Done On Dev. Coverage: 18 browser rows / 24 mapped workflows,
@@ -51,10 +83,17 @@ The external API switch stays false; no role grants, AI/provider/worker/schedule
 activation, commit/push, Main or production action occurred. Other contributor work
 and independent #262/#285/Knowledge/Booking work remain preserved.
 Human-review checklist HR-2026-10-27-SIGNAL-API is Reviewed by Svein Tore.
-Named acceptance on 2026-10-27: "Godkjenner og merge til main".
-Next action (Codex): verify the isolated Main candidate and merge the approved Signal
-scope. Production deployment and provider activation still require separate authorization.
-A public-safe website handoff exists with production/publication gates preserved.
+Named acceptance and Main merge authorization: "Godkjenner og merge til main".
+PR #334 is merged: https://github.com/SveinT83/Nexum-PSA/pull/334
+Merge: be28f77d16f29e662b7b8585b27971e9c1e62438
+Tested and merged tree: 6d2a4a6961b22d7a6ee44a20a8d7f7ab86d3c28b (exact equality verified).
+Isolated Main candidate: 626 tests / 6271 assertions; final contract/source 2 / 310,
+zero failures/errors/skips. All 27 scoped PHP hashes match the actual merge.
+Only Signal additions were packaged; shared Dev code and its staged index are preserved.
+No Signal Main action remains. Next owner/action (Svein Tore): separately authorize
+production deployment/provider activation when desired. No production migration,
+worker/scheduler activation, broader key grant or real customer send was performed.
+Public-safe website handoff retains its production/publication gates.
 
 
 ## Full Knowledge browser/API coverage (2026-10-27)

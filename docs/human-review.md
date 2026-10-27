@@ -37,6 +37,65 @@ Automated domain verification: 51 tests / 466 assertions; actual 17 operations /
 schemas, native MySQL, trusted HTTPS and BookStack read-back pass. Broader provider
 test sequencing remains under investigation before Main promotion; no deferral approved.
 
+
+## HR-2026-10-27-NOTIFICATION-API - Full Notification Browser/API Coverage
+
+Status: In Review / Done On Dev and Merged to Main; production review remains open.
+Date: 2026-10-27
+Owner: Codex. Intended named human reviewer/release owner: Svein Tore.
+Parent: rfc/2026-10-27-notification-full-api-parity.md (Approved).
+Scope: all 19 current browser route rows, embedded bell/profile behavior and Workday
+integration, own devices, admin channel/device actions, portal and typed API coverage.
+Svein Tore explicitly authorized the RFC and scoped Main merge on 2026-10-27:
+"Godkjenner og merge til main". Main promotion may proceed under that instruction
+once automated verification is complete. This is not completed manual scenario review;
+the unchecked checklist continues to block production deployment/release. Existing
+Workday/Email/Web Push/runtime human-review entries retain their independent status.
+
+- [ ] Compare list/detail/total unread, one/all acknowledgement and open through web/API.
+      Inbound Email source-read and operational Ticket/Email work state stay separate.
+- [ ] Verify current Workday filtering, own preferences/readiness, generation snooze,
+      reminder landing and coordinator denial; generic scopes cannot bypass own rights.
+- [ ] Compare grouped registry/preference defaults and transactional saves; unsupported
+      fields/types fail without partial changes and credential URLs stay write-only.
+- [ ] Register/list/resolve/revoke one controlled own browser device with explicit
+      consent; foreign subscriptions cannot transfer and inventories show no keys/endpoints.
+- [ ] Confirm throttled self-test reports queued; independently receive the controlled
+      test if separately authorized. No queued/HTTP-accepted response claims delivery.
+- [ ] With native manage_channels plus scopes, test existing channel form/update,
+      stale state, explicit Nextcloud selection, SMS dry_run/consent and safe results.
+      #205 destinations/#258 VAPID wizard are outside this parity update.
+- [ ] List/revoke an authorized admin device; ordinary actors and revoked admins fail.
+- [ ] Verify portal context/preferences/open/read-one/all with internal/foreign copies,
+      inactive contact/membership and unauthorized targets denied.
+- [ ] Retry the same operation key and simulate unknown outcomes/revoked access;
+      no duplicate notification or secret result is returned.
+- [ ] Review typed Swagger, exact route coverage and actual employee BookStack
+      guide/access; state Dev/Main/production availability separately.
+
+Expected: all supported current browser operations have equivalent scoped APIs with
+typed exact result/side-effect evidence and no expansion of native rights.
+Exact additive migration: 2026_10_27_170000_create_notification_api_commands.php.
+Only this migration is authorized on Dev under the approved RFC; native locking,
+uniqueness and encrypted receipt read-back must pass. Regenerate Swagger/clear caches. No secret migration or frontend build expected.
+Risks/recovery: preserve APP_KEY, device consent, canonical notifications and receipts;
+disable new entry points on failure and reconcile unknown sends before any retry.
+Automated evidence: isolated Main affected suite 174 tests / 6629 assertions plus
+five full Workday consumer-contract cases / 347; zero failures/skips. Dev broad
+172 / 6615 with final boundary and token reruns. Thirty Notification HTTP operations /
+39 schemas and one Workday detail have verified typed coverage. Native MySQL,
+trusted HTTPS, exact Swagger and actual BookStack 516/383/514/449 read-back pass.
+Full Workday guide is embedded and read back in 516. See the verification report.
+All manual checks remain unchecked; automated evidence is not human acceptance.
+Scoped Main promotion is explicitly authorized. Production, real sends and runtime
+activation remain separate; no employee/customer delivery is performed by this work.
+
+
+Main promotion independently verified: PR #336, commit f9efc4eee84e16984e4b6c44433ff9749dd8c2d2.
+The merged tree exactly equals the tested candidate. This merge does not complete
+any unchecked manual scenario. Production deployment/release remains blocked by
+this checklist and separate rollout authorization.
+
 ## HR-2026-10-27-SIGNAL-API - Full Signal Browser/API Coverage
 
 Status: Reviewed.
@@ -74,7 +133,10 @@ Exact migration: 2026_10_27_030000_create_signal_api_commands.php (Dev batch 31)
 No broad migrate, role grants or production/runtime activation is included in this approval.
 Preserve APP_KEY, encrypted commands, immutable history and the existing webhook outbox;
 disable new entry points and reconcile unknown provider outcomes before retrying.
-Main candidate verification and merge evidence are recorded separately.
+Main promotion is complete in PR #334 (be28f77d16f29e662b7b8585b27971e9c1e62438).
+The merge tree equals tested candidate 6d2a4a6961b22d7a6ee44a20a8d7f7ab86d3c28b.
+Candidate 626 / 6271 and final contract/source 2 / 310 pass without failures/skips.
+No production deployment or runtime activation is authorized by this review.
 
 
 ## HR-2026-10-27-KNOWLEDGE-API - Full Knowledge Browser/API Coverage
