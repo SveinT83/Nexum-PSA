@@ -90,8 +90,22 @@ native MySQL: recorded commands/outbound claims block destructive rollback. Prod
 remains undeployed and external execution off. HR-2026-10-27-RELATIONSHIP-API is Pending.
 
 
-Published Main critical read-back was independently rerun: 5 / 1644, including all
+Published Main critical read-back was independently rerun: 9 / 1738, including all
 31 successful HTTP operation bodies and API administration. Final guide Main status
 was source-synced (revisions 187/151) and actual BookStack 510 was read back exactly;
 511 remains unchanged and verified. Permissions remain inherited and unchanged.
-No application tests are repeated for this documentation-only status follow-up.
+The published-Main rerun also includes signed ingress success and retention checks.
+
+## Diagnostic privacy follow-up
+
+Connection requests, rotation receipts, credential-table queries and background signed
+transport are excluded from Telescope diagnostic copies. Nested Nexum token/signature
+headers and secret-bearing JSON are redacted outside that request context. Unexpected
+API errors return generic no-store JSON and log only the exception class; browser
+validation never flashes connection credentials. Encrypted canonical receipts/claims
+remain authoritative. No historical telemetry deletion is performed. Five dedicated
+Dev tests pass with 27 assertions; candidate regression verification is recorded below.
+
+Privacy follow-up regression: authoritative Dev 37 / 2883; isolated Main candidate
+42 / 2972, zero failures/errors, including API-key administration, Knowledge source
+sync and production Swagger scanning. All 31 operation success contracts remain valid.

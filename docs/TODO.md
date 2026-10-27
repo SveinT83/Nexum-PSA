@@ -11,6 +11,9 @@ Accepted ADR: adr/2026-10-27-relationship-api-authority-and-outbound-claims.md.
 RL01-RL05: feature-slices/2026-10-27-relationship-full-api-parity.md (Done On Dev).
 Coverage: 10 browser rows, 21 staff APIs, 5 signed ingress and 5 reused Ticket APIs:
 31 HTTP operations and 33 typed schemas, with actual successful HTTP/schema evidence.
+Diagnostic privacy follow-up is verified: Dev 37 / 2883, Main candidate 42 / 2972.
+Sensitive request/background telemetry is discarded; browser old input and API errors
+exclude credentials. Canonical encrypted receipts remain intact; no history is deleted.
 Verification: plans/2026-10-27-relationship-api-verification.md/.json and coverage matrix.
 Broader Main candidate passes 338 / 7406. Latest Main integration bridge passes
 34 / 2910, no failures/errors/skips/warnings. Final Dev scoped

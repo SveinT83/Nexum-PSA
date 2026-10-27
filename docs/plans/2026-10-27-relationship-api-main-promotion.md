@@ -18,7 +18,12 @@ production release. A future deploy needs the single additive Relationship migra
 normal cache clear and Swagger generation. Preserve encryption key and ledger history.
 This follow-up records facts and updates guide availability only; no runtime code changes.
 
-Published Main critical verification: 5 / 1644 after merge, all 31 successful method
+Published Main critical verification: 9 / 1738 after merge, all 31 successful method
 contracts; retention checks 3 / 9 plus native MySQL. The final handbook explicitly
 states Main merged and production not deployed. This documentation-only reconciliation
 requires no additional runtime migration or application test rerun.
+
+A bounded runtime follow-up closes diagnostic secrecy gaps for signed token headers,
+rotation results and encrypted query evidence. Canonical receipts remain unchanged.
+It requires no additional migration or provider activation. Dev regression passes 37 / 2883; Main candidate passes 42 / 2972, no failures/errors.
+This privacy follow-up is ready for the already-authorized Main merge.

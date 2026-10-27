@@ -55,8 +55,8 @@
       "base": "f91acc9045794ac4ede80a336f80974c17ab9bc4"
     },
     "post_merge_critical": {
-      "passed": 5,
-      "assertions": 1644,
+      "passed": 9,
+      "assertions": 1738,
       "all_http_success_contracts": 31,
       "merged_tree": "860f4883b2ad4d7288583ff39d963b7fa1b980c3"
     },
@@ -142,5 +142,25 @@
     "main_candidate_passed": 3,
     "assertions": 9,
     "native_mysql_verified": true
+  },
+  "diagnostic_privacy": {
+    "dev_tests": 5,
+    "dev_assertions": 27,
+    "sensitive_request_and_background_telemetry": "discarded",
+    "nested_headers_and_one_time_secrets": "redacted",
+    "unexpected_api_failures": "generic no-store response and exception class only",
+    "browser_credentials": "excluded from flashed input",
+    "canonical_receipts": "preserved encrypted; no historical telemetry purge performed",
+    "main_followup": "Tested; merge pending",
+    "dev_regression": {
+      "passed": 37,
+      "assertions": 2883
+    },
+    "main_candidate_regression": {
+      "passed": 42,
+      "assertions": 2972,
+      "failures": 0,
+      "errors": 0
+    }
   }
 }
