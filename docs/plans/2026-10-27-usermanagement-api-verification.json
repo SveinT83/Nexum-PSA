@@ -228,6 +228,13 @@
       "errors": 0,
       "failures": 0,
       "skipped": 1
+    },
+    "main-privacy-tests.xml": {
+      "tests": 24,
+      "assertions": 916,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
     }
   },
   "deployment": {
@@ -290,5 +297,11 @@
     "valid_sso_grant_supported": true,
     "middleware_registration_regression_verified": true
   },
-  "tested_main_base": "fa6aeee942130d72673b809f4aacc6a9d67473e9"
+  "tested_main_base": "b237df60",
+  "shared_privacy_integration": {
+    "both_domain_owners_preserved": true,
+    "tests": 24,
+    "assertions": 916,
+    "failures": 0
+  }
 }

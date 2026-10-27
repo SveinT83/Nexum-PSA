@@ -71,3 +71,5 @@ HR-2026-10-27-USERMANAGEMENT-API is Pending. Svein Tore's explicit implementatio
 Main merge authorization is not human scenario review. These checks plus existing SSO
 review gates still apply before production release/activation. See the promotion report
 for the actual final refs; no production deployment is included.
+
+Final Relationship privacy integration on current Main: 24 passed / 916 assertions, no skips/errors/failures; both diagnostic owners are retained. Final bootstrap formatting has identical executable PHP tokens.

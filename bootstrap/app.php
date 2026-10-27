@@ -120,6 +120,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->report(function (\Throwable $error) {
             if (\App\Modules\Relationship\Support\RelationshipApiPrivacy::matches(request())) {
                 \Illuminate\Support\Facades\Log::error('Relationship operation failed.', ['exception_class' => get_class($error)]);
+
                 return false;
             }
         });
