@@ -1,0 +1,32 @@
+[
+    {
+        "id": 73,
+        "slug": "warroom-api",
+        "status": "published",
+        "visibility": "internal",
+        "exact_markdown_match": true,
+        "sha256": "487c4dee1c106e49186cbcf70581a077b82e3d1f470ecbce678108191b9b51fd",
+        "published_revision_id": 188,
+        "sync_status": "pending_push"
+    },
+    {
+        "id": 74,
+        "slug": "warroom-overview",
+        "status": "published",
+        "visibility": "internal",
+        "exact_markdown_match": true,
+        "sha256": "456bea5d5325ed9e67e9e0cd8c38be744d3bd3081dcd022f317008d4faeba83a",
+        "published_revision_id": 189,
+        "sync_status": "pending_push"
+    },
+    {
+        "id": 75,
+        "slug": "warroom-settings",
+        "status": "published",
+        "visibility": "internal",
+        "exact_markdown_match": true,
+        "sha256": "d5cebb445a071aa0610701866ff2c44822de73e6e838f4157efc17553e9652b4",
+        "published_revision_id": 179,
+        "sync_status": "pending_push"
+    }
+]

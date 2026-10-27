@@ -132973,6 +132973,912 @@
                     "users.operations.read"
                 ]
             }
+        },
+        "/api/v1/warroom/context": {
+            "get": {
+                "tags": [
+                    "Warroom"
+                ],
+                "summary": "Discover Warroom capabilities",
+                "description": "Requires warroom.read and current warroom.view. Source record/field/mailbox authority remains mandatory. No GET writes. Unknown fields are rejected.",
+                "operationId": "warroomContext",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; settings reads/writes include ETag.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WarroomApiContext"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/warroom/dashboard": {
+            "get": {
+                "tags": [
+                    "Warroom"
+                ],
+                "summary": "Read authorized operational dashboard",
+                "description": "Requires warroom.read and current warroom.view. Source record/field/mailbox authority remains mandatory. No GET writes. Unknown fields are rejected.",
+                "operationId": "warroomDashboard",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; settings reads/writes include ETag.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WarroomApiDashboard"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/warroom/my-day": {
+            "get": {
+                "tags": [
+                    "Warroom"
+                ],
+                "summary": "Read personal work queues",
+                "description": "Requires warroom.read and current warroom.view. Source record/field/mailbox authority remains mandatory. No GET writes. Unknown fields are rejected.",
+                "operationId": "warroomMyDay",
+                "parameters": [
+                    {
+                        "name": "focus",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "overdue"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 10000,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; settings reads/writes include ETag.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WarroomApiMyDay"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/warroom/my-day/overdue": {
+            "get": {
+                "tags": [
+                    "Warroom"
+                ],
+                "summary": "Read combined personal overdue work",
+                "description": "Requires warroom.read and current warroom.view. Source record/field/mailbox authority remains mandatory. No GET writes. Unknown fields are rejected.",
+                "operationId": "warroomOverdue",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 10000,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; settings reads/writes include ETag.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WarroomApiOverdue"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/warroom/settings": {
+            "get": {
+                "tags": [
+                    "Warroom"
+                ],
+                "summary": "Read global Warroom settings",
+                "description": "Requires warroom.settings.read and current warroom.manage_settings. Source record/field/mailbox authority remains mandatory. No GET writes. Unknown fields are rejected.",
+                "operationId": "warroomSettings",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; settings reads/writes include ETag.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WarroomApiSettingsSnapshot"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Warroom"
+                ],
+                "summary": "Replace global Warroom settings",
+                "description": "Requires warroom.settings.manage and current warroom.manage_settings. Source record/field/mailbox authority remains mandatory. No GET writes. Unknown fields are rejected.",
+                "operationId": "warroomUpdateSettings",
+                "parameters": [
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WarroomApiSettings"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; settings reads/writes include ETag.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WarroomApiSettingsResult"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/warroom/operations/{command}": {
+            "get": {
+                "tags": [
+                    "Warroom"
+                ],
+                "summary": "Read an own settings-command receipt",
+                "description": "Requires warroom.settings.manage and current warroom.manage_settings. Source record/field/mailbox authority remains mandatory. No GET writes. Unknown fields are rejected.",
+                "operationId": "warroomOperation",
+                "parameters": [
+                    {
+                        "name": "command",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result; settings reads/writes include ETag.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WarroomApiCommand"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Authorization, validation, conflict or source availability error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarroomApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -181768,6 +182674,1290 @@
                     }
                 },
                 "type": "object"
+            },
+            "WarroomApiSettings": {
+                "required": [
+                    "due_soon_hours",
+                    "inbox_recent_hours",
+                    "latest_tickets_limit",
+                    "latest_alerts_limit",
+                    "calendar_today_limit",
+                    "recent_integrations_limit",
+                    "enabled_sections"
+                ],
+                "properties": {
+                    "due_soon_hours": {
+                        "description": "Exact typed Warroom contracts; token scopes never replace native source authority.",
+                        "type": "integer",
+                        "maximum": 168,
+                        "minimum": 1
+                    },
+                    "inbox_recent_hours": {
+                        "type": "integer",
+                        "maximum": 168,
+                        "minimum": 1
+                    },
+                    "latest_tickets_limit": {
+                        "type": "integer",
+                        "maximum": 20,
+                        "minimum": 1
+                    },
+                    "latest_alerts_limit": {
+                        "type": "integer",
+                        "maximum": 20,
+                        "minimum": 1
+                    },
+                    "calendar_today_limit": {
+                        "type": "integer",
+                        "maximum": 20,
+                        "minimum": 1
+                    },
+                    "recent_integrations_limit": {
+                        "type": "integer",
+                        "maximum": 20,
+                        "minimum": 1
+                    },
+                    "enabled_sections": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "pulse",
+                                "tickets",
+                                "asset_alerts",
+                                "calendar",
+                                "domain_radar",
+                                "integrations",
+                                "lanes",
+                                "system_health",
+                                "next_actions"
+                            ]
+                        },
+                        "maxItems": 9,
+                        "minItems": 1,
+                        "uniqueItems": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiSectionOptions": {
+                "required": [
+                    "pulse",
+                    "tickets",
+                    "asset_alerts",
+                    "calendar",
+                    "domain_radar",
+                    "integrations",
+                    "lanes",
+                    "system_health",
+                    "next_actions"
+                ],
+                "properties": {
+                    "pulse": {
+                        "type": "string"
+                    },
+                    "tickets": {
+                        "type": "string"
+                    },
+                    "asset_alerts": {
+                        "type": "string"
+                    },
+                    "calendar": {
+                        "type": "string"
+                    },
+                    "domain_radar": {
+                        "type": "string"
+                    },
+                    "integrations": {
+                        "type": "string"
+                    },
+                    "lanes": {
+                        "type": "string"
+                    },
+                    "system_health": {
+                        "type": "string"
+                    },
+                    "next_actions": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiSourceStates": {
+                "required": [
+                    "tickets",
+                    "tasks",
+                    "calendar",
+                    "assets",
+                    "mail",
+                    "clients",
+                    "contracts",
+                    "sales",
+                    "economy",
+                    "storage",
+                    "knowledge",
+                    "integrations",
+                    "nextcloud",
+                    "notifications"
+                ],
+                "properties": {
+                    "tickets": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "tasks": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "calendar": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "assets": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "mail": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "clients": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "contracts": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "sales": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "economy": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "storage": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "knowledge": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "integrations": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "nextcloud": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "notifications": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiPersonalSourceStates": {
+                "required": [
+                    "tickets",
+                    "tasks",
+                    "calendar"
+                ],
+                "properties": {
+                    "tickets": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "tasks": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "calendar": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiSections": {
+                "required": [
+                    "pulse",
+                    "tickets",
+                    "asset_alerts",
+                    "calendar",
+                    "domain_radar",
+                    "integrations",
+                    "lanes",
+                    "system_health",
+                    "next_actions"
+                ],
+                "properties": {
+                    "pulse": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "hidden",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "tickets": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "hidden",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "asset_alerts": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "hidden",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "calendar": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "hidden",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "domain_radar": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "hidden",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "integrations": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "hidden",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "lanes": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "hidden",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "system_health": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "hidden",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "next_actions": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "hidden",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiAction": {
+                "required": [
+                    "label",
+                    "route",
+                    "icon",
+                    "href"
+                ],
+                "properties": {
+                    "label": {
+                        "type": "string"
+                    },
+                    "route": {
+                        "type": "string"
+                    },
+                    "icon": {
+                        "type": "string"
+                    },
+                    "href": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiContext": {
+                "required": [
+                    "timezone",
+                    "source_states",
+                    "section_options",
+                    "settings",
+                    "preview_limits",
+                    "pagination",
+                    "actions",
+                    "lanes",
+                    "capabilities"
+                ],
+                "properties": {
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "source_states": {
+                        "$ref": "#/components/schemas/WarroomApiSourceStates"
+                    },
+                    "section_options": {
+                        "$ref": "#/components/schemas/WarroomApiSectionOptions"
+                    },
+                    "settings": {
+                        "$ref": "#/components/schemas/WarroomApiSettings"
+                    },
+                    "preview_limits": {
+                        "required": [
+                            "tickets",
+                            "tasks",
+                            "events"
+                        ],
+                        "properties": {
+                            "tickets": {
+                                "type": "integer"
+                            },
+                            "tasks": {
+                                "type": "integer"
+                            },
+                            "events": {
+                                "type": "integer"
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "pagination": {
+                        "required": [
+                            "default_per_page",
+                            "maximum_per_page"
+                        ],
+                        "properties": {
+                            "default_per_page": {
+                                "type": "integer"
+                            },
+                            "maximum_per_page": {
+                                "type": "integer"
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "actions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WarroomApiAction"
+                        }
+                    },
+                    "lanes": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WarroomApiAction"
+                        }
+                    },
+                    "capabilities": {
+                        "required": [
+                            "read_dashboard",
+                            "read_my_day",
+                            "read_settings",
+                            "update_settings"
+                        ],
+                        "properties": {
+                            "read_dashboard": {
+                                "type": "boolean"
+                            },
+                            "read_my_day": {
+                                "type": "boolean"
+                            },
+                            "read_settings": {
+                                "type": "boolean"
+                            },
+                            "update_settings": {
+                                "type": "boolean"
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiMetric": {
+                "required": [
+                    "label",
+                    "value",
+                    "tone",
+                    "icon",
+                    "meta",
+                    "href"
+                ],
+                "properties": {
+                    "label": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "integer"
+                    },
+                    "tone": {
+                        "type": "string"
+                    },
+                    "icon": {
+                        "type": "string"
+                    },
+                    "meta": {
+                        "type": "string"
+                    },
+                    "href": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiDashboardTicket": {
+                "required": [
+                    "id",
+                    "key",
+                    "title",
+                    "assigned",
+                    "is_unread",
+                    "due_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "key": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "assigned": {
+                        "type": "boolean"
+                    },
+                    "is_unread": {
+                        "type": "boolean"
+                    },
+                    "due_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiAlert": {
+                "required": [
+                    "id",
+                    "title",
+                    "status",
+                    "last_seen_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_seen_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiDashboardEvent": {
+                "required": [
+                    "id",
+                    "title",
+                    "status",
+                    "starts_at",
+                    "ends_at",
+                    "details_visible"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "starts_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "ends_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "details_visible": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiIntegration": {
+                "required": [
+                    "id",
+                    "name",
+                    "type",
+                    "health",
+                    "has_error",
+                    "last_sync_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "health": {
+                        "type": "string",
+                        "enum": [
+                            "healthy",
+                            "attention",
+                            "unknown"
+                        ]
+                    },
+                    "has_error": {
+                        "type": "boolean"
+                    },
+                    "last_sync_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiNextAction": {
+                "required": [
+                    "title",
+                    "description",
+                    "href"
+                ],
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "href": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiSystem": {
+                "required": [],
+                "properties": {
+                    "integrations_total": {
+                        "type": "integer"
+                    },
+                    "integrations_unhealthy": {
+                        "type": "integer"
+                    },
+                    "nextcloud_active": {
+                        "type": "integer"
+                    },
+                    "nextcloud_warnings": {
+                        "type": "integer"
+                    },
+                    "notification_channels": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiDashboard": {
+                "required": [
+                    "generated_at",
+                    "timezone",
+                    "settings",
+                    "sources",
+                    "sections",
+                    "pulse",
+                    "operations",
+                    "storage_should_order",
+                    "system",
+                    "calendar_events_label",
+                    "latest_tickets",
+                    "latest_alerts",
+                    "calendar_events",
+                    "recent_integrations",
+                    "lanes",
+                    "next_actions"
+                ],
+                "properties": {
+                    "generated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "settings": {
+                        "$ref": "#/components/schemas/WarroomApiSettings"
+                    },
+                    "sources": {
+                        "$ref": "#/components/schemas/WarroomApiSourceStates"
+                    },
+                    "sections": {
+                        "$ref": "#/components/schemas/WarroomApiSections"
+                    },
+                    "pulse": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WarroomApiMetric"
+                        }
+                    },
+                    "operations": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WarroomApiMetric"
+                        }
+                    },
+                    "storage_should_order": {
+                        "required": [
+                            "count",
+                            "visible",
+                            "href"
+                        ],
+                        "properties": {
+                            "count": {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            "visible": {
+                                "type": "boolean"
+                            },
+                            "href": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "system": {
+                        "$ref": "#/components/schemas/WarroomApiSystem"
+                    },
+                    "calendar_events_label": {
+                        "type": "string",
+                        "enum": [
+                            "Today",
+                            "Next event"
+                        ]
+                    },
+                    "latest_tickets": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WarroomApiDashboardTicket"
+                        },
+                        "maxItems": 20
+                    },
+                    "latest_alerts": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WarroomApiAlert"
+                        },
+                        "maxItems": 20
+                    },
+                    "calendar_events": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WarroomApiDashboardEvent"
+                        },
+                        "maxItems": 20
+                    },
+                    "recent_integrations": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WarroomApiIntegration"
+                        },
+                        "maxItems": 20
+                    },
+                    "lanes": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WarroomApiAction"
+                        }
+                    },
+                    "next_actions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WarroomApiNextAction"
+                        }
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiTicket": {
+                "required": [
+                    "id",
+                    "key",
+                    "title",
+                    "client",
+                    "due_at",
+                    "is_unread",
+                    "url"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "key": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "client": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "due_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "is_unread": {
+                        "type": "boolean"
+                    },
+                    "url": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiTask": {
+                "required": [
+                    "id",
+                    "title",
+                    "client",
+                    "status",
+                    "due_at",
+                    "scheduled_start_at",
+                    "url"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "client": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "due_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "scheduled_start_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "url": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiEvent": {
+                "required": [
+                    "id",
+                    "title",
+                    "calendar",
+                    "location",
+                    "starts_at",
+                    "ends_at",
+                    "status",
+                    "details_visible"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "calendar": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "location": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "starts_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "ends_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "details_visible": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiOverdueItem": {
+                "required": [
+                    "type",
+                    "id",
+                    "title",
+                    "key",
+                    "client",
+                    "due_at",
+                    "is_unread",
+                    "url"
+                ],
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "ticket",
+                            "task"
+                        ]
+                    },
+                    "id": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "key": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "client": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "due_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "is_unread": {
+                        "type": "boolean"
+                    },
+                    "url": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiOverdue": {
+                "required": [
+                    "state",
+                    "total",
+                    "page",
+                    "per_page",
+                    "last_page",
+                    "items"
+                ],
+                "properties": {
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "total": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "page": {
+                        "type": "integer",
+                        "maximum": 10000,
+                        "minimum": 1
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "maximum": 100,
+                        "minimum": 1
+                    },
+                    "last_page": {
+                        "type": "integer"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WarroomApiOverdueItem"
+                        },
+                        "maxItems": 100
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiMyDay": {
+                "required": [
+                    "generated_at",
+                    "timezone",
+                    "window",
+                    "sources",
+                    "counts",
+                    "tickets",
+                    "tasks",
+                    "events",
+                    "actions",
+                    "overdue_state"
+                ],
+                "properties": {
+                    "generated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "window": {
+                        "required": [
+                            "starts_at",
+                            "ends_at"
+                        ],
+                        "properties": {
+                            "starts_at": {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            "ends_at": {
+                                "type": "string",
+                                "format": "date-time"
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "sources": {
+                        "$ref": "#/components/schemas/WarroomApiPersonalSourceStates"
+                    },
+                    "counts": {
+                        "required": [
+                            "tickets",
+                            "tasks",
+                            "events",
+                            "overdue",
+                            "unread"
+                        ],
+                        "properties": {
+                            "tickets": {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            "tasks": {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            "events": {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            "overdue": {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            "unread": {
+                                "type": "integer",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "tickets": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WarroomApiTicket"
+                        },
+                        "maxItems": 8
+                    },
+                    "tasks": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WarroomApiTask"
+                        },
+                        "maxItems": 8
+                    },
+                    "events": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WarroomApiEvent"
+                        },
+                        "maxItems": 12
+                    },
+                    "actions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WarroomApiAction"
+                        }
+                    },
+                    "overdue_state": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "inaccessible",
+                            "unavailable"
+                        ]
+                    },
+                    "overdue": {
+                        "$ref": "#/components/schemas/WarroomApiOverdue"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiSettingsSnapshot": {
+                "required": [
+                    "settings",
+                    "revision",
+                    "section_options"
+                ],
+                "properties": {
+                    "settings": {
+                        "$ref": "#/components/schemas/WarroomApiSettings"
+                    },
+                    "revision": {
+                        "type": "string"
+                    },
+                    "section_options": {
+                        "$ref": "#/components/schemas/WarroomApiSectionOptions"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiSettingsResult": {
+                "required": [
+                    "settings",
+                    "revision",
+                    "section_options",
+                    "operation_id",
+                    "replayed"
+                ],
+                "properties": {
+                    "settings": {
+                        "$ref": "#/components/schemas/WarroomApiSettings"
+                    },
+                    "revision": {
+                        "type": "string"
+                    },
+                    "section_options": {
+                        "$ref": "#/components/schemas/WarroomApiSectionOptions"
+                    },
+                    "operation_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiCommand": {
+                "required": [
+                    "id",
+                    "state",
+                    "result",
+                    "created_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "completed"
+                        ]
+                    },
+                    "result": {
+                        "$ref": "#/components/schemas/WarroomApiSettingsSnapshot"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "WarroomApiError": {
+                "required": [
+                    "message"
+                ],
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -181935,6 +184125,7 @@
         {
             "name": "UserManagement",
             "description": "User lifecycle, profiles, authorization, invitations and existing security/SSO workflows."
-        }
+        },
+        {"name": "Warroom", "description": "Warroom"}
     ]
 }

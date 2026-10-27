@@ -21,6 +21,49 @@ both HTTP 200. All 17 enabled-vhost digests unchanged; no key/certificate/vhost 
 Earlier unprivileged missing-key diagnostics were a permission artifact, not current key absence.
 #224 retains its independent snapshot/rollback/package/site acceptance; #292 no longer blocks it.
 
+## Full Warroom browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Reviewed / Merged To Main In PR #359.
+Owner: Codex; approver and human reviewer: Svein Tore.
+Request: full current Warroom API support. Approval: "Ja godkjent", 2026-10-27.
+RFC: rfc/2026-10-27-warroom-full-api-parity.md (Approved).
+ADR: adr/2026-10-27-warroom-api-projections-and-settings.md (Accepted).
+Four sequential slices: feature-slices/2026-10-27-warroom-full-api-parity.md (Done).
+All 4 current browser operations, overdue variant and embedded actions are mapped
+to 7 typed API operations / 25 schemas with runtime/scope/test/HTTPS read-back evidence.
+Includes source-authorized Dashboard/My Day, private Calendar and ordinary mailbox
+scope, complete totals/bounded previews, all settings, stale browser/API protection,
+encrypted replay/receipts and actual current-actor/token checks.
+Final complete Warroom suite: 31 tests / 619 assertions. Other passing groups:
+343/5934, 189/1773, 45/807; overlapping runs must not be added. No failed/skipped check.
+Native MySQL rollback/replay and concurrent 200/412 with 705 ms wait passed.
+All seven HTTPS operations and published Swagger were independently read back.
+Exact additive warroom_api_commands/mutex migration applied on Dev only.
+Evidence: plans/2026-10-27-warroom-api-verification.md and contract/coverage/native/
+HTTPS/Knowledge/handbook/cleanup JSON files. Contributor work remains preserved.
+Three native sources match published/internal Knowledge. BookStack 443/444 exact
+content and existing employee scope verified; API reference lives in page 443.
+Automatic native BookStack sync remains unconfigured/unchanged. Before future
+enablement, integration owner must reconcile source/page mappings and avoid pushing
+unrelated pending content. Current manual publication is complete and verified.
+OpenWebUI employee retrieval was not tested and is a separate claim.
+HR-2026-10-27-WARROOM-API is Reviewed by Svein Tore, 2026-10-27:
+"Godkjenner" explicitly accepts the completed Dev scope and checklist. The later explicit Main authorization is recorded below; production deployment is separate.
+Scoped Main promotion is complete; no production deployment, grants, provider or queue activation.
+Next action (Svein Tore/release owner): separately request any later production deployment and verify its actual target. No implementation remains open. One public-safe website handoff item was read back, "Ikke publiser".
+No open Warroom Issue was found; historical #183/#202/#208 were not changed.
+
+
+Main promotion approval (Svein Tore, 2026-10-27): "Vi skal bare få alt merger til main først nå. Det er godkjent".
+Codex packaged and verified the existing Warroom scope from latest Main; no new product work.
+This supersedes earlier statements that Main promotion is unauthorized; production is separate.
+
+
+Main result: PR #359 merged and independently read back; commit fc4a9f5b3963588a1b00e8d9712e5db88d7a64dc.
+The merge tree exactly matches tested candidate fb142c623bbed811f329530069256b1eaa899f03.
+Fresh Main candidate: 95 tests / 1522 assertions, zero failures/errors/skips; Pint 22 files.
+See plans/2026-10-27-warroom-api-main-promotion.md. No implementation or Main gate remains.
+
 ## Full UserManagement browser/API coverage (2026-10-27)
 
 Status: Done On Dev / Verified / Merged to Main in PR #353 / Production not deployed.

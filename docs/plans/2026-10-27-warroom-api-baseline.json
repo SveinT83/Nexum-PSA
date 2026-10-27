@@ -1,0 +1,86 @@
+{
+  "date": "2026-10-27",
+  "environment": "authoritative Dev",
+  "branch": "Dev",
+  "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "browser_routes": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/warroom",
+      "name": "tech.admin.settings.warroom",
+      "action": "App\\Modules\\Warroom\\Controllers\\Admin\\WarroomSettingsController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/admin/settings/warroom",
+      "name": "tech.admin.settings.warroom.update",
+      "action": "App\\Modules\\Warroom\\Controllers\\Admin\\WarroomSettingsController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/dashboard",
+      "name": "tech.dashboard",
+      "action": "App\\Modules\\Warroom\\Controllers\\Tech\\WarroomController",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/my-day",
+      "name": "tech.my-day.index",
+      "action": "App\\Modules\\Warroom\\Controllers\\Tech\\MyDayController",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    }
+  ],
+  "api_routes": [],
+  "test_command": "umask 0002; HOME=/tmp php artisan test app/Modules/Warroom/Tests/Feature --compact",
+  "tests": {
+    "passed": 15,
+    "assertions": 103,
+    "failures": 0,
+    "skips": 0,
+    "duration_seconds": 35.84
+  },
+  "preexisting_view_sha256": "4ca4079897b05c4344bfd3d23a41d0fb346b2b38f0809514c0f3b3293b923291",
+  "preexisting_view_change": "Four-line Workday/Absence shortcuts; preserved",
+  "initial_transient_blocker": "LeadIntelligence duplicate imports; fixed by concurrent contributor before successful test and route rerun",
+  "current_blocker": null,
+  "github_open_warroom_issues": 0,
+  "planning_only": true,
+  "baseline_state": "Historical pre-implementation snapshot; implementation is now verified on Dev",
+  "initial_blocker": "Concrete RFC approval before implementation",
+  "approval": "Svein Tore: Ja godkjent, 2026-10-27"
+}
