@@ -1,5 +1,48 @@
 # Human Review Register
 
+## HR-2026-10-27-MARKETING-API - Full Marketing Browser/API Coverage
+
+Status: Pending / Dev implementation verified; merged to Main in PR #350.
+Added: 2026-10-27. Owner: Codex. Intended human reviewer/release owner: Svein Tore.
+Scope: rfc/2026-10-27-marketing-full-api-parity.md (Approved), MK01-MK06, all 28 staff
+browser routes, 3 public recipient capability routes and embedded/API-only workflows.
+Svein Tore authorized "Godkjenner og merge til main" on 2026-10-27. Main promotion
+is explicitly authorized with manual scenarios Pending. This checklist gates production
+deployment/release; no manual checks are marked complete by RFC or merge approval.
+Existing HR-2026-08-24-002 remains Reviewed; no previous review is reopened.
+
+- [ ] Compare dashboard, list/campaign search/filter/pagination and exact detail/read-back.
+- [ ] Create/edit list criteria; add/remove/refresh eligible Contact and legacy members;
+      verify consent, suppressions, exclusions, deduplication and protected deletion.
+- [ ] Create/update campaign, multi-list audience, schedule and ordered email snapshots;
+      compare current template/sender choices, cached content and interest/progress summary.
+- [ ] Preview unsaved/snapshot content without saving, tracking or sending; test foreign
+      campaign-email rejection and restricted context/PII access with narrow rights.
+- [ ] Exercise controlled WordPress and AI actions with disabled/enabled API provider
+      guards; verify no provider activation or role grants from ordinary read requests.
+- [ ] Approve a controlled campaign, compare due-send intent/queue and provider binding;
+      verify quiet hours, consent/suppression and lifetime no-resend after refresh/edits.
+- [ ] Use fake/controlled test-send outcomes; distinguish acceptance, queued, unknown and
+      inbox receipt. Unknown transmissions must never be automatically replayed.
+- [ ] Repeat keyed commands, conflict payloads, stale/concurrent changes and revoke actor /
+      token rights; verify no duplicate records/sends or unauthorized receipt access.
+- [ ] Verify public open/click/unsubscribe URLs and employee handbook/Swagger accuracy.
+
+Expected: full supported operational parity with exact typed results and unchanged
+consent, suppression, evergreen sequencing and delivery claim invariants.
+Deploy: exact additive migration database/migrations/2026_10_27_060000_create_marketing_api_commands.php,
+regenerated Swagger, normal caches and worker restart if changed job code is deployed. No new scheduler cadence or frontend build is planned.
+Recovery/risks: scope-only token compatibility, PII, stale/concurrent audience changes,
+external URL fetches and ambiguous SMTP. Preserve APP_KEY, receipts and delivery history;
+disable new API entry/provider execution on failure and reconcile unknown outcomes.
+Automated evidence: 88 Marketing tests / 2018 assertions pass on Dev; 488 / 7469
+on the initial isolated affected Main candidate. All 42 successful API methods, native
+DB, exact Dev migration, HTTPS/Swagger and actual handbook 449 read-back are verified.
+Manual scenario boxes remain unchecked; this is not a claim that Svein executed them.
+
+Final candidate and Dev Marketing runs each pass 88 tests / 2018 assertions.
+Populated field/receipt contracts, rendered-error privacy and browser/API rollback
+are explicitly covered. Main merge is verified in PR #350; manual scenarios remain Pending.
 
 ## HR-2026-10-27-RELATIONSHIP-API - Full Relationship Browser/API Coverage
 

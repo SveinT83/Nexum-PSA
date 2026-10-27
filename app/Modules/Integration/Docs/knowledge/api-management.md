@@ -1513,3 +1513,18 @@ other actors is restricted by owning-domain view and current field visibility.
 Mutation commands require Idempotency-Key; update/delete require If-Match. Replays
 and receipts recheck current rights and original token ability. Definition rights
 do not grant Client/Site/Ticket value access or activate Ticket write/rule gates.
+
+## Marketing full API coverage (2026-10-27)
+
+Dev implementation: 42 protected HTTP operations, typed Swagger and complete current
+list/campaign/email/settings workflows. New abilities: marketing.context.read,
+marketing.providers.execute and marketing.operations.read. Existing Marketing scopes
+remain supported but must match current native user rights; settings require their
+native administration permission. Context also requires the matching action scope.
+Use Idempotency-Key and current If-Match for safe changes, and own-operation read-back
+for exact results. Legacy unkeyed requests retain compatibility with a retry warning.
+API AI/WordPress/test-send/due-send additionally require the default-off Marketing
+provider-execution guard. Queued/SMTP-accepted results do not prove inbox delivery.
+See the Marketing overview and full Marketing API guide for steps and troubleshooting.
+Merged to Main in PR #350; production/activation is unchanged.
+HR-2026-10-27-MARKETING-API remains Pending for human scenarios before production/release.

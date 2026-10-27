@@ -255,3 +255,12 @@ See:
   snapshot.
 - Do not move Sales pipeline behavior into Marketing. Marketing may record engagement and interest
   signals, but Lead Heat, classification, seller sorting, and follow-up workflow belong in Sales.
+
+
+## Full API coverage (2026-10-27)
+
+42 protected HTTP operations cover the current Marketing browser workflows, with
+complete typed Swagger and actor/token authorization. See `Docs/knowledge/marketing-api.md`
+for scopes, contexts, exact command read-back, provider guards and deployment steps.
+Implemented on Dev and merged to Main in PR #350;
+production is unchanged. Public recipient capability URLs remain unchanged.

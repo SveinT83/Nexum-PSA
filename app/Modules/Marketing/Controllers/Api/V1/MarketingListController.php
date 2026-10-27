@@ -10,8 +10,6 @@ use App\Modules\Marketing\Models\MarketingList;
 use App\Modules\Marketing\Resources\Api\V1\MarketingListMemberResource;
 use App\Modules\Marketing\Resources\Api\V1\MarketingListResource;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
@@ -21,9 +19,10 @@ use OpenApi\Attributes as OA;
 )]
 class MarketingListController extends Controller
 {
+    use \App\Modules\Marketing\Support\MarketingListInput;
+
     public function index(Request $request, EnsureMarketingDefaults $defaults)
     {
-        $defaults->handle();
 
         $query = MarketingList::query()
             ->with('consentCategory')
@@ -210,87 +209,6 @@ class MarketingListController extends Controller
                     'removed_contact_id' => $contact->id,
                 ],
             ]);
-    }
-
-    private function validatedListData(Request $request): array
-    {
-        return $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:2000'],
-            'audience_type' => ['required', 'string', 'in:all_business_contacts,manual_contacts'],
-            'consent_category_id' => ['nullable', 'exists:marketing_consent_categories,id'],
-            'contact_tag_ids' => ['nullable', 'array'],
-            'contact_tag_ids.*' => ['integer', 'exists:tags,id'],
-            'client_tag_ids' => ['nullable', 'array'],
-            'client_tag_ids.*' => ['integer', 'exists:tags,id'],
-            'manual_contact_ids' => ['nullable', 'array'],
-            'manual_contact_ids.*' => ['integer', 'exists:contacts,id'],
-            'manual_client_user_ids' => ['nullable', 'array'],
-            'manual_client_user_ids.*' => ['integer', 'exists:client_users,id'],
-            'postal_codes' => ['nullable'],
-            'counties' => ['nullable'],
-            'countries' => ['nullable'],
-            'sales_category_ids' => ['nullable', 'array'],
-            'sales_category_ids.*' => ['integer', 'exists:categories,id'],
-            'contract_filter' => ['nullable', 'string', Rule::in([
-                'any',
-                'with_contract',
-                'without_contract',
-                'active_contract',
-                'without_active_contract',
-                'won_contract',
-            ])],
-        ]);
-    }
-
-    private function segmentCriteria(string $audienceType, Request $request, array|Collection $excludedContactIds = []): array
-    {
-        return [
-            'audience_type' => $audienceType,
-            'contact_tag_ids' => $this->requestIntegerIds($request, 'contact_tag_ids')->all(),
-            'client_tag_ids' => $this->requestIntegerIds($request, 'client_tag_ids')->all(),
-            'manual_contact_ids' => $this->requestIntegerIds($request, 'manual_contact_ids')->all(),
-            'manual_client_user_ids' => $this->requestIntegerIds($request, 'manual_client_user_ids')->all(),
-            'postal_codes' => $this->requestStringValues($request, 'postal_codes')->all(),
-            'counties' => $this->requestStringValues($request, 'counties')->all(),
-            'countries' => $this->requestStringValues($request, 'countries')->all(),
-            'sales_category_ids' => $this->requestIntegerIds($request, 'sales_category_ids')->all(),
-            'contract_filter' => $request->input('contract_filter', 'any') ?: 'any',
-            'excluded_contact_ids' => collect($excludedContactIds)
-                ->map(fn ($id): int => (int) $id)
-                ->filter()
-                ->unique()
-                ->values()
-                ->all(),
-        ];
-    }
-
-    private function requestIntegerIds(Request $request, string $key): Collection
-    {
-        return collect($request->input($key, []))
-            ->map(fn ($id): int => (int) $id)
-            ->filter()
-            ->unique()
-            ->values();
-    }
-
-    private function requestStringValues(Request $request, string $key): Collection
-    {
-        return collect((array) $request->input($key, []))
-            ->flatMap(fn ($value): array => is_string($value) ? preg_split('/[\r\n,]+/', $value) ?: [] : [$value])
-            ->map(fn ($value): string => mb_strtolower(trim((string) $value)))
-            ->filter()
-            ->unique()
-            ->values();
-    }
-
-    private function criteriaContactIds(MarketingList $list, string $key): Collection
-    {
-        return collect(($list->segment_criteria ?? [])[$key] ?? [])
-            ->map(fn ($id): int => (int) $id)
-            ->filter()
-            ->unique()
-            ->values();
     }
 
     private function loadList(MarketingList $list): MarketingList

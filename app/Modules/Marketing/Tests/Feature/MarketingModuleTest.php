@@ -41,7 +41,6 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
-use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -51,6 +50,7 @@ use Tests\TestCase;
 
 class MarketingModuleTest extends TestCase
 {
+    use \App\Modules\Marketing\Tests\Support\CollectsMarketingApiSamples;
     use ApprovesExternalAiForTests;
     use RefreshDatabase;
 
@@ -214,6 +214,8 @@ class MarketingModuleTest extends TestCase
             'status' => 'active',
         ]);
 
+        app(\App\Modules\Marketing\Actions\EnsureMarketingDefaults::class)->handle();
+
         $this->actingAs($user)
             ->get(route('tech.marketing.index'))
             ->assertOk();
@@ -244,7 +246,7 @@ class MarketingModuleTest extends TestCase
         $template = $this->marketingTemplate('api_marketing_template', 'API Marketing Template');
         $replacementTemplate = $this->marketingTemplate('api_replacement_marketing_template', 'API Replacement Template');
 
-        Sanctum::actingAs($user, [
+        $this->asMarketingApi($user, [
             'marketing.read',
             'marketing.lists.manage',
             'marketing.campaigns.create',
@@ -455,7 +457,7 @@ class MarketingModuleTest extends TestCase
     {
         $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
 
-        Sanctum::actingAs($user, ['marketing.read']);
+        $this->asMarketingApi($user, ['marketing.read']);
 
         $this->getJson(route('api.v1.marketing.lists.index'))
             ->assertOk();
@@ -1929,7 +1931,7 @@ class MarketingModuleTest extends TestCase
     public function api_inactive_email_does_not_continue_a_legacy_completed_campaign(): void
     {
         $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
-        Sanctum::actingAs($user, ['marketing.campaigns.update']);
+        $this->asMarketingApi($user, ['marketing.campaigns.update']);
 
         $template = $this->marketingTemplate(
             'inactive_legacy_continuation',
@@ -2100,7 +2102,7 @@ class MarketingModuleTest extends TestCase
             ->assertDontSee('sensitive provider diagnostic must not be rendered')
             ->assertDontSee('another sensitive provider diagnostic');
 
-        Sanctum::actingAs($user, ['marketing.read', 'marketing.campaigns.update']);
+        $this->asMarketingApi($user, ['marketing.read', 'marketing.campaigns.update']);
 
         $apiResponse = $this->getJson(
             route('api.v1.marketing.campaigns.show', $campaign).'?include_recipients=1',
@@ -2166,6 +2168,7 @@ class MarketingModuleTest extends TestCase
     #[Test]
     public function wordpress_content_can_be_pulled_and_used_as_ai_campaign_context(): void
     {
+        $this->partialMock(\App\Modules\Marketing\Support\MarketingPublicUrl::class, fn ($mock) => $mock->shouldReceive('addresses')->andReturn(['93.184.216.34']));
         foreach (['marketing.view', 'marketing.campaign.edit'] as $permission) {
             Permission::findOrCreate($permission, 'web');
         }
@@ -3180,5 +3183,24 @@ class MarketingModuleTest extends TestCase
             'is_default' => false,
             'is_active' => true,
         ]);
+    }
+
+    /** API fixtures explicitly configure native authority, never rely on token grants. */
+    private function asMarketingApi(User $user, array $scopes): void
+    {
+        $map = ['marketing.read' => 'marketing.view', 'marketing.lists.manage' => 'marketing.list.manage',
+            'marketing.campaigns.create' => 'marketing.campaign.create', 'marketing.campaigns.update' => 'marketing.campaign.edit',
+            'marketing.campaigns.approve' => 'marketing.campaign.approve', 'marketing.campaigns.send' => 'marketing.campaign.send',
+            'marketing.settings.update' => 'marketing.settings.manage'];
+        foreach ($scopes as $scope) {
+            Permission::findOrCreate($map[$scope], 'web');
+            $user->givePermissionTo($map[$scope]);
+        }
+        if (array_intersect($scopes, ['marketing.campaigns.update', 'marketing.campaigns.send'])) {
+            $scopes[] = 'marketing.providers.execute';
+        }
+        config(['marketing.api_provider_execution_enabled' => true]);
+        $this->withHeader('Authorization', 'Bearer '.$user->createToken('Marketing test', $scopes)->plainTextToken);
+        app('auth')->forgetGuards();
     }
 }
