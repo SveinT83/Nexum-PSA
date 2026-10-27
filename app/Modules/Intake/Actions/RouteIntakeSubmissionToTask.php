@@ -21,6 +21,12 @@ class RouteIntakeSubmissionToTask
 
     public function handle(IntakeSubmission $submission, bool $force = false, ?User $actor = null): ?Task
     {
+        return \App\Modules\Intake\Support\IntakeWorkflowLock::run(fn () => $this->execute($submission, $force, $actor));
+    }
+
+    private function execute(IntakeSubmission $submission, bool $force = false, ?User $actor = null): ?Task
+    {
+        $submission->refresh();
         $submission->loadMissing(['form.owner', 'attachments.field', 'matchedClient', 'matchedSite', 'matchedClientUser']);
 
         if (! $this->canRoute($submission, $force)) {

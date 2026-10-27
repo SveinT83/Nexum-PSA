@@ -14,6 +14,11 @@ class ApiAbilityCatalog
      * Access mode is deliberately explicit so progressive read scopes do not depend on their name.
      */
     private const ACCESS_MODES = [
+        'intake.attachments.read' => self::ACCESS_READ,
+        'intake.submissions.route' => self::ACCESS_WRITE,
+        'intake.submissions.review' => self::ACCESS_WRITE,
+        'intake.forms.write' => self::ACCESS_WRITE,
+        'intake.read' => self::ACCESS_READ,
         'sales.reports.read' => self::ACCESS_READ,
         'sales.settings.manage' => self::ACCESS_WRITE,
         'sales.settings.read' => self::ACCESS_READ,
@@ -258,6 +263,11 @@ class ApiAbilityCatalog
     ];
 
     private const ABILITIES = [
+        'intake.attachments.read' => ['label' => 'Intake attachment download', 'domain' => 'Intake', 'description' => 'Read permitted private Intake submission files.'],
+        'intake.submissions.route' => ['label' => 'Intake target routing', 'domain' => 'Intake', 'description' => 'Route Intake submissions through authorized domain actions.'],
+        'intake.submissions.review' => ['label' => 'Intake submission review', 'domain' => 'Intake', 'description' => 'Review Intake submissions through supported actions.'],
+        'intake.forms.write' => ['label' => 'Intake form administration', 'domain' => 'Intake', 'description' => 'Configure Intake forms with current native permissions.'],
+        'intake.read' => ['label' => 'Intake read', 'domain' => 'Intake', 'description' => 'Read permitted Intake forms and submissions.'],
         'nextcloud.calendar.reconcile' => ['label' => 'Reconcile Nextcloud Calendar conflicts', 'description' => 'Preview/apply exact supported identities with conditional writes and read-back.', 'domain' => 'Nextcloud'],
         'nextcloud.calendar.health' => ['label' => 'Check Nextcloud Calendar connection health', 'description' => 'Explicit sanitized health command with connection management permission.', 'domain' => 'Nextcloud'],
         'nextcloud.calendar.sync' => ['label' => 'Request calendar-only Nextcloud sync', 'description' => 'Queue only the explicitly reviewed calendar targets.', 'domain' => 'Nextcloud'],

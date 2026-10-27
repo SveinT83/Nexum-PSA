@@ -5,8 +5,8 @@ namespace App\Modules\Intake\Actions;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
-use App\Modules\Intake\Models\IntakeForm;
 use App\Modules\Contact\Models\Contact;
+use App\Modules\Intake\Models\IntakeForm;
 
 class MatchIntakeSubmissionContext
 {
