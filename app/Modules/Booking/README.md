@@ -57,3 +57,12 @@ booking history are intentionally not exposed here. Skills, departments, service
 scoring, round-robin assignment, holiday-specific service hours, and multiple daily opening windows
 also remain outside this slice. Those need separate approved slices because they change
 authorization, cancellation, scheduling, or operational ownership.
+
+## Official API
+
+The versioned API exposes all current public and staff workflows in routes.php:
+4 public + 13 protected HTTP operations, with explicit scopes/native rights and typed
+Swagger. Public submission/staff mutation gates default off. See Docs/knowledge/booking-api.md
+and docs/plans/2026-10-27-booking-api-coverage-matrix.md for exact contracts/evidence.
+The additive 2026_10_27_040000 migration adds encrypted command and durable dispatch
+claims plus Calendar serialization. No role grants or existing-request backfill.

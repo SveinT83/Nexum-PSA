@@ -1,0 +1,136 @@
+{
+  "status": "verified-dev-and-scoped-main-candidate",
+  "http_operations": 19,
+  "schemas": 45,
+  "matrix_rows": 34,
+  "dev_contact_portal": {
+    "tests": 101,
+    "assertions": 1286,
+    "failures": 0
+  },
+  "main_candidate": {
+    "unique_tests": 342,
+    "assertions": 4433,
+    "failures": 0,
+    "skips": 0,
+    "overlapping_batches": true
+  },
+  "native": {
+    "driver": "mysql",
+    "create": 201,
+    "replay": 201,
+    "read": 200,
+    "receipt": 200,
+    "replayed": true,
+    "encrypted_result": true,
+    "rollback_preserved_counts": true,
+    "competing_connection_blocked": true,
+    "invitation_execution_enabled": false,
+    "queue_jobs": 0
+  },
+  "native_portal": {
+    "driver": "mysql",
+    "scenarios": [
+      {
+        "entry": "central",
+        "role": "viewer",
+        "contact_count": 1,
+        "invitation_count": 1,
+        "client_scope_verified": true,
+        "site_scope_verified": false
+      },
+      {
+        "entry": "client",
+        "role": "customer_admin",
+        "contact_count": 1,
+        "invitation_count": 1,
+        "client_scope_verified": true,
+        "site_scope_verified": false
+      },
+      {
+        "entry": "site",
+        "role": "site_admin",
+        "contact_count": 1,
+        "invitation_count": 1,
+        "client_scope_verified": true,
+        "site_scope_verified": true
+      }
+    ],
+    "queue_dispatch_intents": 3,
+    "real_email_sent": false,
+    "all_fixture_and_audit_rows_rolled_back": true,
+    "human_review_completed": false
+  },
+  "https": {
+    "checks": [
+      {
+        "path": "/api/v1/contacts?per_page=1",
+        "status": 200,
+        "etag_present": true,
+        "json_data_present": true,
+        "tls_validation": true
+      },
+      {
+        "path": "/api/v1/contacts/context",
+        "status": 200,
+        "etag_present": true,
+        "json_data_present": true,
+        "tls_validation": true
+      }
+    ],
+    "temporary_token_revoked": true,
+    "real_customer_write": false
+  },
+  "bookstack": [
+    {
+      "page_id": 364,
+      "book_id": 339,
+      "chapter_id": 415,
+      "revision": 9,
+      "exact_body_readback": true,
+      "permissions_unchanged": true,
+      "inheriting": true,
+      "employee_openwebui_retrieval_tested": false
+    },
+    {
+      "page_id": 514,
+      "book_id": 339,
+      "chapter_id": 512,
+      "revision": 7,
+      "exact_body_readback": true,
+      "permissions_unchanged": true,
+      "inheriting": true,
+      "employee_openwebui_retrieval_tested": false
+    },
+    {
+      "page_id": 449,
+      "book_id": 339,
+      "chapter_id": 374,
+      "revision": 157,
+      "exact_body_readback": true,
+      "permissions_unchanged": true,
+      "inheriting": true,
+      "employee_openwebui_retrieval_tested": false
+    }
+  ],
+  "human_review": "Pending",
+  "main_merge_authorized": true,
+  "production_deployed": false,
+  "api_invitation_execution_enabled": false,
+  "main_merged": true,
+  "main_pr": 341,
+  "main_merge": "13dc4ef4d4ab0474515522fb3131dbe6d198c624",
+  "verified_tree": "4350043a549a592fa810e2a9cb2fd1dd512c02ad",
+  "issue_254_state": "closed",
+  "issue_254_reason": "completed",
+  "latest_main_batch": {
+    "tests": 162,
+    "assertions": 2160,
+    "failures": 0
+  },
+  "final_overlap_batch": {
+    "tests": 42,
+    "assertions": 860,
+    "failures": 0
+  }
+}

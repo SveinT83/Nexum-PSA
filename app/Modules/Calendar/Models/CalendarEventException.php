@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CalendarEventException extends Model
 {
+    use \App\Modules\Calendar\Support\SerializesBookingCalendarWrites;
+
     protected $fillable = [
         'series_id',
         'original_starts_at',

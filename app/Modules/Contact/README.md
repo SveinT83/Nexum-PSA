@@ -81,7 +81,7 @@ invitation` by default. The installation default is off. A user with
 `customer_portal.invite` can override the setting for one create action.
 
 When selected, Contact saves the canonical Contact and Client/Site relations before CustomerPortal
-creates a viewer invitation in the same database transaction. CustomerPortal owns active Contact and
+creates an invitation with the selected predefined portal role (Viewer by default) in the same database transaction. CustomerPortal owns active Contact and
 Client validation, Site scope, email identity, existing access, replacement of pending invitations,
 audit, and queued delivery.
 
@@ -119,3 +119,30 @@ in the activity log.
 Do not remove `client_users`, legacy identity columns, or stable bridge rows until every dependent
 module has migrated to Contact IDs and a later approved ADR defines the deletion and historical-data
 strategy.
+
+
+## Full Browser/API Contract (27 October 2026)
+
+The approved full-parity RFC adds 19 typed HTTP operations / 45 domain schemas,
+including existing ownership repair, discovery/context/lookups, exact identity reuse,
+settings, related history and explicit create-time portal invitations. registrations
+live in routes.php; api.php is a compatibility loader. Token abilities and current
+native actor permissions are independent. No human permission grants are changed.
+ContactApiInput and shared actions preserve omitted fields/relations and active bridge
+identity. Ambiguous email/phone identity fails validation. The #254 create form exposes
+CustomerPortal's predefined roles, default Viewer, without changing edit-time no-send.
+
+Risky writes require an actor/token/action/body/state-bound preview, If-Match and
+Idempotency-Key. Encrypted command receipts serialize API writes and recheck authority
+on replay/read. After-commit failure retains unknown state and never silently retries.
+API invitation execution defaults off in config/contact_api.php. Browser invitations
+keep their existing policy and delivery behavior.
+
+Apply only database/migrations/2026_10_27_040000_create_contact_api_commands.php on Dev
+for this change. Preserve receipts and APP_KEY; do not drop the tables during rollback
+with unreconciled effects. No backfill, worker/scheduler activation or production rollout
+is part of Main promotion. Swagger generation: php artisan l5-swagger:generate.
+
+See docs/rfc/2026-10-27-contact-full-api-parity.md, the Contact coverage/verification
+artifacts and human-review checklist HR-2026-10-27-CONTACT-API. Main merge is explicitly
+authorized while human scenarios remain Pending; production rollout requires its own review.

@@ -26,10 +26,10 @@ complete Swagger and meaningful regression tests. A route count alone is not par
 
 New crawling sources, deeper discovery, manual-review products, email delivery,
 new segment/run/ledger deletion or run cancellation, worker/scheduler activation,
-role grants, independent NexumMCP implementation, Main promotion and production rollout.
+role grants, independent NexumMCP implementation and production rollout.
 These are not supported browser capabilities or are separate release actions.
 
-## Current Behavior
+## Baseline Behavior Before This RFC
 
 - Settings GET/PATCH, segment list/create/detail/update, run create/detail,
   ledger list, contact eligibility evaluation and candidate promotion exist.
@@ -123,8 +123,8 @@ Contact retains identity/relation/bridge writes. Marketing retains membership,
 exclusions and suppression rules. Existing five dirty LeadIntelligence views are
 Jonathan's closed #280 badge work and must be preserved byte-for-byte. #154 is closed;
 retain the verified every-minute planner wiring and regression coverage.
-Knowledge parity is separately In Progress; Signal parity is awaiting approval.
-This task is currently independent planning only, with no second implementation started.
+The initial planning snapshot found separate Knowledge/Signal work. Those workstreams
+and their later Main promotions were retained; this implementation remained scoped.
 If shared Integration/Knowledge files overlap at implementation time, re-audit and
 apply only the scoped additive change without overwriting contributor work.
 
@@ -138,7 +138,8 @@ caches. Use normal existing workers; do not start workers/scheduler or change li
 policy as a side effect of implementation. Verify an external every-minute scheduler
 runner separately before claiming scheduled jobs healthy. Preserve APP_KEY and durable
 receipts during recovery; disable new entry points and reconcile unresolved effects.
-Main/production migration and rollout require separate authorization.
+Production migration and rollout require separate authorization. Main source promotion
+was explicitly authorized and is complete in PR #343.
 
 ## Testing Plan
 
@@ -172,8 +173,7 @@ at a time after this RFC is approved; final completion requires all coverage and
 
 ## Open Questions
 
-Approve this concrete full-parity contract and shared Client/provider boundary?
-No irreversible product default is changed without that approval.
+No blocking product questions remain. Svein Tore approved this concrete contract.
 
 ## Approval
 
@@ -181,3 +181,8 @@ Svein Tore approved the concrete RFC on 2026-10-27: "Godkjenner og merge til mai
 Dev implementation, verification, scoped commit/push and tested Main promotion are
 authorized. Production deployment/provider activation remains separately gated.
 Human-review scenarios remain Pending; design approval is not witnessed scenario review.
+
+## Implementation Status
+
+All six slices are complete on Dev and merged to Main in PR #343. See the exact
+verification and Main-promotion records; production and human scenarios remain separate.

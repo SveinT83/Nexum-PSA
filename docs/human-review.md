@@ -33,9 +33,50 @@ belongs in plans/2026-10-27-relationship-api-verification.md and does not mark R
 
 
 
+
+## HR-2026-10-27-BOOKING-API - Full Booking Browser/API Coverage
+
+Status: Pending / automated verification complete / Merged to Main in PR #339.
+Added: 2026-10-27. Owner: Codex. Intended named human reviewer: Svein Tore.
+Parent: rfc/2026-10-27-booking-full-api-parity.md (Approved).
+Scope: 13 native browser rows, all current embedded workflows and 17 implemented APIs.
+Svein Tore explicitly authorized scoped Main promotion on 2026-10-27. Manual
+scenario acceptance remains Pending and gates production deployment/release. Reviewed HR-2026-07-28-001
+remains Reviewed; no prior checks are reused as API acceptance.
+
+- [ ] Compare public catalogue/context/slots for fixed, automatic and customer choice.
+- [ ] Verify no private technician/Calendar data and unavailable services remain hidden.
+- [ ] Submit synthetic request; check privacy/spam/limits/minimal replay-safe receipt.
+- [ ] Create/edit/toggle all setting fields/pools; verify stale/conflicting/replayed writes.
+- [ ] Compare overview/request/customer/timeline and permitted Calendar link.
+- [ ] Confirm/decline with current rights; verify Calendar conflict/automatic fallback.
+- [ ] Check native concurrency evidence: one terminal decision/event/dispatch on retries.
+- [ ] Check fresh/revoked native/token access and public/staff/receipt isolation.
+- [ ] Verify queued/submitted/failed/unknown mail; real inbox receipt remains separate.
+- [ ] Review exact Swagger and actual BookStack content/intended employee access.
+
+Expected: complete current workflow parity with native authority and safe typed
+read-back. Native MySQL concurrency proof required. Deploy: additive command/dispatch migration
+2026_10_27_040000 (applied on Dev), generated Swagger
+and normal optimize:clear. API effect gates default off until separately authorized
+operational activation. No grants, general migration sweep, scheduler/worker activation
+or real customer test sends. Preserve APP_KEY, receipts/dispatch claims and request
+audit on rollback; disable API effects and reconcile unknown sends before retrying.
+Risks: identity/PII leak, stale writes, terminal/Calendar races and duplicate mail.
+Automated: Dev 189/2622, isolated Main 189/2513; native MySQL and all-17-operation
+HTTPS flow pass. BookStack page 543/revision 3 exact body and inherited staff access
+verified. Every named human scenario remains unchecked; no automated result marks
+this checklist Reviewed. Production and API activation remain gated.
+
+
+
+Main merge 8006d0558079bfd8466978761d73a80ed340fa8a independently verified; tested
+application payload matches. Every manual check remains unchecked. This entry now
+gates production deployment/release and API activation, not the completed Main merge.
+
 ## HR-2026-10-27-CUSTOM-FIELD-API - Full CustomField Browser/API Coverage
 
-Status: Pending / Done On Dev and automated verification passed, 2026-10-27.
+Status: Pending / Done On Dev / Merged To Main In PR #344, 2026-10-27.
 Added: 2026-10-27. Owner: Codex. Intended human reviewer: Svein Tore.
 Scope: rfc/2026-10-27-custom-field-full-api-parity.md (Approved), all definition admin
 and existing Client/Site/Ticket value workflows. This human-review checklist gates
@@ -60,11 +101,14 @@ Automated evidence: final Dev 676 tests / 46696 assertions passed; isolated init
 Main features 572 / 7858 plus units 17 / 465. Seven success schemas, native database
 and trusted HTTPS checks pass. BookStack full sources/access are read back. No
 automated check marks a human scenario complete. Final rebased Main 236 / 9264 and
-scoped contracts 3 / 1481 pass without failures/skips. The authorized merge is ready.
+scoped contracts 3 / 1481 and latest-parent contracts 27 / 2042 pass without failures/skips.
+Main PR #344 is merged as f91acc9045794ac4ede80a336f80974c17ab9bc4; its tree equals
+the verified candidate. No Main gate remains for this promotion. Manual scenarios
+still require named human confirmation before production/release; none are marked done.
 
 ## HR-2026-10-27-LEAD-INTELLIGENCE-API - Full Lead Intelligence Browser/API Coverage
 
-Status: Pending / Done On Dev; final Main candidate verified and promotion authorized.
+Status: Pending / Done On Dev and merged to Main in PR #343.
 Added: 2026-10-27. Owner: Codex. Intended human reviewer/release owner: Svein Tore.
 Scope: rfc/2026-10-27-lead-intelligence-full-api-parity.md (Approved), all 14 browser
 rows and existing API-only evaluation/promotion, planned 17 HTTP operations.
@@ -99,6 +143,10 @@ Automated domain verification: 52 tests / 474 assertions; actual 17 operations /
 schemas, native MySQL, trusted HTTPS and BookStack read-back pass. Final Main 54/483 and earlier affected candidate 293/2887 pass (overlapping). All
 14 concurrent-source Dev failures pass after current author fixes; no deferral.
 
+
+Main merge e42ecddb42a52e1b41931975e4760cf250e157cc / PR #343 is read back;
+whole tree equals the verified candidate. Manual boxes remain untouched; named
+Main authorization is not scenario acceptance. Production release/activation stays gated.
 
 ## HR-2026-10-27-INTAKE-API - Full Intake Browser/API Coverage
 
@@ -12849,3 +12897,58 @@ Deploy notes: no new migration, package or frontend build. Existing acknowledgem
 are prerequisites. After reviewed deployment, clear normal application/view caches, regenerate
 Swagger and gracefully restart long-running workers. Do not enable broad acknowledgement/live or
 collaboration flags. Retain all action/provider evidence on rollback; never erase read-state history.
+
+## HR-2026-10-27-CONTACT-API - Full Contact Browser/API Coverage
+
+Status: Pending / Dev implementation and tested Main merge authorized, 2026-10-27.
+Added: 2026-10-27. Owner: Codex. Intended named human reviewer: Svein Tore.
+Scope: rfc/2026-10-27-contact-full-api-parity.md (Approved), full route/embedded-workflow
+matrix and the approved #254 portal-role dependency. This human-review checklist
+does not block the explicitly authorized tested Main merge. It still blocks production
+deployment/release and runtime activation until separately approved. Svein Tore approved
+the RFC and Main promotion with "Godkjenner og merge til main" on 2026-10-27. Prior reviewed
+Contact/canonical identity/invitation entries retain their historical status.
+
+- [ ] Compare central, Client and Site lists, filters, statistics, suggestions and detail.
+- [ ] Create, reuse and edit a person; check addresses/language/consent and unchanged fields.
+- [ ] Verify canonical relations and stable legacy IDs; Ticket uses the active customer's bridge ID.
+- [ ] Verify all #254 create entry points, Viewer default and selected portal role/scope.
+- [ ] Confirm unauthorized or invalid invitation rolls back; ordinary edit never sends/resends.
+- [ ] Verify settings authority, API/native permission denial and safe compatibility/signal metadata.
+- [ ] Preview and execute controlled repair; verify dry_run, stale/replayed commands and no lost history.
+- [ ] Review exact Swagger/catalog coverage and actual employee handbook contents/access.
+
+Expected: all supported Contact operations have typed read-back with current token
+AND native authority. Default-off external execution remains gated by explicit activation.
+Deploy: planned additive replay/receipt schema, exact migration name and native locking
+evidence to be finalized; Swagger regeneration and ordinary caches. No automatic worker,
+scheduler, provider activation or customer invitation is authorized by this checklist.
+Risk/recovery: preserve stable bridges, encryption keys, audit/receipts and unknown
+external outcomes; disable API effects and reconcile before retrying uncertain delivery.
+Historical automated baseline: 49 tests / 353 assertions passed on Dev. Current
+independent Contact/Portal simulation evidence is recorded below.
+No human scenario is claimed performed. Handbook publication owner after implementation:
+Codex via supported Knowledge/BookStack integration; record a concrete blocker if unavailable.
+
+Issue #254 test-data simulation, 2026-10-27: PASS. The new ContactPortalIssue254SimulationTest
+creates isolated test data and exercises all 3 entry points x all 3 portal roles,
+including activation, exact persisted membership/scope, audit and denied tech access.
+New simulation: 9 passed / 378 assertions. Final combined Contact/Portal verification:
+93 passed / 1224 assertions / 95.58s, exit 0. The earlier Signal fixture and
+mixed-order real-commit test failure are resolved in this final run. Evidence:
+[Issue #254 simulation](plans/2026-10-27-issue-254-testdata-simulation.md).
+Owner: Codex for this simulation; existing Contact owner for overall finish/Issue closure.
+Human review remains Pending; no production, real mail or manual review is claimed.
+
+Automated final evidence (not human acceptance): 101 Contact/Portal tests / 1286 assertions;
+scoped Main affected matrix 342 unique cases / 4433 assertions, zero unresolved failures.
+All nine create/acceptance role-context combinations and explicit negative rollback cases pass.
+Native MySQL Livewire fixture simulation and replay/encryption/concurrency/HTTPS pass; all synthetic
+rows/audit roll back, and no email is sent. BookStack 364/514/449 exact bodies and unchanged inherited
+scope read back. No checkbox or Reviewed status is inferred. Main merge remains expressly authorized;
+Svein Tore must perform the listed human visual/availability checks before production rollout.
+
+Main promotion and Issue reconciliation verified 2026-10-27: PR #341 merged as
+13dc4ef4d4ab0474515522fb3131dbe6d198c624, exact candidate tree verified. #254 closed
+completed with evidence comment 6452232330. Status remains Pending: Svein Tore performs
+the listed human visual/production checks before production rollout. No checkbox changed.

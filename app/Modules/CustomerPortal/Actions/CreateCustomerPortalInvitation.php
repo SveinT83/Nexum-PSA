@@ -22,27 +22,8 @@ class CreateCustomerPortalInvitation
     public function handle(User $actor, Contact $contact, Client $client, ?ClientSite $site, string $role, ?string $email = null, string $source = 'customer_portal_admin'): CustomerPortalInvitation
     {
         return DB::transaction(function () use ($actor, $contact, $client, $site, $role, $email, $source): CustomerPortalInvitation {
-            $this->validateScope($contact, $client, $site);
-
-            if (! array_key_exists($role, CustomerPortalMembership::roleOptions())) {
-                throw ValidationException::withMessages(['role' => 'The selected portal role is invalid.']);
-            }
-
-            $email = trim((string) ($email ?: $this->primaryEmailFor($contact)));
-
-            if ($email === '') {
-                throw ValidationException::withMessages(['email' => 'The contact needs an email address before a portal invitation can be sent.']);
-            }
-
+            $email = $this->validateInvitation($contact, $client, $site, $role, $email);
             $existingUser = User::query()->where('email', $email)->first();
-
-            if ($existingUser && $existingUser->contact_id && (int) $existingUser->contact_id !== (int) $contact->id) {
-                throw ValidationException::withMessages(['email' => 'This email belongs to a user linked to another Contact.']);
-            }
-
-            if ($this->activeMembershipExists($contact, $client, $site)) {
-                throw ValidationException::withMessages(['contact_id' => 'This contact already has active portal access for the selected scope.']);
-            }
 
             $this->revokePendingInvitations($contact, $client, $site);
 
@@ -73,6 +54,34 @@ class CreateCustomerPortalInvitation
 
             return $invitation;
         });
+    }
+
+    /** Read-only eligibility boundary shared by transactional creation and API previews. */
+    public function validateInvitation(Contact $contact, Client $client, ?ClientSite $site, string $role, ?string $email = null): string
+    {
+        $this->validateScope($contact, $client, $site);
+
+        if (! array_key_exists($role, CustomerPortalMembership::roleOptions())) {
+            throw ValidationException::withMessages(['role' => 'The selected portal role is invalid.']);
+        }
+
+        $email = trim((string) ($email ?: $this->primaryEmailFor($contact)));
+
+        if ($email === '') {
+            throw ValidationException::withMessages(['email' => 'The contact needs an email address before a portal invitation can be sent.']);
+        }
+
+        $existingUser = User::query()->where('email', $email)->first();
+
+        if ($existingUser && $existingUser->contact_id && (int) $existingUser->contact_id !== (int) $contact->id) {
+            throw ValidationException::withMessages(['email' => 'This email belongs to a user linked to another Contact.']);
+        }
+
+        if ($this->activeMembershipExists($contact, $client, $site)) {
+            throw ValidationException::withMessages(['contact_id' => 'This contact already has active portal access for the selected scope.']);
+        }
+
+        return $email;
     }
 
     private function validateScope(Contact $contact, Client $client, ?ClientSite $site): void

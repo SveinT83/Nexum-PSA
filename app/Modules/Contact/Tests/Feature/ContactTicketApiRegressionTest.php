@@ -11,13 +11,13 @@ use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class ContactTicketApiRegressionTest extends TestCase
 {
+    use ContactApiContractAssertions;
     use RefreshDatabase;
 
     private User $tech;
@@ -31,9 +31,17 @@ class ContactTicketApiRegressionTest extends TestCase
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole('Tech');
         $this->tech->givePermissionTo([
+            'contact.view', 'contact.create', 'contact.update',
             'ticket.view',
             'ticket.update',
         ]);
+    }
+
+    /** Exercise actual bearer-token identity/scopes, including durable receipt binding. */
+    private function apiAs(User $actor, array $abilities): void
+    {
+        $this->withToken($actor->createToken('contact-api-test', $abilities)->plainTextToken);
+        app('auth')->forgetGuards();
     }
 
     #[Test]
@@ -45,7 +53,7 @@ class ContactTicketApiRegressionTest extends TestCase
             'name' => 'API Contact Site',
         ]);
 
-        Sanctum::actingAs($this->tech, ['contacts.create', 'contacts.update', 'contacts.read']);
+        $this->apiAs($this->tech, ['contacts.create', 'contacts.update', 'contacts.read']);
 
         $response = $this->postJson(route('api.v1.contacts.store'), [
             'display_name' => 'API Reply Contact',
@@ -96,7 +104,7 @@ class ContactTicketApiRegressionTest extends TestCase
         ]);
         $ticket = $this->ticket($client, $site, $oldContact);
 
-        Sanctum::actingAs($this->tech, ['tickets.read', 'tickets.update']);
+        $this->apiAs($this->tech, ['tickets.read', 'tickets.update']);
 
         $this->patchJson(route('api.v1.tickets.update', $ticket), [
             'contact_id' => $newContact->id,
@@ -135,7 +143,7 @@ class ContactTicketApiRegressionTest extends TestCase
         ]);
         $ticket = $this->ticket($client, $site, $currentContact);
 
-        Sanctum::actingAs($this->tech, ['tickets.update']);
+        $this->apiAs($this->tech, ['tickets.update']);
 
         $this->patchJson(route('api.v1.tickets.update', $ticket), [
             'contact_id' => $otherContact->id,

@@ -1,0 +1,762 @@
+{
+  "baseline_snapshot": {
+    "status": "baseline-only-awaiting-rfc-approval",
+    "captured_at_utc": "2026-10-27T16:13:07.812118+00:00",
+    "branch": "Dev",
+    "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+    "contact_routes": [
+      {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "api/v1/clients/{client}/contacts",
+        "name": "api.v1.clients.contacts.index",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactOwnershipController@index",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:contacts.read"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "POST",
+        "uri": "api/v1/clients/{client}/contacts/bulk-fix",
+        "name": "api.v1.clients.contacts.bulk-fix",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactOwnershipController@bulkFix",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:contacts.ownership_manage"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "POST",
+        "uri": "api/v1/clients/{client}/contacts/legacy-orphans/cleanup",
+        "name": "api.v1.clients.contacts.legacy-orphans.cleanup",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactOwnershipController@cleanupLegacyOrphans",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:contacts.ownership_manage"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "DELETE",
+        "uri": "api/v1/clients/{client}/contacts/{contact}",
+        "name": "api.v1.clients.contacts.detach",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactOwnershipController@detach",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:contacts.ownership_manage"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "api/v1/contacts",
+        "name": "api.v1.contacts.index",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactController@index",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:contacts.read"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "POST",
+        "uri": "api/v1/contacts",
+        "name": "api.v1.contacts.store",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactController@store",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:contacts.create,contacts.update"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "api/v1/contacts/{contact}",
+        "name": "api.v1.contacts.show",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactController@show",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:contacts.read"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "PUT|PATCH",
+        "uri": "api/v1/contacts/{contact}",
+        "name": "api.v1.contacts.update",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactController@update",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:contacts.update"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "POST",
+        "uri": "api/v1/contacts/{contact}/move",
+        "name": "api.v1.contacts.move",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactOwnershipController@move",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:contacts.ownership_manage"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/admin/settings/contacts",
+        "name": "tech.admin.settings.contacts",
+        "action": "App\\Modules\\Contact\\Controllers\\Admin\\ContactSettingsController@edit",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "PUT",
+        "uri": "tech/admin/settings/contacts",
+        "name": "tech.admin.settings.contacts.update",
+        "action": "App\\Modules\\Contact\\Controllers\\Admin\\ContactSettingsController@update",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/contacts",
+        "name": "tech.contacts.index",
+        "action": "App\\Modules\\Contact\\Controllers\\Tech\\ContactController@index",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/contacts",
+        "name": "tech.contacts.store",
+        "action": "App\\Modules\\Contact\\Controllers\\Tech\\ContactController@store",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/contacts/context/clear",
+        "name": "tech.contacts.context.clear",
+        "action": "App\\Modules\\Contact\\Controllers\\Tech\\ContactController@clearContext",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/contacts/create",
+        "name": "tech.contacts.create",
+        "action": "App\\Modules\\Contact\\Controllers\\Tech\\ContactController@create",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/contacts/{contact}",
+        "name": "tech.contacts.show",
+        "action": "App\\Modules\\Contact\\Controllers\\Tech\\ContactController@show",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/contacts/{contact}/edit",
+        "name": "tech.contacts.edit",
+        "action": "App\\Modules\\Contact\\Controllers\\Tech\\ContactController@edit",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      }
+    ],
+    "legacy_client_alias_routes": [
+      {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/clients/user/create/{client}",
+        "name": "tech.clients.user.create",
+        "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientUsersController@create",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "DELETE",
+        "uri": "tech/clients/user/delete/{ClientUser}",
+        "name": "tech.clients.user.delete",
+        "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientUsersController@delete",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/clients/user/edit/{ClientUser}",
+        "name": "tech.clients.user.edit",
+        "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientUsersController@edit",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/clients/user/show/{ClientUser}",
+        "name": "tech.clients.user.show",
+        "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientUsersController@show",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/clients/user/store/{client}",
+        "name": "tech.clients.user.store",
+        "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientUsersController@store",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "PUT",
+        "uri": "tech/clients/user/update/{ClientUser}",
+        "name": "tech.clients.user.update",
+        "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientUsersController@update",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/clients/user_management/{client?}",
+        "name": "tech.clients.user_management.index",
+        "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientUsersController@index",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/clients/users/{client?}",
+        "name": "tech.clients.users.index",
+        "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientUsersController@index",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      }
+    ],
+    "contact_api_http_operations": [
+      {
+        "method": "GET",
+        "uri": "api/v1/clients/{client}/contacts",
+        "name": "api.v1.clients.contacts.index",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactOwnershipController@index"
+      },
+      {
+        "method": "POST",
+        "uri": "api/v1/clients/{client}/contacts/bulk-fix",
+        "name": "api.v1.clients.contacts.bulk-fix",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactOwnershipController@bulkFix"
+      },
+      {
+        "method": "POST",
+        "uri": "api/v1/clients/{client}/contacts/legacy-orphans/cleanup",
+        "name": "api.v1.clients.contacts.legacy-orphans.cleanup",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactOwnershipController@cleanupLegacyOrphans"
+      },
+      {
+        "method": "DELETE",
+        "uri": "api/v1/clients/{client}/contacts/{contact}",
+        "name": "api.v1.clients.contacts.detach",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactOwnershipController@detach"
+      },
+      {
+        "method": "GET",
+        "uri": "api/v1/contacts",
+        "name": "api.v1.contacts.index",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactController@index"
+      },
+      {
+        "method": "POST",
+        "uri": "api/v1/contacts",
+        "name": "api.v1.contacts.store",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactController@store"
+      },
+      {
+        "method": "GET",
+        "uri": "api/v1/contacts/{contact}",
+        "name": "api.v1.contacts.show",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactController@show"
+      },
+      {
+        "method": "PUT",
+        "uri": "api/v1/contacts/{contact}",
+        "name": "api.v1.contacts.update",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactController@update"
+      },
+      {
+        "method": "PATCH",
+        "uri": "api/v1/contacts/{contact}",
+        "name": "api.v1.contacts.update",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactController@update"
+      },
+      {
+        "method": "POST",
+        "uri": "api/v1/contacts/{contact}/move",
+        "name": "api.v1.contacts.move",
+        "action": "App\\Modules\\Contact\\Controllers\\Api\\V1\\ContactOwnershipController@move"
+      }
+    ],
+    "baseline_tests": {
+      "command": "HOME=/tmp php artisan test app/Modules/Contact/Tests/Feature",
+      "passed": 49,
+      "assertions": 353,
+      "failures": 0,
+      "skips": 0,
+      "seconds": 45.55
+    },
+    "source_files": {
+      "app/Modules/Contact/routes.php": "c8fdc70b3bbffb8f57b61510cb227db74e32a353a81e9553afeefd29d3635f99",
+      "app/Modules/Contact/api.php": "c6196bd6e52a7179a122b6310dde7677033ce00b939bf1d52c76be5bc1c8bcdc",
+      "app/Modules/Contact/Queries/ContactsForSite.php": "3aebeb383cbb02901ba13b7e10e3ab1a7e3bdab295baf1afb59bc3a860fec3f3",
+      "app/Modules/Contact/Queries/ContactsForClient.php": "0bd88a4f25f3f4ff84ddac2745ed542540f42ad7e9c2405ada45f9f260c431b2",
+      "app/Modules/Contact/Livewire/Tech/ContactForm.php": "18dcd73c29223a246995cb3b50156914a8cf6436ea8ecfb1bf50aec1f0875810",
+      "app/Modules/Contact/Models/ContactPhone.php": "f491151284b4663e76d5fe7f26304eaf971ba7caa9b4407c6f49c55ef996dc2e",
+      "app/Modules/Contact/Models/Contact.php": "3eea760ffe4a743e3791620261ee532ed1b23bfa14a0ad7bba207f175227c016",
+      "app/Modules/Contact/Models/ContactMergeRecord.php": "5bd87829d25ff1f45cf71dd1382660dfcc565fc43b5067b1ca24b7138d951f47",
+      "app/Modules/Contact/Models/ContactAddress.php": "4c2d4585a3bb5ae167c3c6b9f8517df3ab5700e3dde0ae866bb5155071c552d3",
+      "app/Modules/Contact/Models/ContactEmail.php": "50837a82c92a361823d8fed237f0deed7a27cc862a5b9a32740b4bf53575dbe7",
+      "app/Modules/Contact/Models/ContactExternalRef.php": "8ace8a36407f25a7110fa5e9e9b70d49ef6f83dff6bcb151ed8eb2423d62ee64",
+      "app/Modules/Contact/Models/ContactRelation.php": "3e289298d7102413793f1cda53737b8bf2c35f6dc10c9dd7b6835a763499a246",
+      "app/Modules/Contact/Actions/StoreContact.php": "13517ab48e3f09ec2ac0afe00125055388c18cb2a42fd3baf8cdf5990e7c8c86",
+      "app/Modules/Contact/Actions/MigrateClientUsersToContacts.php": "2619e556cac73896a78e8b3dc110e625bc833a1f56d5e7528b40c69dfe2cea8a",
+      "app/Modules/Contact/Actions/RepairContactOwnership.php": "35cb1d6a2d193a24c55556577d19090484c6bb17b3022c7f280213ddb73e2641",
+      "app/Modules/Contact/Actions/CompleteLegacyContactCutover.php": "d063dfcad2c165b07f913c394fe26e2bf9f35ffef2da45438b103afab05b7227",
+      "app/Modules/Contact/Views/Tech/show.blade.php": "6d06bc37f53969c4d08c9c473535103d58527d96b8e5a53e6fc32c621fb8768b",
+      "app/Modules/Contact/Views/Tech/index.blade.php": "59321b4515fcbdb391bcc5e03e2c4dcaa049af67d29aeae374c815c1eac254fc",
+      "app/Modules/Contact/Views/Tech/create.blade.php": "9a98aea1b507b5ca252046ce0f16db8d7d43bea6ebeba3ae5e06dbbfd6ce025c",
+      "app/Modules/Contact/Views/Tech/edit.blade.php": "346a7e4aef42f541c77c8dc0cc48d9d6465f57dd9e8dbc69f13091ec886798dd",
+      "app/Modules/Contact/Views/Livewire/Tech/contact-form.blade.php": "b4d465090705bce76bcf67efeaf4b8bf837e7ab8cd74c3673f6aa9c78e10a378",
+      "app/Modules/Contact/Views/Admin/Settings/edit.blade.php": "9c9c886e6ace01496e9fd00d512b44f9ba287794d8e0d9a783424e84a0f375e4",
+      "app/Modules/Contact/Resources/Api/V1/ContactResource.php": "0c39556902c03801e1593761a26f409d7a8579dd948ca1476c4025e379d6a689",
+      "app/Modules/Contact/Tests/Feature/ContactMigrationTest.php": "58e9c9030569cf082a3135d746614fc73849efbbb4f45b5ff39bd2f07720d2e3",
+      "app/Modules/Contact/Tests/Feature/ContactModuleTest.php": "7c5f81ad43b7cf2190b39ce2abe698b3d598cd7306cefe0471e9d6cfa4700f67",
+      "app/Modules/Contact/Tests/Feature/ContactTicketApiRegressionTest.php": "63bfbd58dea4f4c1fb05163c831a0f3b896ff10e93e529f3c2e5f3bb632e918d",
+      "app/Modules/Contact/Controllers/Tech/ContactController.php": "1d1024dee0b210ddbd4285d328b7250e210698b6d4ff1d09d9b7106e233c75e4",
+      "app/Modules/Contact/Controllers/Admin/ContactSettingsController.php": "47d87d9d6b8cf92b8e74ed254611a6d1c47cf31336ba9cad7fe0ee8f055fda87",
+      "app/Modules/Contact/Controllers/Api/V1/ContactOwnershipController.php": "8a0db8d74b81306fa57befbc227cef861d10cc84c65eca69c92c8023a306d712",
+      "app/Modules/Contact/Controllers/Api/V1/ContactController.php": "66f34257d785ec75801b14e204186aa12c5d154c6218bd52ca95c70c4442a161",
+      "app/Modules/Contact/Support/ContactSettings.php": "7c00cf2d4417353a5b5b770b7ce47a56cf5bcac1822da1229c65c7fbb486c73c"
+    }
+  },
+  "status": "implemented-and-verified-on-dev-main-candidate",
+  "operations": [
+    {
+      "controller": "ContactController",
+      "method": "index",
+      "http": "get",
+      "path": "/api/v1/contacts",
+      "operationId": "getContactList",
+      "responseSchema": "ContactPage",
+      "requestSchema": null,
+      "abilities": "contacts.read",
+      "native": "contact.view"
+    },
+    {
+      "controller": "ContactController",
+      "method": "show",
+      "http": "get",
+      "path": "/api/v1/contacts/{contact}",
+      "operationId": "getContactById",
+      "responseSchema": "ContactResponse",
+      "requestSchema": null,
+      "abilities": "contacts.read",
+      "native": "contact.view OR contact.update"
+    },
+    {
+      "controller": "ContactController",
+      "method": "store",
+      "http": "post",
+      "path": "/api/v1/contacts",
+      "operationId": "upsertContact",
+      "responseSchema": "ContactResponse",
+      "requestSchema": "ContactCreateInput",
+      "abilities": "contacts.create AND contacts.update",
+      "native": "contact.create AND contact.update"
+    },
+    {
+      "controller": "ContactController",
+      "method": "preview",
+      "http": "post",
+      "path": "/api/v1/contacts/preview",
+      "operationId": "previewContactCreate",
+      "responseSchema": "ContactPreview",
+      "requestSchema": "ContactCreateInput",
+      "abilities": "contacts.create AND contacts.update",
+      "native": "contact.create AND contact.update"
+    },
+    {
+      "controller": "ContactController",
+      "method": "update",
+      "http": "put",
+      "path": "/api/v1/contacts/{contact}",
+      "operationId": "replaceContact",
+      "responseSchema": "ContactResponse",
+      "requestSchema": "ContactUpdateInput",
+      "abilities": "contacts.update",
+      "native": "contact.update"
+    },
+    {
+      "controller": "ContactController",
+      "method": "update",
+      "http": "patch",
+      "path": "/api/v1/contacts/{contact}",
+      "operationId": "patchContact",
+      "responseSchema": "ContactResponse",
+      "requestSchema": "ContactUpdateInput",
+      "abilities": "contacts.update",
+      "native": "contact.update"
+    },
+    {
+      "controller": "ContactOwnershipController",
+      "method": "index",
+      "http": "get",
+      "path": "/api/v1/clients/{client}/contacts",
+      "operationId": "getClientTicketContacts",
+      "responseSchema": "ContactOwnershipInspection",
+      "requestSchema": null,
+      "abilities": "contacts.read",
+      "native": "contact.view"
+    },
+    {
+      "controller": "ContactOwnershipController",
+      "method": "move",
+      "http": "post",
+      "path": "/api/v1/contacts/{contact}/move",
+      "operationId": "moveContactOwnership",
+      "responseSchema": "ContactRepairResponse",
+      "requestSchema": "ContactMoveInput",
+      "abilities": "contacts.ownership_manage",
+      "native": "contact.update"
+    },
+    {
+      "controller": "ContactOwnershipController",
+      "method": "bulkFix",
+      "http": "post",
+      "path": "/api/v1/clients/{client}/contacts/bulk-fix",
+      "operationId": "bulkFixContactOwnership",
+      "responseSchema": "ContactRepairBatchResponse",
+      "requestSchema": "ContactBulkInput",
+      "abilities": "contacts.ownership_manage",
+      "native": "contact.update"
+    },
+    {
+      "controller": "ContactOwnershipController",
+      "method": "cleanupLegacyOrphans",
+      "http": "post",
+      "path": "/api/v1/clients/{client}/contacts/legacy-orphans/cleanup",
+      "operationId": "migrateLegacyContactOrphans",
+      "responseSchema": "ContactRepairBatchResponse",
+      "requestSchema": "ContactCleanupInput",
+      "abilities": "contacts.ownership_manage",
+      "native": "contact.create AND contact.update"
+    },
+    {
+      "controller": "ContactOwnershipController",
+      "method": "detach",
+      "http": "delete",
+      "path": "/api/v1/clients/{client}/contacts/{contact}",
+      "operationId": "detachContactOwnership",
+      "responseSchema": "ContactRepairResponse",
+      "requestSchema": "ContactDetachInput",
+      "abilities": "contacts.ownership_manage",
+      "native": "contact.update; contact.delete also required for delete_if_orphan"
+    },
+    {
+      "controller": "ContactWorkspaceController",
+      "method": "context",
+      "http": "get",
+      "path": "/api/v1/contacts/context",
+      "operationId": "getContactContext",
+      "responseSchema": "ContactContext",
+      "requestSchema": null,
+      "abilities": "contacts.read",
+      "native": "contact.view OR contact.create OR contact.update"
+    },
+    {
+      "controller": "ContactWorkspaceController",
+      "method": "lookups",
+      "http": "get",
+      "path": "/api/v1/contacts/lookups/{kind}",
+      "operationId": "getContactLookups",
+      "responseSchema": "ContactLookupResponse",
+      "requestSchema": null,
+      "abilities": "contacts.read",
+      "native": "contact.view OR contact.create OR contact.update"
+    },
+    {
+      "controller": "ContactWorkspaceController",
+      "method": "duplicates",
+      "http": "get",
+      "path": "/api/v1/contacts/duplicates",
+      "operationId": "getContactDuplicateMatches",
+      "responseSchema": "ContactDuplicates",
+      "requestSchema": null,
+      "abilities": "contacts.read",
+      "native": "contact.view OR contact.create OR contact.update"
+    },
+    {
+      "controller": "ContactWorkspaceController",
+      "method": "statistics",
+      "http": "get",
+      "path": "/api/v1/contacts/statistics",
+      "operationId": "getContactStatistics",
+      "responseSchema": "ContactStatistics",
+      "requestSchema": null,
+      "abilities": "contacts.read",
+      "native": "contact.view"
+    },
+    {
+      "controller": "ContactWorkspaceController",
+      "method": "signals",
+      "http": "get",
+      "path": "/api/v1/contacts/{contact}/signals",
+      "operationId": "getContactRelatedSignals",
+      "responseSchema": "ContactSignals",
+      "requestSchema": null,
+      "abilities": "contacts.read",
+      "native": "contact.view"
+    },
+    {
+      "controller": "ContactWorkspaceController",
+      "method": "settings",
+      "http": "get",
+      "path": "/api/v1/contacts/settings",
+      "operationId": "getContactSettings",
+      "responseSchema": "ContactSettingsResponse",
+      "requestSchema": null,
+      "abilities": "contacts.settings.read",
+      "native": "contact.manage_settings"
+    },
+    {
+      "controller": "ContactWorkspaceController",
+      "method": "updateSettings",
+      "http": "put",
+      "path": "/api/v1/contacts/settings",
+      "operationId": "updateContactSettings",
+      "responseSchema": "ContactSettingsResponse",
+      "requestSchema": "ContactSettingsInput",
+      "abilities": "contacts.settings.manage",
+      "native": "contact.manage_settings"
+    },
+    {
+      "controller": "ContactWorkspaceController",
+      "method": "operation",
+      "http": "get",
+      "path": "/api/v1/contacts/operations/{operation}",
+      "operationId": "getContactOperation",
+      "responseSchema": "ContactOperation",
+      "requestSchema": null,
+      "abilities": "contacts.operations.read",
+      "native": "original current native permissions AND token abilities"
+    }
+  ],
+  "schema_names": [
+    "ContactClient",
+    "ContactSite",
+    "ContactEmail",
+    "ContactPhone",
+    "ContactAddress",
+    "ContactRelation",
+    "ContactBridge",
+    "ContactLegacyUser",
+    "ContactPerson",
+    "ContactInvitation",
+    "ContactPaginationLinks",
+    "ContactPageMeta",
+    "ContactPage",
+    "ContactResponse",
+    "ContactPreview",
+    "ContactSettingsValues",
+    "ContactOptions",
+    "ContactSettingsResponse",
+    "ContactContext",
+    "ContactClientLookupPage",
+    "ContactSiteLookupPage",
+    "ContactTitles",
+    "ContactLookupResponse",
+    "ContactDuplicates",
+    "ContactStatistics",
+    "ContactSignals",
+    "ContactOwnershipPerson",
+    "ContactOwnershipInspection",
+    "ContactRepairConflict",
+    "ContactRepairChanges",
+    "ContactRepairPlan",
+    "ContactRepairResponse",
+    "ContactRepairSummary",
+    "ContactRepairItem",
+    "ContactRepairBatchResponse",
+    "ContactUnknownResponse",
+    "ContactOperation",
+    "ContactCreateInput",
+    "ContactUpdateInput",
+    "ContactMoveInput",
+    "ContactBulkInput",
+    "ContactCleanupInput",
+    "ContactDetachInput",
+    "ContactSettingsInput",
+    "ContactError"
+  ],
+  "successful_typed_http_operations": {
+    "delete /api/v1/clients/{client}/contacts/{contact}": 200,
+    "get /api/v1/clients/{client}/contacts": 200,
+    "get /api/v1/contacts": 200,
+    "get /api/v1/contacts/context": 200,
+    "get /api/v1/contacts/duplicates": 200,
+    "get /api/v1/contacts/lookups/{kind}": 200,
+    "get /api/v1/contacts/operations/{operation}": 200,
+    "get /api/v1/contacts/settings": 200,
+    "get /api/v1/contacts/statistics": 200,
+    "get /api/v1/contacts/{contact}": 200,
+    "get /api/v1/contacts/{contact}/signals": 200,
+    "patch /api/v1/contacts/{contact}": 200,
+    "post /api/v1/clients/{client}/contacts/bulk-fix": 200,
+    "post /api/v1/clients/{client}/contacts/legacy-orphans/cleanup": 200,
+    "post /api/v1/contacts": 201,
+    "post /api/v1/contacts/preview": 200,
+    "post /api/v1/contacts/{contact}/move": 200,
+    "put /api/v1/contacts/settings": 200,
+    "put /api/v1/contacts/{contact}": 200
+  },
+  "main_candidate_test_aggregation": {
+    "unique_tests": 342,
+    "assertions": 4433,
+    "failures": 0,
+    "skips": 0,
+    "overlapping_batches": true
+  },
+  "human_review": "HR-2026-10-27-CONTACT-API Pending; Main merge expressly authorized; production gated"
+}
