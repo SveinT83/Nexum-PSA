@@ -7,6 +7,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class ContactResource extends JsonResource
 {
+    public const RELATIONS = ['emails', 'phones', 'addresses', 'relations.related', 'clientUsers.site.client', 'externalRefs', 'user'];
+
     /**
      * @return array<string, mixed>
      */
@@ -53,7 +55,22 @@ class ContactResource extends JsonResource
                 'relation_type' => $relation->relation_type,
                 'is_primary' => (bool) $relation->is_primary,
             ])->values()),
-            'metadata' => $this->metadata,
+            'addresses' => $this->whenLoaded('addresses', fn () => $this->addresses->map(fn ($address) => $address->only([
+                'id', 'label', 'address', 'co_address', 'zip', 'city', 'county', 'country', 'is_primary',
+            ]))->values()),
+            'client' => $this->whenLoaded('relations', fn () => $this->relations->first(fn ($relation) => $relation->related instanceof \App\Models\Clients\Client)?->related?->only(['id', 'name'])),
+            'site' => $this->whenLoaded('relations', fn () => $this->relations->first(fn ($relation) => $relation->related instanceof \App\Models\Clients\ClientSite)?->related?->only(['id', 'client_id', 'name'])),
+            'compatibility' => [
+                'client_users' => $this->whenLoaded('clientUsers', fn () => $this->clientUsers->map(fn ($bridge) => [
+                    'id' => $bridge->id, 'contact_id' => $bridge->contact_id, 'client_id' => $bridge->site?->client_id,
+                    'site_id' => $bridge->client_site_id, 'active' => (bool) $bridge->active,
+                    'is_default_for_site' => (bool) $bridge->is_default_for_site, 'is_default_for_client' => (bool) $bridge->is_default_for_client,
+                ])->values()),
+                'user_id' => $this->whenLoaded('user', fn () => $this->user?->id),
+                'external_refs_count' => $this->whenLoaded('externalRefs', fn () => $this->externalRefs->count()),
+            ],
+            // Integration metadata is opaque and may contain private provider data; never dump it.
+
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'links' => [

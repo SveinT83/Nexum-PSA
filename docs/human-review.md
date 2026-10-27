@@ -12859,3 +12859,53 @@ Deploy notes: no new migration, package or frontend build. Existing acknowledgem
 are prerequisites. After reviewed deployment, clear normal application/view caches, regenerate
 Swagger and gracefully restart long-running workers. Do not enable broad acknowledgement/live or
 collaboration flags. Retain all action/provider evidence on rollback; never erase read-state history.
+
+## HR-2026-10-27-CONTACT-API - Full Contact Browser/API Coverage
+
+Status: Pending / Dev implementation and tested Main merge authorized, 2026-10-27.
+Added: 2026-10-27. Owner: Codex. Intended named human reviewer: Svein Tore.
+Scope: rfc/2026-10-27-contact-full-api-parity.md (Draft), full route/embedded-workflow
+matrix and the approved #254 portal-role dependency. This human-review checklist
+does not block the explicitly authorized tested Main merge. It still blocks production
+deployment/release and runtime activation until separately approved. Svein Tore approved
+the RFC and Main promotion with "Godkjenner og merge til main" on 2026-10-27. Prior reviewed
+Contact/canonical identity/invitation entries retain their historical status.
+
+- [ ] Compare central, Client and Site lists, filters, statistics, suggestions and detail.
+- [ ] Create, reuse and edit a person; check addresses/language/consent and unchanged fields.
+- [ ] Verify canonical relations and stable legacy IDs; Ticket uses the active customer's bridge ID.
+- [ ] Verify all #254 create entry points, Viewer default and selected portal role/scope.
+- [ ] Confirm unauthorized or invalid invitation rolls back; ordinary edit never sends/resends.
+- [ ] Verify settings authority, API/native permission denial and safe compatibility/signal metadata.
+- [ ] Preview and execute controlled repair; verify dry_run, stale/replayed commands and no lost history.
+- [ ] Review exact Swagger/catalog coverage and actual employee handbook contents/access.
+
+Expected: all supported Contact operations have typed read-back with current token
+AND native authority. Default-off external execution remains gated by explicit activation.
+Deploy: planned additive replay/receipt schema, exact migration name and native locking
+evidence to be finalized; Swagger regeneration and ordinary caches. No automatic worker,
+scheduler, provider activation or customer invitation is authorized by this checklist.
+Risk/recovery: preserve stable bridges, encryption keys, audit/receipts and unknown
+external outcomes; disable API effects and reconcile before retrying uncertain delivery.
+Historical automated baseline: 49 tests / 353 assertions passed on Dev. Current
+independent Contact/Portal simulation evidence is recorded below.
+No human scenario is claimed performed. Handbook publication owner after implementation:
+Codex via supported Knowledge/BookStack integration; record a concrete blocker if unavailable.
+
+Issue #254 test-data simulation, 2026-10-27: PASS. The new ContactPortalIssue254SimulationTest
+creates isolated test data and exercises all 3 entry points x all 3 portal roles,
+including activation, exact persisted membership/scope, audit and denied tech access.
+New simulation: 9 passed / 378 assertions. Final combined Contact/Portal verification:
+93 passed / 1224 assertions / 95.58s, exit 0. The earlier Signal fixture and
+mixed-order real-commit test failure are resolved in this final run. Evidence:
+[Issue #254 simulation](plans/2026-10-27-issue-254-testdata-simulation.md).
+Owner: Codex for this simulation; existing Contact owner for overall finish/Issue closure.
+Human review remains Pending; no production, real mail or manual review is claimed.
+
+Automated final evidence (not human acceptance): 101 Contact/Portal tests / 1286 assertions;
+scoped Main affected matrix 342 unique cases / 4433 assertions, zero unresolved failures.
+All nine create/acceptance role-context combinations and explicit negative rollback cases pass.
+Native MySQL Livewire fixture simulation and replay/encryption/concurrency/HTTPS pass; all synthetic
+rows/audit roll back, and no email is sent. BookStack 364/514/449 exact bodies and unchanged inherited
+scope read back. No checkbox or Reviewed status is inferred. Main merge remains expressly authorized;
+Svein Tore must perform the listed human visual/availability checks before production rollout.

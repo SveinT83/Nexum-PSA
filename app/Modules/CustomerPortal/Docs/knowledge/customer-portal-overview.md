@@ -33,7 +33,8 @@ Portal access is hidden by default and must be explicitly granted per Contact an
 Internal notes, internal documents, private tasks, billing margin data, credentials, assignment
 logic, and technician-only audit details are never exposed by the foundation.
 
-Contact-created invitations use the Customer Portal `Viewer` role and the same active Contact,
+Contact-created invitations default to `Viewer`. On Dev from 27 October 2026, **Portal role**
+selects the existing Customer admin, Site admin or Viewer role before saving. They use the same active Contact,
 active Client, Site ownership, email identity, existing-access, pending-invitation, audit, and
 queued-email safeguards as the Customer Portal admin form. The Contact option appears only during
 create and only for users with `customer_portal.invite`; ordinary Contact edits cannot resend an
@@ -88,3 +89,16 @@ membership. Internal copies/preferences are excluded; only portal Email/in-app c
 can be changed. Open resolves a currently authorized same-origin customer/site target.
 See the Notification API guide for typed contracts/troubleshooting. The native
 **Customer Portal > Notifications** uses the same preference/open/read actions.
+
+## Explicit Contact API invitations on Dev - 27 October 2026
+
+The Contact API supports the same create-time invitation with an explicit portal role.
+It requires current contact.create/contact.update and customer_portal.invite permissions,
+contacts.create/contacts.update/contacts.portal_invite token abilities, a valid active Client,
+Contact scope and email, a body-bound preview, If-Match and Idempotency-Key. It uses the
+CustomerPortal-owned validation, audit and after-commit invitation job; it does not create a
+second membership lifecycle. Viewer is the default role. Job title and Contact relation are
+separate and grant no portal permissions. Ordinary Contact API edits never send or resend.
+The API execution switch defaults off; previews still work. Main/production deployment and
+API execution activation are separate. Queued or SMTP acceptance does not verify inbox receipt.
+See the Contact Domain Overview for the exact API procedure and troubleshooting.

@@ -28197,8 +28197,8 @@
                 "tags": [
                     "Contacts"
                 ],
-                "summary": "Get list of contacts",
-                "description": "Returns a paginated list of contacts. Supports q, email, phone, and status filters.",
+                "summary": "List and search canonical Contacts",
+                "description": "Requires token contacts.read and current native contact.view. ",
                 "operationId": "getContactList",
                 "parameters": [
                     {
@@ -28214,8 +28214,7 @@
                         "in": "query",
                         "required": false,
                         "schema": {
-                            "type": "string",
-                            "format": "email"
+                            "type": "string"
                         }
                     },
                     {
@@ -28231,7 +28230,39 @@
                         "in": "query",
                         "required": false,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "inactive",
+                                "archived"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "client_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "site_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
                         }
                     },
                     {
@@ -28239,19 +28270,102 @@
                         "in": "query",
                         "required": false,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful operation"
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactPage"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthenticated"
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Missing contacts.read scope"
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -28264,83 +28378,147 @@
                 "tags": [
                     "Contacts"
                 ],
-                "summary": "Create or upsert contact",
-                "description": "Creates or updates a contact. Existing contacts are matched by email or normalized phone.",
+                "summary": "Create, reuse or upsert a canonical Contact",
+                "description": "Requires token contacts.create AND contacts.update and current native contact.create AND contact.update. Explicit invitation additionally requires contacts.portal_invite and customer_portal.invite; API never inherits the UI invitation default. Viewer is the role default. Preview rolls back; preview IDs are not saved records. Risky writes require preview ETag as If-Match and an Idempotency-Key (8-200 characters). Replays are bound to actor/token/body; stale previews return 412. Both create and update authority are required because POST is an upsert. reuse_existing preserves existing person fields. Invitation execution is default-off. Queued is not inbox delivery. ",
                 "operationId": "upsertContact",
+                "parameters": [
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "display_name"
-                                ],
-                                "properties": {
-                                    "display_name": {
-                                        "type": "string"
-                                    },
-                                    "organization_name": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "job_title": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "nullable": true
-                                    },
-                                    "phone": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "sms_allowed": {
-                                        "type": "boolean",
-                                        "nullable": true
-                                    },
-                                    "do_not_email": {
-                                        "type": "boolean",
-                                        "nullable": true
-                                    },
-                                    "marketing_consent": {
-                                        "type": "boolean",
-                                        "nullable": true
-                                    },
-                                    "client_id": {
-                                        "type": "integer",
-                                        "nullable": true
-                                    },
-                                    "site_id": {
-                                        "type": "integer",
-                                        "nullable": true
-                                    },
-                                    "relation_type": {
-                                        "type": "string",
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
+                                "$ref": "#/components/schemas/ContactCreateInput"
                             }
                         }
                     }
                 },
                 "responses": {
-                    "200": {
-                        "description": "Existing contact updated"
-                    },
                     "201": {
-                        "description": "Contact created"
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactResponse"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactResponse"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Committed state requires delivery reconciliation; do not resend",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactUnknownResponse"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthenticated"
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Missing contacts.create or contacts.update scope"
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -28355,8 +28533,8 @@
                 "tags": [
                     "Contacts"
                 ],
-                "summary": "Get contact information",
-                "description": "Returns one contact with communication methods and relations.",
+                "summary": "Read Contact details and compatibility IDs",
+                "description": "Requires token contacts.read and current native contact.view OR contact.update. ",
                 "operationId": "getContactById",
                 "parameters": [
                     {
@@ -28370,16 +28548,94 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful operation"
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactResponse"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthenticated"
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Missing contacts.read scope"
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Contact not found"
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -28392,8 +28648,8 @@
                 "tags": [
                     "Contacts"
                 ],
-                "summary": "Update contact",
-                "description": "Updates a known contact by ID.",
+                "summary": "Update a known Contact",
+                "description": "Requires token contacts.update and current native contact.update. Omitted fields/relations are preserved. Null email/phone retain the existing communication endpoint, matching the browser; nullable address/profile fields can be cleared. Invitation fields are prohibited. ",
                 "operationId": "replaceContact",
                 "parameters": [
                     {
@@ -28403,23 +28659,134 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactUpdateInput"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Contact updated"
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactResponse"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Committed state requires delivery reconciliation; do not resend",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactUnknownResponse"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthenticated"
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Missing contacts.update scope"
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Contact not found"
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -28432,8 +28799,8 @@
                 "tags": [
                     "Contacts"
                 ],
-                "summary": "Partially update contact",
-                "description": "Partially updates a known contact by ID.",
+                "summary": "Partially update a known Contact",
+                "description": "Requires token contacts.update and current native contact.update. Omitted fields/relations are preserved. Null email/phone retain the existing communication endpoint, matching the browser; nullable address/profile fields can be cleared. Invitation fields are prohibited. ",
                 "operationId": "patchContact",
                 "parameters": [
                     {
@@ -28443,23 +28810,134 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactUpdateInput"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Contact updated"
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactResponse"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Committed state requires delivery reconciliation; do not resend",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactUnknownResponse"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthenticated"
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Missing contacts.update scope"
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Contact not found"
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -112487,6 +112965,1908 @@
                 ],
                 "x-authority": "booking.commands.read + original operation authority"
             }
+        },
+        "/api/v1/contacts/preview": {
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Preview Contact creation and an optional portal invitation",
+                "description": "Requires token contacts.create AND contacts.update and current native contact.create AND contact.update. Explicit invitation additionally requires contacts.portal_invite and customer_portal.invite; API never inherits the UI invitation default. Viewer is the role default. Preview rolls back; preview IDs are not saved records. ",
+                "operationId": "previewContactCreate",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactCreateInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactPreview"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/clients/{client}/contacts": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Get Ticket contact_id for a verified customer. Match the person against legacy_client_users.contact_id, then use the matching active legacy_client_users.id as Ticket contact_id. Never use the global person ID directly.",
+                "description": "Requires token contacts.read and current native contact.view. Match contacts.id with active legacy_client_users.contact_id, then use the matching legacy_client_users.id as Ticket contact_id. Verify the intended customer; never use the global person ID as Ticket contact_id. ",
+                "operationId": "getClientTicketContacts",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactOwnershipInspection"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/contacts/{contact}/move": {
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Preview or move Contact ownership",
+                "description": "Requires token contacts.ownership_manage and current native contact.update. Risky writes require preview ETag as If-Match and an Idempotency-Key (8-200 characters). Replays are bound to actor/token/body; stale previews return 412. ",
+                "operationId": "moveContactOwnership",
+                "parameters": [
+                    {
+                        "name": "contact",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactMoveInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactRepairResponse"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Committed state requires delivery reconciliation; do not resend",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactUnknownResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/clients/{client}/contacts/bulk-fix": {
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Preview or repair a bounded set of Contact owners",
+                "description": "Requires token contacts.ownership_manage and current native contact.update. Risky writes require preview ETag as If-Match and an Idempotency-Key (8-200 characters). Replays are bound to actor/token/body; stale previews return 412. ",
+                "operationId": "bulkFixContactOwnership",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactBulkInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactRepairBatchResponse"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Committed state requires delivery reconciliation; do not resend",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactUnknownResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/clients/{client}/contacts/{contact}": {
+            "delete": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Preview or detach one Contact from a Client",
+                "description": "Requires token contacts.ownership_manage and current native contact.update; contact.delete also required for delete_if_orphan. Risky writes require preview ETag as If-Match and an Idempotency-Key (8-200 characters). Replays are bound to actor/token/body; stale previews return 412. ",
+                "operationId": "detachContactOwnership",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "contact",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactDetachInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactRepairResponse"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Committed state requires delivery reconciliation; do not resend",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactUnknownResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/clients/{client}/contacts/legacy-orphans/cleanup": {
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Preview or migrate orphaned legacy Contacts without deleting bridge IDs",
+                "description": "Requires token contacts.ownership_manage and current native contact.create AND contact.update. Risky writes require preview ETag as If-Match and an Idempotency-Key (8-200 characters). Replays are bound to actor/token/body; stale previews return 412. ",
+                "operationId": "migrateLegacyContactOrphans",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactCleanupInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactRepairBatchResponse"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Committed state requires delivery reconciliation; do not resend",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactUnknownResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/contacts/context": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Read Contact form defaults, context and capabilities",
+                "description": "Requires token contacts.read and current native contact.view OR contact.create OR contact.update. ",
+                "operationId": "getContactContext",
+                "parameters": [
+                    {
+                        "name": "client_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "site_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "contact_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactContext"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/contacts/lookups/{kind}": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Find bounded Contact form choices",
+                "description": "Requires token contacts.read and current native contact.view OR contact.create OR contact.update. ",
+                "operationId": "getContactLookups",
+                "parameters": [
+                    {
+                        "name": "kind",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "clients",
+                                "sites",
+                                "titles"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "client_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "site_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactLookupResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/contacts/duplicates": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Find exact normalized Contact identity matches",
+                "description": "Requires token contacts.read and current native contact.view OR contact.create OR contact.update. ",
+                "operationId": "getContactDuplicateMatches",
+                "parameters": [
+                    {
+                        "name": "email",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "phone",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "exclude_contact_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactDuplicates"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/contacts/statistics": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Read Contact workspace counters",
+                "description": "Requires token contacts.read and current native contact.view. ",
+                "operationId": "getContactStatistics",
+                "parameters": [
+                    {
+                        "name": "client_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "site_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactStatistics"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/contacts/{contact}/signals": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Read the Contact page related Signal summary",
+                "description": "Requires token contacts.read and current native contact.view. ",
+                "operationId": "getContactRelatedSignals",
+                "parameters": [
+                    {
+                        "name": "contact",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactSignals"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/contacts/settings": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Read Contact settings and choices",
+                "description": "Requires token contacts.settings.read and current native contact.manage_settings. ",
+                "operationId": "getContactSettings",
+                "responses": {
+                    "200": {
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactSettingsResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Update Contact defaults and configured relation choices",
+                "description": "Requires token contacts.settings.manage and current native contact.manage_settings. ",
+                "operationId": "updateContactSettings",
+                "parameters": [
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactSettingsInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactSettingsResponse"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Committed state requires delivery reconciliation; do not resend",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactUnknownResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/contacts/operations/{operation}": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Read the original actor/token Contact operation receipt",
+                "description": "Requires token contacts.operations.read and current native original current native permissions AND token abilities. ",
+                "operationId": "getContactOperation",
+                "parameters": [
+                    {
+                        "name": "operation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact operation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactOperation"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing current actor authority or token ability",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target not found or receipt belongs to another actor/token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict or default-off external execution",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; preview again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid payload or identity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Preview ETag and idempotency key required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Contact API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -153732,6 +156112,1902 @@
                 },
                 "type": "object",
                 "additionalProperties": false
+            },
+            "ContactClient": {
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Exact domain contracts shared by Swagger and behavioral response validation.",
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "client_number": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ContactSite": {
+                "required": [
+                    "id",
+                    "client_id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "client_id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "client_number": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_default": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactEmail": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "label": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "is_primary": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactPhone": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "label": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "is_primary": {
+                        "type": "boolean"
+                    },
+                    "sms_allowed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactAddress": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "label": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_primary": {
+                        "type": "boolean"
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "co_address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "zip": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "city": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "county": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "country": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ContactRelation": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "related_type": {
+                        "type": "string"
+                    },
+                    "related_id": {
+                        "type": "integer"
+                    },
+                    "relation_type": {
+                        "type": "string"
+                    },
+                    "is_primary": {
+                        "type": "boolean"
+                    },
+                    "related": {
+                        "nullable": true,
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ContactClient"
+                            },
+                            {
+                                "$ref": "#/components/schemas/ContactSite"
+                            }
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "ContactBridge": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "contact_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "client_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "site_id": {
+                        "type": "integer"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "is_default_for_site": {
+                        "type": "boolean"
+                    },
+                    "is_default_for_client": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactLegacyUser": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "contact_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "role": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "site": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/ContactSite"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "client": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/ContactClient"
+                            }
+                        ],
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ContactPerson": {
+                "required": [
+                    "id",
+                    "type",
+                    "status",
+                    "display_name",
+                    "emails",
+                    "phones",
+                    "relations"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "person",
+                            "department",
+                            "team",
+                            "shared_mailbox",
+                            "vendor_queue",
+                            "other"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "inactive",
+                            "archived"
+                        ]
+                    },
+                    "display_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "organization_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "job_title": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "primary_email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "primary_phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "preferred_language": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "communication_language": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "primary_phone_sms_allowed": {
+                        "type": "boolean"
+                    },
+                    "do_not_call": {
+                        "type": "boolean"
+                    },
+                    "do_not_email": {
+                        "type": "boolean"
+                    },
+                    "marketing_consent": {
+                        "type": "boolean"
+                    },
+                    "emails": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactEmail"
+                        }
+                    },
+                    "phones": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactPhone"
+                        }
+                    },
+                    "addresses": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactAddress"
+                        }
+                    },
+                    "relations": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactRelation"
+                        }
+                    },
+                    "client": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/ContactClient"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "site": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/ContactSite"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "compatibility": {
+                        "properties": {
+                            "client_users": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/ContactBridge"
+                                }
+                            },
+                            "user_id": {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            "external_refs_count": {
+                                "type": "integer"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "links": {
+                        "properties": {
+                            "self": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactInvitation": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "contact_id": {
+                        "type": "integer"
+                    },
+                    "client_id": {
+                        "type": "integer"
+                    },
+                    "site_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "customer_admin",
+                            "site_admin",
+                            "viewer"
+                        ]
+                    },
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "queued"
+                        ]
+                    },
+                    "inbox_delivery_verified": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactPaginationLinks": {
+                "properties": {
+                    "first": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "prev": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ContactPageMeta": {
+                "properties": {
+                    "current_page": {
+                        "type": "integer"
+                    },
+                    "from": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "last_page": {
+                        "type": "integer"
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "to": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "total": {
+                        "type": "integer"
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "url": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "label": {
+                                    "type": "string"
+                                },
+                                "active": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ContactPage": {
+                "required": [
+                    "data",
+                    "links",
+                    "meta"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactPerson"
+                        }
+                    },
+                    "links": {
+                        "$ref": "#/components/schemas/ContactPaginationLinks"
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/ContactPageMeta"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactResponse": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/ContactPerson"
+                    },
+                    "meta": {
+                        "properties": {
+                            "created": {
+                                "type": "boolean"
+                            },
+                            "upserted": {
+                                "type": "boolean"
+                            },
+                            "reused": {
+                                "type": "boolean"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "portal_invitation": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/ContactInvitation"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "operation_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactPreview": {
+                "required": [
+                    "dry_run",
+                    "data",
+                    "invitation_requested",
+                    "execution_enabled"
+                ],
+                "properties": {
+                    "dry_run": {
+                        "type": "boolean"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/ContactPerson"
+                    },
+                    "invitation_requested": {
+                        "type": "boolean"
+                    },
+                    "execution_enabled": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactSettingsValues": {
+                "properties": {
+                    "default_contact_type": {
+                        "type": "string"
+                    },
+                    "default_status": {
+                        "type": "string"
+                    },
+                    "default_relation_type": {
+                        "type": "string"
+                    },
+                    "enabled_relation_types": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "send_portal_invitation_by_default": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactOptions": {
+                "properties": {
+                    "contact_types": {
+                        "properties": {
+                            "person": {
+                                "type": "string"
+                            },
+                            "department": {
+                                "type": "string"
+                            },
+                            "team": {
+                                "type": "string"
+                            },
+                            "shared_mailbox": {
+                                "type": "string"
+                            },
+                            "vendor_queue": {
+                                "type": "string"
+                            },
+                            "other": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "statuses": {
+                        "properties": {
+                            "active": {
+                                "type": "string"
+                            },
+                            "inactive": {
+                                "type": "string"
+                            },
+                            "archived": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "relation_types": {
+                        "properties": {
+                            "contact": {
+                                "type": "string"
+                            },
+                            "primary_contact": {
+                                "type": "string"
+                            },
+                            "technical_contact": {
+                                "type": "string"
+                            },
+                            "billing_contact": {
+                                "type": "string"
+                            },
+                            "site_contact": {
+                                "type": "string"
+                            },
+                            "decision_maker": {
+                                "type": "string"
+                            },
+                            "emergency_contact": {
+                                "type": "string"
+                            },
+                            "manager": {
+                                "type": "string"
+                            },
+                            "ceo": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactSettingsResponse": {
+                "required": [
+                    "data",
+                    "options"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/ContactSettingsValues"
+                    },
+                    "options": {
+                        "$ref": "#/components/schemas/ContactOptions"
+                    },
+                    "operation_id": {
+                        "type": "string"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactContext": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "properties": {
+                            "defaults": {
+                                "$ref": "#/components/schemas/ContactSettingsValues"
+                            },
+                            "contact_types": {
+                                "properties": {
+                                    "person": {
+                                        "type": "string"
+                                    },
+                                    "department": {
+                                        "type": "string"
+                                    },
+                                    "team": {
+                                        "type": "string"
+                                    },
+                                    "shared_mailbox": {
+                                        "type": "string"
+                                    },
+                                    "vendor_queue": {
+                                        "type": "string"
+                                    },
+                                    "other": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "statuses": {
+                                "properties": {
+                                    "active": {
+                                        "type": "string"
+                                    },
+                                    "inactive": {
+                                        "type": "string"
+                                    },
+                                    "archived": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "relation_types": {
+                                "properties": {
+                                    "contact": {
+                                        "type": "string"
+                                    },
+                                    "primary_contact": {
+                                        "type": "string"
+                                    },
+                                    "technical_contact": {
+                                        "type": "string"
+                                    },
+                                    "billing_contact": {
+                                        "type": "string"
+                                    },
+                                    "site_contact": {
+                                        "type": "string"
+                                    },
+                                    "decision_maker": {
+                                        "type": "string"
+                                    },
+                                    "emergency_contact": {
+                                        "type": "string"
+                                    },
+                                    "manager": {
+                                        "type": "string"
+                                    },
+                                    "ceo": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "client": {
+                                "oneOf": [
+                                    {
+                                        "$ref": "#/components/schemas/ContactClient"
+                                    }
+                                ],
+                                "nullable": true
+                            },
+                            "site": {
+                                "oneOf": [
+                                    {
+                                        "$ref": "#/components/schemas/ContactSite"
+                                    }
+                                ],
+                                "nullable": true
+                            },
+                            "contact": {
+                                "oneOf": [
+                                    {
+                                        "$ref": "#/components/schemas/ContactPerson"
+                                    }
+                                ],
+                                "nullable": true
+                            },
+                            "portal_roles": {
+                                "properties": {
+                                    "viewer": {
+                                        "type": "string"
+                                    },
+                                    "site_admin": {
+                                        "type": "string"
+                                    },
+                                    "customer_admin": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "default_portal_role": {
+                                "type": "string"
+                            },
+                            "capabilities": {
+                                "properties": {
+                                    "read": {
+                                        "type": "boolean"
+                                    },
+                                    "create": {
+                                        "type": "boolean"
+                                    },
+                                    "update": {
+                                        "type": "boolean"
+                                    },
+                                    "invite": {
+                                        "type": "boolean"
+                                    },
+                                    "settings": {
+                                        "type": "boolean"
+                                    },
+                                    "invitation_execution_enabled": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactClientLookupPage": {
+                "required": [
+                    "data",
+                    "total"
+                ],
+                "properties": {
+                    "current_page": {
+                        "type": "integer"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactClient"
+                        }
+                    },
+                    "first_page_url": {
+                        "type": "string"
+                    },
+                    "from": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "last_page": {
+                        "type": "integer"
+                    },
+                    "last_page_url": {
+                        "type": "string"
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "url": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "label": {
+                                    "type": "string"
+                                },
+                                "active": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "next_page_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "prev_page_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "to": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "total": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactSiteLookupPage": {
+                "required": [
+                    "data",
+                    "total"
+                ],
+                "properties": {
+                    "current_page": {
+                        "type": "integer"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactSite"
+                        }
+                    },
+                    "first_page_url": {
+                        "type": "string"
+                    },
+                    "from": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "last_page": {
+                        "type": "integer"
+                    },
+                    "last_page_url": {
+                        "type": "string"
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "url": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "label": {
+                                    "type": "string"
+                                },
+                                "active": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "next_page_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "prev_page_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "to": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "total": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactTitles": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ContactLookupResponse": {
+                "anyOf": [
+                    {
+                        "$ref": "#/components/schemas/ContactClientLookupPage"
+                    },
+                    {
+                        "$ref": "#/components/schemas/ContactSiteLookupPage"
+                    },
+                    {
+                        "$ref": "#/components/schemas/ContactTitles"
+                    }
+                ]
+            },
+            "ContactDuplicates": {
+                "required": [
+                    "data",
+                    "ambiguous"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "display_name": {
+                                    "type": "string"
+                                },
+                                "organization_name": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "primary_email": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "primary_phone": {
+                                    "type": "string",
+                                    "nullable": true
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "ambiguous": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactStatistics": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "properties": {
+                            "total": {
+                                "type": "integer"
+                            },
+                            "active": {
+                                "type": "integer"
+                            },
+                            "people": {
+                                "type": "integer"
+                            },
+                            "with_email": {
+                                "type": "integer"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactSignals": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "summary": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "signal_type": {
+                                    "type": "string"
+                                },
+                                "severity": {
+                                    "type": "string"
+                                },
+                                "source_domain": {
+                                    "type": "string"
+                                },
+                                "confidence": {
+                                    "type": "integer"
+                                },
+                                "occurred_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "nullable": true
+                                },
+                                "client_id": {
+                                    "type": "integer",
+                                    "nullable": true
+                                },
+                                "contact_id": {
+                                    "type": "integer",
+                                    "nullable": true
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ContactOwnershipPerson": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "display_name": {
+                        "type": "string"
+                    },
+                    "primary_email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "primary_phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "deleted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "relations": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactRelation"
+                        }
+                    },
+                    "legacy_client_users": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactLegacyUser"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ContactOwnershipInspection": {
+                "required": [
+                    "client",
+                    "summary",
+                    "contacts",
+                    "legacy_client_users"
+                ],
+                "properties": {
+                    "client": {
+                        "$ref": "#/components/schemas/ContactClient"
+                    },
+                    "summary": {
+                        "properties": {
+                            "contacts": {
+                                "type": "integer"
+                            },
+                            "legacy_client_users": {
+                                "type": "integer"
+                            },
+                            "legacy_without_contact": {
+                                "type": "integer"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "contacts": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactOwnershipPerson"
+                        }
+                    },
+                    "legacy_client_users": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactLegacyUser"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ContactRepairConflict": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "client_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "legacy_client_user_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ContactRepairChanges": {
+                "properties": {
+                    "remove_relation_count": {
+                        "type": "integer"
+                    },
+                    "add_target_client_relation": {
+                        "type": "boolean"
+                    },
+                    "add_target_site_relation": {
+                        "type": "boolean"
+                    },
+                    "move_or_create_legacy_client_user": {
+                        "type": "boolean"
+                    },
+                    "target_client_id": {
+                        "type": "integer"
+                    },
+                    "target_client_number": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "target_site_id": {
+                        "type": "integer",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ContactRepairPlan": {
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "contact_id": {
+                        "type": "integer"
+                    },
+                    "target_client": {
+                        "$ref": "#/components/schemas/ContactClient"
+                    },
+                    "target_site": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/ContactSite"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "current_client_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "relation_type": {
+                        "type": "string"
+                    },
+                    "conflicts": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactRepairConflict"
+                        }
+                    },
+                    "changes": {
+                        "$ref": "#/components/schemas/ContactRepairChanges"
+                    },
+                    "delete_relation_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "retire_legacy_client_user_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "delete_legacy_client_user_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "delete_if_orphan": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactRepairResponse": {
+                "required": [
+                    "dry_run",
+                    "changed",
+                    "plan",
+                    "contact"
+                ],
+                "properties": {
+                    "dry_run": {
+                        "type": "boolean"
+                    },
+                    "changed": {
+                        "type": "boolean"
+                    },
+                    "audit_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "plan": {
+                        "$ref": "#/components/schemas/ContactRepairPlan"
+                    },
+                    "contact": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/ContactOwnershipPerson"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "operation_id": {
+                        "type": "string"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactRepairSummary": {
+                "properties": {
+                    "total": {
+                        "type": "integer"
+                    },
+                    "changed": {
+                        "type": "integer"
+                    },
+                    "conflicts": {
+                        "type": "integer"
+                    },
+                    "missing_contacts": {
+                        "type": "integer"
+                    },
+                    "no_change": {
+                        "type": "integer"
+                    },
+                    "eligible": {
+                        "type": "integer"
+                    },
+                    "skipped": {
+                        "type": "integer"
+                    },
+                    "missing_client_users": {
+                        "type": "integer"
+                    },
+                    "wrong_client": {
+                        "type": "integer"
+                    },
+                    "linked_contacts": {
+                        "type": "integer"
+                    },
+                    "dry_run": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactRepairItem": {
+                "properties": {
+                    "contact_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "client_user_id": {
+                        "type": "integer"
+                    },
+                    "display_name": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "conflicts": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactRepairConflict"
+                        }
+                    },
+                    "changes": {
+                        "$ref": "#/components/schemas/ContactRepairChanges"
+                    },
+                    "client_user": {
+                        "$ref": "#/components/schemas/ContactLegacyUser"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactRepairBatchResponse": {
+                "required": [
+                    "client",
+                    "summary",
+                    "results"
+                ],
+                "properties": {
+                    "client": {
+                        "$ref": "#/components/schemas/ContactClient"
+                    },
+                    "target_site": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/ContactSite"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "summary": {
+                        "$ref": "#/components/schemas/ContactRepairSummary"
+                    },
+                    "audit_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactRepairItem"
+                        }
+                    },
+                    "operation_id": {
+                        "type": "string"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactUnknownResponse": {
+                "required": [
+                    "state",
+                    "reconciliation_required"
+                ],
+                "properties": {
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "unknown"
+                        ]
+                    },
+                    "reconciliation_required": {
+                        "type": "boolean"
+                    },
+                    "operation_id": {
+                        "type": "string"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactOperation": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "operation": {
+                                "type": "string"
+                            },
+                            "state": {
+                                "type": "string",
+                                "enum": [
+                                    "completed",
+                                    "unknown"
+                                ]
+                            },
+                            "http_status": {
+                                "type": "integer"
+                            },
+                            "result": {
+                                "oneOf": [
+                                    {
+                                        "$ref": "#/components/schemas/ContactResponse"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/ContactSettingsResponse"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/ContactRepairResponse"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/ContactRepairBatchResponse"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/ContactUnknownResponse"
+                                    }
+                                ]
+                            },
+                            "created_at": {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            "updated_at": {
+                                "type": "string",
+                                "format": "date-time"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactCreateInput": {
+                "required": [
+                    "display_name"
+                ],
+                "properties": {
+                    "organization_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "job_title": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "preferred_language": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "co_address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "zip": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "city": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "county": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "country": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "display_name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "existing_contact_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "person",
+                            "department",
+                            "team",
+                            "shared_mailbox",
+                            "vendor_queue",
+                            "other"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "inactive",
+                            "archived"
+                        ]
+                    },
+                    "sms_allowed": {
+                        "type": "boolean"
+                    },
+                    "do_not_call": {
+                        "type": "boolean"
+                    },
+                    "do_not_email": {
+                        "type": "boolean"
+                    },
+                    "marketing_consent": {
+                        "type": "boolean"
+                    },
+                    "reuse_existing": {
+                        "type": "boolean"
+                    },
+                    "send_customer_portal_invitation": {
+                        "type": "boolean"
+                    },
+                    "client_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "site_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "relation_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "portal_role": {
+                        "type": "string",
+                        "default": "viewer",
+                        "enum": [
+                            "viewer",
+                            "site_admin",
+                            "customer_admin"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "ContactUpdateInput": {
+                "properties": {
+                    "organization_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "job_title": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "preferred_language": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "co_address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "zip": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "city": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "county": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "country": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "display_name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "person",
+                            "department",
+                            "team",
+                            "shared_mailbox",
+                            "vendor_queue",
+                            "other"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "inactive",
+                            "archived"
+                        ]
+                    },
+                    "sms_allowed": {
+                        "type": "boolean"
+                    },
+                    "do_not_call": {
+                        "type": "boolean"
+                    },
+                    "do_not_email": {
+                        "type": "boolean"
+                    },
+                    "marketing_consent": {
+                        "type": "boolean"
+                    },
+                    "client_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "site_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "relation_type": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ContactMoveInput": {
+                "properties": {
+                    "target_client_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "target_client_number": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "target_site_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "dry_run": {
+                        "type": "boolean"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 500
+                    }
+                },
+                "type": "object"
+            },
+            "ContactBulkInput": {
+                "required": [
+                    "contact_ids"
+                ],
+                "properties": {
+                    "contact_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "target_site_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "dry_run": {
+                        "type": "boolean"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 500
+                    }
+                },
+                "type": "object"
+            },
+            "ContactCleanupInput": {
+                "required": [
+                    "client_user_ids"
+                ],
+                "properties": {
+                    "client_user_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "dry_run": {
+                        "type": "boolean"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 500
+                    }
+                },
+                "type": "object"
+            },
+            "ContactDetachInput": {
+                "properties": {
+                    "dry_run": {
+                        "type": "boolean"
+                    },
+                    "delete_if_orphan": {
+                        "type": "boolean"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 500
+                    }
+                },
+                "type": "object"
+            },
+            "ContactSettingsInput": {
+                "required": [
+                    "default_contact_type",
+                    "default_status",
+                    "default_relation_type",
+                    "enabled_relation_types"
+                ],
+                "properties": {
+                    "default_contact_type": {
+                        "type": "string"
+                    },
+                    "default_status": {
+                        "type": "string"
+                    },
+                    "default_relation_type": {
+                        "type": "string"
+                    },
+                    "enabled_relation_types": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "send_portal_invitation_by_default": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactError": {
+                "required": [
+                    "message"
+                ],
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {

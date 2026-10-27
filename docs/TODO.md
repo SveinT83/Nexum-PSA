@@ -2894,3 +2894,50 @@ Initial future scope:
 - Workflow form persists metadata, active/default flags, states, and transitions.
 - Transition requirements are stored for later enforcement.
 - Tests cover create and edit flows.
+
+## Full Contact browser/API coverage (2026-10-27)
+
+Status: Done On Dev / scoped Main candidate verified / Main merge explicitly authorized.
+Owner: Codex. Approver and intended human reviewer: Svein Tore.
+RFC rfc/2026-10-27-contact-full-api-parity.md Approved; ADR Accepted; six sequential slices complete
+on Dev. Coverage: 34 inventory rows, 19 typed HTTP operations / 45 schemas; exact successful
+HTTP/schema/native rights/read-back evidence is in plans/2026-10-27-contact-api-verification.md/.json.
+Contact/Portal: 101 tests / 1286 assertions. Scoped Main: 342 unique affected tests /
+4433 assertions after correcting the candidate-only ability-map assembly. Native MySQL,
+actual rollback-only Livewire portal fixtures, concurrency, encrypted receipts and trusted HTTPS pass.
+#254 all nine entry-point/role activation scenarios plus negatives/defaults/permissions/rollback/no-resend
+are verified. It is ready for an evidence-based completion comment/closure, not another implementation.
+Actual BookStack pages 364/514/449 were updated/read back with inherited scope unchanged.
+No employee OpenWebUI retrieval or human visual acceptance is claimed. Dev has no configured
+BookStack sync; local pending_push is not misreported as sync success.
+Human-review checklist HR-2026-10-27-CONTACT-API remains Pending. Svein Tore expressly authorized
+RFC and tested Main promotion with "Godkjenner og merge til main"; Pending checks gate production,
+not that Main merge. API invitation execution stays default-off; production deployment and runtime
+activation require separate authorization. No role grants, worker changes, real send or customer repair.
+Next: record the scoped Main result and #254 state, then Svein Tore performs the named human checklist
+before any production rollout. Preserve unrelated shared Dev work; the earlier broad Dev handler/schema
+race is recorded separately from the green scoped Contact/Main evidence.
+
+## Contact create portal role selection - Issue #254 (2026-10-09)
+
+Status: Dev Test-Data Simulation Verified / Parent Workstream Finalization In Progress.
+Owner: existing Contact API contributor; Codex performed independent #254 simulation.
+The prior Viewer-only blocker and historical verification failures are superseded by
+current source and the successful final run below. ContactForm offers authoritative
+predefined roles with Viewer default and transactional selected-role persistence.
+Contact and Customer Portal source guides now explain the role selector separately
+from job title and relation. Full create-to-activation simulation and invalid-create,
+permission, override, duplicate-access, rollback and no-resend regressions pass.
+Next: the existing Contact owner reconciles overall handbook evidence and Issue closure
+with the scoped parent handoff. HR-2026-10-27-CONTACT-API remains Pending for human review;
+this simulation does not approve production or start another implementation.
+
+Issue #254 test-data simulation, 2026-10-27: PASS. The new ContactPortalIssue254SimulationTest
+creates isolated test data and exercises all 3 entry points x all 3 portal roles,
+including activation, exact persisted membership/scope, audit and denied tech access.
+New simulation: 9 passed / 378 assertions. Final combined Contact/Portal verification:
+93 passed / 1224 assertions / 95.58s, exit 0. The earlier Signal fixture and
+mixed-order real-commit test failure are resolved in this final run. Evidence:
+[Issue #254 simulation](plans/2026-10-27-issue-254-testdata-simulation.md).
+Owner: Codex for this simulation; existing Contact owner for overall finish/Issue closure.
+Human review remains Pending; no production, real mail or manual review is claimed.
