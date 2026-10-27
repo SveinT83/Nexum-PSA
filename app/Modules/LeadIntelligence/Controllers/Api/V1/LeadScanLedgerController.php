@@ -11,6 +11,7 @@ class LeadScanLedgerController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $request->validate(['due_only' => 'sometimes|boolean', 'domain' => 'sometimes|string|max:255', 'org_no' => 'sometimes|string|max:50', 'status' => 'sometimes|string|max:100']);
         $query = LeadScanLedger::query()->latest();
 
         if ($request->boolean('due_only')) {
@@ -23,7 +24,7 @@ class LeadScanLedgerController extends Controller
             }
         }
 
-        $ledger = $query->paginate($request->integer('per_page') ?: 25);
+        $ledger = $query->paginate(\App\Modules\LeadIntelligence\Support\LeadApiInput::page($request));
 
         return response()->json([
             'data' => $ledger->getCollection()->map(fn (LeadScanLedger $entry): array => $this->serialize($entry))->all(),
@@ -55,4 +56,3 @@ class LeadScanLedgerController extends Controller
         ];
     }
 }
-

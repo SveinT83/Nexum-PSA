@@ -16,6 +16,22 @@ flagged for review but are never changed automatically.
 Coordinator tokens are created from AI Privacy & Coordinator Governance. They bind to an approved
 workload, contain read abilities only, expire, and are policy-checked on every request.
 
+
+## Contact API extension on Dev - 27 October 2026
+
+The Contact domain exposes 19 typed HTTP operations for supported Contact browser workflows.
+Current native Contact rights are required in addition to token abilities. New abilities are
+contacts.settings.read, contacts.settings.manage, contacts.portal_invite and contacts.operations.read.
+No existing key, connector or human role receives these abilities automatically. Existing POST
+contacts remains an upsert requiring both contacts.create and contacts.update; explicit reuse
+preserves existing person/consent fields. Full parameter and response contracts are in Swagger.
+Repair/invitation execution uses an exact actor/token/action/body/state-bound preview, If-Match,
+Idempotency-Key and encrypted operation receipts. Receipt reads recheck original user/token rights.
+Contact API invitations default off; enabling them is a separate installation decision, with
+queued/unknown delivery reported truthfully. Refer to Contact Domain Overview for numbered steps.
+This is Dev availability; Main promotion and production rollout are separate verification claims.
+
+
 ## Internal Model Workloads
 
 An internal model workload is the governed execution boundary for a Nexum feature that needs strict
@@ -1468,16 +1484,17 @@ Credentials additionally require `nextcloud.credentials.write`; new provider wri
 Read the connection ETag, use If-Match and Idempotency-Key, then read the exact resource/receipt.
 The Nextcloud full API guide describes all operations, errors, safe retries and availability.
 
-## Contact API extension on Dev - 27 October 2026
+## Lead Intelligence Full API Coverage (2026-10-27)
 
-The Contact domain exposes 19 typed HTTP operations for supported Contact browser workflows.
-Current native Contact rights are required in addition to token abilities. New abilities are
-contacts.settings.read, contacts.settings.manage, contacts.portal_invite and contacts.operations.read.
-No existing key, connector or human role receives these abilities automatically. Existing POST
-contacts remains an upsert requiring both contacts.create and contacts.update; explicit reuse
-preserves existing person/consent fields. Full parameter and response contracts are in Swagger.
-Repair/invitation execution uses an exact actor/token/action/body/state-bound preview, If-Match,
-Idempotency-Key and encrypted operation receipts. Receipt reads recheck original user/token rights.
-Contact API invitations default off; enabling them is a separate installation decision, with
-queued/unknown delivery reported truthfully. Refer to Contact Domain Overview for numbered steps.
-This is Dev availability; Main promotion and production rollout are separate verification claims.
+Dev now has 17 official HTTP operations / 47 typed Swagger schemas for the full
+current Lead Intelligence browser workflow and existing evaluation/promotion actions.
+Use lead-intelligence.read/manage/run together with the active user's sales.lead_manage
+permission. Includes pure context, settings, segment schedules/budgets, AI draft,
+Run Now, runs/evidence, scan ledger and current-token command-result read-back.
+Writes/actions require Idempotency-Key; use the exact GET ETag as If-Match for edits.
+Provider/AI/discovery execution from APIs defaults off. Unknown commands require
+reconciliation; queued is not completed research. Clients owns provider numbering,
+Contact owns identity/bridge, and Marketing suppression/exclusions remain authoritative.
+Full operator/API instructions are in Lead Intelligence Overview (BookStack page 496).
+Status: implemented/verified on Dev; Main promotion authorized and pending verification;
+production unchanged. HR-2026-10-27-LEAD-INTELLIGENCE-API manual scenarios remain Pending.

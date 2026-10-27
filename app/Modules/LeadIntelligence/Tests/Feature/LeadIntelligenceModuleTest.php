@@ -49,6 +49,9 @@ class LeadIntelligenceModuleTest extends TestCase
         $this->user = User::factory()->create([
             'status' => User::STATUS_ACTIVE,
         ]);
+        Permission::findOrCreate('sales.lead_manage', 'web');
+        $this->user->givePermissionTo('sales.lead_manage');
+        config(['lead-intelligence.api_external_execution' => true]);
     }
 
     #[Test]
@@ -132,7 +135,7 @@ class LeadIntelligenceModuleTest extends TestCase
 
         Sanctum::actingAs($this->user, ['lead-intelligence.manage']);
 
-        $this->patchJson(route('api.v1.lead-intelligence.settings.update'), [
+        $this->withHeader('Idempotency-Key', (string) \Illuminate\Support\Str::uuid())->patchJson(route('api.v1.lead-intelligence.settings.update'), [
             'enabled' => true,
             'auto_create_clients' => true,
             'allow_named_work_emails' => true,
@@ -170,9 +173,11 @@ class LeadIntelligenceModuleTest extends TestCase
     #[Test]
     public function segment_crud_is_available_via_api(): void
     {
+        MarketingList::create(['id' => 1, 'name' => 'First target', 'status' => 'active']);
+        MarketingList::create(['id' => 2, 'name' => 'Second target', 'status' => 'active']);
         Sanctum::actingAs($this->user, ['lead-intelligence.read', 'lead-intelligence.manage']);
 
-        $response = $this->postJson(route('api.v1.lead-segments.store'), [
+        $response = $this->withHeader('Idempotency-Key', (string) \Illuminate\Support\Str::uuid())->postJson(route('api.v1.lead-segments.store'), [
             'name' => 'Norwegian IT buyers',
             'description' => 'B2B companies in Norway',
             'enabled' => true,
@@ -199,7 +204,7 @@ class LeadIntelligenceModuleTest extends TestCase
         $segmentId = $response->json('data.id');
         $segment = LeadSegment::query()->findOrFail($segmentId);
 
-        $this->patchJson(route('api.v1.lead-segments.update', $segment), [
+        $this->withHeader('Idempotency-Key', (string) \Illuminate\Support\Str::uuid())->patchJson(route('api.v1.lead-segments.update', $segment), [
             'name' => 'Updated IT buyers',
             'enabled' => false,
             'keywords' => ['outsourcing', 'supportavtale'],
@@ -226,7 +231,7 @@ class LeadIntelligenceModuleTest extends TestCase
         try {
             Sanctum::actingAs($this->user, ['lead-intelligence.manage']);
 
-            $response = $this->postJson(route('api.v1.lead-segments.store'), [
+            $response = $this->withHeader('Idempotency-Key', (string) \Illuminate\Support\Str::uuid())->postJson(route('api.v1.lead-segments.store'), [
                 'name' => 'Scheduled API segment',
                 'description' => 'Find contactable leads after schedule time.',
                 'enabled' => true,
@@ -264,7 +269,7 @@ class LeadIntelligenceModuleTest extends TestCase
 
         Sanctum::actingAs($this->user, ['lead-intelligence.run']);
 
-        $this->postJson(route('api.v1.lead-research-runs.store'), [
+        $this->withHeader('Idempotency-Key', (string) \Illuminate\Support\Str::uuid())->postJson(route('api.v1.lead-research-runs.store'), [
             'lead_segment_id' => $segment->id,
             'status' => LeadResearchRun::STATUS_COMPLETED,
         ])
@@ -273,7 +278,7 @@ class LeadIntelligenceModuleTest extends TestCase
 
         $this->assertSame(0, LeadResearchRun::query()->count());
 
-        $this->postJson(route('api.v1.lead-research-runs.store'), [
+        $this->withHeader('Idempotency-Key', (string) \Illuminate\Support\Str::uuid())->postJson(route('api.v1.lead-research-runs.store'), [
             'lead_segment_id' => $segment->id,
             'status' => LeadResearchRun::STATUS_DRAFT,
         ])
@@ -587,6 +592,7 @@ class LeadIntelligenceModuleTest extends TestCase
     {
         $client = Client::factory()->create(['name' => 'Evaluation AS']);
         $contact = $this->contactWithEmail('Eva Evaluator', 'eva@evaluation.no', 'IT');
+        \App\Modules\Contact\Models\ContactRelation::create(['contact_id' => $contact->id, 'related_type' => $client->getMorphClass(), 'related_id' => $client->id, 'relation_type' => 'contact']);
 
         app(LeadIntelligenceSettings::class)->update([
             'allow_named_work_emails' => true,
@@ -598,7 +604,7 @@ class LeadIntelligenceModuleTest extends TestCase
 
         Sanctum::actingAs($this->user, ['lead-intelligence.run']);
 
-        $this->postJson(route('api.v1.lead-intelligence.evaluate-contact'), [
+        $this->withHeader('Idempotency-Key', (string) \Illuminate\Support\Str::uuid())->postJson(route('api.v1.lead-intelligence.evaluate-contact'), [
             'contact_id' => $contact->id,
             'client_id' => $client->id,
         ])
@@ -649,7 +655,7 @@ class LeadIntelligenceModuleTest extends TestCase
 
         Sanctum::actingAs($this->user, ['lead-intelligence.run']);
 
-        $this->postJson(route('api.v1.lead-intelligence.evaluate-contact'), [
+        $this->withHeader('Idempotency-Key', (string) \Illuminate\Support\Str::uuid())->postJson(route('api.v1.lead-intelligence.evaluate-contact'), [
             'contact_id' => $contact->id,
             'client_id' => $client->id,
             'source_evidence_id' => $otherEvidence->id,
@@ -764,7 +770,7 @@ class LeadIntelligenceModuleTest extends TestCase
 
         Sanctum::actingAs($this->user, ['lead-intelligence.run']);
 
-        $this->postJson(route('api.v1.lead-intelligence.promote-candidate'), [
+        $this->withHeader('Idempotency-Key', (string) \Illuminate\Support\Str::uuid())->postJson(route('api.v1.lead-intelligence.promote-candidate'), [
             'lead_research_run_id' => $run->id,
             'company' => [
                 'name' => 'Local Prospect AS',
@@ -896,7 +902,7 @@ class LeadIntelligenceModuleTest extends TestCase
 
         Sanctum::actingAs($this->user, ['lead-intelligence.run']);
 
-        $this->postJson(route('api.v1.lead-intelligence.promote-candidate'), [
+        $this->withHeader('Idempotency-Key', (string) \Illuminate\Support\Str::uuid())->postJson(route('api.v1.lead-intelligence.promote-candidate'), [
             'lead_research_run_id' => $run->id,
             'company' => [
                 'name' => 'Excluded Lead Client AS',
@@ -1860,13 +1866,13 @@ class LeadIntelligenceModuleTest extends TestCase
         $this->getJson(route('api.v1.lead-intelligence.settings.show'))
             ->assertForbidden();
 
-        $this->postJson(route('api.v1.lead-intelligence.promote-candidate'), [
+        $this->withHeader('Idempotency-Key', (string) \Illuminate\Support\Str::uuid())->postJson(route('api.v1.lead-intelligence.promote-candidate'), [
             'company' => ['name' => 'Forbidden Prospect AS'],
         ])->assertForbidden();
 
         Sanctum::actingAs($this->user, ['lead-intelligence.read']);
 
-        $this->patchJson(route('api.v1.lead-intelligence.settings.update'), [
+        $this->withHeader('Idempotency-Key', (string) \Illuminate\Support\Str::uuid())->patchJson(route('api.v1.lead-intelligence.settings.update'), [
             'enabled' => true,
         ])->assertForbidden();
     }

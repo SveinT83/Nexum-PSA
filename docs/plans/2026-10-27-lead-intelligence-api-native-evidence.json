@@ -1,0 +1,47 @@
+{
+    "driver": "mysql",
+    "migration": {
+        "migration": "2026_10_27_040000_create_lead_intelligence_api_commands",
+        "batch": 35
+    },
+    "external_execution": false,
+    "independent_lock_probe": {
+        "lock_timeout": true
+    },
+    "encrypted_at_rest": true,
+    "decrypted_exact": true,
+    "unique_replay_constraint": true,
+    "probe_rows_removed": true,
+    "trusted_base": "https://dev.nexumpsa.eu",
+    "http": [
+        {
+            "path": "lead-intelligence/context",
+            "status": 200,
+            "data_present": true
+        },
+        {
+            "path": "lead-intelligence/settings",
+            "status": 200,
+            "data_present": true
+        },
+        {
+            "path": "lead-segments?per_page=1",
+            "status": 200,
+            "data_present": true
+        },
+        {
+            "path": "lead-research-runs?per_page=1",
+            "status": 200,
+            "data_present": true
+        },
+        {
+            "path": "lead-scan-ledger?per_page=1",
+            "status": 200,
+            "data_present": true
+        }
+    ],
+    "anonymous_status": 401,
+    "swagger_http_status": 200,
+    "swagger_lead_operations": 17,
+    "test_token_removed": true
+}

@@ -1,6 +1,6 @@
 {
   "date": "2026-10-27",
-  "status": "done_on_dev_main_promotion_authorized",
+  "status": "done_on_dev_merged_main",
   "owner": "Codex",
   "baseline": {
     "browser_rows": 17,
@@ -405,5 +405,11 @@
     "handbook": "BookStack 553 exact combined-source content; inherited access; no grant changes",
     "human_review": "Pending; explicit tested Main merge authorized, not manual scenario confirmation",
     "production": "not deployed"
+  },
+  "main": {
+    "pr": 340,
+    "merge_sha": "f8180e6efb696321f7bfa09863403ac11d840e33",
+    "tested_tree": "436b960755703d2ccbb4303e19cacc43c2371e05",
+    "exact_tree_match": true
   }
 }

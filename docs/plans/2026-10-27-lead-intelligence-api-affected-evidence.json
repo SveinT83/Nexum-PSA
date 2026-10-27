@@ -1,0 +1,40 @@
+{
+  "initial_dev_batch": {
+    "passed": 316,
+    "failed": 14,
+    "assertions": 4122,
+    "duration_seconds": 1662.2
+  },
+  "cause": "Concurrent author work changed the global UserManagement exception hook/class while the long-lived process ran (13 missing matches() errors); one newly edited Contact test lacked ClientUser import when loaded. Both author-owned sources now contain the missing methods/import. Lead task did not modify those files.",
+  "failed_methods": {
+    "app/Modules/Contact/Tests/Feature/ContactApiParityTest.php": [
+      "all_workspace_and_repair_operations_have_successful_typed_readback"
+    ],
+    "app/Modules/Clients/Tests/Feature/ClientsProviderApiTest.php": [
+      "provider_preconditions_and_foreign_subscription_fail_before_transport",
+      "staff_subscription_actions_share_provider_policy_and_never_cross_integration_ownership"
+    ],
+    "app/Modules/Integration/Tests/Feature/TripletexCustomerNumberTest.php": [
+      "test_api_create_and_update_enforce_same_authority",
+      "test_number_adoption_requires_explicit_consent_and_unchanged_preview",
+      "test_customer_settings_runtime_gate_returns_to_form_and_explains_disabled_controls",
+      "test_customer_settings_stale_form_returns_visible_conflict_without_mutation",
+      "test_runtime_and_permissions_guard_customer_settings_and_lookup",
+      "test_reenable_refuses_provider_drift_until_explicit_review_while_paused",
+      "test_missing_api_scope_cannot_contact_provider"
+    ],
+    "app/Modules/Integration/Tests/Feature/TripletexCustomerProfileTest.php": [
+      "test_prefill_requires_client_access_and_contact_name_requires_contact_view",
+      "test_profile_review_renders_status_and_allows_only_explicit_site_binding",
+      "test_profile_command_honours_global_stop_and_permission_denial",
+      "test_admin_retry_reports_paused_and_busy_without_claiming_success"
+    ]
+  },
+  "retest": {
+    "passed": 14,
+    "failed": 0,
+    "assertions": 192,
+    "duration_seconds": 303.37
+  },
+  "status": "Resolved by fresh retest against current author-owned sources; no unrelated source edits or deferred failures"
+}
