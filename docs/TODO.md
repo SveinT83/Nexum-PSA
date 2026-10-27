@@ -26,9 +26,40 @@ preserving unrelated shared Dev work and separately owned protected security ada
 Final MFA/session regression: Dev 79 / 990; Main 185 passed / 2616 assertions with one existing optional provider skip; no failures/errors.
 
 
+
+## Full Marketing browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Merged to Main in PR #350 / Human Scenarios Pending / Production unchanged.
+Owner: Codex; product/release owner and intended reviewer: Svein Tore.
+Authorization: "Godkjenner og merge til main", 2026-10-27. RFC/ADR approved/accepted;
+all MK01-MK06 slices are implemented. Coverage: 28 staff browser rows + 3 public
+capabilities, seven embedded/API-only groups, 42 protected HTTP operations / 62 schemas.
+Dev: 88 tests / 2018 assertions. Initial clean Main affected candidate: 488 / 7469; final Marketing candidate: 88 / 2018, no failures/skips. Exact Dev
+migration, native MySQL locking/replay/encryption/rollback, trusted HTTPS and Swagger
+verified. Three internal Knowledge sources are exact-read-back; complete guide is
+published/read back in BookStack 449 with inherited employee access unchanged.
+New-page connector validation is separately blocked; the full existing-page handbook
+publication is verified. OpenWebUI retrieval is untested; pending_push is not that proof.
+RFC: rfc/2026-10-27-marketing-full-api-parity.md. ADR and six slices are linked there.
+Evidence: plans/2026-10-27-marketing-api-verification.md/.json and coverage matrix.
+Existing campaign-view contributor fix, shared Dev work and staged index are preserved.
+The first shared-Dev broad snapshot encountered concurrent UserManagement/Contact/Email
+failures; selected reruns passed 9 / 51. Contact is now merged upstream and passes
+in the later isolated affected batch (233 tests / 3687 assertions). The earlier shared
+Dev snapshot is not a current whole-Dev pass claim.
+Main merged and read back in PR #350 (1fc7bd9d); tested/merged trees match.
+Next action (Svein Tore): complete the human scenarios before production rollout. HR-2026-10-27-MARKETING-API remains Pending; no manual check is
+inferred. Production deployment, provider execution and worker/scheduler activation are
+not authorized. API provider switch remains false. Production/release need human review.
+
+
+Final candidate and Dev Marketing runs each pass 88 tests / 2018 assertions.
+Populated field/receipt contracts, rendered-error privacy and browser/API rollback
+are explicitly covered. Main merge is verified in PR #350; manual scenarios remain Pending.
+
 ## Full Relationship browser/API coverage (2026-10-27)
 
-Status: Done On Dev / Current Main Candidate Verified / Main Merge Authorized.
+Status: Done On Dev / Merged to Main in PR #349 / Human Review Pending / Production unchanged.
 Owner: Codex. Approver/intended human reviewer: Svein Tore.
 Authorization: "Godkjenner og merge til main", 2026-10-27.
 Approved RFC: rfc/2026-10-27-relationship-full-api-parity.md.
@@ -52,8 +83,14 @@ dependencies/scopes and an idempotent compatibility loader accompany this releas
 The pre-existing validateTarget extraction is reused without rewriting shared Dev.
 Human-review checklist HR-2026-10-27-RELATIONSHIP-API remains Pending for production
 release/deployment; explicit scoped Main promotion is authorized separately.
-Next action (Codex): commit/push this tested candidate, create/merge its PR and read
-back Main. Production rollout and provider/worker/scheduler activation are not authorized.
+PR #349: https://github.com/SveinT83/Nexum-PSA/pull/349
+Main merge: ee2272b7bac566bfe57a3b61fada0ee0f7e67436. All scoped runtime files and the
+31-operation/33-schema Swagger contract match the tested candidate. Concurrent Main
+Lead/Nextcloud work is preserved; the complete repository trees are not called equal.
+Rollback retention is additionally verified (3 / 9) and on native MySQL.
+Next owner/action (Svein Tore): perform the Pending browser/two-instance human review
+before separately authorizing production rollout. No Main implementation action remains.
+Provider/worker/scheduler activation and employee OpenWebUI retrieval stay separate.
 
 
 

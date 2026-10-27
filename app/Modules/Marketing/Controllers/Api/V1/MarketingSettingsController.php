@@ -43,6 +43,7 @@ class MarketingSettingsController extends Controller
         return response()->json([
             'data' => $settings,
             'meta' => [
+                'sender' => app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class)->forScope('marketing')?->only(['id', 'address', 'from_name']),
                 'consent_mode_options' => MarketingSettings::CONSENT_MODE_OPTIONS,
                 'unsubscribe_mode_options' => MarketingSettings::UNSUBSCRIBE_MODE_OPTIONS,
             ],

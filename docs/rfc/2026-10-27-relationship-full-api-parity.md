@@ -3,7 +3,7 @@
 Status: Approved
 Date: 2026-10-27
 Owner: Codex. Product approver and intended human reviewer: Svein Tore.
-Implementation: Done On Dev; current Main candidate verified and scoped promotion explicitly authorized.
+Implementation: Done On Dev / Merged to Main in PR #349; production and human review remain separate.
 
 ## Context
 Svein requested "Relationship domain: Lag 100% API støtte". Fresh authoritative Dev

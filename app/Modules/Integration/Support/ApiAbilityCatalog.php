@@ -131,6 +131,9 @@ class ApiAbilityCatalog
         'contacts.create' => self::ACCESS_WRITE,
         'contacts.update' => self::ACCESS_WRITE,
         'contacts.ownership_manage' => self::ACCESS_WRITE,
+        'marketing.context.read' => self::ACCESS_READ,
+        'marketing.providers.execute' => self::ACCESS_WRITE,
+        'marketing.operations.read' => self::ACCESS_READ,
         'marketing.read' => self::ACCESS_READ,
         'marketing.lists.manage' => self::ACCESS_WRITE,
         'marketing.campaigns.create' => self::ACCESS_WRITE,
@@ -471,6 +474,21 @@ class ApiAbilityCatalog
             'label' => 'Repair contact ownership',
             'description' => 'Inspect, move, bulk repair, and detach Contact ownership across clients and legacy client users.',
             'domain' => 'Contacts',
+        ],
+        'marketing.context.read' => [
+            'label' => 'Read Marketing form context',
+            'description' => 'Read bounded form choices with the matching native action and token scope.',
+            'domain' => 'Marketing',
+        ],
+        'marketing.providers.execute' => [
+            'label' => 'Execute Marketing provider actions',
+            'description' => 'Explicit API authority for AI, WordPress, SMTP test and queued due-send execution; default-off runtime guard also applies.',
+            'domain' => 'Marketing',
+        ],
+        'marketing.operations.read' => [
+            'label' => 'Read own Marketing commands',
+            'description' => 'Read exact actor/token-owned results while the original operation authority remains valid.',
+            'domain' => 'Marketing',
         ],
         'marketing.read' => [
             'label' => 'Read marketing',

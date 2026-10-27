@@ -1,6 +1,6 @@
 # Feature Slices: Full Relationship API Parity
 
-Status: Done On Dev
+Status: Done On Dev / Merged to Main in PR #349
 Date: 2026-10-27
 Parent: ../rfc/2026-10-27-relationship-full-api-parity.md
 Owner: Codex. Approver and intended reviewer: Svein Tore.

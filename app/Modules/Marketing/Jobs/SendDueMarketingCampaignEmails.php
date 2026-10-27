@@ -32,7 +32,7 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
     /** @var array<int, array{account_id: int|null, provider_binding_version: int|null}> */
     public array $providerBindingSnapshots = [];
 
-    public function __construct(public ?int $campaignId = null)
+    public function __construct(public ?int $campaignId = null, public ?array $apiOrigin = null)
     {
         $bindings = app(EmailProviderBindingSnapshot::class);
         $default = $bindings->captureScope('marketing');
@@ -59,6 +59,10 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
         ClaimMarketingCampaignDelivery $deliveryClaims,
         AdvanceMarketingCampaignLifecycle $lifecycle,
     ): void {
+        if (! \App\Modules\Marketing\Support\MarketingQueuedAuthority::allowed($this->apiOrigin ?? null)) {
+            return;
+        }
+
         $campaigns = MarketingCampaign::query()
             ->with('emailAccount')
             ->whereIn('status', ['approved', 'active'])
@@ -103,6 +107,10 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
         AuthorizeMarketingCampaignRecipientProgression $progression,
         ClaimMarketingCampaignDelivery $deliveryClaims,
     ): void {
+        if (! \App\Modules\Marketing\Support\MarketingQueuedAuthority::allowed($this->apiOrigin ?? null)) {
+            return;
+        }
+
         $account = $campaign->emailAccount ?: $accountResolver->forScope('marketing');
 
         if (! $account) {
@@ -248,6 +256,10 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
                 }
 
                 try {
+                    if (! \App\Modules\Marketing\Support\MarketingQueuedAuthority::allowed($this->apiOrigin ?? null)) {
+                        return;
+                    }
+
                     $messageId = $mailer->send(
                         $account,
                         $recipient->email,

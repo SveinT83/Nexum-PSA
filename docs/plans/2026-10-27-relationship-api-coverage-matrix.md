@@ -74,3 +74,7 @@ Relationship tests remain reused. Source creation owner regression is fixed with
 configured Relationship creator, without impersonation or grants. Native MySQL
 unique replay/encryption/concurrent locking/rollback pass. Actual BookStack 510/511
 were read back exactly and retain inherited access. Final current-Main release verification passes 338 / 7406, no failures/errors/skips.
+
+
+Main promotion: PR #349, ee2272b7bac566bfe57a3b61fada0ee0f7e67436. Scoped runtime and contracts
+match the tested candidate; production and human review remain separate.
