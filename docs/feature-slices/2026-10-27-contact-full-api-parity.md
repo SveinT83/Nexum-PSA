@@ -1,6 +1,6 @@
 # Feature Slices: Full Contact API Parity
 
-Status: Done On Dev / scoped Main candidate verified. Date: 2026-10-27. Owner: Codex.
+Status: Done On Dev / Merged to Main in PR #341; production review Pending. Date: 2026-10-27. Owner: Codex.
 Parent: ../rfc/2026-10-27-contact-full-api-parity.md (Approved by Svein Tore).
 Human review: HR-2026-10-27-CONTACT-API Pending; tested Main merge explicitly authorized.
 

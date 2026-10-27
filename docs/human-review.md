@@ -12868,7 +12868,7 @@ collaboration flags. Retain all action/provider evidence on rollback; never eras
 
 Status: Pending / Dev implementation and tested Main merge authorized, 2026-10-27.
 Added: 2026-10-27. Owner: Codex. Intended named human reviewer: Svein Tore.
-Scope: rfc/2026-10-27-contact-full-api-parity.md (Draft), full route/embedded-workflow
+Scope: rfc/2026-10-27-contact-full-api-parity.md (Approved), full route/embedded-workflow
 matrix and the approved #254 portal-role dependency. This human-review checklist
 does not block the explicitly authorized tested Main merge. It still blocks production
 deployment/release and runtime activation until separately approved. Svein Tore approved
@@ -12913,3 +12913,8 @@ Native MySQL Livewire fixture simulation and replay/encryption/concurrency/HTTPS
 rows/audit roll back, and no email is sent. BookStack 364/514/449 exact bodies and unchanged inherited
 scope read back. No checkbox or Reviewed status is inferred. Main merge remains expressly authorized;
 Svein Tore must perform the listed human visual/availability checks before production rollout.
+
+Main promotion and Issue reconciliation verified 2026-10-27: PR #341 merged as
+13dc4ef4d4ab0474515522fb3131dbe6d198c624, exact candidate tree verified. #254 closed
+completed with evidence comment 6452232330. Status remains Pending: Svein Tore performs
+the listed human visual/production checks before production rollout. No checkbox changed.
