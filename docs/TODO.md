@@ -1,5 +1,34 @@
 # tdPSA Development TODO
 
+## Full Notification browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Scoped Main Candidate Verified; merge pending / Production unchanged.
+Owner: Codex; approver/release owner: Svein Tore. Authorization: "Godkjenner og merge til main".
+Approved RFC: rfc/2026-10-27-notification-full-api-parity.md; accepted ADR:
+adr/2026-10-27-notification-api-authority-and-delivery.md. Five slices Done On Dev.
+All 19 browser rows/embedded actions map to 30 Notification operations / 39 schemas,
+plus Workday landing detail and its existing four operations. Typed contracts, fresh
+native/token authority, portal/Workday isolation, shared side effects, secret-free
+context, encrypted claims/replay, atomic preferences and truthful test outcomes verified.
+Evidence: plans/2026-10-27-notification-api-verification.md/.json and coverage matrix.
+Dev 172 / 6615 broad, latest boundaries 47 / 4719, safety 6 / 39 (overlapping);
+isolated Main broad 174 / 6629 plus five Workday consumer contract cases / 347.
+No failures/skips deferred. Native MySQL locks/uniqueness/encryption/rollback, seven
+trusted HTTPS reads, anonymous denial and Swagger exact-read-back pass.
+Exact additive 2026_10_27_170000 migration ran on Dev only; API real tests remain off.
+Five native source articles and actual BookStack 516/383 plus scoped 514/449 additions
+are verified with existing employee access inheritance. Full Workday guide is embedded
+in 516 because connector page creation/search validation fails. Native pending_push
+is not publication proof; automatic sync/source drift stays in its existing follow-up.
+Human-review checklist HR-2026-10-27-NOTIFICATION-API: In Review. Main explicitly
+authorized; unchecked human scenarios still block production deployment/release.
+Next (Codex): merge the exact verified scoped candidate and read back GitHub/Main.
+Then Svein Tore: complete named browser/device review before separate production rollout.
+No real sends, role grants, VAPID, provider, worker/scheduler or backlog activation.
+Preserve shared Dev/index and all unrelated work. #257 stays closed; #205/#258/#262
+future capabilities remain separate. Employee OpenWebUI retrieval is not verified.
+
+
 ## Full Signal browser/API coverage (2026-10-27)
 
 Status: Done On Dev / Reviewed by Svein Tore / Merged to Main in PR #334 / Production unchanged.

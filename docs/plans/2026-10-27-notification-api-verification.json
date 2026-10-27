@@ -1,0 +1,156 @@
+{
+  "date": "2026-10-27",
+  "status": "Done On Dev; Main candidate verified; merge pending",
+  "notification_operations": 30,
+  "notification_schemas": 39,
+  "browser_rows": 19,
+  "additional_workday_detail": 1,
+  "workday_contract_operations": 37,
+  "dev": {
+    "broad": {
+      "tests": 172,
+      "assertions": 6615
+    },
+    "latest_boundaries": {
+      "tests": 47,
+      "assertions": 4719
+    },
+    "latest_token_safety": {
+      "tests": 6,
+      "assertions": 39
+    },
+    "workday_consumer_contract": {
+      "tests": 5,
+      "assertions": 347
+    },
+    "overlap": true
+  },
+  "main_candidate": {
+    "broad": {
+      "tests": 174,
+      "assertions": 6629
+    },
+    "workday_consumer_contract": {
+      "tests": 5,
+      "assertions": 347
+    },
+    "failures": 0,
+    "skips": 0
+  },
+  "php_syntax_and_pint_files": 34,
+  "native_database": {
+    "driver": "mysql",
+    "schema_columns": true,
+    "unique_guard": true,
+    "lock_contention": true,
+    "encrypted_storage": true,
+    "exact_readback": true,
+    "rollback_unchanged_count": true
+  },
+  "https": {
+    "trusted_origin": "https://dev.nexumpsa.eu",
+    "reads": [
+      {
+        "path": "/api/v1/notifications",
+        "status": 200
+      },
+      {
+        "path": "/api/v1/notifications/summary",
+        "status": 200
+      },
+      {
+        "path": "/api/v1/notifications/context",
+        "status": 200
+      },
+      {
+        "path": "/api/v1/notifications/preferences",
+        "status": 200
+      },
+      {
+        "path": "/api/v1/notifications/web-push/devices",
+        "status": 200
+      },
+      {
+        "path": "/api/v1/notifications/channels",
+        "status": 200
+      },
+      {
+        "path": "/api/v1/notifications/admin/web-push/devices",
+        "status": 200
+      }
+    ],
+    "anonymous": 401,
+    "swagger_exact": true,
+    "api_external_tests_enabled": false,
+    "business_mutations": 0,
+    "real_sends": 0,
+    "temporary_token_removed": true
+  },
+  "knowledge_sources": [
+    {
+      "path": "Notification/notification-api.md",
+      "article_id": 63,
+      "title": "Notification Api",
+      "body_exact": true,
+      "visibility": "internal",
+      "sync_status": "pending_push"
+    },
+    {
+      "path": "Notification/notification-channels.md",
+      "article_id": 64,
+      "title": "Notification Channels",
+      "body_exact": true,
+      "visibility": "internal",
+      "sync_status": "pending_push"
+    },
+    {
+      "path": "Workday/reminders.md",
+      "article_id": 65,
+      "title": "Reminders",
+      "body_exact": true,
+      "visibility": "internal",
+      "sync_status": "pending_push"
+    },
+    {
+      "path": "CustomerPortal/customer-portal-overview.md",
+      "article_id": 21,
+      "title": "Customer Portal Overview",
+      "body_exact": true,
+      "visibility": "internal",
+      "sync_status": "pending_push"
+    },
+    {
+      "path": "Integration/api-management.md",
+      "article_id": 3,
+      "title": "Api Management",
+      "body_exact": true,
+      "visibility": "internal",
+      "sync_status": "pending_push"
+    }
+  ],
+  "bookstack": {
+    "pages": [
+      516,
+      383,
+      514,
+      449
+    ],
+    "notification_guides_exact": true,
+    "portal_and_api_management_additions_verified": true,
+    "existing_access_inherited": true,
+    "full_workday_handbook_embedded_page": 516,
+    "employee_openwebui_retrieval": "not tested",
+    "automatic_sync_pending_push_not_publication_proof": true
+  },
+  "human_review": {
+    "id": "HR-2026-10-27-NOTIFICATION-API",
+    "status": "In Review",
+    "main_authorization": "Svein Tore: Godkjenner og merge til main",
+    "production_gate": true
+  },
+  "production_deployed": false,
+  "real_sends": 0,
+  "provider_or_worker_activation": false,
+  "migration": "2026_10_27_170000_create_notification_api_commands.php",
+  "main_base": "7d37fcae6c9af68ff77787b4e4cec0ed5c99c972"
+}

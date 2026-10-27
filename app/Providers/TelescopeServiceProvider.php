@@ -23,6 +23,9 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
         $isLocal = $this->app->environment('local');
 
         Telescope::filter(function (IncomingEntry $entry) use ($isLocal) {
+            if (\App\Modules\Notification\Support\NotificationPrivacy::matches(request())) {
+                return false;
+            }
             // Workday diagnostic copies are outside its canonical three-year lifecycle.
             if (\App\Modules\Workday\Support\WorkdayPrivacy::matches(request())
                 || \App\Modules\Workday\Actions\PurgeWorkdayDiagnostics::containsWorkday($entry->content)) {
@@ -32,6 +35,14 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
             // factors. Drop these request entries, not just named input fields:
             // recovery JSON has numeric keys and the setup view contains a key.
             $action = $entry->content['controller_action'] ?? null;
+            // API enrollment material, OIDC capabilities and invitation URLs are not telemetry.
+            if ($entry->type === \Laravel\Telescope\EntryType::REQUEST && is_string($action)
+                && (str_contains($action, 'UserManagement\\Controllers\\Api\\V1\\SecurityApiController@')
+                    || str_contains($action, 'UserManagement\\Controllers\\Api\\V1\\PublicIdentityApiController@')
+                    || str_contains($action, 'UserManagement\\Controllers\\Api\\V1\\SsoApiController@'))) {
+                return false;
+            }
+
             if (($entry->type === \Laravel\Telescope\EntryType::REQUEST && in_array($action, [
                 'Laravel\\Fortify\\Http\\Controllers\\RecoveryCodeController@index',
                 'Laravel\\Fortify\\Http\\Controllers\\TwoFactorQrCodeController@show',

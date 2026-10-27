@@ -77,3 +77,12 @@ All operations require explicit own Workday permissions and obey the default-off
 Slice 06 is implemented on Dev with the whole Workday pilot still disabled. Real email/device
 receipt and manual browser review remain part of HR-2026-10-01-WORKDAY when the complete pilot
 is ready. Production activation is separate. Tripletex synchronization remains future scope.
+
+## Notification API integration (2026-10-27)
+
+Verified on Dev; production rollout is separate. The Notification API/Profile share the
+same guarded personal reminder row. Workday own permissions, reminder scopes and
+coordinator denial remain mandatory. GET /api/v1/workday-reminders/{id} returns a current
+own reminder and Workday navigation link without acknowledging it. Existing versioned
+snooze preserves generation-based retry. Explicit open/acknowledgement accepts only a
+currently eligible own copy. The bell shows the total unread count and ten recent copies.
