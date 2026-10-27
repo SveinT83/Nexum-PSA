@@ -164,7 +164,7 @@ verified code. Publish via supported BookStack integration and read back actual
 article content and employee access. If blocked, record blocker/owner/next action
 in TODO; queued publication is insufficient. Planning alone requires no publication.
 Keep RFC/ADR/slices/matrix/TODO current. HR-2026-10-27-SYSTEM-API is a planned Pending
-human-review checklist; it gates future Main promotion and production deployment/
+human-review checklist; its remaining checks gate production deployment/
 release until named approval. Existing HR-2026-07-16-001 stays Reviewed. Website
 handoff after implementation must be public-safe, Dev-only and do not publish until
 availability is independently verified. OpenWebUI retrieval is a separate claim.
@@ -199,8 +199,8 @@ records remain pending_push as Dev has no BookStack integration. Svein Tore/Inte
 owns configuration/mapping reconciliation before future native push; no sync activation.
 No raw backend errors are reported through the System API or its controller dispatch.
 No maintenance, backlog release, real worker restart or customer send ran on shared Dev.
-Main and production remain unchanged. HR-2026-10-27-SYSTEM-API is Pending and gates
-Main promotion and production deployment/release. No manual check is inferred complete.
+Production remains unchanged. HR-2026-10-27-SYSTEM-API is Pending and gates
+production deployment/release; scoped Main promotion is explicitly authorized below. No manual check is inferred complete.
 
 ## Main Promotion Authorization
 

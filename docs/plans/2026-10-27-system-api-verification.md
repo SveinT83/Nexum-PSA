@@ -83,3 +83,11 @@ deployment, migrations and API-maintenance activation are not authorized by merg
 The corrected production scan also passes on authoritative Dev: 1 test / 2 assertions,
 401.05 seconds. The final candidate includes one publication evidence file in addition
 to the 45 scoped implementation/documentation files (46 total).
+
+## Current Main Integration Verification (2026-10-28)
+
+Reconciled upstream Warroom promotion at 5de857fd6af5a230e6a36a8d15de01f9a646f86b. Preserved all upstream
+Warroom scopes, routes, contracts and review history. Combined System parity/contract,
+Warroom parity/contract and UserManagement API run: 44 passed / 1420 assertions,
+416.39 seconds, zero failures/skips. Resolved catalog passes syntax/Pint. Historical
+169-test verification above remains a separate run; counts are not added together.

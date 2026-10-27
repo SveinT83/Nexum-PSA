@@ -155,7 +155,7 @@
     "authorization": "Svein Tore: Godkjenner og merge, 2026-10-27",
     "status": "Candidate verified / Ready for scoped commit and PR",
     "candidate_branch": "codex/system-api-20261027",
-    "base": "86b82ed8625ff709c5a753b62614f22b46114b35",
+    "base": "5de857fd6af5a230e6a36a8d15de01f9a646f86b",
     "production_authorized": false,
     "candidate_files": 46,
     "swagger_non_system_paths_unchanged": true,
@@ -220,6 +220,21 @@
         "passed": 1,
         "assertions": 2,
         "duration_seconds": 401.05
+      },
+      "upstream_integration": {
+        "base": "5de857fd6af5a230e6a36a8d15de01f9a646f86b",
+        "passed": 44,
+        "assertions": 1420,
+        "duration_seconds": 416.39,
+        "failed": 0,
+        "skipped": 0,
+        "classes": [
+          "SystemApiParityTest",
+          "SystemApiContractTest",
+          "WarroomApiParityTest",
+          "WarroomApiContractTest",
+          "UserManagementApiTest"
+        ]
       }
     },
     "swagger": {
@@ -231,7 +246,11 @@
       "unrelated_serialized_bytes_preserved": true,
       "native_generator_path_schema_semantics_preserved": true,
       "existing_tag_metadata_preserved": true,
-      "published_sha256": "e0c0b15cb8aee95cef598a5b8fa737ea3ba1a9058cf4d90bd933ad0902d8024b"
-    }
+      "published_sha256": "2720b08ff1395bb4087a00afa43a3be70bb124453677e9f122efc4779d10007e",
+      "preserved_upstream_domains": [
+        "Warroom"
+      ]
+    },
+    "initial_base": "86b82ed8625ff709c5a753b62614f22b46114b35"
   }
 }

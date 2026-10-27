@@ -1,6 +1,6 @@
 {
   "status": "Candidate verified; merge pending",
-  "base": "86b82ed8625ff709c5a753b62614f22b46114b35",
+  "base": "5de857fd6af5a230e6a36a8d15de01f9a646f86b",
   "branch": "codex/system-api-20261027",
   "manifest": [
     "app/Http/Middleware/EnforceTechRoutePermission.php",
@@ -68,7 +68,7 @@
       "runtime_behavior_changed": false
     },
     "candidate_base": "86b82ed8625ff709c5a753b62614f22b46114b35",
-    "manifest_files": 45,
+    "manifest_files": 46,
     "original_timeout_resolved": true,
     "main_production_scan": {
       "passed": 1,
@@ -86,6 +86,21 @@
       "passed": 1,
       "assertions": 2,
       "duration_seconds": 401.05
+    },
+    "upstream_integration": {
+      "base": "5de857fd6af5a230e6a36a8d15de01f9a646f86b",
+      "passed": 44,
+      "assertions": 1420,
+      "duration_seconds": 416.39,
+      "failed": 0,
+      "skipped": 0,
+      "classes": [
+        "SystemApiParityTest",
+        "SystemApiContractTest",
+        "WarroomApiParityTest",
+        "WarroomApiContractTest",
+        "UserManagementApiTest"
+      ]
     }
   },
   "swagger": {
@@ -97,7 +112,10 @@
     "unrelated_serialized_bytes_preserved": true,
     "native_generator_path_schema_semantics_preserved": true,
     "existing_tag_metadata_preserved": true,
-    "published_sha256": "e0c0b15cb8aee95cef598a5b8fa737ea3ba1a9058cf4d90bd933ad0902d8024b"
+    "published_sha256": "2720b08ff1395bb4087a00afa43a3be70bb124453677e9f122efc4779d10007e",
+    "preserved_upstream_domains": [
+      "Warroom"
+    ]
   },
   "php_files": 25,
   "human_review": {
@@ -107,5 +125,6 @@
     "production_gate": true
   },
   "production_deployed": false,
-  "runtime_activated": false
+  "runtime_activated": false,
+  "initial_base": "86b82ed8625ff709c5a753b62614f22b46114b35"
 }
