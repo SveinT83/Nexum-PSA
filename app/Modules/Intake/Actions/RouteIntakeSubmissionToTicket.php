@@ -19,6 +19,12 @@ class RouteIntakeSubmissionToTicket
 
     public function handle(IntakeSubmission $submission, bool $force = false, ?User $actor = null): ?Ticket
     {
+        return \App\Modules\Intake\Support\IntakeWorkflowLock::run(fn () => $this->execute($submission, $force, $actor));
+    }
+
+    private function execute(IntakeSubmission $submission, bool $force = false, ?User $actor = null): ?Ticket
+    {
+        $submission->refresh();
         $submission->loadMissing(['form', 'attachments.field', 'matchedClient', 'matchedSite', 'matchedClientUser']);
 
         if (! $this->canRoute($submission, $force)) {
@@ -94,5 +100,4 @@ class RouteIntakeSubmissionToTicket
 
         return null;
     }
-
 }

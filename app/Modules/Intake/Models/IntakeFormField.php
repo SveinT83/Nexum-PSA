@@ -9,27 +9,43 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class IntakeFormField extends Model
 {
     public const TYPE_TEXT = 'text';
+
     public const TYPE_TEXTAREA = 'textarea';
+
     public const TYPE_EMAIL = 'email';
+
     public const TYPE_PHONE = 'phone';
+
     public const TYPE_URL = 'url';
+
     public const TYPE_SELECT = 'select';
+
     public const TYPE_MULTISELECT = 'multiselect';
+
     public const TYPE_CHECKBOX = 'checkbox';
+
     public const TYPE_CONSENT = 'consent';
+
     public const TYPE_FILE = 'file';
 
     public const VISIBILITY_MODE_ALWAYS = 'always';
+
     public const VISIBILITY_MODE_CONDITIONAL = 'conditional';
 
     public const VISIBILITY_MATCH_ALL = 'all';
+
     public const VISIBILITY_MATCH_ANY = 'any';
 
     public const VISIBILITY_OPERATOR_HAS_VALUE = 'has_value';
+
     public const VISIBILITY_OPERATOR_EQUALS = 'equals';
+
     public const VISIBILITY_OPERATOR_NOT_EQUALS = 'not_equals';
+
     public const VISIBILITY_OPERATOR_CONTAINS = 'contains';
+
     public const VISIBILITY_OPERATOR_CHECKED = 'checked';
+
     public const VISIBILITY_OPERATOR_UNCHECKED = 'unchecked';
 
     public const FIELD_TYPES = [
@@ -65,13 +81,21 @@ class IntakeFormField extends Model
     ];
 
     public const MAP_COMPANY_NAME = 'company_name';
+
     public const MAP_CONTACT_NAME = 'contact_name';
+
     public const MAP_CONTACT_EMAIL = 'contact_email';
+
     public const MAP_CONTACT_PHONE = 'contact_phone';
+
     public const MAP_SUBJECT = 'subject';
+
     public const MAP_MESSAGE = 'message';
+
     public const MAP_ORG_NO = 'org_no';
+
     public const MAP_WEBSITE = 'website';
+
     public const MAP_CONSENT = 'consent';
 
     public const MAP_TARGETS = [

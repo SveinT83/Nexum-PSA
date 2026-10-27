@@ -1,5 +1,42 @@
 # tdPSA Development TODO
 
+## Full Intake browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Affected and initial Main-candidate verification passed / Main promotion authorized.
+Owner: Codex; approver/reviewer: Svein Tore.
+Authorization: "Godkjenner og merge til main", 2026-10-27.
+RFC: rfc/2026-10-27-intake-full-api-parity.md (Approved).
+ADR: adr/2026-10-27-intake-api-authority-and-routing-claims.md (Accepted).
+Slices: feature-slices/2026-10-27-intake-full-api-parity.md (Done On Dev).
+Coverage: plans/2026-10-27-intake-api-coverage-matrix.md/.json; 17 browser rows
+(14 internal + 3 public), 23 implemented typed HTTP operations, 38 schemas.
+All 23 operations have successful schema-validated test HTTP evidence. Shared native
+form validation, guarded review/link/routing, encrypted idempotency/unknown claims,
+private uploads and public JSON/multipart submission are implemented on Dev.
+Four view-only review-route fallbacks are corrected. Sales Client creation follows
+Clients-owned provider numbering and never infers billing email from primary contact.
+Only additive 2026_10_27_040000_create_intake_api_commands.php ran on Dev. Trusted HTTPS/
+native MySQL create/read/replay/update and draft-denial checks passed; exact temporary
+fixture, commands and token were removed. API provider creation remains default-off.
+Knowledge source sync verified two articles. Dev currently has no BookStack integration
+configuration; supported MCP published their combined content in existing BookStack
+page 553 (Nexum PSA 339 / Intake 552), exact source/content read-back verified, page/
+chapter inherit existing access. No grants changed; employee OpenWebUI retrieval is
+not claimed. A connector string-pattern defect prevents normal new-page titles, so no
+duplicate standalone handbook page was retained. Native automatic BookStack sync
+configuration/linkage remains a separate operator follow-up; current handbook is updated.
+Human-review checklist HR-2026-10-27-INTAKE-API remains Pending. Svein Tore explicitly
+authorized the tested Main promotion; that is not a claim that manual scenarios were
+performed. Production deployment/release and provider activation remain separate gates.
+A first Pint --dirty invocation unexpectedly selected unrelated dirty PHP files and was
+interrupted. It may have normalized unrelated Dev formatting; do not bulk-reset or
+promote those files. The Main candidate uses only exact Intake/shared additions and
+excludes unrelated formatting. Review the broader Dev diff before any later broad commit.
+Next action (Codex): finish affected/candidate verification, update evidence/status,
+commit the scoped candidate, create/read back PR and merge to Main as authorized.
+Preserve all independent workstreams and pending manual-review history.
+
+
 ## Full Notification browser/API coverage (2026-10-27)
 
 Status: Done On Dev / Merged to Main in PR #336 / Human Review In Review / Production unchanged.

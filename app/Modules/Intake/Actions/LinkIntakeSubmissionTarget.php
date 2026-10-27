@@ -17,14 +17,36 @@ use Illuminate\Validation\ValidationException;
 class LinkIntakeSubmissionTarget
 {
     public const TARGET_CLIENT = 'client';
+
     public const TARGET_CONTACT = 'contact';
+
     public const TARGET_TICKET = 'ticket';
+
     public const TARGET_TASK = 'task';
+
     public const TARGET_SALES_OPPORTUNITY = 'sales_opportunity';
 
     public function handle(IntakeSubmission $submission, string $targetType, string $reference, ?User $actor = null): IntakeSubmission
     {
-        $target = $this->findTarget($targetType, trim($reference));
+        return \App\Modules\Intake\Support\IntakeWorkflowLock::run(fn () => $this->execute($submission, $targetType, $reference, $actor));
+    }
+
+    private function execute(IntakeSubmission $submission, string $targetType, string $reference, ?User $actor = null): IntakeSubmission
+    {
+        $submission->refresh();
+        if ($actor) {
+            $permission = match ($targetType) {
+                self::TARGET_CLIENT => 'client.view',
+                self::TARGET_CONTACT => 'contact.view',
+                self::TARGET_TICKET => 'ticket.view',
+                self::TARGET_TASK => 'task.view',
+                self::TARGET_SALES_OPPORTUNITY => 'sales.view',
+                default => null,
+            };
+            abort_unless($permission, 422, 'Unsupported target type.');
+            \App\Modules\Intake\Support\IntakeApiAccess::require($actor, $permission);
+        }
+        $target = $this->resolve($targetType, trim($reference));
 
         return DB::transaction(function () use ($submission, $targetType, $target, $actor, $reference): IntakeSubmission {
             $before = [
@@ -100,7 +122,7 @@ class LinkIntakeSubmissionTarget
         ];
     }
 
-    private function findTarget(string $targetType, string $reference): Model
+    public function resolve(string $targetType, string $reference): Model
     {
         if ($reference === '') {
             throw ValidationException::withMessages([
