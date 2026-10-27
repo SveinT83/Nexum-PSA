@@ -1,6 +1,6 @@
 # Nextcloud API Main Promotion, 2026-10-27
 
-Status: Isolated candidate verified; authorized Main merge pending exact read-back.
+Status: Verified and merged to Main in PR #338. Production unchanged.
 Owner: Codex. RFC/Main authorizer and human-review owner: Svein Tore.
 Authorization: Godkjenner og merge til main, 2026-10-27.
 
@@ -55,3 +55,18 @@ Only its published catalog/route/coordination additions are incorporated; no Int
 implementation is copied from shared Dev. All 121 Nextcloud/Talk tests and all 50 actual
 HTTP/schema operations pass again against this exact combined candidate. Non-Nextcloud
 Swagger values are preserved, and the PR difference remains within the task allowlist.
+
+## Verified Main Promotion (2026-10-27)
+
+PR #338: https://github.com/SveinT83/Nexum-PSA/pull/338.
+Merge: 0f062b9450de76cabdea269c55506e17d42bcef7.
+Verified head: c326587d34b896ef0dee4b021ab0877a4ba3e465.
+Exact candidate/merge tree: 8ce98ceb63f831d2345373941b5d1088c379a262.
+All scoped tested PHP hashes match. Current published Contact/Calendar/Notification
+changes are preserved. Final affected candidate 391 tests / 14397 assertions; final
+Nextcloud/Talk 121 / 6518, no failures/skips. Totals overlap. Every one of the 50 HTTP
+operations has successful typed response evidence. Shared Dev HEAD/index preserved.
+No Main action remains. HR-2026-10-27-NEXTCLOUD-API remains Pending; production
+rollout/provider activation and employee assistant retrieval remain separate.
+This follow-up changes status/evidence documentation only; application tests are not
+repeated for that record. No tested PHP behavior is changed.

@@ -43,6 +43,11 @@ Actual handbook pages/employee inheritance read back. New provider execution sta
 No named human scenario has been checked off; Main merge authorized with scenarios Pending.
 Evidence: plans/2026-10-27-nextcloud-api-verification.md/.json.
 
+Main promotion independently verified: PR #338 merged 2026-10-27 as
+0f062b9450de76cabdea269c55506e17d42bcef7. Exact candidate/merge tree equality and all
+scoped tested PHP hashes pass. Final Main affected suite: 391 / 14397; final domain
+121 / 6518. This does not check off any human scenario. Status remains Pending,
+with production release/activation gated by the manual checks above.
 
 ## HR-2026-10-27-BOOKING-API - Full Booking Browser/API Coverage
 

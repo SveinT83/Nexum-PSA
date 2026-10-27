@@ -2,7 +2,7 @@
 
 ## Full Nextcloud browser/API coverage (2026-10-27)
 
-Status: Done On Dev / isolated Main candidate verified / Main merge authorized, pending recording.
+Status: Done On Dev / Merged To Main in PR #338 / production unchanged.
 Owner: Codex. RFC/Main authorizer and human-review/privacy owner: Svein Tore.
 Approved RFC: rfc/2026-10-27-nextcloud-full-api-parity.md; accepted ADR and five completed slices.
 All 19 browser rows and eight embedded workflows: 50 HTTP operations (36 new + 14 calendar)
@@ -19,9 +19,10 @@ HR-2026-10-27-NEXTCLOUD-API remains Pending; Main merge is explicitly authorized
 manual scenarios open. Production release/provider activation require separate authorization.
 Existing calendar pilot checklist remains In Review; no wider targets or historical cleanup.
 Issue #205 remains open and separate from current-browser API parity. Preserve contributor work.
-Next action (Codex): record the verified scoped PR/Main merge and independent read-back.
+Main merge verified: 0f062b9450de76cabdea269c55506e17d42bcef7. The merged tree
+8ce98ceb63f831d2345373941b5d1088c379a262 equals the verified candidate; all tested PHP hashes match.
+No Main action remains. Production and human-review gates remain separate.
 Future production owner/action (Svein Tore): complete manual review and authorize rollout.
-
 
 ## Full Booking browser/API coverage (2026-10-27)
 

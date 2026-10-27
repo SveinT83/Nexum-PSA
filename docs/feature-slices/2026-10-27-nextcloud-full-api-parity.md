@@ -1,6 +1,6 @@
 # Feature Slices: Full Nextcloud Browser/API Parity
 
-Status: Done On Dev / all five slices verified
+Status: Done On Dev / all five slices verified / Merged To Main in PR #338
 Date: 2026-10-27
 Parent: ../rfc/2026-10-27-nextcloud-full-api-parity.md.
 Owner: Codex. Approver/reviewer: Svein Tore.
