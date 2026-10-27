@@ -815,7 +815,7 @@ class KnowledgeArticleTest extends TestCase
     {
         $this->artisan('knowledge:sync-docs', ['--module' => ['Marketing']])
             ->expectsOutput('chapters: 1')
-            ->expectsOutput('articles: 1')
+            ->expectsOutput('articles: '.count(glob(app_path('Modules/Marketing/Docs/knowledge/*.md'))))
             ->expectsOutput('modules: Marketing')
             ->assertSuccessful();
 
@@ -833,7 +833,7 @@ class KnowledgeArticleTest extends TestCase
     {
         $this->artisan('knowledge:sync-docs', ['--module' => ['Booking']])
             ->expectsOutput('chapters: 1')
-            ->expectsOutput('articles: 1')
+            ->expectsOutput('articles: 2')
             ->expectsOutput('modules: Booking')
             ->assertSuccessful();
 
@@ -844,6 +844,9 @@ class KnowledgeArticleTest extends TestCase
 
         $this->assertSame('Booking Overview', $article->title);
         $this->assertSame('Booking', $article->source_payload['module']);
+        $api = Article::where('source_id', 'booking/booking-api')->firstOrFail();
+        $this->assertStringContainsString('Idempotency-Key', $api->body_markdown);
+        $this->assertStringContainsString('production deployment', $api->body_markdown);
     }
 
     #[Test]

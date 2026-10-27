@@ -1,5 +1,41 @@
 # Human Review Register
 
+## HR-2026-10-27-BOOKING-API - Full Booking Browser/API Coverage
+
+Status: Pending / automated verification complete; scoped Main merge explicitly authorized.
+Added: 2026-10-27. Owner: Codex. Intended named human reviewer: Svein Tore.
+Parent: rfc/2026-10-27-booking-full-api-parity.md (Approved).
+Scope: 13 native browser rows, all current embedded workflows and 17 implemented APIs.
+Svein Tore explicitly authorized scoped Main promotion on 2026-10-27. Manual
+scenario acceptance remains Pending and gates production deployment/release. Reviewed HR-2026-07-28-001
+remains Reviewed; no prior checks are reused as API acceptance.
+
+- [ ] Compare public catalogue/context/slots for fixed, automatic and customer choice.
+- [ ] Verify no private technician/Calendar data and unavailable services remain hidden.
+- [ ] Submit synthetic request; check privacy/spam/limits/minimal replay-safe receipt.
+- [ ] Create/edit/toggle all setting fields/pools; verify stale/conflicting/replayed writes.
+- [ ] Compare overview/request/customer/timeline and permitted Calendar link.
+- [ ] Confirm/decline with current rights; verify Calendar conflict/automatic fallback.
+- [ ] Check native concurrency evidence: one terminal decision/event/dispatch on retries.
+- [ ] Check fresh/revoked native/token access and public/staff/receipt isolation.
+- [ ] Verify queued/submitted/failed/unknown mail; real inbox receipt remains separate.
+- [ ] Review exact Swagger and actual BookStack content/intended employee access.
+
+Expected: complete current workflow parity with native authority and safe typed
+read-back. Native MySQL concurrency proof required. Deploy: additive command/dispatch migration
+2026_10_27_040000 (applied on Dev), generated Swagger
+and normal optimize:clear. API effect gates default off until separately authorized
+operational activation. No grants, general migration sweep, scheduler/worker activation
+or real customer test sends. Preserve APP_KEY, receipts/dispatch claims and request
+audit on rollback; disable API effects and reconcile unknown sends before retrying.
+Risks: identity/PII leak, stale writes, terminal/Calendar races and duplicate mail.
+Automated: Dev 189/2622, isolated Main 189/2513; native MySQL and all-17-operation
+HTTPS flow pass. BookStack page 543/revision 3 exact body and inherited staff access
+verified. Every named human scenario remains unchecked; no automated result marks
+this checklist Reviewed. Production and API activation remain gated.
+
+
+
 ## HR-2026-10-27-CUSTOM-FIELD-API - Full CustomField Browser/API Coverage
 
 Status: Pending / Done On Dev / Merged To Main In PR #344, 2026-10-27.

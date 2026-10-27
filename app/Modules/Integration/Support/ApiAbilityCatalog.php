@@ -14,6 +14,10 @@ class ApiAbilityCatalog
      * Access mode is deliberately explicit so progressive read scopes do not depend on their name.
      */
     private const ACCESS_MODES = [
+        'booking.read' => self::ACCESS_READ,
+        'booking.settings.write' => self::ACCESS_WRITE,
+        'booking.requests.review' => self::ACCESS_WRITE,
+        'booking.commands.read' => self::ACCESS_READ,
         'intake.attachments.read' => self::ACCESS_READ,
         'intake.submissions.route' => self::ACCESS_WRITE,
         'intake.submissions.review' => self::ACCESS_WRITE,
@@ -267,6 +271,10 @@ class ApiAbilityCatalog
     ];
 
     private const ABILITIES = [
+        'booking.read' => ['label' => 'Read Booking', 'description' => 'Read permitted Booking workspace, context and requests.', 'domain' => 'Booking'],
+        'booking.settings.write' => ['label' => 'Configure Booking', 'description' => 'Create/update/toggle Booking settings with native permission.', 'domain' => 'Booking'],
+        'booking.requests.review' => ['label' => 'Review Booking requests', 'description' => 'Confirm or decline through native Booking and Calendar actions.', 'domain' => 'Booking'],
+        'booking.commands.read' => ['label' => 'Read own Booking commands', 'description' => 'Read own token-bound receipts with original authority.', 'domain' => 'Booking'],
         'intake.attachments.read' => ['label' => 'Intake attachment download', 'domain' => 'Intake', 'description' => 'Read permitted private Intake submission files.'],
         'intake.submissions.route' => ['label' => 'Intake target routing', 'domain' => 'Intake', 'description' => 'Route Intake submissions through authorized domain actions.'],
         'intake.submissions.review' => ['label' => 'Intake submission review', 'domain' => 'Intake', 'description' => 'Review Intake submissions through supported actions.'],

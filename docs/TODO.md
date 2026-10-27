@@ -1,5 +1,35 @@
 # tdPSA Development TODO
 
+## Full Booking browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Isolated Main Candidate Verified / Main Merge Authorized.
+Owner: Codex; approver/intended named reviewer: Svein Tore.
+All 13 browser rows map to 17 implemented HTTP operations and 43 typed schemas.
+RFC: rfc/2026-10-27-booking-full-api-parity.md (Approved).
+ADR: adr/2026-10-27-booking-api-authority-and-confirmation.md (Accepted).
+Four slices: feature-slices/2026-10-27-booking-full-api-parity.md (Done On Dev).
+Evidence: plans/2026-10-27-booking-api-coverage-matrix.md/.json and
+plans/2026-10-27-booking-api-verification.md/.json.
+Dev: 189 tests / 2622 assertions; isolated Main: 189 / 2513, no failures/skips.
+Native MySQL decision/slot/writer locking, encrypted uniqueness/rollback, isolated
+trusted HTTPS all-17-operation flow and ordinary Dev HTTPS scoped reads/Swagger pass.
+Handbook: actual BookStack Booking Overview 543/revision 3 includes full API guide;
+exact body and unchanged inherited employee access read back. Dev native integration
+is unconfigured; pending_push is not claimed as native automated publication.
+Temporary BookStack placeholder removed. Native probe left only two disabled synthetic
+Dev users (6/7), without roles/tokens, because append-only authority evidence forbids
+physical deletion; all synthetic Booking/Calendar fixtures removed and no real sends.
+Human-review checklist HR-2026-10-27-BOOKING-API remains Pending; user explicitly
+approved scoped Main merge on 2026-10-27. Production/manual acceptance remain separate.
+Next action (Codex): merge the verified scoped candidate and record PR/merge/tree proof.
+Next action (Svein Tore): perform the named checklist before production deployment/
+API effect activation. Exact Dev migration 2026_10_27_040000 is applied; both ordinary
+Dev API write gates stay false. No production/worker/scheduler activation performed.
+Shared Intake catalog description repair is Dev-only and excluded from Main packaging;
+other contributor work and Dev HEAD/index remain outside this scoped promotion.
+
+
+
 ## Full CustomField browser/API coverage (2026-10-27)
 
 Status: Done On Dev / Merged To Main In PR #344 / Human Review Pending / Production unchanged.
