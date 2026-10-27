@@ -1303,5 +1303,18 @@
     "manual_review_status": "Pending",
     "main_promoted": false,
     "production_deployed": false
+  },
+  "main_promotion": {
+    "merged": true,
+    "pr": 361,
+    "url": "https://github.com/SveinT83/Nexum-PSA/pull/361",
+    "merge_sha": "893ab45e00c65472c6691b9917a726b5fccee285",
+    "tested_head": "8b99008d1f96bd0f9426803aa245a0e6d6e06a5b",
+    "tree": "406e1c13437a38b208deee442c09a6e82b17231b",
+    "exact_tested_tree": true,
+    "main_contains_merge": true,
+    "system_operations": 19,
+    "system_schemas": 44,
+    "date": "2026-10-28"
   }
 }

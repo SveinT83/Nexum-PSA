@@ -3,7 +3,7 @@
 Status: Approved
 Date: 2026-10-27
 Owner: Codex. Product owner and intended reviewer: Svein Tore.
-Implementation: Done On Dev / Human Review Pending; approved by Svein Tore, 2026-10-27.
+Implementation: Done On Dev / Merged To Main / Human Review Pending; approved by Svein Tore, 2026-10-27.
 
 ## Context
 Svein requested "System domain, vi trenger 100% API støtte". Authoritative Dev has
@@ -209,3 +209,16 @@ Build and verify only the scoped System candidate from current origin/main, pres
 shared Dev work and all Main-owned navigation/permissions/catalog content. Manual
 HR-2026-10-27-SYSTEM-API stays Pending for production scenarios; no scenario execution
 or production/runtime activation is inferred from merge approval.
+
+## Verified Main Promotion
+
+Main promotion verified on 2026-10-28: PR #361,
+https://github.com/SveinT83/Nexum-PSA/pull/361, merge
+893ab45e00c65472c6691b9917a726b5fccee285. Merge tree
+406e1c13437a38b208deee442c09a6e82b17231b exactly matches the tested candidate;
+19 System operations / 44 schemas are present. The additional upstream integration
+run passes 44 tests / 1420 assertions; earlier 169-test evidence is a separate run.
+Production is not deployed, its migration has not run, API maintenance stays default-off.
+HR-2026-10-27-SYSTEM-API remains Pending; all unchecked manual scenarios gate
+production deployment/release. Native Knowledge mapping remains owned by Svein Tore /
+Integration; existing BookStack publication remains independently verified.
