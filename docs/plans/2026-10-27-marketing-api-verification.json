@@ -217,7 +217,26 @@
       "failures": 0,
       "skips": 0,
       "base": "6f57a7df22dcbb7e1a08790b90edd94ba8fbbab1"
+    },
+    {
+      "passed": 168,
+      "assertions": 5292,
+      "failures": 0,
+      "skips": 0,
+      "base": "e6a7c8ad38063593564b28aa6b180f2d35f77975",
+      "modules": [
+        "Marketing",
+        "Relationship",
+        "LeadIntelligence"
+      ]
     }
   ],
-  "schema_validation": "Frozen published OpenAPI request and response schemas checked for actual successful payloads covering all 42 protected methods."
+  "schema_validation": "Frozen published OpenAPI request and response schemas checked for actual successful payloads covering all 42 protected methods.",
+  "scoped_checks": {
+    "files": 49,
+    "php_syntax": 33,
+    "pint": 33,
+    "canonical_marketing_code_equal": true,
+    "contributor_view_unchanged": true
+  }
 }

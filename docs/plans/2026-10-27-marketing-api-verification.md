@@ -29,3 +29,7 @@ Status: Done On Dev / final Main candidate verified / production unchanged.
 See JSON for exact evidence. Human-review checklist HR-2026-10-27-MARKETING-API is
 Pending. Svein Tore explicitly authorized Main promotion with that status; it remains
 a production/release gate. Preserve APP_KEY, receipts and historical delivery claims.
+
+Final integration against Main e6a7c8ad: Marketing, Relationship and Lead Intelligence
+pass 168 tests / 5292 assertions, no failures/skips. All 33 scoped PHP files pass
+syntax/Pint; all 49 changed paths match the explicit promotion manifest.
