@@ -83,3 +83,18 @@ privacy handling: 121 / 6518 on both. Totals overlap and must not be added.
 Exact native MySQL lock/uniqueness/encrypted read-back/rollback and trusted HTTPS pass.
 Synthetic inactive HTTPS object was deleted/replayed; temporary token revoked. No live
 provider/calendar/customer mutation. Human checklist remains Pending; Main merge authorized.
+
+## Verified Main Promotion (2026-10-27)
+
+PR #338: https://github.com/SveinT83/Nexum-PSA/pull/338.
+Merge: 0f062b9450de76cabdea269c55506e17d42bcef7.
+Verified head: c326587d34b896ef0dee4b021ab0877a4ba3e465.
+Exact candidate/merge tree: 8ce98ceb63f831d2345373941b5d1088c379a262.
+All scoped tested PHP hashes match. Current published Contact/Calendar/Notification
+changes are preserved. Final affected candidate 391 tests / 14397 assertions; final
+Nextcloud/Talk 121 / 6518, no failures/skips. Totals overlap. Every one of the 50 HTTP
+operations has successful typed response evidence. Shared Dev HEAD/index preserved.
+No Main action remains. HR-2026-10-27-NEXTCLOUD-API remains Pending; production
+rollout/provider activation and employee assistant retrieval remain separate.
+This follow-up changes status/evidence documentation only; application tests are not
+repeated for that record. No tested PHP behavior is changed.

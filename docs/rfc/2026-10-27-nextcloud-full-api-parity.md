@@ -1,6 +1,6 @@
 # RFC: Full Nextcloud Browser/API Parity
 
-Status: Approved / Done On Dev / verified Main candidate
+Status: Approved / Done On Dev / Merged To Main in PR #338
 Date: 2026-10-27
 Owner: Codex; product, privacy and human-review owner: Svein Tore.
 Human-review checklist: HR-2026-10-27-NEXTCLOUD-API (Pending / planned).
