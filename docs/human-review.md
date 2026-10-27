@@ -45,6 +45,135 @@ Final candidate and Dev Marketing runs each pass 87 tests / 1931 assertions.
 Populated field/receipt contracts, rendered-error privacy and browser/API rollback
 are explicitly covered. Main promotion is ready; manual scenarios remain Pending.
 
+## HR-2026-10-27-LEAD-INTELLIGENCE-API - Full Lead Intelligence Browser/API Coverage
+
+Status: Pending / Done On Dev; final Main candidate verified and promotion authorized.
+Added: 2026-10-27. Owner: Codex. Intended human reviewer/release owner: Svein Tore.
+Scope: rfc/2026-10-27-lead-intelligence-full-api-parity.md (Approved), all 14 browser
+rows and existing API-only evaluation/promotion, planned 17 HTTP operations.
+Svein Tore explicitly authorized "Godkjenner og merge til main". Scoped tested Main
+promotion is authorized while these human scenarios remain Pending. This checklist
+continues to block production release/provider activation; no manual review is inferred.
+
+- [ ] Compare settings and segment create/edit/defaults/lists/schedules/budgets in web/API.
+- [ ] Confirm AI draft only suggests editable fields and requires current AI approval.
+- [ ] Compare run list/detail, evidence Client/Contact labels and scan-ledger filters.
+- [ ] Create draft/queued runs and Run Now; distinguish queued acceptance from completion.
+- [ ] Test actor+token+target denials, revoked receipt access and pure context/read routes.
+- [ ] Repeat/stale/concurrent commands; confirm one job and no duplicate AI/promotion effects.
+- [ ] Preview/apply a controlled candidate; confirm suppression, private-email/do_not_email,
+      list exclusions, Contact bridge, source evidence and exact persisted result.
+- [ ] Verify local/Tripletex customer-number authority, one request UUID, explicit invoice
+      email and reconciliation of unknown provider results before retry.
+- [ ] Review Swagger and actual employee handbook content/access and deployment status.
+
+Expected: all current supported reads/writes/actions with equivalent authorization,
+typed exact read-back, unchanged privacy policy and provider execution off by default.
+Deploy: proposed additive encrypted receipt/locking/dispatch schema; exact filename and
+native verification must be finalized before use, with scoped Swagger/cache handling.
+No worker/scheduler activation, data backfill or role grant is part of the change.
+Risks/recovery: legacy token compatibility, cross-domain promotion, delayed jobs and
+provider uncertainty; preserve APP_KEY/receipts and reconcile unresolved attempts.
+Automated baseline: 33 tests / 277 assertions of existing behavior only; no manual
+scenario execution or review acceptance is inferred. No production checks claimed.
+
+
+Automated domain verification: 52 tests / 474 assertions; actual 17 operations / 47
+schemas, native MySQL, trusted HTTPS and BookStack read-back pass. Final Main 54/483 and earlier affected candidate 293/2887 pass (overlapping). All
+14 concurrent-source Dev failures pass after current author fixes; no deferral.
+
+
+## HR-2026-10-27-INTAKE-API - Full Intake Browser/API Coverage
+
+Status: Pending / Dev verified and merged to Main in PR #340, 2026-10-27.
+Added: 2026-10-27. Owner: Codex. Intended named human reviewer: Svein Tore.
+Scope: rfc/2026-10-27-intake-full-api-parity.md (Approved), 17 browser rows, public
+submission and all embedded form/review/routing workflows; 23 implemented HTTP operations / 38 typed schemas.
+This is a human-review checklist entry. It gates future Main promotion and production
+deployment/release; it does not replace RFC approval or block approved Dev implementation.
+HR-2026-08-11-001 remains Reviewed; its history is not rewritten.
+
+- [ ] Compare create/edit, all ten field types/settings, ordering/conditions and lifecycle.
+- [ ] Verify active user/token/native permissions and four corrected view-only action denials.
+- [ ] Compare queue/detail/snapshots/events, target access and exact private file bytes/ownership.
+- [ ] Review all outcomes, duplicate references and five existing-record link types.
+- [ ] Route separately to Sales/Ticket/Task; verify defaults, Contact bridge and one target.
+- [ ] Verify optional Client creation respects provider numbering and explicit invoice email.
+- [ ] Submit public JSON/multipart and verify published checks, spam/hidden fields/upload limits.
+- [ ] Inspect public responses for no internal PII, target IDs, audit errors or storage paths.
+- [ ] Verify retries/stale/concurrent actions, generic public replay and explicit skipped/unknown outcomes.
+- [ ] Verify direct route then one Signal, no extra automation and no copied target files.
+- [ ] Review all Swagger operations and actual employee BookStack content/access/deployment state.
+
+Expected: equivalent supported browser/API behavior, exact authorized results, no extra
+grants, sends, provider activation or duplicate effects. Planned additive command migration
+only, normal caches/Swagger regeneration; exact commands finalized after implementation.
+No data backfill or new scheduler/frontend build is expected. Recovery retains APP_KEY,
+submission/command/audit evidence and reconciles uncertain effects.
+Baseline existing Intake tests: 21 passed / 168 assertions, no failures/skips. This does
+not verify the planned API. No manual scenario is marked complete. Main/production
+remain unchanged; no commit/push or promotion is authorized by this entry.
+
+
+Main read-back: f8180e6efb696321f7bfa09863403ac11d840e33; tree 436b960755703d2ccbb4303e19cacc43c2371e05\nexactly equals the tested candidate. Automated evidence: Dev 912 / 48,851; initial\nMain candidate 760 / 9,773; final focused 70 / 1,180; refreshed Main compatibility\n247 / 7,518; no failures/skips. Production unchanged; no manual checkbox completed.\n
+## HR-2026-10-27-NOTIFICATION-API - Full Notification Browser/API Coverage
+
+Status: In Review / Done On Dev and Merged to Main; production review remains open.
+Date: 2026-10-27
+Owner: Codex. Intended named human reviewer/release owner: Svein Tore.
+Parent: rfc/2026-10-27-notification-full-api-parity.md (Approved).
+Scope: all 19 current browser route rows, embedded bell/profile behavior and Workday
+integration, own devices, admin channel/device actions, portal and typed API coverage.
+Svein Tore explicitly authorized the RFC and scoped Main merge on 2026-10-27:
+"Godkjenner og merge til main". Main promotion may proceed under that instruction
+once automated verification is complete. This is not completed manual scenario review;
+the unchecked checklist continues to block production deployment/release. Existing
+Workday/Email/Web Push/runtime human-review entries retain their independent status.
+
+- [ ] Compare list/detail/total unread, one/all acknowledgement and open through web/API.
+      Inbound Email source-read and operational Ticket/Email work state stay separate.
+- [ ] Verify current Workday filtering, own preferences/readiness, generation snooze,
+      reminder landing and coordinator denial; generic scopes cannot bypass own rights.
+- [ ] Compare grouped registry/preference defaults and transactional saves; unsupported
+      fields/types fail without partial changes and credential URLs stay write-only.
+- [ ] Register/list/resolve/revoke one controlled own browser device with explicit
+      consent; foreign subscriptions cannot transfer and inventories show no keys/endpoints.
+- [ ] Confirm throttled self-test reports queued; independently receive the controlled
+      test if separately authorized. No queued/HTTP-accepted response claims delivery.
+- [ ] With native manage_channels plus scopes, test existing channel form/update,
+      stale state, explicit Nextcloud selection, SMS dry_run/consent and safe results.
+      #205 destinations/#258 VAPID wizard are outside this parity update.
+- [ ] List/revoke an authorized admin device; ordinary actors and revoked admins fail.
+- [ ] Verify portal context/preferences/open/read-one/all with internal/foreign copies,
+      inactive contact/membership and unauthorized targets denied.
+- [ ] Retry the same operation key and simulate unknown outcomes/revoked access;
+      no duplicate notification or secret result is returned.
+- [ ] Review typed Swagger, exact route coverage and actual employee BookStack
+      guide/access; state Dev/Main/production availability separately.
+
+Expected: all supported current browser operations have equivalent scoped APIs with
+typed exact result/side-effect evidence and no expansion of native rights.
+Exact additive migration: 2026_10_27_170000_create_notification_api_commands.php.
+Only this migration is authorized on Dev under the approved RFC; native locking,
+uniqueness and encrypted receipt read-back must pass. Regenerate Swagger/clear caches. No secret migration or frontend build expected.
+Risks/recovery: preserve APP_KEY, device consent, canonical notifications and receipts;
+disable new entry points on failure and reconcile unknown sends before any retry.
+Automated evidence: isolated Main affected suite 174 tests / 6629 assertions plus
+five full Workday consumer-contract cases / 347; zero failures/skips. Dev broad
+172 / 6615 with final boundary and token reruns. Thirty Notification HTTP operations /
+39 schemas and one Workday detail have verified typed coverage. Native MySQL,
+trusted HTTPS, exact Swagger and actual BookStack 516/383/514/449 read-back pass.
+Full Workday guide is embedded and read back in 516. See the verification report.
+All manual checks remain unchecked; automated evidence is not human acceptance.
+Scoped Main promotion is explicitly authorized. Production, real sends and runtime
+activation remain separate; no employee/customer delivery is performed by this work.
+
+
+Main promotion independently verified: PR #336, commit f9efc4eee84e16984e4b6c44433ff9749dd8c2d2.
+The merged tree exactly equals the tested candidate. This merge does not complete
+any unchecked manual scenario. Production deployment/release remains blocked by
+this checklist and separate rollout authorization.
+
 ## HR-2026-10-27-SIGNAL-API - Full Signal Browser/API Coverage
 
 Status: Reviewed.

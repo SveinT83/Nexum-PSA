@@ -15,12 +15,19 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class IntakeSubmission extends Model
 {
     public const STATUS_NEW = 'new';
+
     public const STATUS_SPAM = 'spam';
+
     public const STATUS_ROUTED = 'routed';
+
     public const STATUS_REVIEWED = 'reviewed';
+
     public const STATUS_ROUTING_SKIPPED = 'routing_skipped';
+
     public const STATUS_DUPLICATE = 'duplicate';
+
     public const STATUS_REJECTED = 'rejected';
+
     public const STATUS_ARCHIVED = 'archived';
 
     protected $fillable = [

@@ -29,6 +29,100 @@ Final candidate and Dev Marketing runs each pass 87 tests / 1931 assertions.
 Populated field/receipt contracts, rendered-error privacy and browser/API rollback
 are explicitly covered. Main promotion is ready; manual scenarios remain Pending.
 
+## Full Lead Intelligence browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Scoped Main Candidate Verified / Main Merge Authorized.
+Owner: Codex. Approver/reviewer: Svein Tore, "Godkjenner og merge til main".
+RFC rfc/2026-10-27-lead-intelligence-full-api-parity.md Approved; ADR accepted;
+all six sequential slices Done On Dev. All 14 browser route rows and API-only
+capabilities covered: exact 17 operations / 47 typed Swagger schemas, 18 actual
+success-response contracts including pure promotion preview.
+Final domain: 52 tests / 474 assertions; final candidate: 54 / 483 incl. production
+Swagger and Knowledge source sync. Earlier full Main candidate affected batch:
+293 / 2887; overlapping suites, do not add totals. Dev affected batch's 14 failures
+were concurrent UserManagement hook / Contact import snapshots; current author fixes
+and fresh 14-case retest (192 assertions) pass. No failed case is deferred.
+Exact additive migration 2026_10_27_040000 applied/read back on Dev, batch 35.
+Native MySQL locking/uniqueness/encryption/rollback and trusted HTTPS/Swagger pass.
+BookStack 496/3 and scoped 449/153 published/read back; native articles 52 and 3
+match internal source, existing access preserved. pending_push is not external proof.
+Evidence: plans/2026-10-27-lead-intelligence-api-verification.md and linked artifacts.
+Human-review checklist HR-2026-10-27-LEAD-INTELLIGENCE-API remains Pending; explicit
+Main authorization permits tested source promotion while manual scenarios still gate
+production release/provider activation. External API execution remains false.
+Next action (Codex): merge verified scoped PR and record exact Main identity.
+No production rollout, blanket grants, live provider/customer writes, worker/scheduler
+activation or business backfill. Other contributor work / #280 badge views preserved.
+
+
+## Full Intake browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Merged to Main in PR #340 / Production unchanged.
+Owner: Codex; approver/reviewer: Svein Tore.
+Authorization: "Godkjenner og merge til main", 2026-10-27.
+RFC: rfc/2026-10-27-intake-full-api-parity.md (Approved).
+ADR: adr/2026-10-27-intake-api-authority-and-routing-claims.md (Accepted).
+Slices: feature-slices/2026-10-27-intake-full-api-parity.md (Done On Dev).
+Coverage: plans/2026-10-27-intake-api-coverage-matrix.md/.json; 17 browser rows
+(14 internal + 3 public), 23 implemented typed HTTP operations, 38 schemas.
+All 23 operations have successful schema-validated test HTTP evidence. Shared native
+form validation, guarded review/link/routing, encrypted idempotency/unknown claims,
+private uploads and public JSON/multipart submission are implemented on Dev.
+Four view-only review-route fallbacks are corrected. Sales Client creation follows
+Clients-owned provider numbering and never infers billing email from primary contact.
+Only additive 2026_10_27_040000_create_intake_api_commands.php ran on Dev. Trusted HTTPS/
+native MySQL create/read/replay/update and draft-denial checks passed; exact temporary
+fixture, commands and token were removed. API provider creation remains default-off.
+Knowledge source sync verified two articles. Dev currently has no BookStack integration
+configuration; supported MCP published their combined content in existing BookStack
+page 553 (Nexum PSA 339 / Intake 552), exact source/content read-back verified, page/
+chapter inherit existing access. No grants changed; employee OpenWebUI retrieval is
+not claimed. A connector string-pattern defect prevents normal new-page titles, so no
+duplicate standalone handbook page was retained. Native automatic BookStack sync
+configuration/linkage remains a separate operator follow-up; current handbook is updated.
+Human-review checklist HR-2026-10-27-INTAKE-API remains Pending. Svein Tore explicitly
+authorized the tested Main promotion; that is not a claim that manual scenarios were
+performed. Production deployment/release and provider activation remain separate gates.
+A first Pint --dirty invocation unexpectedly selected unrelated dirty PHP files and was
+interrupted. It may have normalized unrelated Dev formatting; do not bulk-reset or
+promote those files. The Main candidate uses only exact Intake/shared additions and
+excludes unrelated formatting. Review the broader Dev diff before any later broad commit.
+Next action (Codex): finish affected/candidate verification, update evidence/status,
+commit the scoped candidate, create/read back PR and merge to Main as authorized.
+Preserve all independent workstreams and pending manual-review history.
+
+
+## Full Notification browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Merged to Main in PR #336 / Human Review In Review / Production unchanged.
+Owner: Codex; approver/release owner: Svein Tore. Authorization: "Godkjenner og merge til main".
+Approved RFC: rfc/2026-10-27-notification-full-api-parity.md; accepted ADR:
+adr/2026-10-27-notification-api-authority-and-delivery.md. Five slices Done On Dev.
+All 19 browser rows/embedded actions map to 30 Notification operations / 39 schemas,
+plus Workday landing detail and its existing four operations. Typed contracts, fresh
+native/token authority, portal/Workday isolation, shared side effects, secret-free
+context, encrypted claims/replay, atomic preferences and truthful test outcomes verified.
+Evidence: plans/2026-10-27-notification-api-verification.md/.json and coverage matrix.
+Dev 172 / 6615 broad, latest boundaries 47 / 4719, safety 6 / 39 (overlapping);
+isolated Main broad 174 / 6629 plus five Workday consumer contract cases / 347.
+No failures/skips deferred. Native MySQL locks/uniqueness/encryption/rollback, seven
+trusted HTTPS reads, anonymous denial and Swagger exact-read-back pass.
+Exact additive 2026_10_27_170000 migration ran on Dev only; API real tests remain off.
+Five native source articles and actual BookStack 516/383 plus scoped 514/449 additions
+are verified with existing employee access inheritance. Full Workday guide is embedded
+in 516 because connector page creation/search validation fails. Native pending_push
+is not publication proof; automatic sync/source drift stays in its existing follow-up.
+Human-review checklist HR-2026-10-27-NOTIFICATION-API: In Review. Main explicitly
+authorized; unchecked human scenarios still block production deployment/release.
+Main merge verified: https://github.com/SveinT83/Nexum-PSA/pull/336
+Commit f9efc4eee84e16984e4b6c44433ff9749dd8c2d2 has the exact tested tree 34d850b305f2efaba06d9155d33ecc21603538f3.
+No Main implementation action remains. Next (Svein Tore): complete named browser/device
+review before separately authorized production rollout.
+No real sends, role grants, VAPID, provider, worker/scheduler or backlog activation.
+Preserve shared Dev/index and all unrelated work. #257 stays closed; #205/#258/#262
+future capabilities remain separate. Employee OpenWebUI retrieval is not verified.
+
+
 ## Full Signal browser/API coverage (2026-10-27)
 
 Status: Done On Dev / Reviewed by Svein Tore / Merged to Main in PR #334 / Production unchanged.

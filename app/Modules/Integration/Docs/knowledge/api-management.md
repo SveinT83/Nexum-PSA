@@ -1447,6 +1447,42 @@ Human-review checklist HR-2026-10-27-SIGNAL-API is Reviewed. The source is merge
 to Main in PR #334. Production deployment and provider/worker activation remain
 separate; this guide does not imply production availability.
 
+## Full Notification scopes (2026-10-27)
+
+Verified on Dev; production rollout is separate. See the Notification API guide for all
+30 operations and related Workday context. Own preferences/devices, explicit tests,
+channels, admin device revocation, portal actions and command outcome read-back have
+separate notifications.* abilities. Current native rights still apply; channel admin
+also requires notification.manage_channels. Real API tests default off. Queued/provider
+accepted does not prove delivery. Guarded writes use command keys/current channel state.
+Workday own/reminder scopes remain independent. Credential/device transport fields are
+write-only direct-form inputs and never assistant-discoverable inventory.
+
+## Nextcloud operational API (2026-10-27)
+
+Availability: Dev implementation; production deployment is separate. Nextcloud has full-domain
+connection/mapping/folder/sync/Talk operations alongside the compatible calendar-only API.
+Use the narrow Nextcloud scopes in API Management plus the caller's current native rights.
+Credentials additionally require `nextcloud.credentials.write`; new provider writes require
+`nextcloud.providers.execute`, explicit reviewed targets and the default-off API runtime switch.
+Read the connection ETag, use If-Match and Idempotency-Key, then read the exact resource/receipt.
+The Nextcloud full API guide describes all operations, errors, safe retries and availability.
+
+## Lead Intelligence Full API Coverage (2026-10-27)
+
+Dev now has 17 official HTTP operations / 47 typed Swagger schemas for the full
+current Lead Intelligence browser workflow and existing evaluation/promotion actions.
+Use lead-intelligence.read/manage/run together with the active user's sales.lead_manage
+permission. Includes pure context, settings, segment schedules/budgets, AI draft,
+Run Now, runs/evidence, scan ledger and current-token command-result read-back.
+Writes/actions require Idempotency-Key; use the exact GET ETag as If-Match for edits.
+Provider/AI/discovery execution from APIs defaults off. Unknown commands require
+reconciliation; queued is not completed research. Clients owns provider numbering,
+Contact owns identity/bridge, and Marketing suppression/exclusions remain authoritative.
+Full operator/API instructions are in Lead Intelligence Overview (BookStack page 496).
+Status: implemented/verified on Dev; Main promotion authorized and pending verification;
+production unchanged. HR-2026-10-27-LEAD-INTELLIGENCE-API manual scenarios remain Pending.
+
 ## Marketing full API coverage (2026-10-27)
 
 Dev implementation: 42 protected HTTP operations, typed Swagger and complete current

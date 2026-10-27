@@ -18,7 +18,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
-use Laravel\Sanctum\Sanctum;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
@@ -161,7 +160,7 @@ class NotificationSystemTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        Sanctum::actingAs($user, ['notifications.read', 'notifications.update']);
+        $this->withToken($user->createToken('Notification test', ['notifications.read', 'notifications.update'])->plainTextToken);
 
         $this->getJson(route('api.v1.notifications.index', ['unread' => true]))
             ->assertOk()
@@ -198,7 +197,7 @@ class NotificationSystemTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        Sanctum::actingAs($user, ['notifications.read']);
+        $this->withToken($user->createToken('Read notification test', ['notifications.read'])->plainTextToken);
 
         $this->getJson(route('api.v1.notifications.index'))
             ->assertOk();
@@ -449,7 +448,7 @@ class NotificationSystemTest extends TestCase
             'source_type' => 'notification_channel_test',
         ]);
 
-        $this->assertSame('OK', $channel->fresh()->last_test_result);
+        $this->assertSame('Dry-run SMS logged.', $channel->fresh()->last_test_result);
     }
 
     #[Test]
@@ -579,6 +578,7 @@ class NotificationSystemTest extends TestCase
         $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         Role::firstOrCreate(['name' => 'Tech']);
         $user->assignRole('Tech');
+        $user->givePermissionTo('ticket.view');
         $notificationId = (string) Str::uuid();
         $url = route('tech.tickets.index');
 

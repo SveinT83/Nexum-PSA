@@ -59,3 +59,11 @@ Uploaded file contents and storage paths remain Intake-owned and are not copied 
 - `intake.view`
 - `intake.manage`
 - `intake.submission_review`
+
+## Official API
+
+All supported browser workflows have module-owned typed API routes. See
+`Docs/knowledge/intake-api.md` and the generated Swagger. The additive command
+migration is `2026_10_27_040000_create_intake_api_commands.php`; API provider customer
+creation remains default-off. Web/API share form validation, fresh native review
+authority, Intake-owned uploads, durable command keys and serialized routing.

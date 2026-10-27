@@ -67,6 +67,21 @@ class ReminderController extends Controller
             : redirect()->route('tech.workdays.index')->with('success', 'Workday reminder snoozed for 30 minutes.');
     }
 
+    /** Current own landing context; opening acknowledgement is an explicit POST. */
+    public function detail(Request $request, string $id)
+    {
+        $this->authorize($request);
+        $reminder = WorkdayReminder::where('uuid', $id)->where('user_id', $request->user()->id)->firstOrFail();
+        abort_unless($this->reminders->current($request->user(), $reminder)
+            && in_array(true, $this->preferences->read($request->user()), true), 404);
+        $day = Workday::where('user_id', $request->user()->id)->where('work_date', $reminder->work_date)->first();
+
+        return response()->json(['data' => ['reminder' => $this->reminders->serialize($reminder),
+            'workday_url' => $day ? route('tech.workdays.show', $day->uuid)
+                : route('tech.workdays.create', ['work_date' => $reminder->work_date])]])
+            ->header('Cache-Control', 'private, no-store');
+    }
+
     public function open(Request $request, string $id)
     {
         $this->authorize($request);

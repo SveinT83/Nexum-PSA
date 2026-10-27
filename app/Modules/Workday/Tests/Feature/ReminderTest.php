@@ -278,6 +278,8 @@ class ReminderTest extends TestCase
         WorkdayReminderDelivery::query()->update(['state' => 'pending']);
         $this->deliver();
         $this->getJson('/api/v1/workday-reminders')->assertOk()->assertJsonCount(0, 'data');
+        $this->app['auth']->forgetGuards();
+        $this->withToken($this->worker->createToken('Reminder notification read', ['notifications.read'])->plainTextToken);
         $this->getJson('/api/v1/notifications?unread=1')->assertOk()->assertJsonCount(0, 'data');
         $this->assertSame('suppressed', WorkdayReminderDelivery::first()->state);
         $this->assertStringNotContainsString('PRIVATE', json_encode($this->worker->notifications()->first()->data));
@@ -587,5 +589,42 @@ class ReminderTest extends TestCase
         $mail = WorkdayReminderDelivery::where('channel', 'mail')->first();
         $this->assertSame('blocked', $mail->state);
         $this->assertNull($mail->mail_snapshot['account_id']);
+    }
+
+    public function test_landing_context_api_is_own_typed_and_does_not_acknowledge_a_reminder(): void
+    {
+        $this->rule();
+        $this->scan();
+        $this->deliver();
+        $reminder = WorkdayReminder::firstOrFail();
+        $response = $this->getJson('/api/v1/workday-reminders/'.$reminder->uuid)
+            ->assertOk()->assertJsonPath('data.reminder.id', $reminder->uuid)
+            ->assertJsonPath('data.reminder.generation', 1);
+        $this->assertIsString($response->json('data.workday_url'));
+        $this->assertNull($this->worker->notifications()->whereKey($reminder->notification_id)->value('read_at'));
+        $other = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $other->assignRole('Tech');
+        Sanctum::actingAs($other, ['workday-reminders.read']);
+        $this->getJson('/api/v1/workday-reminders/'.$reminder->uuid)->assertNotFound();
+    }
+
+    public function test_notification_scopes_cannot_shortcut_current_reminder_authority(): void
+    {
+        $this->rule();
+        $this->scan();
+        $this->deliver();
+        $reminder = WorkdayReminder::firstOrFail();
+        $authenticate = function (array $scopes): void {
+            $this->app['auth']->forgetGuards();
+            $this->withToken($this->worker->createToken('Reminder scope isolation', $scopes)->plainTextToken);
+        };
+        $authenticate(['notifications.read', 'notifications.update']);
+        $this->getJson('/api/v1/notifications')->assertOk()->assertJsonCount(0, 'data');
+        $this->postJson('/api/v1/notifications/'.$reminder->notification_id.'/read')->assertNotFound();
+        $authenticate(['notifications.read', 'notifications.update', 'workday-reminders.read']);
+        $this->getJson('/api/v1/notifications')->assertOk()->assertJsonCount(1, 'data');
+        $this->postJson('/api/v1/notifications/'.$reminder->notification_id.'/read')->assertForbidden();
+        $this->postJson('/api/v1/notifications/'.$reminder->notification_id.'/open')->assertForbidden();
+        $this->assertNull($this->worker->notifications()->whereKey($reminder->notification_id)->value('read_at'));
     }
 }
