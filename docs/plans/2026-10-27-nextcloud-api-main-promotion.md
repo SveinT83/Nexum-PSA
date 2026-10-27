@@ -6,7 +6,7 @@ Authorization: Godkjenner og merge til main, 2026-10-27.
 
 ## Candidate and scope
 
-Base: origin/main 7d8087e4851f823fc87eaeff2cd46ff84eb8b4b6, including Notification PR #336/#337.
+Base: Main ce004cf7150f846a95ba99a3ea500ab183bf6a2e; Notification and Intake changes preserved.
 Branch: codex/nextcloud-api-20261027.
 Runtime worktree: /tmp/nexum-nextcloud-api-main-20261027.
 Ordinary implementation/runtime remains /var/Projects/tdPSA on Dev.
@@ -49,3 +49,9 @@ After merge fetch origin/main and compare tested candidate tree (or scoped teste
 if unrelated concurrent Main commits intervened). Record actual PR/head/merge/tree read-back
 and reconcile Dev/Main TODO/RFC/slices/review state. A documentation-only follow-up may
 record the immutable result without changing any tested PHP behavior.
+
+Final published-Main reconciliation: Intake landed after the 347-test combined run.
+Only its published catalog/route/coordination additions are incorporated; no Intake
+implementation is copied from shared Dev. All 121 Nextcloud/Talk tests and all 50 actual
+HTTP/schema operations pass again against this exact combined candidate. Non-Nextcloud
+Swagger values are preserved, and the PR difference remains within the task allowlist.

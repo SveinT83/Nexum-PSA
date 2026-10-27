@@ -15,26 +15,41 @@ class IntakeForm extends Model
     public const DEFAULT_SUBMIT_BUTTON_LABEL = 'Send inquiry';
 
     public const STATUS_DRAFT = 'draft';
+
     public const STATUS_PUBLISHED = 'published';
+
     public const STATUS_ACTIVE = self::STATUS_PUBLISHED;
+
     public const STATUS_LEGACY_ACTIVE = 'active';
+
     public const STATUS_PAUSED = 'paused';
+
     public const STATUS_ARCHIVED = 'archived';
 
     public const TARGET_REVIEW_ONLY = 'review_only';
+
     public const TARGET_SALES_LEAD = 'sales_lead';
+
     public const TARGET_TICKET = 'ticket';
+
     public const TARGET_TASK = 'task';
 
     public const ROUTING_MODE_MANUAL_REVIEW = 'manual_review';
+
     public const ROUTING_MODE_KNOWN_CLIENT_ONLY = 'known_client_only';
+
     public const ROUTING_MODE_ANY_SUBMISSION = 'any_submission';
 
     public const SCOPE_GLOBAL = 'global';
+
     public const SCOPE_CLIENT = 'client';
+
     public const SCOPE_SERVICE = 'service';
+
     public const SCOPE_SALES = 'sales';
+
     public const SCOPE_TICKET = 'ticket';
+
     public const SCOPE_CAMPAIGN = 'campaign';
 
     public const DEFAULT_ALLOWED_MIME_TYPES = [

@@ -157,7 +157,7 @@
     "production_authorized": false
   },
   "shared_test_conflict": "An in-progress UserManagement error-handler method mismatch affected the first broad run. It was fixed by its owning work; rerun passed all 373 without editing or packaging that work.",
-  "candidate_reconciled_base": "7d8087e4851f823fc87eaeff2cd46ff84eb8b4b6",
+  "candidate_reconciled_base": "ce004cf7150f846a95ba99a3ea500ab183bf6a2e",
   "knowledge": {
     "articles": [
       {
@@ -205,5 +205,10 @@
     ],
     "count": 6
   },
-  "execution_time_revocation": "Fresh actor/token checks repeat after mutex wait, before provider dispatch and result disclosure; regression passes."
+  "execution_time_revocation": "Fresh actor/token checks repeat after mutex wait, before provider dispatch and result disclosure; regression passes.",
+  "final_reconciled_domain": {
+    "passed": 121,
+    "assertions": 6518,
+    "all_http_operations": 50
+  }
 }

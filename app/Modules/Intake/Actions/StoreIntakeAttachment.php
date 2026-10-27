@@ -17,7 +17,12 @@ class StoreIntakeAttachment
         $filename = $this->safeFilename($file->getClientOriginalName());
         $path = $this->path($submission->id, $filename);
 
-        Storage::disk($disk)->put($path, file_get_contents($file->getRealPath()));
+        if (! Storage::disk($disk)->put($path, file_get_contents($file->getRealPath()))) {
+            throw new \RuntimeException('Intake upload storage failed.');
+        }
+        request()->attributes->set('intake_new_files', [
+            ...request()->attributes->get('intake_new_files', []), [$disk, $path],
+        ]);
 
         return IntakeSubmissionAttachment::query()->create([
             'intake_submission_id' => $submission->id,

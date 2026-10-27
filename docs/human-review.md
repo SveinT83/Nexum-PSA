@@ -44,6 +44,39 @@ No named human scenario has been checked off; Main merge authorized with scenari
 Evidence: plans/2026-10-27-nextcloud-api-verification.md/.json.
 
 
+## HR-2026-10-27-INTAKE-API - Full Intake Browser/API Coverage
+
+Status: Pending / Dev verified and merged to Main in PR #340, 2026-10-27.
+Added: 2026-10-27. Owner: Codex. Intended named human reviewer: Svein Tore.
+Scope: rfc/2026-10-27-intake-full-api-parity.md (Approved), 17 browser rows, public
+submission and all embedded form/review/routing workflows; 23 implemented HTTP operations / 38 typed schemas.
+This is a human-review checklist entry. It gates future Main promotion and production
+deployment/release; it does not replace RFC approval or block approved Dev implementation.
+HR-2026-08-11-001 remains Reviewed; its history is not rewritten.
+
+- [ ] Compare create/edit, all ten field types/settings, ordering/conditions and lifecycle.
+- [ ] Verify active user/token/native permissions and four corrected view-only action denials.
+- [ ] Compare queue/detail/snapshots/events, target access and exact private file bytes/ownership.
+- [ ] Review all outcomes, duplicate references and five existing-record link types.
+- [ ] Route separately to Sales/Ticket/Task; verify defaults, Contact bridge and one target.
+- [ ] Verify optional Client creation respects provider numbering and explicit invoice email.
+- [ ] Submit public JSON/multipart and verify published checks, spam/hidden fields/upload limits.
+- [ ] Inspect public responses for no internal PII, target IDs, audit errors or storage paths.
+- [ ] Verify retries/stale/concurrent actions, generic public replay and explicit skipped/unknown outcomes.
+- [ ] Verify direct route then one Signal, no extra automation and no copied target files.
+- [ ] Review all Swagger operations and actual employee BookStack content/access/deployment state.
+
+Expected: equivalent supported browser/API behavior, exact authorized results, no extra
+grants, sends, provider activation or duplicate effects. Planned additive command migration
+only, normal caches/Swagger regeneration; exact commands finalized after implementation.
+No data backfill or new scheduler/frontend build is expected. Recovery retains APP_KEY,
+submission/command/audit evidence and reconciles uncertain effects.
+Baseline existing Intake tests: 21 passed / 168 assertions, no failures/skips. This does
+not verify the planned API. No manual scenario is marked complete. Main/production
+remain unchanged; no commit/push or promotion is authorized by this entry.
+
+
+Main read-back: f8180e6efb696321f7bfa09863403ac11d840e33; tree 436b960755703d2ccbb4303e19cacc43c2371e05\nexactly equals the tested candidate. Automated evidence: Dev 912 / 48,851; initial\nMain candidate 760 / 9,773; final focused 70 / 1,180; refreshed Main compatibility\n247 / 7,518; no failures/skips. Production unchanged; no manual checkbox completed.\n
 ## HR-2026-10-27-NOTIFICATION-API - Full Notification Browser/API Coverage
 
 Status: In Review / Done On Dev and Merged to Main; production review remains open.
