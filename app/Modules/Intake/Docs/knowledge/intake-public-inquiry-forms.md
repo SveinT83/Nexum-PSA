@@ -125,3 +125,23 @@ see event history. Review actions support:
   records, and routes submissions to Sales, Ticket, or Task.
 
 Admin routes remain protected by the normal tech/admin middleware and route-permission enforcement.
+
+## API And Current Review Access
+
+The official Intake API follows the same form, review and routing rules. See the
+Intake API article for endpoint steps, token abilities, retries and error handling.
+This implementation is verified on Dev before Main promotion; production availability
+requires its own deployment and migration. No provider or automation capability is
+activated merely by exposing an API.
+
+All review outcomes, linking and Sales/Ticket/Task routing require
+intake.submission_review. Viewing an Intake submission alone does not grant those
+actions. Existing-record linking also requires native read access to that target.
+Private uploads remain in Intake and the nested download checks the submission owner.
+
+When Sales routing needs a new Client, Clients owns customer creation and numbering.
+Active Tripletex customer sync uses provider authority and a stable request key.
+The primary contact email is never inferred to be the billing email. API provider
+customer creation defaults off; a skipped or uncertain attempt must be reviewed
+before another creation. Public acceptance only confirms receipt, not downstream
+routing, follow-up or delivery.

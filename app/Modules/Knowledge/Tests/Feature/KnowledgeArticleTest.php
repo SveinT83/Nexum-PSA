@@ -854,7 +854,7 @@ class KnowledgeArticleTest extends TestCase
     {
         $this->artisan('knowledge:sync-docs', ['--module' => ['Intake']])
             ->expectsOutput('chapters: 1')
-            ->expectsOutput('articles: 1')
+            ->expectsOutput('articles: 2')
             ->expectsOutput('modules: Intake')
             ->assertSuccessful();
 
@@ -865,6 +865,9 @@ class KnowledgeArticleTest extends TestCase
 
         $this->assertSame('Intake Public Inquiry Forms', $article->title);
         $this->assertSame('Intake', $article->source_payload['module']);
+        $api = Article::where('source_id', 'intake/intake-api')->firstOrFail();
+        $this->assertStringContainsString('Idempotency-Key', $api->body_markdown);
+        $this->assertStringContainsString('Production must deploy', $api->body_markdown);
     }
 
     #[Test]

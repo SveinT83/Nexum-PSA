@@ -25,6 +25,12 @@ class StoreIntakeSubmission
 
     public function handle(Request $request, IntakeForm $form): IntakeSubmission
     {
+        return \App\Modules\Intake\Support\IntakeWorkflowLock::run(fn () => $this->execute($request, $form));
+    }
+
+    private function execute(Request $request, IntakeForm $form): IntakeSubmission
+    {
+        $form->refresh()->unsetRelation('activeFields');
         abort_unless($form->isActive(), 404);
 
         $form->loadMissing('activeFields');
@@ -46,43 +52,60 @@ class StoreIntakeSubmission
         $normalized = $this->normalizedPayload($visibleFields, $rawFields);
         $match = $this->matchContext->handle($normalized, $form);
 
-        $submission = DB::transaction(function () use ($request, $form, $rawFields, $normalized, $match, $visibleFields): IntakeSubmission {
-            $submission = IntakeSubmission::query()->create([
-                'intake_form_id' => $form->id,
-                'status' => IntakeSubmission::STATUS_NEW,
-                'source_url' => $request->fullUrl(),
-                'referrer' => $request->headers->get('referer'),
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'raw_payload' => [
-                    'fields' => $rawFields,
-                    'form_snapshot' => $this->formSnapshot($form),
-                    'field_snapshots' => $this->fieldSnapshots($visibleFields),
-                ],
-                'normalized_payload' => $normalized,
-                'matched_client_id' => $match['matched_client_id'],
-                'matched_site_id' => $match['matched_site_id'],
-                'matched_contact_id' => $match['matched_contact_id'],
-                'matched_client_user_id' => $match['matched_client_user_id'],
-                'routing_result' => ['match_method' => $match['match_method']],
-                'submitted_at' => now(),
-            ]);
+        request()->attributes->set('intake_new_files', []);
+        try {
+            $submission = DB::transaction(function () use ($request, $form, $rawFields, $normalized, $match, $visibleFields): IntakeSubmission {
+                $submission = IntakeSubmission::query()->create([
+                    'intake_form_id' => $form->id,
+                    'status' => IntakeSubmission::STATUS_NEW,
+                    'source_url' => $request->fullUrl(),
+                    'referrer' => $request->headers->get('referer'),
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'raw_payload' => [
+                        'fields' => $rawFields,
+                        'form_snapshot' => $this->formSnapshot($form),
+                        'field_snapshots' => $this->fieldSnapshots($visibleFields),
+                    ],
+                    'normalized_payload' => $normalized,
+                    'matched_client_id' => $match['matched_client_id'],
+                    'matched_site_id' => $match['matched_site_id'],
+                    'matched_contact_id' => $match['matched_contact_id'],
+                    'matched_client_user_id' => $match['matched_client_user_id'],
+                    'routing_result' => ['match_method' => $match['match_method']],
+                    'submitted_at' => now(),
+                ]);
 
-            foreach ($visibleFields->where('field_type', IntakeFormField::TYPE_FILE) as $field) {
-                foreach ($this->filesFor($request, $field) as $file) {
-                    $this->storeAttachment->handle($submission, $field, $file);
+                $request->attributes->set('intake_candidate_submission_id', $submission->id);
+
+                foreach ($visibleFields->where('field_type', IntakeFormField::TYPE_FILE) as $field) {
+                    foreach ($this->filesFor($request, $field) as $file) {
+                        $this->storeAttachment->handle($submission, $field, $file);
+                    }
                 }
+
+                $submission->events()->create([
+                    'type' => 'submitted',
+                    'message' => 'Public inquiry submitted.',
+                    'metadata' => ['match_method' => $match['match_method']],
+                ]);
+
+                return $submission;
+            });
+
+        } catch (Throwable $error) {
+            $persisted = IntakeSubmission::find($request->attributes->get('intake_candidate_submission_id'));
+            if ($persisted) {
+                $request->attributes->set('intake_persisted_submission_id', $persisted->id);
+                throw $error;
             }
+            foreach (request()->attributes->get('intake_new_files', []) as [$disk, $path]) {
+                \Illuminate\Support\Facades\Storage::disk($disk)->delete($path);
+            }
+            throw $error;
+        }
 
-            $submission->events()->create([
-                'type' => 'submitted',
-                'message' => 'Public inquiry submitted.',
-                'metadata' => ['match_method' => $match['match_method']],
-            ]);
-
-            return $submission;
-        });
-
+        $request->attributes->set('intake_persisted_submission_id', $submission->id);
         $this->routeSubmission($submission);
 
         $submission = $submission->refresh();
@@ -102,6 +125,18 @@ class StoreIntakeSubmission
         }
 
         return $submission->refresh();
+    }
+
+    /** API can validate the same visible fields before claiming an idempotent submission. */
+    public function validateRequest(Request $request, IntakeForm $form): void
+    {
+        abort_unless($form->isActive(), 404);
+        $form->loadMissing('activeFields');
+        if (trim((string) $request->input($form->spam_honeypot_field, '')) !== '') {
+            return;
+        }
+        $fields = $this->visibleFields($form, $request);
+        $request->validate($this->rules($fields), [], $this->attributes($fields));
     }
 
     private function recordSpam(Request $request, IntakeForm $form, string $honeypot): IntakeSubmission
