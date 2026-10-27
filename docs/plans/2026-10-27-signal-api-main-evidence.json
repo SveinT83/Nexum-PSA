@@ -104,11 +104,30 @@
     "docs/plans/2026-10-27-signal-api-verification.md",
     "docs/rfc/2026-10-27-signal-full-api-parity.md",
     "storage/api-docs/api-docs.json",
-    "docs/plans/2026-10-27-signal-api-main-promotion.md"
+    "docs/plans/2026-10-27-signal-api-main-promotion.md",
+    "docs/plans/2026-10-27-signal-api-main-evidence.json"
   ],
   "swagger": "Exact additive Signal overlay; non-Signal operations, schemas and existing root metadata preserved.",
   "environment": "Independent candidate App/Tests autoload, copied identical dependencies, synthetic APP_KEY, SQLite :memory:, fake mail and no provider credentials.",
-  "main_promotion_state": "Candidate verified; commit and merge pending",
+  "main_promotion_state": "Candidate verified and ready for authorized Main merge",
   "production_deployed": false,
-  "runtime_activated": false
+  "runtime_activated": false,
+  "original_tested_base": "1813fcb585619e1e103902f4fb4ad40236b044bc",
+  "concurrent_main": {
+    "old_base": "1813fcb585619e1e103902f4fb4ad40236b044bc",
+    "new_base": "e94e3fe1261d3923fd7d6e5ee286ca38a751fd11",
+    "files": [
+      "app/Modules/Knowledge/Docs/knowledge/knowledge-api.md",
+      "docs/TODO.md",
+      "docs/feature-slices/2026-10-27-knowledge-full-api-parity.md",
+      "docs/human-review.md",
+      "docs/plans/2026-10-27-knowledge-api-coverage-matrix.json",
+      "docs/plans/2026-10-27-knowledge-api-coverage-matrix.md",
+      "docs/plans/2026-10-27-knowledge-api-main-promotion.md",
+      "docs/plans/2026-10-27-knowledge-api-verification.json",
+      "docs/plans/2026-10-27-knowledge-api-verification.md",
+      "docs/rfc/2026-10-27-knowledge-full-api-parity.md"
+    ],
+    "runtime_code_unchanged": true
+  }
 }

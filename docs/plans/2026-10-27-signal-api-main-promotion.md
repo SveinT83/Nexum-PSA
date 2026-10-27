@@ -1,13 +1,14 @@
 # Signal API Main Promotion
 
 Date: 2026-10-27. Owner: Codex. Human reviewer and merge authorizer: Svein Tore.
-Status: Reviewed / isolated Main candidate verified; commit and merge authorized; production unchanged.
+Status: Reviewed / isolated Main candidate verified; ready for authorized Main merge; production unchanged.
 Acceptance and explicit merge authorization: "Godkjenner og merge til main".
 Human-review entry HR-2026-10-27-SIGNAL-API is Reviewed. Original scenario boxes
 are retained without inventing individually witnessed executions.
 
 ## Scoped Candidate
-Base: origin/main e94e3fe1261d3923fd7d6e5ee286ca38a751fd11.
+Final base: origin/main e94e3fe1261d3923fd7d6e5ee286ca38a751fd11.
+Original tested base: 1813fcb585619e1e103902f4fb4ad40236b044bc.
 Branch: codex/signal-api-20261027.
 Isolated candidate: /tmp/nexum-signal-api-main-20261027.
 The authoritative shared Dev working copy remains /var/Projects/tdPSA on Dev.
@@ -26,11 +27,12 @@ Non-Signal Swagger operations and schemas are byte-equivalent as parsed data.
 
 ## Human Review And Independent Gates
 The existing Signal recovery review HR-2026-07-15-002 is Reviewed. The older Knowledge
-revision/sync entries HR-2026-09-04-001 and HR-2026-09-03-003 retain pending historical
-checks in the authoritative register. Those workflows are already on Main and are
-not changed or newly promoted by Signal. Their production/workflow gates are not
-approved by this Signal acceptance. No Knowledge publication/sync authority, RMM
-runtime activation or supplier processing activation is included in this candidate.
+revision/sync entries HR-2026-09-04-001 and HR-2026-09-03-003 had pending historical
+checks on the original base. Concurrent Main PR #333 now records their named acceptance.
+This documentation-only Main update is included in this candidate; all tested PHP,
+configuration and package dependencies remain unchanged. No Knowledge publication/sync
+authority, RMM runtime activation or supplier processing activation is changed by Signal.
+Production deployment and provider/worker activation remain separately authorized.
 
 ## Candidate Verification
 Candidate verification passed 626 tests / 6271 assertions, with zero failures/errors/skips.
@@ -48,3 +50,10 @@ requires only 2026_10_27_030000_create_signal_api_commands.php, normal cache/Swa
 handling and review of affected existing workers. Preserve APP_KEY, encrypted command
 receipts, immutable attempts and the webhook outbox; reconcile unknown external
 outcomes instead of blind replay. No frontend build or package change is introduced.
+
+## Concurrent Main Documentation Reconciliation
+
+Main PR #333 advanced the base to e94e3fe1261d3923fd7d6e5ee286ca38a751fd11.
+Only Knowledge approval/status Markdown and JSON changed. The candidate includes that
+update and independently confirms all 27 tested PHP hashes and runtime dependencies
+are unchanged. Final contract/source checks are repeated before merge.
