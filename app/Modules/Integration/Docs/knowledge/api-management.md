@@ -1467,3 +1467,33 @@ Credentials additionally require `nextcloud.credentials.write`; new provider wri
 `nextcloud.providers.execute`, explicit reviewed targets and the default-off API runtime switch.
 Read the connection ETag, use If-Match and Idempotency-Key, then read the exact resource/receipt.
 The Nextcloud full API guide describes all operations, errors, safe retries and availability.
+
+## Lead Intelligence Full API Coverage (2026-10-27)
+
+Dev now has 17 official HTTP operations / 47 typed Swagger schemas for the full
+current Lead Intelligence browser workflow and existing evaluation/promotion actions.
+Use lead-intelligence.read/manage/run together with the active user's sales.lead_manage
+permission. Includes pure context, settings, segment schedules/budgets, AI draft,
+Run Now, runs/evidence, scan ledger and current-token command-result read-back.
+Writes/actions require Idempotency-Key; use the exact GET ETag as If-Match for edits.
+Provider/AI/discovery execution from APIs defaults off. Unknown commands require
+reconciliation; queued is not completed research. Clients owns provider numbering,
+Contact owns identity/bridge, and Marketing suppression/exclusions remain authoritative.
+Full operator/API instructions are in Lead Intelligence Overview (BookStack page 496).
+Status: implemented/verified on Dev; Main promotion authorized and pending verification;
+production unchanged. HR-2026-10-27-LEAD-INTELLIGENCE-API manual scenarios remain Pending.
+
+## Full CustomField API Support (Dev Extension)
+
+The approved CustomField extension has seven typed operations for filtered definition
+discovery, full configuration/context, create/update/activate/deactivate, soft delete
+and own encrypted command read-back. See **Custom Field API** for exact steps, headers,
+all 11 types and owning-domain value operations. Its production deployment is separate.
+
+Scopes: custom-fields.read, custom-fields.create, custom-fields.update,
+custom-fields.delete and custom-fields.operations.read. Configuration also needs the
+active internal user's native customfield.manage_settings permission. Discovery for
+other actors is restricted by owning-domain view and current field visibility.
+Mutation commands require Idempotency-Key; update/delete require If-Match. Replays
+and receipts recheck current rights and original token ability. Definition rights
+do not grant Client/Site/Ticket value access or activate Ticket write/rule gates.

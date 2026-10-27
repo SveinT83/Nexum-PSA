@@ -61,11 +61,11 @@ class ExecuteLeadResearchRun
         private readonly PlanLeadDiscoveryWithAi $discoveryPlanner,
         private readonly ReviewLeadCandidateWithAi $aiReviewer,
         private readonly SearchLeadWebWithAi $aiWebSearch,
-    ) {
-    }
+    ) {}
 
     public function handle(LeadResearchRun $run): LeadResearchRun
     {
+        \App\Modules\LeadIntelligence\Support\LeadApiAccess::forRun($run);
         $run->load('segment');
         $segment = $run->segment;
         $settings = $this->settings->get();
@@ -1015,6 +1015,7 @@ class ExecuteLeadResearchRun
         }
 
         try {
+            \App\Modules\LeadIntelligence\Support\LeadApiAccess::forRun($run);
             $result = $this->promoteLeadCandidate->handle([
                 'lead_research_run_id' => $run->id,
                 'company' => $candidate['company'],

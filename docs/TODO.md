@@ -23,6 +23,66 @@ Next action (Codex): record the verified scoped PR/Main merge and independent re
 Future production owner/action (Svein Tore): complete manual review and authorize rollout.
 
 
+## Full CustomField browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Verified Main Candidate Ready / Human Review Pending.
+Owner: Codex; approver/reviewer: Svein Tore. Request: CustomField 100% API support.
+RFC: rfc/2026-10-27-custom-field-full-api-parity.md (Approved).
+ADR: adr/2026-10-27-custom-field-api-authority-and-value-ownership.md (Accepted).
+Four sequential slices: feature-slices/2026-10-27-custom-field-full-api-parity.md.
+Coverage/baseline: plans/2026-10-27-custom-field-api-coverage-matrix.md and
+plans/2026-10-27-custom-field-api-baseline.json. Four domain browser rows, two API
+operations; Client/Site embedded values and Ticket/rule contracts also covered.
+Existing Dev baseline: 17 tests / 228 assertions passed, no failures/skips.
+Scope: seven typed operations, native definition management, actor-filtered discovery,
+11 field types/settings, idempotent guarded writes/soft delete/read-back and full
+owning-domain value regression coverage.
+Authorization: Svein Tore, "Godkjenner og merge til main", 2026-10-27.
+Knowledge is Done On Dev and merged in PR #331; sequencing prerequisite resolved.
+Verification: final Dev 676 / 46696 passes, no failures/errors/skips; isolated initial
+Main features 572 / 7858 plus units 17 / 465. Seven typed HTTP operations / 19 schemas,
+23 PHP syntax/Pint, actual response schemas, native MySQL and trusted HTTPS pass.
+Exact command migration ran on Dev (batch 34), with no business backfill or activation.
+Four internal Knowledge sources and actual BookStack 451/449 are read back; the full
+core/API guide is embedded in 451 due the connector name validator. Existing access
+inheritance remains unchanged; employee OpenWebUI retrieval is untested. pending_push
+is not the evidence for this separate successful BookStack publication.
+Final rebased Main interoperability: 236 / 9264 passes with an isolated Blade cache;
+no failures/errors/skips. All other Main Swagger contracts are preserved.
+Next action (Codex): perform the explicitly authorized scoped Main merge and read back
+the exact merged revision/tree, then record completion.
+No production deployment, provider activation, grants or real customer sends authorized.
+HR-2026-10-27-CUSTOM-FIELD-API remains Pending; manual definition administration,
+Client/Site/Ticket value and access/retry scenarios still require Svein Tore review
+before production release. Explicit Main merge authorization is recorded above.
+Preserve the pre-existing module test and all unrelated contributor files/index.
+
+## Full Lead Intelligence browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Scoped Main Candidate Verified / Main Merge Authorized.
+Owner: Codex. Approver/reviewer: Svein Tore, "Godkjenner og merge til main".
+RFC rfc/2026-10-27-lead-intelligence-full-api-parity.md Approved; ADR accepted;
+all six sequential slices Done On Dev. All 14 browser route rows and API-only
+capabilities covered: exact 17 operations / 47 typed Swagger schemas, 18 actual
+success-response contracts including pure promotion preview.
+Final domain: 52 tests / 474 assertions; final candidate: 54 / 483 incl. production
+Swagger and Knowledge source sync. Earlier full Main candidate affected batch:
+293 / 2887; overlapping suites, do not add totals. Dev affected batch's 14 failures
+were concurrent UserManagement hook / Contact import snapshots; current author fixes
+and fresh 14-case retest (192 assertions) pass. No failed case is deferred.
+Exact additive migration 2026_10_27_040000 applied/read back on Dev, batch 35.
+Native MySQL locking/uniqueness/encryption/rollback and trusted HTTPS/Swagger pass.
+BookStack 496/3 and scoped 449/153 published/read back; native articles 52 and 3
+match internal source, existing access preserved. pending_push is not external proof.
+Evidence: plans/2026-10-27-lead-intelligence-api-verification.md and linked artifacts.
+Human-review checklist HR-2026-10-27-LEAD-INTELLIGENCE-API remains Pending; explicit
+Main authorization permits tested source promotion while manual scenarios still gate
+production release/provider activation. External API execution remains false.
+Next action (Codex): merge verified scoped PR and record exact Main identity.
+No production rollout, blanket grants, live provider/customer writes, worker/scheduler
+activation or business backfill. Other contributor work / #280 badge views preserved.
+
+
 ## Full Intake browser/API coverage (2026-10-27)
 
 Status: Done On Dev / Merged to Main in PR #340 / Production unchanged.
