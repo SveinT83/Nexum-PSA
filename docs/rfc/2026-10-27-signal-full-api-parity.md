@@ -1,6 +1,6 @@
 # RFC: Full Signal Browser/API Parity
 
-Status: Approved - Done On Dev; human review Reviewed; Main/production separate.
+Status: Done On Dev / Reviewed by Svein Tore / Merged to Main in PR #334 / Production unchanged.
 Date: 2026-10-27
 Owner: Codex. Product/release owner and intended reviewer: Svein Tore.
 Human-review checklist: HR-2026-10-27-SIGNAL-API (Pending; planned scope).
@@ -177,3 +177,13 @@ by inference. Main and production authorization remain separate.
 Implemented on authoritative Dev. See ../plans/2026-10-27-signal-api-verification.md.
 All 18 browser rows map to 19 typed operations / 42 schemas. Human review is
 Reviewed; no commit/push/Main promotion/production deployment is performed by this task.
+
+## Verified Main Promotion (2026-10-27)
+
+Svein Tore accepted the completed scope and authorized Main merge. PR #334 is merged:
+https://github.com/SveinT83/Nexum-PSA/pull/334
+Merge: be28f77d16f29e662b7b8585b27971e9c1e62438
+Tested and merged tree: 6d2a4a6961b22d7a6ee44a20a8d7f7ab86d3c28b; exact equality verified by fresh fetch.
+Candidate: 626 tests / 6271 assertions; final contract/source: 2 / 310, zero failures/skips.
+All 27 tested PHP hashes match. Main action is complete; production/provider activation
+remains separately authorized. Shared Dev work and its staged index are preserved.

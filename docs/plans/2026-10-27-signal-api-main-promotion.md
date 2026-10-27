@@ -1,7 +1,7 @@
 # Signal API Main Promotion
 
 Date: 2026-10-27. Owner: Codex. Human reviewer and merge authorizer: Svein Tore.
-Status: Reviewed / isolated Main candidate verified; ready for authorized Main merge; production unchanged.
+Status: Reviewed / Merged to Main in PR #334 / Production unchanged.
 Acceptance and explicit merge authorization: "Godkjenner og merge til main".
 Human-review entry HR-2026-10-27-SIGNAL-API is Reviewed. Original scenario boxes
 are retained without inventing individually witnessed executions.
@@ -57,3 +57,13 @@ Main PR #333 advanced the base to e94e3fe1261d3923fd7d6e5ee286ca38a751fd11.
 Only Knowledge approval/status Markdown and JSON changed. The candidate includes that
 update and independently confirms all 27 tested PHP hashes and runtime dependencies
 are unchanged. Final contract/source checks are repeated before merge.
+
+## Verified Main Merge
+
+PR #334: https://github.com/SveinT83/Nexum-PSA/pull/334
+Merge commit: be28f77d16f29e662b7b8585b27971e9c1e62438
+Tested and merged tree: 6d2a4a6961b22d7a6ee44a20a8d7f7ab86d3c28b
+A fresh fetch confirmed exact tree equality and all 27 tested PHP hashes. Candidate
+626 / 6271 and final contract/source 2 / 310 pass. No Main implementation action remains.
+This follow-up changes documentation/status only; application tests are not repeated.
+Production deployment, migrations and runtime/provider activation remain separate.

@@ -109,7 +109,7 @@
   ],
   "swagger": "Exact additive Signal overlay; non-Signal operations, schemas and existing root metadata preserved.",
   "environment": "Independent candidate App/Tests autoload, copied identical dependencies, synthetic APP_KEY, SQLite :memory:, fake mail and no provider credentials.",
-  "main_promotion_state": "Candidate verified and ready for authorized Main merge",
+  "main_promotion_state": "Merged to Main in PR #334; exact tested tree and PHP identity verified",
   "production_deployed": false,
   "runtime_activated": false,
   "original_tested_base": "1813fcb585619e1e103902f4fb4ad40236b044bc",
@@ -129,5 +129,14 @@
       "docs/rfc/2026-10-27-knowledge-full-api-parity.md"
     ],
     "runtime_code_unchanged": true
+  },
+  "merge_proof": {
+    "pr": 334,
+    "url": "https://github.com/SveinT83/Nexum-PSA/pull/334",
+    "merge": "be28f77d16f29e662b7b8585b27971e9c1e62438",
+    "tested_head": "3d2e1655a3e6a14a5014fc0074656692474bb2a2",
+    "tested_and_merged_tree": "6d2a4a6961b22d7a6ee44a20a8d7f7ab86d3c28b",
+    "exact_tree_equality": true,
+    "tested_php_hashes_verified": 27
   }
 }

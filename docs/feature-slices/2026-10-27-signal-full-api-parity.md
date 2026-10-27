@@ -1,6 +1,6 @@
 # Feature Slices: Full Signal API Parity
 
-Status: Done On Dev - human review Reviewed; no Main/production promotion.
+Status: Done On Dev / Reviewed by Svein Tore / Merged to Main in PR #334 / Production unchanged.
 Date: 2026-10-27
 Parent: ../rfc/2026-10-27-signal-full-api-parity.md
 Owner: Codex. Product/release owner and reviewer: Svein Tore.
@@ -58,5 +58,14 @@ README, Knowledge/BookStack, API guide, coverage/evidence, TODO and human review
 All five slices are implemented and verified. Final Signal: 62 tests / 894 assertions;
 all 19 HTTP operations / 42 schemas, affected regression, native MySQL, HTTPS and
 actual handbook read-back are in ../plans/2026-10-27-signal-api-verification.md.
-Human review is Reviewed; automatic checks never mark it Reviewed. No Main or
-production/provider activation is included in this completion.
+Human review is Reviewed; automatic checks never mark it Reviewed. Main source promotion is complete in PR #334; no production/provider activation is included.
+
+## Verified Main Promotion (2026-10-27)
+
+Svein Tore accepted the completed scope and authorized Main merge. PR #334 is merged:
+https://github.com/SveinT83/Nexum-PSA/pull/334
+Merge: be28f77d16f29e662b7b8585b27971e9c1e62438
+Tested and merged tree: 6d2a4a6961b22d7a6ee44a20a8d7f7ab86d3c28b; exact equality verified by fresh fetch.
+Candidate: 626 tests / 6271 assertions; final contract/source: 2 / 310, zero failures/skips.
+All 27 tested PHP hashes match. Main action is complete; production/provider activation
+remains separately authorized. Shared Dev work and its staged index are preserved.

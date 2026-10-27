@@ -191,7 +191,19 @@
     },
     "connector_search_blocker": "Multi-character query rejected by connector pattern validator; normal page listing and exact body updates/read-back succeeded.",
     "native_sync_state": "pending_push; separate from actual BookStack publication evidence",
-    "final_intake_prefill_authority_section_read_back": true
+    "final_intake_prefill_authority_section_read_back": true,
+    "main_merge_publication_readback": {
+      "pages": [
+        530,
+        449
+      ],
+      "exact_readback": true,
+      "main_pr": 334,
+      "review_status": "Reviewed",
+      "production_deployed": false,
+      "other_sections_preserved": true,
+      "signal_api_section_restored_after_concurrent_publication": true
+    }
   },
   "knowledge": {
     "signal_summary": {
@@ -206,7 +218,7 @@
       {
         "id": 47,
         "source": "signals/signal-domain-overview",
-        "source_sha256": "5912707752cbb6b43acb0523c966d2d7ae1106ec38f91bc2e83ca14a7632d422",
+        "source_sha256": "3b0a774d904ce3c57425d24afe943735fa129013dda8eb00cbf729eb28ee5a54",
         "exact_body_readback": true,
         "visibility": "internal",
         "sync_status": "pending_push"
@@ -214,7 +226,7 @@
       {
         "id": 46,
         "source": "signals/signal-api-support",
-        "source_sha256": "bbd254d708d235d80e3e9bcfd0d63832ef1ebb69a4e8e17954a0543d4bce35a3",
+        "source_sha256": "fb280193d1932211d14f65b0b5e82e7cdcdcf4a776e9fa659e05de6d5b447c88",
         "exact_body_readback": true,
         "visibility": "internal",
         "sync_status": "pending_push"
@@ -222,7 +234,7 @@
       {
         "id": 3,
         "source": "integrations/api-management",
-        "source_sha256": "70bb3271a9fa095576da598d4d930c25bb0e630e91a2f3ac05fe3f0d54de5333",
+        "source_sha256": "2aadd30fae4c01d5dedb0f3c9bf9d2b0c62610f119e234beb7eb63fa971e898b",
         "exact_body_readback": true,
         "visibility": "internal",
         "sync_status": "pending_push"
@@ -238,9 +250,9 @@
     "date": "2026-10-27",
     "production_authorized": false
   },
-  "main_promotion_performed": false,
+  "main_promotion_performed": true,
   "production_deployment_performed": false,
-  "committed_or_pushed": false,
+  "committed_or_pushed": true,
   "provider_ai_worker_scheduler_activation_performed": false,
   "website_handoff": "One public-safe item added/read back; do not publish before review and production availability.",
   "files": [
@@ -296,5 +308,15 @@
   "shared_work_note": "Catalog and Knowledge test/source files contain other contributor changes. This task made only additive Signal scopes, one source-sync test section and the Signal handbook section. Do not promote whole shared-file diffs blindly.",
   "final_scoped_whitespace_utf8_json_verified": true,
   "intake_prefill_same_browser_rule_manager_authority_verified": true,
-  "main_promotion_authorized": true
+  "main_promotion_authorized": true,
+  "main_promotion": {
+    "pr": 334,
+    "url": "https://github.com/SveinT83/Nexum-PSA/pull/334",
+    "merge": "be28f77d16f29e662b7b8585b27971e9c1e62438",
+    "tested_head": "3d2e1655a3e6a14a5014fc0074656692474bb2a2",
+    "tested_and_merged_tree": "6d2a4a6961b22d7a6ee44a20a8d7f7ab86d3c28b",
+    "exact_tree_equality": true,
+    "tested_php_hashes_verified": 27
+  },
+  "shared_dev_branch_committed_or_pushed": false
 }
