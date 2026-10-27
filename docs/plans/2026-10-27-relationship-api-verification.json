@@ -63,7 +63,7 @@
     "final_merge_ready": {
       "passed": 5,
       "assertions": 1644,
-      "base": "0f062b945",
+      "base": "0f062b9450de76cabdea269c55506e17d42bcef7",
       "retention_additional_passed": 3,
       "retention_assertions": 9
     }
