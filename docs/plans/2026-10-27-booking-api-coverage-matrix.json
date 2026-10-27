@@ -855,7 +855,14 @@
     },
     "native_mysql": true,
     "https_operations": 17,
-    "https_calls": 20
+    "https_calls": 20,
+    "latest_main_refresh": {
+      "base_commit": "e42ecddb42a52e1b41931975e4760cf250e157cc",
+      "tests": 48,
+      "assertions": 740,
+      "failures": 0,
+      "skips": 0
+    }
   },
   "human_review": "HR-2026-10-27-BOOKING-API Pending; Main merge explicitly authorized"
 }

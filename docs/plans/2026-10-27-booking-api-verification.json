@@ -274,5 +274,12 @@
     "pint_passed": true,
     "whitespace_passed": true,
     "unrelated_swagger_contracts_unchanged": true
+  },
+  "latest_main_refresh": {
+    "base_commit": "e42ecddb42a52e1b41931975e4760cf250e157cc",
+    "tests": 48,
+    "assertions": 740,
+    "failures": 0,
+    "skips": 0
   }
 }

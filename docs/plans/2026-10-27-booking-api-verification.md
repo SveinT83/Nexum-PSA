@@ -95,3 +95,7 @@ false until separate operational activation after named manual review. Retain AP
 requests/audit and encrypted command/dispatch history on rollback. Unknown notification
 outcomes require reconciliation, never blind resend. Production deployment, external
 activation and named manual checks remain separate from the authorized Main merge.
+
+Latest Main integration: Intake changes were incorporated without changing their
+contracts. Focused Booking, API-key administration and source-sync regression then
+passed 48 tests / 740 assertions, zero failures/skips, on base f8180e6e.
