@@ -14,12 +14,24 @@ Existing article operation IDs are preserved. Main's other Swagger operations/sc
 are unchanged. Concurrent Signal code/scopes/guide additions were excluded from this
 candidate and remain preserved on shared Dev. The shared Dev index was unchanged.
 
-HR-2026-10-27-KNOWLEDGE-API, HR-2026-09-04-001 and HR-2026-09-03-003 remain Pending
-for manual scenarios; Svein explicitly authorized this Main merge without claiming
-those checks were performed. Production deployment/release/provider activation is
+HR-2026-10-27-KNOWLEDGE-API is Reviewed by Svein Tore, 2026-10-27. The independent
+HR-2026-09-04-001 and HR-2026-09-03-003 remain Pending. No individual scenario execution
+is invented. Production deployment/release/provider activation is
 separately gated. The exact additive migration ran only on Dev, batch 32; no retained
 probe commands or temporary read tokens. Native MySQL/HTTPS and actual handbook read-back
 are recorded in knowledge-api-verification.md/.json.
 
 No Main implementation action remains. This follow-up updates only documentation and
 coordination status. Application tests were not rerun for this status-only reconciliation.
+
+## Named Human Acceptance (2026-10-27)
+
+Svein Tore explicitly accepted the completed Knowledge API handoff with
+"Godkjenner og merge til main". HR-2026-10-27-KNOWLEDGE-API is Reviewed.
+This records the named reviewer's acceptance of the presented scope; individual
+scenario executions were not separately reported and are not invented. Main was
+already merged in PR #331, with merge evidence reconciled in PR #332.
+The older HR-2026-09-04-001 and HR-2026-09-03-003 reviews remain independent and
+Pending. This acceptance does not authorize production deployment or provider activation.
+This follow-up changes documentation/acceptance status only; application tests were
+not rerun because executable code, configuration and OpenAPI are unchanged.

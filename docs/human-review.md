@@ -42,14 +42,17 @@ Main candidate verification and merge evidence are recorded separately.
 
 ## HR-2026-10-27-KNOWLEDGE-API - Full Knowledge Browser/API Coverage
 
-Status: Pending human scenario review; automated Dev implementation is complete.
+Status: Reviewed by Svein Tore, 2026-10-27.
+Named acceptance: "Godkjenner og merge til main".
+The reviewer accepted the completed scope; individual scenario execution was not
+separately reported. The checklist below is retained as the accepted review criteria.
 Owner: Codex. Named intended human reviewer/release owner: Svein Tore.
 Scope: rfc/2026-10-27-knowledge-full-api-parity.md (Approved; Done On Dev); all 37 browser rows,
 Livewire tags/editor, library Sync Now, settings and portal workflows.
-Svein Tore explicitly authorized "Ja og merge til main" on 2026-10-27. Tested Main
-promotion is authorized with these manual scenarios still Pending; no scenario or
-review is marked Reviewed. This checklist and HR-2026-09-04-001 / HR-2026-09-03-003
-continue to block production rollout/release/provider activation until separately approved.
+Svein Tore authorized Main merge earlier and has now explicitly accepted this review.
+This checklist's acceptance gate is satisfied. The separate HR-2026-09-04-001 and
+HR-2026-09-03-003 gates remain Pending; production rollout/release/provider activation
+also requires separate authorization. No production action is included here.
 
 - [ ] Create/edit a proposal; confirm the published article stays unchanged until exact approval/publication.
 - [ ] Review full preview/diff/history; approve/reject and publish/retry with separate native/token rights.
@@ -74,7 +77,8 @@ Evidence: plans/2026-10-27-knowledge-api-verification.md/.json. No human scenari
 is inferred. Main merge is completed in PR #331; production/activation remains blocked.
 
 Verified Main merge: https://github.com/SveinT83/Nexum-PSA/pull/331
-Named approval remains the direct Main instruction, not completed scenario review.
+The later explicit acceptance marks this API checklist Reviewed; earlier Main approval
+alone did not complete it. Individual scenario execution is not asserted.
 This status-only follow-up does not change runtime code; application tests were not rerun.
 
 ## HR-2026-10-27-DOCUMENTATION-API - Full Documentation Browser/API Coverage
