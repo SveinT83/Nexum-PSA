@@ -33,7 +33,7 @@ or an endpoint count. Preserve supported public recipient capabilities unchanged
 New campaign lifecycle, repeat/resend, social/Google integrations, new segmentation
 engine, sender/provider administration, Contact identity or consent redesign, role
 grants, AI activation, real customer sends, queue backlog processing, frontend redesign,
-Main commit/push/merge or production deployment. No new list/campaign deletion,
+or production deployment. Main merge was explicitly approved below. No new list/campaign deletion,
 pause/resume or recovery operation is invented where it lacks a supported workflow.
 Existing future integration backlog remains separate. No localization changes.
 
@@ -209,5 +209,5 @@ Main promotion with those checks outstanding, not production rollout or activati
 All six slices are Done On Dev. Final Dev and Main candidate Marketing checks each
 pass 88 tests / 2018 assertions; the affected Main batch passes 488 / 7469. Native
 DB, trusted HTTPS, 42 operations / 62 schemas and actual BookStack 449 content/access
-are verified. Main promotion is explicitly authorized; production and human scenario
+are verified. Main is merged and read back in PR #350; production and human scenario
 review remain separate. See plans/2026-10-27-marketing-api-verification.md/.json.

@@ -262,5 +262,5 @@ See:
 42 protected HTTP operations cover the current Marketing browser workflows, with
 complete typed Swagger and actor/token authorization. See `Docs/knowledge/marketing-api.md`
 for scopes, contexts, exact command read-back, provider guards and deployment steps.
-Current availability is Dev; Main promotion is authorized and under verification,
+Implemented on Dev and merged to Main in PR #350;
 production is unchanged. Public recipient capability URLs remain unchanged.

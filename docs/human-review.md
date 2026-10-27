@@ -2,7 +2,7 @@
 
 ## HR-2026-10-27-MARKETING-API - Full Marketing Browser/API Coverage
 
-Status: Pending / Dev implementation verified; Main promotion authorized.
+Status: Pending / Dev implementation verified; merged to Main in PR #350.
 Added: 2026-10-27. Owner: Codex. Intended human reviewer/release owner: Svein Tore.
 Scope: rfc/2026-10-27-marketing-full-api-parity.md (Approved), MK01-MK06, all 28 staff
 browser routes, 3 public recipient capability routes and embedded/API-only workflows.
@@ -42,7 +42,7 @@ Manual scenario boxes remain unchecked; this is not a claim that Svein executed 
 
 Final candidate and Dev Marketing runs each pass 88 tests / 2018 assertions.
 Populated field/receipt contracts, rendered-error privacy and browser/API rollback
-are explicitly covered. Main promotion is ready; manual scenarios remain Pending.
+are explicitly covered. Main merge is verified in PR #350; manual scenarios remain Pending.
 
 ## HR-2026-10-27-RELATIONSHIP-API - Full Relationship Browser/API Coverage
 

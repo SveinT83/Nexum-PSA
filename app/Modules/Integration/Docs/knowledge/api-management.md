@@ -1526,5 +1526,5 @@ for exact results. Legacy unkeyed requests retain compatibility with a retry war
 API AI/WordPress/test-send/due-send additionally require the default-off Marketing
 provider-execution guard. Queued/SMTP-accepted results do not prove inbox delivery.
 See the Marketing overview and full Marketing API guide for steps and troubleshooting.
-Main promotion is authorized and under verification; production/activation is unchanged.
+Merged to Main in PR #350; production/activation is unchanged.
 HR-2026-10-27-MARKETING-API remains Pending for human scenarios before production/release.
