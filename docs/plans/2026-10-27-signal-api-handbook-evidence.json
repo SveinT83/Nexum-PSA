@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-27",
+  "pages": [
+    {
+      "id": 530,
+      "name": "Signal Domain Overview",
+      "body_exact_after_terminal_newline_normalization": true
+    },
+    {
+      "id": 449,
+      "name": "Api Management",
+      "requested_section_exact": true,
+      "prior_body_preserved": true,
+      "concurrent_knowledge_addition_preserved": true
+    }
+  ],
+  "publication_method": "Supported BookStack connector body updates; standalone API guide is included in existing Signal overview 530.",
+  "access": {
+    "page530": "inherits chapter 529",
+    "chapter529": "inherits book 339",
+    "page449": "inherits chapter 374",
+    "book339": "existing overrides and fallback inheritance preserved",
+    "employee_role": {
+      "id": 2,
+      "name": "Editor",
+      "global_read_permissions_verified": [
+        "book-view-all",
+        "chapter-view-all",
+        "page-view-all"
+      ]
+    },
+    "permissions_changed": false,
+    "employee_openwebui_retrieval_tested": false
+  },
+  "connector_search_blocker": "Multi-character query rejected by connector pattern validator; normal page listing and exact body updates/read-back succeeded.",
+  "native_sync_state": "pending_push; separate from actual BookStack publication evidence",
+  "final_intake_prefill_authority_section_read_back": true
+}

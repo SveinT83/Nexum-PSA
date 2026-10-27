@@ -32,6 +32,11 @@ class ExecuteSignalAction
 {
     public function handle(Signal $signal, SignalRule $rule, array $action, int $actionIndex = 0): array
     {
+        if (request()->routeIs('api.v1.signals.*')) {
+            app(\App\Modules\Signal\Support\SignalApiExecutionPolicy::class)->authorize(request(), $signal, $action);
+            // Downstream Task/Portal/Storage services receive the fresh direct API caller.
+            $action['actor_id'] = request()->user()->id;
+        }
         $idempotencyKey = $this->idempotencyKey($signal, $rule, $actionIndex);
 
         return match ($action['type'] ?? null) {

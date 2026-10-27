@@ -1,0 +1,74 @@
+{
+    "trusted_https": true,
+    "checks": [
+        {
+            "path": "\/api\/v1\/signals",
+            "anonymous_status": 401
+        },
+        {
+            "path": "\/api\/v1\/signals",
+            "status": 200,
+            "json_envelope": true,
+            "bytes": 74
+        },
+        {
+            "path": "\/api\/v1\/signals\/context",
+            "status": 200,
+            "json_envelope": true,
+            "bytes": 395
+        },
+        {
+            "path": "\/api\/v1\/signals\/rules",
+            "status": 200,
+            "json_envelope": true,
+            "bytes": 74
+        },
+        {
+            "path": "\/api\/v1\/signals\/rules\/context",
+            "status": 200,
+            "json_envelope": true,
+            "bytes": 2373
+        },
+        {
+            "path": "\/api\/v1\/signals\/lookups\/actors",
+            "status": 200,
+            "json_envelope": true,
+            "bytes": 102
+        },
+        {
+            "path": "\/api\/v1\/signals\/lookups\/task-templates",
+            "status": 200,
+            "json_envelope": true,
+            "bytes": 74
+        },
+        {
+            "path": "\/api\/v1\/signals\/settings",
+            "status": 200,
+            "json_envelope": true,
+            "bytes": 1327
+        },
+        {
+            "path": "\/api\/v1\/signals\/related\/clients\/1",
+            "status": 200,
+            "json_envelope": true,
+            "bytes": 11
+        },
+        {
+            "path": "\/api\/v1\/signals\/related\/contacts\/1",
+            "status": 200,
+            "json_envelope": true,
+            "bytes": 11
+        },
+        {
+            "path": "\/api\/v1\/signals\/operations\/{missing}",
+            "status": 404
+        },
+        {
+            "path": "\/docs",
+            "status": 200,
+            "signal_operations": 19
+        }
+    ],
+    "temporary_token_removed": true,
+    "provider_switch_unchanged": true
+}

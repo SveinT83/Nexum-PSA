@@ -1,0 +1,697 @@
+{
+  "date": "2026-10-27",
+  "branch": "Dev",
+  "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "browser_rows": 18,
+  "current_api_operations": 19,
+  "count_excludes_head": true,
+  "rows": [
+    {
+      "id": "S01",
+      "browser_method": "GET",
+      "browser_uri": "tech/admin/system/signals",
+      "browser_name": "tech.admin.system.signals.index",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalController@index",
+      "classification": "read",
+      "planned_api": "GET /api/v1/signals",
+      "token_ability": "signals.read",
+      "native_permission": "signal.view",
+      "acceptance": "feed filters, sorting and pagination",
+      "status": "Verified On Dev",
+      "runtime_operation": "GET /api/v1/signals",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    },
+    {
+      "id": "S02",
+      "browser_method": "GET",
+      "browser_uri": "tech/admin/system/signals/rules",
+      "browser_name": "tech.admin.system.signals.rules.index",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@index",
+      "classification": "read",
+      "planned_api": "GET /api/v1/signals/rules",
+      "token_ability": "signals.rules.read",
+      "native_permission": "signal.view",
+      "acceptance": "priority ordering, execution count and pagination",
+      "status": "Verified On Dev",
+      "runtime_operation": "GET /api/v1/signals/rules",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    },
+    {
+      "id": "S03",
+      "browser_method": "POST",
+      "browser_uri": "tech/admin/system/signals/rules",
+      "browser_name": "tech.admin.system.signals.rules.store",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@store",
+      "classification": "write",
+      "planned_api": "POST /api/v1/signals/rules",
+      "token_ability": "signals.rules.write",
+      "native_permission": "signal.rule.manage",
+      "acceptance": "shared grouped/legacy validation, audit and exact saved result",
+      "status": "Verified On Dev",
+      "runtime_operation": "POST /api/v1/signals/rules",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    },
+    {
+      "id": "S04",
+      "browser_method": "GET",
+      "browser_uri": "tech/admin/system/signals/rules/create",
+      "browser_name": "tech.admin.system.signals.rules.create",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@create",
+      "classification": "read",
+      "planned_api": "GET /api/v1/signals/rules/context",
+      "token_ability": "signals.rules.write",
+      "native_permission": "signal.rule.manage",
+      "acceptance": "defaults, ten actions, operators, bounded lookups, Intake prefill",
+      "status": "Verified On Dev",
+      "runtime_operation": "GET /api/v1/signals/rules/context",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    },
+    {
+      "id": "S05",
+      "browser_method": "GET",
+      "browser_uri": "tech/admin/system/signals/rules/{rule}",
+      "browser_name": "tech.admin.system.signals.rules.show",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@show",
+      "classification": "read",
+      "planned_api": "GET /api/v1/signals/rules/{rule}",
+      "token_ability": "signals.rules.read",
+      "native_permission": "signal.view",
+      "acceptance": "saved definition, reference and history; edit context separately gated",
+      "status": "Verified On Dev",
+      "runtime_operation": "GET /api/v1/signals/rules/{rule}",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    },
+    {
+      "id": "S06",
+      "browser_method": "PUT",
+      "browser_uri": "tech/admin/system/signals/rules/{rule}",
+      "browser_name": "tech.admin.system.signals.rules.update",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@update",
+      "classification": "write",
+      "planned_api": "PUT /api/v1/signals/rules/{rule}",
+      "token_ability": "signals.rules.write",
+      "native_permission": "signal.rule.manage",
+      "acceptance": "shared validation, state precondition and audit",
+      "status": "Verified On Dev",
+      "runtime_operation": "PUT /api/v1/signals/rules/{rule}",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    },
+    {
+      "id": "S07",
+      "browser_method": "GET",
+      "browser_uri": "tech/admin/system/signals/settings",
+      "browser_name": "tech.admin.system.signals.settings.edit",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalSettingsController@edit",
+      "classification": "read",
+      "planned_api": "GET /api/v1/signals/settings",
+      "token_ability": "signals.settings.read",
+      "native_permission": "signal.rule.manage",
+      "acceptance": "normalized AI policy and sanitized current agent status",
+      "status": "Verified On Dev",
+      "runtime_operation": "GET /api/v1/signals/settings",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    },
+    {
+      "id": "S08",
+      "browser_method": "PUT",
+      "browser_uri": "tech/admin/system/signals/settings",
+      "browser_name": "tech.admin.system.signals.settings.update",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalSettingsController@update",
+      "classification": "write",
+      "planned_api": "PUT /api/v1/signals/settings",
+      "token_ability": "signals.settings.write",
+      "native_permission": "signal.rule.manage",
+      "acceptance": "shared normalization, precondition and exact read-back",
+      "status": "Verified On Dev",
+      "runtime_operation": "PUT /api/v1/signals/settings",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    },
+    {
+      "id": "S09",
+      "browser_method": "GET",
+      "browser_uri": "tech/admin/system/signals/{signal}",
+      "browser_name": "tech.admin.system.signals.show",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalController@show",
+      "classification": "read",
+      "planned_api": "GET /api/v1/signals/{signal}",
+      "token_ability": "signals.read",
+      "native_permission": "signal.view",
+      "acceptance": "payload, related context and execution ancestry",
+      "status": "Verified On Dev",
+      "runtime_operation": "GET /api/v1/signals/{signal}",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    },
+    {
+      "id": "S10",
+      "browser_method": "POST",
+      "browser_uri": "tech/admin/system/signals/{signal}/executions/{execution}/retry",
+      "browser_name": "tech.admin.system.signals.executions.retry",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalController@retryExecution",
+      "classification": "action",
+      "planned_api": "POST /api/v1/signals/{signal}/executions/{execution}/retry",
+      "token_ability": "signals.actions.execute",
+      "native_permission": "signal.action.execute",
+      "acceptance": "failed/all snapshot positions, immutable linked attempt and stable keys",
+      "status": "Verified On Dev",
+      "runtime_operation": "POST /api/v1/signals/{signal}/executions/{execution}/retry",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    },
+    {
+      "id": "S11",
+      "browser_method": "GET",
+      "browser_uri": "tech/signals",
+      "browser_name": "tech.signals.index",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalController@index",
+      "classification": "read",
+      "planned_api": "GET /api/v1/signals",
+      "token_ability": "signals.read",
+      "native_permission": "signal.view",
+      "acceptance": "feed filters, sorting and pagination",
+      "status": "Verified On Dev",
+      "runtime_operation": "GET /api/v1/signals",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    },
+    {
+      "id": "S12",
+      "browser_method": "GET",
+      "browser_uri": "tech/signals/rules",
+      "browser_name": "tech.signals.rules.index",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@index",
+      "classification": "read",
+      "planned_api": "GET /api/v1/signals/rules",
+      "token_ability": "signals.rules.read",
+      "native_permission": "signal.view",
+      "acceptance": "priority ordering, execution count and pagination",
+      "status": "Verified On Dev",
+      "runtime_operation": "GET /api/v1/signals/rules",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    },
+    {
+      "id": "S13",
+      "browser_method": "POST",
+      "browser_uri": "tech/signals/rules",
+      "browser_name": "tech.signals.rules.store",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@store",
+      "classification": "write",
+      "planned_api": "POST /api/v1/signals/rules",
+      "token_ability": "signals.rules.write",
+      "native_permission": "signal.rule.manage",
+      "acceptance": "shared grouped/legacy validation, audit and exact saved result",
+      "status": "Verified On Dev",
+      "runtime_operation": "POST /api/v1/signals/rules",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    },
+    {
+      "id": "S14",
+      "browser_method": "GET",
+      "browser_uri": "tech/signals/rules/create",
+      "browser_name": "tech.signals.rules.create",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@create",
+      "classification": "read",
+      "planned_api": "GET /api/v1/signals/rules/context",
+      "token_ability": "signals.rules.write",
+      "native_permission": "signal.rule.manage",
+      "acceptance": "defaults, ten actions, operators, bounded lookups, Intake prefill",
+      "status": "Verified On Dev",
+      "runtime_operation": "GET /api/v1/signals/rules/context",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    },
+    {
+      "id": "S15",
+      "browser_method": "GET",
+      "browser_uri": "tech/signals/rules/{rule}",
+      "browser_name": "tech.signals.rules.show",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@show",
+      "classification": "read",
+      "planned_api": "GET /api/v1/signals/rules/{rule}",
+      "token_ability": "signals.rules.read",
+      "native_permission": "signal.view",
+      "acceptance": "saved definition, reference and history; edit context separately gated",
+      "status": "Verified On Dev",
+      "runtime_operation": "GET /api/v1/signals/rules/{rule}",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    },
+    {
+      "id": "S16",
+      "browser_method": "PUT",
+      "browser_uri": "tech/signals/rules/{rule}",
+      "browser_name": "tech.signals.rules.update",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@update",
+      "classification": "write",
+      "planned_api": "PUT /api/v1/signals/rules/{rule}",
+      "token_ability": "signals.rules.write",
+      "native_permission": "signal.rule.manage",
+      "acceptance": "shared validation, state precondition and audit",
+      "status": "Verified On Dev",
+      "runtime_operation": "PUT /api/v1/signals/rules/{rule}",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    },
+    {
+      "id": "S17",
+      "browser_method": "GET",
+      "browser_uri": "tech/signals/{signal}",
+      "browser_name": "tech.signals.show",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalController@show",
+      "classification": "read",
+      "planned_api": "GET /api/v1/signals/{signal}",
+      "token_ability": "signals.read",
+      "native_permission": "signal.view",
+      "acceptance": "payload, related context and execution ancestry",
+      "status": "Verified On Dev",
+      "runtime_operation": "GET /api/v1/signals/{signal}",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    },
+    {
+      "id": "S18",
+      "browser_method": "POST",
+      "browser_uri": "tech/signals/{signal}/executions/{execution}/retry",
+      "browser_name": "tech.signals.executions.retry",
+      "controller_action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalController@retryExecution",
+      "classification": "action",
+      "planned_api": "POST /api/v1/signals/{signal}/executions/{execution}/retry",
+      "token_ability": "signals.actions.execute",
+      "native_permission": "signal.action.execute",
+      "acceptance": "failed/all snapshot positions, immutable linked attempt and stable keys",
+      "status": "Verified On Dev",
+      "runtime_operation": "POST /api/v1/signals/{signal}/executions/{execution}/retry",
+      "evidence": [
+        "app/Modules/Signal/Tests/Feature/SignalApiParityTest.php",
+        "app/Modules/Signal/Tests/Feature/SignalApiContractTest.php",
+        "docs/plans/2026-10-27-signal-api-verification.json"
+      ]
+    }
+  ],
+  "baseline_routes": [
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/signals",
+      "name": "api.v1.signals.store",
+      "action": "App\\Modules\\Signal\\Controllers\\Api\\V1\\SignalController@store",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:signals.create"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/signals",
+      "name": "tech.admin.system.signals.index",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/signals/rules",
+      "name": "tech.admin.system.signals.rules.index",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/signals/rules",
+      "name": "tech.admin.system.signals.rules.store",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/signals/rules/create",
+      "name": "tech.admin.system.signals.rules.create",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@create",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/signals/rules/{rule}",
+      "name": "tech.admin.system.signals.rules.show",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/admin/system/signals/rules/{rule}",
+      "name": "tech.admin.system.signals.rules.update",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/signals/settings",
+      "name": "tech.admin.system.signals.settings.edit",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalSettingsController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/admin/system/signals/settings",
+      "name": "tech.admin.system.signals.settings.update",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalSettingsController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/signals/{signal}",
+      "name": "tech.admin.system.signals.show",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/signals/{signal}/executions/{execution}/retry",
+      "name": "tech.admin.system.signals.executions.retry",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalController@retryExecution",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/signals",
+      "name": "tech.signals.index",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/signals/rules",
+      "name": "tech.signals.rules.index",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/signals/rules",
+      "name": "tech.signals.rules.store",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/signals/rules/create",
+      "name": "tech.signals.rules.create",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@create",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/signals/rules/{rule}",
+      "name": "tech.signals.rules.show",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/signals/rules/{rule}",
+      "name": "tech.signals.rules.update",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalRuleController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/signals/{signal}",
+      "name": "tech.signals.show",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/signals/{signal}/executions/{execution}/retry",
+      "name": "tech.signals.executions.retry",
+      "action": "App\\Modules\\Signal\\Controllers\\Tech\\SignalController@retryExecution",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    }
+  ],
+  "signal_source_sha256": {
+    "app/Modules/Signal/routes.php": "b154dbea951eac8c214d705420c0d8a1e7a99e2b94cd2d498b494fe613b25fe3",
+    "app/Modules/Signal/api.php": "60ea1a6e802dcd06b3293be1314c4fc321576824d078f1dc140c0be691ea58ca",
+    "app/Modules/Signal/README.md": "35b07e7e7f156fc5faff430e2022948b19760bb534a5921a9217941bff8e52e3",
+    "app/Modules/Signal/Queries/RelatedSignals.php": "2ed7d028c24e78c7047fc7c50c40884c6719e9de663e7bf671e6d19b8a76ddbe",
+    "app/Modules/Signal/Models/Signal.php": "b4211ddd2f816932fdca48b69c173c031348d72d2480d033ccb8ffbc9512f2df",
+    "app/Modules/Signal/Models/SignalRule.php": "21a2acf6fc6f27d9f60347ed55a581c592872cf95141a8792bcbd5ba01bdf0ec",
+    "app/Modules/Signal/Models/SignalWebhookDelivery.php": "411b55d4f44d79a9e94fa60020d4454e98f11339284da4c71fafa63be4866372",
+    "app/Modules/Signal/Models/SignalRuleExecution.php": "ee36268d34ca5579f6db8fe0f996c27fe43e6a3bebaa42a20a7294a44ac61cf3",
+    "app/Modules/Signal/Jobs/DispatchPendingSignalWebhookDeliveries.php": "41b07a167603e58bba53a1280053f3cab30e43df43662bebfe5a0eb5cc941ca4",
+    "app/Modules/Signal/Jobs/DeliverSignalWebhook.php": "962cec7d73e24bb5920ddc16219e13f0d35237192b60ad63e4c3f601943b994b",
+    "app/Modules/Signal/Actions/EnsureSignalDefaults.php": "413bd89e23046a772e118bd1ac6b512cc28f2070fcadf4614781a8fb7e7bb4d8",
+    "app/Modules/Signal/Actions/ProcessSignalRules.php": "01a6ff8586ba6fe6d337b4a32d817bf596b2d14bbc785e93b8fab85ff0d6a64b",
+    "app/Modules/Signal/Actions/ExecuteSignalAction.php": "36be698f58685a9df5ce750ff7ef3d4d5dea223a83af1148595f71513856425a",
+    "app/Modules/Signal/Actions/RecordSignal.php": "36e2eef0a1cf7e626f964ee18da2178c6555406392d7b9a726584a577a474915",
+    "app/Modules/Signal/Actions/ClassifySignalContextWithAi.php": "d87c2af6eec153ccf2224c842d962738f0d39d8826c38bed6e17882432e4e4b2",
+    "app/Modules/Signal/Views/Tech/settings.blade.php": "ebb96fa7c629857863376faaf0c27ff729129013369149a159c66db8146e43b5",
+    "app/Modules/Signal/Views/Tech/show.blade.php": "7c75c4078ee2dfd41a422e9549e5be15580623b727ee5cdd238365af2971be93",
+    "app/Modules/Signal/Views/Tech/index.blade.php": "d3ef5cdbc51dec4189159035d3490675defd24f8c34a3ea30dfc7fad8ff169aa",
+    "app/Modules/Signal/Views/Tech/partials/related-signals.blade.php": "4066d1b0f6b1f84fbfb767f943aa8ac24cf84858cfac9242641a7ddf69117c6c",
+    "app/Modules/Signal/Views/Tech/rules/show.blade.php": "652035cb5b3ad977fb383a6d68c47ac2211bd165e10bbf027885b058f60f59e1",
+    "app/Modules/Signal/Views/Tech/rules/form.blade.php": "e8d75081659cc62801ab62d64c0a9f0c1923f112ff8a8419e4a03d2d75d50ece",
+    "app/Modules/Signal/Views/Tech/rules/index.blade.php": "eeecbb09a79010cc8ecdaf2ad7e3aff7398884552da002cff50d83447bb0984c",
+    "app/Modules/Signal/Views/Tech/rules/partials/condition-row.blade.php": "1ab04b42eda8337d7119098501131ad252e07b69f457a7064dbacd02c66690e8",
+    "app/Modules/Signal/Views/Tech/rules/partials/reference.blade.php": "753061745195e3fe4a9b27d32ebb46dd5e24d39113e1cd1bbc4c812a0460870e",
+    "app/Modules/Signal/Views/Tech/rules/partials/action-row.blade.php": "78928888de4fa84f20f74bc81cbf5ef0ecd01add2f8a1faa23cd1b1724fd9d95",
+    "app/Modules/Signal/Views/Tech/rules/partials/fields.blade.php": "c5e9bf7f4a7251593646a1e99c2212ea4c25712b6679639aa63f2baf8af8c366",
+    "app/Modules/Signal/Views/Tech/rules/partials/condition-group.blade.php": "bfbd28b18837fdb36c59e1f595123bdf7727de358b608635f497a469227d10eb",
+    "app/Modules/Signal/Resources/Api/V1/SignalResource.php": "c6aff59e4bb7a95f8e6b310a07b4ec2f7e609fdf6f3b925b73f8cd59d1ed993e",
+    "app/Modules/Signal/Tests/Feature/SignalModuleTest.php": "14393b0819087deaecf65e00a898cf1d2f943048592913bdc52bb1d534adc38e",
+    "app/Modules/Signal/Tests/Feature/SupplierOrderImportActionTest.php": "019ed63ba7f97bc34b8905a0f8c4a2f2d9371fb373ba4025ec29d29aaa314ceb",
+    "app/Modules/Signal/Controllers/Tech/SignalSettingsController.php": "43cc2539ccccf93bf5cf2861a8db3d8de2ad5256d4fb53bff7b56c8b1c93a80b",
+    "app/Modules/Signal/Controllers/Tech/SignalController.php": "1b477a506c38ce4b76a5152987d7c1e4716656fd4c6b2ba653818d64fef6713d",
+    "app/Modules/Signal/Controllers/Tech/SignalRuleController.php": "d7d8dfc8e85d99cb3a945581916216709c4ffc81be3d54be8b760ac079eb3eb7",
+    "app/Modules/Signal/Controllers/Api/V1/SignalController.php": "15e4771d7ca81acbd710285659258c6d190418f33ecdb17a111172bcc712ad21",
+    "app/Modules/Signal/Support/SignalRuleDefinition.php": "208770d6f8b541ef8d00b8ad84b1f205b2193656a63504e4c1fc7b3e262590fb",
+    "app/Modules/Signal/Support/SignalSettings.php": "46b011b8274ab949050f2ce509fbc227fb20842f11f23618bf3521b602633cd9",
+    "app/Modules/Signal/Docs/knowledge/signal-domain-overview.md": "136f55ac21fa7eab3e944ef4be4eddd5557e931ec05257af01af5c623b37104a"
+  },
+  "baseline_tests": {
+    "command": "HOME=/tmp php artisan test app/Modules/Signal/Tests",
+    "passed": 40,
+    "assertions": 211,
+    "failures": 0,
+    "skipped": 0,
+    "duration_seconds": 44.6
+  },
+  "github_open_search": {
+    "query": "repo:SveinT83/Nexum-PSA Signal",
+    "related_issues": [
+      262,
+      285
+    ],
+    "direct_signal_parity_issue_found": false
+  },
+  "scope_state": "Done On Dev; human review Pending; Main/production not promoted by this task.",
+  "verification_report": "2026-10-27-signal-api-verification.md",
+  "http_operations": 19,
+  "typed_schemas": 42,
+  "baseline_api_operations": 1
+}

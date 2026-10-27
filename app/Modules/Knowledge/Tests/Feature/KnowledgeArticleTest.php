@@ -887,7 +887,7 @@ class KnowledgeArticleTest extends TestCase
     {
         $this->artisan('knowledge:sync-docs', ['--module' => ['Signal']])
             ->expectsOutput('chapters: 1')
-            ->expectsOutput('articles: 1')
+            ->expectsOutput('articles: 2')
             ->expectsOutput('modules: Signal')
             ->assertSuccessful();
 
@@ -898,6 +898,10 @@ class KnowledgeArticleTest extends TestCase
 
         $this->assertSame('Signal Domain Overview', $article->title);
         $this->assertSame('Signal', $article->source_payload['module']);
+        $guide = Article::where('source_type', 'repository-docs')->where('source_id', 'signals/signal-api-support')->firstOrFail();
+        $this->assertSame('internal', $guide->visibility);
+        $this->assertSame(trim(file_get_contents(app_path('Modules/Signal/Docs/knowledge/signal-api-support.md'))), $guide->body_markdown);
+
     }
 
     #[Test]

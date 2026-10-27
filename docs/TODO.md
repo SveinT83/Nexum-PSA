@@ -1,5 +1,39 @@
 # tdPSA Development TODO
 
+## Full Signal browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Reviewed by Svein Tore / Main promotion In Progress / Production unchanged.
+Owner: Codex. Reviewer/release owner: Svein Tore. RFC approved with Godkjenner.
+RFC rfc/2026-10-27-signal-full-api-parity.md is Approved; ADR is Accepted; all five
+sequential slices are Done On Dev. Coverage: 18 browser rows / 24 mapped workflows,
+19 HTTP operations / 42 typed schemas. Final Signal: 62 tests / 894 assertions.
+Knowledge source-sync: 1 / 8; bounded remaining Integration: 52 / 267.
+Completed broad non-Signal groups: 2144 passing cases. Independent
+per-case fresh-database Tripletex provider suites were outside scope and interrupted;
+the whole application suite is not claimed complete. Initial shared-Swagger Signal
+failures are reconciled by the final complete Signal rerun. No relevant failure remains.
+All successful HTTP schemas, current actor/token/native/downstream access, encrypted
+replay, stale state, legacy history/payloads and failed/full retry are covered.
+Native MySQL uniqueness/encryption/rollback/two-connection retry and synthetic cleanup
+pass. Exact migration 2026_10_27_030000_create_signal_api_commands ran in Dev batch 31.
+Trusted HTTPS/Swagger and 25 scoped PHP syntax/Pint checks pass; tokens removed.
+Three Knowledge sources and actual BookStack 530/449 content/access are read back.
+Full guide is embedded in 530; connector multi-character search remains broken,
+normal body writes/read-back work. Native pending_push is not handbook proof;
+employee OpenWebUI retrieval remains untested. No handbook publication action remains.
+Evidence: plans/2026-10-27-signal-api-verification.md/.json and coverage/contract matrices.
+Compatibility: native signal.action.execute now protects ingest; processing additionally
+needs signals.actions.execute, downstream rights and explicit provider guards.
+The external API switch stays false; no role grants, AI/provider/worker/scheduler
+activation, commit/push, Main or production action occurred. Other contributor work
+and independent #262/#285/Knowledge/Booking work remain preserved.
+Human-review checklist HR-2026-10-27-SIGNAL-API is Reviewed by Svein Tore.
+Named acceptance on 2026-10-27: "Godkjenner og merge til main".
+Next action (Codex): verify the isolated Main candidate and merge the approved Signal
+scope. Production deployment and provider activation still require separate authorization.
+A public-safe website handoff exists with production/publication gates preserved.
+
+
 ## Full Knowledge browser/API coverage (2026-10-27)
 
 Status: Done On Dev / Merged To Main In PR #331 / Human Review Pending / Production unchanged.

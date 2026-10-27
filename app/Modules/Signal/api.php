@@ -1,9 +1,6 @@
 <?php
 
-use App\Modules\Signal\Controllers\Api\V1\SignalController;
-use Illuminate\Support\Facades\Route;
-use Laravel\Sanctum\Http\Middleware\CheckAbilities;
-
-Route::post('signals', [SignalController::class, 'store'])
-    ->name('signals.store')
-    ->middleware(CheckAbilities::class.':signals.create');
+// Compatibility loader; all Signal routes are domain-owned in routes.php.
+$signalApiRoutes = true;
+require __DIR__.'/routes.php';
+unset($signalApiRoutes);

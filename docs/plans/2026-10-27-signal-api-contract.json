@@ -1,0 +1,2041 @@
+{
+  "operations": [
+    {
+      "name": "index",
+      "path": "/api/v1/signals",
+      "method": "get",
+      "response_schema": "SignalApiSignalPage",
+      "parameters": [
+        "new OA\\Parameter(name: 'range', in: 'query', schema: new OA\\Schema(type: 'string', enum: ['7', '30', '90', 'custom', 'all']))",
+        "new OA\\Parameter(name: 'from', in: 'query', schema: new OA\\Schema(type: 'string', format: 'date'))",
+        "new OA\\Parameter(name: 'to', in: 'query', schema: new OA\\Schema(type: 'string', format: 'date'))",
+        "new OA\\Parameter(name: 'q', in: 'query', schema: new OA\\Schema(type: 'string'))",
+        "new OA\\Parameter(name: 'source_domain', in: 'query', schema: new OA\\Schema(type: 'string'))",
+        "new OA\\Parameter(name: 'signal_type', in: 'query', schema: new OA\\Schema(type: 'string'))",
+        "new OA\\Parameter(name: 'severity', in: 'query', schema: new OA\\Schema(type: 'string'))",
+        "new OA\\Parameter(name: 'status', in: 'query', schema: new OA\\Schema(type: 'string'))",
+        "new OA\\Parameter(name: 'sort', in: 'query', schema: new OA\\Schema(type: 'string', enum: ['signal_type', 'source_domain', 'severity', 'confidence', 'status', 'executions_count', 'occurred_at']))",
+        "new OA\\Parameter(name: 'direction', in: 'query', schema: new OA\\Schema(type: 'string', enum: ['asc', 'desc']))",
+        "new OA\\Parameter(name: 'page', in: 'query', schema: new OA\\Schema(type: 'integer', minimum: 1))",
+        "new OA\\Parameter(name: 'per_page', in: 'query', schema: new OA\\Schema(type: 'integer', minimum: 1, maximum: 100))"
+      ]
+    },
+    {
+      "name": "store",
+      "path": "/api/v1/signals",
+      "method": "post",
+      "response_schema": "SignalApiSignalResult",
+      "parameters": [
+        "new OA\\Parameter(name: 'Idempotency-Key', in: 'header', required: false, schema: new OA\\Schema(type: 'string', minLength: 8, maxLength: 200))"
+      ]
+    },
+    {
+      "name": "context",
+      "path": "/api/v1/signals/context",
+      "method": "get",
+      "response_schema": "SignalApiContextResult",
+      "parameters": []
+    },
+    {
+      "name": "lookups",
+      "path": "/api/v1/signals/lookups/{kind}",
+      "method": "get",
+      "response_schema": "SignalApiReferencePage",
+      "parameters": [
+        "new OA\\Parameter(name: 'kind', in: 'path', required: true, schema: new OA\\Schema(type: 'string'))",
+        "new OA\\Parameter(name: 'q', in: 'query', schema: new OA\\Schema(type: 'string'))",
+        "new OA\\Parameter(name: 'page', in: 'query', schema: new OA\\Schema(type: 'integer', minimum: 1))",
+        "new OA\\Parameter(name: 'per_page', in: 'query', schema: new OA\\Schema(type: 'integer', minimum: 1, maximum: 100))"
+      ]
+    },
+    {
+      "name": "operations.show",
+      "path": "/api/v1/signals/operations/{operation}",
+      "method": "get",
+      "response_schema": "SignalApiOperationResult",
+      "parameters": [
+        "new OA\\Parameter(name: 'operation', in: 'path', required: true, schema: new OA\\Schema(type: 'string'))"
+      ]
+    },
+    {
+      "name": "related.clients",
+      "path": "/api/v1/signals/related/clients/{client}",
+      "method": "get",
+      "response_schema": "SignalApiSignalList",
+      "parameters": [
+        "new OA\\Parameter(name: 'client', in: 'path', required: true, schema: new OA\\Schema(type: 'integer'))",
+        "new OA\\Parameter(name: 'per_page', in: 'query', schema: new OA\\Schema(type: 'integer', minimum: 1, maximum: 100))"
+      ]
+    },
+    {
+      "name": "related.contacts",
+      "path": "/api/v1/signals/related/contacts/{contact}",
+      "method": "get",
+      "response_schema": "SignalApiSignalList",
+      "parameters": [
+        "new OA\\Parameter(name: 'contact', in: 'path', required: true, schema: new OA\\Schema(type: 'integer'))",
+        "new OA\\Parameter(name: 'per_page', in: 'query', schema: new OA\\Schema(type: 'integer', minimum: 1, maximum: 100))"
+      ]
+    },
+    {
+      "name": "rules.index",
+      "path": "/api/v1/signals/rules",
+      "method": "get",
+      "response_schema": "SignalApiRulePage",
+      "parameters": [
+        "new OA\\Parameter(name: 'page', in: 'query', schema: new OA\\Schema(type: 'integer', minimum: 1))",
+        "new OA\\Parameter(name: 'per_page', in: 'query', schema: new OA\\Schema(type: 'integer', minimum: 1, maximum: 100))"
+      ]
+    },
+    {
+      "name": "rules.store",
+      "path": "/api/v1/signals/rules",
+      "method": "post",
+      "response_schema": "SignalApiRuleResult",
+      "parameters": [
+        "new OA\\Parameter(name: 'Idempotency-Key', in: 'header', required: true, schema: new OA\\Schema(type: 'string', minLength: 8, maxLength: 200))"
+      ]
+    },
+    {
+      "name": "rules.context",
+      "path": "/api/v1/signals/rules/context",
+      "method": "get",
+      "response_schema": "SignalApiRuleContextResult",
+      "parameters": [
+        "new OA\\Parameter(name: 'source_domain', in: 'query', schema: new OA\\Schema(type: 'string'))",
+        "new OA\\Parameter(name: 'intake_form_id', in: 'query', schema: new OA\\Schema(type: 'integer', minimum: 1))"
+      ]
+    },
+    {
+      "name": "rules.show",
+      "path": "/api/v1/signals/rules/{rule}",
+      "method": "get",
+      "response_schema": "SignalApiRuleResult",
+      "parameters": [
+        "new OA\\Parameter(name: 'rule', in: 'path', required: true, schema: new OA\\Schema(type: 'integer'))",
+        "new OA\\Parameter(name: 'page', in: 'query', schema: new OA\\Schema(type: 'integer', minimum: 1))",
+        "new OA\\Parameter(name: 'per_page', in: 'query', schema: new OA\\Schema(type: 'integer', minimum: 1, maximum: 100))"
+      ]
+    },
+    {
+      "name": "rules.update",
+      "path": "/api/v1/signals/rules/{rule}",
+      "method": "put",
+      "response_schema": "SignalApiRuleResult",
+      "parameters": [
+        "new OA\\Parameter(name: 'rule', in: 'path', required: true, schema: new OA\\Schema(type: 'integer'))",
+        "new OA\\Parameter(name: 'Idempotency-Key', in: 'header', required: true, schema: new OA\\Schema(type: 'string', minLength: 8, maxLength: 200))",
+        "new OA\\Parameter(name: 'If-Match', in: 'header', required: true, schema: new OA\\Schema(type: 'string'))"
+      ]
+    },
+    {
+      "name": "settings.show",
+      "path": "/api/v1/signals/settings",
+      "method": "get",
+      "response_schema": "SignalApiSettingsResult",
+      "parameters": []
+    },
+    {
+      "name": "settings.update",
+      "path": "/api/v1/signals/settings",
+      "method": "put",
+      "response_schema": "SignalApiSettingsResult",
+      "parameters": [
+        "new OA\\Parameter(name: 'Idempotency-Key', in: 'header', required: true, schema: new OA\\Schema(type: 'string', minLength: 8, maxLength: 200))",
+        "new OA\\Parameter(name: 'If-Match', in: 'header', required: true, schema: new OA\\Schema(type: 'string'))"
+      ]
+    },
+    {
+      "name": "show",
+      "path": "/api/v1/signals/{signal}",
+      "method": "get",
+      "response_schema": "SignalApiSignalResult",
+      "parameters": [
+        "new OA\\Parameter(name: 'signal', in: 'path', required: true, schema: new OA\\Schema(type: 'integer'))"
+      ]
+    },
+    {
+      "name": "executions.index",
+      "path": "/api/v1/signals/{signal}/executions",
+      "method": "get",
+      "response_schema": "SignalApiExecutionPage",
+      "parameters": [
+        "new OA\\Parameter(name: 'signal', in: 'path', required: true, schema: new OA\\Schema(type: 'integer'))",
+        "new OA\\Parameter(name: 'page', in: 'query', schema: new OA\\Schema(type: 'integer', minimum: 1))",
+        "new OA\\Parameter(name: 'per_page', in: 'query', schema: new OA\\Schema(type: 'integer', minimum: 1, maximum: 100))"
+      ]
+    },
+    {
+      "name": "executions.show",
+      "path": "/api/v1/signals/{signal}/executions/{execution}",
+      "method": "get",
+      "response_schema": "SignalApiExecutionResult",
+      "parameters": [
+        "new OA\\Parameter(name: 'signal', in: 'path', required: true, schema: new OA\\Schema(type: 'integer'))",
+        "new OA\\Parameter(name: 'execution', in: 'path', required: true, schema: new OA\\Schema(type: 'integer'))"
+      ]
+    },
+    {
+      "name": "executions.retry",
+      "path": "/api/v1/signals/{signal}/executions/{execution}/retry",
+      "method": "post",
+      "response_schema": "SignalApiRetryResult",
+      "parameters": [
+        "new OA\\Parameter(name: 'signal', in: 'path', required: true, schema: new OA\\Schema(type: 'integer'))",
+        "new OA\\Parameter(name: 'execution', in: 'path', required: true, schema: new OA\\Schema(type: 'integer'))",
+        "new OA\\Parameter(name: 'Idempotency-Key', in: 'header', required: true, schema: new OA\\Schema(type: 'string', minLength: 8, maxLength: 200))",
+        "new OA\\Parameter(name: 'If-Match', in: 'header', required: true, schema: new OA\\Schema(type: 'string'))"
+      ]
+    },
+    {
+      "name": "executions.retry-preview",
+      "path": "/api/v1/signals/{signal}/executions/{execution}/retry-preview",
+      "method": "post",
+      "response_schema": "SignalApiPreviewResult",
+      "parameters": [
+        "new OA\\Parameter(name: 'signal', in: 'path', required: true, schema: new OA\\Schema(type: 'integer'))",
+        "new OA\\Parameter(name: 'execution', in: 'path', required: true, schema: new OA\\Schema(type: 'integer'))"
+      ]
+    }
+  ],
+  "schemas": {
+    "Error": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "errors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "required": [
+        "message"
+      ]
+    },
+    "Meta": {
+      "type": "object",
+      "properties": {
+        "current_page": {
+          "type": "integer"
+        },
+        "per_page": {
+          "type": "integer"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "last_page": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "current_page",
+        "per_page",
+        "total",
+        "last_page"
+      ]
+    },
+    "Reference": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Links": {
+      "type": "object",
+      "properties": {
+        "self": {
+          "type": "string"
+        },
+        "admin": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "self",
+        "admin"
+      ]
+    },
+    "Action": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "marketing_suppress_contact_email",
+            "tag_contact",
+            "tag_client",
+            "emit_signal",
+            "sales_follow_up",
+            "ticket_follow_up",
+            "task_follow_up",
+            "portal_invitation",
+            "storage_supplier_order_import",
+            "webhook"
+          ]
+        },
+        "tag": {
+          "type": "string",
+          "nullable": true
+        },
+        "signal_type": {
+          "type": "string",
+          "nullable": true
+        },
+        "severity": {
+          "type": "string",
+          "nullable": true
+        },
+        "summary": {
+          "type": "string",
+          "nullable": true
+        },
+        "url": {
+          "type": "string",
+          "nullable": true
+        },
+        "title": {
+          "type": "string",
+          "nullable": true
+        },
+        "opportunity_title": {
+          "type": "string",
+          "nullable": true
+        },
+        "opportunity_type": {
+          "type": "string",
+          "nullable": true
+        },
+        "opportunity_status": {
+          "type": "string",
+          "nullable": true
+        },
+        "needs": {
+          "type": "string",
+          "nullable": true
+        },
+        "activity_type": {
+          "type": "string",
+          "nullable": true
+        },
+        "activity_subject": {
+          "type": "string",
+          "nullable": true
+        },
+        "activity_body": {
+          "type": "string",
+          "nullable": true
+        },
+        "next_follow_up_type": {
+          "type": "string",
+          "nullable": true
+        },
+        "next_follow_up_note": {
+          "type": "string",
+          "nullable": true
+        },
+        "subject": {
+          "type": "string",
+          "nullable": true
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "role": {
+          "type": "string",
+          "nullable": true
+        },
+        "email": {
+          "type": "string",
+          "nullable": true
+        },
+        "impact": {
+          "type": "string",
+          "nullable": true
+        },
+        "urgency": {
+          "type": "string",
+          "nullable": true
+        },
+        "confidence": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "actor_id": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "creator_id": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "owner_id": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "assigned_to": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "probability_percent": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "estimated_value_ex_vat": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "follow_up_minutes_from_now": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "site_id": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "contact_id": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "queue_id": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "ticket_type_id": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "priority_id": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "category_id": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "due_minutes_from_now": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "estimated_minutes": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "profile_id": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "template_group_id": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "nullable": true
+        },
+        "append_to_existing": {
+          "type": "boolean"
+        },
+        "create_if_missing": {
+          "type": "boolean"
+        },
+        "queue": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "ConditionRow": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string",
+          "nullable": true
+        },
+        "operator": {
+          "type": "string"
+        },
+        "value": {
+          "nullable": true
+        }
+      },
+      "required": [
+        "field",
+        "operator"
+      ]
+    },
+    "ConditionGroup": {
+      "type": "object",
+      "properties": {
+        "match": {
+          "type": "string",
+          "enum": [
+            "all",
+            "any"
+          ]
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/SignalApiConditionRow"
+          }
+        }
+      },
+      "required": [
+        "match",
+        "conditions"
+      ]
+    },
+    "GroupedConditions": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "integer"
+        },
+        "match": {
+          "type": "string",
+          "enum": [
+            "all",
+            "any"
+          ]
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/SignalApiConditionGroup"
+          }
+        }
+      },
+      "required": [
+        "match",
+        "groups"
+      ]
+    },
+    "LegacyConditions": {
+      "type": "object",
+      "properties": {
+        "source_domain": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "signal_type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "severity": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "min_confidence": {
+          "type": "integer"
+        },
+        "has_client": {
+          "type": "boolean"
+        },
+        "has_contact": {
+          "type": "boolean"
+        },
+        "payload_equals": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "payload_contains": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "Conditions": {
+      "oneOf": [
+        {
+          "$ref": "#/components/schemas/SignalApiGroupedConditions"
+        },
+        {
+          "$ref": "#/components/schemas/SignalApiLegacyConditions"
+        },
+        {
+          "type": "array",
+          "items": {},
+          "maxItems": 0
+        }
+      ]
+    },
+    "ActionResult": {
+      "type": "object",
+      "properties": {
+        "action_index": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string",
+          "nullable": true
+        },
+        "contact_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "tag_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "signal_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "opportunity_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "activity_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "ticket_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "task_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "invitation_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "delivery_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "import_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "purchase_order_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "task_template_run_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "tag": {
+          "type": "string"
+        },
+        "ticket_key": {
+          "type": "string"
+        },
+        "idempotency_key": {
+          "type": "string"
+        },
+        "task_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      },
+      "required": [
+        "action_index",
+        "type",
+        "status"
+      ],
+      "additionalProperties": true
+    },
+    "Signal": {
+      "type": "object",
+      "properties": {
+        "source_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "subject_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "client_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "contact_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "source_type": {
+          "type": "string",
+          "nullable": true
+        },
+        "subject_type": {
+          "type": "string",
+          "nullable": true
+        },
+        "client_name": {
+          "type": "string",
+          "nullable": true
+        },
+        "contact_name": {
+          "type": "string",
+          "nullable": true
+        },
+        "summary": {
+          "type": "string",
+          "nullable": true
+        },
+        "id": {
+          "type": "integer"
+        },
+        "source_domain": {
+          "type": "string"
+        },
+        "signal_type": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "string"
+        },
+        "payload": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": true
+            },
+            {
+              "type": "array",
+              "items": {}
+            }
+          ],
+          "nullable": true
+        },
+        "occurred_at": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        },
+        "created_at": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        },
+        "executions_count": {
+          "type": "integer"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "links": {
+          "$ref": "#/components/schemas/SignalApiLinks"
+        }
+      },
+      "required": [
+        "source_id",
+        "subject_id",
+        "client_id",
+        "contact_id",
+        "source_type",
+        "subject_type",
+        "client_name",
+        "contact_name",
+        "summary",
+        "id",
+        "source_domain",
+        "signal_type",
+        "severity",
+        "confidence",
+        "status",
+        "payload",
+        "occurred_at",
+        "created_at",
+        "executions_count",
+        "revision",
+        "links"
+      ]
+    },
+    "Rule": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "is_active": {
+          "type": "boolean"
+        },
+        "stop_processing": {
+          "type": "boolean"
+        },
+        "priority": {
+          "type": "integer"
+        },
+        "conditions": {
+          "$ref": "#/components/schemas/SignalApiConditions"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/SignalApiAction"
+          }
+        },
+        "created_by": {
+          "type": "integer",
+          "nullable": true
+        },
+        "updated_by": {
+          "type": "integer",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        },
+        "executions_count": {
+          "type": "integer"
+        },
+        "revision": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "is_active",
+        "stop_processing",
+        "priority",
+        "conditions",
+        "actions",
+        "created_by",
+        "updated_by",
+        "created_at",
+        "updated_at",
+        "executions_count",
+        "revision"
+      ]
+    },
+    "Execution": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "signal_id": {
+          "type": "integer"
+        },
+        "signal_rule_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "rule_name": {
+          "type": "string",
+          "nullable": true
+        },
+        "retry_of_execution_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "attempt": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "string"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/SignalApiAction"
+          }
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/SignalApiActionResult"
+          }
+        },
+        "error": {
+          "type": "string",
+          "nullable": true
+        },
+        "executed_at": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        },
+        "retry_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "has_retryable_actions": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "signal_id",
+        "signal_rule_id",
+        "rule_name",
+        "retry_of_execution_id",
+        "attempt",
+        "status",
+        "actions",
+        "results",
+        "error",
+        "executed_at",
+        "retry_ids",
+        "has_retryable_actions"
+      ]
+    },
+    "SignalPage": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/SignalApiSignal"
+          }
+        },
+        "meta": {
+          "$ref": "#/components/schemas/SignalApiMeta"
+        }
+      },
+      "required": [
+        "data",
+        "meta"
+      ]
+    },
+    "RulePage": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/SignalApiRule"
+          }
+        },
+        "meta": {
+          "$ref": "#/components/schemas/SignalApiMeta"
+        }
+      },
+      "required": [
+        "data",
+        "meta"
+      ]
+    },
+    "ExecutionPage": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/SignalApiExecution"
+          }
+        },
+        "meta": {
+          "$ref": "#/components/schemas/SignalApiMeta"
+        }
+      },
+      "required": [
+        "data",
+        "meta"
+      ]
+    },
+    "ReferencePage": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/SignalApiReference"
+          }
+        },
+        "meta": {
+          "$ref": "#/components/schemas/SignalApiMeta"
+        }
+      },
+      "required": [
+        "data",
+        "meta"
+      ]
+    },
+    "SignalResult": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/SignalApiSignal"
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "executions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/SignalApiExecution"
+          }
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "RuleResult": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/SignalApiRule"
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "executions": {
+          "$ref": "#/components/schemas/SignalApiExecutionPage"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "ExecutionResult": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/SignalApiExecution"
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "replayed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "SignalList": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/SignalApiSignal"
+          }
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "Settings": {
+      "type": "object",
+      "properties": {
+        "ai_classification_enabled": {
+          "type": "boolean"
+        },
+        "ai_min_confidence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "ai_source_domains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ai_allowed_signal_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ai_stop_ticket_routing_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ai_classification_prompt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "ai_classification_enabled",
+        "ai_min_confidence",
+        "ai_source_domains",
+        "ai_allowed_signal_types",
+        "ai_stop_ticket_routing_types",
+        "ai_classification_prompt"
+      ]
+    },
+    "SettingsState": {
+      "type": "object",
+      "properties": {
+        "settings": {
+          "$ref": "#/components/schemas/SignalApiSettings"
+        },
+        "agent": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "string"
+            },
+            "is_active": {
+              "type": "boolean"
+            },
+            "provider_name": {
+              "type": "string",
+              "nullable": true
+            },
+            "can_execute_actions": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "is_active",
+            "provider_name",
+            "can_execute_actions"
+          ],
+          "nullable": true
+        }
+      },
+      "required": [
+        "settings",
+        "agent"
+      ]
+    },
+    "SettingsResult": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/SignalApiSettingsState"
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "replayed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "Context": {
+      "type": "object",
+      "properties": {
+        "ranges": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "default_range": {
+          "type": "string"
+        },
+        "sorts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "directions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "default_sort": {
+          "type": "string"
+        },
+        "default_direction": {
+          "type": "string"
+        },
+        "default_per_page": {
+          "type": "integer"
+        },
+        "maximum_per_page": {
+          "type": "integer"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "severities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "statuses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "external_execution_enabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ranges",
+        "default_range",
+        "sorts",
+        "directions",
+        "default_sort",
+        "default_direction",
+        "default_per_page",
+        "maximum_per_page",
+        "sources",
+        "types",
+        "severities",
+        "statuses",
+        "external_execution_enabled"
+      ]
+    },
+    "ContextResult": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/SignalApiContext"
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "replayed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "RuleContext": {
+      "type": "object",
+      "properties": {
+        "defaults": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "nullable": true
+            },
+            "description": {
+              "type": "string",
+              "nullable": true
+            },
+            "is_active": {
+              "type": "boolean"
+            },
+            "priority": {
+              "type": "integer"
+            },
+            "stop_processing": {
+              "type": "boolean"
+            },
+            "conditions": {
+              "$ref": "#/components/schemas/SignalApiConditions",
+              "nullable": true
+            },
+            "actions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/SignalApiAction"
+              },
+              "nullable": true
+            }
+          },
+          "required": [
+            "name",
+            "description",
+            "is_active",
+            "priority",
+            "stop_processing",
+            "conditions",
+            "actions"
+          ]
+        },
+        "condition_fields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "operators": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "action_types": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "required": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "label",
+              "required"
+            ]
+          }
+        },
+        "action_optional_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "legacy_condition_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "portal_roles": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "lookups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "defaults",
+        "condition_fields",
+        "operators",
+        "action_types",
+        "action_optional_fields",
+        "legacy_condition_fields",
+        "portal_roles",
+        "lookups"
+      ]
+    },
+    "RuleContextResult": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/SignalApiRuleContext"
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "replayed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "Policy": {
+      "type": "object",
+      "properties": {
+        "allowed": {
+          "type": "boolean"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "abilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "external": {
+          "type": "boolean"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "allowed",
+        "permissions",
+        "abilities",
+        "external",
+        "reasons"
+      ]
+    },
+    "PreviewAction": {
+      "type": "object",
+      "properties": {
+        "action_index": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        },
+        "action": {
+          "$ref": "#/components/schemas/SignalApiAction"
+        },
+        "policy": {
+          "$ref": "#/components/schemas/SignalApiPolicy"
+        }
+      },
+      "required": [
+        "action_index",
+        "type",
+        "action",
+        "policy"
+      ]
+    },
+    "Preview": {
+      "type": "object",
+      "properties": {
+        "signal_id": {
+          "type": "integer"
+        },
+        "root_execution_id": {
+          "type": "integer"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "failed",
+            "all"
+          ]
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/SignalApiPreviewAction"
+          }
+        },
+        "has_work": {
+          "type": "boolean"
+        },
+        "revision": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "signal_id",
+        "root_execution_id",
+        "mode",
+        "actions",
+        "has_work",
+        "revision"
+      ]
+    },
+    "PreviewResult": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/SignalApiPreview"
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "replayed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "Retry": {
+      "type": "object",
+      "properties": {
+        "execution": {
+          "$ref": "#/components/schemas/SignalApiExecution",
+          "nullable": true
+        },
+        "has_work": {
+          "type": "boolean"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "executed",
+            "failed",
+            "no_work"
+          ]
+        }
+      },
+      "required": [
+        "execution",
+        "has_work",
+        "state"
+      ]
+    },
+    "RetryResult": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/SignalApiRetry"
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "replayed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "Unknown": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "unknown"
+          ]
+        },
+        "reconciliation_required": {
+          "type": "boolean"
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "local_result": {
+          "oneOf": [
+            {
+              "$ref": "#/components/schemas/SignalApiSignalResult"
+            },
+            {
+              "$ref": "#/components/schemas/SignalApiRuleResult"
+            },
+            {
+              "$ref": "#/components/schemas/SignalApiSettingsResult"
+            },
+            {
+              "$ref": "#/components/schemas/SignalApiRetryResult"
+            }
+          ]
+        }
+      },
+      "required": [
+        "state",
+        "reconciliation_required"
+      ]
+    },
+    "Operation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "operation": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "completed",
+            "unknown"
+          ]
+        },
+        "status": {
+          "type": "integer"
+        },
+        "result": {
+          "oneOf": [
+            {
+              "$ref": "#/components/schemas/SignalApiSignalResult"
+            },
+            {
+              "$ref": "#/components/schemas/SignalApiRuleResult"
+            },
+            {
+              "$ref": "#/components/schemas/SignalApiSettingsResult"
+            },
+            {
+              "$ref": "#/components/schemas/SignalApiRetryResult"
+            },
+            {
+              "$ref": "#/components/schemas/SignalApiUnknown"
+            }
+          ]
+        },
+        "revision": {
+          "type": "string",
+          "nullable": true
+        },
+        "reconciliation_required": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "operation",
+        "state",
+        "status",
+        "result",
+        "revision",
+        "reconciliation_required",
+        "created_at"
+      ]
+    },
+    "OperationResult": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/SignalApiOperation"
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "replayed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "IngestInput": {
+      "type": "object",
+      "properties": {
+        "source_type": {
+          "type": "string",
+          "nullable": true
+        },
+        "subject_type": {
+          "type": "string",
+          "nullable": true
+        },
+        "status": {
+          "type": "string",
+          "nullable": true
+        },
+        "summary": {
+          "type": "string",
+          "nullable": true
+        },
+        "source_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "subject_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "client_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "contact_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "source_domain": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "signal_type": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "info",
+            "warning",
+            "error",
+            "critical"
+          ]
+        },
+        "confidence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "payload": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": true
+            },
+            {
+              "type": "array",
+              "items": {}
+            }
+          ],
+          "nullable": true
+        },
+        "occurred_at": {
+          "type": "string",
+          "nullable": true,
+          "format": "date-time"
+        },
+        "process_rules": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "source_domain",
+        "signal_type"
+      ],
+      "additionalProperties": false
+    },
+    "RuleInput": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "description": {
+          "type": "string",
+          "nullable": true,
+          "maxLength": 2000
+        },
+        "is_active": {
+          "type": "boolean"
+        },
+        "stop_processing": {
+          "type": "boolean"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "use_advanced_json": {
+          "type": "boolean"
+        },
+        "conditions_json": {
+          "type": "string",
+          "nullable": true
+        },
+        "actions_json": {
+          "type": "string",
+          "nullable": true
+        },
+        "conditions": {
+          "$ref": "#/components/schemas/SignalApiConditions"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/SignalApiAction"
+          }
+        }
+      },
+      "required": [
+        "name",
+        "priority"
+      ],
+      "additionalProperties": false
+    },
+    "SettingsInput": {
+      "type": "object",
+      "properties": {
+        "ai_classification_enabled": {
+          "type": "boolean"
+        },
+        "ai_min_confidence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "ai_source_domains": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "ai_allowed_signal_types": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "ai_stop_ticket_routing_types": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "ai_classification_prompt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "ai_min_confidence"
+      ],
+      "additionalProperties": false
+    },
+    "RetryInput": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "failed",
+            "all"
+          ]
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

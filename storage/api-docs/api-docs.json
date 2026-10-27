@@ -97447,6 +97447,2578 @@
                     }
                 ]
             }
+        },
+        "/api/v1/signals": {
+            "get": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal index",
+                "description": "Required token ability: signals.read. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_index_get",
+                "parameters": [
+                    {
+                        "name": "range",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "7",
+                                "30",
+                                "90",
+                                "custom",
+                                "all"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "source_domain",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "signal_type",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "severity",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "signal_type",
+                                "source_domain",
+                                "severity",
+                                "confidence",
+                                "status",
+                                "executions_count",
+                                "occurred_at"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiSignalPage"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal store",
+                "description": "Required token ability: signals.create. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_store_post",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SignalApiIngestInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiSignalResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Committed local outcome needs reconciliation; never blindly retry external effects.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiUnknown"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/signals/context": {
+            "get": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal context",
+                "description": "Required token ability: signals.read. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_context_get",
+                "responses": {
+                    "200": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiContextResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/signals/lookups/{kind}": {
+            "get": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal lookups",
+                "description": "Required token ability: signals.rules.write. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_lookups_get",
+                "parameters": [
+                    {
+                        "name": "kind",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiReferencePage"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/signals/operations/{operation}": {
+            "get": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal operations show",
+                "description": "Required token ability: signals.operations.read. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_operations_show_get",
+                "parameters": [
+                    {
+                        "name": "operation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiOperationResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/signals/related/clients/{client}": {
+            "get": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal related clients",
+                "description": "Required token ability: signals.read. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_related_clients_get",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiSignalList"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/signals/related/contacts/{contact}": {
+            "get": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal related contacts",
+                "description": "Required token ability: signals.read. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_related_contacts_get",
+                "parameters": [
+                    {
+                        "name": "contact",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiSignalList"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/signals/rules": {
+            "get": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal rules index",
+                "description": "Required token ability: signals.rules.read. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_rules_index_get",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiRulePage"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal rules store",
+                "description": "Required token ability: signals.rules.write. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_rules_store_post",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SignalApiRuleInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiRuleResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Committed local outcome needs reconciliation; never blindly retry external effects.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiUnknown"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/signals/rules/context": {
+            "get": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal rules context",
+                "description": "Required token ability: signals.rules.write. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_rules_context_get",
+                "parameters": [
+                    {
+                        "name": "source_domain",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "intake_form_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiRuleContextResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/signals/rules/{rule}": {
+            "get": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal rules show",
+                "description": "Required token ability: signals.rules.read. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_rules_show_get",
+                "parameters": [
+                    {
+                        "name": "rule",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiRuleResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal rules update",
+                "description": "Required token ability: signals.rules.write. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_rules_update_put",
+                "parameters": [
+                    {
+                        "name": "rule",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SignalApiRuleInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiRuleResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Committed local outcome needs reconciliation; never blindly retry external effects.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiUnknown"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/signals/settings": {
+            "get": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal settings show",
+                "description": "Required token ability: signals.settings.read. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_settings_show_get",
+                "responses": {
+                    "200": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiSettingsResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal settings update",
+                "description": "Required token ability: signals.settings.write. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_settings_update_put",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SignalApiSettingsInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiSettingsResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Committed local outcome needs reconciliation; never blindly retry external effects.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiUnknown"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/signals/{signal}": {
+            "get": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal show",
+                "description": "Required token ability: signals.read. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_show_get",
+                "parameters": [
+                    {
+                        "name": "signal",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiSignalResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/signals/{signal}/executions": {
+            "get": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal executions index",
+                "description": "Required token ability: signals.read. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_executions_index_get",
+                "parameters": [
+                    {
+                        "name": "signal",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiExecutionPage"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/signals/{signal}/executions/{execution}": {
+            "get": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal executions show",
+                "description": "Required token ability: signals.read. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_executions_show_get",
+                "parameters": [
+                    {
+                        "name": "signal",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "execution",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiExecutionResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/signals/{signal}/executions/{execution}/retry": {
+            "post": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal executions retry",
+                "description": "Required token ability: signals.actions.execute. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_executions_retry_post",
+                "parameters": [
+                    {
+                        "name": "signal",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "execution",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SignalApiRetryInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiRetryResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Committed local outcome needs reconciliation; never blindly retry external effects.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiUnknown"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/signals/{signal}/executions/{execution}/retry-preview": {
+            "post": {
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "Signal executions retry-preview",
+                "description": "Required token ability: signals.actions.execute. Current native actor/object permissions are also required. Idempotency-Key and If-Match protect writes. process_rules=true also requires signals.actions.execute. External actions additionally need signals.providers.execute and the default-off API switch; queued is not delivered.",
+                "operationId": "signals_executions_retry_preview_post",
+                "parameters": [
+                    {
+                        "name": "signal",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "execution",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SignalApiRetryInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Authoritative local result; inspect action/provider states.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiPreviewResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Current actor or scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unauthorized exact target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay key conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "State changed; reload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required key or state precondition missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Signal API migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignalApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -129705,6 +132277,1852 @@
                 },
                 "type": "object",
                 "additionalProperties": false
+            },
+            "SignalApiError": {
+                "required": [
+                    "message"
+                ],
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiMeta": {
+                "required": [
+                    "current_page",
+                    "per_page",
+                    "total",
+                    "last_page"
+                ],
+                "properties": {
+                    "current_page": {
+                        "type": "integer"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "total": {
+                        "type": "integer"
+                    },
+                    "last_page": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiReference": {
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiLinks": {
+                "required": [
+                    "self",
+                    "admin"
+                ],
+                "properties": {
+                    "self": {
+                        "type": "string"
+                    },
+                    "admin": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiAction": {
+                "required": [
+                    "type"
+                ],
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "marketing_suppress_contact_email",
+                            "tag_contact",
+                            "tag_client",
+                            "emit_signal",
+                            "sales_follow_up",
+                            "ticket_follow_up",
+                            "task_follow_up",
+                            "portal_invitation",
+                            "storage_supplier_order_import",
+                            "webhook"
+                        ]
+                    },
+                    "tag": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "signal_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "severity": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "summary": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "opportunity_title": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "opportunity_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "opportunity_status": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "needs": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "activity_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "activity_subject": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "activity_body": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "next_follow_up_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "next_follow_up_note": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "subject": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "role": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "impact": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "urgency": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "confidence": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "actor_id": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "creator_id": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "owner_id": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "assigned_to": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "probability_percent": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "estimated_value_ex_vat": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "follow_up_minutes_from_now": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "site_id": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "contact_id": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "queue_id": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "ticket_type_id": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "priority_id": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "category_id": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "due_minutes_from_now": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "estimated_minutes": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "profile_id": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "template_group_id": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "append_to_existing": {
+                        "type": "boolean"
+                    },
+                    "create_if_missing": {
+                        "type": "boolean"
+                    },
+                    "queue": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SignalApiConditionRow": {
+                "required": [
+                    "field",
+                    "operator"
+                ],
+                "properties": {
+                    "field": {
+                        "type": "string"
+                    },
+                    "path": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "operator": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiConditionGroup": {
+                "required": [
+                    "match",
+                    "conditions"
+                ],
+                "properties": {
+                    "match": {
+                        "type": "string",
+                        "enum": [
+                            "all",
+                            "any"
+                        ]
+                    },
+                    "conditions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SignalApiConditionRow"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiGroupedConditions": {
+                "required": [
+                    "match",
+                    "groups"
+                ],
+                "properties": {
+                    "version": {
+                        "type": "integer"
+                    },
+                    "match": {
+                        "type": "string",
+                        "enum": [
+                            "all",
+                            "any"
+                        ]
+                    },
+                    "groups": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SignalApiConditionGroup"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiLegacyConditions": {
+                "required": [],
+                "properties": {
+                    "source_domain": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "signal_type": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "severity": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "status": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "min_confidence": {
+                        "type": "integer"
+                    },
+                    "has_client": {
+                        "type": "boolean"
+                    },
+                    "has_contact": {
+                        "type": "boolean"
+                    },
+                    "payload_equals": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "payload_contains": {
+                        "type": "object",
+                        "additionalProperties": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SignalApiConditions": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/SignalApiGroupedConditions"
+                    },
+                    {
+                        "$ref": "#/components/schemas/SignalApiLegacyConditions"
+                    },
+                    {
+                        "type": "array",
+                        "items": {},
+                        "maxItems": 0
+                    }
+                ]
+            },
+            "SignalApiActionResult": {
+                "required": [
+                    "action_index",
+                    "type",
+                    "status"
+                ],
+                "properties": {
+                    "action_index": {
+                        "type": "integer"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "contact_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "tag_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "signal_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "opportunity_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "activity_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "ticket_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "task_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "invitation_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "delivery_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "import_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "purchase_order_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "task_template_run_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "tag": {
+                        "type": "string"
+                    },
+                    "ticket_key": {
+                        "type": "string"
+                    },
+                    "idempotency_key": {
+                        "type": "string"
+                    },
+                    "task_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "type": "object",
+                "additionalProperties": true
+            },
+            "SignalApiSignal": {
+                "required": [
+                    "source_id",
+                    "subject_id",
+                    "client_id",
+                    "contact_id",
+                    "source_type",
+                    "subject_type",
+                    "client_name",
+                    "contact_name",
+                    "summary",
+                    "id",
+                    "source_domain",
+                    "signal_type",
+                    "severity",
+                    "confidence",
+                    "status",
+                    "payload",
+                    "occurred_at",
+                    "created_at",
+                    "executions_count",
+                    "revision",
+                    "links"
+                ],
+                "properties": {
+                    "source_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "subject_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "client_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "contact_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "source_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "subject_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "client_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "contact_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "summary": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "id": {
+                        "type": "integer"
+                    },
+                    "source_domain": {
+                        "type": "string"
+                    },
+                    "signal_type": {
+                        "type": "string"
+                    },
+                    "severity": {
+                        "type": "string"
+                    },
+                    "confidence": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "payload": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "object",
+                                "additionalProperties": true
+                            },
+                            {
+                                "type": "array",
+                                "items": {}
+                            }
+                        ]
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "executions_count": {
+                        "type": "integer"
+                    },
+                    "revision": {
+                        "type": "string"
+                    },
+                    "links": {
+                        "$ref": "#/components/schemas/SignalApiLinks"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiRule": {
+                "required": [
+                    "id",
+                    "name",
+                    "description",
+                    "is_active",
+                    "stop_processing",
+                    "priority",
+                    "conditions",
+                    "actions",
+                    "created_by",
+                    "updated_by",
+                    "created_at",
+                    "updated_at",
+                    "executions_count",
+                    "revision"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "stop_processing": {
+                        "type": "boolean"
+                    },
+                    "priority": {
+                        "type": "integer"
+                    },
+                    "conditions": {
+                        "$ref": "#/components/schemas/SignalApiConditions"
+                    },
+                    "actions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SignalApiAction"
+                        }
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "updated_by": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "executions_count": {
+                        "type": "integer"
+                    },
+                    "revision": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiExecution": {
+                "required": [
+                    "id",
+                    "signal_id",
+                    "signal_rule_id",
+                    "rule_name",
+                    "retry_of_execution_id",
+                    "attempt",
+                    "status",
+                    "actions",
+                    "results",
+                    "error",
+                    "executed_at",
+                    "retry_ids",
+                    "has_retryable_actions"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "signal_id": {
+                        "type": "integer"
+                    },
+                    "signal_rule_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "rule_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "retry_of_execution_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "attempt": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "actions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SignalApiAction"
+                        }
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SignalApiActionResult"
+                        }
+                    },
+                    "error": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "executed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "retry_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "has_retryable_actions": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiSignalPage": {
+                "required": [
+                    "data",
+                    "meta"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SignalApiSignal"
+                        }
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/SignalApiMeta"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiRulePage": {
+                "required": [
+                    "data",
+                    "meta"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SignalApiRule"
+                        }
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/SignalApiMeta"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiExecutionPage": {
+                "required": [
+                    "data",
+                    "meta"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SignalApiExecution"
+                        }
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/SignalApiMeta"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiReferencePage": {
+                "required": [
+                    "data",
+                    "meta"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SignalApiReference"
+                        }
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/SignalApiMeta"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiSignalResult": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SignalApiSignal"
+                    },
+                    "operation_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    },
+                    "executions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SignalApiExecution"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiRuleResult": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SignalApiRule"
+                    },
+                    "operation_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    },
+                    "executions": {
+                        "$ref": "#/components/schemas/SignalApiExecutionPage"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiExecutionResult": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SignalApiExecution"
+                    },
+                    "operation_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiSignalList": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SignalApiSignal"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiSettings": {
+                "required": [
+                    "ai_classification_enabled",
+                    "ai_min_confidence",
+                    "ai_source_domains",
+                    "ai_allowed_signal_types",
+                    "ai_stop_ticket_routing_types",
+                    "ai_classification_prompt"
+                ],
+                "properties": {
+                    "ai_classification_enabled": {
+                        "type": "boolean"
+                    },
+                    "ai_min_confidence": {
+                        "type": "integer",
+                        "maximum": 100,
+                        "minimum": 0
+                    },
+                    "ai_source_domains": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "ai_allowed_signal_types": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "ai_stop_ticket_routing_types": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "ai_classification_prompt": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiSettingsState": {
+                "required": [
+                    "settings",
+                    "agent"
+                ],
+                "properties": {
+                    "settings": {
+                        "$ref": "#/components/schemas/SignalApiSettings"
+                    },
+                    "agent": {
+                        "required": [
+                            "id",
+                            "name",
+                            "is_active",
+                            "provider_name",
+                            "can_execute_actions"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "is_active": {
+                                "type": "boolean"
+                            },
+                            "provider_name": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "can_execute_actions": {
+                                "type": "boolean"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiSettingsResult": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SignalApiSettingsState"
+                    },
+                    "operation_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiContext": {
+                "required": [
+                    "ranges",
+                    "default_range",
+                    "sorts",
+                    "directions",
+                    "default_sort",
+                    "default_direction",
+                    "default_per_page",
+                    "maximum_per_page",
+                    "sources",
+                    "types",
+                    "severities",
+                    "statuses",
+                    "external_execution_enabled"
+                ],
+                "properties": {
+                    "ranges": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "default_range": {
+                        "type": "string"
+                    },
+                    "sorts": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "directions": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "default_sort": {
+                        "type": "string"
+                    },
+                    "default_direction": {
+                        "type": "string"
+                    },
+                    "default_per_page": {
+                        "type": "integer"
+                    },
+                    "maximum_per_page": {
+                        "type": "integer"
+                    },
+                    "sources": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "types": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "severities": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "statuses": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "external_execution_enabled": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiContextResult": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SignalApiContext"
+                    },
+                    "operation_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiRuleContext": {
+                "required": [
+                    "defaults",
+                    "condition_fields",
+                    "operators",
+                    "action_types",
+                    "action_optional_fields",
+                    "legacy_condition_fields",
+                    "portal_roles",
+                    "lookups"
+                ],
+                "properties": {
+                    "defaults": {
+                        "required": [
+                            "name",
+                            "description",
+                            "is_active",
+                            "priority",
+                            "stop_processing",
+                            "conditions",
+                            "actions"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "description": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "is_active": {
+                                "type": "boolean"
+                            },
+                            "priority": {
+                                "type": "integer"
+                            },
+                            "stop_processing": {
+                                "type": "boolean"
+                            },
+                            "conditions": {
+                                "oneOf": [
+                                    {
+                                        "$ref": "#/components/schemas/SignalApiConditions"
+                                    }
+                                ],
+                                "nullable": true
+                            },
+                            "actions": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/SignalApiAction"
+                                },
+                                "nullable": true
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "condition_fields": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "operators": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "action_types": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "required": [
+                                "label",
+                                "required"
+                            ],
+                            "properties": {
+                                "label": {
+                                    "type": "string"
+                                },
+                                "required": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "action_optional_fields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "legacy_condition_fields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "portal_roles": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "lookups": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiRuleContextResult": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SignalApiRuleContext"
+                    },
+                    "operation_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiPolicy": {
+                "required": [
+                    "allowed",
+                    "permissions",
+                    "abilities",
+                    "external",
+                    "reasons"
+                ],
+                "properties": {
+                    "allowed": {
+                        "type": "boolean"
+                    },
+                    "permissions": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "abilities": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "external": {
+                        "type": "boolean"
+                    },
+                    "reasons": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiPreviewAction": {
+                "required": [
+                    "action_index",
+                    "type",
+                    "action",
+                    "policy"
+                ],
+                "properties": {
+                    "action_index": {
+                        "type": "integer"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "action": {
+                        "$ref": "#/components/schemas/SignalApiAction"
+                    },
+                    "policy": {
+                        "$ref": "#/components/schemas/SignalApiPolicy"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiPreview": {
+                "required": [
+                    "signal_id",
+                    "root_execution_id",
+                    "mode",
+                    "actions",
+                    "has_work",
+                    "revision"
+                ],
+                "properties": {
+                    "signal_id": {
+                        "type": "integer"
+                    },
+                    "root_execution_id": {
+                        "type": "integer"
+                    },
+                    "mode": {
+                        "type": "string",
+                        "enum": [
+                            "failed",
+                            "all"
+                        ]
+                    },
+                    "actions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SignalApiPreviewAction"
+                        }
+                    },
+                    "has_work": {
+                        "type": "boolean"
+                    },
+                    "revision": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiPreviewResult": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SignalApiPreview"
+                    },
+                    "operation_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiRetry": {
+                "required": [
+                    "execution",
+                    "has_work",
+                    "state"
+                ],
+                "properties": {
+                    "execution": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SignalApiExecution"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "has_work": {
+                        "type": "boolean"
+                    },
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "executed",
+                            "failed",
+                            "no_work"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiRetryResult": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SignalApiRetry"
+                    },
+                    "operation_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiUnknown": {
+                "required": [
+                    "state",
+                    "reconciliation_required"
+                ],
+                "properties": {
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "unknown"
+                        ]
+                    },
+                    "reconciliation_required": {
+                        "type": "boolean"
+                    },
+                    "operation_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    },
+                    "local_result": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SignalApiSignalResult"
+                            },
+                            {
+                                "$ref": "#/components/schemas/SignalApiRuleResult"
+                            },
+                            {
+                                "$ref": "#/components/schemas/SignalApiSettingsResult"
+                            },
+                            {
+                                "$ref": "#/components/schemas/SignalApiRetryResult"
+                            }
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiOperation": {
+                "required": [
+                    "id",
+                    "operation",
+                    "state",
+                    "status",
+                    "result",
+                    "revision",
+                    "reconciliation_required",
+                    "created_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "operation": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "completed",
+                            "unknown"
+                        ]
+                    },
+                    "status": {
+                        "type": "integer"
+                    },
+                    "result": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SignalApiSignalResult"
+                            },
+                            {
+                                "$ref": "#/components/schemas/SignalApiRuleResult"
+                            },
+                            {
+                                "$ref": "#/components/schemas/SignalApiSettingsResult"
+                            },
+                            {
+                                "$ref": "#/components/schemas/SignalApiRetryResult"
+                            },
+                            {
+                                "$ref": "#/components/schemas/SignalApiUnknown"
+                            }
+                        ]
+                    },
+                    "revision": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "reconciliation_required": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiOperationResult": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SignalApiOperation"
+                    },
+                    "operation_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "SignalApiIngestInput": {
+                "required": [
+                    "source_domain",
+                    "signal_type"
+                ],
+                "properties": {
+                    "source_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "subject_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "summary": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "source_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "subject_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "client_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "contact_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "source_domain": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "signal_type": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "severity": {
+                        "type": "string",
+                        "enum": [
+                            "info",
+                            "warning",
+                            "error",
+                            "critical"
+                        ]
+                    },
+                    "confidence": {
+                        "type": "integer",
+                        "maximum": 100,
+                        "minimum": 0
+                    },
+                    "payload": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "type": "object",
+                                "additionalProperties": true
+                            },
+                            {
+                                "type": "array",
+                                "items": {}
+                            }
+                        ]
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "process_rules": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SignalApiRuleInput": {
+                "required": [
+                    "name",
+                    "priority"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 2000
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "stop_processing": {
+                        "type": "boolean"
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "maximum": 10000,
+                        "minimum": 1
+                    },
+                    "use_advanced_json": {
+                        "type": "boolean"
+                    },
+                    "conditions_json": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "actions_json": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "conditions": {
+                        "$ref": "#/components/schemas/SignalApiConditions"
+                    },
+                    "actions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SignalApiAction"
+                        }
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SignalApiSettingsInput": {
+                "required": [
+                    "ai_min_confidence"
+                ],
+                "properties": {
+                    "ai_classification_enabled": {
+                        "type": "boolean"
+                    },
+                    "ai_min_confidence": {
+                        "type": "integer",
+                        "maximum": 100,
+                        "minimum": 0
+                    },
+                    "ai_source_domains": {
+                        "oneOf": [
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "ai_allowed_signal_types": {
+                        "oneOf": [
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "ai_stop_ticket_routing_types": {
+                        "oneOf": [
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "ai_classification_prompt": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SignalApiRetryInput": {
+                "required": [
+                    "mode"
+                ],
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "enum": [
+                            "failed",
+                            "all"
+                        ]
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
             }
         },
         "securitySchemes": {
@@ -129839,6 +134257,10 @@
         {
             "name": "Workday",
             "description": "Workday"
+        },
+        {
+            "name": "Signal",
+            "description": "Signal"
         }
     ]
 }

@@ -127,3 +127,23 @@ when Signal settings allow it and an active Signal AI agent exists. AI classific
 one of the configured allowed signal types. It records normal Signal rows and does not execute actions
 directly; Signal rules still decide mutations such as tagging, suppression, Sales follow-up, Ticket
 follow-up, and webhooks.
+
+
+## Full API Support (Dev Only, 2026-10-27)
+
+The official API covers the current browser feed, exact related Client/Contact history,
+rule/settings administration, immutable execution history, retry preview and failed/all
+retry. There are 19 HTTP operations and 42 typed schemas. All registrations are in
+routes.php; api.php is a compatibility loader. See Docs/knowledge/signal-api-support.md.
+
+Mutations use encrypted actor/token-bound receipts and stable replay identities.
+New writes require Idempotency-Key; rule/settings updates and retry require If-Match.
+Legacy unkeyed ingest retains documented duplicate risk. API processing requires
+signals.actions.execute and fresh downstream rights; external effects additionally
+need signals.providers.execute and the default-off config/signal.php switch.
+
+The exact additive migration is 2026_10_27_030000_create_signal_api_commands.php
+(Dev batch 31). Native MySQL verified encryption, replay uniqueness, rollback and
+two-connection retry serialization with one derived effect. Probe records were removed.
+Human review HR-2026-10-27-SIGNAL-API is Reviewed; Main promotion is authorized. Production remains separately authorized.
+No provider/AI/worker/scheduler activation or production deployment is inferred.
