@@ -65,6 +65,11 @@ class ExecuteLeadResearchRun
 
     public function handle(LeadResearchRun $run): LeadResearchRun
     {
+        return \App\Modules\LeadIntelligence\Support\LeadApiAccess::scoped($run, fn () => $this->execute($run));
+    }
+
+    private function execute(LeadResearchRun $run): LeadResearchRun
+    {
         \App\Modules\LeadIntelligence\Support\LeadApiAccess::forRun($run);
         $run->load('segment');
         $segment = $run->segment;

@@ -28,14 +28,16 @@ class ExecuteLeadResearchRunJob implements ShouldQueue
             return;
         }
 
-        try {
-            \App\Modules\LeadIntelligence\Support\LeadApiAccess::forRun($run);
-        } catch (\Throwable) {
-            $run->forceFill(['status' => LeadResearchRun::STATUS_FAILED, 'finished_at' => now(),
-                'summary_json' => ['completion_reason' => 'api_authority_or_execution_disabled']])->save();
+        \App\Modules\LeadIntelligence\Support\LeadApiAccess::scoped($run, function () use ($run, $executor): void {
+            try {
+                \App\Modules\LeadIntelligence\Support\LeadApiAccess::forRun($run);
+            } catch (\Throwable) {
+                $run->forceFill(['status' => LeadResearchRun::STATUS_FAILED, 'finished_at' => now(),
+                    'summary_json' => ['completion_reason' => 'api_authority_or_execution_disabled']])->save();
 
-            return;
-        }
-        $executor->handle($run);
+                return;
+            }
+            $executor->handle($run);
+        });
     }
 }

@@ -841,8 +841,8 @@
   "http_operations": 17,
   "typed_schemas": 47,
   "tests_final_domain": {
-    "passed": 52,
-    "assertions": 474,
+    "passed": 53,
+    "assertions": 484,
     "failed": 0,
     "skipped": 0
   },
@@ -859,5 +859,13 @@
     "tree": "d65bf3c88356992667dc5154c79686527fef0e3f",
     "candidate_tree_exact": true,
     "production_deployed": false
+  },
+  "worker_actor_regression": {
+    "failed_before": true,
+    "final_main_subset": {
+      "passed": 6,
+      "assertions": 68
+    },
+    "restores_after_success_exception_and_direct_recovery": true
   }
 }

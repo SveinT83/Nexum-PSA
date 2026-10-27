@@ -11,7 +11,7 @@ API support: 17 HTTP operations / 47 typed Swagger schemas. Exact route/contract
 comparison and 18 actual success responses (including promotion preview) pass.
 No new deletion/cancellation/crawl/email feature is claimed.
 
-Final domain suite: 52 tests / 474 assertions, no failures/skips, 99.86 seconds.
+Final domain suite: 53 tests / 484 assertions, no failures/skips, 105.88 seconds.
 Prior narrower 49/458 and 2/8 are overlapping and must not be added to this final total.
 Knowledge source-sync regression: 1 test / 6 assertions passes.
 All 29 scoped PHP files pass syntax; scoped Pint and whitespace checks pass.
@@ -91,3 +91,16 @@ GitHub merged=true and a fresh strict SSH git fetch/read-back independently conf
 The follow-up changes status/docs only and requires no repeated application suite.
 No Main action remains. Svein Tore owns the pending manual checklist and any separately
 authorized production migration/deployment/provider pilot. API external execution stays off.
+
+## Worker Actor Isolation Regression
+
+The final context check exposed an API actor left in the shared worker authentication
+state after a job. A regression test failed before the fix. API job and direct recovery
+execution now restore the previous actor (or empty guards) in finally blocks on normal
+return and exceptions. Native/system runs retain their established context. No new
+scope, schema, migration, provider call or runtime switch is introduced.
+Full final Dev domain: 53 tests / 484 assertions, zero failures/skips, 105.88 seconds.
+Independent Main worker/revocation/discovery subset: 6 tests / 68 assertions, zero
+failures/skips, 26.107 seconds. Earlier 54/483 and 293/2887 sets overlap and are retained.
+This is a Level 1 correctness repair within the approved actor-bound execution scope.
+The same Pending human-review checklist and production gate remain in force.
