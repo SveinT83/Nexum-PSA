@@ -26,6 +26,14 @@ class LeadIntelligenceEvaluationController extends Controller
         $contact = Contact::query()->with('emails')->findOrFail($validated['contact_id']);
         $client = isset($validated['client_id']) ? Client::query()->findOrFail($validated['client_id']) : null;
         $evidence = $this->resolveEvidence($validated, $contact, $client);
+        if ($client) {
+            $linked = \App\Modules\Contact\Models\ContactRelation::where('contact_id', $contact->id)
+                ->where('related_type', $client->getMorphClass())->where('related_id', $client->id)->exists();
+            $supported = LeadSourceEvidence::where('contact_id', $contact->id)->where('client_id', $client->id)->exists();
+            if (! $linked && ! $supported) {
+                throw ValidationException::withMessages(['client_id' => 'The contact does not belong to this client.']);
+            }
+        }
         $eligibility = $evaluator->evaluateAndPersist($contact, $client, $evidence);
 
         return response()->json([

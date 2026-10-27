@@ -1,6 +1,6 @@
 # Intake Browser/API Coverage Plan
 
-Status: Implemented and HTTP/schema verified on Dev; final promotion checks in progress. Date: 2026-10-27. Owner: Codex.
+Status: Implemented and HTTP/schema verified on Dev; merged to Main in PR #340. Date: 2026-10-27. Owner: Codex.
 Parent: rfc/2026-10-27-intake-full-api-parity.md.
 Baseline: 17 browser rows (14 internal + 3 public), zero Intake API operations.
 All rows map to implemented module routes; exact successful HTTP/schema evidence is in the JSON matrix and verification plan.

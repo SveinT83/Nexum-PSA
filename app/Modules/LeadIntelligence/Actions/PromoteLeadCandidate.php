@@ -25,10 +25,16 @@ class PromoteLeadCandidate
         private readonly PlanMarketingListPromotion $promotionPlanner,
         private readonly StoreContact $storeContact,
         private readonly SuggestClientNumber $suggestClientNumber,
-    ) {
-    }
+    ) {}
 
     public function handle(array $payload): array
+    {
+        // Cross-key and scheduled/API promotion share one lock; match and insert cannot race.
+        return \Illuminate\Support\Facades\Cache::lock('lead-intelligence:promotion', 600)
+            ->block(30, fn () => $this->promote($payload));
+    }
+
+    private function promote(array $payload): array
     {
         $settings = $this->settings->get();
         $dryRun = (bool) ($payload['dry_run'] ?? false);
@@ -56,8 +62,7 @@ class PromoteLeadCandidate
             return $this->dryRunResult($company, $payload, $existingClient, $settings, $marketingListIds);
         }
 
-        return DB::transaction(function () use ($company, $payload, $settings, $existingClient, $run, $marketingListIds): array {
-            $client = $existingClient ?: $this->createClient($company, $settings);
+        $finish = function (Client $client) use ($company, $payload, $settings, $existingClient, $run, $marketingListIds): array {
             $this->fillMissingClientFields($client, $company);
             $site = $this->defaultSite($client);
             $companyEvidence = $this->storeEvidence($company, $run, $client, null, $marketingListIds, 'company');
@@ -92,7 +97,30 @@ class PromoteLeadCandidate
                 'contacts_skipped_reason' => $settings['auto_create_contacts'] ? null : 'Automatic Contact creation is disabled.',
                 'marketing_list_ids' => $marketingListIds,
             ];
+        };
+        if ($existingClient) {
+            return DB::transaction(fn () => $finish($existingClient));
+        }
+        $attributes = $this->clientPayload($company, $settings);
+        $authority = app(\App\Modules\DataExchange\Services\TripletexCustomerNumbers::class);
+        if ($authority->connection()) {
+            $key = $payload['tripletex_request_key'] ?? null;
+            if (! $key && $run) {
+                $key = (string) \Ramsey\Uuid\Uuid::uuid5(\Ramsey\Uuid\Uuid::NAMESPACE_URL,
+                    'lead:'.$run->id.':'.($company['org_no'] ?? $company['website'] ?? $company['name']));
+            }
+            if (! $key) {
+                throw ValidationException::withMessages(['company' => 'A durable promotion request key is required for provider customer creation.']);
+            }
+            $attributes['tripletex_number_mode'] = true;
+            $attributes['tripletex_request_key'] = $key;
+        }
+        $result = null;
+        app(\App\Modules\Clients\Actions\CreateClientRecord::class)->handle($attributes, function (Client $client) use ($finish, &$result): void {
+            $result = $finish($client);
         });
+
+        return $result;
     }
 
     private function dryRunResult(array $company, array $payload, ?Client $existingClient, array $settings, array $marketingListIds): array
@@ -118,13 +146,13 @@ class PromoteLeadCandidate
         ];
     }
 
-    private function createClient(array $company, array $settings): Client
+    private function clientPayload(array $company, array $settings): array
     {
         $payload = [
             'name' => trim((string) $company['name']),
             'org_no' => $this->normalizeOrgNo($company['org_no'] ?? null),
             'website' => $this->normalizeUrl($company['website'] ?? null),
-            'billing_email' => $this->normalizeEmail($company['billing_email'] ?? $company['email'] ?? null),
+            'billing_email' => $this->normalizeEmail($company['billing_email'] ?? (filled($company['org_no'] ?? null) ? ($company['email'] ?? null) : null)),
             'lead_temperature' => 3,
             'notes' => trim(implode("\n", array_filter([
                 'Created by Lead Intelligence.',
@@ -133,25 +161,8 @@ class PromoteLeadCandidate
             ]))),
             'active' => true,
         ];
-        $lastException = null;
 
-        for ($attempt = 0; $attempt < 5; $attempt++) {
-            try {
-                return Client::query()->create(array_merge($payload, [
-                    'client_number' => $this->suggestClientNumber->handle(),
-                ]));
-            } catch (QueryException $exception) {
-                if (! $this->isClientNumberDuplicate($exception)) {
-                    throw $exception;
-                }
-
-                $lastException = $exception;
-            }
-        }
-
-        throw $lastException ?: ValidationException::withMessages([
-            'client_number' => 'Unable to generate a unique client number.',
-        ]);
+        return $payload;
     }
 
     private function fillMissingClientFields(Client $client, array $company): void
@@ -161,7 +172,7 @@ class PromoteLeadCandidate
         foreach ([
             'org_no' => $this->normalizeOrgNo($company['org_no'] ?? null),
             'website' => $this->normalizeUrl($company['website'] ?? null),
-            'billing_email' => $this->normalizeEmail($company['billing_email'] ?? $company['email'] ?? null),
+            'billing_email' => $this->normalizeEmail($company['billing_email'] ?? (filled($company['org_no'] ?? null) ? ($company['email'] ?? null) : null)),
         ] as $field => $value) {
             if (blank($client->{$field}) && filled($value)) {
                 $updates[$field] = $value;

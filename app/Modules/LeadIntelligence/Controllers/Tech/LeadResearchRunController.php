@@ -3,7 +3,6 @@
 namespace App\Modules\LeadIntelligence\Controllers\Tech;
 
 use App\Http\Controllers\Controller;
-use App\Modules\LeadIntelligence\Jobs\ExecuteLeadResearchRunJob;
 use App\Modules\LeadIntelligence\Models\LeadResearchRun;
 use App\Modules\LeadIntelligence\Models\LeadSegment;
 use Illuminate\Http\RedirectResponse;
@@ -29,18 +28,9 @@ class LeadResearchRunController extends Controller
             'status' => ['required', Rule::in([LeadResearchRun::STATUS_DRAFT, LeadResearchRun::STATUS_QUEUED])],
         ]);
 
-        $run = LeadResearchRun::query()->create([
-            'lead_segment_id' => $validated['lead_segment_id'] ?? null,
-            'status' => $validated['status'],
-            'created_by' => $request->user()?->id,
-            'summary_json' => [
-                'note' => 'Planned research run.',
-            ],
-        ]);
-
-        if ($run->status === LeadResearchRun::STATUS_QUEUED) {
-            ExecuteLeadResearchRunJob::dispatch($run->id);
-        }
+        $segment = ! empty($validated['lead_segment_id']) ? LeadSegment::findOrFail($validated['lead_segment_id']) : null;
+        $run = app(\App\Modules\LeadIntelligence\Actions\CreateLeadResearchRun::class)->handle(
+            $segment, $validated['status'], $request->user()?->id, ['note' => 'Planned research run.']);
 
         return redirect()
             ->route('tech.lead-intelligence.runs.show', $run)

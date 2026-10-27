@@ -1,0 +1,206 @@
+{
+  "operations": [
+    {
+      "method": "GET",
+      "path": "/api/v1/lead-intelligence/context",
+      "name": "api.v1.lead-intelligence.context",
+      "ability": "lead-intelligence.read",
+      "response_schema": "LeadApiContextResponse",
+      "request_schema": null,
+      "success": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/lead-intelligence/evaluate-contact",
+      "name": "api.v1.lead-intelligence.evaluate-contact",
+      "ability": "lead-intelligence.run",
+      "response_schema": "LeadApiEvaluationResponse",
+      "request_schema": "LeadApiEvaluationInput",
+      "success": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/lead-intelligence/operations/{command}",
+      "name": "api.v1.lead-intelligence.operations.show",
+      "ability": "original command ability",
+      "response_schema": "LeadApiOperationResponse",
+      "request_schema": null,
+      "success": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/lead-intelligence/promote-candidate",
+      "name": "api.v1.lead-intelligence.promote-candidate",
+      "ability": "lead-intelligence.run",
+      "response_schema": "LeadApiPromotionResponse",
+      "request_schema": "LeadApiPromotionInput",
+      "success": 201
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/lead-intelligence/settings",
+      "name": "api.v1.lead-intelligence.settings.show",
+      "ability": "lead-intelligence.read",
+      "response_schema": "LeadApiSettingsResponse",
+      "request_schema": null,
+      "success": 200
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/lead-intelligence/settings",
+      "name": "api.v1.lead-intelligence.settings.update",
+      "ability": "lead-intelligence.manage",
+      "response_schema": "LeadApiSettingsResponse",
+      "request_schema": "LeadApiSettingsInput",
+      "success": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/lead-research-runs",
+      "name": "api.v1.lead-research-runs.index",
+      "ability": "lead-intelligence.read",
+      "response_schema": "LeadApiRunPage",
+      "request_schema": null,
+      "success": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/lead-research-runs",
+      "name": "api.v1.lead-research-runs.store",
+      "ability": "lead-intelligence.run",
+      "response_schema": "LeadApiRunResponse",
+      "request_schema": "LeadApiRunCreate",
+      "success": 201
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/lead-research-runs/{run}",
+      "name": "api.v1.lead-research-runs.show",
+      "ability": "lead-intelligence.read",
+      "response_schema": "LeadApiRunResponse",
+      "request_schema": null,
+      "success": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/lead-research-runs/{run}/evidence",
+      "name": "api.v1.lead-research-runs.evidence",
+      "ability": "lead-intelligence.read",
+      "response_schema": "LeadApiEvidencePage",
+      "request_schema": null,
+      "success": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/lead-scan-ledger",
+      "name": "api.v1.lead-scan-ledger.index",
+      "ability": "lead-intelligence.read",
+      "response_schema": "LeadApiLedgerPage",
+      "request_schema": null,
+      "success": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/lead-segments",
+      "name": "api.v1.lead-segments.index",
+      "ability": "lead-intelligence.read",
+      "response_schema": "LeadApiSegmentPage",
+      "request_schema": null,
+      "success": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/lead-segments",
+      "name": "api.v1.lead-segments.store",
+      "ability": "lead-intelligence.manage",
+      "response_schema": "LeadApiSegmentResponse",
+      "request_schema": "LeadApiSegmentCreate",
+      "success": 201
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/lead-segments/ai-draft",
+      "name": "api.v1.lead-segments.ai-draft",
+      "ability": "lead-intelligence.manage",
+      "response_schema": "LeadApiDraftResponse",
+      "request_schema": "LeadApiDraftInput",
+      "success": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/lead-segments/{segment}",
+      "name": "api.v1.lead-segments.show",
+      "ability": "lead-intelligence.read",
+      "response_schema": "LeadApiSegmentResponse",
+      "request_schema": null,
+      "success": 200
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/lead-segments/{segment}",
+      "name": "api.v1.lead-segments.update",
+      "ability": "lead-intelligence.manage",
+      "response_schema": "LeadApiSegmentResponse",
+      "request_schema": "LeadApiSegmentPatch",
+      "success": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/lead-segments/{segment}/run-now",
+      "name": "api.v1.lead-segments.run-now",
+      "ability": "lead-intelligence.run",
+      "response_schema": "LeadApiRunResponse",
+      "request_schema": null,
+      "success": 202
+    }
+  ],
+  "schema_names": [
+    "LeadApiReference",
+    "LeadApiContactReference",
+    "LeadApiVariableObject",
+    "LeadApiError",
+    "LeadApiPageMeta",
+    "LeadApiUnknown",
+    "LeadApiSettings",
+    "LeadApiSettingsInput",
+    "LeadApiSegment",
+    "LeadApiSegmentCreate",
+    "LeadApiSegmentPatch",
+    "LeadApiEvidence",
+    "LeadApiRunSummary",
+    "LeadApiRun",
+    "LeadApiRunCreate",
+    "LeadApiLedger",
+    "LeadApiDraftInput",
+    "LeadApiDraft",
+    "LeadApiEvaluationInput",
+    "LeadApiEvaluation",
+    "LeadApiCompanyInput",
+    "LeadApiContactInput",
+    "LeadApiPromotionInput",
+    "LeadApiPromotedContact",
+    "LeadApiPreviewContact",
+    "LeadApiPromotion",
+    "LeadApiPromotionPreview",
+    "LeadApiDefaults",
+    "LeadApiMarketingList",
+    "LeadApiWeekday",
+    "LeadApiCapabilities",
+    "LeadApiContext",
+    "LeadApiOperation",
+    "LeadApiSettingsResponse",
+    "LeadApiSegmentResponse",
+    "LeadApiRunResponse",
+    "LeadApiDraftResponse",
+    "LeadApiEvaluationResponse",
+    "LeadApiPromotionResponse",
+    "LeadApiPromotionPreviewResponse",
+    "LeadApiContextResponse",
+    "LeadApiOperationResponse",
+    "LeadApiUnknownResponse",
+    "LeadApiSegmentPage",
+    "LeadApiRunPage",
+    "LeadApiEvidencePage",
+    "LeadApiLedgerPage"
+  ]
+}

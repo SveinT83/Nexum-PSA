@@ -50,7 +50,7 @@ class LeadIntelligenceSettingsController extends Controller
         $validated['allowed_roles'] = $this->splitList($validated['allowed_roles'] ?? '');
         $validated['discovery_sources'] = $this->splitList($validated['discovery_sources'] ?? '');
 
-        $settings->update($validated);
+        app(\App\Modules\LeadIntelligence\Actions\SaveLeadSettings::class)->handle($validated);
 
         return redirect()
             ->route('tech.admin.settings.lead-intelligence')
