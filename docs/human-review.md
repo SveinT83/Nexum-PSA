@@ -37,7 +37,10 @@ Exact migration: 2026_10_27_030000_create_signal_api_commands.php (Dev batch 31)
 No broad migrate, role grants or production/runtime activation is included in this approval.
 Preserve APP_KEY, encrypted commands, immutable history and the existing webhook outbox;
 disable new entry points and reconcile unknown provider outcomes before retrying.
-Main candidate verification and merge evidence are recorded separately.
+Main promotion is complete in PR #334 (be28f77d16f29e662b7b8585b27971e9c1e62438).
+The merge tree equals tested candidate 6d2a4a6961b22d7a6ee44a20a8d7f7ab86d3c28b.
+Candidate 626 / 6271 and final contract/source 2 / 310 pass without failures/skips.
+No production deployment or runtime activation is authorized by this review.
 
 
 ## HR-2026-10-27-KNOWLEDGE-API - Full Knowledge Browser/API Coverage

@@ -689,9 +689,18 @@
     ],
     "direct_signal_parity_issue_found": false
   },
-  "scope_state": "Done On Dev; human review Pending; Main/production not promoted by this task.",
+  "scope_state": "Done On Dev / Reviewed / Merged to Main in PR #334 / Production unchanged",
   "verification_report": "2026-10-27-signal-api-verification.md",
   "http_operations": 19,
   "typed_schemas": 42,
-  "baseline_api_operations": 1
+  "baseline_api_operations": 1,
+  "main_promotion": {
+    "pr": 334,
+    "url": "https://github.com/SveinT83/Nexum-PSA/pull/334",
+    "merge": "be28f77d16f29e662b7b8585b27971e9c1e62438",
+    "tested_head": "3d2e1655a3e6a14a5014fc0074656692474bb2a2",
+    "tested_and_merged_tree": "6d2a4a6961b22d7a6ee44a20a8d7f7ab86d3c28b",
+    "exact_tree_equality": true,
+    "tested_php_hashes_verified": 27
+  }
 }

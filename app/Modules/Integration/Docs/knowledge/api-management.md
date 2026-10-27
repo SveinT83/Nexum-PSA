@@ -1443,5 +1443,6 @@ If-Match from the exact current resource/preview ETag. Own operation receipts ar
 encrypted and remain bound to the original actor/token and current action/source
 authority. Queued is not delivered; ambiguous external outcomes require reconciliation.
 The exact Dev migration is 2026_10_27_030000_create_signal_api_commands.php.
-Human-review checklist HR-2026-10-27-SIGNAL-API is Pending. Main, production and
-provider/worker activation remain separate; this guide does not imply deployment.
+Human-review checklist HR-2026-10-27-SIGNAL-API is Reviewed. The source is merged
+to Main in PR #334. Production deployment and provider/worker activation remain
+separate; this guide does not imply production availability.
