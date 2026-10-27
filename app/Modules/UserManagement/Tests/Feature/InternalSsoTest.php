@@ -684,6 +684,8 @@ class InternalSsoTest extends TestCase
         config(['sanctum.stateful' => ['nexum.example.test']]);
         $this->withHeaders(['Origin' => 'https://nexum.example.test']);
         $user = $this->employee();
+        DB::table('common_settings')->updateOrInsert(['name' => 'enforce_two_factor'], ['value' => '1']);
+        DB::table('common_settings')->updateOrInsert(['name' => 'enforce_two_factor_roles'], ['json' => '["Tech"]']);
         $this->apiResponse('GET', 'users/auth/sso')->assertOk()->assertJsonPath('data.available', true);
         $start = $this->apiResponse('POST', 'users/auth/sso/start')->assertOk()->json('data');
         parse_str(parse_url($start['authorization_url'], PHP_URL_QUERY), $parameters);

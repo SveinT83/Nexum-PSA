@@ -1,6 +1,6 @@
 # RFC: Full UserManagement Browser/API Parity
 
-Status: Approved by Svein Tore, 2026-10-27. Implementation: Verified on Dev; final broad rerun and Main promotion in progress.
+Status: Approved by Svein Tore, 2026-10-27. Implementation: Verified on Dev and isolated Main candidate; tested Main promotion in progress.
 Date: 2026-10-27
 Owner: Codex. Product/release owner and intended human reviewer: Svein Tore.
 Change level: 3 - API, permissions and authentication integration.
@@ -51,7 +51,10 @@ only placeholder status; they do not authorize a new provider/token system.
    api.php as a compatibility loader. Preserve current URLs, PUT/PATCH and existing
    users scopes. Add native active-human/tech/object and user.view/create/update/
    manage_roles/invite checks matching each web operation. Provide context/lookup and
-   narrow edit forms without exposing broader account/private data. Enforce every
+   narrow edit forms without exposing broader account/private data. First-party API
+   sessions reuse the existing web role-enrollment policy, retaining own security setup
+   and current verified SSO exemptions. Authenticated bearer credentials retain the
+   Integration-owned token policy; a fake header cannot substitute for a pending session. Enforce every
    embedded role assignment's current rights, including roles in create payloads.
 2. UM02: add own profile, avatar upload/removal, full preferences/theme and current
    integration/view status. Reuse existing profile/preferences actions. Preserve weekly

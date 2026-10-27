@@ -206,6 +206,16 @@ if (($tdpsaLoadingApiRoutes ?? false) === true) {
         $apiRoute->middleware(\App\Modules\UserManagement\Actions\ExecuteUserManagementApiCommand::class);
     }
 
+    // All authenticated UserManagement operations share the web enrollment policy,
+    // including the retained Work Plan and Calendar-preference owner endpoints.
+    foreach (Route::getRoutes() as $apiRoute) {
+        if (str_starts_with($apiRoute->uri(), 'api/v1/')
+            && str_starts_with($apiRoute->getActionName(), 'App\\Modules\\UserManagement\\')
+            && in_array('auth:sanctum', $apiRoute->middleware(), true)) {
+            $apiRoute->middleware(\App\Modules\UserManagement\Support\UserManagementApiMfa::class);
+        }
+    }
+
     return;
 }
 

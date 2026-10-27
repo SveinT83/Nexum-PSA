@@ -1,6 +1,6 @@
 # Feature Slices: Full UserManagement API Parity
 
-Status: Done On Dev / parent RFC Approved; final broad rerun and Main promotion in progress. Date: 2026-10-27.
+Status: Done On Dev / parent RFC Approved; affected regression verified on Dev and Main candidate; Main promotion in progress. Date: 2026-10-27.
 Parent: ../rfc/2026-10-27-usermanagement-full-api-parity.md
 Owner: Codex. Intended human reviewer: Svein Tore.
 
@@ -20,8 +20,8 @@ validation, shared side effects, exact read-back, negative tests and documentati
 | UM08 | Full contract, regression, handbook and human-review handoff | Swagger/catalog/Knowledge/BookStack and coordination status only | Every matrix row + embedded action mapped; actual successful HTTP schemas, affected suites, trusted HTTPS and handbook read-back |
 
 Out of scope: new profile concepts/integrations, auth/Vault activation, real customer
-mutations, human permission grants, automatic human review, Dev commit/push, Main and
-production. Planned review ID HR-2026-10-27-USERMANAGEMENT-API is not yet a review result.
+mutations, human permission grants, automatic human review, Dev commit/push and
+production deployment. Tested Main promotion is explicitly authorized. Planned review ID HR-2026-10-27-USERMANAGEMENT-API is not yet a review result.
 
 Documentation: module developer/employee sources, API ability descriptions, coverage,
 parent RFC/ADR when a decision is approved, TODO and human-review checklists. Each slice

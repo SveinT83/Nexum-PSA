@@ -4,7 +4,7 @@ UserManagement exposes the current user, profile, authorization, invitation and 
 
 This guide describes the Dev implementation dated 2026-10-27. Main promotion, production deployment and authentication/provider activation are separate actions. Confirm the installed release before relying on new operations in production. Existing Work Plan and Calendar preference gates still apply.
 
-Use an active internal human account. Portal-only, disabled and protected system accounts cannot use internal UserManagement operations. Each protected operation requires its explicit API ability and the account's current ordinary permission. A token never grants a role or a permission. Account lifecycle is managed by status; there is no user-delete operation.
+Use an active internal human account. Portal-only, disabled and protected system accounts cannot use internal UserManagement operations. Each protected operation requires its explicit API ability and the account's current ordinary permission. A token never grants a role or a permission. First-party API sessions follow the same role-required enrollment policy as web. Own security/enrollment stays reachable; only a currently valid SSO grant can satisfy the existing provider-owned login-MFA rule. Scoped bearer tokens retain the existing Integration-owned authentication policy and never substitute for local verification on sensitive operations. Account lifecycle is managed by status; there is no user-delete operation.
 
 ## Create a suitably scoped token
 

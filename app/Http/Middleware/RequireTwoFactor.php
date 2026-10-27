@@ -23,31 +23,7 @@ class RequireTwoFactor
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $user = $request->user();
-
-        if (! $user) {
-            return $next($request);
-        }
-
-        // If 2FA enforcement is disabled, pass through
-        if (! $this->enforcementEnabled()) {
-            return $next($request);
-        }
-
-        // Check if the user's roles require 2FA
-        if (! $this->userRequiresTwoFactor($user)) {
-            return $next($request);
-        }
-
-        // User already has confirmed 2FA? All good
-        if ($user->hasConfirmedTwoFactor()) {
-            return $next($request);
-        }
-
-        // Only a live grant for this user qualifies; a linked account or request flag
-        // must not exempt later local-password sessions from enrollment.
-        $grant = $request->hasSession() ? $request->session()->get('sso.grant') : null;
-        if (is_string($grant) && app(SsoSessions::class)->valid($grant, $user->fresh())) {
+        if (! $this->requiresEnrollment($request)) {
             return $next($request);
         }
 
@@ -58,6 +34,19 @@ class RequireTwoFactor
         }
 
         return $next($request);
+    }
+
+    /** Shared web/API enrollment decision; only a current verified SSO grant substitutes. */
+    public function requiresEnrollment(Request $request): bool
+    {
+        $user = $request->user()?->fresh();
+        if (! $user || ! $this->enforcementEnabled() || ! $this->userRequiresTwoFactor($user)
+            || $user->hasConfirmedTwoFactor()) {
+            return false;
+        }
+        $grant = $request->hasSession() ? $request->session()->get('sso.grant') : null;
+
+        return ! (is_string($grant) && app(SsoSessions::class)->valid($grant, $user));
     }
 
     /**

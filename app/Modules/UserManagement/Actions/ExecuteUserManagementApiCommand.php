@@ -24,7 +24,7 @@ class ExecuteUserManagementApiCommand
         }
         if ($request->isMethod('get') || ($defaults['um_owner_replay'] ?? false)) {
             $response = $next($request);
-            if ($etag = UserManagementApiState::etag($request)) {
+            if ($response->getStatusCode() < 400 && ($etag = UserManagementApiState::etag($request))) {
                 $response->headers->set('ETag', $etag);
             }
 
@@ -54,6 +54,7 @@ class ExecuteUserManagementApiCommand
             [$command, $replayed] = DB::transaction(function () use ($request, $next, $defaults, $actor, $tokenHash, $keyHash, $requestHash) {
                 abort_unless(DB::table('user_management_api_mutex')->where('id', 1)->lockForUpdate()->first(), 503, 'UserManagement API migration is required.');
                 $fresh = UserManagementApiAccess::actor($request);
+                \App\Modules\UserManagement\Support\UserManagementApiMfa::authorize($request);
                 UserManagementApiAccess::authorize($fresh, $defaults['um_permissions'] ?? []);
                 abort_unless($fresh->tokenCan($defaults['um_ability']), 403);
                 $command = UserManagementApiCommand::where('actor_id', $actor->id)->where('token_hash', $tokenHash)->where('key_hash', $keyHash)->first();

@@ -89,7 +89,7 @@
         "status": "published",
         "sync_status": "pending_push",
         "source_matches": true,
-        "published_revision_id": 168
+        "published_revision_id": 192
       },
       {
         "id": 69,
@@ -107,7 +107,7 @@
         "status": "published",
         "sync_status": "pending_push",
         "source_matches": true,
-        "published_revision_id": 171
+        "published_revision_id": 193
       },
       {
         "id": 71,
@@ -139,8 +139,8 @@
       {
         "id": 517,
         "name": "User Management API",
-        "updated_at": "2026-10-27T19:43:19.000000Z",
-        "revision_count": 3,
+        "updated_at": "2026-10-27T20:39:17.000000Z",
+        "revision_count": 5,
         "content_verified": true,
         "chapter_id": 368,
         "book_id": 339,
@@ -177,16 +177,16 @@
     "dev-final-tests.xml": {
       "tests": 236,
       "assertions": 3120,
-      "failures": 0,
       "errors": 0,
+      "failures": 0,
       "skipped": 0,
       "time": 651.682132
     },
     "dev-last-tests.xml": {
       "tests": 26,
       "assertions": 907,
-      "failures": 0,
       "errors": 0,
+      "failures": 0,
       "skipped": 0,
       "time": 47.647903
     },
@@ -205,6 +205,22 @@
       "errors": 0,
       "skipped": 0,
       "time": 41.561299
+    },
+    "dev-mfa-tests.xml": {
+      "tests": 79,
+      "assertions": 990,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "time": 99.023074
+    },
+    "main-mfa-tests.xml": {
+      "tests": 186,
+      "assertions": 2616,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 1,
+      "time": 183.533718
     }
   },
   "deployment": {
@@ -258,5 +274,13 @@
     "Initial mock-bearer and serialized-key expectations repaired; final Dev broad suite is green.",
     "A transient concurrent Warroom migration edit interrupted one fresh test setup; source syntax was independently valid and the exact rerun passed.",
     "Candidate Composer autoload files were privately detached/regenerated, then APP_BASE_PATH was pinned and controller paths checked; no shared Dev vendor file changed."
-  ]
+  ],
+  "first_party_mfa": {
+    "native_enrollment_policy_shared": true,
+    "genuine_bearer_policy_retained": true,
+    "fake_header_cannot_bypass_session": true,
+    "own_setup_reachable": true,
+    "valid_sso_grant_supported": true,
+    "middleware_registration_regression_verified": true
+  }
 }

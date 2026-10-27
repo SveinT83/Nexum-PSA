@@ -307,6 +307,33 @@ class UserManagementFullApiTest extends TestCase
         $this->assertSame(1, Role::where('name', 'Committed role')->count());
     }
 
+    public function test_first_party_role_policy_preserves_bearer_auth_and_keeps_own_setup_available(): void
+    {
+        DB::table('common_settings')->updateOrInsert(['name' => 'enforce_two_factor'], ['value' => '1']);
+        DB::table('common_settings')->updateOrInsert(['name' => 'enforce_two_factor_roles'], ['json' => '["Admin"]']);
+        config(['workday.enabled' => true]);
+        $this->api('GET', 'users')->assertOk();
+        $this->api('GET', 'users/context')->assertOk();
+        $this->api('GET', 'users/me/work-plan')->assertOk();
+        $this->assertDatabaseCount('user_management_api_commands', 0);
+        config(['sanctum.stateful' => ['localhost']]);
+        $this->withoutHeader('Authorization');
+        Auth::forgetGuards();
+        $this->actingAs($this->admin, 'web')->withSession(['sso_authenticated' => true])->withHeaders(['Origin' => 'http://localhost']);
+        $this->getJson('/api/v1/users')->assertForbidden()->assertHeaderMissing('ETag');
+        $this->getJson('/api/v1/users/me/profile')->assertForbidden()->assertHeaderMissing('ETag');
+        $this->getJson('/api/v1/users/me/work-plan')->assertForbidden();
+        $this->withHeaders(['Authorization' => 'Bearer synthetic-untrusted-header'])->getJson('/api/v1/users')->assertForbidden();
+        $this->withoutHeader('Authorization');
+        $this->getJson('/api/v1/users/me/security')->assertOk();
+        $this->postJson('/api/v1/users/me/security/2fa/enable', ['current_password' => 'synthetic-password'])->assertOk();
+        $material = $this->postJson('/api/v1/users/me/security/material', ['current_password' => 'synthetic-password'])->assertOk()->json('data');
+        $code = (new \PragmaRX\Google2FA\Google2FA)->getCurrentOtp($material['setup_key']);
+        $this->postJson('/api/v1/users/me/security/2fa/confirm', ['current_password' => 'synthetic-password', 'code' => $code])->assertOk();
+        $this->getJson('/api/v1/users')->assertOk();
+        $this->assertDatabaseCount('user_management_api_commands', 0);
+    }
+
     public function test_real_csrf_middleware_protects_first_party_security_mutations(): void
     {
         config(['sanctum.stateful' => ['localhost'],

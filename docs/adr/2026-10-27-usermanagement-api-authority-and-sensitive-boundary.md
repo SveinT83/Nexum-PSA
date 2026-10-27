@@ -17,6 +17,10 @@ unfinished protected-owner work that must not be promoted with the API release.
 - Sanctum's standard first-party middleware accepts configured Origin/Referer session
   traffic with CSRF while retaining ordinary bearer authentication. Native active human,
   internal access and exact current user permissions are required in addition to abilities.
+  First-party API sessions share the exact web role-enrollment decision; own security
+  setup remains reachable and verified SSO still satisfies provider-owned login MFA.
+  Genuine bearer credentials retain Integration-owned authentication. The credential
+  selected by Sanctum is checked, so a fake header cannot bypass a pending web session.
   Existing SSO settings keep their additional exact user.manage_2fa check. Embedded role
   assignment in both create surfaces requires current user.manage_roles authority.
 - Share existing actions with web. SetRolePermission uses explicit desired membership;

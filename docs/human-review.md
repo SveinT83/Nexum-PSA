@@ -14,6 +14,7 @@ not complete any scenario or authorize production release/auth/provider activati
 - [ ] Compare create/profile/avatar/status/invite and own profile/preferences/work-plan with web.
 - [ ] Exercise role/permission CRUD and membership with separate native and token rights.
 - [ ] Verify password/TOTP/recovery and SSO linking/settings require existing local assurance.
+- [ ] Verify a pending first-party MFA session cannot use ordinary APIs; own setup and a valid SSO grant still work, and normal scoped bearer authentication is retained.
 - [ ] Compare invite expiry/single-use acceptance and protected privileged activation.
 - [ ] Revoke rights, use stale requests/replay keys and verify no duplicate effects or leaked data.
 - [ ] Verify Swagger and actual employee handbook content/access and deployed availability.
@@ -31,7 +32,7 @@ Automated evidence: Dev 236 / 3120 and final changes 26 / 907; isolated Main 184
 All 56 HTTP method responses match Swagger on both runtimes; native MySQL, trusted
 HTTPS, exact handbook content and inherited employee access are verified. None of this
 marks the scenario boxes Reviewed. Actual refs are in the Main promotion report.
-
+Final MFA/session regression: Dev 79 / 990; Main 185 passed / 2616 assertions with one existing optional provider skip; no failures/errors.
 
 
 ## HR-2026-10-27-RELATIONSHIP-API - Full Relationship Browser/API Coverage

@@ -15,6 +15,7 @@ its actual JSON validated against Swagger on both Dev and the isolated Main cand
 - Isolated Main affected batch: 184 passed, one existing optional provider skip; 2590 assertions,
   zero errors/failures. The separate protected UserSecurity provider is not installed on Main.
 - Final Main changed-flow checks: 37 passed / 975 assertions, zero failures/errors/skips.
+- Final shared MFA/session policy: Dev 79 passed / 990 assertions; Main 185 passed / 2616 assertions, one existing optional provider skip. No errors/failures.
 - Scoped native syntax/Pint/whitespace checks pass. Final immutable file hashes and exact
   candidate/promotion refs are recorded in the linked Main report before/after merge.
 
