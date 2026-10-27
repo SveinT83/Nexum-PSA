@@ -1,0 +1,450 @@
+[
+  {
+    "method": "get",
+    "path": "notifications",
+    "name": "notifications.index",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+    "action": "index",
+    "ability": "notifications.read",
+    "fields": [
+      "page",
+      "per_page",
+      "unread"
+    ],
+    "defaults": {
+      "notification_legacy": true
+    },
+    "portal": false,
+    "response_schema": "NotificationApiList"
+  },
+  {
+    "method": "get",
+    "path": "notifications/summary",
+    "name": "notifications.summary",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+    "action": "summary",
+    "ability": "notifications.read",
+    "fields": [],
+    "defaults": {
+      "notification_legacy": true
+    },
+    "portal": false,
+    "response_schema": "NotificationApiSummary"
+  },
+  {
+    "method": "get",
+    "path": "notifications/context",
+    "name": "notifications.context",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationPreferencesController",
+    "action": "show",
+    "ability": "notifications.preferences.read",
+    "fields": [],
+    "defaults": {},
+    "portal": false,
+    "response_schema": "NotificationApiPreferences"
+  },
+  {
+    "method": "get",
+    "path": "notifications/preferences",
+    "name": "notifications.preferences.show",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationPreferencesController",
+    "action": "show",
+    "ability": "notifications.preferences.read",
+    "fields": [],
+    "defaults": {},
+    "portal": false,
+    "response_schema": "NotificationApiPreferences"
+  },
+  {
+    "method": "put",
+    "path": "notifications/preferences",
+    "name": "notifications.preferences.update",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationPreferencesController",
+    "action": "update",
+    "ability": "notifications.preferences.write",
+    "fields": [
+      "settings"
+    ],
+    "defaults": {},
+    "portal": false,
+    "response_schema": "NotificationApiPreferences",
+    "request_schema": "NotificationApiPreferencesInput"
+  },
+  {
+    "method": "get",
+    "path": "notifications/web-push/devices",
+    "name": "notifications.devices.index",
+    "controller": "App\\Modules\\Notification\\Controllers\\WebPushSubscriptionController",
+    "action": "index",
+    "ability": "notifications.devices.read",
+    "fields": [],
+    "defaults": {},
+    "portal": false,
+    "response_schema": "NotificationApiDevices"
+  },
+  {
+    "method": "post",
+    "path": "notifications/web-push/devices",
+    "name": "notifications.devices.store",
+    "controller": "App\\Modules\\Notification\\Controllers\\WebPushSubscriptionController",
+    "action": "store",
+    "ability": "notifications.devices.write",
+    "fields": [
+      "endpoint",
+      "keys",
+      "content_encoding"
+    ],
+    "defaults": {},
+    "portal": false,
+    "response_schema": "NotificationApiDeviceResponse",
+    "request_schema": "NotificationApiDeviceInput"
+  },
+  {
+    "method": "post",
+    "path": "notifications/web-push/devices/current",
+    "name": "notifications.devices.current",
+    "controller": "App\\Modules\\Notification\\Controllers\\WebPushSubscriptionController",
+    "action": "current",
+    "ability": "notifications.devices.write",
+    "fields": [
+      "endpoint"
+    ],
+    "defaults": {},
+    "portal": false,
+    "response_schema": "NotificationApiDeviceResponse",
+    "request_schema": "NotificationApiEndpointInput"
+  },
+  {
+    "method": "delete",
+    "path": "notifications/web-push/devices/{subscription}",
+    "name": "notifications.devices.destroy",
+    "controller": "App\\Modules\\Notification\\Controllers\\WebPushSubscriptionController",
+    "action": "destroy",
+    "ability": "notifications.devices.write",
+    "fields": [],
+    "defaults": {},
+    "portal": false,
+    "response_schema": "NotificationApiRemoved"
+  },
+  {
+    "method": "post",
+    "path": "notifications/web-push/test",
+    "name": "notifications.devices.test",
+    "controller": "App\\Modules\\Notification\\Controllers\\WebPushSelfTestController",
+    "action": "store",
+    "ability": "notifications.tests.execute",
+    "fields": [
+      "endpoint"
+    ],
+    "defaults": {
+      "notification_command": true,
+      "notification_external": true
+    },
+    "portal": false,
+    "response_schema": "NotificationApiQueued",
+    "request_schema": "NotificationApiEndpointInput"
+  },
+  {
+    "method": "get",
+    "path": "notifications/channels",
+    "name": "notifications.channels.index",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationAdministrationController",
+    "action": "index",
+    "ability": "notifications.channels.read",
+    "fields": [],
+    "defaults": {
+      "notification_admin": true
+    },
+    "portal": false,
+    "response_schema": "NotificationApiChannelList"
+  },
+  {
+    "method": "get",
+    "path": "notifications/channels/{channel}/context",
+    "name": "notifications.channels.context",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationAdministrationController",
+    "action": "context",
+    "ability": "notifications.channels.read",
+    "fields": [],
+    "defaults": {
+      "notification_admin": true
+    },
+    "portal": false,
+    "response_schema": "NotificationApiChannelContext"
+  },
+  {
+    "method": "get",
+    "path": "notifications/channels/{channel}",
+    "name": "notifications.channels.show",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationAdministrationController",
+    "action": "show",
+    "ability": "notifications.channels.read",
+    "fields": [],
+    "defaults": {
+      "notification_admin": true
+    },
+    "portal": false,
+    "response_schema": "NotificationApiChannelResponse"
+  },
+  {
+    "method": "put",
+    "path": "notifications/channels/{channel}",
+    "name": "notifications.channels.update",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationAdministrationController",
+    "action": "update",
+    "ability": "notifications.channels.write",
+    "fields": [
+      "is_enabled",
+      "config",
+      "secrets"
+    ],
+    "defaults": {
+      "notification_admin": true,
+      "notification_command": true,
+      "notification_if_match": true
+    },
+    "portal": false,
+    "response_schema": "NotificationApiChannelResponse",
+    "request_schema": "NotificationApiChannelInput"
+  },
+  {
+    "method": "post",
+    "path": "notifications/channels/{channel}/test",
+    "name": "notifications.channels.test",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationAdministrationController",
+    "action": "test",
+    "ability": "notifications.channels.test",
+    "fields": [
+      "test_contact_id",
+      "test_template_key"
+    ],
+    "defaults": {
+      "notification_admin": true,
+      "notification_command": true,
+      "notification_external": true
+    },
+    "portal": false,
+    "response_schema": "NotificationApiTestOutcome",
+    "request_schema": "NotificationApiChannelTestInput"
+  },
+  {
+    "method": "get",
+    "path": "notifications/admin/web-push/devices",
+    "name": "notifications.admin.devices.index",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationAdministrationController",
+    "action": "devices",
+    "ability": "notifications.devices.manage",
+    "fields": [
+      "search",
+      "page",
+      "per_page"
+    ],
+    "defaults": {
+      "notification_admin": true
+    },
+    "portal": false,
+    "response_schema": "NotificationApiAdminDevices"
+  },
+  {
+    "method": "delete",
+    "path": "notifications/admin/web-push/devices/{subscription}",
+    "name": "notifications.admin.devices.destroy",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationAdministrationController",
+    "action": "revoke",
+    "ability": "notifications.devices.manage",
+    "fields": [],
+    "defaults": {
+      "notification_admin": true,
+      "notification_command": true
+    },
+    "portal": false,
+    "response_schema": "NotificationApiRemoved"
+  },
+  {
+    "method": "get",
+    "path": "notifications/operations/{operation}",
+    "name": "notifications.operations.show",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationAdministrationController",
+    "action": "operation",
+    "ability": "notifications.operations.read",
+    "fields": [],
+    "defaults": {},
+    "portal": false,
+    "response_schema": "NotificationApiOperation"
+  },
+  {
+    "method": "post",
+    "path": "notifications/read-all",
+    "name": "notifications.read-all",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+    "action": "markAllRead",
+    "ability": "notifications.update",
+    "fields": [],
+    "defaults": {
+      "notification_legacy": true
+    },
+    "portal": false,
+    "response_schema": "NotificationApiAcknowledgement"
+  },
+  {
+    "method": "get",
+    "path": "notifications/{notification}",
+    "name": "notifications.show",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+    "action": "show",
+    "ability": "notifications.read",
+    "fields": [],
+    "defaults": {
+      "notification_legacy": true
+    },
+    "portal": false,
+    "response_schema": "NotificationApiRecordResponse"
+  },
+  {
+    "method": "post",
+    "path": "notifications/{notification}/read",
+    "name": "notifications.read",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+    "action": "markRead",
+    "ability": "notifications.update",
+    "fields": [],
+    "defaults": {
+      "notification_legacy": true
+    },
+    "portal": false,
+    "response_schema": "NotificationApiRecordResponse"
+  },
+  {
+    "method": "post",
+    "path": "notifications/{notification}/open",
+    "name": "notifications.open",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+    "action": "open",
+    "ability": "notifications.update",
+    "fields": [],
+    "defaults": {
+      "notification_legacy": true
+    },
+    "portal": false,
+    "response_schema": "NotificationApiOpen"
+  },
+  {
+    "method": "get",
+    "path": "notifications/portal",
+    "name": "notifications.portal.index",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+    "action": "index",
+    "ability": "notifications.portal.read",
+    "fields": [
+      "page",
+      "per_page",
+      "unread"
+    ],
+    "defaults": {
+      "notification_portal": true
+    },
+    "portal": true,
+    "response_schema": "NotificationApiList"
+  },
+  {
+    "method": "get",
+    "path": "notifications/portal/summary",
+    "name": "notifications.portal.summary",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+    "action": "summary",
+    "ability": "notifications.portal.read",
+    "fields": [],
+    "defaults": {
+      "notification_portal": true
+    },
+    "portal": true,
+    "response_schema": "NotificationApiSummary"
+  },
+  {
+    "method": "get",
+    "path": "notifications/portal/preferences",
+    "name": "notifications.portal.preferences.show",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationPreferencesController",
+    "action": "show",
+    "ability": "notifications.portal.read",
+    "fields": [],
+    "defaults": {
+      "notification_portal": true
+    },
+    "portal": true,
+    "response_schema": "NotificationApiPreferences"
+  },
+  {
+    "method": "put",
+    "path": "notifications/portal/preferences",
+    "name": "notifications.portal.preferences.update",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationPreferencesController",
+    "action": "update",
+    "ability": "notifications.portal.preferences.write",
+    "fields": [
+      "settings"
+    ],
+    "defaults": {
+      "notification_portal": true
+    },
+    "portal": true,
+    "response_schema": "NotificationApiPreferences",
+    "request_schema": "NotificationApiPortalPreferencesInput"
+  },
+  {
+    "method": "post",
+    "path": "notifications/portal/read-all",
+    "name": "notifications.portal.read-all",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+    "action": "markAllRead",
+    "ability": "notifications.portal.update",
+    "fields": [],
+    "defaults": {
+      "notification_portal": true
+    },
+    "portal": true,
+    "response_schema": "NotificationApiAcknowledgement"
+  },
+  {
+    "method": "get",
+    "path": "notifications/portal/{notification}",
+    "name": "notifications.portal.show",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+    "action": "show",
+    "ability": "notifications.portal.read",
+    "fields": [],
+    "defaults": {
+      "notification_portal": true
+    },
+    "portal": true,
+    "response_schema": "NotificationApiRecordResponse"
+  },
+  {
+    "method": "post",
+    "path": "notifications/portal/{notification}/read",
+    "name": "notifications.portal.read",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+    "action": "markRead",
+    "ability": "notifications.portal.update",
+    "fields": [],
+    "defaults": {
+      "notification_portal": true
+    },
+    "portal": true,
+    "response_schema": "NotificationApiRecordResponse"
+  },
+  {
+    "method": "post",
+    "path": "notifications/portal/{notification}/open",
+    "name": "notifications.portal.open",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\NotificationController",
+    "action": "open",
+    "ability": "notifications.portal.update",
+    "fields": [],
+    "defaults": {
+      "notification_portal": true
+    },
+    "portal": true,
+    "response_schema": "NotificationApiOpen"
+  }
+]

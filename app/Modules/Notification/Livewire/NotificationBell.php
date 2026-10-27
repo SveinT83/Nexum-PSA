@@ -2,7 +2,6 @@
 
 namespace App\Modules\Notification\Livewire;
 
-use App\Modules\Notification\Notifications\InboundEmailRoutedNotification;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -32,14 +31,9 @@ class NotificationBell extends Component
             return;
         }
 
-        $query = $user->unreadNotifications();
-        app(\App\Modules\Workday\Actions\WorkdayReminders::class)->filterNotifications($query, $user);
-        $this->notifications = $query
-            ->latest()
-            ->take(10)
-            ->get();
-
-        $this->unreadCount = $this->notifications->count();
+        $query = app(\App\Modules\Notification\Actions\ManageNotificationReads::class)->query($user)->whereNull('read_at');
+        $this->unreadCount = (clone $query)->count();
+        $this->notifications = $query->latest()->limit(10)->get();
     }
 
     public function snoozeWorkday(string $id, int $generation): void
@@ -50,38 +44,21 @@ class NotificationBell extends Component
 
     public function markAsRead(string $notificationId)
     {
-        $notification = Auth::user()->notifications()->findOrFail($notificationId);
-        $notification->markAsRead();
-
+        app(\App\Modules\Notification\Actions\ManageNotificationReads::class)->read(Auth::user(), $notificationId);
         $this->loadNotifications();
     }
 
     public function openNotification(string $notificationId)
     {
-        $notification = Auth::user()->notifications()->findOrFail($notificationId);
+        $result = app(\App\Modules\Notification\Actions\OpenNotification::class)->handle(Auth::user(), $notificationId);
+        $this->loadNotifications();
 
-        if ($notification->type === \App\Modules\Notification\Notifications\WorkdayReminderNotification::class) {
-            return redirect()->route('tech.profile.notifications.open', $notification);
-        }
-        if ($notification->type !== InboundEmailRoutedNotification::class) {
-            $url = $notification->data['url'] ?? null;
-
-            $notification->markAsRead();
-            $this->loadNotifications();
-
-            if (filled($url) && $url !== '#') {
-                return redirect()->to($url);
-            }
-
-            return null;
-        }
-
-        return redirect()->route('tech.profile.notifications.open', $notification);
+        return redirect()->to($result['target_url']);
     }
 
     public function markAllAsRead()
     {
-        Auth::user()->unreadNotifications->markAsRead();
+        app(\App\Modules\Notification\Actions\ManageNotificationReads::class)->readAll(Auth::user());
         $this->loadNotifications();
     }
 

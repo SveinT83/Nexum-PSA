@@ -213,7 +213,7 @@ class ApiContractTest extends TestCase
                 $count++;
             }
         }
-        $this->assertSame(36, $count);
+        $this->assertSame(37, $count);
         $this->assertDatabaseCount('workdays', 1);
         $this->assertDatabaseCount('workday_revisions', 1);
         $this->assertDatabaseCount('calendar_events', 1);
@@ -246,8 +246,8 @@ class ApiContractTest extends TestCase
                 $covered[] = $operation['operationId'];
             }
         }
-        $this->assertCount(36, $covered);
-        $this->assertCount(36, array_unique($covered));
+        $this->assertCount(37, $covered);
+        $this->assertCount(37, array_unique($covered));
         $this->assertArrayHasKey('next_page_url', $spec['components']['schemas']['WorkPlanBlockList']['properties']);
         $this->assertSame(false, $spec['components']['schemas']['WorkPlanWrite']['additionalProperties']);
     }

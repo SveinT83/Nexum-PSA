@@ -39,57 +39,29 @@ class CustomerPortalNotificationController extends Controller
 
     public function open(Request $request, DatabaseNotification $notification): RedirectResponse
     {
-        $this->authorizeNotification($request, $notification);
-
-        $notification->markAsRead();
-
-        return redirect()->to($this->safeRedirectUrl($notification->data['url'] ?? null));
+        return redirect()->to(app(\App\Modules\Notification\Actions\OpenNotification::class)
+            ->handle($request->user(), $notification->id, true)['target_url']);
     }
 
     public function markRead(Request $request, DatabaseNotification $notification): RedirectResponse
     {
         $this->authorizeNotification($request, $notification);
 
-        $notification->markAsRead();
+        app(\App\Modules\Notification\Actions\ManageNotificationReads::class)->read($request->user(), $notification->id, true);
 
         return back()->with('success', 'Notification marked as read.');
     }
 
     public function markAllRead(Request $request): RedirectResponse
     {
-        $request->user()
-            ->unreadNotifications()
-            ->where('type', CustomerPortalNotification::class)
-            ->update(['read_at' => now()]);
+        app(\App\Modules\Notification\Actions\ManageNotificationReads::class)->readAll($request->user(), true);
 
         return back()->with('success', 'All portal notifications were marked as read.');
     }
 
     public function updatePreferences(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'settings' => ['required', 'array'],
-            'settings.*.notification_type' => ['required', 'string', 'distinct', 'in:'.implode(',', array_keys(NotificationTypeRegistry::labels(NotificationTypeRegistry::AUDIENCE_CUSTOMER_PORTAL)))],
-            'settings.*.mail_enabled' => ['nullable', 'boolean'],
-            'settings.*.database_enabled' => ['nullable', 'boolean'],
-        ]);
-
-        foreach ($validated['settings'] as $setting) {
-            NotificationSetting::updateOrCreate(
-                [
-                    'user_id' => $request->user()->id,
-                    'notification_type' => $setting['notification_type'],
-                ],
-                [
-                    'mail_enabled' => (bool) ($setting['mail_enabled'] ?? false),
-                    'database_enabled' => (bool) ($setting['database_enabled'] ?? false),
-                    'web_push_enabled' => false,
-                    'web_push_preview_enabled' => false,
-                    'nextcloud_talk_enabled' => false,
-                    'nextcloud_talk_webhook_url' => null,
-                ],
-            );
-        }
+        app(\App\Modules\Notification\Actions\ManageNotificationPreferences::class)->update($request, true);
 
         return back()->with('success', 'Notification preferences updated.');
     }
