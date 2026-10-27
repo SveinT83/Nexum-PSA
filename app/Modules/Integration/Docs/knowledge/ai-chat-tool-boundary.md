@@ -2,8 +2,8 @@ Nexum keeps ordinary AI chat tools separate from external API abilities.
 
 ## Credential rejection and safe failures (Dev, 2026-10-27)
 
-Availability: implemented on Dev under verification for Issues #269/#278; production behavior
-is unchanged until a separately approved rollout. Main promotion and human review are separate.
+Availability: verified on Dev and merged to Main in PR #360. Production behavior is unchanged
+until a separately approved rollout. Human review remains Pending before production.
 
 Never paste passwords, API keys, authorization headers, tokens, recovery codes or private keys
 into either AI Chats or the right-bar assistant. The shared input gate rejects supported

@@ -37,5 +37,5 @@ structured outcomes, failed jobs and telemetry. Generic string truncation preser
 
 ## Follow-Up
 
-Complete both RFC slices, negative/compatibility tests and handbook read-back. Keep
+Both RFC slices, negative/compatibility tests and handbook read-back are complete; PR #360 is merged. Keep
 HR-2026-10-27-AI-INPUT-ERRORS Pending until named human review; production remains separate.

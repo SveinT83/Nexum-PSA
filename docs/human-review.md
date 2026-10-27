@@ -4,6 +4,8 @@
 
 Status: Pending. Owner: Codex. Intended human reviewer: Svein Tore.
 Scope: Issues #269/#278; approved RFC/ADR 2026-10-27-ai-chat-input-and-error-boundaries.
+Verified Main merge: PR #360, 74d5d2ef1d1aa1e81bbeca8a36f083802a1b0731; both Issues closed completed.
+Code/tree/tests/handbook evidence is in the RFC; none of the manual checks below is inferred complete.
 Svein explicitly authorized tested Main merge ("Fix alt og merge til main"). This review
 remains a production rollout/release gate and is not marked Reviewed by tests or merge.
 
@@ -21,7 +23,6 @@ No migration, secret rotation, new runtime or scheduler activation. Later approv
 normal cache refresh and graceful refresh of existing approved workers. No real provider test
 or customer send is part of these synthetic checks. Risks: detector false positives, unlabelled
 opaque credentials, error compatibility and concurrent shared files; tests must cover them.
-
 
 ## HR-2026-10-27-SYSTEM-API - Full System Browser/API Coverage
 
