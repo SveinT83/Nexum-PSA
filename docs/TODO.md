@@ -1,5 +1,37 @@
 # tdPSA Development TODO
 
+
+## Full Relationship browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Current Main Candidate Verified / Main Merge Authorized.
+Owner: Codex. Approver/intended human reviewer: Svein Tore.
+Authorization: "Godkjenner og merge til main", 2026-10-27.
+Approved RFC: rfc/2026-10-27-relationship-full-api-parity.md.
+Accepted ADR: adr/2026-10-27-relationship-api-authority-and-outbound-claims.md.
+RL01-RL05: feature-slices/2026-10-27-relationship-full-api-parity.md (Done On Dev).
+Coverage: 10 browser rows, 21 staff APIs, 5 signed ingress and 5 reused Ticket APIs:
+31 HTTP operations and 33 typed schemas, with actual successful HTTP/schema evidence.
+Verification: plans/2026-10-27-relationship-api-verification.md/.json and coverage matrix.
+Broader Main candidate passes 338 / 7406. Latest Main integration bridge passes
+34 / 2910, no failures/errors/skips/warnings. Final Dev scoped
+suite passes 29 / 2821. Broad Dev set covered 656 cases; one shared Swagger read race
+was resolved by exact recheck (1 / 24). Native MySQL encryption, unique replay,
+competing row lock and rollback pass. Only the exact additive Relationship migration
+ran on Dev; API outbound remains default-off.
+BookStack 510/511 match the authoritative sources exactly; inherited employee access
+was verified without grants. Native Dev BookStack integration remains unconfigured;
+actual connected-plugin publication/read-back is distinct from native pending_push.
+Employee OpenWebUI retrieval and real two-instance/browser checks remain unperformed.
+Main initially lacked the reused Ticket adapters; only those bounded existing Dev
+dependencies/scopes and an idempotent compatibility loader accompany this release.
+The pre-existing validateTarget extraction is reused without rewriting shared Dev.
+Human-review checklist HR-2026-10-27-RELATIONSHIP-API remains Pending for production
+release/deployment; explicit scoped Main promotion is authorized separately.
+Next action (Codex): commit/push this tested candidate, create/merge its PR and read
+back Main. Production rollout and provider/worker/scheduler activation are not authorized.
+
+
+
 ## Full CustomField browser/API coverage (2026-10-27)
 
 Status: Done On Dev / Verified Main Candidate Ready / Human Review Pending.

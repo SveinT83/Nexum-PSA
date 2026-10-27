@@ -30,6 +30,23 @@ class SyncKnowledgeArticleToRelationship
             throw ValidationException::withMessages(['article' => 'This article does not belong to the relationship client.']);
         }
 
+        return app(ClaimRelationshipContentPush::class)->handle($relationship, $article, fn () => $this->send($article, $relationship));
+    }
+
+    private function send(Article $article, NexumRelationship $relationship): NexumSyncLink
+    {
+        if (! $relationship->isActive() || ! $relationship->supports(RelationshipCapability::KNOWLEDGE_SYNC)) {
+            throw ValidationException::withMessages(['relationship' => 'Knowledge sync is not enabled for this relationship.']);
+        }
+
+        if ($article->visibility === 'internal') {
+            throw ValidationException::withMessages(['article' => 'Internal knowledge articles cannot be synced through a relationship.']);
+        }
+
+        if ($article->visibility === 'client-wide' && $relationship->isProviderForClient() && (int) $article->client_scope_id !== (int) $relationship->client_id) {
+            throw ValidationException::withMessages(['article' => 'This article does not belong to the relationship client.']);
+        }
+
         $payload = [
             'source_article_id' => (string) $article->id,
             'title' => $article->title,
@@ -58,11 +75,25 @@ class SyncKnowledgeArticleToRelationship
 
         if ($result['ok']) {
             $remote = $result['data']['data'] ?? $result['data'];
+            if (($remote['conflict'] ?? false) === true) {
+                $link->markConflict('Remote content requires conflict review.');
+
+                return $link->refresh();
+            }
+            if (empty($remote['remote_id']) && empty($remote['id'])) {
+                $link->forceFill(['sync_status' => 'unresolved', 'last_error' => 'Remote object identity was not verified.'])->save();
+
+                return $link->refresh();
+            }
             $link->markSynced([
                 'remote_id' => (string) ($remote['remote_id'] ?? $remote['id'] ?? $link->remote_id),
                 'remote_checksum' => $checksum,
                 'remote_updated_at' => $article->updated_at,
             ]);
+        }
+
+        if (! $result['ok'] && ($result['unresolved'] ?? false)) {
+            $link->forceFill(['sync_status' => 'unresolved', 'last_error' => 'Remote outcome requires reconciliation.'])->save();
         }
 
         return $link->refresh();

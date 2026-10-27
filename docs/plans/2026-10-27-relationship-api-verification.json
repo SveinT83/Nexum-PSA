@@ -1,0 +1,96 @@
+{
+  "status": "Done On Dev / current Main candidate verified / merge authorized",
+  "approved_by": "Svein Tore",
+  "approval": "Godkjenner og merge til main",
+  "date": "2026-10-27",
+  "scope": {
+    "browser_rows": 10,
+    "relationship_staff_http": 21,
+    "signed_http": 5,
+    "ticket_http": 5,
+    "total_http": 31
+  },
+  "dev": {
+    "broad_cases": 656,
+    "broad_passed": 655,
+    "broad_failures": 1,
+    "broad_assertions": 48009,
+    "broad_failure": "Concurrent shared Swagger JSON regeneration caused a Documentation contract read race.",
+    "exact_failure_recheck": {
+      "passed": 1,
+      "assertions": 24
+    },
+    "latest_scoped": {
+      "passed": 29,
+      "assertions": 2821
+    }
+  },
+  "main_candidate": {
+    "prior_full": {
+      "cases": 569,
+      "errors": 0,
+      "failures": 0,
+      "assertions": 9664
+    },
+    "minimal_test_env_warning_recheck": {
+      "passed": 253,
+      "assertions": 4390,
+      "warnings": 0
+    },
+    "bounded_ticket_dependency": "Five existing Dev Ticket operations and required schemas are included; remaining Ticket parity is excluded.",
+    "final_release": {
+      "passed": 338,
+      "assertions": 7406,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "base": "7d8087e4851f823fc87eaeff2cd46ff84eb8b4b6"
+    },
+    "latest_main_bridge": {
+      "passed": 34,
+      "assertions": 2910,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "base": "f91acc9045794ac4ede80a336f80974c17ab9bc4"
+    }
+  },
+  "native_database": {
+    "driver": "mysql",
+    "migration": true,
+    "encrypted": true,
+    "unique_replay": true,
+    "concurrent_lock_blocked": true,
+    "rolled_back": true,
+    "outbound_disabled": true
+  },
+  "handbook": {
+    "source_articles": [
+      61,
+      62
+    ],
+    "published_revisions": [
+      150,
+      151
+    ],
+    "bookstack_pages": [
+      510,
+      511
+    ],
+    "exact_body_readback": true,
+    "existing_inherited_employee_scope_verified": true,
+    "permissions_changed": false,
+    "method": "Authoritative repository source sync, then connected BookStack plugin publication/read-back; native Dev BookStack integration is not configured.",
+    "openwebui_retrieval_verified": false
+  },
+  "human_review": {
+    "id": "HR-2026-10-27-RELATIONSHIP-API",
+    "status": "Pending",
+    "gate": "Production release/deployment; Main expressly authorized separately."
+  },
+  "production": {
+    "deployed": false,
+    "provider_activation": false
+  },
+  "migration": "2026_10_27_060000_create_relationship_api_commands.php"
+}
