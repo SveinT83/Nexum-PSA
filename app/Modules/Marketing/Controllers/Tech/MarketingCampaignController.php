@@ -29,17 +29,16 @@ use App\Modules\Marketing\Support\MarketingSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
 
 class MarketingCampaignController extends Controller
 {
+    use \App\Modules\Marketing\Support\MarketingScheduleInput;
+
     public function index(
         EnsureMarketingDefaults $marketingDefaults,
         EnsureDefaultEmailTemplates $emailDefaults,
@@ -111,7 +110,7 @@ class MarketingCampaignController extends Controller
             'marketing_list_id' => ['required_without:marketing_list_ids', 'integer', 'exists:marketing_lists,id'],
             'marketing_list_ids' => ['required_without:marketing_list_id', 'array', 'min:1'],
             'marketing_list_ids.*' => ['integer', 'distinct', 'exists:marketing_lists,id'],
-            'email_account_id' => ['nullable', 'exists:email_accounts,id'],
+            'email_account_id' => ['nullable', 'integer', 'exists:email_accounts,id'],
             'starts_at' => ['nullable', 'date'],
             'schedule_frequency' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SCHEDULE_FREQUENCIES))],
             'first_send_date' => ['nullable', 'date_format:Y-m-d'],
@@ -419,60 +418,9 @@ class MarketingCampaignController extends Controller
             ->with('status', 'Campaign email updated.');
     }
 
-    public function previewEmail(
-        MarketingCampaign $campaign,
-        Request $request,
-        EmailTemplateRenderer $templateRenderer,
-    ): JsonResponse {
-        $data = $request->validate([
-            'email_template_id' => ['nullable', 'integer', 'exists:email_templates,id', 'required_without:campaign_email_id'],
-            'campaign_email_id' => ['nullable', 'integer', 'exists:marketing_campaign_emails,id'],
-            'email_name' => ['nullable', 'string', 'max:255'],
-            'email_subject' => ['nullable', 'string', 'max:255'],
-            'body_html' => ['nullable', 'string', 'max:250000'],
-            'body_text' => ['nullable', 'string', 'max:250000'],
-        ]);
-        $email = filled($data['campaign_email_id'] ?? null)
-            ? MarketingCampaignEmail::query()->with('template')->findOrFail($data['campaign_email_id'])
-            : null;
-        abort_if($email && (int) $email->marketing_campaign_id !== (int) $campaign->id, 404);
-
-        $baseTemplate = $email?->renderableTemplate()
-            ?: EmailTemplate::query()
-                ->whereKey($data['email_template_id'])
-                ->where('scope', 'marketing')
-                ->where('is_active', true)
-                ->firstOrFail();
-        $template = new EmailTemplate([
-            'scope' => 'marketing',
-            'key' => 'marketing_campaign_preview',
-            'name' => $data['email_name'] ?? $email?->displayName() ?? $baseTemplate->name,
-            'subject' => $data['email_subject'] ?? $email?->effectiveSubject() ?? $baseTemplate->subject,
-            'body_html' => array_key_exists('body_html', $data)
-                ? $data['body_html']
-                : $email?->effectiveBodyHtml() ?? $baseTemplate->body_html,
-            'body_text' => array_key_exists('body_text', $data)
-                ? $data['body_text']
-                : $email?->effectiveBodyText() ?? $baseTemplate->body_text,
-            'layout_mode' => $baseTemplate->layout_mode ?? EmailTemplate::LAYOUT_BRANDING,
-            'layout_html' => $baseTemplate->layout_html,
-            'variables' => $baseTemplate->variables,
-            'is_active' => true,
-        ]);
-
-        try {
-            $variables = $this->previewVariables(
-                $template,
-                $campaign,
-                $email,
-                $this->previewMember($campaign),
-                $templateRenderer,
-            );
-
-            return response()->json($templateRenderer->render($template, $variables));
-        } catch (InvalidArgumentException $exception) {
-            throw ValidationException::withMessages(['body_html' => $exception->getMessage()]);
-        }
+    public function previewEmail(MarketingCampaign $campaign, Request $request, EmailTemplateRenderer $templateRenderer): JsonResponse
+    {
+        return response()->json(app(\App\Modules\Marketing\Actions\PreviewMarketingCampaignEmail::class)->handle($campaign, $request, $templateRenderer));
     }
 
     public function testSendEmail(
@@ -605,7 +553,7 @@ class MarketingCampaignController extends Controller
     {
         abort_if(! in_array($campaign->status, ['approved', 'active'], true), 422, 'Campaign must be approved before sending.');
 
-        SendDueMarketingCampaignEmails::dispatch($campaign->id)->onQueue('email');
+        SendDueMarketingCampaignEmails::dispatch($campaign->id)->onQueue('email')->afterCommit();
 
         return redirect()
             ->route('tech.marketing.campaigns.show', $campaign)
@@ -644,44 +592,6 @@ class MarketingCampaignController extends Controller
         }
     }
 
-    private function normalizeSchedulePayload(array $data): array
-    {
-        $frequency = $data['schedule_frequency'] ?? null;
-
-        if (! $frequency) {
-            return [
-                'starts_at' => $this->dateTimeFromLegacyPayload($data),
-                'sequence_interval_value' => $data['sequence_interval_value'] ?? 1,
-                'sequence_interval_unit' => $data['sequence_interval_unit'] ?? 'days',
-            ];
-        }
-
-        $startsAt = $this->startsAtFromScheduleFields($data);
-
-        return match ($frequency) {
-            'daily' => [
-                'starts_at' => $startsAt,
-                'sequence_interval_value' => 1,
-                'sequence_interval_unit' => 'days',
-            ],
-            'weekly' => [
-                'starts_at' => $this->weeklyStart($startsAt, (int) ($data['send_weekday'] ?? 5)),
-                'sequence_interval_value' => 1,
-                'sequence_interval_unit' => 'weeks',
-            ],
-            'monthly' => [
-                'starts_at' => $this->monthlyStart($startsAt, (int) ($data['month_day'] ?? 1)),
-                'sequence_interval_value' => 1,
-                'sequence_interval_unit' => 'months',
-            ],
-            default => [
-                'starts_at' => $startsAt,
-                'sequence_interval_value' => $data['custom_interval_value'] ?? $data['sequence_interval_value'] ?? 1,
-                'sequence_interval_unit' => $data['custom_interval_unit'] ?? $data['sequence_interval_unit'] ?? 'days',
-            ],
-        };
-    }
-
     private function campaignListIds(array $data): array
     {
         $ids = collect($data['marketing_list_ids'] ?? []);
@@ -696,62 +606,6 @@ class MarketingCampaignController extends Controller
             ->unique()
             ->values()
             ->all();
-    }
-
-    private function startsAtFromScheduleFields(array $data): ?Carbon
-    {
-        if (! empty($data['first_send_date'])) {
-            $time = $data['send_time'] ?? '12:00';
-
-            return Carbon::parse($data['first_send_date'].' '.$time)->seconds(0);
-        }
-
-        return $this->dateTimeFromLegacyPayload($data);
-    }
-
-    private function dateTimeFromLegacyPayload(array $data): ?Carbon
-    {
-        if (empty($data['starts_at'])) {
-            return null;
-        }
-
-        return Carbon::parse($data['starts_at'])->seconds(0);
-    }
-
-    private function weeklyStart(?Carbon $startsAt, int $weekday): ?Carbon
-    {
-        if (! $startsAt) {
-            return null;
-        }
-
-        $weekday = max(1, min(7, $weekday));
-        $daysToAdd = ($weekday - (int) $startsAt->format('N') + 7) % 7;
-
-        return $startsAt->copy()->addDays($daysToAdd);
-    }
-
-    private function monthlyStart(?Carbon $startsAt, int $monthDay): ?Carbon
-    {
-        if (! $startsAt) {
-            return null;
-        }
-
-        $monthDay = max(1, min(31, $monthDay));
-        $candidate = $this->dateOnMonthDay($startsAt, $monthDay);
-
-        if ($candidate->lt($startsAt)) {
-            $candidate = $this->dateOnMonthDay($startsAt->copy()->addMonthNoOverflow(), $monthDay);
-        }
-
-        return $candidate;
-    }
-
-    private function dateOnMonthDay(Carbon $date, int $monthDay): Carbon
-    {
-        $month = $date->copy()->day(1);
-        $safeDay = min($monthDay, $month->daysInMonth);
-
-        return $month->day($safeDay)->setTime((int) $date->format('H'), (int) $date->format('i'));
     }
 
     private function previewVariables(

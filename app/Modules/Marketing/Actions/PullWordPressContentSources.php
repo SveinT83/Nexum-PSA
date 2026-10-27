@@ -14,7 +14,22 @@ class PullWordPressContentSources
     public function handle(MarketingCampaign $campaign, string $sourceUrl, int $limit = 5): int
     {
         $endpoint = $this->endpoint($sourceUrl, $limit);
-        $response = Http::timeout(15)->acceptJson()->get($endpoint);
+        // Redirects are followed explicitly so DNS validation/pinning applies to every hop.
+        for ($hop = 0; ; $hop++) {
+            $options = app(\App\Modules\Marketing\Support\MarketingPublicUrl::class)->options($endpoint);
+            $response = Http::timeout(15)->withOptions($options)->acceptJson()->get($endpoint);
+            if (! $response->redirect()) {
+                break;
+            }
+            if ($hop >= 3) {
+                throw new RuntimeException('WordPress redirected too many times.');
+            }
+            $location = $response->header('Location');
+            if (! $location) {
+                throw new RuntimeException('WordPress returned an invalid redirect.');
+            }
+            $endpoint = (string) \GuzzleHttp\Psr7\UriResolver::resolve(new \GuzzleHttp\Psr7\Uri($endpoint), new \GuzzleHttp\Psr7\Uri($location));
+        }
 
         if (! $response->ok() || ! is_array($response->json())) {
             throw new RuntimeException('WordPress content could not be fetched from the provided URL.');
