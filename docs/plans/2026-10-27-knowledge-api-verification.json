@@ -1,6 +1,6 @@
 {
   "date": "2026-10-27",
-  "status": "Done On Dev / Isolated Main Candidate Verified / Merge Authorized / Production unchanged",
+  "status": "Done On Dev / Merged To Main In PR #331 / Human Review Pending / Production unchanged",
   "authorization": "Svein Tore: Ja og merge til main, 2026-10-27",
   "coverage": {
     "browser_rows": 37,
@@ -128,35 +128,35 @@
         "id": 9,
         "slug": "knowledge-overview",
         "visibility": "internal",
-        "published_revision_id": 118,
+        "published_revision_id": 128,
         "sync_status": "pending_push"
       },
       {
         "id": 10,
         "slug": "knowledge-settings",
         "visibility": "internal",
-        "published_revision_id": 119,
+        "published_revision_id": 129,
         "sync_status": "pending_push"
       },
       {
         "id": 45,
         "slug": "knowledge-api",
         "visibility": "internal",
-        "published_revision_id": 117,
+        "published_revision_id": 127,
         "sync_status": "pending_push"
       },
       {
         "id": 3,
         "slug": "api-management",
         "visibility": "internal",
-        "published_revision_id": 123,
+        "published_revision_id": 130,
         "sync_status": "pending_push"
       },
       {
         "id": 4,
         "slug": "bookstack-integration",
         "visibility": "internal",
-        "published_revision_id": 124,
+        "published_revision_id": 131,
         "sync_status": "pending_push"
       }
     ]
@@ -172,7 +172,13 @@
     "full_api_guide_embedded_in": 382,
     "permissions_inherited_and_unchanged": true,
     "employee_openwebui_retrieval_tested": false,
-    "dedicated_page_create": "Connector multi-character name/markdown pattern rejects creation; existing page updates/readback succeed."
+    "dedicated_page_create": "Connector multi-character name/markdown pattern rejects creation; existing page updates/readback succeed.",
+    "final_page_revisions": {
+      "382": 13,
+      "445": 11,
+      "449": 150,
+      "379": 53
+    }
   },
   "schema_preservation": {
     "preexisting_non_knowledge_operations_unchanged": false,
@@ -219,5 +225,20 @@
     "utf8": true,
     "main_non_knowledge_operations_and_schemas_unchanged": true,
     "source_index_preserved": true
+  },
+  "main_promotion": {
+    "url": "https://github.com/SveinT83/Nexum-PSA/pull/331",
+    "merge_commit": "5dab62d56c7663368de11d0f5961e08d7e269bd3",
+    "tested_tree": "c134e03cc5cb5c1be5193f15993b5906d62f4102",
+    "merged_tree": "c134e03cc5cb5c1be5193f15993b5906d62f4102",
+    "exact_tree_equality": true,
+    "production_deployed": false
+  },
+  "website_handoff": {
+    "items_added": 1,
+    "items_updated": 1,
+    "exact_readback": true,
+    "status": "klar for vurdering",
+    "production_publication": "Ikke publiser"
   }
 }

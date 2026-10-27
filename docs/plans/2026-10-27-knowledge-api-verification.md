@@ -1,7 +1,7 @@
 # Full Knowledge API Verification
 
 Date: 2026-10-27. Owner: Codex. Named human reviewer/release owner: Svein Tore.
-Status: Done On Dev; isolated Main candidate verified; merge authorized; production unchanged.
+Status: Done On Dev; merged to Main in PR #331; human review Pending; production unchanged.
 Authorization: Svein Tore approved the concrete RFC and requested Main merge with
 "Ja og merge til main". This does not mark manual scenarios Reviewed.
 
@@ -95,4 +95,12 @@ it was not altered by Pint. Final merged-tree equality is verified after the Git
 The explicit 50-file manifest contains only Knowledge and its required shared contracts/docs.
 Concurrent Signal code, scopes, source-guide sections and generated additions are excluded
 from this Main candidate, while the shared Dev originals remain intact. All required Dev and
-Main checks pass; this is ready for the authorized PR merge. Production remains unchanged.
+Main checks pass. The authorized merge is completed and independently verified. Production is unchanged.
+
+## Independently Verified Main Merge
+
+PR #331 is merged: https://github.com/SveinT83/Nexum-PSA/pull/331
+Merge commit: 5dab62d56c7663368de11d0f5961e08d7e269bd3
+Tested and merged tree: c134e03cc5cb5c1be5193f15993b5906d62f4102
+A fresh fetch confirms exact tree equality. No Main implementation work remains. The
+follow-up only reconciles documentation/status; application tests were not rerun.

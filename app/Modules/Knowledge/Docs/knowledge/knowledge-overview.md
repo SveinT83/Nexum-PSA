@@ -217,6 +217,6 @@ The Knowledge API now covers the current library, hierarchy, article proposals, 
 review/publication/retry/rollback, BookStack conflict/sync actions, live tags, defaults and scoped
 portal reads. User rights and token abilities are both required. Creating or editing text produces
 an immutable proposal; approval and verified publication remain separate. Repository-owned guides
-retain repository authority. Provider execution remains default-off. Main promotion is in progress;
+retain repository authority. Provider execution remains default-off. Main merge is verified in PR #331;
 production availability is separate. See the full Knowledge API guide for exact steps, scopes,
 idempotent writes, ETag conflicts, encrypted operation read-back and uncertain-provider handling.

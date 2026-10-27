@@ -1,6 +1,6 @@
 {
   "date": "2026-10-27",
-  "status": "Verified On Dev / isolated Main candidate verified; merge authorized",
+  "status": "Done On Dev / Merged To Main In PR #331 / Human Review Pending / Production unchanged",
   "browser_rows": 37,
   "api_rows": 20,
   "api_http_operations": 24,
@@ -1241,5 +1241,13 @@
     "post /api/v1/knowledge/book-stack/pull": 200,
     "get /api/v1/knowledge/portal/articles": 200,
     "get /api/v1/knowledge/portal/articles/{article}": 200
+  },
+  "main_promotion": {
+    "url": "https://github.com/SveinT83/Nexum-PSA/pull/331",
+    "merge_commit": "5dab62d56c7663368de11d0f5961e08d7e269bd3",
+    "tested_tree": "c134e03cc5cb5c1be5193f15993b5906d62f4102",
+    "merged_tree": "c134e03cc5cb5c1be5193f15993b5906d62f4102",
+    "exact_tree_equality": true,
+    "production_deployed": false
   }
 }

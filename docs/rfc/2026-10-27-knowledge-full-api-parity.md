@@ -1,6 +1,6 @@
 # RFC: Full Knowledge Browser/API Parity
 
-Status: Approved by Svein Tore, 2026-10-27. Implementation: Done On Dev; isolated Main candidate verified; merge authorized.
+Status: Approved by Svein Tore, 2026-10-27. Implementation: Done On Dev; Merged to Main in PR #331; production unchanged.
 Date: 2026-10-27
 Owner: Codex. Product/release owner and intended human reviewer: Svein Tore.
 Human review: HR-2026-10-27-KNOWLEDGE-API (Pending; planned implementation).
@@ -146,3 +146,10 @@ RFC and authorizes implementation, scoped commit/PR and tested Main merge. It do
 manual scenarios Reviewed or authorize production rollout/provider activation. Main promotion
 is explicitly authorized while the historical and new human scenario reviews remain Pending;
 production/release gates remain in effect.
+
+## Verified Main Merge (2026-10-27)
+
+https://github.com/SveinT83/Nexum-PSA/pull/331 is merged at 5dab62d56c7663368de11d0f5961e08d7e269bd3.
+The merged tree equals the tested candidate: c134e03cc5cb5c1be5193f15993b5906d62f4102.
+No Main implementation action remains. Human scenarios and production gates remain separate.
+This status-only follow-up does not change runtime code; application tests were not rerun.

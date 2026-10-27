@@ -1,6 +1,6 @@
 # Feature Slices: Full Knowledge API Parity
 
-Status: Done On Dev (all six scopes); isolated Main candidate verified; merge authorized.
+Status: Done On Dev (all six scopes); Merged to Main in PR #331; production unchanged.
 Date: 2026-10-27
 Parent: ../rfc/2026-10-27-knowledge-full-api-parity.md
 Owner: Codex. Reviewer/release owner: Svein Tore.
@@ -29,7 +29,8 @@ additive local command/lock schema. No business backfill or role grants.
 
 ## Out Of Scope
 #265/#261 audiences/AI retrieval, #275 Documentation revisions, general BookStack administration,
-real customer publication, Main promotion, production deployment or provider activation.
+real customer publication, production deployment or provider activation. Main promotion
+was separately authorized by Svein Tore and is complete in PR #331.
 
 ## Permissions And Tests
 Use the parent RFC's explicit native/token/Ticket/portal contracts. Cover positive lifecycle,
@@ -50,3 +51,10 @@ See plans/2026-10-27-knowledge-api-verification.md/.json. All supported operatio
 contracts, source/BookStack read-back and Dev migration/native/HTTPS evidence are verified.
 Human scenarios remain Pending; only Svein Tore may mark the checklist Reviewed.
 Main merge is explicitly authorized, without production rollout or runtime activation.
+
+## Verified Main Merge (2026-10-27)
+
+https://github.com/SveinT83/Nexum-PSA/pull/331 is merged at 5dab62d56c7663368de11d0f5961e08d7e269bd3.
+The merged tree equals the tested candidate: c134e03cc5cb5c1be5193f15993b5906d62f4102.
+No Main implementation action remains. Human scenarios and production gates remain separate.
+This status-only follow-up does not change runtime code; application tests were not rerun.
