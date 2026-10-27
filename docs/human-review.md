@@ -2,7 +2,7 @@
 
 ## HR-2026-10-27-WARROOM-API - Full Warroom Browser/API Coverage
 
-Status: Reviewed / Done On Dev, 2026-10-27.
+Status: Reviewed / Merged To Main In PR #359, 2026-10-27.
 Owner: Codex. Named human reviewer: Svein Tore.
 RFC: rfc/2026-10-27-warroom-full-api-parity.md (Approved, "Ja godkjent").
 Evidence: plans/2026-10-27-warroom-api-verification.md and linked JSON artifacts.
@@ -48,14 +48,19 @@ No checkbox is inferred from automated tests; this records the human approval.
 Deployment: exact additive 2026_10_27_110000_create_warroom_api_commands.php
 already applied on Dev only; future authorized targets need it plus optimize:clear
 and l5-swagger:generate. No frontend build, queue/scheduler/worker/provider activation.
-Preserve APP_KEY and receipts during recovery. This Warroom change has not been
-committed/pushed, promoted to Main or deployed to production.
+Preserve APP_KEY and receipts during recovery. This Warroom change is committed/pushed and merged to Main in PR #359.
+Production is not deployed by this promotion.
 
 
 Main promotion approval (Svein Tore, 2026-10-27): "Vi skal bare få alt merger til main først nå. Det er godkjent".
-Codex packages the existing verified Warroom scope from latest Main; no new product work.
+Codex packaged and verified the existing Warroom scope from latest Main; no new product work.
 This supersedes earlier statements that Main promotion is unauthorized; production is separate.
 
+
+Main result: PR #359 merged and independently read back; commit fc4a9f5b3963588a1b00e8d9712e5db88d7a64dc.
+The merge tree exactly matches tested candidate fb142c623bbed811f329530069256b1eaa899f03.
+Fresh Main candidate: 95 tests / 1522 assertions, zero failures/errors/skips; Pint 22 files.
+See plans/2026-10-27-warroom-api-main-promotion.md. No implementation or Main gate remains.
 
 ## HR-2026-10-27-USERMANAGEMENT-API - Full UserManagement Browser/API Coverage
 

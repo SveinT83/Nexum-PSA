@@ -1,6 +1,6 @@
 # Warroom API Main Promotion
 
-Date: 2026-10-27. Status: Scoped candidate verified; Main merge authorized.
+Date: 2026-10-27. Status: Merged To Main In PR #359; verified and independently read back.
 Owner: Codex. Source: authoritative Dev /var/Projects/tdPSA.
 Approval: Svein Tore explicitly authorized all completed, verified current domain work
 for Main promotion: "Vi skal bare få alt merger til main først nå. Det er godkjent".
@@ -43,3 +43,12 @@ A separately requested deployment must apply only the approved required migratio
 including 2026_10_27_110000_create_warroom_api_commands.php, regenerate Swagger and
 refresh normal caches. Preserve APP_KEY and retained command/receipt history.
 No production operation, real mail, grant expansion or additional product work is included.
+
+## Main Result
+
+PR: https://github.com/SveinT83/Nexum-PSA/pull/359
+Merge commit: fc4a9f5b3963588a1b00e8d9712e5db88d7a64dc
+Tested head: fb142c623bbed811f329530069256b1eaa899f03
+GitHub reports merged=true. The merge commit tree equals the verified candidate tree,
+and the merge is an ancestor of current origin/main. Human review stays Reviewed.
+No implementation or Main promotion remains open for Warroom.

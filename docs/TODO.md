@@ -2,7 +2,7 @@
 
 ## Full Warroom browser/API coverage (2026-10-27)
 
-Status: Done On Dev / Human Review Reviewed / Main Merge Authorized / Candidate In Progress.
+Status: Done On Dev / Reviewed / Merged To Main In PR #359.
 Owner: Codex; approver and human reviewer: Svein Tore.
 Request: full current Warroom API support. Approval: "Ja godkjent", 2026-10-27.
 RFC: rfc/2026-10-27-warroom-full-api-parity.md (Approved).
@@ -27,18 +27,21 @@ enablement, integration owner must reconcile source/page mappings and avoid push
 unrelated pending content. Current manual publication is complete and verified.
 OpenWebUI employee retrieval was not tested and is a separate claim.
 HR-2026-10-27-WARROOM-API is Reviewed by Svein Tore, 2026-10-27:
-"Godkjenner" explicitly accepts the completed Dev scope and checklist. This does
-not authorize commit/push, Main promotion or production deployment.
-No commit/push, Main/production promotion, grants, provider or queue activation.
-Next action (Svein Tore/release owner): separately authorize any desired scoped
-promotion/deployment and verify its actual target. No implementation remains open. One public-safe website handoff item was read back, "Ikke publiser".
+"Godkjenner" explicitly accepts the completed Dev scope and checklist. The later explicit Main authorization is recorded below; production deployment is separate.
+Scoped Main promotion is complete; no production deployment, grants, provider or queue activation.
+Next action (Svein Tore/release owner): separately request any later production deployment and verify its actual target. No implementation remains open. One public-safe website handoff item was read back, "Ikke publiser".
 No open Warroom Issue was found; historical #183/#202/#208 were not changed.
 
 
 Main promotion approval (Svein Tore, 2026-10-27): "Vi skal bare få alt merger til main først nå. Det er godkjent".
-Codex packages the existing verified Warroom scope from latest Main; no new product work.
+Codex packaged and verified the existing Warroom scope from latest Main; no new product work.
 This supersedes earlier statements that Main promotion is unauthorized; production is separate.
 
+
+Main result: PR #359 merged and independently read back; commit fc4a9f5b3963588a1b00e8d9712e5db88d7a64dc.
+The merge tree exactly matches tested candidate fb142c623bbed811f329530069256b1eaa899f03.
+Fresh Main candidate: 95 tests / 1522 assertions, zero failures/errors/skips; Pint 22 files.
+See plans/2026-10-27-warroom-api-main-promotion.md. No implementation or Main gate remains.
 
 ## Full UserManagement browser/API coverage (2026-10-27)
 

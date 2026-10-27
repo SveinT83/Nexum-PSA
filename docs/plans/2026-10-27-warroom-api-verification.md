@@ -1,11 +1,11 @@
 # Warroom API Verification
 
-Status: Done On Dev / Human Review Reviewed
+Status: Done On Dev / Human Review Reviewed / Merged To Main In PR #359
 Date: 2026-10-27
 Owner: Codex
 Approval: Svein Tore, "Ja godkjent", concrete RFC approved on 2026-10-27.
 Human-review checklist: HR-2026-10-27-WARROOM-API (Reviewed by Svein Tore, 2026-10-27).
-This change has not been committed/pushed, promoted to Main or deployed to production.
+This change is committed/pushed and merged to Main in PR #359; production deployment is separate.
 
 ## Result
 
@@ -167,3 +167,10 @@ All 28 recorded module/source hashes still matched the verified snapshot when
 approval was recorded. Only coordination documentation changed; no new code,
 tests, migration, commit/push, Main promotion or production operation was performed.
 The existing passing test/native/HTTPS/handbook evidence remains unchanged.
+
+## Main Promotion Result
+
+Svein Tore separately authorized Main promotion on 2026-10-27. PR #359 is merged
+as fc4a9f5b3963588a1b00e8d9712e5db88d7a64dc. Fresh isolated candidate: 95 tests / 1522 assertions;
+merge tree equals the verified candidate. See warroom-api-main-promotion.md under
+the same dated prefix. This supersedes historical no-Main-authorization wording.
