@@ -37,50 +37,50 @@
 
 @section('content')
 <div class="container-fluid">
+    {{-- Filtered evidence summary: unknown attempts are never formatted as free calls. --}}
     <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card text-white bg-primary">
-                <div class="card-body">
-                    <h5 class="card-title">Total Tokens</h5>
-                    <p class="card-text h2">{{ number_format($stats['total_tokens']) }}</p>
-                </div>
-            </div>
+        <div class="col-md-4">
+            <div class="card h-100"><div class="card-body">
+                <h5>Filtered usage</h5>
+                <p>{{ $stats['attempts'] }} attempts / {{ $stats['executions'] }} executions</p>
+                <p>Known token subtotal: {{ $stats['known_token_subtotal'] }}</p>
+                <p>Unknown token usage: {{ $stats['unknown_token_attempts'] }} attempts</p>
+            </div></div>
         </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-success">
-                <div class="card-body">
-                    <h5 class="card-title">Estimated Cost (USD)</h5>
-                    <p class="card-text h2">${{ number_format($stats['total_cost'], 4) }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">Usage by Domain</div>
-                <div class="card-body p-0">
-                    <table class="table table-sm mb-0">
-                        <thead>
-                            <tr>
-                                <th>Domain</th>
-                                <th class="text-end">Tokens</th>
-                                <th class="text-end">Cost</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($stats['by_domain'] as $row)
-                                <tr>
-                                    <td>{{ $row->domain }}</td>
-                                    <td class="text-end">{{ number_format($row->tokens) }}</td>
-                                    <td class="text-end">${{ number_format($row->cost, 4) }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="col-md-8">
+            <div class="card h-100"><div class="card-body">
+                <h5>Known cost subtotals by currency</h5>
+                <p>Cost: {{ $stats['cost_state'] }}; sources: {{ $stats['source_state'] }}; currencies: {{ $stats['currency_state'] }}.</p>
+                <p>{{ $stats['complete'] ? 'All filtered attempts have cost and currency evidence.' : 'Partial evidence: these subtotals exclude unknown costs or currencies.' }}</p>
+                @forelse($stats['currencies'] as $currency => $cost)
+                    <p class="mb-1"><strong>{{ $cost['known_subtotal'] }} {{ $currency }}</strong>
+                        (reported {{ $cost['provider_reported_subtotal'] }}; estimated {{ $cost['estimated_subtotal'] }})</p>
+                @empty
+                    <p>Unknown: no known cost and currency evidence.</p>
+                @endforelse
+                <p class="mb-0">Unknown cost: {{ $stats['unknown_cost_attempts'] }} attempts.
+                    Unknown currency: {{ $stats['unknown_currency_attempts'] }} attempts.</p>
+            </div></div>
         </div>
     </div>
 
+    {{-- Domain summaries use the same filters and per-currency evidence as the trace. --}}
+    <div class="card mb-4">
+        <div class="card-header">Usage by Domain</div>
+        <div class="card-body">
+            @foreach($stats['by_domain'] as $domain => $row)
+                <p><strong>{{ $domain }}</strong>: {{ $row['attempts'] }} attempts;
+                    known tokens {{ $row['known_token_subtotal'] }};
+                    unknown cost/currency {{ $row['unknown_cost_attempts'] + $row['unknown_currency_attempts'] }}.
+                    @foreach($row['currencies'] as $currency => $cost)
+                        {{ $cost['known_subtotal'] }} {{ $currency }}
+                    @endforeach
+                </p>
+            @endforeach
+        </div>
+    </div>
+
+    {{-- Bounded attempt trace; each provider fallback remains a separate attempt. --}}
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>Recent AI Execution Trace</span>
@@ -115,8 +115,12 @@
                                 {{ $event->actual_model ?: $event->requested_model }}<br>
                                 <small class="text-muted">{{ $event->provider?->name }}</small>
                             </td>
-                            <td class="text-end">{{ number_format($event->total_tokens) }}</td>
-                            <td class="text-end">${{ number_format($event->effective_cost, 4) }}</td>
+                            <td class="text-end">{{ $event->total_tokens === null ? 'Unknown' : number_format($event->total_tokens) }}</td>
+                            <td class="text-end">
+                                @php($cost = \App\Modules\Integration\Support\AiCostEvidence::forEvent($event))
+                                {{ \App\Modules\Integration\Support\AiCostEvidence::display($cost['amount'], $cost['currency']) }}
+                                <small class="d-block">{{ $cost['source'] }}</small>
+                            </td>
                             <td>
                                 @if($event->status === 'success')
                                     <span class="text-success"><i class="fas fa-check-circle"></i></span>

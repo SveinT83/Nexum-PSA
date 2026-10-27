@@ -4,53 +4,60 @@ namespace App\Modules\Integration\Services;
 
 use App\Modules\Integration\Models\AiModelRateCard;
 use App\Modules\Integration\Models\AiProvider;
+use App\Modules\Integration\Support\AiCostDecimal;
 use App\Modules\Integration\Support\AiModelUsage;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 
 class AiCostCalculator
 {
-    /**
-     * Calculate cost for a given usage, provider and model.
-     * Returns an array with 'total_cost', 'source' and 'pricing_snapshot'.
-     */
+    /** Missing price or required usage evidence remains unknown; estimates never imply provider charges. */
     public function calculate(AiModelUsage $usage, AiProvider $provider, ?string $modelName): array
     {
-        $rateCard = $this->findRateCard($provider, $modelName);
-
-        if (! $rateCard) {
-            return [
-                'total_cost' => 0.0,
-                'source' => 'none',
-                'pricing_snapshot' => null,
+        $unknown = ['total_cost' => null, 'currency' => null, 'source' => 'unknown', 'pricing_snapshot' => null];
+        $card = $this->findRateCard($provider, $modelName);
+        if (! $card || ! AiCostDecimal::currency($card->currency) || $card->rates->isEmpty()
+            || $usage->inputTokens === null || $usage->outputTokens === null
+            || collect($usage->nonTokenUsage)->contains(fn ($units) => $units > 0)
+            || ($usage->audioInputTokens ?? 0) > 0 || ($usage->audioOutputTokens ?? 0) > 0
+            || ($usage->cacheWriteTokens ?? 0) > 0) {
+            return $unknown;
+        }
+        $rates = $card->rates->keyBy('metric');
+        if ($rates->keys()->diff(['input_token', 'output_token', 'cached_input_token'])->isNotEmpty()
+            || ($usage->inputTokens > 0 && ! $rates->has('input_token'))
+            || ($usage->outputTokens > 0 && ! $rates->has('output_token'))) {
+            return $unknown;
+        }
+        $counts = ['input_token' => $usage->inputTokens, 'output_token' => $usage->outputTokens];
+        // Cached input is a subset of input, charged once at its explicit cache rate.
+        if ($rates->has('cached_input_token')) {
+            if ($usage->cachedInputTokens === null || $usage->cachedInputTokens > $usage->inputTokens) {
+                return $unknown;
+            }
+            $counts['input_token'] -= $usage->cachedInputTokens;
+            $counts['cached_input_token'] = $usage->cachedInputTokens;
+        }
+        $total = BigDecimal::zero();
+        $snapshot = ['rate_card_id' => $card->id, 'currency' => $card->currency, 'metrics' => []];
+        foreach ($rates as $metric => $rate) {
+            $price = AiCostDecimal::parse($rate->rate);
+            if ($price === null || $rate->unit_quantity < 1) {
+                return $unknown;
+            }
+            $amount = $price->multipliedBy($counts[$metric] ?? 0)
+                ->dividedBy($rate->unit_quantity, 24, RoundingMode::HalfUp);
+            $total = $total->plus($amount);
+            $snapshot['metrics'][$metric] = [
+                'units' => $counts[$metric] ?? 0, 'rate' => (string) $price,
+                'unit_quantity' => $rate->unit_quantity, 'cost' => (string) $amount,
             ];
         }
+        $stored = AiCostDecimal::stored((string) $total);
 
-        $totalCost = 0.0;
-        $snapshot = [];
-
-        foreach ($rateCard->rates as $rate) {
-            $units = match ($rate->metric) {
-                'input_token' => $usage->inputTokens,
-                'output_token' => $usage->outputTokens,
-                'cached_input_token' => $usage->cachedInputTokens,
-                default => 0,
-            };
-
-            if ($units > 0) {
-                $cost = ($units / $rate->unit_quantity) * (float) $rate->rate;
-                $totalCost += $cost;
-                $snapshot[$rate->metric] = [
-                    'units' => $units,
-                    'rate' => (float) $rate->rate,
-                    'unit_quantity' => $rate->unit_quantity,
-                    'cost' => $cost,
-                ];
-            }
-        }
-
-        return [
-            'total_cost' => $totalCost,
-            'source' => 'rate_card:'.$rateCard->id,
-            'pricing_snapshot' => $snapshot,
+        return $stored === null ? $unknown : [
+            'total_cost' => $stored, 'currency' => $card->currency,
+            'source' => 'estimated', 'pricing_snapshot' => $snapshot,
         ];
     }
 
@@ -59,39 +66,19 @@ class AiCostCalculator
         if (! $modelName) {
             return null;
         }
-
-        // Try exact match first
-        $card = AiModelRateCard::query()
-            ->with('rates')
-            ->active()
-            ->where('ai_provider_id', $provider->id)
-            ->where('model_pattern', $modelName)
-            ->first();
-
-        if ($card) {
-            return $card;
+        $cards = AiModelRateCard::query()->with('rates')->active()
+            ->where('ai_provider_id', $provider->id)->orderByDesc('effective_from')->orderBy('id')->get();
+        $exact = $cards->firstWhere('model_pattern', $modelName);
+        if ($exact) {
+            return $exact;
         }
-
-        // Try pattern match (very basic wildcard for now)
-        $cards = AiModelRateCard::query()
-            ->with('rates')
-            ->active()
-            ->where('ai_provider_id', $provider->id)
-            ->get();
-
-        foreach ($cards as $c) {
-            $pattern = str_replace('*', '.*', $c->model_pattern);
+        foreach ($cards->sortByDesc(fn ($card) => strlen(str_replace('*', '', $card->model_pattern))) as $card) {
+            $pattern = str_replace('\*', '.*', preg_quote($card->model_pattern, '/'));
             if (preg_match('/^'.$pattern.'$/i', $modelName)) {
-                return $c;
+                return $card;
             }
         }
 
-        // Try global provider default (pattern '*')
-        return AiModelRateCard::query()
-            ->with('rates')
-            ->active()
-            ->where('ai_provider_id', $provider->id)
-            ->where('model_pattern', '*')
-            ->first();
+        return null;
     }
 }

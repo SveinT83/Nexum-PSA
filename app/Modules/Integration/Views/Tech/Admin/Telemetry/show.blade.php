@@ -107,12 +107,12 @@
                 <div class="card-header">Usage & Tokens</div>
                 <div class="card-body p-0">
                     <table class="table table-sm mb-0">
-                        <tr class="table-light"><th>Total Tokens</th><th class="text-end">{{ number_format($event->total_tokens) }}</th></tr>
-                        <tr><td>Input Tokens</td><td class="text-end">{{ number_format($event->input_tokens) }}</td></tr>
-                        <tr><td>Output Tokens</td><td class="text-end">{{ number_format($event->output_tokens) }}</td></tr>
-                        <tr><td>Cached Input</td><td class="text-end">{{ number_format($event->cached_input_tokens) }}</td></tr>
-                        <tr><td>Reasoning</td><td class="text-end">{{ number_format($event->reasoning_tokens) }}</td></tr>
-                        <tr><td>Audio (In/Out)</td><td class="text-end">{{ number_format($event->audio_input_tokens) }} / {{ number_format($event->audio_output_tokens) }}</td></tr>
+                        <tr class="table-light"><th>Total Tokens</th><th class="text-end">{{ $event->total_tokens === null ? 'Unknown' : number_format($event->total_tokens) }}</th></tr>
+                        <tr><td>Input Tokens</td><td class="text-end">{{ $event->input_tokens === null ? 'Unknown' : number_format($event->input_tokens) }}</td></tr>
+                        <tr><td>Output Tokens</td><td class="text-end">{{ $event->output_tokens === null ? 'Unknown' : number_format($event->output_tokens) }}</td></tr>
+                        <tr><td>Cached Input</td><td class="text-end">{{ $event->cached_input_tokens === null ? 'Unknown' : number_format($event->cached_input_tokens) }}</td></tr>
+                        <tr><td>Reasoning</td><td class="text-end">{{ $event->reasoning_tokens === null ? 'Unknown' : number_format($event->reasoning_tokens) }}</td></tr>
+                        <tr><td>Audio (In/Out)</td><td class="text-end">{{ $event->audio_input_tokens === null ? 'Unknown' : number_format($event->audio_input_tokens) }} / {{ $event->audio_output_tokens === null ? 'Unknown' : number_format($event->audio_output_tokens) }}</td></tr>
                     </table>
                 </div>
             </div>
@@ -120,26 +120,27 @@
             <div class="card mb-4 border-success">
                 <div class="card-header bg-success text-white">Cost Breakdown</div>
                 <div class="card-body">
+                    {{-- Reported, estimated and unknown evidence remain separate. --}}
+                    @php($cost = \App\Modules\Integration\Support\AiCostEvidence::forEvent($event))
                     <div class="text-center mb-3">
-                        <h3 class="mb-0">${{ number_format($event->effective_cost, 6) }}</h3>
-                        <small class="text-muted">Effective Cost ({{ $event->cost_currency ?: 'USD' }})</small>
+                        <h3 class="mb-0">{{ \App\Modules\Integration\Support\AiCostEvidence::display($cost['amount'], $cost['currency']) }}</h3>
+                        <small class="text-muted">Cost evidence: {{ $cost['state'] }}</small>
                     </div>
-                    <hr>
                     <table class="table table-sm mb-0">
-                        <tr><th>Source</th><td>{{ $event->cost_source }}</td></tr>
-                        <tr><th>Reported</th><td>${{ number_format($event->provider_reported_cost, 6) }}</td></tr>
-                        <tr><th>Calculated</th><td>${{ number_format($event->calculated_cost, 6) }}</td></tr>
+                        <tr><th>Source</th><td>{{ $cost['source'] }}</td></tr>
+                        <tr><th>Reported</th><td>{{ \App\Modules\Integration\Support\AiCostEvidence::display($cost['provider_reported_amount'], $cost['provider_reported_currency']) }}</td></tr>
+                        <tr><th>Estimated</th><td>{{ \App\Modules\Integration\Support\AiCostEvidence::display($cost['estimated_amount'], $cost['estimated_currency']) }}</td></tr>
                     </table>
                 </div>
                 @if($event->pricing_snapshot)
                 <div class="card-footer p-0">
                     <div class="p-2 bg-light"><small>Pricing Snapshot</small></div>
                     <table class="table table-sm mb-0 x-small">
-                        @foreach($event->pricing_snapshot as $metric => $data)
+                        @foreach(($event->pricing_snapshot['metrics'] ?? []) as $metric => $data)
                             <tr>
                                 <td>{{ $metric }}</td>
                                 <td class="text-end">
-                                    {{ number_format($data['units']) }} @ ${{ number_format($data['rate'], 6) }} / {{ number_format($data['unit_quantity']) }}
+                                    {{ number_format($data['units']) }} @ {{ $data['rate'] }} {{ $cost['estimated_currency'] ?? '(currency unknown)' }} / {{ number_format($data['unit_quantity']) }}
                                 </td>
                             </tr>
                         @endforeach

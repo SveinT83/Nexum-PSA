@@ -14,6 +14,7 @@ class ApiAbilityCatalog
      * Access mode is deliberately explicit so progressive read scopes do not depend on their name.
      */
     private const ACCESS_MODES = [
+        'integration.ai_telemetry.read' => self::ACCESS_READ,
         'system.read' => self::ACCESS_READ,
         'system.settings.read' => self::ACCESS_READ,
         'system.settings.write' => self::ACCESS_WRITE,
@@ -641,6 +642,11 @@ class ApiAbilityCatalog
             'label' => 'Update knowledge',
             'description' => 'Update or delete knowledge shelves, books, chapters, articles, and documentation records.',
             'domain' => 'Knowledge',
+        ],
+        'integration.ai_telemetry.read' => [
+            'label' => 'Read AI usage and cost evidence',
+            'description' => 'Read sanitized AI attempts, currency-specific cost evidence and rate cards with native AI administration authority.',
+            'domain' => 'Integration',
         ],
         'integration.bookstack.read' => [
             'label' => 'Read BookStack sync status',

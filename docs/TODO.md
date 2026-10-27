@@ -1,5 +1,19 @@
 # tdPSA Development TODO
 
+## Truthful AI Cost Evidence - Issue #277 (2026-10-28)
+
+Status: In Progress On Dev / RFC Approved / Tested Main Merge Authorized. Owner: Codex / Svein Tore.
+Parent approved July telemetry RFC; current RFC 2026-10-28-truthful-ai-cost-evidence and accepted
+ADR 2026-10-28-ai-cost-source-and-decimal-contract. Two sequential slices: exact nullable attempt
+cost/budget/storage, then shared UI/typed API/currency summaries and documentation. Source schema,
+casts, normalization, aggregation and budget gaps are inventoried in the RFC before edits.
+One precision-expansion migration needs protected preflight/backup and exact Dev read-back.
+No historical backfill, currency conversion, pricing/provider change or production deployment.
+HR-2026-10-28-AI-COST-EVIDENCE Pending for production; user explicitly authorized tested Main merge.
+#269/#278 are complete and merged (PR #360; merge-record PR #363), not another active implementation.
+Next: reproduce both zero/mass-assignment gaps, implement/verify slices, handbook, exact Main and
+Issue completion. #290 still awaits actual receiver/provider/model/review facts from Svein.
+
 ## Approved Open-Issue Completion And Main Promotion (2026-10-27)
 
 Status: In Progress. Owner: Codex / Svein Tore. Direct authorization: "Fix alt og merge til main".

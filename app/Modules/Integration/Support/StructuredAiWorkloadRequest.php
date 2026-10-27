@@ -91,7 +91,8 @@ final class StructuredAiWorkloadRequest
             throw new InvalidArgumentException('Invalid structured AI reasoning effort.');
         }
         if ($maxProviderReportedCost !== null
-            && (! is_numeric($maxProviderReportedCost) || (float) $maxProviderReportedCost < 0)) {
+            && (AiCostDecimal::stored($maxProviderReportedCost) === null
+                || ! AiCostDecimal::parse($maxProviderReportedCost)->isEqualTo(AiCostDecimal::stored($maxProviderReportedCost)))) {
             throw new InvalidArgumentException('Structured AI cost limit must be a non-negative decimal.');
         }
         $costCurrency = is_string($costCurrency) ? strtoupper(trim($costCurrency)) : null;
@@ -116,7 +117,7 @@ final class StructuredAiWorkloadRequest
         $this->reasoningEffort = $reasoningEffort;
         $this->maxProviderReportedCost = $maxProviderReportedCost === null
             ? null
-            : rtrim(rtrim(number_format((float) $maxProviderReportedCost, 12, '.', ''), '0'), '.');
+            : AiCostDecimal::stored($maxProviderReportedCost);
         $this->costCurrency = $costCurrency;
     }
 
