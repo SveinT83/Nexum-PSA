@@ -2,11 +2,14 @@
 
 namespace App\Modules\System\Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class SecurityHeadersTest extends TestCase
 {
+    use RefreshDatabase;
+
     #[Test]
     public function application_responses_include_security_headers(): void
     {

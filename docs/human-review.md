@@ -23,6 +23,68 @@ or customer send is part of these synthetic checks. Risks: detector false positi
 opaque credentials, error compatibility and concurrent shared files; tests must cover them.
 
 
+## HR-2026-10-27-SYSTEM-API - Full System Browser/API Coverage
+
+Status: Pending / Done On Dev / Merged To Main In PR #361, verified 2026-10-28.
+Added: 2026-10-27. Owner: Codex. Intended named human reviewer: Svein Tore.
+Parent: rfc/2026-10-27-system-full-api-parity.md (Approved); SY-S1 through SY-S4 Done On Dev.
+This is a human-review checklist entry. Remaining manual scenarios gate production
+deployment/release. Svein Tore explicitly authorized the tested scoped Main promotion:
+"Godkjenner og merge", 2026-10-27. That authorization does not assert scenario execution. Historical HR-2026-07-16-001
+remains Reviewed; no old checkbox is reused as API acceptance.
+
+- [ ] Compare authorized admin context/navigation and local/cached GitHub version states.
+- [ ] Update every company field; compare web/API exact persisted read-back.
+- [ ] Compare all visual fields, default theme, preset/reset and side-effect-free preview.
+- [ ] Upload/replace/remove fallback/light/dark logos through real multipart; verify
+      bytes/fallback and portal/PWA/Commercial rendering without losing company data.
+- [ ] Verify settings-only/queue-only, inactive/revoked/expired token and native access.
+- [ ] Compare supported backend metadata and unknown/unavailable count/health states.
+- [ ] In approved isolated test context confirm restart/clear/retry-one/retry-all/flush;
+      verify failure/expired or stale confirmation/unresolved and no duplicate effects.
+- [ ] Verify restart receipt means signal issued and retry means re-enqueued; process
+      restart, actual job completion and recipient delivery require separate evidence.
+- [ ] Compare concurrent web/API/stale writes, receipt isolation and safe error/audit data.
+- [ ] Verify exact Swagger/coverage and actual BookStack content/employee access.
+
+Expected: every current supported workflow with independent native/token authority,
+safe exact result read-back and no implicit activation. API-maintenance switch stays
+default off until separately authorized. No real backlog or scheduler/worker change.
+Deploy: exact additive schema 2026_10_27_160000_create_system_api_commands,
+normal cache clear and Swagger regeneration; public storage link if absent. Preserve
+receipts/audit and APP_KEY where encrypted. Recovery disables new API effects and
+reconciles unresolved commands before retry. #262 operational health remains separate.
+Risks: destructive/replayed queue effects, false success/health, lost logos/settings,
+raw exception leakage. Original baseline SSO test failures have been resolved; current
+Dev and final Main candidate verification are recorded independently below.
+No scenario is performed; RFC/Main/production authorization and deployment are separate.
+
+
+Automated completion evidence (does not check manual items): 121 passed / 1529
+assertions, all 19 HTTP/Swagger operation results, native MySQL concurrent writers,
+receipt encryption/uniqueness/rollback, trusted HTTPS and real multipart validation,
+24-file syntax/Pint. Exact migration 2026_10_27_160000_create_system_api_commands ran
+in Dev batch 43. Original baseline failures are resolved. Complete handbook content/
+access independently verified on BookStack 366/367/438/546 via supported connector.
+Native Knowledge pending_push reflects absent Dev integration, not missing actual
+publication; Svein Tore/Integration owns mapping/configuration before native push.
+No UI scenario is marked reviewed. Remaining checks: all unchecked scenarios above,
+especially valid multipart/logo appearance, least privilege, and explicitly isolated
+maintenance/process observations. Gates: production deployment/release. Dev implementation is complete; tested Main promotion
+is expressly authorized with manual checks Pending. No production or runtime activation.
+
+Main promotion verified on 2026-10-28: PR #361,
+https://github.com/SveinT83/Nexum-PSA/pull/361, merge
+893ab45e00c65472c6691b9917a726b5fccee285. Merge tree
+406e1c13437a38b208deee442c09a6e82b17231b exactly matches the tested candidate;
+19 System operations / 44 schemas are present. The additional upstream integration
+run passes 44 tests / 1420 assertions; earlier 169-test evidence is a separate run.
+Production is not deployed, its migration has not run, API maintenance stays default-off.
+HR-2026-10-27-SYSTEM-API remains Pending; all unchecked manual scenarios gate
+production deployment/release. Native Knowledge mapping remains owned by Svein Tore /
+Integration; existing BookStack publication remains independently verified.
+
+
 ## HR-2026-10-27-WARROOM-API - Full Warroom Browser/API Coverage
 
 Status: Reviewed / Merged To Main In PR #359, 2026-10-27.

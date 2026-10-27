@@ -1,0 +1,143 @@
+{
+  "status": "Merged to Main / production not deployed",
+  "base": "5de857fd6af5a230e6a36a8d15de01f9a646f86b",
+  "branch": "codex/system-api-20261027",
+  "manifest": [
+    "app/Http/Middleware/EnforceTechRoutePermission.php",
+    "app/Modules/Integration/Support/ApiAbilityCatalog.php",
+    "app/Modules/Integration/Tests/Feature/SwaggerProductionScanTest.php",
+    "app/Modules/System/Actions/ExecuteSystemSettingsCommand.php",
+    "app/Modules/System/Actions/QueueMaintenanceAction.php",
+    "app/Modules/System/Controllers/Admin/CompanyProfileController.php",
+    "app/Modules/System/Controllers/Api/V1/SystemController.php",
+    "app/Modules/System/Docs/knowledge/admin-settings-navigation.md",
+    "app/Modules/System/Docs/knowledge/application-version-and-update-status.md",
+    "app/Modules/System/Docs/knowledge/company-profile-and-branding.md",
+    "app/Modules/System/Docs/knowledge/queues-and-workers.md",
+    "app/Modules/System/Docs/knowledge/system-api-support.md",
+    "app/Modules/System/Models/SystemApiCommand.php",
+    "app/Modules/System/Queries/QueueWorkerStatusQuery.php",
+    "app/Modules/System/Queries/SystemAdminNavigation.php",
+    "app/Modules/System/Resources/Api/V1/SystemApiOpenApi.php",
+    "app/Modules/System/Resources/Api/V1/SystemApiView.php",
+    "app/Modules/System/Support/CompanyProfileRules.php",
+    "app/Modules/System/Support/CompanyProfileSettings.php",
+    "app/Modules/System/Support/SystemApiAccess.php",
+    "app/Modules/System/Support/SystemApiInput.php",
+    "app/Modules/System/Support/SystemQueueMaintenance.php",
+    "app/Modules/System/Tests/Feature/SecurityHeadersTest.php",
+    "app/Modules/System/Tests/Feature/SystemApiContractTest.php",
+    "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+    "app/Modules/System/Tests/Support/ValidatesSystemApiResponses.php",
+    "app/Modules/System/Views/Admin/index.blade.php",
+    "app/Modules/System/api.php",
+    "app/Modules/System/routes.php",
+    "config/system_api.php",
+    "database/migrations/2026_10_27_160000_create_system_api_commands.php",
+    "docs/TODO.md",
+    "docs/adr/2026-10-27-system-api-authority-and-maintenance.md",
+    "docs/feature-slices/2026-10-27-system-full-api-parity.md",
+    "docs/human-review.md",
+    "docs/plans/2026-10-27-system-api-baseline.md",
+    "docs/plans/2026-10-27-system-api-coverage-matrix.json",
+    "docs/plans/2026-10-27-system-api-coverage-matrix.md",
+    "docs/plans/2026-10-27-system-api-handbook-evidence.json",
+    "docs/plans/2026-10-27-system-api-https-evidence.json",
+    "docs/plans/2026-10-27-system-api-main-promotion.json",
+    "docs/plans/2026-10-27-system-api-native-evidence.json",
+    "docs/plans/2026-10-27-system-api-verification.json",
+    "docs/plans/2026-10-27-system-api-verification.md",
+    "docs/rfc/2026-10-27-system-full-api-parity.md",
+    "storage/api-docs/api-docs.json"
+  ],
+  "tests": {
+    "original_run": {
+      "passed": 168,
+      "failed": 1,
+      "assertions": 2218,
+      "duration_seconds": 981.71,
+      "failed_test": "SwaggerProductionScanTest::swagger_generates_without_loading_development_only_module_test_parents",
+      "failure": "ProcessTimedOutException at 120 seconds"
+    },
+    "repair": {
+      "file": "app/Modules/Integration/Tests/Feature/SwaggerProductionScanTest.php",
+      "old_budget_seconds": 120,
+      "new_budget_seconds": 600,
+      "assertions_unchanged": true,
+      "implemented_on": "authoritative Dev",
+      "runtime_behavior_changed": false
+    },
+    "candidate_base": "86b82ed8625ff709c5a753b62614f22b46114b35",
+    "manifest_files": 46,
+    "original_timeout_resolved": true,
+    "main_production_scan": {
+      "passed": 1,
+      "assertions": 2,
+      "duration_seconds": 353.48
+    },
+    "verified_combined": {
+      "passed": 169,
+      "assertions": 2220,
+      "unresolved_failures": 0,
+      "skipped": 0,
+      "runs": "168 successful affected tests, then unchanged production-compatibility assertions rerun successfully with the corrected bounded budget."
+    },
+    "dev_production_scan": {
+      "passed": 1,
+      "assertions": 2,
+      "duration_seconds": 401.05
+    },
+    "upstream_integration": {
+      "base": "5de857fd6af5a230e6a36a8d15de01f9a646f86b",
+      "passed": 44,
+      "assertions": 1420,
+      "duration_seconds": 416.39,
+      "failed": 0,
+      "skipped": 0,
+      "classes": [
+        "SystemApiParityTest",
+        "SystemApiContractTest",
+        "WarroomApiParityTest",
+        "WarroomApiContractTest",
+        "UserManagementApiTest"
+      ]
+    }
+  },
+  "swagger": {
+    "system_operations": 19,
+    "system_schemas": 44,
+    "non_system_path_changes": [],
+    "non_system_schema_changes": [],
+    "generated_sha256": "7c8e81a37af1fe9c645b0b37451ca030e3bec1770b40d00490c1de717717a250",
+    "unrelated_serialized_bytes_preserved": true,
+    "native_generator_path_schema_semantics_preserved": true,
+    "existing_tag_metadata_preserved": true,
+    "published_sha256": "2720b08ff1395bb4087a00afa43a3be70bb124453677e9f122efc4779d10007e",
+    "preserved_upstream_domains": [
+      "Warroom"
+    ]
+  },
+  "php_files": 25,
+  "human_review": {
+    "id": "HR-2026-10-27-SYSTEM-API",
+    "status": "Pending",
+    "main_promotion_authorized": true,
+    "production_gate": true
+  },
+  "production_deployed": false,
+  "runtime_activated": false,
+  "initial_base": "86b82ed8625ff709c5a753b62614f22b46114b35",
+  "merge_readback": {
+    "merged": true,
+    "pr": 361,
+    "url": "https://github.com/SveinT83/Nexum-PSA/pull/361",
+    "merge_sha": "893ab45e00c65472c6691b9917a726b5fccee285",
+    "tested_head": "8b99008d1f96bd0f9426803aa245a0e6d6e06a5b",
+    "tree": "406e1c13437a38b208deee442c09a6e82b17231b",
+    "exact_tested_tree": true,
+    "main_contains_merge": true,
+    "system_operations": 19,
+    "system_schemas": 44,
+    "date": "2026-10-28"
+  }
+}

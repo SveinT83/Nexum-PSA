@@ -133879,6 +133879,2356 @@
                     }
                 ]
             }
+        },
+        "/api/v1/system/context": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Authorized admin discovery and local build metadata",
+                "description": "Token scope: system.read. Native authority: system.view. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY01",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemContextResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/system/version-status": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Cached GitHub release and branch comparison",
+                "description": "Token scope: system.read. Native authority: system.view. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY02",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemVersionResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/system/company-profile": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Organization data, constraints and state version",
+                "description": "Token scope: system.settings.read. Native authority: system.settings_manage. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY03",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemCompanyResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Validated company update and exact read-back",
+                "description": "Token scope: system.settings.write. Native authority: system.settings_manage. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY04",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "description": "Exact current settings ETag; stale state is 412.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SystemCompanyInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemCompanyMutation"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/system/branding": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Colors, theme, safe logo metadata and state version",
+                "description": "Token scope: system.settings.read. Native authority: system.settings_manage. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY05",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemBrandingResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "JSON visual settings and explicit removals",
+                "description": "Token scope: system.settings.write. Native authority: system.settings_manage. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY06",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "description": "Exact current settings ETag; stale state is 412.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SystemBrandingInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemBrandingMutation"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Multipart visual settings and three logo uploads",
+                "description": "Token scope: system.settings.write. Native authority: system.settings_manage. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY07",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "description": "Exact current settings ETag; stale state is 412.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SystemBrandingUploadInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemBrandingMutation"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/system/branding/presets": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Preset keys and values",
+                "description": "Token scope: system.settings.read. Native authority: system.settings_manage. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY08",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemPresetsResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/system/branding/preview": {
+            "post": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Side-effect-free unsaved visual settings preview",
+                "description": "Token scope: system.settings.read. Native authority: system.settings_manage. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY09",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SystemBrandingPreviewInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemBrandingPreviewResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/system/branding/preset": {
+            "post": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Apply preset, preserving company and logos",
+                "description": "Token scope: system.settings.write. Native authority: system.settings_manage. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY10",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "description": "Exact current settings ETag; stale state is 412.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SystemPresetInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemBrandingMutation"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/system/branding/reset": {
+            "put": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Reset all branding/logos, preserve company data",
+                "description": "Token scope: system.settings.write. Native authority: system.settings_manage. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY11",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "description": "Exact current settings ETag; stale state is 412.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemBrandingMutation"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/system/queues-workers": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Driver-aware status, bounded safe failed-job metadata and guidance",
+                "description": "Token scope: system.queue.read. Native authority: system.queue_manage. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY12",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemQueueStatusResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/system/queues-workers/preview": {
+            "post": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Explicit maintenance target, impact and expiring confirmation",
+                "description": "Token scope: system.queue.read. Native authority: system.queue_manage. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY13",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SystemMaintenancePreviewInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemMaintenancePreviewResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/system/queues-workers/restart": {
+            "post": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Graceful restart signal receipt, no inferred worker restart",
+                "description": "Token scope: system.queue.restart. Native authority: system.queue_manage. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY14",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SystemRestartInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemMaintenanceCommandResult"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Dispatch outcome unresolved; read the retained receipt and reconcile, never blindly retry.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemMaintenanceCommandResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/system/queues-workers/clear": {
+            "post": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Confirmed named-queue clear and exact outcome receipt",
+                "description": "Token scope: system.queue.clear. Native authority: system.queue_manage. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY15",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SystemClearInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemMaintenanceCommandResult"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Dispatch outcome unresolved; read the retained receipt and reconcile, never blindly retry.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemMaintenanceCommandResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/system/queues-workers/failed/retry": {
+            "post": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Confirmed failed job or explicit all, no implicit backlog release",
+                "description": "Token scope: system.queue.retry. Native authority: system.queue_manage. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY16",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SystemRetryInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemMaintenanceCommandResult"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Dispatch outcome unresolved; read the retained receipt and reconcile, never blindly retry.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemMaintenanceCommandResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/system/queues-workers/failed/flush": {
+            "post": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Confirmed failed-store flush and outcome evidence",
+                "description": "Token scope: system.queue.flush. Native authority: system.queue_manage. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY17",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SystemFlushInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemMaintenanceCommandResult"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Dispatch outcome unresolved; read the retained receipt and reconcile, never blindly retry.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemMaintenanceCommandResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/system/operations": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Bounded own receipts with current source native/scope rights",
+                "description": "Token scope: system.operations.read. Native authority: action-specific. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY18",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemOperationsResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/system/operations/{operation}": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Actor/token-bound result and reconciliation status",
+                "description": "Token scope: system.operations.read. Native authority: action-specific. Settings writes require Idempotency-Key and exact If-Match. Maintenance requires default-off execution switch, dedicated scope, preview confirmation and Idempotency-Key. Restart proves signal issued; retry proves re-enqueued, never delivery. Driver counts are snapshots; they do not prove process health.",
+                "operationId": "systemSY19",
+                "parameters": [
+                    {
+                        "name": "operation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemOperationResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token scope denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Target unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Replay, confirmation, runtime gate or maintenance conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Settings version changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or confirmation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Storage, exact migration or backend unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -183958,6 +186308,2200 @@
                     }
                 },
                 "type": "object"
+            },
+            "SystemApiError": {
+                "required": [
+                    "message"
+                ],
+                "properties": {
+                    "message": {
+                        "description": "Full typed System browser/API parity with native authority and honest operational outcomes.",
+                        "type": "string"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "SystemCompany": {
+                "required": [
+                    "company_name",
+                    "legal_name",
+                    "organization_number",
+                    "address_line_1",
+                    "address_line_2",
+                    "postal_code",
+                    "city",
+                    "country",
+                    "support_email",
+                    "phone",
+                    "website"
+                ],
+                "properties": {
+                    "company_name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "legal_name": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 160
+                    },
+                    "organization_number": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 50
+                    },
+                    "address_line_1": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 160
+                    },
+                    "address_line_2": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 160
+                    },
+                    "postal_code": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 30
+                    },
+                    "city": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 80
+                    },
+                    "country": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "support_email": {
+                        "type": "string",
+                        "format": "email",
+                        "nullable": true,
+                        "maxLength": 160
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 60
+                    },
+                    "website": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true,
+                        "maxLength": 200
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SystemCompanyInput": {
+                "required": [
+                    "company_name"
+                ],
+                "properties": {
+                    "company_name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "legal_name": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 160
+                    },
+                    "organization_number": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 50
+                    },
+                    "address_line_1": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 160
+                    },
+                    "address_line_2": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 160
+                    },
+                    "postal_code": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 30
+                    },
+                    "city": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 80
+                    },
+                    "country": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 80
+                    },
+                    "support_email": {
+                        "type": "string",
+                        "format": "email",
+                        "nullable": true,
+                        "maxLength": 160
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 60
+                    },
+                    "website": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true,
+                        "maxLength": 200
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SystemBrandColors": {
+                "required": [
+                    "primary_color",
+                    "secondary_color",
+                    "accent_color",
+                    "light_header_background",
+                    "light_header_color",
+                    "light_footer_background",
+                    "light_footer_color",
+                    "light_left_sidebar_background",
+                    "light_left_sidebar_color",
+                    "light_main_background",
+                    "light_right_sidebar_background",
+                    "light_right_sidebar_color",
+                    "light_page_header_background",
+                    "light_page_header_color",
+                    "light_card_header_background",
+                    "light_card_header_color",
+                    "light_content_background",
+                    "light_primary_button_background",
+                    "light_primary_button_color",
+                    "light_secondary_button_background",
+                    "light_secondary_button_color",
+                    "dark_header_background",
+                    "dark_header_color",
+                    "dark_footer_background",
+                    "dark_footer_color",
+                    "dark_left_sidebar_background",
+                    "dark_left_sidebar_color",
+                    "dark_main_background",
+                    "dark_right_sidebar_background",
+                    "dark_right_sidebar_color",
+                    "dark_page_header_background",
+                    "dark_page_header_color",
+                    "dark_card_header_background",
+                    "dark_card_header_color",
+                    "dark_content_background",
+                    "dark_primary_button_background",
+                    "dark_primary_button_color",
+                    "dark_secondary_button_background",
+                    "dark_secondary_button_color"
+                ],
+                "properties": {
+                    "primary_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "secondary_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "accent_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_footer_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_footer_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_left_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_left_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_main_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_right_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_right_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_page_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_page_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_card_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_card_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_content_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_primary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_primary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_secondary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_secondary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_footer_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_footer_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_left_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_left_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_main_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_right_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_right_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_page_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_page_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_card_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_card_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_content_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_primary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_primary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_secondary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_secondary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SystemLogo": {
+                "required": [
+                    "configured",
+                    "url",
+                    "sha256",
+                    "bytes"
+                ],
+                "properties": {
+                    "configured": {
+                        "type": "boolean"
+                    },
+                    "url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "sha256": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$",
+                        "nullable": true
+                    },
+                    "bytes": {
+                        "type": "integer",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SystemLogos": {
+                "required": [
+                    "fallback",
+                    "light",
+                    "dark"
+                ],
+                "properties": {
+                    "fallback": {
+                        "$ref": "#/components/schemas/SystemLogo"
+                    },
+                    "light": {
+                        "$ref": "#/components/schemas/SystemLogo"
+                    },
+                    "dark": {
+                        "$ref": "#/components/schemas/SystemLogo"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SystemBranding": {
+                "required": [
+                    "primary_color",
+                    "secondary_color",
+                    "accent_color",
+                    "light_header_background",
+                    "light_header_color",
+                    "light_footer_background",
+                    "light_footer_color",
+                    "light_left_sidebar_background",
+                    "light_left_sidebar_color",
+                    "light_main_background",
+                    "light_right_sidebar_background",
+                    "light_right_sidebar_color",
+                    "light_page_header_background",
+                    "light_page_header_color",
+                    "light_card_header_background",
+                    "light_card_header_color",
+                    "light_content_background",
+                    "light_primary_button_background",
+                    "light_primary_button_color",
+                    "light_secondary_button_background",
+                    "light_secondary_button_color",
+                    "dark_header_background",
+                    "dark_header_color",
+                    "dark_footer_background",
+                    "dark_footer_color",
+                    "dark_left_sidebar_background",
+                    "dark_left_sidebar_color",
+                    "dark_main_background",
+                    "dark_right_sidebar_background",
+                    "dark_right_sidebar_color",
+                    "dark_page_header_background",
+                    "dark_page_header_color",
+                    "dark_card_header_background",
+                    "dark_card_header_color",
+                    "dark_content_background",
+                    "dark_primary_button_background",
+                    "dark_primary_button_color",
+                    "dark_secondary_button_background",
+                    "dark_secondary_button_color",
+                    "default_theme",
+                    "logos"
+                ],
+                "properties": {
+                    "primary_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "secondary_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "accent_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_footer_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_footer_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_left_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_left_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_main_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_right_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_right_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_page_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_page_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_card_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_card_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_content_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_primary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_primary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_secondary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_secondary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_footer_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_footer_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_left_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_left_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_main_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_right_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_right_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_page_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_page_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_card_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_card_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_content_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_primary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_primary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_secondary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_secondary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "default_theme": {
+                        "type": "string",
+                        "enum": [
+                            "light",
+                            "dark",
+                            "system"
+                        ]
+                    },
+                    "logos": {
+                        "$ref": "#/components/schemas/SystemLogos"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SystemBrandingInput": {
+                "required": [
+                    "primary_color",
+                    "secondary_color",
+                    "accent_color",
+                    "light_header_background",
+                    "light_header_color",
+                    "light_footer_background",
+                    "light_footer_color",
+                    "light_left_sidebar_background",
+                    "light_left_sidebar_color",
+                    "light_main_background",
+                    "light_right_sidebar_background",
+                    "light_right_sidebar_color",
+                    "light_page_header_background",
+                    "light_page_header_color",
+                    "light_card_header_background",
+                    "light_card_header_color",
+                    "light_content_background",
+                    "light_primary_button_background",
+                    "light_primary_button_color",
+                    "light_secondary_button_background",
+                    "light_secondary_button_color",
+                    "dark_header_background",
+                    "dark_header_color",
+                    "dark_footer_background",
+                    "dark_footer_color",
+                    "dark_left_sidebar_background",
+                    "dark_left_sidebar_color",
+                    "dark_main_background",
+                    "dark_right_sidebar_background",
+                    "dark_right_sidebar_color",
+                    "dark_page_header_background",
+                    "dark_page_header_color",
+                    "dark_card_header_background",
+                    "dark_card_header_color",
+                    "dark_content_background",
+                    "dark_primary_button_background",
+                    "dark_primary_button_color",
+                    "dark_secondary_button_background",
+                    "dark_secondary_button_color",
+                    "default_theme"
+                ],
+                "properties": {
+                    "primary_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "secondary_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "accent_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_footer_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_footer_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_left_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_left_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_main_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_right_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_right_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_page_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_page_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_card_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_card_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_content_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_primary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_primary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_secondary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_secondary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_footer_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_footer_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_left_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_left_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_main_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_right_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_right_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_page_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_page_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_card_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_card_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_content_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_primary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_primary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_secondary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_secondary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "default_theme": {
+                        "type": "string",
+                        "enum": [
+                            "light",
+                            "dark",
+                            "system"
+                        ]
+                    },
+                    "remove_logo": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "remove_light_logo": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "remove_dark_logo": {
+                        "type": "boolean",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SystemBrandingUploadInput": {
+                "required": [
+                    "primary_color",
+                    "secondary_color",
+                    "accent_color",
+                    "light_header_background",
+                    "light_header_color",
+                    "light_footer_background",
+                    "light_footer_color",
+                    "light_left_sidebar_background",
+                    "light_left_sidebar_color",
+                    "light_main_background",
+                    "light_right_sidebar_background",
+                    "light_right_sidebar_color",
+                    "light_page_header_background",
+                    "light_page_header_color",
+                    "light_card_header_background",
+                    "light_card_header_color",
+                    "light_content_background",
+                    "light_primary_button_background",
+                    "light_primary_button_color",
+                    "light_secondary_button_background",
+                    "light_secondary_button_color",
+                    "dark_header_background",
+                    "dark_header_color",
+                    "dark_footer_background",
+                    "dark_footer_color",
+                    "dark_left_sidebar_background",
+                    "dark_left_sidebar_color",
+                    "dark_main_background",
+                    "dark_right_sidebar_background",
+                    "dark_right_sidebar_color",
+                    "dark_page_header_background",
+                    "dark_page_header_color",
+                    "dark_card_header_background",
+                    "dark_card_header_color",
+                    "dark_content_background",
+                    "dark_primary_button_background",
+                    "dark_primary_button_color",
+                    "dark_secondary_button_background",
+                    "dark_secondary_button_color",
+                    "default_theme"
+                ],
+                "properties": {
+                    "primary_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "secondary_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "accent_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_footer_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_footer_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_left_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_left_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_main_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_right_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_right_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_page_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_page_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_card_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_card_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_content_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_primary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_primary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_secondary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_secondary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_footer_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_footer_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_left_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_left_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_main_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_right_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_right_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_page_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_page_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_card_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_card_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_content_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_primary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_primary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_secondary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_secondary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "default_theme": {
+                        "type": "string",
+                        "enum": [
+                            "light",
+                            "dark",
+                            "system"
+                        ]
+                    },
+                    "remove_logo": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "remove_light_logo": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "remove_dark_logo": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "logo": {
+                        "type": "string",
+                        "format": "binary",
+                        "nullable": true
+                    },
+                    "logo_light": {
+                        "type": "string",
+                        "format": "binary",
+                        "nullable": true
+                    },
+                    "logo_dark": {
+                        "type": "string",
+                        "format": "binary",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SystemBrandingPreviewInput": {
+                "required": [],
+                "properties": {
+                    "primary_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "secondary_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "accent_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_footer_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_footer_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_left_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_left_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_main_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_right_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_right_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_page_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_page_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_card_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_card_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_content_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_primary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_primary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_secondary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "light_secondary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_footer_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_footer_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_left_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_left_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_main_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_right_sidebar_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_right_sidebar_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_page_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_page_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_card_header_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_card_header_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_content_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_primary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_primary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_secondary_button_background": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "dark_secondary_button_color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "default_theme": {
+                        "type": "string",
+                        "enum": [
+                            "light",
+                            "dark",
+                            "system"
+                        ]
+                    },
+                    "remove_logo": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "remove_light_logo": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "remove_dark_logo": {
+                        "type": "boolean",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SystemPresetInput": {
+                "required": [
+                    "preset"
+                ],
+                "properties": {
+                    "preset": {
+                        "type": "string",
+                        "enum": [
+                            "nexum",
+                            "tronder-data"
+                        ]
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SystemCompanyResult": {
+                "required": [
+                    "data",
+                    "version"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SystemCompany"
+                    },
+                    "fields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "version": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemCompanyMutation": {
+                "required": [
+                    "data",
+                    "version",
+                    "operation_id",
+                    "replayed"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SystemCompany"
+                    },
+                    "fields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "version": {
+                        "type": "string"
+                    },
+                    "operation_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemBrandingResult": {
+                "required": [
+                    "data",
+                    "version"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SystemBranding"
+                    },
+                    "fields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "version": {
+                        "type": "string"
+                    },
+                    "max_upload_kib": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemBrandingMutation": {
+                "required": [
+                    "data",
+                    "version",
+                    "operation_id",
+                    "replayed"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SystemBranding"
+                    },
+                    "fields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "version": {
+                        "type": "string"
+                    },
+                    "max_upload_kib": {
+                        "type": "integer"
+                    },
+                    "operation_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemBrandingPreviewResult": {
+                "required": [
+                    "data",
+                    "persisted",
+                    "version"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SystemBranding"
+                    },
+                    "persisted": {
+                        "type": "boolean",
+                        "enum": [
+                            false
+                        ]
+                    },
+                    "version": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemPreset": {
+                "required": [
+                    "key",
+                    "label",
+                    "values"
+                ],
+                "properties": {
+                    "key": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "values": {
+                        "$ref": "#/components/schemas/SystemBrandColors"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemPresetsResult": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SystemPreset"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "SystemRelease": {
+                "required": [
+                    "version"
+                ],
+                "properties": {
+                    "version": {
+                        "type": "string"
+                    },
+                    "tag": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "published_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "prerelease": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemVersion": {
+                "required": [
+                    "installed_version",
+                    "installed_commit",
+                    "installed_commit_short",
+                    "update_branch",
+                    "latest_release",
+                    "release_status",
+                    "comparison_status",
+                    "commits_behind",
+                    "commits_ahead",
+                    "github_available",
+                    "stale",
+                    "checked_at"
+                ],
+                "properties": {
+                    "installed_version": {
+                        "type": "string"
+                    },
+                    "installed_commit": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "installed_commit_short": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "update_branch": {
+                        "type": "string"
+                    },
+                    "latest_release": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SystemRelease"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "release_status": {
+                        "type": "string",
+                        "enum": [
+                            "unknown",
+                            "current",
+                            "update_available"
+                        ]
+                    },
+                    "comparison_status": {
+                        "type": "string",
+                        "enum": [
+                            "unknown",
+                            "commit_unknown",
+                            "current",
+                            "behind",
+                            "ahead",
+                            "diverged"
+                        ]
+                    },
+                    "commits_behind": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "commits_ahead": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "github_available": {
+                        "type": "boolean"
+                    },
+                    "stale": {
+                        "type": "boolean"
+                    },
+                    "checked_at": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SystemVersionResult": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SystemVersion"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemNavigationLink": {
+                "required": [
+                    "label",
+                    "url",
+                    "route"
+                ],
+                "properties": {
+                    "label": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "route": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemNavigationSection": {
+                "required": [
+                    "title",
+                    "description",
+                    "links"
+                ],
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SystemNavigationLink"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "SystemContext": {
+                "required": [
+                    "navigation",
+                    "version"
+                ],
+                "properties": {
+                    "navigation": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SystemNavigationSection"
+                        }
+                    },
+                    "version": {
+                        "$ref": "#/components/schemas/SystemVersion"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemContextResult": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SystemContext"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemPendingQueue": {
+                "required": [
+                    "queue",
+                    "jobs_count",
+                    "ready_count",
+                    "reserved_count",
+                    "delayed_count",
+                    "oldest_available_at"
+                ],
+                "properties": {
+                    "queue": {
+                        "type": "string"
+                    },
+                    "jobs_count": {
+                        "type": "integer"
+                    },
+                    "ready_count": {
+                        "type": "integer"
+                    },
+                    "reserved_count": {
+                        "type": "integer"
+                    },
+                    "delayed_count": {
+                        "type": "integer"
+                    },
+                    "oldest_available_at": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SystemFailedJob": {
+                "required": [
+                    "id",
+                    "uuid",
+                    "connection",
+                    "queue",
+                    "failed_at",
+                    "exception"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "connection": {
+                        "type": "string"
+                    },
+                    "queue": {
+                        "type": "string"
+                    },
+                    "failed_at": {
+                        "type": "string"
+                    },
+                    "exception": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemFailedJobs": {
+                "required": [
+                    "count",
+                    "latest"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "latest": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SystemFailedJob"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "SystemQueueStatus": {
+                "required": [
+                    "connection",
+                    "configured_queue",
+                    "worker_queues",
+                    "pending_jobs",
+                    "failed_jobs",
+                    "supports_database_counts",
+                    "supports_failed_jobs",
+                    "pending_state",
+                    "failed_state",
+                    "worker_health",
+                    "scheduler_health",
+                    "observed_at"
+                ],
+                "properties": {
+                    "connection": {
+                        "type": "string"
+                    },
+                    "configured_queue": {
+                        "type": "string"
+                    },
+                    "worker_queues": {
+                        "type": "string"
+                    },
+                    "pending_jobs": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SystemPendingQueue"
+                        }
+                    },
+                    "failed_jobs": {
+                        "$ref": "#/components/schemas/SystemFailedJobs"
+                    },
+                    "supports_database_counts": {
+                        "type": "boolean"
+                    },
+                    "supports_failed_jobs": {
+                        "type": "boolean"
+                    },
+                    "pending_state": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "unavailable",
+                            "unsupported"
+                        ]
+                    },
+                    "failed_state": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "unavailable",
+                            "unsupported"
+                        ]
+                    },
+                    "worker_health": {
+                        "type": "string",
+                        "enum": [
+                            "unknown"
+                        ]
+                    },
+                    "scheduler_health": {
+                        "type": "string",
+                        "enum": [
+                            "unknown"
+                        ]
+                    },
+                    "observed_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemQueueStatusResult": {
+                "required": [
+                    "data",
+                    "maintenance_enabled"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SystemQueueStatus"
+                    },
+                    "maintenance_enabled": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemMaintenanceTarget": {
+                "required": [],
+                "properties": {
+                    "queue": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "job_id": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "all": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SystemMaintenancePreviewInput": {
+                "required": [
+                    "action"
+                ],
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "enum": [
+                            "restart",
+                            "clear",
+                            "retry",
+                            "flush"
+                        ]
+                    },
+                    "queue": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "job_id": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "all": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SystemRestartInput": {
+                "required": [
+                    "confirmation"
+                ],
+                "properties": {
+                    "confirmation": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SystemClearInput": {
+                "required": [
+                    "confirmation",
+                    "queue"
+                ],
+                "properties": {
+                    "confirmation": {
+                        "type": "string"
+                    },
+                    "queue": {
+                        "type": "string",
+                        "maxLength": 100
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SystemRetryInput": {
+                "required": [
+                    "confirmation"
+                ],
+                "properties": {
+                    "confirmation": {
+                        "type": "string"
+                    },
+                    "job_id": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "all": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SystemFlushInput": {
+                "required": [
+                    "confirmation"
+                ],
+                "properties": {
+                    "confirmation": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "SystemMaintenancePreview": {
+                "required": [
+                    "action",
+                    "target",
+                    "connection",
+                    "affected_count",
+                    "evidence",
+                    "confirmation",
+                    "expires_at",
+                    "execution_enabled",
+                    "warning"
+                ],
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "enum": [
+                            "restart",
+                            "clear",
+                            "retry",
+                            "flush"
+                        ]
+                    },
+                    "target": {
+                        "$ref": "#/components/schemas/SystemMaintenanceTarget"
+                    },
+                    "connection": {
+                        "type": "string"
+                    },
+                    "affected_count": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "evidence": {
+                        "type": "string",
+                        "enum": [
+                            "restart_signal_only",
+                            "failed_store_cohort",
+                            "database_queue_cohort",
+                            "driver_count_only"
+                        ]
+                    },
+                    "confirmation": {
+                        "type": "string"
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "execution_enabled": {
+                        "type": "boolean"
+                    },
+                    "warning": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemMaintenancePreviewResult": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SystemMaintenancePreview"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemMaintenanceOutcome": {
+                "required": [
+                    "action",
+                    "target",
+                    "state",
+                    "reconciliation_required",
+                    "message",
+                    "before_count",
+                    "evidence"
+                ],
+                "properties": {
+                    "action": {
+                        "type": "string"
+                    },
+                    "target": {
+                        "$ref": "#/components/schemas/SystemMaintenanceTarget"
+                    },
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "accepted",
+                            "completed",
+                            "failed",
+                            "rejected",
+                            "unresolved"
+                        ]
+                    },
+                    "reconciliation_required": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "before_count": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "evidence": {
+                        "type": "string"
+                    },
+                    "exit_code": {
+                        "type": "integer"
+                    },
+                    "observed_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemMaintenanceCommandResult": {
+                "required": [
+                    "action",
+                    "target",
+                    "state",
+                    "reconciliation_required",
+                    "message",
+                    "before_count",
+                    "evidence",
+                    "operation_id",
+                    "replayed"
+                ],
+                "properties": {
+                    "action": {
+                        "type": "string"
+                    },
+                    "target": {
+                        "$ref": "#/components/schemas/SystemMaintenanceTarget"
+                    },
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "accepted",
+                            "completed",
+                            "failed",
+                            "rejected",
+                            "unresolved"
+                        ]
+                    },
+                    "reconciliation_required": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "before_count": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "evidence": {
+                        "type": "string"
+                    },
+                    "exit_code": {
+                        "type": "integer"
+                    },
+                    "observed_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "operation_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemOperation": {
+                "required": [
+                    "id",
+                    "operation",
+                    "state",
+                    "result",
+                    "version",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "operation": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "result": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SystemCompanyResult"
+                            },
+                            {
+                                "$ref": "#/components/schemas/SystemBrandingResult"
+                            },
+                            {
+                                "$ref": "#/components/schemas/SystemMaintenanceOutcome"
+                            }
+                        ]
+                    },
+                    "version": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemOperationResult": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/SystemOperation"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemPageMeta": {
+                "required": [
+                    "current_page",
+                    "per_page",
+                    "total"
+                ],
+                "properties": {
+                    "current_page": {
+                        "type": "integer"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "total": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "SystemOperationsResult": {
+                "required": [
+                    "data",
+                    "meta"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SystemOperation"
+                        }
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/SystemPageMeta"
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -184126,6 +188670,10 @@
             "name": "UserManagement",
             "description": "User lifecycle, profiles, authorization, invitations and existing security/SSO workflows."
         },
-        {"name": "Warroom", "description": "Warroom"}
+        {"name": "Warroom", "description": "Warroom"},
+        {
+            "name": "System",
+            "description": "Company, branding, admin discovery, version and confirmed queue maintenance."
+        }
     ]
 }

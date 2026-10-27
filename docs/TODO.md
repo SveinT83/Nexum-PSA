@@ -21,6 +21,56 @@ both HTTP 200. All 17 enabled-vhost digests unchanged; no key/certificate/vhost 
 Earlier unprivileged missing-key diagnostics were a permission artifact, not current key absence.
 #224 retains its independent snapshot/rollback/package/site acceptance; #292 no longer blocks it.
 
+## Full System browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Merged To Main In PR #361 / Human Review Pending.
+Owner: Codex. Approver and intended named human reviewer: Svein Tore.
+Svein Tore approved the concrete RFC on 2026-10-27: Godkjent. All four sequential
+slices are verified on authoritative Dev. Every one of 13 browser rows (5 read,
+2 write, 6 action) maps to complete current behavior through 19 typed API operations,
+nine scopes and 44 schemas. Coverage includes company fields, all theme/logo/
+preset/reset/preview behavior, admin discovery, version/cache and every guarded
+queue maintenance action, actor/token-bound receipts and truthful outcomes.
+RFC rfc/2026-10-27-system-full-api-parity.md: Approved / Done On Dev.
+ADR adr/2026-10-27-system-api-authority-and-maintenance.md: Accepted.
+Slices feature-slices/2026-10-27-system-full-api-parity.md: all Done On Dev.
+Exact migration 2026_10_27_160000_create_system_api_commands ran in Dev batch 43.
+Evidence: plans/2026-10-27-system-api-coverage-matrix.md/.json; verification.md/.json;
+native-evidence.json, https-evidence.json and handbook-evidence.json under the same prefix.
+Final affected suite passes 121 tests / 1529 assertions, zero failures/skips. All
+19 actual HTTP responses validate against Swagger. Native MySQL two-writer contention,
+first creation, monotonic version, encrypted/unique receipts/rollback and cleanup pass.
+Trusted HTTPS reads, authentication denial, Swagger and real multipart decoder pass.
+24 PHP files pass syntax/Pint; original two SSO login baseline failures are resolved.
+All live API maintenance remains disabled; zero live command receipts, backlog release,
+worker restart or customer test sends. Existing System admin-index contributor Workday
+addition and other shared edits remain preserved through the shared navigation registry.
+BookStack 366/367/438/546 exact content/sections and existing Editor employee access are
+verified through the supported connector; complete guide is included in 366. No access
+changes. Employee OpenWebUI retrieval is untested, a separate claim.
+Native sync follow-up (owner Svein Tore / Integration): Dev has no BookStack integration;
+six internal Knowledge source records remain pending_push. Configure approved integration/
+mode and reconcile actual page mappings before future native push. Do not duplicate the
+already-published handbook or treat pending_push as failure of verified connector publication.
+HR-2026-10-27-SYSTEM-API remains Pending. Next action: Svein Tore performs its manual
+branding/authority/isolated-maintenance checks before production deployment/release.
+Svein Tore authorized tested scoped Main promotion: "Godkjenner og merge", 2026-10-27.
+Main merge and exact tested-tree read-back are verified; production/runtime activation is not authorized.
+#262 remains independent
+runtime reconciliation. Website handoff records Main merge / do not publish until production release gates pass.
+
+Main promotion verified on 2026-10-28: PR #361,
+https://github.com/SveinT83/Nexum-PSA/pull/361, merge
+893ab45e00c65472c6691b9917a726b5fccee285. Merge tree
+406e1c13437a38b208deee442c09a6e82b17231b exactly matches the tested candidate;
+19 System operations / 44 schemas are present. The additional upstream integration
+run passes 44 tests / 1420 assertions; earlier 169-test evidence is a separate run.
+Production is not deployed, its migration has not run, API maintenance stays default-off.
+HR-2026-10-27-SYSTEM-API remains Pending; all unchecked manual scenarios gate
+production deployment/release. Native Knowledge mapping remains owned by Svein Tore /
+Integration; existing BookStack publication remains independently verified.
+
+
 ## Full Warroom browser/API coverage (2026-10-27)
 
 Status: Done On Dev / Reviewed / Merged To Main In PR #359.

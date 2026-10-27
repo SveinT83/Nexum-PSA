@@ -14,6 +14,15 @@ class ApiAbilityCatalog
      * Access mode is deliberately explicit so progressive read scopes do not depend on their name.
      */
     private const ACCESS_MODES = [
+        'system.read' => self::ACCESS_READ,
+        'system.settings.read' => self::ACCESS_READ,
+        'system.settings.write' => self::ACCESS_WRITE,
+        'system.queue.read' => self::ACCESS_READ,
+        'system.queue.restart' => self::ACCESS_WRITE,
+        'system.queue.clear' => self::ACCESS_WRITE,
+        'system.queue.retry' => self::ACCESS_WRITE,
+        'system.queue.flush' => self::ACCESS_WRITE,
+        'system.operations.read' => self::ACCESS_READ,
         'warroom.read' => self::ACCESS_READ,
         'warroom.settings.read' => self::ACCESS_READ,
         'warroom.settings.manage' => self::ACCESS_WRITE,
@@ -319,6 +328,15 @@ class ApiAbilityCatalog
     ];
 
     private const ABILITIES = [
+        'system.read' => ['label' => 'Read System admin context and version', 'description' => 'Requires current native System authority; maintenance also requires bound confirmation and explicit runtime activation.', 'domain' => 'System'],
+        'system.settings.read' => ['label' => 'Read System company and branding configuration', 'description' => 'Requires current native System authority; maintenance also requires bound confirmation and explicit runtime activation.', 'domain' => 'System'],
+        'system.settings.write' => ['label' => 'Update System company and branding configuration', 'description' => 'Requires current native System authority; maintenance also requires bound confirmation and explicit runtime activation.', 'domain' => 'System'],
+        'system.queue.read' => ['label' => 'Read System queues and preview maintenance', 'description' => 'Requires current native System authority; maintenance also requires bound confirmation and explicit runtime activation.', 'domain' => 'System'],
+        'system.queue.restart' => ['label' => 'Request graceful worker restart', 'description' => 'Requires current native System authority; maintenance also requires bound confirmation and explicit runtime activation.', 'domain' => 'System'],
+        'system.queue.clear' => ['label' => 'Clear an explicitly confirmed named queue', 'description' => 'Requires current native System authority; maintenance also requires bound confirmation and explicit runtime activation.', 'domain' => 'System'],
+        'system.queue.retry' => ['label' => 'Retry confirmed failed jobs', 'description' => 'Requires current native System authority; maintenance also requires bound confirmation and explicit runtime activation.', 'domain' => 'System'],
+        'system.queue.flush' => ['label' => 'Flush a confirmed failed-job store', 'description' => 'Requires current native System authority; maintenance also requires bound confirmation and explicit runtime activation.', 'domain' => 'System'],
+        'system.operations.read' => ['label' => 'Read own System command receipts', 'description' => 'Requires current native System authority; maintenance also requires bound confirmation and explicit runtime activation.', 'domain' => 'System'],
         'warroom.read' => ['label' => 'Read Warroom and My Day', 'description' => 'Read authorized operational summaries and personal queues; source rights remain authoritative.', 'domain' => 'Warroom'],
         'warroom.settings.read' => ['label' => 'Read Warroom settings', 'description' => 'Read global dashboard settings with native settings management permission.', 'domain' => 'Warroom'],
         'warroom.settings.manage' => ['label' => 'Update Warroom settings', 'description' => 'Update global dashboard settings and read own command results with current native settings authority.', 'domain' => 'Warroom'],

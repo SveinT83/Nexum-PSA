@@ -1,0 +1,1320 @@
+{
+  "date": "2026-10-27",
+  "status": "Done On Dev / Human Review Pending",
+  "runtime": "/var/Projects/tdPSA",
+  "branch": "Dev",
+  "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "browser_counts": {
+    "read": 5,
+    "write": 2,
+    "action": 6
+  },
+  "browser_rows": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin",
+      "name": "tech.admin.index",
+      "action": "App\\Modules\\System\\Controllers\\Admin\\AdminDashboardController",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "classification": "read",
+      "proposed_operation_ids": [
+        "SY01"
+      ],
+      "coverage": "Verified On Dev through linked API operations and successful typed HTTP/read-back tests."
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/branding",
+      "name": "tech.admin.system.branding.edit",
+      "action": "App\\Modules\\System\\Controllers\\Admin\\CompanyProfileController@editBranding",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "classification": "read",
+      "proposed_operation_ids": [
+        "SY05",
+        "SY08",
+        "SY09"
+      ],
+      "coverage": "Verified On Dev through linked API operations and successful typed HTTP/read-back tests."
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/admin/system/branding",
+      "name": "tech.admin.system.branding.update",
+      "action": "App\\Modules\\System\\Controllers\\Admin\\CompanyProfileController@updateBranding",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "classification": "write",
+      "proposed_operation_ids": [
+        "SY06",
+        "SY07"
+      ],
+      "coverage": "Verified On Dev through linked API operations and successful typed HTTP/read-back tests."
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/branding/preset",
+      "name": "tech.admin.system.branding.preset",
+      "action": "App\\Modules\\System\\Controllers\\Admin\\CompanyProfileController@applyThemePreset",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "classification": "action",
+      "proposed_operation_ids": [
+        "SY10"
+      ],
+      "coverage": "Verified On Dev through linked API operations and successful typed HTTP/read-back tests."
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/admin/system/branding/reset",
+      "name": "tech.admin.system.branding.reset",
+      "action": "App\\Modules\\System\\Controllers\\Admin\\CompanyProfileController@resetBranding",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "classification": "action",
+      "proposed_operation_ids": [
+        "SY11"
+      ],
+      "coverage": "Verified On Dev through linked API operations and successful typed HTTP/read-back tests."
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/company-profile",
+      "name": "tech.admin.system.company-profile.edit",
+      "action": "App\\Modules\\System\\Controllers\\Admin\\CompanyProfileController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "classification": "read",
+      "proposed_operation_ids": [
+        "SY03"
+      ],
+      "coverage": "Verified On Dev through linked API operations and successful typed HTTP/read-back tests."
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/admin/system/company-profile",
+      "name": "tech.admin.system.company-profile.update",
+      "action": "App\\Modules\\System\\Controllers\\Admin\\CompanyProfileController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "classification": "write",
+      "proposed_operation_ids": [
+        "SY04"
+      ],
+      "coverage": "Verified On Dev through linked API operations and successful typed HTTP/read-back tests."
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/queues-workers",
+      "name": "tech.admin.system.queues-workers.index",
+      "action": "App\\Modules\\System\\Controllers\\Admin\\QueueWorkerController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "classification": "read",
+      "proposed_operation_ids": [
+        "SY12"
+      ],
+      "coverage": "Verified On Dev through linked API operations and successful typed HTTP/read-back tests."
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/queues-workers/clear",
+      "name": "tech.admin.system.queues-workers.clear",
+      "action": "App\\Modules\\System\\Controllers\\Admin\\QueueWorkerController@clearQueue",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "classification": "action",
+      "proposed_operation_ids": [
+        "SY13",
+        "SY15"
+      ],
+      "coverage": "Verified On Dev through linked API operations and successful typed HTTP/read-back tests."
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/queues-workers/failed/flush",
+      "name": "tech.admin.system.queues-workers.failed.flush",
+      "action": "App\\Modules\\System\\Controllers\\Admin\\QueueWorkerController@flushFailed",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "classification": "action",
+      "proposed_operation_ids": [
+        "SY13",
+        "SY17"
+      ],
+      "coverage": "Verified On Dev through linked API operations and successful typed HTTP/read-back tests."
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/queues-workers/failed/retry",
+      "name": "tech.admin.system.queues-workers.failed.retry",
+      "action": "App\\Modules\\System\\Controllers\\Admin\\QueueWorkerController@retryFailed",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "classification": "action",
+      "proposed_operation_ids": [
+        "SY13",
+        "SY16"
+      ],
+      "coverage": "Verified On Dev through linked API operations and successful typed HTTP/read-back tests."
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/queues-workers/restart",
+      "name": "tech.admin.system.queues-workers.restart",
+      "action": "App\\Modules\\System\\Controllers\\Admin\\QueueWorkerController@restartWorkers",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "classification": "action",
+      "proposed_operation_ids": [
+        "SY13",
+        "SY14"
+      ],
+      "coverage": "Verified On Dev through linked API operations and successful typed HTTP/read-back tests."
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/version-status",
+      "name": "tech.admin.system.version-status",
+      "action": "App\\Modules\\System\\Controllers\\Admin\\ApplicationVersionStatusController",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null,
+      "classification": "read",
+      "proposed_operation_ids": [
+        "SY02"
+      ],
+      "coverage": "Verified On Dev through linked API operations and successful typed HTTP/read-back tests."
+    }
+  ],
+  "existing_api_operations": [],
+  "existing_swagger_system_paths": [],
+  "company_input_fields": [
+    "company_name",
+    "legal_name",
+    "organization_number",
+    "address_line_1",
+    "address_line_2",
+    "postal_code",
+    "city",
+    "country",
+    "support_email",
+    "phone",
+    "website"
+  ],
+  "branding_input_fields": [
+    "primary_color",
+    "secondary_color",
+    "accent_color",
+    "default_theme",
+    "light_header_background",
+    "light_header_color",
+    "light_footer_background",
+    "light_footer_color",
+    "light_left_sidebar_background",
+    "light_left_sidebar_color",
+    "light_main_background",
+    "light_right_sidebar_background",
+    "light_right_sidebar_color",
+    "light_page_header_background",
+    "light_page_header_color",
+    "light_card_header_background",
+    "light_card_header_color",
+    "light_content_background",
+    "light_primary_button_background",
+    "light_primary_button_color",
+    "light_secondary_button_background",
+    "light_secondary_button_color",
+    "dark_header_background",
+    "dark_header_color",
+    "dark_footer_background",
+    "dark_footer_color",
+    "dark_left_sidebar_background",
+    "dark_left_sidebar_color",
+    "dark_main_background",
+    "dark_right_sidebar_background",
+    "dark_right_sidebar_color",
+    "dark_page_header_background",
+    "dark_page_header_color",
+    "dark_card_header_background",
+    "dark_card_header_color",
+    "dark_content_background",
+    "dark_primary_button_background",
+    "dark_primary_button_color",
+    "dark_secondary_button_background",
+    "dark_secondary_button_color",
+    "logo",
+    "logo_light",
+    "logo_dark",
+    "remove_logo",
+    "remove_light_logo",
+    "remove_dark_logo"
+  ],
+  "proposed_operations": [
+    {
+      "id": "SY01",
+      "method": "GET",
+      "path": "/api/v1/system/context",
+      "kind": "read",
+      "scope": "system.read",
+      "native_permission": "system.view",
+      "behavior": "Authorized admin discovery and local build metadata",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.context",
+        "method": "GET",
+        "uri": "api/v1/system/context",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@context",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY01",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemContextResult"
+        },
+        "request_content": []
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "settings_only_and_queue_only_actors_have_positive_access_without_system_view"
+        },
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "version_api_preserves_cached_github_results_and_context_does_not_call_provider"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "get",
+          "path": "/api/v1/system/context",
+          "status": 200,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY02",
+      "method": "GET",
+      "path": "/api/v1/system/version-status",
+      "kind": "read",
+      "scope": "system.read",
+      "native_permission": "system.view",
+      "behavior": "Cached GitHub release and branch comparison",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.version-status",
+        "method": "GET",
+        "uri": "api/v1/system/version-status",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@version",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY02",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemVersionResult"
+        },
+        "request_content": []
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "version_api_preserves_cached_github_results_and_context_does_not_call_provider"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "get",
+          "path": "/api/v1/system/version-status",
+          "status": 200,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY03",
+      "method": "GET",
+      "path": "/api/v1/system/company-profile",
+      "kind": "read",
+      "scope": "system.settings.read",
+      "native_permission": "system.settings_manage",
+      "behavior": "Organization data, constraints and state version",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.company-profile.show",
+        "method": "GET",
+        "uri": "api/v1/system/company-profile",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@company",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY03",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemCompanyResult"
+        },
+        "request_content": []
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "all_company_fields_persist_and_exact_result_replays_without_overwriting_later_state"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "get",
+          "path": "/api/v1/system/company-profile",
+          "status": 200,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY04",
+      "method": "PUT",
+      "path": "/api/v1/system/company-profile",
+      "kind": "write",
+      "scope": "system.settings.write",
+      "native_permission": "system.settings_manage",
+      "behavior": "Validated company update and exact read-back",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.company-profile.update",
+        "method": "PUT",
+        "uri": "api/v1/system/company-profile",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@updateCompany",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY04",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemCompanyMutation"
+        },
+        "request_content": [
+          "application/json"
+        ]
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "all_company_fields_persist_and_exact_result_replays_without_overwriting_later_state"
+        },
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "stale_missing_headers_changed_key_and_unknown_or_cross_surface_fields_have_no_effects"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "put",
+          "path": "/api/v1/system/company-profile",
+          "status": 200,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY05",
+      "method": "GET",
+      "path": "/api/v1/system/branding",
+      "kind": "read",
+      "scope": "system.settings.read",
+      "native_permission": "system.settings_manage",
+      "behavior": "Colors, theme, safe logo metadata and state version",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.branding.show",
+        "method": "GET",
+        "uri": "api/v1/system/branding",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@branding",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY05",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemBrandingResult"
+        },
+        "request_content": []
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "every_visual_field_and_unsaved_preview_preserves_profile_and_files"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "get",
+          "path": "/api/v1/system/branding",
+          "status": 200,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY06",
+      "method": "PUT",
+      "path": "/api/v1/system/branding",
+      "kind": "write",
+      "scope": "system.settings.write",
+      "native_permission": "system.settings_manage",
+      "behavior": "JSON visual settings and explicit removals",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.branding.update",
+        "method": "PUT",
+        "uri": "api/v1/system/branding",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@updateBranding",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY06",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemBrandingMutation"
+        },
+        "request_content": [
+          "application/json"
+        ]
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "every_visual_field_and_unsaved_preview_preserves_profile_and_files"
+        },
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "all_logo_slots_support_multipart_exact_bytes_replay_fallback_and_removal"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "put",
+          "path": "/api/v1/system/branding",
+          "status": 200,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY07",
+      "method": "POST",
+      "path": "/api/v1/system/branding",
+      "kind": "write",
+      "scope": "system.settings.write",
+      "native_permission": "system.settings_manage",
+      "behavior": "Multipart visual settings and three logo uploads",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.branding.upload",
+        "method": "POST",
+        "uri": "api/v1/system/branding",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@updateBranding",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY07",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemBrandingMutation"
+        },
+        "request_content": [
+          "multipart/form-data"
+        ]
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "all_logo_slots_support_multipart_exact_bytes_replay_fallback_and_removal"
+        },
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "file_write_failure_and_receipt_rollback_keep_the_previous_usable_logo"
+        },
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "outer_receipt_failure_rolls_back_settings_and_discards_only_its_new_staged_image"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "post",
+          "path": "/api/v1/system/branding",
+          "status": 200,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY08",
+      "method": "GET",
+      "path": "/api/v1/system/branding/presets",
+      "kind": "read",
+      "scope": "system.settings.read",
+      "native_permission": "system.settings_manage",
+      "behavior": "Preset keys and values",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.branding.presets",
+        "method": "GET",
+        "uri": "api/v1/system/branding/presets",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@presets",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY08",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemPresetsResult"
+        },
+        "request_content": []
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "presets_and_reset_have_the_same_current_browser_preservation_rules"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "get",
+          "path": "/api/v1/system/branding/presets",
+          "status": 200,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY09",
+      "method": "POST",
+      "path": "/api/v1/system/branding/preview",
+      "kind": "action",
+      "scope": "system.settings.read",
+      "native_permission": "system.settings_manage",
+      "behavior": "Side-effect-free unsaved visual settings preview",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.branding.preview",
+        "method": "POST",
+        "uri": "api/v1/system/branding/preview",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@previewBranding",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY09",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemBrandingPreviewResult"
+        },
+        "request_content": [
+          "application/json"
+        ]
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "every_visual_field_and_unsaved_preview_preserves_profile_and_files"
+        },
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "all_logo_slots_support_multipart_exact_bytes_replay_fallback_and_removal"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "post",
+          "path": "/api/v1/system/branding/preview",
+          "status": 200,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY10",
+      "method": "POST",
+      "path": "/api/v1/system/branding/preset",
+      "kind": "action",
+      "scope": "system.settings.write",
+      "native_permission": "system.settings_manage",
+      "behavior": "Apply preset, preserving company and logos",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.branding.preset",
+        "method": "POST",
+        "uri": "api/v1/system/branding/preset",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@applyPreset",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY10",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemBrandingMutation"
+        },
+        "request_content": [
+          "application/json"
+        ]
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "presets_and_reset_have_the_same_current_browser_preservation_rules"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "post",
+          "path": "/api/v1/system/branding/preset",
+          "status": 200,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY11",
+      "method": "PUT",
+      "path": "/api/v1/system/branding/reset",
+      "kind": "action",
+      "scope": "system.settings.write",
+      "native_permission": "system.settings_manage",
+      "behavior": "Reset all branding/logos, preserve company data",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.branding.reset",
+        "method": "PUT",
+        "uri": "api/v1/system/branding/reset",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@reset",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY11",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemBrandingMutation"
+        },
+        "request_content": []
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "presets_and_reset_have_the_same_current_browser_preservation_rules"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "put",
+          "path": "/api/v1/system/branding/reset",
+          "status": 200,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY12",
+      "method": "GET",
+      "path": "/api/v1/system/queues-workers",
+      "kind": "read",
+      "scope": "system.queue.read",
+      "native_permission": "system.queue_manage",
+      "behavior": "Driver-aware status, bounded safe failed-job metadata and guidance",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.queues-workers.show",
+        "method": "GET",
+        "uri": "api/v1/system/queues-workers",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@queues",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY12",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemQueueStatusResult"
+        },
+        "request_content": []
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "queue_status_never_exposes_raw_exception_payload_or_false_health"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "get",
+          "path": "/api/v1/system/queues-workers",
+          "status": 200,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY13",
+      "method": "POST",
+      "path": "/api/v1/system/queues-workers/preview",
+      "kind": "action",
+      "scope": "system.queue.read",
+      "native_permission": "system.queue_manage",
+      "behavior": "Explicit maintenance target, impact and expiring confirmation",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.queues-workers.preview",
+        "method": "POST",
+        "uri": "api/v1/system/queues-workers/preview",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@previewMaintenance",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY13",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemMaintenancePreviewResult"
+        },
+        "request_content": [
+          "application/json"
+        ]
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "maintenance_preview_is_side_effect_free_and_execution_defaults_off"
+        },
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "confirmation_expiry_tampering_target_drift_and_insufficient_action_scope_never_dispatch"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "post",
+          "path": "/api/v1/system/queues-workers/preview",
+          "status": 200,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY14",
+      "method": "POST",
+      "path": "/api/v1/system/queues-workers/restart",
+      "kind": "action",
+      "scope": "system.queue.restart",
+      "native_permission": "system.queue_manage",
+      "behavior": "Graceful restart signal receipt, no inferred worker restart",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.queues-workers.restart",
+        "method": "POST",
+        "uri": "api/v1/system/queues-workers/restart",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@maintenance",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY14",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemMaintenanceCommandResult"
+        },
+        "request_content": [
+          "application/json"
+        ]
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "restart_confirmation_executes_once_and_truthfully_reports_signal_only"
+        },
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "post_dispatch_exception_retains_unresolved_receipt_and_blocks_duplicate_effects"
+        },
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "browser_maintenance_keeps_availability_and_shares_the_fenced_operation_lane"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "post",
+          "path": "/api/v1/system/queues-workers/restart",
+          "status": 202,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY15",
+      "method": "POST",
+      "path": "/api/v1/system/queues-workers/clear",
+      "kind": "action",
+      "scope": "system.queue.clear",
+      "native_permission": "system.queue_manage",
+      "behavior": "Confirmed named-queue clear and exact outcome receipt",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.queues-workers.clear",
+        "method": "POST",
+        "uri": "api/v1/system/queues-workers/clear",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@maintenance",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY15",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemMaintenanceCommandResult"
+        },
+        "request_content": [
+          "application/json"
+        ]
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "actual_clear_retry_one_retry_all_and_flush_touch_only_isolated_test_jobs"
+        },
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "driver_clear_uses_its_supported_adapter_and_does_not_invent_cohort_evidence"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "post",
+          "path": "/api/v1/system/queues-workers/clear",
+          "status": 200,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY16",
+      "method": "POST",
+      "path": "/api/v1/system/queues-workers/failed/retry",
+      "kind": "action",
+      "scope": "system.queue.retry",
+      "native_permission": "system.queue_manage",
+      "behavior": "Confirmed failed job or explicit all, no implicit backlog release",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.queues-workers.retry",
+        "method": "POST",
+        "uri": "api/v1/system/queues-workers/failed/retry",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@maintenance",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY16",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemMaintenanceCommandResult"
+        },
+        "request_content": [
+          "application/json"
+        ]
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "actual_clear_retry_one_retry_all_and_flush_touch_only_isolated_test_jobs"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "post",
+          "path": "/api/v1/system/queues-workers/failed/retry",
+          "status": 200,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY17",
+      "method": "POST",
+      "path": "/api/v1/system/queues-workers/failed/flush",
+      "kind": "action",
+      "scope": "system.queue.flush",
+      "native_permission": "system.queue_manage",
+      "behavior": "Confirmed failed-store flush and outcome evidence",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.queues-workers.flush",
+        "method": "POST",
+        "uri": "api/v1/system/queues-workers/failed/flush",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@maintenance",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY17",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemMaintenanceCommandResult"
+        },
+        "request_content": [
+          "application/json"
+        ]
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "actual_clear_retry_one_retry_all_and_flush_touch_only_isolated_test_jobs"
+        },
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "nonzero_command_exit_is_unresolved_and_no_new_key_can_repeat_partial_effects"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "post",
+          "path": "/api/v1/system/queues-workers/failed/flush",
+          "status": 202,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY18",
+      "method": "GET",
+      "path": "/api/v1/system/operations",
+      "kind": "read",
+      "scope": "system.operations.read",
+      "native_permission": "action-specific",
+      "behavior": "Bounded own receipts with current source native/scope rights",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.operations.index",
+        "method": "GET",
+        "uri": "api/v1/system/operations",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@operations",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY18",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemOperationsResult"
+        },
+        "request_content": []
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "settings_receipts_are_encrypted_actor_token_bound_and_require_original_live_authority"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "get",
+          "path": "/api/v1/system/operations",
+          "status": 200,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    },
+    {
+      "id": "SY19",
+      "method": "GET",
+      "path": "/api/v1/system/operations/{operation}",
+      "kind": "read",
+      "scope": "system.operations.read",
+      "native_permission": "action-specific",
+      "behavior": "Actor/token-bound result and reconciliation status",
+      "status": "Verified On Dev",
+      "runtime_route": {
+        "name": "api.v1.system.operations.show",
+        "method": "GET",
+        "uri": "api/v1/system/operations/{operation}",
+        "action": "App\\Modules\\System\\Controllers\\Api\\V1\\SystemController@operation",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\System\\Support\\SystemApiAccess"
+        ]
+      },
+      "openapi_operation": {
+        "operation_id": "systemSY19",
+        "success_schema": {
+          "$ref": "#/components/schemas/SystemOperationResult"
+        },
+        "request_content": []
+      },
+      "test_evidence": [
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "settings_receipts_are_encrypted_actor_token_bound_and_require_original_live_authority"
+        },
+        {
+          "file": "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+          "test": "restart_confirmation_executes_once_and_truthfully_reports_signal_only"
+        }
+      ],
+      "read_back_evidence": [
+        {
+          "method": "get",
+          "path": "/api/v1/system/operations/{operation}",
+          "status": 200,
+          "schema_validated": true
+        },
+        {
+          "matrix_contract_test": "SystemApiContractTest::every_runtime_operation_has_exact_typed_swagger_scope_native_policy_and_inputs"
+        }
+      ]
+    }
+  ],
+  "baseline_tests": {
+    "passed": 33,
+    "failed": 2,
+    "assertions": 220,
+    "duration_seconds": 41.69,
+    "cause": "Two SecurityHeadersTest login failures: missing user_sso_providers in SQLite :memory:"
+  },
+  "human_review": "HR-2026-10-27-SYSTEM-API",
+  "verification": {
+    "tests_passed": 121,
+    "assertions": 1529,
+    "failures": 0,
+    "skips": 0,
+    "duration_seconds": 131.79,
+    "php_syntax_files": 24,
+    "pint_files": 24,
+    "system_operations": 19,
+    "system_schemas": 44,
+    "positive_schema_validated_operations": 19,
+    "migration": "2026_10_27_160000_create_system_api_commands",
+    "migration_batch": 43,
+    "manual_review_status": "Pending",
+    "main_promoted": false,
+    "production_deployed": false
+  },
+  "main_promotion": {
+    "merged": true,
+    "pr": 361,
+    "url": "https://github.com/SveinT83/Nexum-PSA/pull/361",
+    "merge_sha": "893ab45e00c65472c6691b9917a726b5fccee285",
+    "tested_head": "8b99008d1f96bd0f9426803aa245a0e6d6e06a5b",
+    "tree": "406e1c13437a38b208deee442c09a6e82b17231b",
+    "exact_tested_tree": true,
+    "main_contains_merge": true,
+    "system_operations": 19,
+    "system_schemas": 44,
+    "date": "2026-10-28"
+  }
+}

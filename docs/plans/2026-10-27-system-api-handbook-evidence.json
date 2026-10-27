@@ -1,0 +1,75 @@
+{
+  "date": "2026-10-27",
+  "publication_method": "Supported BookStack connector updates; complete API guide included as System API Support section in existing Company Profile And Branding page 366.",
+  "pages": [
+    {
+      "id": 366,
+      "title": "Company Profile And Branding",
+      "body_exact_after_terminal_newline_normalization": true,
+      "chapter_id": 416
+    },
+    {
+      "id": 367,
+      "title": "Queues And Workers",
+      "body_exact_after_terminal_newline_normalization": true,
+      "chapter_id": 416
+    },
+    {
+      "id": 438,
+      "title": "Admin Settings Navigation",
+      "body_exact_after_terminal_newline_normalization": true,
+      "chapter_id": 416
+    },
+    {
+      "id": 546,
+      "title": "Application Version And Update Status",
+      "body_exact_after_terminal_newline_normalization": true,
+      "chapter_id": 416
+    }
+  ],
+  "access": {
+    "pages": [
+      {
+        "id": 366,
+        "inherits": true,
+        "explicit_roles": []
+      },
+      {
+        "id": 367,
+        "inherits": true,
+        "explicit_roles": []
+      },
+      {
+        "id": 438,
+        "inherits": true,
+        "explicit_roles": []
+      },
+      {
+        "id": 546,
+        "inherits": true,
+        "explicit_roles": []
+      }
+    ],
+    "chapter416": "inherits book339",
+    "book339": "existing role overrides and fallback inheritance preserved",
+    "employee_role": {
+      "id": 2,
+      "name": "Editor",
+      "global_read_permissions_verified": [
+        "book-view-all",
+        "chapter-view-all",
+        "page-view-all"
+      ]
+    },
+    "permissions_changed": false,
+    "employee_openwebui_retrieval_tested": false
+  },
+  "native_sync": {
+    "integration_configured": false,
+    "status": "Six internal repository Knowledge articles synchronized; pending_push remains because Dev has no BookStack integration. Actual provider publication is verified independently through the supported connector.",
+    "remaining_action": "Svein Tore / Integration owner: configure the supported Dev BookStack integration and explicitly decide two-way sync, then reconcile repository article mappings before a future native push. No runtime activation performed."
+  },
+  "standalone_creation_blocker": "BookStack connector create validator incorrectly rejects multi-character name/markdown. Existing page updates and exact read-back succeeded; no duplicate page created.",
+  "provider_verified": true,
+  "api_guide_exact_in_page366": true
+}

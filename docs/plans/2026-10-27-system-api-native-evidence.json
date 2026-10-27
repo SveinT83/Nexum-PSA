@@ -1,0 +1,32 @@
+{
+    "driver": "mysql",
+    "isolated_table_prefix": "sysapi_probe_6c660697a5_",
+    "business_data_changed": false,
+    "independent_lock_timeout": true,
+    "concurrent_writers": [
+        {
+            "writer": "A",
+            "completed": true,
+            "wait_seconds": 0.375
+        },
+        {
+            "writer": "B",
+            "completed": true,
+            "wait_seconds": 0.339
+        }
+    ],
+    "both_writers_observed_contention": true,
+    "one_aggregate_created": true,
+    "both_updates_preserved": true,
+    "monotonic_settings_version": true,
+    "encrypted_result_readback": true,
+    "unique_replay_identity": true,
+    "receipt_rollback": true,
+    "probe_cleanup": true,
+    "migration": {
+        "migration": "2026_10_27_160000_create_system_api_commands",
+        "batch": 43
+    },
+    "runtime_command_count": 0,
+    "maintenance_enabled": false
+}
