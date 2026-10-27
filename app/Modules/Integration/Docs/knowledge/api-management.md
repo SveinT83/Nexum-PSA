@@ -1467,3 +1467,17 @@ Credentials additionally require `nextcloud.credentials.write`; new provider wri
 `nextcloud.providers.execute`, explicit reviewed targets and the default-off API runtime switch.
 Read the connection ETag, use If-Match and Idempotency-Key, then read the exact resource/receipt.
 The Nextcloud full API guide describes all operations, errors, safe retries and availability.
+
+## Contact API extension on Dev - 27 October 2026
+
+The Contact domain exposes 19 typed HTTP operations for supported Contact browser workflows.
+Current native Contact rights are required in addition to token abilities. New abilities are
+contacts.settings.read, contacts.settings.manage, contacts.portal_invite and contacts.operations.read.
+No existing key, connector or human role receives these abilities automatically. Existing POST
+contacts remains an upsert requiring both contacts.create and contacts.update; explicit reuse
+preserves existing person/consent fields. Full parameter and response contracts are in Swagger.
+Repair/invitation execution uses an exact actor/token/action/body/state-bound preview, If-Match,
+Idempotency-Key and encrypted operation receipts. Receipt reads recheck original user/token rights.
+Contact API invitations default off; enabling them is a separate installation decision, with
+queued/unknown delivery reported truthfully. Refer to Contact Domain Overview for numbered steps.
+This is Dev availability; Main promotion and production rollout are separate verification claims.

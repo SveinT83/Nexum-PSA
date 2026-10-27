@@ -43,6 +43,8 @@ class ContactForm extends Component
 
     public bool $send_customer_portal_invitation = false;
 
+    public string $portal_role = CustomerPortalMembership::ROLE_VIEWER;
+
     public ?string $job_title = null;
 
     public string $relation_type = 'contact';
@@ -208,6 +210,7 @@ class ContactForm extends Component
         }
 
         $validated = $this->validate([
+            'portal_role' => [$shouldSendPortalInvitation ? 'required' : 'nullable', Rule::in(array_keys(CustomerPortalMembership::roleOptions()))],
             'existing_contact_id' => ['nullable', Rule::exists('contacts', 'id')],
             'display_name' => ['required', 'string', 'max:255'],
             'organization_name' => ['nullable', 'string', 'max:255'],
@@ -259,7 +262,7 @@ class ContactForm extends Component
                     $contact,
                     $client,
                     $site,
-                    CustomerPortalMembership::ROLE_VIEWER,
+                    $this->portal_role,
                     $validated['email'],
                     'contact_create',
                 );
@@ -275,37 +278,8 @@ class ContactForm extends Component
 
     public function duplicateMatches(): Collection
     {
-        $email = trim((string) $this->email);
-        $phone = $this->normalizePhone($this->phone);
-
-        if ($email === '' && $phone === '') {
-            return collect();
-        }
-
-        return Contact::query()
-            ->with(['emails', 'phones'])
-            ->when($this->contactId, fn ($query) => $query->whereKeyNot($this->contactId))
-            ->where(function ($query) use ($email, $phone): void {
-                if ($email !== '') {
-                    $query->orWhereHas('emails', fn ($emailQuery) => $emailQuery->where('email', $email));
-                }
-
-                if ($phone !== '') {
-                    $query->orWhereHas('phones');
-                }
-            })
-            ->limit(10)
-            ->get()
-            ->filter(function (Contact $contact) use ($phone): bool {
-                if ($phone === '') {
-                    return true;
-                }
-
-                return $contact->phones->contains(
-                    fn ($contactPhone) => $this->normalizePhone($contactPhone->phone) === $phone
-                ) || trim((string) $this->email) !== '';
-            })
-            ->values();
+        return app(\App\Modules\Contact\Queries\ContactIdentityMatches::class)
+            ->handle($this->email, $this->phone, $this->contactId)->take(10);
     }
 
     public function selectedExistingContact(): ?Contact
