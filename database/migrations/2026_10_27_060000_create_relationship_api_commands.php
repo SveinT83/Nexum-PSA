@@ -42,6 +42,12 @@ return new class extends Migration
 
     public function down(): void
     {
+        foreach (['relationship_api_commands', 'relationship_outbound_claims'] as $ledger) {
+            if (Schema::hasTable($ledger) && DB::table($ledger)->exists()) {
+                throw new RuntimeException('Relationship command/outbound evidence exists; disable API execution and retain the ledger.');
+            }
+        }
+
         Schema::dropIfExists('relationship_outbound_claims');
         Schema::dropIfExists('relationship_api_commands');
         Schema::dropIfExists('relationship_api_mutex');
