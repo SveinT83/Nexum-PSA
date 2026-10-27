@@ -165,7 +165,7 @@
     "pull_request": 356,
     "latest_main_critical": {
       "passed": 14,
-      "assertions": 1765,
+      "assertions": 1791,
       "base": "fa6aeee942130d72673b809f4aacc6a9d67473e9"
     }
   }
