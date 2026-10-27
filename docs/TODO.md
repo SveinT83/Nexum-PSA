@@ -1,5 +1,26 @@
 # tdPSA Development TODO
 
+## Approved Open-Issue Completion And Main Promotion (2026-10-27)
+
+Status: In Progress. Owner: Codex / Svein Tore. Direct authorization: "Fix alt og merge til main".
+Finish the audited Issues sequentially, preserve concurrent domain work and merge only scoped,
+verified candidates. #254 is already completed/merged/closed independently; do not redo it.
+Current primary implementation: #269/#278 under the approved RFC/ADR
+2026-10-27-ai-chat-input-and-error-boundaries, two sequential slices.
+Human-review checklist HR-2026-10-27-AI-INPUT-ERRORS is Pending; tested Main merge is explicitly
+authorized, production scenario/release review remains separate. #262/#285 have independent
+active owners and are reconciled before promotion. #290 awaits actual recipient/provider/model
+and review facts requested from Svein; no external grant or provider decision is invented.
+Next: reproduce, fix and verify input/error boundaries, handbook, scoped Main candidate and
+Issue read-back; then continue remaining fixes. No production rollout/backlog retry is implied.
+
+Operational completion during verification: #292 closed completed (GitHub comment 6455598251).
+Approved key SSH plus DPAPI-backed sudo verified the existing nonempty 0600 TLS key; root
+configtest is Syntax OK, graceful reload passed, Apache active, trusted Dev and MCP healthz
+both HTTP 200. All 17 enabled-vhost digests unchanged; no key/certificate/vhost mutation.
+Earlier unprivileged missing-key diagnostics were a permission artifact, not current key absence.
+#224 retains its independent snapshot/rollback/package/site acceptance; #292 no longer blocks it.
+
 ## Full UserManagement browser/API coverage (2026-10-27)
 
 Status: Done On Dev / Verified / Merged to Main in PR #353 / Production not deployed.

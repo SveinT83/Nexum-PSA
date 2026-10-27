@@ -391,8 +391,8 @@ class StructuredAiWorkloadExecutorTest extends TestCase
 
         $this->assertSame(StructuredAiWorkloadStatus::Unavailable, $result->status);
         $this->assertSame('provider_request_failed', $result->reasonCode);
-        $this->assertSame('gpt-4.1-mini', $result->metadata->actualModel);
-        $this->assertSame('req_structured_unavailable', $result->metadata->providerRequestId);
+        $this->assertNull($result->metadata->actualModel);
+        $this->assertNull($result->metadata->providerRequestId);
         $this->assertDatabaseHas('ai_model_usage_events', [
             'execution_id' => 'structured-unavailable',
             'status' => 'failed',
@@ -404,6 +404,17 @@ class StructuredAiWorkloadExecutorTest extends TestCase
             'Do not persist this upstream detail.',
             json_encode(DB::table('ai_model_usage_events')->get()),
         );
+    }
+
+    #[Test]
+    public function raw_transport_exception_remains_a_safe_typed_unavailable_result(): void
+    {
+        [, , $workload] = $this->governedInternalWorkload();
+        Http::fake(fn () => throw new \RuntimeException('upstreamStructuredCanary987654'));
+        $result = app(RunsStructuredAiWorkloads::class)->execute($this->request($workload, 'structured-safe-transport'));
+        $this->assertSame(StructuredAiWorkloadStatus::Unavailable, $result->status);
+        $this->assertStringNotContainsString('upstreamStructuredCanary987654', json_encode($result));
+        $this->assertStringNotContainsString('upstreamStructuredCanary987654', json_encode(DB::table('ai_model_usage_events')->get()));
     }
 
     #[Test]

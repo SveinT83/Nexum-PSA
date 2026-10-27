@@ -1,6 +1,40 @@
 AI Privacy & Coordinator Governance is available from **Admin -> Integrations**. It records the
 organization's technical and governance decisions; it is not legal certification by Nexum.
 
+## Credential rejection and safe failures (Dev, 2026-10-27)
+
+Availability: implemented on Dev under verification for Issues #269/#278; production behavior
+is unchanged until a separately approved rollout. Main promotion and human review are separate.
+
+Never paste passwords, API keys, authorization headers, tokens, recovery codes or private keys
+into either AI Chats or the right-bar assistant. The shared input gate rejects supported
+credential-like forms before creating a chat/title/message, pending reply or response job.
+It clears rejected text from the response/component and does not save it as validation old input.
+The gate detects labelled credentials, known key/token formats, private-key blocks, authenticated
+URLs and common equivalent text encodings. Arbitrary unlabelled random text cannot reliably be
+recognized; this is not a way to submit secrets safely.
+
+1. Open the full **AI Chats** workspace or the right-bar assistant for the current page.
+2. Write the operational question without credential values. Describe the credential type or
+   approved opaque reference instead of the secret.
+3. If **Credentials cannot be submitted through AI chat** appears, the suspect input is discarded.
+   Reword the question; do not retry by disguising or splitting the value.
+4. For an AI provider key, users with the existing AI administration permission can use the
+   encrypted key field in **Admin > Integrations > AI**. For another credential type, use its
+   appropriate authorized secure credential form or ask an administrator. No Vault runtime or
+   broader credential access is granted by this change.
+
+AI failures now use fixed categories/messages and a **Reference** ID. The message explains
+whether to wait, retry within approved limits or ask an administrator to check policy or secure
+configuration. Give support the reference and approximate time; never paste credentials or raw
+provider responses. A failed provider call retains local execution/attempt identity and safe HTTP
+status/category, not arbitrary upstream error code, model, request-ID or reason text. Successful
+approved calls and bounded endpoint fallback retain their existing behavior.
+
+No old chat/telemetry data is silently rewritten. An already disclosed credential requires the
+ordinary approved rotation/incident procedure. Provider egress policy remains in force and
+rejection does not change actor permissions, runtime enablement or external processing approval.
+
 ## Privacy-first defaults
 
 A new installation policy starts with AI and external processing disabled, the privacy gateway
