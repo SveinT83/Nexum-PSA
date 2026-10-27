@@ -151,7 +151,7 @@
     "unexpected_api_failures": "generic no-store response and exception class only",
     "browser_credentials": "excluded from flashed input",
     "canonical_receipts": "preserved encrypted; no historical telemetry purge performed",
-    "main_followup": "Tested; merge pending",
+    "main_followup": "PR #356; immutable merge state is recorded by GitHub",
     "dev_regression": {
       "passed": 37,
       "assertions": 2883
@@ -161,6 +161,12 @@
       "assertions": 2972,
       "failures": 0,
       "errors": 0
+    },
+    "pull_request": 356,
+    "latest_main_critical": {
+      "passed": 14,
+      "assertions": 1765,
+      "base": "fa6aeee942130d72673b809f4aacc6a9d67473e9"
     }
   }
 }

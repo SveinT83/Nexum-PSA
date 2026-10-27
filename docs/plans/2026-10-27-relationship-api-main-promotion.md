@@ -26,4 +26,5 @@ requires no additional runtime migration or application test rerun.
 A bounded runtime follow-up closes diagnostic secrecy gaps for signed token headers,
 rotation results and encrypted query evidence. Canonical receipts remain unchanged.
 It requires no additional migration or provider activation. Dev regression passes 37 / 2883; Main candidate passes 42 / 2972, no failures/errors.
-This privacy follow-up is ready for the already-authorized Main merge.
+Privacy follow-up: PR #356; its immutable merge state is recorded by GitHub.
+Latest-Main critical verification passes 14 / 1765 after integrating fa6aeee.

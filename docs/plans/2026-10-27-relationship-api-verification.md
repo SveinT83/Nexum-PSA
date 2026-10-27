@@ -109,3 +109,7 @@ Dev tests pass with 27 assertions; candidate regression verification is recorded
 Privacy follow-up regression: authoritative Dev 37 / 2883; isolated Main candidate
 42 / 2972, zero failures/errors, including API-key administration, Knowledge source
 sync and production Swagger scanning. All 31 operation success contracts remain valid.
+
+After integrating current Main fa6aeee942130d72673b809f4aacc6a9d67473e9, all 31
+successful method contracts, retention, administration and five privacy checks pass
+14 / 1765. Privacy follow-up PR #356 records its immutable GitHub merge state.
