@@ -18,9 +18,7 @@ class ExecuteLeadResearchRunJob implements ShouldQueue
 
     public int $tries = 1;
 
-    public function __construct(public int $runId)
-    {
-    }
+    public function __construct(public int $runId) {}
 
     public function handle(ExecuteLeadResearchRun $executor): void
     {
@@ -30,6 +28,14 @@ class ExecuteLeadResearchRunJob implements ShouldQueue
             return;
         }
 
+        try {
+            \App\Modules\LeadIntelligence\Support\LeadApiAccess::forRun($run);
+        } catch (\Throwable) {
+            $run->forceFill(['status' => LeadResearchRun::STATUS_FAILED, 'finished_at' => now(),
+                'summary_json' => ['completion_reason' => 'api_authority_or_execution_disabled']])->save();
+
+            return;
+        }
         $executor->handle($run);
     }
 }

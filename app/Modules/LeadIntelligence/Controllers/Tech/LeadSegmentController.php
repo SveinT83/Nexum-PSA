@@ -7,8 +7,6 @@ use App\Modules\Integration\Services\AiAgentResolver;
 use App\Modules\LeadIntelligence\Actions\DraftLeadSegmentWithAi;
 use App\Modules\LeadIntelligence\Actions\EnsureLeadIntelligenceDefaults;
 use App\Modules\LeadIntelligence\Actions\PlanDueLeadResearchRuns;
-use App\Modules\LeadIntelligence\Jobs\ExecuteLeadResearchRunJob;
-use App\Modules\LeadIntelligence\Models\LeadResearchRun;
 use App\Modules\LeadIntelligence\Models\LeadSegment;
 use App\Modules\Marketing\Models\MarketingList;
 use Illuminate\Http\JsonResponse;
@@ -61,13 +59,7 @@ class LeadSegmentController extends Controller
     public function store(Request $request, PlanDueLeadResearchRuns $planner): RedirectResponse
     {
         $payload = $this->payload($request, true);
-        $segment = new LeadSegment($payload);
-
-        if ($segment->schedule_enabled) {
-            $segment->next_run_at = $planner->firstRunAt($segment);
-        }
-
-        $segment->save();
+        $segment = app(\App\Modules\LeadIntelligence\Actions\SaveLeadSegment::class)->handle($payload);
 
         return redirect()
             ->route('tech.lead-intelligence.segments.edit', $segment)
@@ -90,17 +82,7 @@ class LeadSegmentController extends Controller
     public function update(Request $request, LeadSegment $segment, PlanDueLeadResearchRuns $planner): RedirectResponse
     {
         $payload = $this->payload($request, false);
-        $wasScheduled = (bool) $segment->schedule_enabled;
-
-        $segment->fill($payload);
-
-        if (! $segment->schedule_enabled) {
-            $segment->next_run_at = null;
-        } elseif (! $wasScheduled || ! $segment->next_run_at) {
-            $segment->next_run_at = $planner->firstRunAt($segment);
-        }
-
-        $segment->save();
+        $segment = app(\App\Modules\LeadIntelligence\Actions\SaveLeadSegment::class)->handle($payload, $segment);
 
         return redirect()
             ->route('tech.lead-intelligence.segments.edit', $segment)
@@ -109,17 +91,7 @@ class LeadSegmentController extends Controller
 
     public function runNow(Request $request, LeadSegment $segment): RedirectResponse
     {
-        $run = $segment->researchRuns()->create([
-            'status' => LeadResearchRun::STATUS_QUEUED,
-            'created_by' => $request->user()?->id,
-            'summary_json' => [
-                'planner' => 'manual_run_now',
-                'execution_engine' => 'ai_led_discovery_worker',
-                'requested_for' => now()->toDateTimeString(),
-                'note' => 'Manual run requested from the Lead Segment screen. The worker executes the same pipeline used by scheduled runs.',
-            ],
-        ]);
-        ExecuteLeadResearchRunJob::dispatch($run->id);
+        $run = app(\App\Modules\LeadIntelligence\Actions\CreateLeadResearchRun::class)->now($segment, $request->user()?->id);
 
         return redirect()
             ->route('tech.lead-intelligence.runs.show', $run)

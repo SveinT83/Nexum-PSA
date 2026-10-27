@@ -1,0 +1,18 @@
+[
+    {
+        "id": 52,
+        "source": "lead-intelligence\/lead-intelligence-overview",
+        "exact_body": true,
+        "visibility": "internal",
+        "status": "published",
+        "sync_status": "pending_push"
+    },
+    {
+        "id": 3,
+        "source": "integrations\/api-management",
+        "exact_body": true,
+        "visibility": "internal",
+        "status": "published",
+        "sync_status": "pending_push"
+    }
+]

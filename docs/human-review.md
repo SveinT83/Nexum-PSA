@@ -1,5 +1,43 @@
 # Human Review Register
 
+## HR-2026-10-27-LEAD-INTELLIGENCE-API - Full Lead Intelligence Browser/API Coverage
+
+Status: Pending / Done On Dev; final Main candidate verified and promotion authorized.
+Added: 2026-10-27. Owner: Codex. Intended human reviewer/release owner: Svein Tore.
+Scope: rfc/2026-10-27-lead-intelligence-full-api-parity.md (Approved), all 14 browser
+rows and existing API-only evaluation/promotion, planned 17 HTTP operations.
+Svein Tore explicitly authorized "Godkjenner og merge til main". Scoped tested Main
+promotion is authorized while these human scenarios remain Pending. This checklist
+continues to block production release/provider activation; no manual review is inferred.
+
+- [ ] Compare settings and segment create/edit/defaults/lists/schedules/budgets in web/API.
+- [ ] Confirm AI draft only suggests editable fields and requires current AI approval.
+- [ ] Compare run list/detail, evidence Client/Contact labels and scan-ledger filters.
+- [ ] Create draft/queued runs and Run Now; distinguish queued acceptance from completion.
+- [ ] Test actor+token+target denials, revoked receipt access and pure context/read routes.
+- [ ] Repeat/stale/concurrent commands; confirm one job and no duplicate AI/promotion effects.
+- [ ] Preview/apply a controlled candidate; confirm suppression, private-email/do_not_email,
+      list exclusions, Contact bridge, source evidence and exact persisted result.
+- [ ] Verify local/Tripletex customer-number authority, one request UUID, explicit invoice
+      email and reconciliation of unknown provider results before retry.
+- [ ] Review Swagger and actual employee handbook content/access and deployment status.
+
+Expected: all current supported reads/writes/actions with equivalent authorization,
+typed exact read-back, unchanged privacy policy and provider execution off by default.
+Deploy: proposed additive encrypted receipt/locking/dispatch schema; exact filename and
+native verification must be finalized before use, with scoped Swagger/cache handling.
+No worker/scheduler activation, data backfill or role grant is part of the change.
+Risks/recovery: legacy token compatibility, cross-domain promotion, delayed jobs and
+provider uncertainty; preserve APP_KEY/receipts and reconcile unresolved attempts.
+Automated baseline: 33 tests / 277 assertions of existing behavior only; no manual
+scenario execution or review acceptance is inferred. No production checks claimed.
+
+
+Automated domain verification: 52 tests / 474 assertions; actual 17 operations / 47
+schemas, native MySQL, trusted HTTPS and BookStack read-back pass. Final Main 54/483 and earlier affected candidate 293/2887 pass (overlapping). All
+14 concurrent-source Dev failures pass after current author fixes; no deferral.
+
+
 ## HR-2026-10-27-INTAKE-API - Full Intake Browser/API Coverage
 
 Status: Pending / Dev verified and merged to Main in PR #340, 2026-10-27.

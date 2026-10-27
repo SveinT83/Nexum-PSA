@@ -25,7 +25,8 @@ class LeadSegmentController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $query = LeadSegment::query()->latest();
+        $request->validate(['enabled' => 'sometimes|boolean', 'q' => 'sometimes|string|max:255']);
+        $query = LeadSegment::query()->withCount('researchRuns')->latest();
 
         if ($request->has('enabled')) {
             $query->where('enabled', $request->boolean('enabled'));
@@ -39,7 +40,7 @@ class LeadSegmentController extends Controller
             });
         }
 
-        $segments = $query->paginate($request->integer('per_page') ?: 15);
+        $segments = $query->paginate(\App\Modules\LeadIntelligence\Support\LeadApiInput::page($request, 25));
 
         return response()->json([
             'data' => $segments->getCollection()->map(fn (LeadSegment $segment): array => $this->serialize($segment))->all(),
@@ -53,13 +54,7 @@ class LeadSegmentController extends Controller
 
     public function store(Request $request, PlanDueLeadResearchRuns $planner): JsonResponse
     {
-        $segment = new LeadSegment($this->payload($request, true));
-
-        if ($segment->schedule_enabled && ! $segment->next_run_at) {
-            $segment->next_run_at = $planner->firstRunAt($segment);
-        }
-
-        $segment->save();
+        $segment = app(\App\Modules\LeadIntelligence\Actions\SaveLeadSegment::class)->handle($this->payload($request, true));
 
         return response()->json(['data' => $this->serialize($segment)], 201);
     }
@@ -71,17 +66,7 @@ class LeadSegmentController extends Controller
 
     public function update(Request $request, LeadSegment $segment, PlanDueLeadResearchRuns $planner): JsonResponse
     {
-        $wasScheduled = (bool) $segment->schedule_enabled;
-
-        $segment->fill($this->payload($request, false));
-
-        if (! $segment->schedule_enabled) {
-            $segment->next_run_at = null;
-        } elseif (! $wasScheduled || ! $segment->next_run_at) {
-            $segment->next_run_at = $planner->firstRunAt($segment);
-        }
-
-        $segment->save();
+        $segment = app(\App\Modules\LeadIntelligence\Actions\SaveLeadSegment::class)->handle($this->payload($request, false), $segment);
 
         return response()->json(['data' => $this->serialize($segment->fresh())]);
     }
@@ -125,6 +110,9 @@ class LeadSegmentController extends Controller
         }
 
         foreach (self::JSON_FIELDS as $publicName => $column) {
+            if (array_key_exists($publicName, $validated) && array_key_exists($column, $validated) && $validated[$publicName] !== $validated[$column]) {
+                throw \Illuminate\Validation\ValidationException::withMessages([$publicName => 'Conflicting field aliases.']);
+            }
             if (array_key_exists($publicName, $validated)) {
                 $validated[$column] = $validated[$publicName];
                 unset($validated[$publicName]);
@@ -134,10 +122,11 @@ class LeadSegmentController extends Controller
         return $validated;
     }
 
-    private function serialize(LeadSegment $segment): array
+    public function serialize(LeadSegment $segment): array
     {
         return [
             'id' => $segment->id,
+            'research_runs_count' => $segment->research_runs_count ?? $segment->researchRuns()->count(),
             'name' => $segment->name,
             'description' => $segment->description,
             'enabled' => (bool) $segment->enabled,
