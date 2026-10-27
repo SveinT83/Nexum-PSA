@@ -1,6 +1,6 @@
 # Feature Slices: Full Lead Intelligence API Parity
 
-Status: LI-01 through LI-05 Done On Dev; LI-06 final verification/Main in progress
+Status: All six sequential slices Done On Dev; scoped Main candidate verified
 Date: 2026-10-27
 Parent: ../rfc/2026-10-27-lead-intelligence-full-api-parity.md
 Owner: Codex

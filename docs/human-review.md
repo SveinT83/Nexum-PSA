@@ -2,7 +2,7 @@
 
 ## HR-2026-10-27-LEAD-INTELLIGENCE-API - Full Lead Intelligence Browser/API Coverage
 
-Status: Pending / domain implementation verified; Main candidate verification in progress.
+Status: Pending / Done On Dev; final Main candidate verified and promotion authorized.
 Added: 2026-10-27. Owner: Codex. Intended human reviewer/release owner: Svein Tore.
 Scope: rfc/2026-10-27-lead-intelligence-full-api-parity.md (Approved), all 14 browser
 rows and existing API-only evaluation/promotion, planned 17 HTTP operations.
@@ -33,9 +33,9 @@ Automated baseline: 33 tests / 277 assertions of existing behavior only; no manu
 scenario execution or review acceptance is inferred. No production checks claimed.
 
 
-Automated domain verification: 51 tests / 466 assertions; actual 17 operations / 47
-schemas, native MySQL, trusted HTTPS and BookStack read-back pass. Broader provider
-test sequencing remains under investigation before Main promotion; no deferral approved.
+Automated domain verification: 52 tests / 474 assertions; actual 17 operations / 47
+schemas, native MySQL, trusted HTTPS and BookStack read-back pass. Final Main 54/483 and earlier affected candidate 293/2887 pass (overlapping). All
+14 concurrent-source Dev failures pass after current author fixes; no deferral.
 
 
 ## HR-2026-10-27-NOTIFICATION-API - Full Notification Browser/API Coverage

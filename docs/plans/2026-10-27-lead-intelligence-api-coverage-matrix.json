@@ -837,15 +837,20 @@
       "required": "encrypted current-actor original-ability read-back without provider retry"
     }
   ],
-  "implementation_status": "Implemented On Dev; affected regression/Main verification in progress",
+  "implementation_status": "Done On Dev; final scoped Main candidate verified",
   "http_operations": 17,
   "typed_schemas": 47,
   "tests_final_domain": {
-    "passed": 51,
-    "assertions": 466,
-    "failures": 0,
-    "skips": 0,
-    "duration_seconds": 100.13
+    "passed": 52,
+    "assertions": 474,
+    "failed": 0,
+    "skipped": 0
   },
-  "contract_test": "LeadApiParityTest::every_runtime_operation_has_a_typed_contract_matching_actual_success"
+  "contract_test": "LeadApiParityTest::every_runtime_operation_has_a_typed_contract_matching_actual_success",
+  "main_candidate_final": {
+    "passed": 54,
+    "assertions": 483,
+    "failed": 0,
+    "skipped": 0
+  }
 }

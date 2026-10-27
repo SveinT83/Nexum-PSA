@@ -2,27 +2,28 @@
 
 ## Full Lead Intelligence browser/API coverage (2026-10-27)
 
-Status: In Progress on Dev / RFC Approved / Main Merge Authorized. Owner: Codex; approver/reviewer: Svein Tore.
-Request: LeadIntelligence 100% API support. Live Dev baseline: 14 browser rows,
-11 API operations, zero matching generated Swagger operations; 33 tests / 277 assertions.
-RFC: rfc/2026-10-27-lead-intelligence-full-api-parity.md (Approved).
-ADR: adr/2026-10-27-lead-intelligence-api-authority-and-execution.md (Accepted).
-Sequential slices: feature-slices/2026-10-27-lead-intelligence-full-api-parity.md (Draft).
-Coverage/baseline: plans/2026-10-27-lead-intelligence-api-coverage-matrix.md/.json and
-plans/2026-10-27-lead-intelligence-api-baseline.md. Expected target: 17 HTTP operations;
-final exact operation/schema/test mapping must be verified before completion.
-Includes all existing reads/writes/settings, AI draft, run list/Run Now, evidence/context,
-existing evaluation/promotion, exact actor+token authority, durable commands and safe
-provider/worker boundaries. Promotion must respect Clients-owned Tripletex numbering
-and explicit invoice email; existing suppression and Marketing exclusions remain.
-Human-review checklist HR-2026-10-27-LEAD-INTELLIGENCE-API is Pending/planned and gates
-future Main promotion and production deployment/release. Implementation is in progress; no production activation.
-Authorization: Svein Tore, 2026-10-27: "Godkjenner og merge til main".
-Next action (Codex): complete all sequential slices and verification on Dev, then
-package/verify an isolated scoped Main candidate and merge. Production remains separate.
-The human checklist stays Pending; design/Main approval is not scenario review.
-Other contributors' active work and five pre-existing badge views remain preserved.
-
+Status: Done On Dev / Scoped Main Candidate Verified / Main Merge Authorized.
+Owner: Codex. Approver/reviewer: Svein Tore, "Godkjenner og merge til main".
+RFC rfc/2026-10-27-lead-intelligence-full-api-parity.md Approved; ADR accepted;
+all six sequential slices Done On Dev. All 14 browser route rows and API-only
+capabilities covered: exact 17 operations / 47 typed Swagger schemas, 18 actual
+success-response contracts including pure promotion preview.
+Final domain: 52 tests / 474 assertions; final candidate: 54 / 483 incl. production
+Swagger and Knowledge source sync. Earlier full Main candidate affected batch:
+293 / 2887; overlapping suites, do not add totals. Dev affected batch's 14 failures
+were concurrent UserManagement hook / Contact import snapshots; current author fixes
+and fresh 14-case retest (192 assertions) pass. No failed case is deferred.
+Exact additive migration 2026_10_27_040000 applied/read back on Dev, batch 35.
+Native MySQL locking/uniqueness/encryption/rollback and trusted HTTPS/Swagger pass.
+BookStack 496/3 and scoped 449/153 published/read back; native articles 52 and 3
+match internal source, existing access preserved. pending_push is not external proof.
+Evidence: plans/2026-10-27-lead-intelligence-api-verification.md and linked artifacts.
+Human-review checklist HR-2026-10-27-LEAD-INTELLIGENCE-API remains Pending; explicit
+Main authorization permits tested source promotion while manual scenarios still gate
+production release/provider activation. External API execution remains false.
+Next action (Codex): merge verified scoped PR and record exact Main identity.
+No production rollout, blanket grants, live provider/customer writes, worker/scheduler
+activation or business backfill. Other contributor work / #280 badge views preserved.
 
 ## Full Notification browser/API coverage (2026-10-27)
 

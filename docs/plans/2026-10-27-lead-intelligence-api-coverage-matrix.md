@@ -1,6 +1,6 @@
 # Lead Intelligence Browser/API Coverage Matrix
 
-Date: 2026-10-27. Status: Implemented and verified on Dev; affected regression/Main promotion in progress.
+Date: 2026-10-27. Status: Implemented and verified on Dev; Main candidate verified; merge authorized.
 Authoritative Dev: /var/Projects/tdPSA; branch Dev; HEAD 36918edbcaae1ce7b1208ba34f84a3a1719f0e98.
 Baseline: 14 browser rows, 11 API operations, zero matching generated Swagger operations.
 Result: all current workflows; exact 17 HTTP operations / 47 typed schemas verified.
@@ -33,6 +33,6 @@ authorization, strict inputs, typed Swagger and exact outcome/pure-read tests.
 
 Full runtime route middleware, source hashes and baseline evidence are in the companion JSON.
 All LI01-LI14 rows now pass actual response/schema and domain behavior checks.
-Final domain suite: 51 tests / 466 assertions, no failures/skips.
-See 2026-10-27-lead-intelligence-api-verification.md for outstanding cross-domain verification and release gates.
+Final domain suite: 52 tests / 474 assertions, no failures/skips.
+See 2026-10-27-lead-intelligence-api-verification.md for cross-domain verification and separate release gates.
 An existing route is not evidence that authorization, safe writes or full parity is complete.

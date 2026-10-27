@@ -29,5 +29,12 @@
       "test_profile_command_honours_global_stop_and_permission_denial",
       "test_admin_retry_reports_paused_and_busy_without_claiming_success"
     ]
-  }
+  },
+  "retest": {
+    "passed": 14,
+    "failed": 0,
+    "assertions": 192,
+    "duration_seconds": 303.37
+  },
+  "status": "Resolved by fresh retest against current author-owned sources; no unrelated source edits or deferred failures"
 }

@@ -1,7 +1,7 @@
 # Lead Intelligence API Verification
 
 Date: 2026-10-27. Authoritative source/runtime: /var/Projects/tdPSA (Dev).
-Status: domain implementation verified; broader regressions and Main promotion in progress.
+Status: Done On Dev; final Main candidate verified; authorized merge pending.
 Authorization: Svein Tore, "Godkjenner og merge til main"; RFC Approved / ADR Accepted.
 
 ## Current Result
@@ -11,7 +11,7 @@ API support: 17 HTTP operations / 47 typed Swagger schemas. Exact route/contract
 comparison and 18 actual success responses (including promotion preview) pass.
 No new deletion/cancellation/crawl/email feature is claimed.
 
-Final domain suite: 51 tests / 466 assertions, no failures/skips, 100.13 seconds.
+Final domain suite: 52 tests / 474 assertions, no failures/skips, 99.86 seconds.
 Prior narrower 49/458 and 2/8 are overlapping and must not be added to this final total.
 Knowledge source-sync regression: 1 test / 6 assertions passes.
 Twenty-nine scoped PHP files pass Pint/syntax before final guard/test formatting;
@@ -47,15 +47,25 @@ Use exact GET ETag as If-Match on edits. Preserve APP_KEY and receipt/intent dat
 recovery, disable API external execution and reconcile unknown attempts. Domain-wide
 locking favors integrity; high-volume production performance is not measured.
 
-## Verification In Progress
+## Cross-Domain And Candidate Verification
 
-The broader Dev suite includes Marketing, Contact, Clients, customer-number/profile
-and production-mode Swagger. It reported two ClientsProviderApiTest failures while
-continuing; both pass in isolation (2/25) and after ClientsApiParityTest (20/152).
-Their complete failure details and same-class sequencing are still under investigation.
-No failure is approved for deferral. An isolated Main candidate is being tested with
-its own Composer metadata, independently proven to autoload App from that candidate.
-Do not treat these in-progress checks as passing or claim Main merge yet.
+Initial broad Dev batch: 316 passed / 14 failed / 4122 assertions. Thirteen errors
+came from an author-updated UserManagement exception hook calling matches() before
+that method was in the class loaded by the long-lived process; one new Contact test
+loaded without its ClientUser import. Both author-owned files now contain the fixes.
+Fresh rerun of all 14 affected cases passes: 14 tests / 192 assertions, 303.37 seconds.
+No related source was overwritten and no failure is deferred. This is not represented
+as a single fresh all-green combined Dev batch.
+
+The independent clean Main candidate, with its own verified App/Tests Composer base,
+passes the full affected set: 293 tests / 2887 assertions, zero failures/skips.
+After current Main Notification/documentation integration and final Lead changes,
+the exact final domain + production Swagger + Knowledge source set passes:
+54 tests / 483 assertions, zero failures/skips, 101.656 seconds. Sets overlap.
+Main changes since the broader batch do not alter Client/Contact/Marketing/Tripletex
+runtime paths; final Swagger and native/token authority are rechecked on the final tree.
+The final generated 17 Lead operations and 47 schemas exactly match scoped canonical
+Swagger additions; unrelated existing contracts are retained.
 
 ## Human Review And Deployment
 
