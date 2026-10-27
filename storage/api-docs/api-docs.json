@@ -103976,6 +103976,1995 @@
                     "workday-reminders.read"
                 ]
             }
+        },
+        "/api/v1/booking/public/services": {
+            "get": {
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Safe bookable catalogue",
+                "operationId": "bookingP01",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success; persisted local result. Delivery evidence is separate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingP01Response"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/api/v1/booking/public/services/{setting}": {
+            "get": {
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Service form context, public timezone, privacy/honeypot and permitted choices",
+                "operationId": "bookingP02",
+                "parameters": [
+                    {
+                        "name": "setting",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success; persisted local result. Delivery evidence is separate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingP02Response"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/api/v1/booking/public/services/{setting}/slots": {
+            "get": {
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Bounded dates/technician selection and Calendar availability",
+                "operationId": "bookingP03",
+                "parameters": [
+                    {
+                        "name": "setting",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "technician_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success; persisted local result. Delivery evidence is separate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingP03Response"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/api/v1/booking/public/services/{setting}/requests": {
+            "post": {
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Shared validated submission/spam and minimal acknowledgement",
+                "operationId": "bookingP04",
+                "parameters": [
+                    {
+                        "name": "setting",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 32
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BookingPublicRequestInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Success; persisted local result. Delivery evidence is separate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingP04Response"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/api/v1/booking/context": {
+            "get": {
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Defaults, constraints and native service/user options",
+                "operationId": "bookingA01",
+                "parameters": [
+                    {
+                        "name": "capability",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "overview",
+                                "configuration",
+                                "review"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "setting_slug",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success; persisted local result. Delivery evidence is separate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingA01Response"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-authority": "booking.read + capability-specific native permission"
+            }
+        },
+        "/api/v1/booking/summary": {
+            "get": {
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Current open-request and overview counts",
+                "operationId": "bookingA02",
+                "responses": {
+                    "200": {
+                        "description": "Success; persisted local result. Delivery evidence is separate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingA02Response"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-authority": "booking.read + booking.view"
+            }
+        },
+        "/api/v1/booking/settings": {
+            "get": {
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Bounded settings and request counts",
+                "operationId": "bookingA03",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success; persisted local result. Delivery evidence is separate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingA03Response"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-authority": "booking.read + booking.view"
+            },
+            "post": {
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Create all supported fields and eligible pool",
+                "operationId": "bookingA05",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 16
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BookingSettingCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Success; persisted local result. Delivery evidence is separate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingA05Response"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-authority": "booking.settings.write + booking.manage"
+            }
+        },
+        "/api/v1/booking/settings/{setting}": {
+            "get": {
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Exact setting/edit context",
+                "operationId": "bookingA04",
+                "parameters": [
+                    {
+                        "name": "setting",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success; persisted local result. Delivery evidence is separate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingA04Response"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-authority": "booking.read + booking.manage"
+            },
+            "put": {
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Update setting/pool with current-state precondition",
+                "operationId": "bookingA06",
+                "parameters": [
+                    {
+                        "name": "setting",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 16
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BookingSettingUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success; persisted local result. Delivery evidence is separate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingA06Response"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-authority": "booking.settings.write + booking.manage"
+            }
+        },
+        "/api/v1/booking/settings/{setting}/toggle": {
+            "post": {
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Native toggle with current-state precondition",
+                "operationId": "bookingA07",
+                "parameters": [
+                    {
+                        "name": "setting",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 16
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BookingExpectedRevision"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success; persisted local result. Delivery evidence is separate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingA07Response"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-authority": "booking.settings.write + booking.manage"
+            }
+        },
+        "/api/v1/booking/requests": {
+            "get": {
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Bounded request list",
+                "operationId": "bookingA08",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success; persisted local result. Delivery evidence is separate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingA08Response"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-authority": "booking.read + booking.view"
+            }
+        },
+        "/api/v1/booking/requests/{bookingRequest}": {
+            "get": {
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Safe request/customer/decision/Calendar link",
+                "operationId": "bookingA09",
+                "parameters": [
+                    {
+                        "name": "bookingRequest",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success; persisted local result. Delivery evidence is separate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingA09Response"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-authority": "booking.read + booking.view"
+            }
+        },
+        "/api/v1/booking/requests/{bookingRequest}/events": {
+            "get": {
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Bounded ordered timeline and truthful notification evidence",
+                "operationId": "bookingA10",
+                "parameters": [
+                    {
+                        "name": "bookingRequest",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success; persisted local result. Delivery evidence is separate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingA10Response"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-authority": "booking.read + booking.view"
+            }
+        },
+        "/api/v1/booking/requests/{bookingRequest}/confirm": {
+            "post": {
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Atomic recheck/confirm/Calendar event and automatic fallback",
+                "operationId": "bookingA11",
+                "parameters": [
+                    {
+                        "name": "bookingRequest",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 16
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BookingExpectedRevision"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success; persisted local result. Delivery evidence is separate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingA11Response"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-authority": "booking.requests.review + booking.request_review"
+            }
+        },
+        "/api/v1/booking/requests/{bookingRequest}/decline": {
+            "post": {
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Atomic decline/reason and customer notification",
+                "operationId": "bookingA12",
+                "parameters": [
+                    {
+                        "name": "bookingRequest",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 16
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BookingDeclineInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success; persisted local result. Delivery evidence is separate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingA12Response"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-authority": "booking.requests.review + booking.request_review"
+            }
+        },
+        "/api/v1/booking/commands/{command}": {
+            "get": {
+                "tags": [
+                    "Booking"
+                ],
+                "summary": "Own actor/token-bound sanitized result with fresh rights",
+                "operationId": "bookingA13",
+                "parameters": [
+                    {
+                        "name": "command",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success; persisted local result. Delivery evidence is separate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingA13Response"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Denied, invalid, concurrent or unavailable operation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-authority": "booking.commands.read + original operation authority"
+            }
         }
     },
     "components": {
@@ -139133,6 +141122,1440 @@
                     }
                 },
                 "type": "object"
+            },
+            "BookingNamedRef": {
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Complete current Booking contract, verified against runtime routes and successful responses.",
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingUserRef": {
+                "required": [
+                    "id",
+                    "name",
+                    "email"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingError": {
+                "required": [
+                    "message"
+                ],
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "type": "object",
+                "additionalProperties": true
+            },
+            "BookingPublicService": {
+                "required": [
+                    "slug",
+                    "public_name",
+                    "public_description",
+                    "opening_window_start",
+                    "opening_window_end",
+                    "location",
+                    "instructions",
+                    "technician_routing_mode",
+                    "duration_minutes",
+                    "slot_step_minutes",
+                    "min_notice_hours",
+                    "horizon_days"
+                ],
+                "properties": {
+                    "slug": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "public_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "public_description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "opening_window_start": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "opening_window_end": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "location": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "instructions": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "technician_routing_mode": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "duration_minutes": {
+                        "type": "integer"
+                    },
+                    "slot_step_minutes": {
+                        "type": "integer"
+                    },
+                    "min_notice_hours": {
+                        "type": "integer"
+                    },
+                    "horizon_days": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingSetting": {
+                "required": [
+                    "status",
+                    "slug",
+                    "public_name",
+                    "public_description",
+                    "technician_routing_mode",
+                    "working_hours_source",
+                    "opening_window_start",
+                    "opening_window_end",
+                    "location",
+                    "instructions",
+                    "spam_honeypot_field",
+                    "id",
+                    "duration_minutes",
+                    "slot_step_minutes",
+                    "min_notice_hours",
+                    "horizon_days",
+                    "requests_count",
+                    "service_id",
+                    "assigned_user_id",
+                    "eligible_user_ids",
+                    "revision",
+                    "booking_mode",
+                    "allow_new_clients",
+                    "is_bookable",
+                    "service_name"
+                ],
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "slug": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "public_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "public_description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "technician_routing_mode": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "working_hours_source": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "opening_window_start": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "opening_window_end": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "location": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "instructions": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "spam_honeypot_field": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "id": {
+                        "type": "integer"
+                    },
+                    "duration_minutes": {
+                        "type": "integer"
+                    },
+                    "slot_step_minutes": {
+                        "type": "integer"
+                    },
+                    "min_notice_hours": {
+                        "type": "integer"
+                    },
+                    "horizon_days": {
+                        "type": "integer"
+                    },
+                    "requests_count": {
+                        "type": "integer"
+                    },
+                    "service_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "assigned_user_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "eligible_user_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "revision": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "minLength": 64
+                    },
+                    "booking_mode": {
+                        "type": "string"
+                    },
+                    "allow_new_clients": {
+                        "type": "boolean"
+                    },
+                    "is_bookable": {
+                        "type": "boolean"
+                    },
+                    "service_name": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingNotificationEvidence": {
+                "required": [
+                    "kind",
+                    "state",
+                    "claimed_at",
+                    "submitted_at"
+                ],
+                "properties": {
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "received",
+                            "confirmed",
+                            "declined"
+                        ]
+                    },
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "unknown",
+                            "submitted",
+                            "failed"
+                        ]
+                    },
+                    "claimed_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "submitted_at": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingRequest": {
+                "required": [
+                    "id",
+                    "booking_service_setting_id",
+                    "service_id",
+                    "assigned_user_id",
+                    "calendar_event_id",
+                    "confirmed_by",
+                    "declined_by",
+                    "booking_key",
+                    "status",
+                    "company_name",
+                    "contact_name",
+                    "contact_email",
+                    "contact_phone",
+                    "message",
+                    "timezone",
+                    "decline_reason",
+                    "requested_starts_at",
+                    "requested_ends_at",
+                    "confirmed_at",
+                    "declined_at",
+                    "created_at",
+                    "updated_at",
+                    "service_name",
+                    "technician_name",
+                    "revision",
+                    "notifications"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "booking_service_setting_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "service_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "assigned_user_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "calendar_event_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "confirmed_by": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "declined_by": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "booking_key": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "company_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "contact_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "contact_email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "contact_phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "message": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "decline_reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "requested_starts_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "requested_ends_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "confirmed_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "declined_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "service_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "technician_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "revision": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "minLength": 64
+                    },
+                    "notifications": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/BookingNotificationEvidence"
+                        }
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingEvent": {
+                "required": [
+                    "id",
+                    "type",
+                    "message",
+                    "actor",
+                    "created_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "actor": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/BookingNamedRef"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingPublicServicesPage": {
+                "required": [
+                    "items",
+                    "page",
+                    "per_page",
+                    "total"
+                ],
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/BookingPublicService"
+                        }
+                    },
+                    "page": {
+                        "type": "integer"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "total": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingSettingsPage": {
+                "required": [
+                    "items",
+                    "page",
+                    "per_page",
+                    "total"
+                ],
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/BookingSetting"
+                        }
+                    },
+                    "page": {
+                        "type": "integer"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "total": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingRequestsPage": {
+                "required": [
+                    "items",
+                    "page",
+                    "per_page",
+                    "total"
+                ],
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/BookingRequest"
+                        }
+                    },
+                    "page": {
+                        "type": "integer"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "total": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingEventsPage": {
+                "required": [
+                    "items",
+                    "page",
+                    "per_page",
+                    "total"
+                ],
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/BookingEvent"
+                        }
+                    },
+                    "page": {
+                        "type": "integer"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "total": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingPublicContext": {
+                "required": [
+                    "service",
+                    "timezone",
+                    "technicians",
+                    "privacy_acknowledgement_required",
+                    "honeypot_field",
+                    "request_mode",
+                    "api_submissions_enabled"
+                ],
+                "properties": {
+                    "service": {
+                        "$ref": "#/components/schemas/BookingPublicService"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "technicians": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/BookingNamedRef"
+                        }
+                    },
+                    "privacy_acknowledgement_required": {
+                        "type": "boolean"
+                    },
+                    "honeypot_field": {
+                        "type": "string"
+                    },
+                    "request_mode": {
+                        "type": "string",
+                        "enum": [
+                            "staff_confirmed"
+                        ]
+                    },
+                    "api_submissions_enabled": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingSlot": {
+                "required": [
+                    "starts_at",
+                    "ends_at",
+                    "timezone"
+                ],
+                "properties": {
+                    "starts_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "ends_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingSlots": {
+                "required": [
+                    "timezone",
+                    "slots"
+                ],
+                "properties": {
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "slots": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/BookingSlot"
+                        }
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingAcknowledgement": {
+                "required": [
+                    "reference",
+                    "message"
+                ],
+                "properties": {
+                    "reference": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingSummary": {
+                "required": [
+                    "open_request_count",
+                    "settings_count"
+                ],
+                "properties": {
+                    "open_request_count": {
+                        "type": "integer"
+                    },
+                    "settings_count": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingDefaults": {
+                "required": [
+                    "status",
+                    "booking_mode",
+                    "technician_routing_mode",
+                    "working_hours_source",
+                    "duration_minutes",
+                    "slot_step_minutes",
+                    "min_notice_hours",
+                    "horizon_days",
+                    "allow_new_clients",
+                    "spam_honeypot_field"
+                ],
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "booking_mode": {
+                        "type": "string"
+                    },
+                    "technician_routing_mode": {
+                        "type": "string"
+                    },
+                    "working_hours_source": {
+                        "type": "string"
+                    },
+                    "duration_minutes": {
+                        "type": "integer"
+                    },
+                    "slot_step_minutes": {
+                        "type": "integer"
+                    },
+                    "min_notice_hours": {
+                        "type": "integer"
+                    },
+                    "horizon_days": {
+                        "type": "integer"
+                    },
+                    "allow_new_clients": {
+                        "type": "boolean"
+                    },
+                    "spam_honeypot_field": {
+                        "type": "string"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingConstraints": {
+                "required": [
+                    "statuses",
+                    "routing_modes",
+                    "hours_sources",
+                    "duration_min",
+                    "duration_max",
+                    "notice_min",
+                    "notice_max",
+                    "horizon_min",
+                    "horizon_max",
+                    "slot_steps"
+                ],
+                "properties": {
+                    "statuses": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "routing_modes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "hours_sources": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "duration_min": {
+                        "type": "integer"
+                    },
+                    "duration_max": {
+                        "type": "integer"
+                    },
+                    "notice_min": {
+                        "type": "integer"
+                    },
+                    "notice_max": {
+                        "type": "integer"
+                    },
+                    "horizon_min": {
+                        "type": "integer"
+                    },
+                    "horizon_max": {
+                        "type": "integer"
+                    },
+                    "slot_steps": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingContext": {
+                "required": [
+                    "capability",
+                    "api_staff_writes_enabled",
+                    "request_statuses"
+                ],
+                "properties": {
+                    "capability": {
+                        "type": "string",
+                        "enum": [
+                            "overview",
+                            "configuration",
+                            "review"
+                        ]
+                    },
+                    "api_staff_writes_enabled": {
+                        "type": "boolean"
+                    },
+                    "request_statuses": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "defaults": {
+                        "$ref": "#/components/schemas/BookingDefaults"
+                    },
+                    "services": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/BookingNamedRef"
+                        }
+                    },
+                    "users": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/BookingUserRef"
+                        }
+                    },
+                    "constraints": {
+                        "$ref": "#/components/schemas/BookingConstraints"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingCommandReceipt": {
+                "required": [
+                    "id",
+                    "operation",
+                    "result",
+                    "created_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "operation": {
+                        "type": "string"
+                    },
+                    "result": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/BookingSetting"
+                            },
+                            {
+                                "$ref": "#/components/schemas/BookingRequest"
+                            }
+                        ]
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingSettingCreate": {
+                "required": [
+                    "service_id",
+                    "public_name",
+                    "status",
+                    "technician_routing_mode",
+                    "working_hours_source",
+                    "duration_minutes",
+                    "slot_step_minutes",
+                    "min_notice_hours",
+                    "horizon_days"
+                ],
+                "properties": {
+                    "slug": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]+$",
+                        "nullable": true,
+                        "maxLength": 120
+                    },
+                    "public_name": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "public_description": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 2000
+                    },
+                    "location": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "instructions": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 2000
+                    },
+                    "spam_honeypot_field": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 80
+                    },
+                    "service_id": {
+                        "type": "integer"
+                    },
+                    "assigned_user_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "eligible_user_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "active",
+                            "archived"
+                        ]
+                    },
+                    "technician_routing_mode": {
+                        "type": "string",
+                        "enum": [
+                            "fixed",
+                            "automatic",
+                            "customer_choice"
+                        ]
+                    },
+                    "working_hours_source": {
+                        "type": "string",
+                        "enum": [
+                            "company",
+                            "technician"
+                        ]
+                    },
+                    "duration_minutes": {
+                        "type": "integer",
+                        "maximum": 480,
+                        "minimum": 15
+                    },
+                    "slot_step_minutes": {
+                        "type": "integer",
+                        "enum": [
+                            15,
+                            30,
+                            60
+                        ]
+                    },
+                    "min_notice_hours": {
+                        "type": "integer",
+                        "maximum": 720,
+                        "minimum": 0
+                    },
+                    "horizon_days": {
+                        "type": "integer",
+                        "maximum": 365,
+                        "minimum": 1
+                    },
+                    "opening_window_start": {
+                        "type": "string",
+                        "pattern": "^(?:[01][0-9]|2[0-3]):(?:00|15|30|45)$",
+                        "nullable": true
+                    },
+                    "opening_window_end": {
+                        "type": "string",
+                        "pattern": "^(?:[01][0-9]|2[0-3]):(?:00|15|30|45)$",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingSettingUpdate": {
+                "required": [
+                    "service_id",
+                    "public_name",
+                    "status",
+                    "technician_routing_mode",
+                    "working_hours_source",
+                    "duration_minutes",
+                    "slot_step_minutes",
+                    "min_notice_hours",
+                    "horizon_days",
+                    "expected_revision"
+                ],
+                "properties": {
+                    "slug": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]+$",
+                        "nullable": true,
+                        "maxLength": 120
+                    },
+                    "public_name": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "public_description": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 2000
+                    },
+                    "location": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "instructions": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 2000
+                    },
+                    "spam_honeypot_field": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 80
+                    },
+                    "service_id": {
+                        "type": "integer"
+                    },
+                    "assigned_user_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "eligible_user_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "active",
+                            "archived"
+                        ]
+                    },
+                    "technician_routing_mode": {
+                        "type": "string",
+                        "enum": [
+                            "fixed",
+                            "automatic",
+                            "customer_choice"
+                        ]
+                    },
+                    "working_hours_source": {
+                        "type": "string",
+                        "enum": [
+                            "company",
+                            "technician"
+                        ]
+                    },
+                    "duration_minutes": {
+                        "type": "integer",
+                        "maximum": 480,
+                        "minimum": 15
+                    },
+                    "slot_step_minutes": {
+                        "type": "integer",
+                        "enum": [
+                            15,
+                            30,
+                            60
+                        ]
+                    },
+                    "min_notice_hours": {
+                        "type": "integer",
+                        "maximum": 720,
+                        "minimum": 0
+                    },
+                    "horizon_days": {
+                        "type": "integer",
+                        "maximum": 365,
+                        "minimum": 1
+                    },
+                    "opening_window_start": {
+                        "type": "string",
+                        "pattern": "^(?:[01][0-9]|2[0-3]):(?:00|15|30|45)$",
+                        "nullable": true
+                    },
+                    "opening_window_end": {
+                        "type": "string",
+                        "pattern": "^(?:[01][0-9]|2[0-3]):(?:00|15|30|45)$",
+                        "nullable": true
+                    },
+                    "expected_revision": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "minLength": 64
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingExpectedRevision": {
+                "required": [
+                    "expected_revision"
+                ],
+                "properties": {
+                    "expected_revision": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "minLength": 64
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingDeclineInput": {
+                "required": [
+                    "expected_revision"
+                ],
+                "properties": {
+                    "expected_revision": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "minLength": 64
+                    },
+                    "decline_reason": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 1000
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingPublicRequestInput": {
+                "required": [
+                    "contact_name",
+                    "contact_email",
+                    "slot_starts_at",
+                    "timezone",
+                    "privacy_acknowledged"
+                ],
+                "properties": {
+                    "company_name": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "contact_name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "contact_email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "contact_phone": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 80
+                    },
+                    "message": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 2000
+                    },
+                    "slot_starts_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "technician_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "privacy_acknowledged": {
+                        "type": "boolean"
+                    },
+                    "booking_website": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 80
+                    }
+                },
+                "type": "object",
+                "additionalProperties": {
+                    "type": "string",
+                    "maxLength": 80
+                }
+            },
+            "BookingP01Response": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/BookingPublicServicesPage"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingP02Response": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/BookingPublicContext"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingP03Response": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/BookingSlots"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingP04Response": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/BookingAcknowledgement"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingA01Response": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/BookingContext"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingA02Response": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/BookingSummary"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingA03Response": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/BookingSettingsPage"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingA04Response": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/BookingSetting"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingA05Response": {
+                "required": [
+                    "data",
+                    "command_id"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/BookingSetting"
+                    },
+                    "command_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingA06Response": {
+                "required": [
+                    "data",
+                    "command_id"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/BookingSetting"
+                    },
+                    "command_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingA07Response": {
+                "required": [
+                    "data",
+                    "command_id"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/BookingSetting"
+                    },
+                    "command_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingA08Response": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/BookingRequestsPage"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingA09Response": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/BookingRequest"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingA10Response": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/BookingEventsPage"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingA11Response": {
+                "required": [
+                    "data",
+                    "command_id"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/BookingRequest"
+                    },
+                    "command_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingA12Response": {
+                "required": [
+                    "data",
+                    "command_id"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/BookingRequest"
+                    },
+                    "command_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "BookingA13Response": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/BookingCommandReceipt"
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
             }
         },
         "securitySchemes": {

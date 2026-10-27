@@ -1,0 +1,861 @@
+{
+  "date": "2026-10-27",
+  "runtime": "/var/Projects/tdPSA",
+  "branch": "Dev",
+  "status": "Done On Dev; isolated Main candidate verified; merge authorized; production unchanged",
+  "browser_rows": 13,
+  "existing_api_operations": 0,
+  "proposed_api_operations": 17,
+  "coverage_complete": true,
+  "browser": [
+    {
+      "id": "B01",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "booking",
+        "name": "booking.index",
+        "action": "App\\Modules\\Booking\\Controllers\\Public\\BookingController@index",
+        "middleware": [
+          "web",
+          "Illuminate\\Routing\\Middleware\\ThrottleRequests:60,1"
+        ],
+        "path": null
+      },
+      "classification": "read",
+      "planned_operation_ids": [
+        "P01"
+      ],
+      "status": "Verified with mapped native/API tests and HTTPS flow"
+    },
+    {
+      "id": "B02",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "booking/{setting}",
+        "name": "booking.services.show",
+        "action": "App\\Modules\\Booking\\Controllers\\Public\\BookingController@show",
+        "middleware": [
+          "web",
+          "Illuminate\\Routing\\Middleware\\ThrottleRequests:60,1"
+        ],
+        "path": null
+      },
+      "classification": "read",
+      "planned_operation_ids": [
+        "P02",
+        "P03"
+      ],
+      "status": "Verified with mapped native/API tests and HTTPS flow"
+    },
+    {
+      "id": "B03",
+      "runtime": {
+        "domain": null,
+        "method": "POST",
+        "uri": "booking/{setting}",
+        "name": "booking.services.store",
+        "action": "App\\Modules\\Booking\\Controllers\\Public\\BookingController@store",
+        "middleware": [
+          "web",
+          "Illuminate\\Routing\\Middleware\\ThrottleRequests:10,1"
+        ],
+        "path": null
+      },
+      "classification": "write",
+      "planned_operation_ids": [
+        "P04"
+      ],
+      "status": "Verified with mapped native/API tests and HTTPS flow"
+    },
+    {
+      "id": "B04",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "booking/{setting}/thanks",
+        "name": "booking.services.thanks",
+        "action": "App\\Modules\\Booking\\Controllers\\Public\\BookingController@thanks",
+        "middleware": [
+          "web",
+          "Illuminate\\Routing\\Middleware\\ThrottleRequests:60,1"
+        ],
+        "path": null
+      },
+      "classification": "read",
+      "planned_operation_ids": [
+        "P04"
+      ],
+      "status": "Verified with mapped native/API tests and HTTPS flow"
+    },
+    {
+      "id": "B05",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/admin/system/booking",
+        "name": "tech.admin.system.booking.index",
+        "action": "App\\Modules\\Booking\\Controllers\\Admin\\BookingController@index",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "classification": "read",
+      "planned_operation_ids": [
+        "A02",
+        "A03",
+        "A08"
+      ],
+      "status": "Verified with mapped native/API tests and HTTPS flow"
+    },
+    {
+      "id": "B06",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/admin/system/booking/requests/{bookingRequest}",
+        "name": "tech.admin.system.booking.requests.show",
+        "action": "App\\Modules\\Booking\\Controllers\\Admin\\BookingRequestController@show",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "classification": "read",
+      "planned_operation_ids": [
+        "A09",
+        "A10"
+      ],
+      "status": "Verified with mapped native/API tests and HTTPS flow"
+    },
+    {
+      "id": "B07",
+      "runtime": {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/admin/system/booking/requests/{bookingRequest}/confirm",
+        "name": "tech.admin.system.booking.requests.confirm",
+        "action": "App\\Modules\\Booking\\Controllers\\Admin\\BookingRequestController@confirm",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "classification": "action",
+      "planned_operation_ids": [
+        "A11"
+      ],
+      "status": "Verified with mapped native/API tests and HTTPS flow"
+    },
+    {
+      "id": "B08",
+      "runtime": {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/admin/system/booking/requests/{bookingRequest}/decline",
+        "name": "tech.admin.system.booking.requests.decline",
+        "action": "App\\Modules\\Booking\\Controllers\\Admin\\BookingRequestController@decline",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "classification": "action",
+      "planned_operation_ids": [
+        "A12"
+      ],
+      "status": "Verified with mapped native/API tests and HTTPS flow"
+    },
+    {
+      "id": "B09",
+      "runtime": {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/admin/system/booking/settings",
+        "name": "tech.admin.system.booking.settings.store",
+        "action": "App\\Modules\\Booking\\Controllers\\Admin\\BookingServiceSettingController@store",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "classification": "write",
+      "planned_operation_ids": [
+        "A05"
+      ],
+      "status": "Verified with mapped native/API tests and HTTPS flow"
+    },
+    {
+      "id": "B10",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/admin/system/booking/settings/create",
+        "name": "tech.admin.system.booking.settings.create",
+        "action": "App\\Modules\\Booking\\Controllers\\Admin\\BookingServiceSettingController@create",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "classification": "read",
+      "planned_operation_ids": [
+        "A01"
+      ],
+      "status": "Verified with mapped native/API tests and HTTPS flow"
+    },
+    {
+      "id": "B11",
+      "runtime": {
+        "domain": null,
+        "method": "PUT",
+        "uri": "tech/admin/system/booking/settings/{setting}",
+        "name": "tech.admin.system.booking.settings.update",
+        "action": "App\\Modules\\Booking\\Controllers\\Admin\\BookingServiceSettingController@update",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "classification": "write",
+      "planned_operation_ids": [
+        "A06"
+      ],
+      "status": "Verified with mapped native/API tests and HTTPS flow"
+    },
+    {
+      "id": "B12",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/admin/system/booking/settings/{setting}/edit",
+        "name": "tech.admin.system.booking.settings.edit",
+        "action": "App\\Modules\\Booking\\Controllers\\Admin\\BookingServiceSettingController@edit",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "classification": "read",
+      "planned_operation_ids": [
+        "A04",
+        "A01"
+      ],
+      "status": "Verified with mapped native/API tests and HTTPS flow"
+    },
+    {
+      "id": "B13",
+      "runtime": {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/admin/system/booking/settings/{setting}/toggle",
+        "name": "tech.admin.system.booking.settings.toggle",
+        "action": "App\\Modules\\Booking\\Controllers\\Admin\\BookingServiceSettingController@toggle",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "classification": "action",
+      "planned_operation_ids": [
+        "A07"
+      ],
+      "status": "Verified with mapped native/API tests and HTTPS flow"
+    }
+  ],
+  "operations": [
+    {
+      "id": "P01",
+      "method": "GET",
+      "path": "booking/public/services",
+      "authority": "public",
+      "behavior": "Safe bookable catalogue",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "api/v1/booking/public/services",
+        "name": "api.v1.booking.public.services",
+        "action": "App\\Modules\\Booking\\Controllers\\Api\\V1\\BookingController@publicServices",
+        "middleware": [
+          "api",
+          "App\\Modules\\Booking\\Support\\BookingApiErrors",
+          "Illuminate\\Routing\\Middleware\\ThrottleRequests:booking-public-read"
+        ],
+        "path": null
+      },
+      "operation_id": "bookingP01",
+      "scope": null,
+      "status": "Verified on Dev and isolated Main candidate",
+      "tests": [
+        "BookingApiTest",
+        "BookingApiContractTest",
+        "BookingModuleTest"
+      ],
+      "readback": "Isolated trusted HTTPS successful 17-operation flow; ordinary Dev read-only HTTPS verified"
+    },
+    {
+      "id": "P02",
+      "method": "GET",
+      "path": "booking/public/services/{slug}",
+      "authority": "public",
+      "behavior": "Service form context, public timezone, privacy/honeypot and permitted choices",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "api/v1/booking/public/services/{setting}",
+        "name": "api.v1.booking.public.context",
+        "action": "App\\Modules\\Booking\\Controllers\\Api\\V1\\BookingController@publicContext",
+        "middleware": [
+          "api",
+          "App\\Modules\\Booking\\Support\\BookingApiErrors",
+          "Illuminate\\Routing\\Middleware\\ThrottleRequests:booking-public-read"
+        ],
+        "path": null
+      },
+      "operation_id": "bookingP02",
+      "scope": null,
+      "status": "Verified on Dev and isolated Main candidate",
+      "tests": [
+        "BookingApiTest",
+        "BookingApiContractTest",
+        "BookingModuleTest"
+      ],
+      "readback": "Isolated trusted HTTPS successful 17-operation flow; ordinary Dev read-only HTTPS verified"
+    },
+    {
+      "id": "P03",
+      "method": "GET",
+      "path": "booking/public/services/{slug}/slots",
+      "authority": "public",
+      "behavior": "Bounded dates/technician selection and Calendar availability",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "api/v1/booking/public/services/{setting}/slots",
+        "name": "api.v1.booking.public.slots",
+        "action": "App\\Modules\\Booking\\Controllers\\Api\\V1\\BookingController@publicSlots",
+        "middleware": [
+          "api",
+          "App\\Modules\\Booking\\Support\\BookingApiErrors",
+          "Illuminate\\Routing\\Middleware\\ThrottleRequests:booking-public-read"
+        ],
+        "path": null
+      },
+      "operation_id": "bookingP03",
+      "scope": null,
+      "status": "Verified on Dev and isolated Main candidate",
+      "tests": [
+        "BookingApiTest",
+        "BookingApiContractTest",
+        "BookingModuleTest"
+      ],
+      "readback": "Isolated trusted HTTPS successful 17-operation flow; ordinary Dev read-only HTTPS verified"
+    },
+    {
+      "id": "P04",
+      "method": "POST",
+      "path": "booking/public/services/{slug}/requests",
+      "authority": "public",
+      "behavior": "Shared validated submission/spam and minimal acknowledgement",
+      "runtime": {
+        "domain": null,
+        "method": "POST",
+        "uri": "api/v1/booking/public/services/{setting}/requests",
+        "name": "api.v1.booking.public.submit",
+        "action": "App\\Modules\\Booking\\Controllers\\Api\\V1\\BookingController@submit",
+        "middleware": [
+          "api",
+          "App\\Modules\\Booking\\Support\\BookingApiErrors",
+          "Illuminate\\Routing\\Middleware\\ThrottleRequests:booking-public-submit"
+        ],
+        "path": null
+      },
+      "operation_id": "bookingP04",
+      "scope": null,
+      "status": "Verified on Dev and isolated Main candidate",
+      "tests": [
+        "BookingApiTest",
+        "BookingApiContractTest",
+        "BookingModuleTest"
+      ],
+      "readback": "Isolated trusted HTTPS successful 17-operation flow; ordinary Dev read-only HTTPS verified"
+    },
+    {
+      "id": "A01",
+      "method": "GET",
+      "path": "booking/context",
+      "authority": "booking.read + capability-specific native permission",
+      "behavior": "Defaults, constraints and native service/user options",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "api/v1/booking/context",
+        "name": "api.v1.booking.context",
+        "action": "App\\Modules\\Booking\\Controllers\\Api\\V1\\BookingController@context",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\Booking\\Support\\BookingApiErrors",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:booking.read",
+          "App\\Modules\\Booking\\Support\\BookingApiAccess"
+        ],
+        "path": null
+      },
+      "operation_id": "bookingA01",
+      "scope": "booking.read",
+      "status": "Verified on Dev and isolated Main candidate",
+      "tests": [
+        "BookingApiTest",
+        "BookingApiContractTest",
+        "BookingModuleTest"
+      ],
+      "readback": "Isolated trusted HTTPS successful 17-operation flow; ordinary Dev read-only HTTPS verified"
+    },
+    {
+      "id": "A02",
+      "method": "GET",
+      "path": "booking/summary",
+      "authority": "booking.read + booking.view",
+      "behavior": "Current open-request and overview counts",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "api/v1/booking/summary",
+        "name": "api.v1.booking.summary",
+        "action": "App\\Modules\\Booking\\Controllers\\Api\\V1\\BookingController@summary",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\Booking\\Support\\BookingApiErrors",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:booking.read",
+          "App\\Modules\\Booking\\Support\\BookingApiAccess"
+        ],
+        "path": null
+      },
+      "operation_id": "bookingA02",
+      "scope": "booking.read",
+      "status": "Verified on Dev and isolated Main candidate",
+      "tests": [
+        "BookingApiTest",
+        "BookingApiContractTest",
+        "BookingModuleTest"
+      ],
+      "readback": "Isolated trusted HTTPS successful 17-operation flow; ordinary Dev read-only HTTPS verified"
+    },
+    {
+      "id": "A03",
+      "method": "GET",
+      "path": "booking/settings",
+      "authority": "booking.read + booking.view",
+      "behavior": "Bounded settings and request counts",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "api/v1/booking/settings",
+        "name": "api.v1.booking.settings",
+        "action": "App\\Modules\\Booking\\Controllers\\Api\\V1\\BookingController@settings",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\Booking\\Support\\BookingApiErrors",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:booking.read",
+          "App\\Modules\\Booking\\Support\\BookingApiAccess"
+        ],
+        "path": null
+      },
+      "operation_id": "bookingA03",
+      "scope": "booking.read",
+      "status": "Verified on Dev and isolated Main candidate",
+      "tests": [
+        "BookingApiTest",
+        "BookingApiContractTest",
+        "BookingModuleTest"
+      ],
+      "readback": "Isolated trusted HTTPS successful 17-operation flow; ordinary Dev read-only HTTPS verified"
+    },
+    {
+      "id": "A04",
+      "method": "GET",
+      "path": "booking/settings/{setting}",
+      "authority": "booking.read + booking.manage",
+      "behavior": "Exact setting/edit context",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "api/v1/booking/settings/{setting}",
+        "name": "api.v1.booking.setting",
+        "action": "App\\Modules\\Booking\\Controllers\\Api\\V1\\BookingController@setting",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\Booking\\Support\\BookingApiErrors",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:booking.read",
+          "App\\Modules\\Booking\\Support\\BookingApiAccess"
+        ],
+        "path": null
+      },
+      "operation_id": "bookingA04",
+      "scope": "booking.read",
+      "status": "Verified on Dev and isolated Main candidate",
+      "tests": [
+        "BookingApiTest",
+        "BookingApiContractTest",
+        "BookingModuleTest"
+      ],
+      "readback": "Isolated trusted HTTPS successful 17-operation flow; ordinary Dev read-only HTTPS verified"
+    },
+    {
+      "id": "A05",
+      "method": "POST",
+      "path": "booking/settings",
+      "authority": "booking.settings.write + booking.manage",
+      "behavior": "Create all supported fields and eligible pool",
+      "runtime": {
+        "domain": null,
+        "method": "POST",
+        "uri": "api/v1/booking/settings",
+        "name": "api.v1.booking.saveSetting",
+        "action": "App\\Modules\\Booking\\Controllers\\Api\\V1\\BookingController@saveSetting",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\Booking\\Support\\BookingApiErrors",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:booking.settings.write",
+          "App\\Modules\\Booking\\Support\\BookingApiAccess"
+        ],
+        "path": null
+      },
+      "operation_id": "bookingA05",
+      "scope": "booking.settings.write",
+      "status": "Verified on Dev and isolated Main candidate",
+      "tests": [
+        "BookingApiTest",
+        "BookingApiContractTest",
+        "BookingModuleTest"
+      ],
+      "readback": "Isolated trusted HTTPS successful 17-operation flow; ordinary Dev read-only HTTPS verified"
+    },
+    {
+      "id": "A06",
+      "method": "PUT",
+      "path": "booking/settings/{setting}",
+      "authority": "booking.settings.write + booking.manage",
+      "behavior": "Update setting/pool with current-state precondition",
+      "runtime": {
+        "domain": null,
+        "method": "PUT",
+        "uri": "api/v1/booking/settings/{setting}",
+        "name": "api.v1.booking.updateSetting",
+        "action": "App\\Modules\\Booking\\Controllers\\Api\\V1\\BookingController@updateSetting",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\Booking\\Support\\BookingApiErrors",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:booking.settings.write",
+          "App\\Modules\\Booking\\Support\\BookingApiAccess"
+        ],
+        "path": null
+      },
+      "operation_id": "bookingA06",
+      "scope": "booking.settings.write",
+      "status": "Verified on Dev and isolated Main candidate",
+      "tests": [
+        "BookingApiTest",
+        "BookingApiContractTest",
+        "BookingModuleTest"
+      ],
+      "readback": "Isolated trusted HTTPS successful 17-operation flow; ordinary Dev read-only HTTPS verified"
+    },
+    {
+      "id": "A07",
+      "method": "POST",
+      "path": "booking/settings/{setting}/toggle",
+      "authority": "booking.settings.write + booking.manage",
+      "behavior": "Native toggle with current-state precondition",
+      "runtime": {
+        "domain": null,
+        "method": "POST",
+        "uri": "api/v1/booking/settings/{setting}/toggle",
+        "name": "api.v1.booking.toggle",
+        "action": "App\\Modules\\Booking\\Controllers\\Api\\V1\\BookingController@toggle",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\Booking\\Support\\BookingApiErrors",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:booking.settings.write",
+          "App\\Modules\\Booking\\Support\\BookingApiAccess"
+        ],
+        "path": null
+      },
+      "operation_id": "bookingA07",
+      "scope": "booking.settings.write",
+      "status": "Verified on Dev and isolated Main candidate",
+      "tests": [
+        "BookingApiTest",
+        "BookingApiContractTest",
+        "BookingModuleTest"
+      ],
+      "readback": "Isolated trusted HTTPS successful 17-operation flow; ordinary Dev read-only HTTPS verified"
+    },
+    {
+      "id": "A08",
+      "method": "GET",
+      "path": "booking/requests",
+      "authority": "booking.read + booking.view",
+      "behavior": "Bounded request list",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "api/v1/booking/requests",
+        "name": "api.v1.booking.requests",
+        "action": "App\\Modules\\Booking\\Controllers\\Api\\V1\\BookingController@requests",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\Booking\\Support\\BookingApiErrors",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:booking.read",
+          "App\\Modules\\Booking\\Support\\BookingApiAccess"
+        ],
+        "path": null
+      },
+      "operation_id": "bookingA08",
+      "scope": "booking.read",
+      "status": "Verified on Dev and isolated Main candidate",
+      "tests": [
+        "BookingApiTest",
+        "BookingApiContractTest",
+        "BookingModuleTest"
+      ],
+      "readback": "Isolated trusted HTTPS successful 17-operation flow; ordinary Dev read-only HTTPS verified"
+    },
+    {
+      "id": "A09",
+      "method": "GET",
+      "path": "booking/requests/{bookingRequest}",
+      "authority": "booking.read + booking.view",
+      "behavior": "Safe request/customer/decision/Calendar link",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "api/v1/booking/requests/{bookingRequest}",
+        "name": "api.v1.booking.bookingRequest",
+        "action": "App\\Modules\\Booking\\Controllers\\Api\\V1\\BookingController@bookingRequest",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\Booking\\Support\\BookingApiErrors",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:booking.read",
+          "App\\Modules\\Booking\\Support\\BookingApiAccess"
+        ],
+        "path": null
+      },
+      "operation_id": "bookingA09",
+      "scope": "booking.read",
+      "status": "Verified on Dev and isolated Main candidate",
+      "tests": [
+        "BookingApiTest",
+        "BookingApiContractTest",
+        "BookingModuleTest"
+      ],
+      "readback": "Isolated trusted HTTPS successful 17-operation flow; ordinary Dev read-only HTTPS verified"
+    },
+    {
+      "id": "A10",
+      "method": "GET",
+      "path": "booking/requests/{bookingRequest}/events",
+      "authority": "booking.read + booking.view",
+      "behavior": "Bounded ordered timeline and truthful notification evidence",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "api/v1/booking/requests/{bookingRequest}/events",
+        "name": "api.v1.booking.events",
+        "action": "App\\Modules\\Booking\\Controllers\\Api\\V1\\BookingController@events",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\Booking\\Support\\BookingApiErrors",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:booking.read",
+          "App\\Modules\\Booking\\Support\\BookingApiAccess"
+        ],
+        "path": null
+      },
+      "operation_id": "bookingA10",
+      "scope": "booking.read",
+      "status": "Verified on Dev and isolated Main candidate",
+      "tests": [
+        "BookingApiTest",
+        "BookingApiContractTest",
+        "BookingModuleTest"
+      ],
+      "readback": "Isolated trusted HTTPS successful 17-operation flow; ordinary Dev read-only HTTPS verified"
+    },
+    {
+      "id": "A11",
+      "method": "POST",
+      "path": "booking/requests/{bookingRequest}/confirm",
+      "authority": "booking.requests.review + booking.request_review",
+      "behavior": "Atomic recheck/confirm/Calendar event and automatic fallback",
+      "runtime": {
+        "domain": null,
+        "method": "POST",
+        "uri": "api/v1/booking/requests/{bookingRequest}/confirm",
+        "name": "api.v1.booking.confirm",
+        "action": "App\\Modules\\Booking\\Controllers\\Api\\V1\\BookingController@confirm",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\Booking\\Support\\BookingApiErrors",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:booking.requests.review",
+          "App\\Modules\\Booking\\Support\\BookingApiAccess"
+        ],
+        "path": null
+      },
+      "operation_id": "bookingA11",
+      "scope": "booking.requests.review",
+      "status": "Verified on Dev and isolated Main candidate",
+      "tests": [
+        "BookingApiTest",
+        "BookingApiContractTest",
+        "BookingModuleTest"
+      ],
+      "readback": "Isolated trusted HTTPS successful 17-operation flow; ordinary Dev read-only HTTPS verified"
+    },
+    {
+      "id": "A12",
+      "method": "POST",
+      "path": "booking/requests/{bookingRequest}/decline",
+      "authority": "booking.requests.review + booking.request_review",
+      "behavior": "Atomic decline/reason and customer notification",
+      "runtime": {
+        "domain": null,
+        "method": "POST",
+        "uri": "api/v1/booking/requests/{bookingRequest}/decline",
+        "name": "api.v1.booking.decline",
+        "action": "App\\Modules\\Booking\\Controllers\\Api\\V1\\BookingController@decline",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\Booking\\Support\\BookingApiErrors",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:booking.requests.review",
+          "App\\Modules\\Booking\\Support\\BookingApiAccess"
+        ],
+        "path": null
+      },
+      "operation_id": "bookingA12",
+      "scope": "booking.requests.review",
+      "status": "Verified on Dev and isolated Main candidate",
+      "tests": [
+        "BookingApiTest",
+        "BookingApiContractTest",
+        "BookingModuleTest"
+      ],
+      "readback": "Isolated trusted HTTPS successful 17-operation flow; ordinary Dev read-only HTTPS verified"
+    },
+    {
+      "id": "A13",
+      "method": "GET",
+      "path": "booking/commands/{command}",
+      "authority": "booking.commands.read + original operation authority",
+      "behavior": "Own actor/token-bound sanitized result with fresh rights",
+      "runtime": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "api/v1/booking/commands/{command}",
+        "name": "api.v1.booking.command",
+        "action": "App\\Modules\\Booking\\Controllers\\Api\\V1\\BookingController@command",
+        "middleware": [
+          "api",
+          "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+          "App\\Modules\\Booking\\Support\\BookingApiErrors",
+          "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:booking.commands.read",
+          "App\\Modules\\Booking\\Support\\BookingApiAccess"
+        ],
+        "path": null
+      },
+      "operation_id": "bookingA13",
+      "scope": "booking.commands.read",
+      "status": "Verified on Dev and isolated Main candidate",
+      "tests": [
+        "BookingApiTest",
+        "BookingApiContractTest",
+        "BookingModuleTest"
+      ],
+      "readback": "Isolated trusted HTTPS successful 17-operation flow; ordinary Dev read-only HTTPS verified"
+    }
+  ],
+  "baseline_tests": {
+    "passed": 37,
+    "assertions": 315,
+    "failures": 0,
+    "skips": 0,
+    "future_api_verified": false
+  },
+  "implemented_api_operations": 17,
+  "typed_schemas": 43,
+  "verification": {
+    "dev": {
+      "tests": 189,
+      "assertions": 2622,
+      "failures": 0,
+      "skips": 0
+    },
+    "main_candidate": {
+      "tests": 189,
+      "assertions": 2490,
+      "failures": 0,
+      "skips": 0
+    },
+    "native_mysql": true,
+    "https_operations": 17,
+    "https_calls": 20
+  },
+  "human_review": "HR-2026-10-27-BOOKING-API Pending; Main merge explicitly authorized"
+}

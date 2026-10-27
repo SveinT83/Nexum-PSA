@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CalendarEvent extends Model
 {
+    use \App\Modules\Calendar\Support\SerializesBookingCalendarWrites;
     use SoftDeletes;
 
     protected $fillable = [

@@ -33,7 +33,9 @@ class ProjectWorkdayAbsence
                 && $event->calendar_id === $calendar->id && ! $event->series_id && ! $event->external_source
                 && ! $event->participants()->exists(), 409, 'The Calendar projection needs repair before this absence can change.');
             // Deliberately narrow write: generic model updates/deletes are forbidden for owned blocks.
-            DB::table('calendar_events')->where('id', $event->id)->update($data + ['updated_at' => now()]);
+            \App\Modules\Calendar\Support\CalendarBookingWriteBoundary::run(
+                fn () => DB::table('calendar_events')->where('id', $event->id)->update($data + ['updated_at' => now()]),
+            );
             $event->refresh();
         } else {
             $event = app(StoreCalendarEvent::class)->handle($data, $worker);

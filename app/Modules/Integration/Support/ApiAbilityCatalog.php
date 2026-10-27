@@ -14,6 +14,10 @@ class ApiAbilityCatalog
      * Access mode is deliberately explicit so progressive read scopes do not depend on their name.
      */
     private const ACCESS_MODES = [
+        'booking.read' => self::ACCESS_READ,
+        'booking.settings.write' => self::ACCESS_WRITE,
+        'booking.requests.review' => self::ACCESS_WRITE,
+        'booking.commands.read' => self::ACCESS_READ,
         'sales.reports.read' => self::ACCESS_READ,
         'sales.settings.manage' => self::ACCESS_WRITE,
         'sales.settings.read' => self::ACCESS_READ,
@@ -258,6 +262,10 @@ class ApiAbilityCatalog
     ];
 
     private const ABILITIES = [
+        'booking.read' => ['label' => 'Read Booking', 'description' => 'Read permitted Booking workspace, context and requests.', 'domain' => 'Booking'],
+        'booking.settings.write' => ['label' => 'Configure Booking', 'description' => 'Create/update/toggle Booking settings with native permission.', 'domain' => 'Booking'],
+        'booking.requests.review' => ['label' => 'Review Booking requests', 'description' => 'Confirm or decline through native Booking and Calendar actions.', 'domain' => 'Booking'],
+        'booking.commands.read' => ['label' => 'Read own Booking commands', 'description' => 'Read own token-bound receipts with original authority.', 'domain' => 'Booking'],
         'nextcloud.calendar.reconcile' => ['label' => 'Reconcile Nextcloud Calendar conflicts', 'description' => 'Preview/apply exact supported identities with conditional writes and read-back.', 'domain' => 'Nextcloud'],
         'nextcloud.calendar.health' => ['label' => 'Check Nextcloud Calendar connection health', 'description' => 'Explicit sanitized health command with connection management permission.', 'domain' => 'Nextcloud'],
         'nextcloud.calendar.sync' => ['label' => 'Request calendar-only Nextcloud sync', 'description' => 'Queue only the explicitly reviewed calendar targets.', 'domain' => 'Nextcloud'],

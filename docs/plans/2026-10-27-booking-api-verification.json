@@ -1,0 +1,269 @@
+{
+  "dev": {
+    "tests": 189,
+    "assertions": 2622,
+    "failures": 0,
+    "skips": 0
+  },
+  "main_candidate": {
+    "tests": 189,
+    "assertions": 2490,
+    "failures": 0,
+    "skips": 0
+  },
+  "native_mysql": {
+    "competing_confirmations": [
+      "applied",
+      "blocked"
+    ],
+    "confirm_versus_decline": [
+      "applied",
+      "blocked"
+    ],
+    "calendar_writer_waited_for_reservation": true,
+    "encrypted_receipt_unique_and_rolled_back": true,
+    "real_customer_sends": 0,
+    "retained_disabled_probe_users": 2,
+    "booking_calendar_fixtures_removed": true
+  },
+  "isolated_https": {
+    "isolated_candidate_https": true,
+    "certificate_and_hostname_verified": true,
+    "production_and_dev_mutation_gates_unchanged": true,
+    "notifications_mocked": true,
+    "operations_verified": 17,
+    "successful_http_calls": 20,
+    "calls": [
+      {
+        "method": "POST",
+        "path": "/api/v1/booking/settings",
+        "status": 201,
+        "tls_verified": true,
+        "result_keys": [
+          "data",
+          "command_id"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/context",
+        "status": 200,
+        "tls_verified": true,
+        "result_keys": [
+          "data"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/summary",
+        "status": 200,
+        "tls_verified": true,
+        "result_keys": [
+          "data"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/settings",
+        "status": 200,
+        "tls_verified": true,
+        "result_keys": [
+          "data"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/settings/isolated-https-service",
+        "status": 200,
+        "tls_verified": true,
+        "result_keys": [
+          "data"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/public/services",
+        "status": 200,
+        "tls_verified": true,
+        "result_keys": [
+          "data"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/public/services/isolated-https-service",
+        "status": 200,
+        "tls_verified": true,
+        "result_keys": [
+          "data"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/public/services/isolated-https-service/slots",
+        "status": 200,
+        "tls_verified": true,
+        "result_keys": [
+          "data"
+        ]
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/booking/public/services/isolated-https-service/requests",
+        "status": 202,
+        "tls_verified": true,
+        "result_keys": [
+          "data"
+        ]
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/booking/public/services/isolated-https-service/requests",
+        "status": 202,
+        "tls_verified": true,
+        "result_keys": [
+          "data"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/requests",
+        "status": 200,
+        "tls_verified": true,
+        "result_keys": [
+          "data"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/requests/1",
+        "status": 200,
+        "tls_verified": true,
+        "result_keys": [
+          "data"
+        ]
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/booking/requests/1/confirm",
+        "status": 200,
+        "tls_verified": true,
+        "result_keys": [
+          "data",
+          "command_id"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/requests/1/events",
+        "status": 200,
+        "tls_verified": true,
+        "result_keys": [
+          "data"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/commands/6cca9337-f10d-48cb-b5ab-0b2e4a541724",
+        "status": 200,
+        "tls_verified": true,
+        "result_keys": [
+          "data"
+        ]
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/booking/requests/2/decline",
+        "status": 200,
+        "tls_verified": true,
+        "result_keys": [
+          "data",
+          "command_id"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/settings/isolated-https-service",
+        "status": 200,
+        "tls_verified": true,
+        "result_keys": [
+          "data"
+        ]
+      },
+      {
+        "method": "PUT",
+        "path": "/api/v1/booking/settings/isolated-https-service",
+        "status": 200,
+        "tls_verified": true,
+        "result_keys": [
+          "data",
+          "command_id"
+        ]
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/booking/settings/isolated-https-service/toggle",
+        "status": 200,
+        "tls_verified": true,
+        "result_keys": [
+          "data",
+          "command_id"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/requests/1",
+        "status": 200,
+        "tls_verified": true,
+        "result_keys": [
+          "data"
+        ]
+      }
+    ]
+  },
+  "live_https": {
+    "trusted_dev_https_reads": [
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/context",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/summary",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/settings",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/requests",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/booking/public/services",
+        "status": 200
+      }
+    ],
+    "swagger_http": 200,
+    "booking_swagger_operations": 17,
+    "native_actor_scope_verified": true,
+    "temporary_token_revoked": true,
+    "public_mutations_enabled": false,
+    "staff_mutations_enabled": false
+  },
+  "bookstack": {
+    "page_id": 543,
+    "revision": 3,
+    "exact_combined_source_match": true,
+    "employee_access": "Editor role linked to /staff-internal retains page-view-all; page and chapter inherit book; no ACL changes",
+    "openwebui_retrieval_verified": false,
+    "publication": "Connected BookStack MCP; full API guide consolidated on existing Booking Overview. Naming schema rejected a separate API page; temporary page 650 soft-deleted and absence verified."
+  },
+  "production": "unchanged",
+  "human_review": "HR-2026-10-27-BOOKING-API Pending; Main promotion explicitly authorized by Svein Tore"
+}
