@@ -1,5 +1,5 @@
 Verified on Dev and merged to Main in PR #331 on 2026-10-27. Production is unchanged.
-Human scenario review remains Pending. Do not describe this as deployed production behavior.
+Scope accepted by Svein Tore on 2026-10-27. Production rollout requires separate authorization. Do not describe this as deployed production behavior.
 
 ## Before You Start
 

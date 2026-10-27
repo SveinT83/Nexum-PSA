@@ -2,7 +2,7 @@
 
 ## Full Knowledge browser/API coverage (2026-10-27)
 
-Status: Done On Dev / Merged To Main In PR #331 / Human Review Pending / Production unchanged.
+Status: Done On Dev / Merged To Main In PR #331 / Reviewed By Svein Tore / Production unchanged.
 Owner: Codex. Approver, human reviewer and release owner: Svein Tore.
 Authorization: "Ja og merge til main", 2026-10-27. RFC/ADR are Approved/Accepted;
 all six Feature Slice scopes are complete. Coverage: all 37 browser rows and embedded
@@ -20,17 +20,19 @@ not represent the separate verified BookStack publication. Existing connector/so
 follow-up remains with the maintainer; no permission expansion or credential workaround.
 Documentation is already merged in PR #329 and its full current-browser APIs are regression-tested.
 #265/#261 audiences/AI retrieval and #275 Documentation revisions remain separate work.
-HR-2026-10-27-KNOWLEDGE-API remains Pending, with HR-2026-09-04-001 and HR-2026-09-03-003.
-Svein explicitly authorizes tested Main merge without marking those manual scenarios Reviewed;
-production/release/provider activation still requires their separate gates and authorization.
+HR-2026-10-27-KNOWLEDGE-API is Reviewed by Svein Tore, 2026-10-27, following the
+explicit "Godkjenner og merge til main" acceptance. No individual scenario execution is
+invented. HR-2026-09-04-001 and HR-2026-09-03-003 remain Pending independently;
+production/release/provider activation still requires those gates and separate authorization.
 PR #331 is merged and independently read back: 5dab62d56c7663368de11d0f5961e08d7e269bd3.
 The merged tree exactly equals tested candidate c134e03cc5cb5c1be5193f15993b5906d62f4102.
 No Main implementation action remains.
-Next action (Svein Tore): perform the named manual checklists and separately authorize rollout.
+Next action (Svein Tore): resolve the separate older review gates and authorize rollout
+when desired. No Knowledge API implementation, current API review or Main merge remains.
 Preserve the shared Dev checkout/index and unrelated new Signal configuration.
 
 Verified Main merge: https://github.com/SveinT83/Nexum-PSA/pull/331
-Named approval remains the direct Main instruction, not completed scenario review.
+The subsequent explicit acceptance records this API review as Reviewed.
 This status-only follow-up does not change runtime code; application tests were not rerun.
 
 ## Full Documentation browser/API coverage (2026-10-27)

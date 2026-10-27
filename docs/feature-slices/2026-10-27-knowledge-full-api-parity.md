@@ -4,7 +4,7 @@ Status: Done On Dev (all six scopes); Merged to Main in PR #331; production unch
 Date: 2026-10-27
 Parent: ../rfc/2026-10-27-knowledge-full-api-parity.md
 Owner: Codex. Reviewer/release owner: Svein Tore.
-Human-review entry: HR-2026-10-27-KNOWLEDGE-API (Pending).
+Human-review entry: HR-2026-10-27-KNOWLEDGE-API (Reviewed by Svein Tore, 2026-10-27).
 
 ## Goal And User-Visible Behavior
 All supported Knowledge web and portal operations are available through a typed official API
@@ -49,7 +49,8 @@ actual response schemas, exact runtime routes and affected module regressions.
 
 See plans/2026-10-27-knowledge-api-verification.md/.json. All supported operations,
 contracts, source/BookStack read-back and Dev migration/native/HTTPS evidence are verified.
-Human scenarios remain Pending; only Svein Tore may mark the checklist Reviewed.
+Svein Tore has explicitly accepted this API scope; its checklist is Reviewed.
+Separate older revision/sync reviews and production authorization remain outstanding.
 Main merge is explicitly authorized, without production rollout or runtime activation.
 
 ## Verified Main Merge (2026-10-27)
@@ -58,3 +59,15 @@ https://github.com/SveinT83/Nexum-PSA/pull/331 is merged at 5dab62d56c7663368de1
 The merged tree equals the tested candidate: c134e03cc5cb5c1be5193f15993b5906d62f4102.
 No Main implementation action remains. Human scenarios and production gates remain separate.
 This status-only follow-up does not change runtime code; application tests were not rerun.
+
+## Named Human Acceptance (2026-10-27)
+
+Svein Tore explicitly accepted the completed Knowledge API handoff with
+"Godkjenner og merge til main". HR-2026-10-27-KNOWLEDGE-API is Reviewed.
+This records the named reviewer's acceptance of the presented scope; individual
+scenario executions were not separately reported and are not invented. Main was
+already merged in PR #331, with merge evidence reconciled in PR #332.
+The older HR-2026-09-04-001 and HR-2026-09-03-003 reviews remain independent and
+Pending. This acceptance does not authorize production deployment or provider activation.
+This follow-up changes documentation/acceptance status only; application tests were
+not rerun because executable code, configuration and OpenAPI are unchanged.
