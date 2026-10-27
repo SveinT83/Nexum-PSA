@@ -1496,5 +1496,20 @@ Provider/AI/discovery execution from APIs defaults off. Unknown commands require
 reconciliation; queued is not completed research. Clients owns provider numbering,
 Contact owns identity/bridge, and Marketing suppression/exclusions remain authoritative.
 Full operator/API instructions are in Lead Intelligence Overview (BookStack page 496).
-Status: implemented/verified on Dev; Main promotion authorized and pending verification;
+Status: implemented/verified on Dev and merged to Main in PR #343;
 production unchanged. HR-2026-10-27-LEAD-INTELLIGENCE-API manual scenarios remain Pending.
+
+## Full CustomField API Support (Dev Extension)
+
+The approved CustomField extension has seven typed operations for filtered definition
+discovery, full configuration/context, create/update/activate/deactivate, soft delete
+and own encrypted command read-back. See **Custom Field API** for exact steps, headers,
+all 11 types and owning-domain value operations. Its production deployment is separate.
+
+Scopes: custom-fields.read, custom-fields.create, custom-fields.update,
+custom-fields.delete and custom-fields.operations.read. Configuration also needs the
+active internal user's native customfield.manage_settings permission. Discovery for
+other actors is restricted by owning-domain view and current field visibility.
+Mutation commands require Idempotency-Key; update/delete require If-Match. Replays
+and receipts recheck current rights and original token ability. Definition rights
+do not grant Client/Site/Ticket value access or activate Ticket write/rule gates.

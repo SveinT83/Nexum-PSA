@@ -1,8 +1,76 @@
 # Human Review Register
 
+## HR-2026-10-27-BOOKING-API - Full Booking Browser/API Coverage
+
+Status: Pending / automated verification complete; scoped Main merge explicitly authorized.
+Added: 2026-10-27. Owner: Codex. Intended named human reviewer: Svein Tore.
+Parent: rfc/2026-10-27-booking-full-api-parity.md (Approved).
+Scope: 13 native browser rows, all current embedded workflows and 17 implemented APIs.
+Svein Tore explicitly authorized scoped Main promotion on 2026-10-27. Manual
+scenario acceptance remains Pending and gates production deployment/release. Reviewed HR-2026-07-28-001
+remains Reviewed; no prior checks are reused as API acceptance.
+
+- [ ] Compare public catalogue/context/slots for fixed, automatic and customer choice.
+- [ ] Verify no private technician/Calendar data and unavailable services remain hidden.
+- [ ] Submit synthetic request; check privacy/spam/limits/minimal replay-safe receipt.
+- [ ] Create/edit/toggle all setting fields/pools; verify stale/conflicting/replayed writes.
+- [ ] Compare overview/request/customer/timeline and permitted Calendar link.
+- [ ] Confirm/decline with current rights; verify Calendar conflict/automatic fallback.
+- [ ] Check native concurrency evidence: one terminal decision/event/dispatch on retries.
+- [ ] Check fresh/revoked native/token access and public/staff/receipt isolation.
+- [ ] Verify queued/submitted/failed/unknown mail; real inbox receipt remains separate.
+- [ ] Review exact Swagger and actual BookStack content/intended employee access.
+
+Expected: complete current workflow parity with native authority and safe typed
+read-back. Native MySQL concurrency proof required. Deploy: additive command/dispatch migration
+2026_10_27_040000 (applied on Dev), generated Swagger
+and normal optimize:clear. API effect gates default off until separately authorized
+operational activation. No grants, general migration sweep, scheduler/worker activation
+or real customer test sends. Preserve APP_KEY, receipts/dispatch claims and request
+audit on rollback; disable API effects and reconcile unknown sends before retrying.
+Risks: identity/PII leak, stale writes, terminal/Calendar races and duplicate mail.
+Automated: Dev 189/2622, isolated Main 189/2513; native MySQL and all-17-operation
+HTTPS flow pass. BookStack page 543/revision 3 exact body and inherited staff access
+verified. Every named human scenario remains unchecked; no automated result marks
+this checklist Reviewed. Production and API activation remain gated.
+
+
+
+## HR-2026-10-27-CUSTOM-FIELD-API - Full CustomField Browser/API Coverage
+
+Status: Pending / Done On Dev / Merged To Main In PR #344, 2026-10-27.
+Added: 2026-10-27. Owner: Codex. Intended human reviewer: Svein Tore.
+Scope: rfc/2026-10-27-custom-field-full-api-parity.md (Approved), all definition admin
+and existing Client/Site/Ticket value workflows. This human-review checklist gates
+production deployment/release. Svein Tore explicitly authorized "Godkjenner og merge
+til main" on 2026-10-27, allowing the tested scoped Main promotion with these manual
+scenarios still Pending. No scenario execution or Reviewed status is inferred.
+
+- [ ] Compare admin list/search/model filtering, modal context and all 11 types/settings.
+- [ ] Create/edit/activate/deactivate and soft-delete via API; verify exact state and retained values.
+- [ ] Verify scoped native management, field visibility and denied/revoked actor/token access.
+- [ ] Retry identical/conflicting/stale/concurrent writes; confirm one effect and exact own receipts.
+- [ ] Compare Client/Site typed values, clearing, required/unique/search and UI/API flags.
+- [ ] Verify Ticket work-context/events/rule pinning, portal exclusion and unchanged disabled gates.
+- [ ] Review complete Swagger and actual BookStack content/access and Dev/Main/production status.
+
+Expected: current-browser operational parity without expanded native permissions.
+Deploy: exact additive 2026_10_27_050000_create_custom_field_api_commands migration;
+Swagger regeneration and normal caches. No provider/worker/scheduler activation.
+Risks: legacy discovery tightening, type/key changes, aliases and concurrent writes.
+Recovery: disable new write entry points and retain encrypted receipts and field values.
+Automated evidence: final Dev 676 tests / 46696 assertions passed; isolated initial
+Main features 572 / 7858 plus units 17 / 465. Seven success schemas, native database
+and trusted HTTPS checks pass. BookStack full sources/access are read back. No
+automated check marks a human scenario complete. Final rebased Main 236 / 9264 and
+scoped contracts 3 / 1481 and latest-parent contracts 27 / 2042 pass without failures/skips.
+Main PR #344 is merged as f91acc9045794ac4ede80a336f80974c17ab9bc4; its tree equals
+the verified candidate. No Main gate remains for this promotion. Manual scenarios
+still require named human confirmation before production/release; none are marked done.
+
 ## HR-2026-10-27-LEAD-INTELLIGENCE-API - Full Lead Intelligence Browser/API Coverage
 
-Status: Pending / Done On Dev; final Main candidate verified and promotion authorized.
+Status: Pending / Done On Dev and merged to Main in PR #343.
 Added: 2026-10-27. Owner: Codex. Intended human reviewer/release owner: Svein Tore.
 Scope: rfc/2026-10-27-lead-intelligence-full-api-parity.md (Approved), all 14 browser
 rows and existing API-only evaluation/promotion, planned 17 HTTP operations.
@@ -37,6 +105,10 @@ Automated domain verification: 52 tests / 474 assertions; actual 17 operations /
 schemas, native MySQL, trusted HTTPS and BookStack read-back pass. Final Main 54/483 and earlier affected candidate 293/2887 pass (overlapping). All
 14 concurrent-source Dev failures pass after current author fixes; no deferral.
 
+
+Main merge e42ecddb42a52e1b41931975e4760cf250e157cc / PR #343 is read back;
+whole tree equals the verified candidate. Manual boxes remain untouched; named
+Main authorization is not scenario acceptance. Production release/activation stays gated.
 
 ## HR-2026-10-27-INTAKE-API - Full Intake Browser/API Coverage
 

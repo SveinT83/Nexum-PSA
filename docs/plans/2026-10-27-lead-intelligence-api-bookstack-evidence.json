@@ -1,16 +1,15 @@
 {
   "overview": {
     "id": 496,
-    "revision": 3,
-    "updated_at": "2026-10-27T19:15:40.000000Z",
-    "exact_match": true,
-    "scope": "Existing page/chapter inheritance preserved; no permissions changed"
+    "revision": 4,
+    "exact_match": true
   },
   "catalog": {
     "id": 449,
-    "revision": 153,
+    "revision": 160,
     "section_exact": true
   },
+  "main_pr": 343,
   "permission_changes": false,
   "employee_openwebui_retrieval": "not tested"
 }

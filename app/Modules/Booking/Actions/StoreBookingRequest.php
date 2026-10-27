@@ -19,7 +19,7 @@ class StoreBookingRequest
         private readonly NotifyBookingCustomer $notifyCustomer,
     ) {}
 
-    public function handle(Request $request, BookingServiceSetting $setting): BookingRequest
+    public function handle(Request $request, BookingServiceSetting $setting, bool $deferNotifications = false): BookingRequest
     {
         $setting->loadMissing(['service', 'assignedUser', 'eligibleUsers']);
         abort_unless($setting->isBookable(), 404);
@@ -123,6 +123,8 @@ class StoreBookingRequest
                 ],
             ]);
 
+            $this->notifyCustomer->claim($bookingRequest, 'received');
+
             return $bookingRequest;
         });
 
@@ -131,6 +133,7 @@ class StoreBookingRequest
             new BookingRequestReceived($bookingRequest),
             'customer_request_notification_sent',
             'customer_requested_notification_sent_at',
+            $deferNotifications,
         );
 
         return $bookingRequest->refresh();
