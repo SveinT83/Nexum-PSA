@@ -238,3 +238,5 @@ Thirty Notification HTTP operations / 39 schemas and one related Workday detail
 are implemented. The previous Current Behavior section is the dated pre-change baseline.
 Human scenario review remains In Review; Svein Tore's explicit Main instruction
 authorizes scoped promotion after tests, not production or real delivery activation.
+
+Main promotion complete: PR #336 (f9efc4eee84e16984e4b6c44433ff9749dd8c2d2). Production deployment is not included; the human scenario checklist remains In Review.

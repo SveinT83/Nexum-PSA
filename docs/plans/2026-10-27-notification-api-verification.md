@@ -1,7 +1,7 @@
 # Notification Full API Verification
 
 Date: 2026-10-27. Owner: Codex. Approver/release owner: Svein Tore.
-Status: Done On Dev; scoped Main candidate verified, merge pending. Production unchanged.
+Status: Done On Dev / Merged to Main in PR #336. Production unchanged.
 Approved instruction: "Godkjenner og merge til main".
 
 ## Verified Behavior And Coverage
@@ -79,3 +79,12 @@ Keep external API tests off until explicitly configured for a controlled test.
 No production deployment is included. Preserve APP_KEY/receipts on rollback; disable
 new entry points rather than dropping live command history. Reconcile uncertain sends.
 #205 Talk redesign, #258 VAPID wizard and #262 shared runtime remain separate work.
+
+## Verified Main Promotion
+
+PR #336: https://github.com/SveinT83/Nexum-PSA/pull/336
+Merge: f9efc4eee84e16984e4b6c44433ff9749dd8c2d2
+Tested/merged tree: 34d850b305f2efaba06d9155d33ecc21603538f3
+Fresh GitHub read-back and origin/main fetch confirm merged state and exact tree equality.
+Shared Dev HEAD and staged index remain unchanged. Human-review checklist remains
+In Review; production rollout and activation are not authorized by this merge.

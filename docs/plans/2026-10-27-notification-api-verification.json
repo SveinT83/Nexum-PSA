@@ -1,6 +1,6 @@
 {
   "date": "2026-10-27",
-  "status": "Done On Dev; Main candidate verified; merge pending",
+  "status": "Done On Dev / Merged To Main / Production unchanged",
   "notification_operations": 30,
   "notification_schemas": 39,
   "browser_rows": 19,
@@ -152,5 +152,13 @@
   "real_sends": 0,
   "provider_or_worker_activation": false,
   "migration": "2026_10_27_170000_create_notification_api_commands.php",
-  "main_base": "7d37fcae6c9af68ff77787b4e4cec0ed5c99c972"
+  "main_base": "7d37fcae6c9af68ff77787b4e4cec0ed5c99c972",
+  "main_promotion": {
+    "pr": 336,
+    "url": "https://github.com/SveinT83/Nexum-PSA/pull/336",
+    "merge": "f9efc4eee84e16984e4b6c44433ff9749dd8c2d2",
+    "tested_tree": "34d850b305f2efaba06d9155d33ecc21603538f3",
+    "merge_tree_equals_tested": true
+  },
+  "shared_dev_index_preserved": true
 }
