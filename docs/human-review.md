@@ -2,7 +2,7 @@
 
 ## HR-2026-10-27-SYSTEM-API - Full System Browser/API Coverage
 
-Status: Pending / Done On Dev / Main promotion explicitly authorized by Svein Tore, 2026-10-27.
+Status: Pending / Done On Dev / Merged To Main In PR #361, verified 2026-10-28.
 Added: 2026-10-27. Owner: Codex. Intended named human reviewer: Svein Tore.
 Parent: rfc/2026-10-27-system-full-api-parity.md (Approved); SY-S1 through SY-S4 Done On Dev.
 This is a human-review checklist entry. Remaining manual scenarios gate production
@@ -49,6 +49,18 @@ No UI scenario is marked reviewed. Remaining checks: all unchecked scenarios abo
 especially valid multipart/logo appearance, least privilege, and explicitly isolated
 maintenance/process observations. Gates: production deployment/release. Dev implementation is complete; tested Main promotion
 is expressly authorized with manual checks Pending. No production or runtime activation.
+
+Main promotion verified on 2026-10-28: PR #361,
+https://github.com/SveinT83/Nexum-PSA/pull/361, merge
+893ab45e00c65472c6691b9917a726b5fccee285. Merge tree
+406e1c13437a38b208deee442c09a6e82b17231b exactly matches the tested candidate;
+19 System operations / 44 schemas are present. The additional upstream integration
+run passes 44 tests / 1420 assertions; earlier 169-test evidence is a separate run.
+Production is not deployed, its migration has not run, API maintenance stays default-off.
+HR-2026-10-27-SYSTEM-API remains Pending; all unchecked manual scenarios gate
+production deployment/release. Native Knowledge mapping remains owned by Svein Tore /
+Integration; existing BookStack publication remains independently verified.
+
 
 ## HR-2026-10-27-WARROOM-API - Full Warroom Browser/API Coverage
 

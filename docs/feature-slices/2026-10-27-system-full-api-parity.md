@@ -1,6 +1,6 @@
 # Feature Slices: Full System Browser/API Parity
 
-Status: Done On Dev / Human Review Pending
+Status: Done On Dev / Merged To Main / Human Review Pending
 Date: 2026-10-27
 Parent: ../rfc/2026-10-27-system-full-api-parity.md
 Owner: Codex. Product owner and intended reviewer: Svein Tore.
@@ -92,3 +92,16 @@ records remain pending_push because no BookStack integration exists; owner Svein
 Integration must reconcile mappings before configuring native push. This does not
 invalidate independent actual BookStack publication/read-back. No tests were silently
 deferred. Manual HR-2026-10-27-SYSTEM-API stays Pending; Main/production are separate.
+
+## Verified Main Promotion
+
+Main promotion verified on 2026-10-28: PR #361,
+https://github.com/SveinT83/Nexum-PSA/pull/361, merge
+893ab45e00c65472c6691b9917a726b5fccee285. Merge tree
+406e1c13437a38b208deee442c09a6e82b17231b exactly matches the tested candidate;
+19 System operations / 44 schemas are present. The additional upstream integration
+run passes 44 tests / 1420 assertions; earlier 169-test evidence is a separate run.
+Production is not deployed, its migration has not run, API maintenance stays default-off.
+HR-2026-10-27-SYSTEM-API remains Pending; all unchecked manual scenarios gate
+production deployment/release. Native Knowledge mapping remains owned by Svein Tore /
+Integration; existing BookStack publication remains independently verified.

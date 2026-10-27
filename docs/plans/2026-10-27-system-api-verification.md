@@ -76,7 +76,7 @@ seconds (1 test / 2 assertions, 353.48 seconds). Combined final verified set:
 was relaxed or test skipped. The timeout fix was implemented on authoritative Dev.
 25 PHP files pass syntax/Pint. Candidate-generated System paths/schemas exactly match
 runtime; non-System contracts and their inherited serialized content remain preserved.
-Main publication/merge SHA and tree read-back will be recorded after GitHub completion.
+Main publication/merge SHA and tree read-back are recorded below.
 Manual HR-2026-10-27-SYSTEM-API remains Pending for production scenarios; production
 deployment, migrations and API-maintenance activation are not authorized by merge.
 
@@ -91,3 +91,16 @@ Warroom scopes, routes, contracts and review history. Combined System parity/con
 Warroom parity/contract and UserManagement API run: 44 passed / 1420 assertions,
 416.39 seconds, zero failures/skips. Resolved catalog passes syntax/Pint. Historical
 169-test verification above remains a separate run; counts are not added together.
+
+## Verified Main Merge
+
+Main promotion verified on 2026-10-28: PR #361,
+https://github.com/SveinT83/Nexum-PSA/pull/361, merge
+893ab45e00c65472c6691b9917a726b5fccee285. Merge tree
+406e1c13437a38b208deee442c09a6e82b17231b exactly matches the tested candidate;
+19 System operations / 44 schemas are present. The additional upstream integration
+run passes 44 tests / 1420 assertions; earlier 169-test evidence is a separate run.
+Production is not deployed, its migration has not run, API maintenance stays default-off.
+HR-2026-10-27-SYSTEM-API remains Pending; all unchecked manual scenarios gate
+production deployment/release. Native Knowledge mapping remains owned by Svein Tore /
+Integration; existing BookStack publication remains independently verified.
