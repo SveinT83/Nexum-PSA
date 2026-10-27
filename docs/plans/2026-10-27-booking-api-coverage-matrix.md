@@ -75,3 +75,6 @@ fallback semantics. BookingApiContractTest verifies all routes/abilities/43 sche
 See 2026-10-27-booking-api-verification.md/.json for test/native/HTTPS/handbook proof.
 Ordinary Dev API write gates stay off; Main merge is authorized. Production,
 operational activation and named manual scenario review remain separate.
+
+Main status: merged in PR #339 (8006d055), application payload independently
+verified against the tested candidate. Production and manual review remain separate.

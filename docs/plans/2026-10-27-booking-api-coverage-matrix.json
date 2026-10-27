@@ -2,7 +2,7 @@
   "date": "2026-10-27",
   "runtime": "/var/Projects/tdPSA",
   "branch": "Dev",
-  "status": "Done On Dev; isolated Main candidate verified; merge authorized; production unchanged",
+  "status": "Done On Dev and merged to Main; human review Pending; production unchanged",
   "browser_rows": 13,
   "existing_api_operations": 0,
   "proposed_api_operations": 17,
@@ -864,5 +864,11 @@
       "skips": 0
     }
   },
-  "human_review": "HR-2026-10-27-BOOKING-API Pending; Main merge explicitly authorized"
+  "human_review": "HR-2026-10-27-BOOKING-API Pending; Main merge explicitly authorized",
+  "main_promotion": {
+    "pull_request": 339,
+    "merge_commit": "8006d0558079bfd8466978761d73a80ed340fa8a",
+    "application_payload_matches_candidate": true,
+    "production_deployed": false
+  }
 }

@@ -116,5 +116,21 @@
   "human_review": "Pending",
   "main_merge_authorized": true,
   "production_deployed": false,
-  "api_invitation_execution_enabled": false
+  "api_invitation_execution_enabled": false,
+  "main_merged": true,
+  "main_pr": 341,
+  "main_merge": "13dc4ef4d4ab0474515522fb3131dbe6d198c624",
+  "verified_tree": "4350043a549a592fa810e2a9cb2fd1dd512c02ad",
+  "issue_254_state": "closed",
+  "issue_254_reason": "completed",
+  "latest_main_batch": {
+    "tests": 162,
+    "assertions": 2160,
+    "failures": 0
+  },
+  "final_overlap_batch": {
+    "tests": 42,
+    "assertions": 860,
+    "failures": 0
+  }
 }

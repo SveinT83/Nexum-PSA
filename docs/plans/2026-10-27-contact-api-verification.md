@@ -62,3 +62,9 @@ No contact backfill, stable-ID deletion, provider test send or API-key/connector
 
 Remaining human checks are listed in HR-2026-10-27-CONTACT-API. Automated fixture simulation
 fulfills reproducible Dev acceptance but never marks a named human review Reviewed.
+
+## Verified Main result
+
+PR #341 merged as 13dc4ef4d4ab0474515522fb3131dbe6d198c624; exact candidate/Main tree 4350043a549a592fa810e2a9cb2fd1dd512c02ad verified.
+Issue #254 is closed completed. See contact-api-main-promotion.md for the exact read-back.
+HR-2026-10-27-CONTACT-API remains Pending for production.

@@ -46,7 +46,7 @@ Evidence: plans/2026-10-27-nextcloud-api-verification.md/.json.
 
 ## HR-2026-10-27-BOOKING-API - Full Booking Browser/API Coverage
 
-Status: Pending / automated verification complete; scoped Main merge explicitly authorized.
+Status: Pending / automated verification complete / Merged to Main in PR #339.
 Added: 2026-10-27. Owner: Codex. Intended named human reviewer: Svein Tore.
 Parent: rfc/2026-10-27-booking-full-api-parity.md (Approved).
 Scope: 13 native browser rows, all current embedded workflows and 17 implemented APIs.
@@ -79,6 +79,10 @@ verified. Every named human scenario remains unchecked; no automated result mark
 this checklist Reviewed. Production and API activation remain gated.
 
 
+
+Main merge 8006d0558079bfd8466978761d73a80ed340fa8a independently verified; tested
+application payload matches. Every manual check remains unchecked. This entry now
+gates production deployment/release and API activation, not the completed Main merge.
 
 ## HR-2026-10-27-CUSTOM-FIELD-API - Full CustomField Browser/API Coverage
 
@@ -12908,7 +12912,7 @@ collaboration flags. Retain all action/provider evidence on rollback; never eras
 
 Status: Pending / Dev implementation and tested Main merge authorized, 2026-10-27.
 Added: 2026-10-27. Owner: Codex. Intended named human reviewer: Svein Tore.
-Scope: rfc/2026-10-27-contact-full-api-parity.md (Draft), full route/embedded-workflow
+Scope: rfc/2026-10-27-contact-full-api-parity.md (Approved), full route/embedded-workflow
 matrix and the approved #254 portal-role dependency. This human-review checklist
 does not block the explicitly authorized tested Main merge. It still blocks production
 deployment/release and runtime activation until separately approved. Svein Tore approved
@@ -12953,3 +12957,8 @@ Native MySQL Livewire fixture simulation and replay/encryption/concurrency/HTTPS
 rows/audit roll back, and no email is sent. BookStack 364/514/449 exact bodies and unchanged inherited
 scope read back. No checkbox or Reviewed status is inferred. Main merge remains expressly authorized;
 Svein Tore must perform the listed human visual/availability checks before production rollout.
+
+Main promotion and Issue reconciliation verified 2026-10-27: PR #341 merged as
+13dc4ef4d4ab0474515522fb3131dbe6d198c624, exact candidate tree verified. #254 closed
+completed with evidence comment 6452232330. Status remains Pending: Svein Tore performs
+the listed human visual/production checks before production rollout. No checkbox changed.

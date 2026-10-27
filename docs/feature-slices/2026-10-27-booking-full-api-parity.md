@@ -98,3 +98,6 @@ scenario acceptance remain separate.
 
 Verification: 2026-10-27-booking-api-verification.md; all four sequential slices
 implemented and verified. Manual review Pending; scoped Main merge authorized.
+
+Main status: merged in PR #339 (8006d055), application payload independently
+verified against the tested candidate. Production and manual review remain separate.

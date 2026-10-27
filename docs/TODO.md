@@ -25,32 +25,35 @@ Future production owner/action (Svein Tore): complete manual review and authoriz
 
 ## Full Booking browser/API coverage (2026-10-27)
 
-Status: Done On Dev / Isolated Main Candidate Verified / Main Merge Authorized.
+Status: Done On Dev / Merged To Main In PR #339 / Human Review Pending / Production Unchanged.
 Owner: Codex; approver/intended named reviewer: Svein Tore.
-All 13 browser rows map to 17 implemented HTTP operations and 43 typed schemas.
+All 13 browser rows map to 17 official HTTP operations and 43 typed Swagger schemas.
 RFC: rfc/2026-10-27-booking-full-api-parity.md (Approved).
 ADR: adr/2026-10-27-booking-api-authority-and-confirmation.md (Accepted).
-Four slices: feature-slices/2026-10-27-booking-full-api-parity.md (Done On Dev).
-Evidence: plans/2026-10-27-booking-api-coverage-matrix.md/.json and
-plans/2026-10-27-booking-api-verification.md/.json.
-Dev: 189 tests / 2622 assertions; isolated Main: 189 / 2513, no failures/skips.
-Native MySQL decision/slot/writer locking, encrypted uniqueness/rollback, isolated
-trusted HTTPS all-17-operation flow and ordinary Dev HTTPS scoped reads/Swagger pass.
-Handbook: actual BookStack Booking Overview 543/revision 3 includes full API guide;
-exact body and unchanged inherited employee access read back. Dev native integration
-is unconfigured; pending_push is not claimed as native automated publication.
-Temporary BookStack placeholder removed. Native probe left only two disabled synthetic
-Dev users (6/7), without roles/tokens, because append-only authority evidence forbids
-physical deletion; all synthetic Booking/Calendar fixtures removed and no real sends.
-Human-review checklist HR-2026-10-27-BOOKING-API remains Pending; user explicitly
-approved scoped Main merge on 2026-10-27. Production/manual acceptance remain separate.
-Next action (Codex): merge the verified scoped candidate and record PR/merge/tree proof.
-Next action (Svein Tore): perform the named checklist before production deployment/
-API effect activation. Exact Dev migration 2026_10_27_040000 is applied; both ordinary
-Dev API write gates stay false. No production/worker/scheduler activation performed.
-Shared Intake catalog description repair is Dev-only and excluded from Main packaging;
-other contributor work and Dev HEAD/index remain outside this scoped promotion.
-
+Four slices: feature-slices/2026-10-27-booking-full-api-parity.md (Done On Dev/Main).
+Evidence: plans/2026-10-27-booking-api-coverage-matrix.md/.json,
+plans/2026-10-27-booking-api-verification.md/.json and
+plans/2026-10-27-booking-api-main-promotion.md/.json.
+Main merge: 8006d0558079bfd8466978761d73a80ed340fa8a, PR #339.
+Merged application payload matches the verified candidate; additional inherited
+CustomField documentation is preserved. Later Main still contains Booking unchanged.
+Dev: 189 tests / 2622 assertions. Main broad regression: 189 / 2513; additional
+Intake compatibility: 48 / 740; final runtime/ability/43-schema contract: 1 / 135.
+Native MySQL decisions/slot/writer locking and encrypted uniqueness/rollback pass;
+all 17 operations pass isolated trusted HTTPS, with ordinary Dev HTTPS reads/Swagger.
+Handbook: actual BookStack Booking Overview 543/revision 3 includes the full API guide;
+exact body and unchanged inherited staff access read back. Native Dev BookStack is
+unconfigured; pending_push is not claimed as automated publication. Placeholder removed.
+No real sends. Synthetic Booking/Calendar fixtures removed; only two disabled synthetic
+Dev identities (6/7) remain without roles/tokens to preserve append-only authority evidence.
+Human-review checklist HR-2026-10-27-BOOKING-API remains Pending. Svein Tore explicitly
+authorized the Main merge; automated verification does not imply named manual acceptance.
+Next action (Svein Tore): perform the named checklist before production deployment/API
+activation. Exact migration 2026_10_27_040000 is applied on Dev only; normal Dev API
+write gates stay false. No production, provider, scheduler or worker activation occurred.
+Public-safe website handoff: one verified item, klar for vurdering; Ikke publiser until
+manual review, production deployment and activation are confirmed. Dev HEAD/index and
+unrelated contributor work were preserved. No Booking implementation work remains.
 
 
 ## Full CustomField browser/API coverage (2026-10-27)
@@ -2920,7 +2923,7 @@ Initial future scope:
 
 ## Full Contact browser/API coverage (2026-10-27)
 
-Status: Done On Dev / scoped Main candidate verified / Main merge explicitly authorized.
+Status: Done On Dev / Merged to Main in PR #341 / Issue #254 closed completed / HR Pending.
 Owner: Codex. Approver and intended human reviewer: Svein Tore.
 RFC rfc/2026-10-27-contact-full-api-parity.md Approved; ADR Accepted; six sequential slices complete
 on Dev. Coverage: 34 inventory rows, 19 typed HTTP operations / 45 schemas; exact successful
@@ -2929,7 +2932,7 @@ Contact/Portal: 101 tests / 1286 assertions. Scoped Main: 342 unique affected te
 4433 assertions after correcting the candidate-only ability-map assembly. Native MySQL,
 actual rollback-only Livewire portal fixtures, concurrency, encrypted receipts and trusted HTTPS pass.
 #254 all nine entry-point/role activation scenarios plus negatives/defaults/permissions/rollback/no-resend
-are verified. It is ready for an evidence-based completion comment/closure, not another implementation.
+are verified. Issue #254 is closed as completed with comment 6452232330 and independent GitHub read-back.
 Actual BookStack pages 364/514/449 were updated/read back with inherited scope unchanged.
 No employee OpenWebUI retrieval or human visual acceptance is claimed. Dev has no configured
 BookStack sync; local pending_push is not misreported as sync success.
@@ -2937,13 +2940,15 @@ Human-review checklist HR-2026-10-27-CONTACT-API remains Pending. Svein Tore exp
 RFC and tested Main promotion with "Godkjenner og merge til main"; Pending checks gate production,
 not that Main merge. API invitation execution stays default-off; production deployment and runtime
 activation require separate authorization. No role grants, worker changes, real send or customer repair.
-Next: record the scoped Main result and #254 state, then Svein Tore performs the named human checklist
+Main merge 13dc4ef4d4ab0474515522fb3131dbe6d198c624 matches the exact verified tree.
+See plans/2026-10-27-contact-api-main-promotion.md. No ordinary Main action remains.
+Next: Svein Tore performs the named human checklist
 before any production rollout. Preserve unrelated shared Dev work; the earlier broad Dev handler/schema
 race is recorded separately from the green scoped Contact/Main evidence.
 
 ## Contact create portal role selection - Issue #254 (2026-10-09)
 
-Status: Dev Test-Data Simulation Verified / Parent Workstream Finalization In Progress.
+Status: Done On Dev / Merged to Main in PR #341 / Issue #254 closed completed.
 Owner: existing Contact API contributor; Codex performed independent #254 simulation.
 The prior Viewer-only blocker and historical verification failures are superseded by
 current source and the successful final run below. ContactForm offers authoritative
@@ -2951,8 +2956,9 @@ predefined roles with Viewer default and transactional selected-role persistence
 Contact and Customer Portal source guides now explain the role selector separately
 from job title and relation. Full create-to-activation simulation and invalid-create,
 permission, override, duplicate-access, rollback and no-resend regressions pass.
-Next: the existing Contact owner reconciles overall handbook evidence and Issue closure
-with the scoped parent handoff. HR-2026-10-27-CONTACT-API remains Pending for human review;
+Main merge 13dc4ef4d4ab0474515522fb3131dbe6d198c624 and closed/completed Issue state were
+read back. Completion comment 6452232330 records the full acceptance evidence. BookStack
+364/514 bodies and unchanged inherited access were verified; no implementation/Main work remains. HR-2026-10-27-CONTACT-API remains Pending for human review;
 this simulation does not approve production or start another implementation.
 
 Issue #254 test-data simulation, 2026-10-27: PASS. The new ContactPortalIssue254SimulationTest
