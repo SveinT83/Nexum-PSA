@@ -2,7 +2,7 @@
 
 ## HR-2026-10-27-NOTIFICATION-API - Full Notification Browser/API Coverage
 
-Status: In Review / Done On Dev; scoped Main promotion explicitly authorized.
+Status: In Review / Done On Dev and Merged to Main; production review remains open.
 Date: 2026-10-27
 Owner: Codex. Intended named human reviewer/release owner: Svein Tore.
 Parent: rfc/2026-10-27-notification-full-api-parity.md (Approved).
@@ -52,6 +52,11 @@ All manual checks remain unchecked; automated evidence is not human acceptance.
 Scoped Main promotion is explicitly authorized. Production, real sends and runtime
 activation remain separate; no employee/customer delivery is performed by this work.
 
+
+Main promotion independently verified: PR #336, commit f9efc4eee84e16984e4b6c44433ff9749dd8c2d2.
+The merged tree exactly equals the tested candidate. This merge does not complete
+any unchecked manual scenario. Production deployment/release remains blocked by
+this checklist and separate rollout authorization.
 
 ## HR-2026-10-27-SIGNAL-API - Full Signal Browser/API Coverage
 

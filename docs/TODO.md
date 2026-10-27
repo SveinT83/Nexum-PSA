@@ -2,7 +2,7 @@
 
 ## Full Notification browser/API coverage (2026-10-27)
 
-Status: Done On Dev / Scoped Main Candidate Verified; merge pending / Production unchanged.
+Status: Done On Dev / Merged to Main in PR #336 / Human Review In Review / Production unchanged.
 Owner: Codex; approver/release owner: Svein Tore. Authorization: "Godkjenner og merge til main".
 Approved RFC: rfc/2026-10-27-notification-full-api-parity.md; accepted ADR:
 adr/2026-10-27-notification-api-authority-and-delivery.md. Five slices Done On Dev.
@@ -22,8 +22,10 @@ in 516 because connector page creation/search validation fails. Native pending_p
 is not publication proof; automatic sync/source drift stays in its existing follow-up.
 Human-review checklist HR-2026-10-27-NOTIFICATION-API: In Review. Main explicitly
 authorized; unchecked human scenarios still block production deployment/release.
-Next (Codex): merge the exact verified scoped candidate and read back GitHub/Main.
-Then Svein Tore: complete named browser/device review before separate production rollout.
+Main merge verified: https://github.com/SveinT83/Nexum-PSA/pull/336
+Commit f9efc4eee84e16984e4b6c44433ff9749dd8c2d2 has the exact tested tree 34d850b305f2efaba06d9155d33ecc21603538f3.
+No Main implementation action remains. Next (Svein Tore): complete named browser/device
+review before separately authorized production rollout.
 No real sends, role grants, VAPID, provider, worker/scheduler or backlog activation.
 Preserve shared Dev/index and all unrelated work. #257 stays closed; #205/#258/#262
 future capabilities remain separate. Employee OpenWebUI retrieval is not verified.

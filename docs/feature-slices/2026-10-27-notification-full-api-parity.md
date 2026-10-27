@@ -87,3 +87,5 @@ no failure deferred silently; BookStack verified or concrete blocker recorded. N
 human review and Main/production remain separate gates.
 
 Verification: ../plans/2026-10-27-notification-api-verification.md. Main promotion authorized; production and human scenario review remain separate.
+
+Main promotion: PR #336 merged and exact tested tree independently verified. Production/human scenario gates remain separate.
