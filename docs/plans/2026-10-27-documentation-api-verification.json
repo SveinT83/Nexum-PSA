@@ -1,5 +1,5 @@
 {
-  "status": "Done On Dev / Reviewed by Svein Tore / Main and production unchanged",
+  "status": "Done On Dev / Reviewed by Svein Tore / Merged to Main / Production unchanged",
   "date": "2026-10-27",
   "authoritative_working_copy": "/var/Projects/tdPSA",
   "branch": "Dev",
@@ -174,35 +174,35 @@
     {
       "id": 42,
       "slug": "documentation-overview",
-      "published_revision_id": 107,
+      "published_revision_id": 112,
       "exact_source_readback": true,
       "sync_status": "pending_push"
     },
     {
       "id": 43,
       "slug": "shipping-carriers",
-      "published_revision_id": 108,
+      "published_revision_id": 113,
       "exact_source_readback": true,
       "sync_status": "pending_push"
     },
     {
       "id": 44,
       "slug": "documentation-api",
-      "published_revision_id": 109,
+      "published_revision_id": 114,
       "exact_source_readback": true,
       "sync_status": "pending_push"
     },
     {
       "id": 41,
       "slug": "storage-vendors-and-suppliers",
-      "published_revision_id": 110,
+      "published_revision_id": 115,
       "exact_source_readback": true,
       "sync_status": "pending_push"
     },
     {
       "id": 3,
       "slug": "api-management",
-      "published_revision_id": 111,
+      "published_revision_id": 116,
       "exact_source_readback": true,
       "sync_status": "pending_push"
     }
@@ -210,38 +210,38 @@
   "bookstack": [
     {
       "id": 503,
-      "revision": 7,
+      "revision": 8,
       "exact": true,
-      "updated_at": "2026-10-27T14:59:53.000000Z",
-      "chars": 16099
+      "updated_at": "2026-10-27T15:25:51.000000Z",
+      "chars": 16166
     },
     {
       "id": 504,
-      "revision": 3,
+      "revision": 4,
       "exact": true,
-      "updated_at": "2026-10-27T14:59:57.000000Z",
-      "chars": 2653
+      "updated_at": "2026-10-27T15:25:55.000000Z",
+      "chars": 2690
     },
     {
       "id": 547,
-      "revision": 3,
+      "revision": 4,
       "exact": true,
-      "updated_at": "2026-10-27T15:00:00.000000Z",
-      "chars": 4809
+      "updated_at": "2026-10-27T15:26:00.000000Z",
+      "chars": 4863
     },
     {
       "id": 423,
-      "revision": 15,
+      "revision": 16,
       "exact": true,
-      "updated_at": "2026-10-27T15:00:03.000000Z",
-      "chars": 3255
+      "updated_at": "2026-10-27T15:26:03.000000Z",
+      "chars": 3299
     },
     {
       "id": 449,
-      "revision": 145,
+      "revision": 146,
       "exact": true,
-      "updated_at": "2026-10-27T15:00:07.000000Z",
-      "chars": 64682
+      "updated_at": "2026-10-27T15:26:08.000000Z",
+      "chars": 64690
     }
   ],
   "employee_scope": {
@@ -257,7 +257,7 @@
     "batch": 30,
     "business_backfill": false
   },
-  "main": "Not changed; not committed, pushed or merged",
+  "main": "Merged in PR #329: c6249f422f74abe333a9b0c95d460adeb7193b68",
   "production": "Not changed",
   "human_review": {
     "id": "HR-2026-10-27-DOCUMENTATION-API",
@@ -399,6 +399,19 @@
     "authorization": "Merge til main",
     "authorized_by": "Svein Tore",
     "authorized_on": "2026-10-27",
-    "status": "Isolated candidate verification in progress"
+    "status": "Merged",
+    "pr_url": "https://github.com/SveinT83/Nexum-PSA/pull/329",
+    "commit": "c848616987a81425e090f6f9821c0b0a59b24754",
+    "main_merge": "c6249f422f74abe333a9b0c95d460adeb7193b68",
+    "tested_tree": "64d7176610701a931bbf198787a711f1b17da071",
+    "merged_tree": "64d7176610701a931bbf198787a711f1b17da071",
+    "tree_matches": true,
+    "candidate_tests": {
+      "passed": 545,
+      "assertions": 8135,
+      "skipped": 1
+    },
+    "unrelated_dev_preserved": true,
+    "staged_dev_index_preserved": true
   }
 }

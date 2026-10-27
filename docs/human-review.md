@@ -114,6 +114,21 @@ manual scenario execution or production deployment is inferred from approval.
 
 
 
+### Verified Main Promotion (2026-10-27)
+
+Svein Tore explicitly authorized "Merge til main". PR #329 is merged:
+https://github.com/SveinT83/Nexum-PSA/pull/329
+Main merge: c6249f422f74abe333a9b0c95d460adeb7193b68
+Tested and merged tree: 64d7176610701a931bbf198787a711f1b17da071; exact equality independently confirmed by fresh fetch.
+Isolated Main candidate: 545 passed / 8135 assertions, zero errors/failures.
+One existing Storage MariaDB identity-contract test skipped for missing dedicated
+test credentials. All 33 typed HTTP operations and 40 schemas verified; 37 PHP
+syntax/Pint checks pass. Shared Dev code, unrelated changes and staged index preserved.
+HR-2026-10-27-DOCUMENTATION-API remains Reviewed. No Main action remains.
+Production deployment and provider/worker/runtime activation remain separate.
+This follow-up changes documentation/status only; application tests were not rerun.
+
+
 ## HR-2026-10-26-ASSETS-API - Full Assets Browser/API Coverage
 
 Status: Pending human scenario verification. Date: 2026-10-26.

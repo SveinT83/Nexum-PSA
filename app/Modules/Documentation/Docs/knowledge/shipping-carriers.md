@@ -95,6 +95,6 @@ POST `/{shippingCarrier}/tracking-preview` with tracking_number and optional dir
 returns only a safe browser link. It performs no network/provider request or write.
 The same HTTPS/host/template validation as web applies. Existing shipment snapshots
 stay unchanged. See **Documentation Overview -> Documentation API guide**.
-This addition is Dev-only. HR-2026-10-27-DOCUMENTATION-API was Reviewed by
-Svein Tore on 2026-10-27; Main/production promotion requires separate authorization.
-It does not activate carrier integrations.
+This addition is verified on Dev and merged to Main in PR #329; production is unchanged.
+HR-2026-10-27-DOCUMENTATION-API was Reviewed by Svein Tore on 2026-10-27.
+Production deployment requires separate authorization. Carrier integrations remain unchanged.

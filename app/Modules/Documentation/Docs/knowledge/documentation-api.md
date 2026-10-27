@@ -1,7 +1,7 @@
-Verified on Dev on 2026-10-27. Main and production are unchanged. Human checklist
+Verified on Dev and merged to Main in PR #329 on 2026-10-27. Production is unchanged. Human checklist
 **HR-2026-10-27-DOCUMENTATION-API** was Reviewed by Svein Tore on 2026-10-27.
-Main promotion and production release require separate authorization. Do not describe
-these additions as production functionality.
+Main promotion is complete. Production release requires separate authorization.
+Do not describe these additions as production functionality.
 
 ## Prerequisites
 

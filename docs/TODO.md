@@ -2,7 +2,7 @@
 
 ## Full Documentation browser/API coverage (2026-10-27)
 
-Status: Done On Dev / Reviewed by Svein Tore, 2026-10-27 / Main and production unchanged.
+Status: Done On Dev / Reviewed by Svein Tore / Merged to Main in PR #329 / Production unchanged.
 Owner: Codex. Named reviewer/release owner: Svein Tore.
 Direct authorization: full current-browser API support in this chat, 2026-10-27.
 RFC: rfc/2026-10-27-documentation-full-api-parity.md (Approved).
@@ -30,12 +30,23 @@ Human-review checklist HR-2026-10-27-DOCUMENTATION-API is Reviewed. Svein Tore
 explicitly accepted the completed scope with "Godkjenner" on 2026-10-27.
 This satisfies the human-review gate only. Individual scenario executions are not
 invented, and commit/push/Main promotion/production deployment remain separate.
-Next owner/action (Svein Tore): separately authorize Main promotion when desired.
-No commit/push/merge/deploy was performed. Preserve the 1291-path dirty baseline and
-use the explicit scoped manifest for any future promotion; no unrelated work was reverted.
+Next owner/action (Svein Tore): separately authorize production rollout when desired.
+The API implementation is merged in PR #329; no Main promotion action remains.
+Preserve the unrelated shared Dev work and the independent production/runtime gates.
 
-Main promotion explicitly authorized by Svein Tore on 2026-10-27: "Merge til main".
-A scoped isolated candidate is under verification. Production deployment remains separate.
+### Verified Main Promotion (2026-10-27)
+
+Svein Tore explicitly authorized "Merge til main". PR #329 is merged:
+https://github.com/SveinT83/Nexum-PSA/pull/329
+Main merge: c6249f422f74abe333a9b0c95d460adeb7193b68
+Tested and merged tree: 64d7176610701a931bbf198787a711f1b17da071; exact equality independently confirmed by fresh fetch.
+Isolated Main candidate: 545 passed / 8135 assertions, zero errors/failures.
+One existing Storage MariaDB identity-contract test skipped for missing dedicated
+test credentials. All 33 typed HTTP operations and 40 schemas verified; 37 PHP
+syntax/Pint checks pass. Shared Dev code, unrelated changes and staged index preserved.
+HR-2026-10-27-DOCUMENTATION-API remains Reviewed. No Main action remains.
+Production deployment and provider/worker/runtime activation remain separate.
+This follow-up changes documentation/status only; application tests were not rerun.
 
 
 ## Full Storage browser/API coverage (2026-10-26)

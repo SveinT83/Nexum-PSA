@@ -1,8 +1,10 @@
 # Documentation API: Dev verification and human review
 
 Date: 2026-10-27. Implementation owner: Codex. Named reviewer/release owner: Svein Tore.
-Status: Done On Dev. All five sequential slices and final affected verification pass.
-Main and production are unchanged. No commit, push, merge or deployment was performed.
+Status: Done On Dev / Reviewed by Svein Tore / Merged to Main in PR #329.
+All five sequential slices and affected verification pass; production is unchanged.
+Main merge c6249f422f74abe333a9b0c95d460adeb7193b68 is independently verified.
+The merged tree equals the tested candidate. No production deployment was performed.
 
 ## Delivered behavior
 
@@ -145,3 +147,17 @@ Reviewer: Svein Tore. Direct response: "Godkjenner". HR is Reviewed; Main and
 production remain unchanged and require separate authorization. This turn updates
 documentation/status only; application tests were not rerun because runtime code
 and the previously verified behavior were unchanged.
+
+## Verified Main Promotion (2026-10-27)
+
+Svein Tore explicitly authorized "Merge til main". PR #329 is merged:
+https://github.com/SveinT83/Nexum-PSA/pull/329
+Main merge: c6249f422f74abe333a9b0c95d460adeb7193b68
+Tested and merged tree: 64d7176610701a931bbf198787a711f1b17da071; exact equality independently confirmed by fresh fetch.
+Isolated Main candidate: 545 passed / 8135 assertions, zero errors/failures.
+One existing Storage MariaDB identity-contract test skipped for missing dedicated
+test credentials. All 33 typed HTTP operations and 40 schemas verified; 37 PHP
+syntax/Pint checks pass. Shared Dev code, unrelated changes and staged index preserved.
+HR-2026-10-27-DOCUMENTATION-API remains Reviewed. No Main action remains.
+Production deployment and provider/worker/runtime activation remain separate.
+This follow-up changes documentation/status only; application tests were not rerun.

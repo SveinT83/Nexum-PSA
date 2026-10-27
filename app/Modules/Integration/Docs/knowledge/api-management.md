@@ -1411,8 +1411,8 @@ Portal data uses the same active account/contact/membership and Client/Site boun
 as web. Scope changes hide previously visible content pending explicit publication.
 No role/token grants or provider activation are performed by this release.
 
-This is Dev-only: Main/production are unchanged. The human checklist
-HR-2026-10-27-DOCUMENTATION-API was Reviewed by Svein Tore on 2026-10-27.
-Main promotion and production deployment require separate authorization.
+This implementation is verified on Dev and merged to Main in PR #329; production
+is unchanged. HR-2026-10-27-DOCUMENTATION-API was Reviewed by Svein Tore on
+2026-10-27. Production deployment requires separate authorization.
 Issue #275's immutable Documentation revision/publication workflow remains open.
 API exposure and BookStack publication do not prove employee OpenWebUI retrieval.

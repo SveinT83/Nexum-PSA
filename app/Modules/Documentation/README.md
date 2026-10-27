@@ -64,4 +64,4 @@ See Docs/knowledge/documentation-api.md for contracts, permissions, read-back,
 register ownership and #275 boundaries. routes.php owns all declarations; api.php
 is the compatibility loader. Additive migration: 2026_10_27_010000_create_documentation_api_commands.php.
 Human review HR-2026-10-27-DOCUMENTATION-API Reviewed by Svein Tore, 2026-10-27;
-Main/production unchanged and require separate authorization.
+Merged to Main in PR #329; production unchanged and requires separate authorization.

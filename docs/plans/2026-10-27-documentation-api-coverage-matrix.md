@@ -1,6 +1,7 @@
 # Documentation Browser/API Coverage Matrix
 
-Status: Verified on Dev. Main/production unchanged; human review Reviewed by Svein Tore, 2026-10-27.
+Status: Verified on Dev; merged to Main in PR #329; production unchanged.
+Human review: Reviewed by Svein Tore, 2026-10-27.
 Owner: Codex. Date: 2026-10-27.
 Baseline: 30 browser route rows (28 staff + 2 portal), 16 API HTTP operations.
 Final: all 30 browser rows mapped; 33 typed API HTTP operations and 40 schemas.
