@@ -51,7 +51,9 @@ PHP;
                 'NEXUM_SWAGGER_TEST_SENTINEL' => $sentinel,
                 'NEXUM_SWAGGER_TEST_DIRECTORY' => $directory,
             ]);
-            $process->setTimeout(120);
+            // Complete contract generation grows with finished domains; cold isolated
+            // worktrees need a bounded budget beyond the former two-minute limit.
+            $process->setTimeout(600);
             $process->run();
 
             $this->assertTrue($process->isSuccessful(), $process->getOutput().$process->getErrorOutput());

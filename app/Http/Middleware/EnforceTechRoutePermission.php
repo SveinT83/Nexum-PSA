@@ -456,6 +456,14 @@ class EnforceTechRoutePermission
         'tech.storage.*' => 'storage.view',
     ];
 
+    /** Admin discovery uses the same ordered route table as browser authorization. */
+    public function allowsRoute(\App\Models\Core\User $actor, string $routeName): bool
+    {
+        $permission = $this->permissionForRoute($routeName);
+
+        return $permission !== null && $this->allowsActor($actor, $permission);
+    }
+
     /** Reuse the browser permission decision from typed domain APIs without a session bridge. */
     public function allowsPermission(Request $request, string $permission): bool
     {

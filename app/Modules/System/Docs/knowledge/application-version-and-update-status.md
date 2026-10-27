@@ -49,3 +49,12 @@ Clear or rebuild Laravel configuration cache after changing any update setting.
 Successful GitHub status is cached for 30 minutes. The last successful result is retained for 24
 hours and marked as cached if a refresh fails. After a complete failure, Nexum waits five minutes
 before trying GitHub again. No GitHub token or raw API response is exposed in the interface.
+
+
+## Official API
+
+On Dev, GET /api/v1/system/context exposes local metadata without GitHub calls and
+GET /api/v1/system/version-status reuses the exact cached comparison above. Both
+need system.read and current native system.view. No GitHub token/raw provider result
+is returned. This is discovery, not update/deployment. Main/production availability
+must be verified separately.

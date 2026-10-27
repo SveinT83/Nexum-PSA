@@ -57,9 +57,9 @@ The tech layout reads the Company Profile on render.
 If no settings exist, the shell falls back to:
 
 - Company name: `Nexum PSA`
-- Primary color: Bootstrap primary blue
-- Secondary color: Bootstrap secondary gray
-- Accent color: Bootstrap teal
+- Primary color: Nexum orange (#FF6D1F)
+- Secondary color: #fc7730
+- Accent color: #faba98
 - Logo: generated building icon mark
 
 ## Theme Behavior
@@ -120,3 +120,16 @@ After deploying layout or route changes, clear cached bootstrap files:
 ```bash
 php artisan optimize:clear
 ```
+
+
+## API Access And Current Availability
+
+The same organization/branding workflows are implemented on Dev through the official
+System API, including all three logo slots, every color/default theme, presets, reset
+and unsaved preview. Main/production availability requires separate deployment proof.
+
+Read System Api Support for exact endpoints, token/native rights, JSON/multipart,
+ETag checks and actor/key-bound receipts. Preview does not persist changes. Presets
+retain company data/logos; reset retains company data and removes visual settings/logos.
+Reload after a stale-version response. Branding also affects public/portal/PWA shells,
+contract documents and SMS; check these consumers during approved branding changes.

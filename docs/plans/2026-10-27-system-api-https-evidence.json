@@ -1,0 +1,48 @@
+{
+    "trusted_base": "https://dev.nexumpsa.eu",
+    "tls_validation": true,
+    "business_state_changed": false,
+    "http": [
+        {
+            "path": "/context",
+            "status": 200,
+            "data_present": true
+        },
+        {
+            "path": "/company-profile",
+            "status": 200,
+            "data_present": true
+        },
+        {
+            "path": "/branding",
+            "status": 200,
+            "data_present": true
+        },
+        {
+            "path": "/branding/presets",
+            "status": 200,
+            "data_present": true
+        },
+        {
+            "path": "/queues-workers",
+            "status": 200,
+            "data_present": true
+        },
+        {
+            "path": "/operations",
+            "status": 200,
+            "data_present": true
+        }
+    ],
+    "real_multipart_parser": {
+        "status": 422,
+        "image_validation_reached": true,
+        "settings_unchanged": true
+    },
+    "anonymous_status": 401,
+    "swagger_http_status": 200,
+    "swagger_system_operations": 19,
+    "maintenance_enabled": false,
+    "runtime_command_count": 0,
+    "temporary_token_removed": true
+}

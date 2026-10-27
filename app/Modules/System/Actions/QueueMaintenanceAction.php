@@ -2,55 +2,46 @@
 
 namespace App\Modules\System\Actions;
 
+use App\Modules\System\Support\SystemQueueMaintenance;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Config;
 
+/** Fixed Laravel commands only. Dispatch claims and truthful outcomes belong to System. */
 class QueueMaintenanceAction
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Safe queue maintenance commands
-    |--------------------------------------------------------------------------
-    |
-    | The web UI should use Laravel-supported maintenance commands only.
-    | Starting and stopping worker processes belongs to Supervisor, systemd,
-    | Docker, or another process manager and is documented in the admin view.
-    |
-    */
     public function restartWorkers(): string
     {
-        Artisan::call('queue:restart');
-
-        return trim(Artisan::output()) ?: 'Queue workers were asked to restart after their current job.';
+        return app(SystemQueueMaintenance::class)->browser('restart', []);
     }
 
     public function clearQueue(?string $queue = null): string
     {
-        $connection = Config::get('queue.default', 'sync');
-        $queue = $queue ?: Config::get('queue.connections.' . $connection . '.queue', 'default');
+        $queue = $queue ?: (string) config('queue.connections.'.config('queue.default').'.queue', 'default');
 
-        Artisan::call('queue:clear', [
-            'connection' => $connection,
-            '--queue' => $queue,
-            '--force' => true,
-        ]);
-
-        return trim(Artisan::output()) ?: 'Queue cleared.';
+        return app(SystemQueueMaintenance::class)->browser('clear', ['queue' => $queue]);
     }
 
     public function retryFailed(?string $jobId = null): string
     {
-        Artisan::call('queue:retry', [
-            'id' => $jobId ? [$jobId] : ['all'],
-        ]);
-
-        return trim(Artisan::output()) ?: 'Failed jobs were released back to the queue.';
+        return app(SystemQueueMaintenance::class)->browser('retry', $jobId && $jobId !== 'all'
+            ? ['job_id' => $jobId, 'all' => false] : ['all' => true]);
     }
 
     public function flushFailed(): string
     {
-        Artisan::call('queue:flush');
+        return app(SystemQueueMaintenance::class)->browser('flush', []);
+    }
 
-        return trim(Artisan::output()) ?: 'Failed jobs were flushed.';
+    /** Never expose captured console output; even a nonzero exit can follow partial effects. */
+    public function invoke(string $action, array $target): int
+    {
+        return match ($action) {
+            'restart' => Artisan::call('queue:restart'),
+            'clear' => Artisan::call('queue:clear', [
+                'connection' => config('queue.default'), '--queue' => $target['queue'], '--force' => true,
+            ]),
+            'retry' => Artisan::call('queue:retry', ['id' => [($target['all'] ?? false) ? 'all' : $target['job_id']]]),
+            'flush' => Artisan::call('queue:flush'),
+            default => throw new \InvalidArgumentException('Unsupported queue maintenance action.'),
+        };
     }
 }

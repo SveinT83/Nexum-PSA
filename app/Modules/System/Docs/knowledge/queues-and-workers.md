@@ -85,3 +85,21 @@ php artisan queue:clear --queue=default
 ```
 
 Use `queue:restart` after deployments. It asks long-running workers to restart gracefully after their current job.
+
+
+## API Maintenance And Honest Outcomes
+
+System API on Dev exposes status, preview and all four maintenance actions. API
+execution is disabled by default; it needs separate operational activation, current
+system.queue_manage, matching scopes, explicit target, expiring confirmation and
+replay key. Browser controls retain availability and share the dispatch lane.
+See System Api Support for numbered steps.
+
+Restart means signal issued; retry means re-enqueued. Neither proves worker completion
+or message delivery. Clear/flush remove work and must not be routine health checks.
+Omitted API retry target never means all jobs. Unknown counts/backend state stay
+unknown; overview excludes raw failure text and payloads.
+
+Unresolved dispatch retains its receipt and blocks further maintenance until reconciled.
+Do not use another key to bypass it. Scheduler is separate: verify actual external
+schedule:run execution every minute, not only registered schedules or Next Due.
