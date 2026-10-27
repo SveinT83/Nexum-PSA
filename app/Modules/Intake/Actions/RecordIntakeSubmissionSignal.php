@@ -8,9 +8,7 @@ use App\Modules\Signal\Models\Signal;
 
 class RecordIntakeSubmissionSignal
 {
-    public function __construct(private readonly RecordSignal $signals)
-    {
-    }
+    public function __construct(private readonly RecordSignal $signals) {}
 
     public function handle(IntakeSubmission $submission): Signal
     {

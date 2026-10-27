@@ -1,0 +1,129 @@
+{
+  "date": "2026-10-27",
+  "dev_affected": {
+    "passed": 912,
+    "assertions": 48851,
+    "failures": 0,
+    "skips": 0
+  },
+  "initial_main_candidate_affected": {
+    "passed": 760,
+    "assertions": 9773,
+    "failures": 0,
+    "skips": 0
+  },
+  "dev_focused": {
+    "passed": 70,
+    "assertions": 1180,
+    "failures": 0,
+    "skips": 0
+  },
+  "main_candidate_focused": {
+    "passed": 70,
+    "assertions": 1180,
+    "failures": 0,
+    "skips": 0
+  },
+  "http": [
+    {
+      "path": "/up",
+      "status": 200,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/v1/intake/context",
+      "status": 401,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/v1/intake/context",
+      "status": 200,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/v1/intake/forms?per_page=1",
+      "status": 200,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/v1/intake/forms/context",
+      "status": 200,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/v1/intake/submissions?per_page=1",
+      "status": 200,
+      "tls_verified": true
+    },
+    {
+      "path": "/api/v1/intake/lookups/owners?per_page=1",
+      "status": 200,
+      "tls_verified": true
+    },
+    {
+      "native_concurrent_same_key_one_effect": true
+    },
+    {
+      "path": "POST /api/v1/intake/forms",
+      "status": 201,
+      "draft_exact_readback": true,
+      "tls_verified": true
+    },
+    {
+      "native_encrypted_receipt_replay": true
+    },
+    {
+      "native_mysql_update_and_revision": true
+    },
+    {
+      "public_draft_denied": true
+    },
+    {
+      "temporary_token_revoked": true,
+      "draft_fixture_removed": true
+    }
+  ],
+  "handbook": {
+    "page_id": 553,
+    "book_id": 339,
+    "chapter_id": 552,
+    "exact_combined_source_readback": true,
+    "draft": false,
+    "updated_at": "2026-10-27T19:27:50.000000Z",
+    "temporary_page_651_removed": true,
+    "scope": "Existing Nexum PSA book 339/chapter 552; no permission writes; page/chapter inherit existing parent grants.",
+    "native_dev_bookstack_integration_configured": false,
+    "employee_openwebui_retrieval_verified": false
+  },
+  "syntax": {
+    "php_files": 39,
+    "all_passed": true
+  },
+  "pint": {
+    "files": 39,
+    "passed": true
+  },
+  "operations": 23,
+  "schemas": 38,
+  "browser_rows": 17,
+  "migration": {
+    "path": "database/migrations/2026_10_27_040000_create_intake_api_commands.php",
+    "dev_applied": true,
+    "production_applied": false
+  },
+  "human_review": {
+    "id": "HR-2026-10-27-INTAKE-API",
+    "status": "Pending",
+    "main_merge_explicitly_authorized": true
+  },
+  "production": "not deployed",
+  "refreshed_main_candidate": {
+    "passed": 247,
+    "assertions": 7518,
+    "failures": 0,
+    "skips": 0,
+    "base": "7d8087e4851f823fc87eaeff2cd46ff84eb8b4b6",
+    "scope": "Intake, Notification, Knowledge source sync, production-safe Swagger"
+  },
+  "pr": "https://github.com/SveinT83/Nexum-PSA/pull/340"
+}

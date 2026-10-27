@@ -1,0 +1,323 @@
+{
+  "date": "2026-10-27",
+  "environment": "authoritative Dev",
+  "root": "/var/Projects/tdPSA",
+  "branch": "Dev",
+  "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "dirty_paths_before_planning": 1438,
+  "intake_dirty_before_planning": [],
+  "browser_rows": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "intake/forms/{form}",
+      "name": "intake.forms.show",
+      "action": "App\\Modules\\Intake\\Controllers\\Public\\IntakeFormController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Routing\\Middleware\\ThrottleRequests:60,1"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "intake/forms/{form}",
+      "name": "intake.forms.submit",
+      "action": "App\\Modules\\Intake\\Controllers\\Public\\IntakeFormController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Routing\\Middleware\\ThrottleRequests:10,1"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "intake/forms/{form}/thanks",
+      "name": "intake.forms.thanks",
+      "action": "App\\Modules\\Intake\\Controllers\\Public\\IntakeFormController@thanks",
+      "middleware": [
+        "web",
+        "Illuminate\\Routing\\Middleware\\ThrottleRequests:60,1"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/intake",
+      "name": "tech.admin.system.intake.index",
+      "action": "App\\Modules\\Intake\\Controllers\\Admin\\IntakeController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/intake/forms",
+      "name": "tech.admin.system.intake.forms.store",
+      "action": "App\\Modules\\Intake\\Controllers\\Admin\\IntakeFormController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/intake/forms/create",
+      "name": "tech.admin.system.intake.forms.create",
+      "action": "App\\Modules\\Intake\\Controllers\\Admin\\IntakeFormController@create",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/admin/system/intake/forms/{form}",
+      "name": "tech.admin.system.intake.forms.update",
+      "action": "App\\Modules\\Intake\\Controllers\\Admin\\IntakeFormController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/intake/forms/{form}/edit",
+      "name": "tech.admin.system.intake.forms.edit",
+      "action": "App\\Modules\\Intake\\Controllers\\Admin\\IntakeFormController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/intake/forms/{form}/toggle",
+      "name": "tech.admin.system.intake.forms.toggle",
+      "action": "App\\Modules\\Intake\\Controllers\\Admin\\IntakeFormController@toggle",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/intake/submissions/{submission}",
+      "name": "tech.admin.system.intake.submissions.show",
+      "action": "App\\Modules\\Intake\\Controllers\\Admin\\IntakeSubmissionController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/system/intake/submissions/{submission}/attachments/{attachment}",
+      "name": "tech.admin.system.intake.attachments.download",
+      "action": "App\\Modules\\Intake\\Controllers\\Admin\\IntakeSubmissionController@downloadAttachment",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/intake/submissions/{submission}/link-existing",
+      "name": "tech.admin.system.intake.submissions.link-existing",
+      "action": "App\\Modules\\Intake\\Controllers\\Admin\\IntakeSubmissionController@linkExisting",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/intake/submissions/{submission}/outcome",
+      "name": "tech.admin.system.intake.submissions.outcome",
+      "action": "App\\Modules\\Intake\\Controllers\\Admin\\IntakeSubmissionController@markOutcome",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/intake/submissions/{submission}/reviewed",
+      "name": "tech.admin.system.intake.submissions.reviewed",
+      "action": "App\\Modules\\Intake\\Controllers\\Admin\\IntakeSubmissionController@markReviewed",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/intake/submissions/{submission}/route-sales",
+      "name": "tech.admin.system.intake.submissions.route-sales",
+      "action": "App\\Modules\\Intake\\Controllers\\Admin\\IntakeSubmissionController@routeSales",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/intake/submissions/{submission}/route-task",
+      "name": "tech.admin.system.intake.submissions.route-task",
+      "action": "App\\Modules\\Intake\\Controllers\\Admin\\IntakeSubmissionController@routeTask",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/system/intake/submissions/{submission}/route-ticket",
+      "name": "tech.admin.system.intake.submissions.route-ticket",
+      "action": "App\\Modules\\Intake\\Controllers\\Admin\\IntakeSubmissionController@routeTicket",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    }
+  ],
+  "api_rows": [],
+  "source_sha256": {
+    "app/Modules/Intake/Actions/EnsureIntakeDefaults.php": "7315ac130e6d35f561447b1dee5f32567e911439658da52486e8f1c5a825d09a",
+    "app/Modules/Intake/Actions/LinkIntakeSubmissionTarget.php": "f2e7d2968d84ea9cfc493ea0d2adabfafc8755477a0a0c2278b0ba9db9faff49",
+    "app/Modules/Intake/Actions/MarkIntakeSubmissionOutcome.php": "1a5c0c99b0608f485ba1f91e7f82c129d6712b3646e281b10f16b04ae4df9ad1",
+    "app/Modules/Intake/Actions/MatchIntakeSubmissionContext.php": "5fd73726bf606f97a915ee29ec8b1bf3aa00816958fbf50dfd5244cf8102f31e",
+    "app/Modules/Intake/Actions/RecordIntakeSubmissionSignal.php": "0ae22294b307b45db999904aaf096801a48670bde642ba5bcf0535de870cf193",
+    "app/Modules/Intake/Actions/RouteIntakeSubmissionToSales.php": "1feb082c21483a4c97eaa13bf9ed9077d7d889feaca611dce6ab45c3972e58fb",
+    "app/Modules/Intake/Actions/RouteIntakeSubmissionToTask.php": "f936f848d3c7b307e2974a838abc6fc5d81ac19c40b8ca6859c7ceb3865201ad",
+    "app/Modules/Intake/Actions/RouteIntakeSubmissionToTicket.php": "3b3a46e459847675b16f38dab3bb95a814e8b8d6d04bec9eeef49ac869f30184",
+    "app/Modules/Intake/Actions/StoreIntakeAttachment.php": "7052536b8882725ae9da671bbc0028b6cfc26b22bd8ea148d31743ae38620f83",
+    "app/Modules/Intake/Actions/StoreIntakeSubmission.php": "27a2aa068f7b4b5e25398e6ad365c2b0406505bb6a5182c9761467e93e23e822",
+    "app/Modules/Intake/Controllers/Admin/IntakeController.php": "16ece0ac4189dc2d4d41d3d91599e1ecfc0e978ab6a0f53a4098ef70efc9b628",
+    "app/Modules/Intake/Controllers/Admin/IntakeFormController.php": "710e78a34808c6a1cd1a5b57eb128a4bb89842863bef930e1058b588461fa8cd",
+    "app/Modules/Intake/Controllers/Admin/IntakeSubmissionController.php": "e1410a9121c29c366dcdc48c2cef4c1647209c94c3b125a9b92ebf2465b7afd0",
+    "app/Modules/Intake/Controllers/Public/IntakeFormController.php": "d00024c9d2527cf9ab97a195e81f56c69aae12bdd6abe50f590ffe6a886a1e09",
+    "app/Modules/Intake/Models/IntakeForm.php": "43b14e94fca2a784a6523f9a1d2e39ae22176faf988a946f28e61f9a154705c5",
+    "app/Modules/Intake/Models/IntakeFormField.php": "0955f08c5c555f6b85b3f497a87d06c4e150416d41284061bf261ae2d524ee55",
+    "app/Modules/Intake/Models/IntakeSubmission.php": "9fa8b22202e3833f48f66035b67c203529b6443213850390f82a9e94cb484960",
+    "app/Modules/Intake/Models/IntakeSubmissionAttachment.php": "641465dfc9ad5d589ef57e61d54da0fac9f2247f4abfee0b2b15e1b5b4397f62",
+    "app/Modules/Intake/Models/IntakeSubmissionEvent.php": "e445fb21729eb59345c513b4f51b6ad7316e99417adebe63631fc83f8a5e19c1",
+    "app/Modules/Intake/Support/IntakeFormFieldInput.php": "8e1908a455ee05083d37c6addb3a36c24742a32cb11c62e2ee43ed46ea4b48ad",
+    "app/Modules/Intake/Support/IntakeSubmissionTargetPayload.php": "f619dd07f483fb54bda6849bf4246248a5842ceaedf408a9c65dcbe65176ccfa",
+    "app/Modules/Intake/Tests/Feature/IntakeModuleTest.php": "8b9fe1ec60126f2f414e9dd3b432b962bf69471795b0cdcf74d582fdf21c4b76",
+    "app/Modules/Intake/Views/Admin/forms/create.blade.php": "91643a456bc0410745c38fc0758ae6485de892ece48c4f97e2381ff7fe91ad5b",
+    "app/Modules/Intake/Views/Admin/forms/edit.blade.php": "cf4f7e9fc53ae83a7a8ac70fa0a0b38b61a4ea86f3345f638ab02e0a14f839fc",
+    "app/Modules/Intake/Views/Admin/forms/partials/field-row.blade.php": "9a3ad78e283baaf600f5bad283825aa3ca4b77f14cc492b5ac63ba3b240b6d98",
+    "app/Modules/Intake/Views/Admin/forms/partials/form.blade.php": "4d355fa59f3172b06aaa0c030e80b8102f47777547ed57bbd2a863e920bd8843",
+    "app/Modules/Intake/Views/Admin/index.blade.php": "dad300bbe38a1b20e8909c608450b5296fc8b76e2116a1e56458557c150ac479",
+    "app/Modules/Intake/Views/Admin/submissions/show.blade.php": "202bf6685d0ea87c45a5c857ac64236aff6ae0018fb42c5c54cc229db4ded188",
+    "app/Modules/Intake/Views/Public/show.blade.php": "0304b43ef5ceac78b8d937068c96ac4a1dc09c91d7e4f6f0885f4cb8bb657e0f",
+    "app/Modules/Intake/Views/Public/thanks.blade.php": "cc7e60044e8f49497140c3f9c764dd50ba1ae5ea874e1f1f84221729066d2e3f",
+    "app/Modules/Intake/Views/layouts/public.blade.php": "e90422ca3d983fb84cc4da3a94f30f7bc85932cb9b78d0a60423c8896f70c480",
+    "app/Modules/Intake/routes.php": "ddd7eabb64ad0d03ca80fd1db474712cc0e8e53504d1edaeb9374371f63b26a2",
+    "app/Http/Middleware/EnforceTechRoutePermission.php": "949b78998e1feee3254883127f47863110b3a0442f899ff80322b2aa9e233c22"
+  },
+  "existing_native_tests": {
+    "command": "umask 0002 && HOME=/tmp php artisan test app/Modules/Intake/Tests --compact",
+    "passed": 21,
+    "assertions": 168,
+    "failures": 0,
+    "skipped": 0,
+    "duration_seconds": 43.64,
+    "note": "Existing native tests only; planned API is not implemented."
+  },
+  "github_check": {
+    "query": "repo:SveinT83/Nexum-PSA is:issue is:open intake",
+    "matching_open_issues": 0,
+    "writes": false
+  },
+  "human_review_previous": "HR-2026-08-11-001 Reviewed by Svein 2026-08-25",
+  "new_api_implemented": false
+}
