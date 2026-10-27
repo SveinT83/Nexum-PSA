@@ -146,7 +146,8 @@ final class TicketCustomFieldValueResolver
             CustomFieldDefinition::TYPE_CHECKBOX => $record->value_boolean,
             CustomFieldDefinition::TYPE_DATE => $record->value_date?->toDateString(),
             CustomFieldDefinition::TYPE_DATETIME => $record->value_datetime?->format('Y-m-d H:i:s'),
-            CustomFieldDefinition::TYPE_MULTISELECT => $record->value_json ?? [],
+            // A cleared stored payload must match normalize(null), including no-op/rule facts.
+            CustomFieldDefinition::TYPE_MULTISELECT => $record->value_json === null ? null : array_values($record->value_json),
             default => $record->value_text,
         };
     }

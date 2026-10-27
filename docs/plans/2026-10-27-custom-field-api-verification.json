@@ -1,0 +1,195 @@
+{
+  "date": "2026-10-27",
+  "scope": "Full current CustomField browser/API parity",
+  "operations": 7,
+  "schemas": 19,
+  "candidate_feature_tests": {
+    "passed": 572,
+    "assertions": 7858,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0
+  },
+  "candidate_unit_tests": {
+    "passed": 17,
+    "assertions": 465,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0
+  },
+  "dev_final_focused": {
+    "passed": 51,
+    "assertions": 1858,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0
+  },
+  "dev_broad_final": {
+    "tests": 676,
+    "assertions": 46696,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "php_files_syntax_pint": 23,
+  "native_mysql": {
+    "driver": "mysql",
+    "probe_isolated": true,
+    "encrypted_readback": true,
+    "native_replay_uniqueness": true,
+    "atomic_rollback": true,
+    "two_connection_mutex": true,
+    "lock_released": true,
+    "probe_tables_removed": true,
+    "dev_migration": {
+      "migration": "2026_10_27_050000_create_custom_field_api_commands",
+      "batch": 34
+    }
+  },
+  "trusted_https": {
+    "trusted_https": true,
+    "operations": {
+      "context": 200,
+      "create": 201,
+      "list": 200,
+      "detail": 200,
+      "update": 200,
+      "delete": 200,
+      "own_operation": 200,
+      "deleted_detail": 404,
+      "anonymous": 401,
+      "swagger": 200
+    },
+    "swagger_exact": true,
+    "temporary_token_removed": true,
+    "synthetic_definition_removed": true,
+    "temporary_commands_removed": true
+  },
+  "knowledge_source": [
+    {
+      "id": 27,
+      "slug": "client-domain-overview",
+      "visibility": "internal",
+      "published_revision_id": 158,
+      "sync_status": "pending_push",
+      "source_exact": true
+    },
+    {
+      "id": 3,
+      "slug": "api-management",
+      "visibility": "internal",
+      "published_revision_id": 156,
+      "sync_status": "pending_push",
+      "source_exact": true
+    },
+    {
+      "id": 48,
+      "slug": "custom-field-api",
+      "visibility": "internal",
+      "published_revision_id": 157,
+      "sync_status": "pending_push",
+      "source_exact": true
+    },
+    {
+      "id": 49,
+      "slug": "custom-fields-core",
+      "visibility": "internal",
+      "published_revision_id": 134,
+      "sync_status": "pending_push",
+      "source_exact": true
+    }
+  ],
+  "bookstack": {
+    "page451": {
+      "id": 451,
+      "name": "Client Domain Overview",
+      "updated_at": "2026-10-27T19:15:43.000000Z",
+      "content_length": 30248,
+      "exact_readback": true,
+      "full_core": true,
+      "full_guide": true
+    },
+    "page449": {
+      "id": 449,
+      "name": "Api Management",
+      "updated_at": "2026-10-27T19:15:51.000000Z",
+      "content_length": 78938,
+      "exact_readback": true,
+      "full_core": false,
+      "full_guide": false
+    },
+    "chapter_creation": {
+      "failed": true,
+      "reason": "Connector rejects normal multi-character chapter names; no chapter created."
+    },
+    "publication": "Exact full CustomField core and API guide embedded in existing Client Domain Overview 451; API management note in 449.",
+    "access": "Existing page/chapter inheritance read back; no permissions changed.",
+    "openwebui": "Not tested",
+    "final_readback": [
+      {
+        "id": 451,
+        "name": "Client Domain Overview",
+        "updated_at": "2026-10-27T19:21:47.000000Z",
+        "exact_affected_sources": true,
+        "markdown_length": 30317
+      },
+      {
+        "id": 449,
+        "name": "Api Management",
+        "updated_at": "2026-10-27T19:21:58.000000Z",
+        "exact_affected_sources": true,
+        "markdown_length": 84513
+      }
+    ]
+  },
+  "manual_review": "HR-2026-10-27-CUSTOM-FIELD-API Pending; direct scoped Main merge authorized",
+  "production": "Unchanged, no deployment/provider/worker/scheduler activation",
+  "source_hashes": {
+    "app/Modules/CustomField/Actions/ExecuteCustomFieldCommand.php": "7ef663d2d47a145355cd1589e0084bfa954d6cab25654d072da2259e92039b80",
+    "app/Modules/CustomField/Actions/NormalizeCustomFieldValue.php": "dae1b0a55ae9a3950d88efee4aacdfaa253a6720a3b751f5f666e0554a1e9553",
+    "app/Modules/CustomField/Actions/SaveCustomFieldDefinition.php": "1022a013212a85376fe89d7637faaefe6bc888b94e669ab3cce06a9e00d5a866",
+    "app/Modules/CustomField/Actions/SyncCustomFieldValues.php": "3515834d7afcc32207c202c089842f6901c2f97b4ab69dcbef1898600c123a6a",
+    "app/Modules/CustomField/Controllers/Admin/CustomFieldDefinitionController.php": "f2dfb975310d5f6a814849e81f9bced60b9600ee3a7b1d01673b052129ebf6c6",
+    "app/Modules/CustomField/Controllers/Api/V1/CustomFieldDefinitionController.php": "a47b82fff8f18866d959eeb8bd5991537b743026472f05b8823ebf3e41892030",
+    "app/Modules/CustomField/Models/CustomFieldApiCommand.php": "fa97ad178c800ba0570e9ef4f319a1fe6fb97e0368ac7f0bffd09668cc430da5",
+    "app/Modules/CustomField/Queries/CustomFieldDefinitionQuery.php": "65bb3629b31e071a7c5bbc00b38a3110bcfae9e49a365f64f29495e6fcd735f3",
+    "app/Modules/CustomField/Resources/Api/V1/CustomFieldApiOpenApi.php": "fbdc2be53aad54aec981849fbf7298adb4e18151a06aa40c2af0decadfeb4b31",
+    "app/Modules/CustomField/Resources/Api/V1/CustomFieldDefinitionResource.php": "29d783d56e4a7995e440d921a02db8b962deaa9b50eedd9868afe681c758ed94",
+    "app/Modules/CustomField/Support/CustomFieldApiAccess.php": "4d066ad22e8749706c57af332d739209fcc09b949bb793f0fc792d7636cdabb0",
+    "app/Modules/CustomField/Support/CustomFieldDefinitionInput.php": "2a80629cf34858ab26a4f3e6e5cee969bf18f07c270788a9261b80433279b82b",
+    "app/Modules/CustomField/Support/CustomFieldRevision.php": "3452b6cb23eff6a7bf0fd977e78901b62e871eb9e7eefeeb723bbe39db5f0028",
+    "app/Modules/CustomField/Tests/Feature/CustomFieldApiContractTest.php": "c958903870b9bfccbe0c780b6c871397caa14145c174e7c46c2ce7b9346c5620",
+    "app/Modules/CustomField/Tests/Feature/CustomFieldApiParityTest.php": "7b9cc5f087747e0e09ace759dd60febcb8e840be51976e8610943a4ab89b7cbe",
+    "app/Modules/CustomField/Tests/Feature/CustomFieldKnowledgeSourceTest.php": "68db1138ad7e3b18a0590249d6206e110e5f7057690dda9908b37c3c5e119468",
+    "app/Modules/CustomField/Tests/Feature/CustomFieldValueParityTest.php": "0103b8db9177ad6877fb6b9d4e4f4ad7fcd299e8f45c6ed7b008b28e0e37bad9",
+    "app/Modules/CustomField/api.php": "f1e4763c86cade7718a21774ee435353faa7aa2d18a10876180415f29610aa64",
+    "app/Modules/CustomField/routes.php": "d047fa25b93a3c392e560e690b24c6a06f41f2522bffb3fbc42c6c7372036455",
+    "app/Modules/Integration/Support/ApiAbilityCatalog.php": "a93f507373f4871cc6bfc4de6ed3bf37e8da75229b793d372453727c10f47f6f",
+    "app/Modules/Knowledge/Actions/SyncRepositoryKnowledgeDocs.php": "781bfd5fb32bafdcf82cb6212e9da053b0331339c2e453aa2d94dacfde9f12dc",
+    "app/Modules/Ticket/Services/TicketCustomFieldValueResolver.php": "80556e9f5ad87e18aa2e10060d0857cba4d240c5f8afbbaaf6bcfdffe19f5d14",
+    "database/migrations/2026_10_27_050000_create_custom_field_api_commands.php": "e9fa2baa045a4e4b63aed43ec2ad2328baae108c2272f3dfd55e6f84786a77dc"
+  },
+  "scoped_artifact_contract": {
+    "tests": 3,
+    "assertions": 1481,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "candidate_rebased_final": {
+    "tests": 236,
+    "assertions": 9264,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "candidate_blade_cache": "Dedicated per-worktree directory; shared-view race eliminated and the full 236-case batch rerun successfully",
+  "candidate_parent": "f8180e6efb696321f7bfa09863403ac11d840e33",
+  "candidate_latest_main_check": {
+    "tests": 27,
+    "assertions": 2042,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}

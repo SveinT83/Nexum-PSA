@@ -1,0 +1,167 @@
+{
+  "date": "2026-10-27",
+  "branch": "Dev",
+  "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "scope": "Existing implementation only; no new API implemented",
+  "routes": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/custom-fields",
+      "name": "api.v1.custom-fields.index",
+      "action": "App\\Modules\\CustomField\\Controllers\\Api\\V1\\CustomFieldDefinitionController@index",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:custom-fields.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/custom-fields/{definition}",
+      "name": "api.v1.custom-fields.show",
+      "action": "App\\Modules\\CustomField\\Controllers\\Api\\V1\\CustomFieldDefinitionController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:custom-fields.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/custom-fields",
+      "name": "tech.admin.settings.custom-fields.index",
+      "action": "App\\Modules\\CustomField\\Controllers\\Admin\\CustomFieldDefinitionController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/settings/custom-fields",
+      "name": "tech.admin.settings.custom-fields.store",
+      "action": "App\\Modules\\CustomField\\Controllers\\Admin\\CustomFieldDefinitionController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "tech/admin/settings/custom-fields/{definition}",
+      "name": "tech.admin.settings.custom-fields.update",
+      "action": "App\\Modules\\CustomField\\Controllers\\Admin\\CustomFieldDefinitionController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/admin/settings/custom-fields/{definition}",
+      "name": "tech.admin.settings.custom-fields.destroy",
+      "action": "App\\Modules\\CustomField\\Controllers\\Admin\\CustomFieldDefinitionController@destroy",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "tech/clients/sites/{site}/custom-fields/{definition}",
+      "name": "tech.clients.sites.custom-fields.update",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientCustomFieldValueController@updateSite",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "tech/clients/{client}/custom-fields/{definition}",
+      "name": "tech.clients.custom-fields.update",
+      "action": "App\\Modules\\Clients\\Controllers\\Tech\\ClientCustomFieldValueController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    }
+  ],
+  "customfield_source_sha256": {
+    "app/Modules/CustomField/routes.php": "060023f37c3b817866fd40325f86914feb2d89c8b7bbcbc432c59bc454eae09c",
+    "app/Modules/CustomField/api.php": "441ba1feea6448f032c2aa06ce117270fa802a503a2260666182a6cce84096b6",
+    "app/Modules/CustomField/Models/CustomFieldValue.php": "5bd2cc5ff99973c8f546bcf7da69c5643b6138d9e9ccfca318e278888dd5aa0d",
+    "app/Modules/CustomField/Models/CustomFieldDefinition.php": "ae3cded4a809c0b6da331762949b1280259ea8e903b0b25668c82376b249af28",
+    "app/Modules/CustomField/Actions/SyncCustomFieldValues.php": "b9f100c17ce4b052ca382336209abf6a9a72c356f51b04622ffeaf51e26460cc",
+    "app/Modules/CustomField/Actions/NormalizeCustomFieldValue.php": "1c062d9bb7ad0c94ee463387105a71929bcc284ca93dc89dd6ac3539e668a072",
+    "app/Modules/CustomField/Views/Admin/index.blade.php": "2df95f80213cd8a6c1bb6386bf72dc8416586fdfb127efc1bba4c6b7d5f04c72",
+    "app/Modules/CustomField/Views/Admin/_definition-form-modal.blade.php": "743c6d2eb9f1622aad69e00c62549a30e20366fa25328f815ac170ef49347f1f",
+    "app/Modules/CustomField/Views/components/value-input.blade.php": "6a683f25dba7563335a5265a1960cb66be3c299c648182e61e192887c9178aa0",
+    "app/Modules/CustomField/Resources/Api/V1/CustomFieldDefinitionResource.php": "a57fd2a450340160f88db5e271015ecb27436eb06d69e98399c6dcc63218c8f0",
+    "app/Modules/CustomField/Tests/Feature/CustomFieldModuleTest.php": "fe722f5084d69e57e44956df65cfabf5c5e6c65f51e28303e0ac4099a0a84694",
+    "app/Modules/CustomField/Controllers/Admin/CustomFieldDefinitionController.php": "9005565ea3a380645da127ea519a8b43200163b73496a9ccf1e13a031cd75e47",
+    "app/Modules/CustomField/Controllers/Api/V1/CustomFieldDefinitionController.php": "1493bc58271b4940adea71c09d9f625d86c98686030dcc9abbad8ff4ba5f7f3b",
+    "app/Modules/CustomField/Support/CustomFieldModelRegistry.php": "e043fd492d5e5647cb4ebb4310d7e7208b575d20049f14d11e6b577b706f2be6",
+    "app/Modules/CustomField/Support/CustomFieldPresenter.php": "4944385d8a28a8b1e320e718874ec64f1d6ff82e076d677ddf7d0ba6b29cd306",
+    "app/Modules/CustomField/Docs/knowledge/custom-fields-core.md": "5fbd260570b793f8f4c1ff045e59d36291a2c3f1c80283e5fa72526c624ab4dd"
+  },
+  "git_status_customfield": " M app/Modules/CustomField/Tests/Feature/CustomFieldModuleTest.php\n",
+  "existing_tests": {
+    "CustomFieldModuleTest": {
+      "passed": 9,
+      "assertions": 87
+    },
+    "TicketCustomFieldSurfaceAndRuleContract": {
+      "passed": 8,
+      "assertions": 141
+    }
+  },
+  "counts": {
+    "customfield_browser_route_rows": 4,
+    "customfield_api_http_operations_excluding_head": 2,
+    "clients_value_patch_rows": 2
+  },
+  "github_reconciliation": {
+    "searched": "repo:SveinT83/Nexum-PSA is:open \"custom field\"",
+    "relevant_open_issue": 285,
+    "decision": "Independent Ticket Rules production activation; no existing full CustomField parity issue found by this query."
+  }
+}
