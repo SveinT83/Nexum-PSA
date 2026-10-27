@@ -3,81 +3,88 @@
 namespace App\Modules\CustomField\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Modules\CustomField\Actions\ExecuteCustomFieldCommand;
+use App\Modules\CustomField\Actions\SaveCustomFieldDefinition;
+use App\Modules\CustomField\Models\CustomFieldApiCommand;
 use App\Modules\CustomField\Models\CustomFieldDefinition;
+use App\Modules\CustomField\Queries\CustomFieldDefinitionQuery;
 use App\Modules\CustomField\Resources\Api\V1\CustomFieldDefinitionResource;
+use App\Modules\CustomField\Support\CustomFieldApiAccess;
 use App\Modules\CustomField\Support\CustomFieldModelRegistry;
+use App\Modules\CustomField\Support\CustomFieldRevision;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use OpenApi\Attributes as OA;
+use Illuminate\Support\Facades\Schema;
+use Spatie\Permission\Models\Permission;
 
-#[OA\Tag(
-    name: 'Custom Fields',
-    description: 'API endpoints for discovering configurable custom field definitions.'
-)]
+/** Domain definitions only; owning record APIs retain value authority and side effects. */
 class CustomFieldDefinitionController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Custom field definition API
-    |--------------------------------------------------------------------------
-    |
-    | This API is intentionally read-only. Integrations use it to discover
-    | field definitions, while values remain owned by each domain API.
-    |
-    */
-
-    #[OA\Get(path: '/api/v1/custom-fields', operationId: 'getCustomFields', summary: 'List custom field definitions', security: [['bearerAuth' => []]], tags: ['Custom Fields'], parameters: [
-        new OA\Parameter(name: 'model', in: 'query', schema: new OA\Schema(type: 'string'), description: 'Filter by model alias, for example client.'),
-        new OA\Parameter(name: 'q', in: 'query', schema: new OA\Schema(type: 'string'), description: 'Search by key, label, help text, or model type.'),
-        new OA\Parameter(name: 'active', in: 'query', schema: new OA\Schema(type: 'boolean')),
-        new OA\Parameter(name: 'editable_via_api', in: 'query', schema: new OA\Schema(type: 'boolean')),
-        new OA\Parameter(name: 'searchable', in: 'query', schema: new OA\Schema(type: 'boolean')),
-    ], responses: [new OA\Response(response: 200, description: 'Custom field definitions')])]
-    public function index(Request $request, CustomFieldModelRegistry $models): AnonymousResourceCollection
+    public function index(Request $request, CustomFieldDefinitionQuery $query)
     {
-        $validated = $request->validate([
-            'model' => ['nullable', 'string', 'max:100'],
-            'q' => ['nullable', 'string', 'max:255'],
-            'active' => ['nullable', 'boolean'],
-            'editable_via_api' => ['nullable', 'boolean'],
-            'searchable' => ['nullable', 'boolean'],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
-        ]);
-
-        $query = CustomFieldDefinition::query()
-            ->orderBy('model_type')
-            ->orderBy('sort_order')
-            ->orderBy('label');
-
-        if ($modelType = $models->classFor($validated['model'] ?? '')) {
-            $query->where('model_type', $modelType);
-        }
-
-        if ($search = $validated['q'] ?? null) {
-            $query->where(function ($query) use ($search): void {
-                $query->where('key', 'like', "%{$search}%")
-                    ->orWhere('label', 'like', "%{$search}%")
-                    ->orWhere('help_text', 'like', "%{$search}%")
-                    ->orWhere('model_type', 'like', "%{$search}%");
-            });
-        }
-
-        foreach (['active', 'editable_via_api', 'searchable'] as $booleanFilter) {
-            if ($request->has($booleanFilter)) {
-                $query->where($booleanFilter, $request->boolean($booleanFilter));
-            }
-        }
-
-        return CustomFieldDefinitionResource::collection(
-            $query->paginate((int) ($validated['per_page'] ?? 25))->withQueryString(),
-        );
+        return CustomFieldDefinitionResource::collection($query->handle($request));
     }
 
-    #[OA\Get(path: '/api/v1/custom-fields/{definition}', operationId: 'getCustomField', summary: 'View custom field definition', security: [['bearerAuth' => []]], tags: ['Custom Fields'], parameters: [
-        new OA\Parameter(name: 'definition', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-    ], responses: [new OA\Response(response: 200, description: 'Custom field definition'), new OA\Response(response: 404, description: 'Custom field definition not found')])]
-    public function show(CustomFieldDefinition $definition): CustomFieldDefinitionResource
+    public function show(Request $request, string $definition)
     {
-        return CustomFieldDefinitionResource::make($definition);
+        $record = CustomFieldDefinition::findOrFail($definition);
+        abort_unless(CustomFieldApiAccess::canDiscover($request->user(), $record), 404);
+
+        return response()->json(['data' => (new CustomFieldDefinitionResource($record))->resolve($request)])
+            ->header('ETag', '"'.CustomFieldRevision::of($record).'"');
+    }
+
+    public function context(Request $request, CustomFieldModelRegistry $models)
+    {
+        return response()->json(['data' => ['models' => collect($models->all())->map(fn ($class, $alias) => [
+            'alias' => $alias, 'model_type' => $class, 'label' => $models->displayLabelFor($alias),
+        ])->values(), 'field_types' => CustomFieldDefinition::SUPPORTED_TYPES,
+            'permissions' => Permission::query()->where('guard_name', 'web')->orderBy('name')->pluck('name'),
+            'create_defaults' => ['visible_in_ui' => true, 'editable_in_ui' => true, 'editable_via_api' => true,
+                'active' => true, 'searchable' => false, 'unique_per_model' => false, 'required' => false, 'admin_only' => false, 'sort_order' => 0],
+            'ticket_write_gates' => ['ui' => (bool) config('ticket_rules.capabilities.custom_fields.ui_write', false),
+                'api' => (bool) config('ticket_rules.capabilities.custom_fields.api_write', false)],
+            'commands_available' => Schema::hasTable('custom_field_api_commands')]]);
+    }
+
+    public function store(Request $request, ExecuteCustomFieldCommand $command, SaveCustomFieldDefinition $save)
+    {
+        return $command->handle($request, function () use ($request, $save) {
+            $record = $save->handle($request);
+
+            return response()->json(['data' => (new CustomFieldDefinitionResource($record))->resolve($request)], 201)
+                ->header('ETag', '"'.CustomFieldRevision::of($record).'"');
+        });
+    }
+
+    public function update(Request $request, string $definition, ExecuteCustomFieldCommand $command, SaveCustomFieldDefinition $save)
+    {
+        return $command->handle($request, function () use ($request, $definition, $save) {
+            $record = $save->handle($request, (int) $definition);
+
+            return response()->json(['data' => (new CustomFieldDefinitionResource($record))->resolve($request)])
+                ->header('ETag', '"'.CustomFieldRevision::of($record).'"');
+        });
+    }
+
+    public function destroy(Request $request, string $definition, ExecuteCustomFieldCommand $command, SaveCustomFieldDefinition $save)
+    {
+        return $command->handle($request, function () use ($request, $definition, $save) {
+            $record = $save->handle($request, (int) $definition, delete: true);
+
+            return response()->json(['data' => ['id' => (int) $record->id, 'active' => false, 'deleted' => true,
+                'values_retained' => true, 'deleted_at' => $record->deleted_at->toIso8601String()]]);
+        });
+    }
+
+    public function operation(Request $request, string $operation)
+    {
+        abort_unless(Schema::hasTable('custom_field_api_commands'), 503, 'Apply the CustomField command migration first.');
+        $command = CustomFieldApiCommand::where('actor_id', $request->user()->id)
+            ->where('token_hash', CustomFieldApiAccess::tokenHash($request))->findOrFail($operation);
+        abort_unless($request->user()->tokenCan($command->result['ability']), 403);
+
+        return response()->json(['data' => ['id' => $command->id, 'operation' => $command->operation,
+            'state' => $command->state, 'status' => $command->result['status'],
+            'result' => $command->result['body'], 'etag' => $command->result['etag']]]);
     }
 }

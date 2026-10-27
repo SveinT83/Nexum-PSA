@@ -279,3 +279,13 @@ Site deletion refuses linked or historical records, provider bindings and Site-s
 portal access. Review or move references through their owning workflows first.
 Removing a Site must never erase historical Contacts/Documentation or turn Site-only
 Customer Portal membership into client-wide access.
+
+## Custom Field Administration And Values
+
+The approved CustomField API extension is documented in **Custom Field API**. It is
+Dev-only until separately deployed. Configure definitions with customfield.manage_settings
+and the exact custom-fields token scope; Client/Site values retain their own existing
+Client rights and API editability flags. The extension supports all 11 current types,
+atomic invalid-input rejection, required values and optional null clearing. Searchable
+values keep the existing Client/Site filters. Definition deletion retains values but
+hides the definition; updating a definition does not convert stored values.

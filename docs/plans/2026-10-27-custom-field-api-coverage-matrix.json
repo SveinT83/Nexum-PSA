@@ -1,0 +1,205 @@
+{
+  "date": "2026-10-27",
+  "browser_definition_routes": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/custom-fields",
+      "name": "tech.admin.settings.custom-fields.index",
+      "action": "App\\Modules\\CustomField\\Controllers\\Admin\\CustomFieldDefinitionController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/admin/settings/custom-fields",
+      "name": "tech.admin.settings.custom-fields.store",
+      "action": "App\\Modules\\CustomField\\Controllers\\Admin\\CustomFieldDefinitionController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "tech/admin/settings/custom-fields/{definition}",
+      "name": "tech.admin.settings.custom-fields.update",
+      "action": "App\\Modules\\CustomField\\Controllers\\Admin\\CustomFieldDefinitionController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "tech/admin/settings/custom-fields/{definition}",
+      "name": "tech.admin.settings.custom-fields.destroy",
+      "action": "App\\Modules\\CustomField\\Controllers\\Admin\\CustomFieldDefinitionController@destroy",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    }
+  ],
+  "operations": [
+    {
+      "method": "GET",
+      "path": "/api/v1/custom-fields",
+      "route": "api.v1.custom-fields.index",
+      "controller": "App\\Modules\\CustomField\\Controllers\\Api\\V1\\CustomFieldDefinitionController@index",
+      "scope": "custom-fields.read",
+      "operation_id": "getCustomFields",
+      "success_schema": {
+        "200": "CustomFieldApiList"
+      },
+      "native_authority": "native management or owning-domain view plus field visibility"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/custom-fields",
+      "route": "api.v1.custom-fields.store",
+      "controller": "App\\Modules\\CustomField\\Controllers\\Api\\V1\\CustomFieldDefinitionController@store",
+      "scope": "custom-fields.create",
+      "operation_id": "createCustomField",
+      "success_schema": {
+        "201": "CustomFieldApiMutationResult"
+      },
+      "native_authority": "customfield.manage_settings"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/custom-fields/context",
+      "route": "api.v1.custom-fields.context",
+      "controller": "App\\Modules\\CustomField\\Controllers\\Api\\V1\\CustomFieldDefinitionController@context",
+      "scope": "custom-fields.read",
+      "operation_id": "getCustomFieldContext",
+      "success_schema": {
+        "200": "CustomFieldApiContextResult"
+      },
+      "native_authority": "customfield.manage_settings"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/custom-fields/operations/{operation}",
+      "route": "api.v1.custom-fields.operation",
+      "controller": "App\\Modules\\CustomField\\Controllers\\Api\\V1\\CustomFieldDefinitionController@operation",
+      "scope": "custom-fields.operations.read",
+      "operation_id": "getCustomFieldOperation",
+      "success_schema": {
+        "200": "CustomFieldApiOperationResult"
+      },
+      "native_authority": "customfield.manage_settings"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/custom-fields/{definition}",
+      "route": "api.v1.custom-fields.show",
+      "controller": "App\\Modules\\CustomField\\Controllers\\Api\\V1\\CustomFieldDefinitionController@show",
+      "scope": "custom-fields.read",
+      "operation_id": "getCustomField",
+      "success_schema": {
+        "200": "CustomFieldApiDefinitionResult"
+      },
+      "native_authority": "native management or owning-domain view plus field visibility"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/custom-fields/{definition}",
+      "route": "api.v1.custom-fields.update",
+      "controller": "App\\Modules\\CustomField\\Controllers\\Api\\V1\\CustomFieldDefinitionController@update",
+      "scope": "custom-fields.update",
+      "operation_id": "updateCustomField",
+      "success_schema": {
+        "200": "CustomFieldApiMutationResult"
+      },
+      "native_authority": "customfield.manage_settings"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/custom-fields/{definition}",
+      "route": "api.v1.custom-fields.destroy",
+      "controller": "App\\Modules\\CustomField\\Controllers\\Api\\V1\\CustomFieldDefinitionController@destroy",
+      "scope": "custom-fields.delete",
+      "operation_id": "deleteCustomField",
+      "success_schema": {
+        "200": "CustomFieldApiDeleteResult"
+      },
+      "native_authority": "customfield.manage_settings"
+    }
+  ],
+  "schemas": [
+    "CustomFieldApiError",
+    "CustomFieldApiLinks",
+    "CustomFieldApiDefinition",
+    "CustomFieldApiDefinitionInput",
+    "CustomFieldApiDefinitionPatch",
+    "CustomFieldApiDefinitionResult",
+    "CustomFieldApiMutationResult",
+    "CustomFieldApiDeleted",
+    "CustomFieldApiDeleteResult",
+    "CustomFieldApiDeletedBody",
+    "CustomFieldApiPageLinks",
+    "CustomFieldApiPageMeta",
+    "CustomFieldApiList",
+    "CustomFieldApiModel",
+    "CustomFieldApiDefaults",
+    "CustomFieldApiContext",
+    "CustomFieldApiContextResult",
+    "CustomFieldApiOperation",
+    "CustomFieldApiOperationResult"
+  ],
+  "embedded_owners": {
+    "client": [
+      "read/create/update/clear/search",
+      "CustomFieldValueParityTest",
+      "CustomFieldModuleTest"
+    ],
+    "client_site": [
+      "read/create/update/clear/search/legacy aliases",
+      "CustomFieldValueParityTest",
+      "CustomFieldModuleTest"
+    ],
+    "ticket": [
+      "read/create/update/clear/one-event/no-op/field/work-context/portal",
+      "TicketCustomFieldSurfaceTest",
+      "TicketCustomFieldRuleContractTest",
+      "CustomFieldValueParityTest"
+    ]
+  },
+  "new_http_tests": [
+    "CustomFieldApiParityTest",
+    "CustomFieldApiContractTest",
+    "CustomFieldValueParityTest",
+    "CustomFieldKnowledgeSourceTest"
+  ],
+  "native_evidence": "native-db.json",
+  "trusted_https_evidence": "https.json",
+  "handbook_evidence": "bookstack.json",
+  "human_review": "HR-2026-10-27-CUSTOM-FIELD-API Pending; scoped Main merge explicitly authorized",
+  "production": "Not deployed"
+}

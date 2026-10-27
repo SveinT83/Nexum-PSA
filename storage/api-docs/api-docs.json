@@ -28474,13 +28474,13 @@
                 "tags": [
                     "Custom Fields"
                 ],
-                "summary": "List custom field definitions",
+                "summary": "List or search visible custom field definitions",
+                "description": "Required token ability: custom-fields.read. Native manager permission gives configuration access; other actors need owning-domain view and current field visibility. Hidden definitions are filtered before pagination.",
                 "operationId": "getCustomFields",
                 "parameters": [
                     {
                         "name": "model",
                         "in": "query",
-                        "description": "Filter by model alias, for example client.",
                         "schema": {
                             "type": "string"
                         }
@@ -28488,7 +28488,6 @@
                     {
                         "name": "q",
                         "in": "query",
-                        "description": "Search by key, label, help text, or model type.",
                         "schema": {
                             "type": "string"
                         }
@@ -28513,11 +28512,239 @@
                         "schema": {
                             "type": "boolean"
                         }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Custom field definitions"
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiList"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token ability denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unavailable target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Idempotency conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Definition state changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or filters",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header absent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Exact additive command migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Custom Fields"
+                ],
+                "summary": "Create a custom field definition",
+                "description": "Required token ability: custom-fields.create. Native customfield.manage_settings is required.",
+                "operationId": "createCustomField",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CustomFieldApiDefinitionInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiMutationResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token ability denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unavailable target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Idempotency conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Definition state changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or filters",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header absent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Exact additive command migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -28532,7 +28759,8 @@
                 "tags": [
                     "Custom Fields"
                 ],
-                "summary": "View custom field definition",
+                "summary": "Read exact custom field definition",
+                "description": "Required token ability: custom-fields.read. Native manager permission gives configuration access; other actors need owning-domain view and current field visibility. Hidden definitions are filtered before pagination.",
                 "operationId": "getCustomField",
                 "parameters": [
                     {
@@ -28546,10 +28774,372 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Custom field definition"
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiDefinitionResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token ability denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Custom field definition not found"
+                        "description": "Missing or unavailable target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Idempotency conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Definition state changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or filters",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header absent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Exact additive command migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Custom Fields"
+                ],
+                "summary": "Soft-delete a definition and retain its values",
+                "description": "Required token ability: custom-fields.delete. Native customfield.manage_settings is required. Normal definition GET becomes 404; repeated identical delete replays the retained receipt.",
+                "operationId": "deleteCustomField",
+                "parameters": [
+                    {
+                        "name": "definition",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "description": "Use the exact ETag returned by GET; stale state is 412.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiDeleteResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token ability denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unavailable target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Idempotency conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Definition state changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or filters",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header absent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Exact additive command migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Custom Fields"
+                ],
+                "summary": "Update or activate/deactivate a definition",
+                "description": "Required token ability: custom-fields.update. Native customfield.manage_settings is required. Omitted fields retain their values; model_type cannot change.",
+                "operationId": "updateCustomField",
+                "parameters": [
+                    {
+                        "name": "definition",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    },
+                    {
+                        "name": "If-Match",
+                        "in": "header",
+                        "description": "Use the exact ETag returned by GET; stale state is 412.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CustomFieldApiDefinitionPatch"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiMutationResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token ability denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unavailable target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Idempotency conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Definition state changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or filters",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header absent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Exact additive command migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -109683,6 +110273,231 @@
                     }
                 ]
             }
+        },
+        "/api/v1/custom-fields/context": {
+            "get": {
+                "tags": [
+                    "Custom Fields"
+                ],
+                "summary": "Definition administration context",
+                "description": "Required token ability: custom-fields.read. Native customfield.manage_settings is required.",
+                "operationId": "getCustomFieldContext",
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiContextResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token ability denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unavailable target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Idempotency conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Definition state changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or filters",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header absent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Exact additive command migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/custom-fields/operations/{operation}": {
+            "get": {
+                "tags": [
+                    "Custom Fields"
+                ],
+                "summary": "Read own exact command result",
+                "description": "Required token ability: custom-fields.operations.read. Native customfield.manage_settings is required. Current original mutation ability is also required. Results are actor/token bound.",
+                "operationId": "getCustomFieldOperation",
+                "parameters": [
+                    {
+                        "name": "operation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact authorized result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiOperationResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Native actor or token ability denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Missing or unavailable target",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Idempotency conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Definition state changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid input or filters",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "428": {
+                        "description": "Required command header absent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Exact additive command migration required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomFieldApiError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -148807,6 +149622,693 @@
                 },
                 "type": "object",
                 "additionalProperties": false
+            },
+            "CustomFieldApiError": {
+                "required": [
+                    "message"
+                ],
+                "properties": {
+                    "message": {
+                        "description": "Typed current-browser parity; value mutations stay in their owning domain APIs.",
+                        "type": "string"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "CustomFieldApiLinks": {
+                "required": [
+                    "self"
+                ],
+                "properties": {
+                    "self": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "CustomFieldApiDefinition": {
+                "required": [
+                    "id",
+                    "model",
+                    "model_type",
+                    "revision",
+                    "key",
+                    "label",
+                    "field_type",
+                    "help_text",
+                    "options",
+                    "sort_order",
+                    "visible_in_ui",
+                    "editable_in_ui",
+                    "editable_via_api",
+                    "searchable",
+                    "unique_per_model",
+                    "required",
+                    "admin_only",
+                    "active",
+                    "view_permission",
+                    "edit_permission",
+                    "links"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "model": {
+                        "type": "string",
+                        "enum": [
+                            "client",
+                            "client_site",
+                            "ticket"
+                        ]
+                    },
+                    "model_type": {
+                        "type": "string"
+                    },
+                    "revision": {
+                        "type": "string"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "field_type": {
+                        "type": "string",
+                        "enum": [
+                            "text",
+                            "textarea",
+                            "number",
+                            "date",
+                            "datetime",
+                            "select",
+                            "multiselect",
+                            "checkbox",
+                            "email",
+                            "phone",
+                            "url"
+                        ]
+                    },
+                    "help_text": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "options": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "sort_order": {
+                        "type": "integer"
+                    },
+                    "visible_in_ui": {
+                        "type": "boolean"
+                    },
+                    "editable_in_ui": {
+                        "type": "boolean"
+                    },
+                    "editable_via_api": {
+                        "type": "boolean"
+                    },
+                    "searchable": {
+                        "type": "boolean"
+                    },
+                    "unique_per_model": {
+                        "type": "boolean"
+                    },
+                    "required": {
+                        "type": "boolean"
+                    },
+                    "admin_only": {
+                        "type": "boolean"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "view_permission": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "edit_permission": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "links": {
+                        "$ref": "#/components/schemas/CustomFieldApiLinks"
+                    }
+                },
+                "type": "object"
+            },
+            "CustomFieldApiDefinitionInput": {
+                "required": [
+                    "model_type",
+                    "key",
+                    "label",
+                    "field_type"
+                ],
+                "properties": {
+                    "model_type": {
+                        "type": "string"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "field_type": {
+                        "type": "string",
+                        "enum": [
+                            "text",
+                            "textarea",
+                            "number",
+                            "date",
+                            "datetime",
+                            "select",
+                            "multiselect",
+                            "checkbox",
+                            "email",
+                            "phone",
+                            "url"
+                        ]
+                    },
+                    "help_text": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "options": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "nullable": true
+                    },
+                    "sort_order": {
+                        "type": "integer"
+                    },
+                    "visible_in_ui": {
+                        "type": "boolean"
+                    },
+                    "editable_in_ui": {
+                        "type": "boolean"
+                    },
+                    "editable_via_api": {
+                        "type": "boolean"
+                    },
+                    "searchable": {
+                        "type": "boolean"
+                    },
+                    "unique_per_model": {
+                        "type": "boolean"
+                    },
+                    "required": {
+                        "type": "boolean"
+                    },
+                    "admin_only": {
+                        "type": "boolean"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "view_permission": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "edit_permission": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "options_text": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "CustomFieldApiDefinitionPatch": {
+                "required": [],
+                "properties": {
+                    "model_type": {
+                        "type": "string"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "field_type": {
+                        "type": "string",
+                        "enum": [
+                            "text",
+                            "textarea",
+                            "number",
+                            "date",
+                            "datetime",
+                            "select",
+                            "multiselect",
+                            "checkbox",
+                            "email",
+                            "phone",
+                            "url"
+                        ]
+                    },
+                    "help_text": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "options": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "nullable": true
+                    },
+                    "sort_order": {
+                        "type": "integer"
+                    },
+                    "visible_in_ui": {
+                        "type": "boolean"
+                    },
+                    "editable_in_ui": {
+                        "type": "boolean"
+                    },
+                    "editable_via_api": {
+                        "type": "boolean"
+                    },
+                    "searchable": {
+                        "type": "boolean"
+                    },
+                    "unique_per_model": {
+                        "type": "boolean"
+                    },
+                    "required": {
+                        "type": "boolean"
+                    },
+                    "admin_only": {
+                        "type": "boolean"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "view_permission": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "edit_permission": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "options_text": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "CustomFieldApiDefinitionResult": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/CustomFieldApiDefinition"
+                    }
+                },
+                "type": "object"
+            },
+            "CustomFieldApiMutationResult": {
+                "required": [
+                    "data",
+                    "operation_id",
+                    "replayed"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/CustomFieldApiDefinition"
+                    },
+                    "operation_id": {
+                        "type": "string"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "CustomFieldApiDeleted": {
+                "required": [
+                    "id",
+                    "active",
+                    "deleted",
+                    "values_retained",
+                    "deleted_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "deleted": {
+                        "type": "boolean"
+                    },
+                    "values_retained": {
+                        "type": "boolean"
+                    },
+                    "deleted_at": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "CustomFieldApiDeleteResult": {
+                "required": [
+                    "data",
+                    "operation_id",
+                    "replayed"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/CustomFieldApiDeleted"
+                    },
+                    "operation_id": {
+                        "type": "string"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "CustomFieldApiDeletedBody": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/CustomFieldApiDeleted"
+                    }
+                },
+                "type": "object"
+            },
+            "CustomFieldApiPageLinks": {
+                "required": [
+                    "first",
+                    "last",
+                    "prev",
+                    "next"
+                ],
+                "properties": {
+                    "first": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "prev": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "CustomFieldApiPageMeta": {
+                "required": [
+                    "current_page",
+                    "last_page",
+                    "per_page",
+                    "total"
+                ],
+                "properties": {
+                    "current_page": {
+                        "type": "integer"
+                    },
+                    "last_page": {
+                        "type": "integer"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "total": {
+                        "type": "integer"
+                    },
+                    "from": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "to": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "url",
+                                "label",
+                                "active"
+                            ],
+                            "properties": {
+                                "url": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "label": {
+                                    "type": "string"
+                                },
+                                "active": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "CustomFieldApiList": {
+                "required": [
+                    "data",
+                    "links",
+                    "meta"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CustomFieldApiDefinition"
+                        }
+                    },
+                    "links": {
+                        "$ref": "#/components/schemas/CustomFieldApiPageLinks"
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/CustomFieldApiPageMeta"
+                    }
+                },
+                "type": "object"
+            },
+            "CustomFieldApiModel": {
+                "required": [
+                    "alias",
+                    "model_type",
+                    "label"
+                ],
+                "properties": {
+                    "alias": {
+                        "type": "string"
+                    },
+                    "model_type": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "CustomFieldApiDefaults": {
+                "required": [
+                    "visible_in_ui",
+                    "editable_in_ui",
+                    "editable_via_api",
+                    "searchable",
+                    "unique_per_model",
+                    "required",
+                    "admin_only",
+                    "active",
+                    "sort_order"
+                ],
+                "properties": {
+                    "visible_in_ui": {
+                        "type": "boolean"
+                    },
+                    "editable_in_ui": {
+                        "type": "boolean"
+                    },
+                    "editable_via_api": {
+                        "type": "boolean"
+                    },
+                    "searchable": {
+                        "type": "boolean"
+                    },
+                    "unique_per_model": {
+                        "type": "boolean"
+                    },
+                    "required": {
+                        "type": "boolean"
+                    },
+                    "admin_only": {
+                        "type": "boolean"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "sort_order": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "CustomFieldApiContext": {
+                "required": [
+                    "models",
+                    "field_types",
+                    "permissions",
+                    "create_defaults",
+                    "ticket_write_gates",
+                    "commands_available"
+                ],
+                "properties": {
+                    "models": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CustomFieldApiModel"
+                        }
+                    },
+                    "field_types": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "permissions": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "create_defaults": {
+                        "$ref": "#/components/schemas/CustomFieldApiDefaults"
+                    },
+                    "ticket_write_gates": {
+                        "required": [
+                            "ui",
+                            "api"
+                        ],
+                        "properties": {
+                            "ui": {
+                                "type": "boolean"
+                            },
+                            "api": {
+                                "type": "boolean"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "commands_available": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "CustomFieldApiContextResult": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/CustomFieldApiContext"
+                    }
+                },
+                "type": "object"
+            },
+            "CustomFieldApiOperation": {
+                "required": [
+                    "id",
+                    "operation",
+                    "state",
+                    "status",
+                    "result",
+                    "etag"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "operation": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "completed"
+                        ]
+                    },
+                    "status": {
+                        "type": "integer"
+                    },
+                    "result": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/CustomFieldApiDefinitionResult"
+                            },
+                            {
+                                "$ref": "#/components/schemas/CustomFieldApiDeletedBody"
+                            }
+                        ]
+                    },
+                    "etag": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "CustomFieldApiOperationResult": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/CustomFieldApiOperation"
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -148852,7 +150354,7 @@
         },
         {
             "name": "Custom Fields",
-            "description": "API endpoints for discovering configurable custom field definitions."
+            "description": "Scoped definition discovery and native definition administration."
         },
         {
             "name": "DataExchange",
