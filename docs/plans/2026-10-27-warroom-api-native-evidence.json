@@ -1,0 +1,15 @@
+{
+    "environment": "authoritative Dev native MySQL",
+    "migration": "2026_10_27_110000_create_warroom_api_commands.php",
+    "transaction_rollback": true,
+    "replay": true,
+    "encrypted_receipt": true,
+    "concurrent_statuses": [
+        200,
+        412
+    ],
+    "second_writer_wait_ms": 705,
+    "live_settings_values_preserved": true,
+    "receipt_cleanup": true,
+    "app_origin": "https:\/\/dev.nexumpsa.eu"
+}

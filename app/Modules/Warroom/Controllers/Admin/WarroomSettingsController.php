@@ -3,37 +3,24 @@
 namespace App\Modules\Warroom\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Warroom\Support\WarroomSettings;
+use App\Modules\Warroom\Actions\SaveWarroomSettings;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class WarroomSettingsController extends Controller
 {
-    public function edit(WarroomSettings $settings)
+    public function edit(SaveWarroomSettings $action)
     {
-        return view('warroom::Admin.Settings.edit', [
-            'settings' => $settings->get(),
-            'sectionOptions' => WarroomSettings::SECTION_OPTIONS,
-        ]);
+        $snapshot = $action->snapshot();
+
+        return view('warroom::Admin.Settings.edit', ['settings' => $snapshot['settings'],
+            'revision' => $snapshot['revision'], 'sectionOptions' => $snapshot['section_options']]);
     }
 
-    public function update(Request $request, WarroomSettings $settings)
+    public function update(Request $request, SaveWarroomSettings $action)
     {
-        $validated = $request->validate([
-            'due_soon_hours' => ['required', 'integer', 'min:1', 'max:168'],
-            'inbox_recent_hours' => ['required', 'integer', 'min:1', 'max:168'],
-            'latest_tickets_limit' => ['required', 'integer', 'min:1', 'max:20'],
-            'latest_alerts_limit' => ['required', 'integer', 'min:1', 'max:20'],
-            'calendar_today_limit' => ['required', 'integer', 'min:1', 'max:20'],
-            'recent_integrations_limit' => ['required', 'integer', 'min:1', 'max:20'],
-            'enabled_sections' => ['required', 'array', 'min:1'],
-            'enabled_sections.*' => ['string', Rule::in(array_keys(WarroomSettings::SECTION_OPTIONS))],
-        ]);
+        // CSRF/method/revision belong to transport; every business field uses the shared validator.
+        $action->execute($request->user(), $request->except(['_token', '_method', 'revision']), $request->input('revision'));
 
-        $settings->update($validated);
-
-        return redirect()
-            ->route('tech.admin.settings.warroom')
-            ->with('success', 'Warroom settings were updated.');
+        return redirect()->route('tech.admin.settings.warroom')->with('success', 'Warroom settings were updated.');
     }
 }

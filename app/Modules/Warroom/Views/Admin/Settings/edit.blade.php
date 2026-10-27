@@ -16,6 +16,7 @@
     <form method="POST" action="{{ route('tech.admin.settings.warroom.update') }}">
         @csrf
         @method('PUT')
+        <input type="hidden" name="revision" value="{{ $revision }}">
 
         <div class="card shadow-sm mb-3">
             <div class="card-header">
