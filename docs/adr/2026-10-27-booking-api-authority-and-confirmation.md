@@ -43,7 +43,7 @@ record exposure beyond the existing thanks page.
 
 ## Follow-Up
 
-Implement four sequential slices after RFC approval; verify each matrix row,
+Four sequential slices are implemented and verified; evidence covers each matrix row,
 current authority, native concurrency, typed read-back and BookStack access.
 HR-2026-10-27-BOOKING-API remains Pending until named review; Main/production separate.
 

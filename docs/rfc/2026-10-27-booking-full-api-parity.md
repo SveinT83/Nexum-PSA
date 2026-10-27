@@ -10,12 +10,12 @@ Slices: ../feature-slices/2026-10-27-booking-full-api-parity.md (Draft).
 
 ## Context
 
-Svein requested 100% Booking API support. Authoritative Dev has 13 browser route
+Svein requested 100% Booking API support. At approval baseline, authoritative Dev had 13 browser route
 rows and zero Booking API operations. Existing Booking and Calendar module suites
 pass 37 tests / 315 assertions. This is baseline evidence, not API completion.
 The approved July Booking RFC and July 28 slice define current routing/workflows;
 they do not approve this new API authority/command contract. Existing Knowledge
-and other contributor work is preserved; this checkpoint starts no implementation.
+and other contributor work is preserved; implementation is now complete and verified.
 
 ## Goals
 
@@ -35,6 +35,9 @@ sends, runtime activation or production deployment are included. Scoped Main pro
 and its commit/push are explicitly authorized by Svein Tore.
 
 ## Current Behavior
+
+This section records the inspected pre-change baseline; the verified implementation
+is documented in the linked verification report.
 
 Public /booking lists active staff-confirmed settings backed by orderable active/
 published Commercial services and valid technicians. Customers choose Calendar-based

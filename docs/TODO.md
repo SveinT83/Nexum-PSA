@@ -10,7 +10,7 @@ ADR: adr/2026-10-27-booking-api-authority-and-confirmation.md (Accepted).
 Four slices: feature-slices/2026-10-27-booking-full-api-parity.md (Done On Dev).
 Evidence: plans/2026-10-27-booking-api-coverage-matrix.md/.json and
 plans/2026-10-27-booking-api-verification.md/.json.
-Dev: 189 tests / 2622 assertions; isolated Main: 189 / 2490, no failures/skips.
+Dev: 189 tests / 2622 assertions; isolated Main: 189 / 2513, no failures/skips.
 Native MySQL decision/slot/writer locking, encrypted uniqueness/rollback, isolated
 trusted HTTPS all-17-operation flow and ordinary Dev HTTPS scoped reads/Swagger pass.
 Handbook: actual BookStack Booking Overview 543/revision 3 includes full API guide;

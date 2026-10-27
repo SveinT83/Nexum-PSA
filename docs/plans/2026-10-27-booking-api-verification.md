@@ -18,7 +18,7 @@ operations. Four Booking abilities have route, catalog, typed contract and tests
 ## Automated Evidence
 
 - Dev: 189 distinct tests / 2622 assertions, zero unresolved failures/skips.
-- Isolated Main candidate: 189 distinct tests / 2490 assertions, zero unresolved
+- Isolated Main candidate: 189 distinct tests / 2513 assertions, zero unresolved
   failures/skips. Booking subset: 35 tests, including the inventory contract test.
 - Counts deduplicate JUnit test identities across the broad run and targeted repair
   runs; already-passing cases were not repeated without a changed file/failure.

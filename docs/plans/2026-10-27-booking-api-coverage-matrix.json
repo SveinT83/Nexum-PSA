@@ -849,7 +849,7 @@
     },
     "main_candidate": {
       "tests": 189,
-      "assertions": 2490,
+      "assertions": 2513,
       "failures": 0,
       "skips": 0
     },

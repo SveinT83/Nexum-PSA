@@ -7,9 +7,11 @@
   },
   "main_candidate": {
     "tests": 189,
-    "assertions": 2490,
+    "assertions": 2513,
     "failures": 0,
-    "skips": 0
+    "skips": 0,
+    "base_commit": "7d8087e4851f823fc87eaeff2cd46ff84eb8b4b6",
+    "final_single_run": true
   },
   "native_mysql": {
     "competing_confirmations": [
@@ -265,5 +267,12 @@
     "publication": "Connected BookStack MCP; full API guide consolidated on existing Booking Overview. Naming schema rejected a separate API page; temporary page 650 soft-deleted and absence verified."
   },
   "production": "unchanged",
-  "human_review": "HR-2026-10-27-BOOKING-API Pending; Main promotion explicitly authorized by Svein Tore"
+  "human_review": "HR-2026-10-27-BOOKING-API Pending; Main promotion explicitly authorized by Svein Tore",
+  "final_scope": {
+    "changed_files": 45,
+    "php_syntax_checks": 50,
+    "pint_passed": true,
+    "whitespace_passed": true,
+    "unrelated_swagger_contracts_unchanged": true
+  }
 }

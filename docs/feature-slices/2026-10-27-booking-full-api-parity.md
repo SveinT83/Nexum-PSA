@@ -78,7 +78,7 @@ matrix/HR reconciled; Dev/Main/production and pending manual/activation gates ex
 
 ## Out Of Scope
 
-Future unimplemented Booking products, Main/production promotion, role grants,
+Future unimplemented Booking products, production promotion, role grants,
 live customer tests and operational API/provider/scheduler activation.
 
 ## Documentation
