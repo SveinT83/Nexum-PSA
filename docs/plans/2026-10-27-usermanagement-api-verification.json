@@ -159,8 +159,8 @@
       {
         "id": 449,
         "name": "Api Management",
-        "updated_at": "2026-10-27T19:43:26.000000Z",
-        "revision_count": 158,
+        "updated_at": "2026-10-27T20:29:03.000000Z",
+        "revision_count": 161,
         "content_verified": true,
         "chapter_id": 374,
         "book_id": 339,
@@ -221,6 +221,13 @@
       "failures": 0,
       "skipped": 1,
       "time": 183.533718
+    },
+    "main-integrated-tests.xml": {
+      "tests": 91,
+      "assertions": 2496,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 1
     }
   },
   "deployment": {
@@ -282,5 +289,6 @@
     "own_setup_reachable": true,
     "valid_sso_grant_supported": true,
     "middleware_registration_regression_verified": true
-  }
+  },
+  "tested_main_base": "fa6aeee942130d72673b809f4aacc6a9d67473e9"
 }

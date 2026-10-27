@@ -24,7 +24,7 @@ manual checks still gate production release/activation. Earlier SSO/manual gates
 Next (Codex): merge only the scoped tested Main candidate after current-base read-back,
 preserving unrelated shared Dev work and separately owned protected security adapters.
 Final MFA/session regression: Dev 79 / 990; Main 185 passed / 2616 assertions with one existing optional provider skip; no failures/errors.
-
+Latest Main integration (including Marketing): 90 passed / 2496 assertions; one existing optional protected-provider skip, zero errors/failures.
 
 
 ## Full Marketing browser/API coverage (2026-10-27)

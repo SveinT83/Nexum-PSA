@@ -33,7 +33,7 @@ All 56 HTTP method responses match Swagger on both runtimes; native MySQL, trust
 HTTPS, exact handbook content and inherited employee access are verified. None of this
 marks the scenario boxes Reviewed. Actual refs are in the Main promotion report.
 Final MFA/session regression: Dev 79 / 990; Main 185 passed / 2616 assertions with one existing optional provider skip; no failures/errors.
-
+Latest Main integration (including Marketing): 90 passed / 2496 assertions; one existing optional protected-provider skip, zero errors/failures.
 
 
 ## HR-2026-10-27-MARKETING-API - Full Marketing Browser/API Coverage

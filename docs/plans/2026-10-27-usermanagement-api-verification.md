@@ -24,6 +24,8 @@ A transient concurrent Warroom migration edit interrupted one later fresh test s
 its syntax was independently valid and the exact changed-flow rerun passed. No foreign
 work was rewritten or deferred. These historical failures are not outstanding blockers.
 
+Latest Main integration (including Marketing): 90 passed / 2496 assertions; one existing optional protected-provider skip, zero errors/failures.
+
 ## Native, HTTP and handbook evidence
 
 The exact additive migration 2026_10_27_030000_create_user_management_api_commands.php
