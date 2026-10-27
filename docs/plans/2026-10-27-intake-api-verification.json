@@ -125,5 +125,13 @@
     "base": "7d8087e4851f823fc87eaeff2cd46ff84eb8b4b6",
     "scope": "Intake, Notification, Knowledge source sync, production-safe Swagger"
   },
-  "pr": "https://github.com/SveinT83/Nexum-PSA/pull/340"
+  "pr": "https://github.com/SveinT83/Nexum-PSA/pull/340",
+  "main": {
+    "pr": 340,
+    "merge_sha": "f8180e6efb696321f7bfa09863403ac11d840e33",
+    "candidate_sha": "1b0a931907a94ea62c59e132713b70dd175d6a38",
+    "tested_tree": "436b960755703d2ccbb4303e19cacc43c2371e05",
+    "exact_tree_match": true,
+    "production_deployed": false
+  }
 }

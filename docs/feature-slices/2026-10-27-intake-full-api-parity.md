@@ -1,6 +1,6 @@
 # Feature Slices: Full Intake Browser/API Parity
 
-Status: Done On Dev / RFC Approved / Main promotion authorized
+Status: Done On Dev / Merged to Main in PR #340 / Production unchanged
 Date: 2026-10-27
 Parent: rfc/2026-10-27-intake-full-api-parity.md
 Owner: Codex

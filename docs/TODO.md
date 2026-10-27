@@ -2,7 +2,7 @@
 
 ## Full Intake browser/API coverage (2026-10-27)
 
-Status: Done On Dev / Affected and initial Main-candidate verification passed / Main promotion authorized.
+Status: Done On Dev / Merged to Main in PR #340 / Production unchanged.
 Owner: Codex; approver/reviewer: Svein Tore.
 Authorization: "Godkjenner og merge til main", 2026-10-27.
 RFC: rfc/2026-10-27-intake-full-api-parity.md (Approved).
