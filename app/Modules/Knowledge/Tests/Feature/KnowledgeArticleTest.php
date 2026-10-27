@@ -17,7 +17,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
-use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -70,6 +69,22 @@ class KnowledgeArticleTest extends TestCase
         $this->tech->assignRole('Tech');
     }
 
+    /** Legacy workflow tests use real PAT identity; provider calls are HTTP/queue fakes. */
+    private function apiActor(array $abilities): void
+    {
+        config(['knowledge-api.provider_execution_enabled' => true]);
+        $this->withToken($this->tech->createToken('Knowledge regression', array_merge($abilities, ['knowledge.providers.execute']))->plainTextToken);
+    }
+
+    public function call($method, $uri, $parameters = [], $cookies = [], $files = [], $server = [], $content = null)
+    {
+        if (! in_array(strtoupper($method), ['GET', 'HEAD'], true)) {
+            $server['HTTP_IDEMPOTENCY_KEY'] ??= (string) \Illuminate\Support\Str::uuid();
+        }
+
+        return parent::call($method, $uri, $parameters, $cookies, $files, $server, $content);
+    }
+
     #[Test]
     public function tech_user_can_create_article(): void
     {
@@ -98,7 +113,7 @@ class KnowledgeArticleTest extends TestCase
     #[Test]
     public function authenticated_api_user_can_create_list_show_and_update_articles(): void
     {
-        Sanctum::actingAs($this->tech, ['knowledge.read', 'knowledge.create', 'knowledge.update']);
+        $this->apiActor(['knowledge.read', 'knowledge.create', 'knowledge.update']);
 
         $this->postJson(route('api.v1.knowledge.articles.store'), [
             'title' => 'API Knowledge Article',
@@ -145,7 +160,7 @@ class KnowledgeArticleTest extends TestCase
     #[Test]
     public function knowledge_visibility_scope_remains_separate_from_work_context(): void
     {
-        Sanctum::actingAs($this->tech, ['knowledge.create']);
+        $this->apiActor(['knowledge.create']);
 
         $client = Client::factory()->create(['name' => 'Knowledge Scope Client']);
 
@@ -173,7 +188,7 @@ class KnowledgeArticleTest extends TestCase
     #[Test]
     public function knowledge_read_api_token_cannot_create_articles(): void
     {
-        Sanctum::actingAs($this->tech, ['knowledge.read']);
+        $this->apiActor(['knowledge.read']);
 
         $this->postJson(route('api.v1.knowledge.articles.store'), [
             'title' => 'Blocked Knowledge Article',
@@ -185,7 +200,7 @@ class KnowledgeArticleTest extends TestCase
     public function authenticated_api_user_can_manage_knowledge_hierarchy(): void
     {
         Queue::fake();
-        Sanctum::actingAs($this->tech, ['knowledge.read', 'knowledge.create', 'knowledge.update']);
+        $this->apiActor(['knowledge.read', 'knowledge.create', 'knowledge.update']);
 
         Integration::create([
             'name' => 'BookStack',
@@ -252,7 +267,7 @@ class KnowledgeArticleTest extends TestCase
     #[Test]
     public function knowledge_api_rejects_book_stack_sync_request_when_two_way_sync_is_disabled(): void
     {
-        Sanctum::actingAs($this->tech, ['knowledge.create']);
+        $this->apiActor(['knowledge.create']);
 
         $this->postJson(route('api.v1.knowledge.shelves.store'), [
             'name' => 'Unsynced Shelf',
@@ -266,7 +281,7 @@ class KnowledgeArticleTest extends TestCase
     public function article_api_can_mark_local_hierarchy_for_book_stack_push(): void
     {
         Queue::fake();
-        Sanctum::actingAs($this->tech, ['knowledge.read', 'knowledge.create', 'knowledge.update']);
+        $this->apiActor(['knowledge.read', 'knowledge.create', 'knowledge.update']);
 
         Integration::create([
             'name' => 'BookStack',
@@ -323,7 +338,7 @@ class KnowledgeArticleTest extends TestCase
     #[Test]
     public function article_api_rejects_book_stack_owned_update_when_two_way_sync_is_disabled(): void
     {
-        Sanctum::actingAs($this->tech, ['knowledge.update']);
+        $this->apiActor(['knowledge.update']);
 
         $article = Article::create([
             'title' => 'Synced Page',
@@ -890,7 +905,7 @@ class KnowledgeArticleTest extends TestCase
     {
         $this->artisan('knowledge:sync-docs', ['--module' => ['Documentation']])
             ->expectsOutput('chapters: 1')
-            ->expectsOutput('articles: 3')
+            ->expectsOutput('articles: 4')
             ->expectsOutput('modules: Documentation')
             ->assertSuccessful();
 
@@ -919,6 +934,19 @@ class KnowledgeArticleTest extends TestCase
             $supplierBootstrapArticle->title,
         );
         $this->assertSame('Documentation', $supplierBootstrapArticle->source_payload['module']);
+
+        // The API guide is a repository-owned handbook article alongside the overview.
+        $apiArticle = Article::where('source_system', 'nexum')
+            ->where('source_type', 'repository-docs')
+            ->where('source_id', 'documentation/documentation-api')
+            ->firstOrFail();
+
+        $this->assertSame('Documentation Api', $apiArticle->title);
+        $this->assertSame('Documentation', $apiArticle->source_payload['module']);
+        $this->assertSame(
+            trim(file_get_contents(app_path('Modules/Documentation/Docs/knowledge/documentation-api.md'))),
+            $apiArticle->body_markdown,
+        );
     }
 
     #[Test]

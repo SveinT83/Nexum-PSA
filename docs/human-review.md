@@ -1,5 +1,38 @@
 # Human Review Register
 
+## HR-2026-10-27-KNOWLEDGE-API - Full Knowledge Browser/API Coverage
+
+Status: Pending human scenario review; automated Dev implementation is complete.
+Owner: Codex. Named intended human reviewer/release owner: Svein Tore.
+Scope: rfc/2026-10-27-knowledge-full-api-parity.md (Approved; Done On Dev); all 37 browser rows,
+Livewire tags/editor, library Sync Now, settings and portal workflows.
+Svein Tore explicitly authorized "Ja og merge til main" on 2026-10-27. Tested Main
+promotion is authorized with these manual scenarios still Pending; no scenario or
+review is marked Reviewed. This checklist and HR-2026-09-04-001 / HR-2026-09-03-003
+continue to block production rollout/release/provider activation until separately approved.
+
+- [ ] Create/edit a proposal; confirm the published article stays unchanged until exact approval/publication.
+- [ ] Review full preview/diff/history; approve/reject and publish/retry with separate native/token rights.
+- [ ] Verify Ticket-only AI review remains exact-object, with no library/other-revision/publication access.
+- [ ] Test stale/replayed requests and revoked rights; confirm no duplicate mutation or leaked receipt.
+- [ ] Exercise hierarchy, tags, defaults and source-owned records; confirm browser/API results match.
+- [ ] Exercise controlled sync/conflict/local/provider read-back and rollback; queued is not published proof.
+- [ ] Verify portal account/contact/membership and other-client/internal/draft exclusions.
+- [ ] Review Swagger and actual employee BookStack guide/access; confirm Dev/Main/production availability.
+
+Expected: equivalent current browser operations with typed exact results and no extra authority.
+Deploy: exact additive migration 2026_10_27_020000_create_knowledge_api_commands.php is
+installed on Dev in batch 32; production rollout requires separate authorization, this exact
+migration, Swagger/cache handling and the open review gates. API provider execution stays off.
+Risks/recovery: preserve published projection, immutable revisions and encrypted receipts; disable
+new entry points on failure; reconcile unknown provider outcomes without blind retries.
+Automated Dev evidence: all 44 HTTP operations / 38 schemas; final contract 16 / 1160,
+earlier core 97 / 2663 and broader affected 252 / 3648 (overlap). Exact Dev migration in
+batch 32, native MySQL, trusted HTTPS and actual handbook bodies/access were verified.
+Final isolated Main batch passed 326 / 5246; final Swagger checks 2 / 694.
+Evidence: plans/2026-10-27-knowledge-api-verification.md/.json. No human scenario execution
+is inferred. Main merge is authorized; production/activation remains blocked.
+
 ## HR-2026-10-27-DOCUMENTATION-API - Full Documentation Browser/API Coverage
 
 Status: Reviewed. Date: 2026-10-27.

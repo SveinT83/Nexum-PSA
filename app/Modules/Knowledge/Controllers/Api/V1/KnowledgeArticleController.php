@@ -13,36 +13,11 @@ use App\Modules\Knowledge\Support\KnowledgeSettings;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use OpenApi\Attributes as OA;
 
-#[OA\Tag(
-    name: 'Knowledge',
-    description: 'API endpoints for knowledge articles.'
-)]
 class KnowledgeArticleController extends Controller
 {
     public function __construct(private readonly KnowledgeBookStackSync $bookStackSync) {}
 
-    #[OA\Get(
-        path: '/api/v1/knowledge/articles',
-        operationId: 'getKnowledgeArticleList',
-        description: 'Returns a paginated list of knowledge articles.',
-        summary: 'Get list of knowledge articles',
-        security: [['bearerAuth' => []]],
-        tags: ['Knowledge'],
-        parameters: [
-            new OA\Parameter(name: 'q', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
-            new OA\Parameter(name: 'status', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
-            new OA\Parameter(name: 'visibility', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
-            new OA\Parameter(name: 'book_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
-            new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Successful operation'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 403, description: 'Missing knowledge.read scope'),
-        ]
-    )]
     public function index(Request $request)
     {
         $query = Article::query()
@@ -70,61 +45,26 @@ class KnowledgeArticleController extends Controller
             $query->where('knowledge_book_id', $request->integer('book_id'));
         }
 
+        foreach (['shelf_id' => 'knowledge_shelf_id', 'chapter_id' => 'knowledge_chapter_id', 'category_id' => 'category_id', 'client_scope_id' => 'client_scope_id'] as $filter => $column) {
+            if ($request->filled($filter)) {
+                $query->where($column, $request->integer($filter));
+            }
+        }
+        $request->validate(['review_due' => 'sometimes|boolean']);
+        if ($request->boolean('review_due')) {
+            $query->whereNotNull('next_review_at')->where('next_review_at', '<=', now());
+        }
+
         return KnowledgeArticleResource::collection($query->paginate($request->integer('per_page') ?: 15));
     }
 
-    #[OA\Get(
-        path: '/api/v1/knowledge/articles/{article}',
-        operationId: 'getKnowledgeArticleById',
-        description: 'Returns one knowledge article.',
-        summary: 'Get knowledge article',
-        security: [['bearerAuth' => []]],
-        tags: ['Knowledge'],
-        parameters: [
-            new OA\Parameter(name: 'article', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Successful operation'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 403, description: 'Missing knowledge.read scope'),
-            new OA\Response(response: 404, description: 'Article not found'),
-        ]
-    )]
     public function show(Article $article)
     {
+        app(\App\Modules\Knowledge\Actions\RecordArticleView::class)->handle($article);
+
         return new KnowledgeArticleResource($this->loadArticle($article));
     }
 
-    #[OA\Post(
-        path: '/api/v1/knowledge/articles',
-        operationId: 'createKnowledgeArticle',
-        description: 'Creates a knowledge article and renders Markdown to HTML.',
-        summary: 'Create knowledge article',
-        security: [['bearerAuth' => []]],
-        tags: ['Knowledge'],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                required: ['title', 'body_markdown'],
-                properties: [
-                    new OA\Property(property: 'title', type: 'string'),
-                    new OA\Property(property: 'body_markdown', type: 'string'),
-                    new OA\Property(property: 'visibility', type: 'string', nullable: true),
-                    new OA\Property(property: 'status', type: 'string', nullable: true),
-                    new OA\Property(property: 'knowledge_book_id', type: 'integer', nullable: true),
-                    new OA\Property(property: 'knowledge_chapter_id', type: 'integer', nullable: true),
-                    new OA\Property(property: 'priority', type: 'integer', nullable: true),
-                ],
-                type: 'object'
-            )
-        ),
-        responses: [
-            new OA\Response(response: 201, description: 'Article created'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 403, description: 'Missing knowledge.create scope'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
     public function store(Request $request, StoreArticle $storeArticle, KnowledgeSettings $settings)
     {
         $request->merge($settings->articleDefaults($request->all()));
@@ -147,42 +87,6 @@ class KnowledgeArticleController extends Controller
             ->setStatusCode(201);
     }
 
-    #[OA\Put(
-        path: '/api/v1/knowledge/articles/{article}',
-        operationId: 'replaceKnowledgeArticle',
-        description: 'Updates a knowledge article and re-renders Markdown to HTML.',
-        summary: 'Update knowledge article',
-        security: [['bearerAuth' => []]],
-        tags: ['Knowledge'],
-        parameters: [
-            new OA\Parameter(name: 'article', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Article updated'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 403, description: 'Missing knowledge.update scope'),
-            new OA\Response(response: 404, description: 'Article not found'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
-    #[OA\Patch(
-        path: '/api/v1/knowledge/articles/{article}',
-        operationId: 'patchKnowledgeArticle',
-        description: 'Partially updates a knowledge article. Missing required edit fields are inherited from the current article.',
-        summary: 'Partially update knowledge article',
-        security: [['bearerAuth' => []]],
-        tags: ['Knowledge'],
-        parameters: [
-            new OA\Parameter(name: 'article', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Article updated'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 403, description: 'Missing knowledge.update scope'),
-            new OA\Response(response: 404, description: 'Article not found'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
     public function update(Request $request, Article $article, UpdateArticle $updateArticle)
     {
         $this->ensureBookStackOwnedArticleCanBeEdited($article);
@@ -190,7 +94,7 @@ class KnowledgeArticleController extends Controller
         $syncToBookStack = $request->boolean('sync_to_book_stack');
         $this->ensureTwoWaySyncWhenRequested($syncToBookStack);
 
-        $validated = $this->validateArticlePayload($request, creating: false);
+        $validated = $this->validateArticlePayload($request, creating: false, article: $article);
         unset($validated['sync_to_book_stack']);
 
         $data = array_merge(
@@ -221,9 +125,9 @@ class KnowledgeArticleController extends Controller
         return response()->noContent();
     }
 
-    private function validateArticlePayload(Request $request, bool $creating): array
+    private function validateArticlePayload(Request $request, bool $creating, ?Article $article = null): array
     {
-        return $request->validate([
+        $validated = $request->validate([
             'title' => [$creating ? 'required' : 'sometimes', 'string', 'max:255'],
             'body_markdown' => [$creating ? 'required' : 'sometimes', 'string'],
             'visibility' => ['sometimes', 'required', Rule::in(array_keys(KnowledgeSettings::VISIBILITY_OPTIONS))],
@@ -237,6 +141,19 @@ class KnowledgeArticleController extends Controller
             'next_review_at' => ['sometimes', 'nullable', 'date'],
             'sync_to_book_stack' => ['sometimes', 'boolean'],
         ]);
+        $combined = array_merge($article ? $this->payloadFromArticle($article) : [], $validated);
+        if (! empty($combined['knowledge_book_id']) && ! empty($combined['knowledge_shelf_id'])) {
+            \Illuminate\Support\Facades\Validator::make($combined, [
+                'knowledge_book_id' => Rule::exists('knowledge_books', 'id')->where('shelf_id', $combined['knowledge_shelf_id']),
+            ])->validate();
+        }
+        if (! empty($combined['knowledge_chapter_id']) && ! empty($combined['knowledge_book_id'])) {
+            \Illuminate\Support\Facades\Validator::make($combined, [
+                'knowledge_chapter_id' => Rule::exists('knowledge_chapters', 'id')->where('book_id', $combined['knowledge_book_id']),
+            ])->validate();
+        }
+
+        return $validated;
     }
 
     private function payloadFromArticle(Article $article): array
@@ -258,7 +175,7 @@ class KnowledgeArticleController extends Controller
 
     private function loadArticle(Article $article): Article
     {
-        return $article->load(['knowledgeShelf', 'knowledgeBook', 'knowledgeChapter', 'owner', 'creator', 'updater']);
+        return $article->unsetRelation('pendingRevision')->refresh()->load(['knowledgeShelf', 'knowledgeBook', 'knowledgeChapter', 'owner', 'creator', 'updater', 'category', 'clientScope', 'tags']);
     }
 
     private function ensureTwoWaySyncWhenRequested(bool $syncToBookStack): void

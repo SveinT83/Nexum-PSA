@@ -14,6 +14,10 @@ class KnowledgeArticleResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'published_revision_id' => $this->published_revision_id,
+            'category' => $this->whenLoaded('category', fn () => $this->category?->only(['id', 'name'])),
+            'client' => $this->whenLoaded('clientScope', fn () => $this->clientScope?->only(['id', 'name'])),
+            'tags' => $this->whenLoaded('tags', fn () => $this->tags->map(fn ($tag) => $tag->only(['id', 'name', 'color']))),
             'title' => $this->title,
             'slug' => $this->slug,
             'body_markdown' => $this->body_markdown,

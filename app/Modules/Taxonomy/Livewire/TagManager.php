@@ -2,15 +2,18 @@
 
 namespace App\Modules\Taxonomy\Livewire;
 
+use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Component;
-use App\Modules\Taxonomy\Models\Tag;
 
 class TagManager extends Component
 {
     public $model;
+
     public $module;
+
     public $search = '';
+
     public $showSuggestions = false;
 
     // Remove $listeners = ['tagAdded' => '$refresh', 'tagRemoved' => '$refresh'];
@@ -25,18 +28,30 @@ class TagManager extends Component
     protected function inferModule()
     {
         $class = get_class($this->model);
-        if (str_contains($class, 'Knowledge')) return 'knowledge';
-        if (str_contains($class, 'Client')) return 'crm';
+        if (str_contains($class, 'Knowledge')) {
+            return 'knowledge';
+        }
+        if (str_contains($class, 'Client')) {
+            return 'crm';
+        }
+
         return 'general';
     }
 
     public function addTag($tagId)
     {
-        if (!$this->model->exists) {
-             return;
+        if ($this->model instanceof \App\Models\Knowledge\Article) {
+            $this->model = app(\App\Modules\Knowledge\Actions\ManageArticleTag::class)->handle($this->model, (int) $tagId);
+            $this->search = '';
+            $this->showSuggestions = false;
+
+            return;
+        }
+        if (! $this->model->exists) {
+            return;
         }
 
-        if (!$this->model->tags()->where('tags.id', $tagId)->exists()) {
+        if (! $this->model->tags()->where('tags.id', $tagId)->exists()) {
             $this->model->tags()->attach($tagId, ['module' => $this->module]);
         }
 
@@ -47,13 +62,27 @@ class TagManager extends Component
 
     public function removeTag($tagId)
     {
+        if ($this->model instanceof \App\Models\Knowledge\Article) {
+            $this->model = app(\App\Modules\Knowledge\Actions\ManageArticleTag::class)->handle($this->model, (int) $tagId, remove: true);
+
+            return;
+        }
         $this->model->tags()->detach($tagId);
         $this->model->load('tags');
     }
 
     public function createAndAddTag()
     {
-        if (empty(trim($this->search))) return;
+        if ($this->model instanceof \App\Models\Knowledge\Article) {
+            $this->model = app(\App\Modules\Knowledge\Actions\ManageArticleTag::class)->handle($this->model, name: $this->search);
+            $this->search = '';
+            $this->showSuggestions = false;
+
+            return;
+        }
+        if (empty(trim($this->search))) {
+            return;
+        }
 
         $tag = Tag::firstOrCreate(
             ['name' => trim($this->search)],
@@ -67,11 +96,11 @@ class TagManager extends Component
     {
         $query = Tag::query()->where('active', true);
 
-        if (!empty($this->search)) {
-            $query->where('name', 'like', '%' . $this->search . '%');
+        if (! empty($this->search)) {
+            $query->where('name', 'like', '%'.$this->search.'%');
         }
 
-        $suggestions = (!empty($this->search)) ? $query->limit(5)->get() : collect();
+        $suggestions = (! empty($this->search)) ? $query->limit(5)->get() : collect();
         $attachedTags = $this->model->exists ? $this->model->tags : collect();
 
         return view('taxonomy::Livewire.tag-manager', [

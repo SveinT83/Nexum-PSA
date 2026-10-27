@@ -30,6 +30,15 @@ class KnowledgeSettings
         'default_priority' => 0,
     ];
 
+    /** Identical bounded defaults for browser and API settings. */
+    public static function rules(): array
+    {
+        return ['default_visibility' => 'required|in:internal,client-wide,public',
+            'default_status' => 'required|in:draft,published,archived,needs_review',
+            'default_review_days' => 'required|integer|min:1|max:3650',
+            'default_priority' => 'required|integer|min:0|max:100000'];
+    }
+
     public function get(): array
     {
         $setting = CommonSetting::query()

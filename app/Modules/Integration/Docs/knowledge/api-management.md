@@ -1416,3 +1416,14 @@ is unchanged. HR-2026-10-27-DOCUMENTATION-API was Reviewed by Svein Tore on
 2026-10-27. Production deployment requires separate authorization.
 Issue #275's immutable Documentation revision/publication workflow remains open.
 API exposure and BookStack publication do not prove employee OpenWebUI retrieval.
+
+## Full Knowledge Domain API (Dev, 2026-10-27)
+
+Knowledge uses existing `knowledge.read/create/update` abilities plus narrow revision read,
+approval/publication/rollback, settings read/write, own operation read-back, portal reads and
+explicit provider-execution abilities. Token scopes never grant missing native user rights.
+Article writes propose immutable revisions; publication and exact BookStack read-back remain
+separate. New writes require Idempotency-Key; ETag/If-Match detects stale observed state.
+The API provider execution switch remains disabled by default. Use the Knowledge API guide and
+installation Swagger for exact endpoints and contracts. Main promotion is in progress; production
+availability must be verified separately. No permissions or integration policy were enabled here.

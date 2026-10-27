@@ -1,0 +1,223 @@
+{
+  "date": "2026-10-27",
+  "status": "Done On Dev / Isolated Main Candidate Verified / Merge Authorized / Production unchanged",
+  "authorization": "Svein Tore: Ja og merge til main, 2026-10-27",
+  "coverage": {
+    "browser_rows": 37,
+    "embedded_workflows": 3,
+    "http_operations": 44,
+    "typed_schemas": 38,
+    "observed_success_methods": {
+      "get /api/v1/knowledge/context": 200,
+      "post /api/v1/knowledge/shelves": 201,
+      "post /api/v1/knowledge/books": 201,
+      "post /api/v1/knowledge/chapters": 201,
+      "post /api/v1/knowledge/articles": 201,
+      "get /api/v1/knowledge/shelves": 200,
+      "get /api/v1/knowledge/books": 200,
+      "get /api/v1/knowledge/chapters": 200,
+      "get /api/v1/knowledge/articles": 200,
+      "get /api/v1/knowledge/shelves/{shelf}": 200,
+      "get /api/v1/knowledge/books/{book}": 200,
+      "get /api/v1/knowledge/chapters/{chapter}": 200,
+      "get /api/v1/knowledge/articles/{article}": 200,
+      "put /api/v1/knowledge/shelves/{shelf}": 200,
+      "patch /api/v1/knowledge/shelves/{shelf}": 200,
+      "put /api/v1/knowledge/books/{book}": 200,
+      "patch /api/v1/knowledge/books/{book}": 200,
+      "put /api/v1/knowledge/chapters/{chapter}": 200,
+      "patch /api/v1/knowledge/chapters/{chapter}": 200,
+      "put /api/v1/knowledge/articles/{article}": 200,
+      "patch /api/v1/knowledge/articles/{article}": 200,
+      "get /api/v1/knowledge/lookups": 200,
+      "get /api/v1/knowledge/settings": 200,
+      "put /api/v1/knowledge/settings": 200,
+      "post /api/v1/knowledge/articles/{article}/tags": 200,
+      "delete /api/v1/knowledge/articles/{article}/tags/{tag}": 200,
+      "get /api/v1/knowledge/operations/{command}": 200,
+      "delete /api/v1/knowledge/articles/{article}": 204,
+      "delete /api/v1/knowledge/chapters/{chapter}": 204,
+      "delete /api/v1/knowledge/books/{book}": 204,
+      "delete /api/v1/knowledge/shelves/{shelf}": 204,
+      "get /api/v1/knowledge/articles/{article}/revisions": 200,
+      "get /api/v1/knowledge/revisions/{revision}": 200,
+      "post /api/v1/knowledge/revisions/{revision}/approve": 200,
+      "post /api/v1/knowledge/revisions/{revision}/publish": 200,
+      "post /api/v1/knowledge/revisions/{revision}/reject": 200,
+      "post /api/v1/knowledge/revisions/{revision}/retry": 200,
+      "post /api/v1/knowledge/revisions/{revision}/rollback": 201,
+      "get /api/v1/knowledge/articles/{article}/book-stack": 200,
+      "post /api/v1/knowledge/articles/{article}/book-stack/accept-remote": 200,
+      "post /api/v1/knowledge/articles/{article}/book-stack/keep-nexum": 200,
+      "post /api/v1/knowledge/book-stack/pull": 200,
+      "get /api/v1/knowledge/portal/articles": 200,
+      "get /api/v1/knowledge/portal/articles/{article}": 200
+    }
+  },
+  "dev_core": {
+    "passed": 97,
+    "assertions": 2663,
+    "failures": 0,
+    "skips": 0
+  },
+  "dev_affected_extra": {
+    "passed": 252,
+    "assertions": 3648,
+    "failures": 0,
+    "skips": 0
+  },
+  "dev_final_contract": {
+    "passed": 16,
+    "assertions": 1160,
+    "failures": 0,
+    "skips": 0
+  },
+  "main_initial": {
+    "passed": 326,
+    "assertions": 5237,
+    "failures": 0,
+    "skips": 0
+  },
+  "main_final": {
+    "passed": 326,
+    "assertions": 5246,
+    "failures": 0,
+    "skips": 0
+  },
+  "native": {
+    "migration": {
+      "migration": "2026_10_27_020000_create_knowledge_api_commands",
+      "batch": 32
+    },
+    "retained_commands": 0,
+    "temporary_read_tokens": 0,
+    "provider_execution_enabled": false
+  },
+  "native_mysql_probes": {
+    "encryption_roundtrip": true,
+    "unique_replay_key": true,
+    "transaction_rollback": true,
+    "second_connection_mutex": true,
+    "retained_probe_rows": 0
+  },
+  "trusted_https": {
+    "trusted_https": {
+      "/api/v1/knowledge/context": 200,
+      "/api/v1/knowledge/shelves": 200,
+      "/api/v1/knowledge/books": 200,
+      "/api/v1/knowledge/chapters": 200,
+      "/api/v1/knowledge/articles": 200,
+      "/api/v1/knowledge/lookups?type=tags": 200,
+      "/api/v1/knowledge/settings": 200
+    },
+    "anonymous": 401,
+    "portal_staff_denial": 403,
+    "swagger_exact": true
+  },
+  "knowledge_sources": {
+    "knowledge_summary": {
+      "chapters": 1,
+      "articles": 3,
+      "skipped": 0,
+      "modules": [
+        "Knowledge"
+      ]
+    },
+    "exact_articles": [
+      {
+        "id": 9,
+        "slug": "knowledge-overview",
+        "visibility": "internal",
+        "published_revision_id": 118,
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 10,
+        "slug": "knowledge-settings",
+        "visibility": "internal",
+        "published_revision_id": 119,
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 45,
+        "slug": "knowledge-api",
+        "visibility": "internal",
+        "published_revision_id": 117,
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 3,
+        "slug": "api-management",
+        "visibility": "internal",
+        "published_revision_id": 123,
+        "sync_status": "pending_push"
+      },
+      {
+        "id": 4,
+        "slug": "bookstack-integration",
+        "visibility": "internal",
+        "published_revision_id": 124,
+        "sync_status": "pending_push"
+      }
+    ]
+  },
+  "bookstack": {
+    "actual_page_ids": [
+      382,
+      445,
+      449,
+      379
+    ],
+    "exact_body_readback": true,
+    "full_api_guide_embedded_in": 382,
+    "permissions_inherited_and_unchanged": true,
+    "employee_openwebui_retrieval_tested": false,
+    "dedicated_page_create": "Connector multi-character name/markdown pattern rejects creation; existing page updates/readback succeed."
+  },
+  "schema_preservation": {
+    "preexisting_non_knowledge_operations_unchanged": false,
+    "main_candidate_non_knowledge_preserved": true,
+    "non_knowledge_schemas_unchanged": true
+  },
+  "human_review": {
+    "id": "HR-2026-10-27-KNOWLEDGE-API",
+    "status": "Pending",
+    "main_merge_explicitly_authorized": true,
+    "production_blocked": true,
+    "dependencies": [
+      "HR-2026-09-04-001",
+      "HR-2026-09-03-003"
+    ]
+  },
+  "limitations": [
+    "No production rollout",
+    "No provider/worker/scheduler activation",
+    "No real customer publication",
+    "Future #265/#261 audiences/AI consumption and #275 Documentation revisions remain separate"
+  ],
+  "main_final_swagger": {
+    "passed": 2,
+    "assertions": 694,
+    "failures": 0,
+    "skips": 0
+  },
+  "dev_final_swagger": {
+    "passed": 1,
+    "assertions": 692,
+    "failures": 0,
+    "skips": 0
+  },
+  "legacy_operation_ids_preserved": [
+    "getKnowledgeArticleList",
+    "getKnowledgeArticleById",
+    "createKnowledgeArticle",
+    "replaceKnowledgeArticle",
+    "patchKnowledgeArticle"
+  ],
+  "candidate_checks": {
+    "php_syntax_and_pint_files": 33,
+    "utf8": true,
+    "main_non_knowledge_operations_and_schemas_unchanged": true,
+    "source_index_preserved": true
+  }
+}

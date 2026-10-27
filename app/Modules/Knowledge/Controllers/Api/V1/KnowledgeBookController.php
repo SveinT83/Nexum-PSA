@@ -69,6 +69,8 @@ class KnowledgeBookController extends Controller
 
     public function show(Book $book)
     {
+        $book->load(['pages' => fn ($q) => $q->orderBy('priority')->orderBy('id')->limit(100), 'chapters' => fn ($q) => $q->withCount('pages')->orderBy('priority')->orderBy('name')->limit(100)]);
+
         return new KnowledgeBookResource($this->loadBook($book));
     }
 
