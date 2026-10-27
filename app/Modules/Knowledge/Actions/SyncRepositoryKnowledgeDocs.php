@@ -110,6 +110,7 @@ class SyncRepositoryKnowledgeDocs
             'Booking' => $this->definition('booking', 'Booking', 585),
             'Calendar' => $this->definition('calendar', 'Calendar', 580),
             'Clients' => $this->definition('clients', 'Clients', 190),
+            'CustomField' => $this->definition('custom-fields', 'Custom Fields', 195),
             'Commercial' => $this->definition('commercial', 'Commercial', 700),
             'Contact' => $this->definition('contacts', 'Contacts', 200),
             'CustomerPortal' => $this->definition('customer-portal', 'Customer Portal', 840),

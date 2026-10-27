@@ -112,24 +112,23 @@ GET /api/v1/clients/{client}/sites?custom_field[msp_manager_site_id]=SITE-12345
 
 ## Definition API
 
-Custom field definitions are exposed through a read-only API so trusted automations and future AI
-agents can discover configured fields before writing values through domain APIs.
+Full definition administration is available in the approved Dev extension. Production
+availability requires a separate deployment; see the **Custom Field API** guide and
+HR-2026-10-27-CUSTOM-FIELD-API for current verification/release status.
 
-```text
-GET /api/v1/custom-fields
-GET /api/v1/custom-fields/{id}
-```
+The API covers list/search/detail, manager context, creation, partial settings updates,
+activation/deactivation, native soft deletion and own-command read-back. All 11 field
+types and existing admin settings are supported. New mutations require Idempotency-Key;
+update/delete also require the exact current ETag in If-Match. Soft deletion retains
+stored values. Configuration requires native customfield.manage_settings as well as
+the exact custom-fields token ability; ordinary discovery respects current field and
+owning-domain visibility before pagination/counts. Values stay in Client/Site/Ticket.
 
-The API requires:
-
-```text
-custom-fields.read
-```
-
-The API supports filters such as `model=client`, `model=client_site`, `editable_via_api=1`, and
-`searchable=1`.
-
-This API returns field definitions only. Field values remain owned by each supported domain API.
+Malformed fields, impossible dates, unrecognized booleans, unavailable keys and
+unauthorized writes fail explicitly without partial multi-field persistence. New
+records require their editable required fields; partial updates preserve omitted values.
+API and UI editability remain independent. Target model cannot be changed after creation.
+Key/type/option edits do not convert old values or rewrite pinned Ticket Rules targets.
 
 ## Ticket Integration
 

@@ -98,6 +98,10 @@ class ApiAbilityCatalog
         'clients.create' => self::ACCESS_WRITE,
         'clients.update' => self::ACCESS_WRITE,
         'custom-fields.read' => self::ACCESS_READ,
+        'custom-fields.operations.read' => self::ACCESS_READ,
+        'custom-fields.delete' => self::ACCESS_WRITE,
+        'custom-fields.update' => self::ACCESS_WRITE,
+        'custom-fields.create' => self::ACCESS_WRITE,
         'assets.read' => self::ACCESS_READ,
         'assets.create' => self::ACCESS_WRITE,
         'assets.update' => self::ACCESS_WRITE,
@@ -347,6 +351,26 @@ class ApiAbilityCatalog
         'custom-fields.read' => [
             'label' => 'Read custom fields',
             'description' => 'List and view custom field definitions for supported domains.',
+            'domain' => 'Custom Fields',
+        ],
+        'custom-fields.operations.read' => [
+            'label' => 'Read own custom field command results',
+            'description' => 'Read own custom field command results with current native Custom Field management permission.',
+            'domain' => 'Custom Fields',
+        ],
+        'custom-fields.delete' => [
+            'label' => 'Soft-delete custom field definitions',
+            'description' => 'Soft-delete custom field definitions with current native Custom Field management permission.',
+            'domain' => 'Custom Fields',
+        ],
+        'custom-fields.update' => [
+            'label' => 'Update custom field definitions',
+            'description' => 'Update custom field definitions with current native Custom Field management permission.',
+            'domain' => 'Custom Fields',
+        ],
+        'custom-fields.create' => [
+            'label' => 'Create custom field definitions',
+            'description' => 'Create custom field definitions with current native Custom Field management permission.',
             'domain' => 'Custom Fields',
         ],
         'assets.read' => [

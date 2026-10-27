@@ -36,6 +36,35 @@ this checklist Reviewed. Production and API activation remain gated.
 
 
 
+## HR-2026-10-27-CUSTOM-FIELD-API - Full CustomField Browser/API Coverage
+
+Status: Pending / Done On Dev and automated verification passed, 2026-10-27.
+Added: 2026-10-27. Owner: Codex. Intended human reviewer: Svein Tore.
+Scope: rfc/2026-10-27-custom-field-full-api-parity.md (Approved), all definition admin
+and existing Client/Site/Ticket value workflows. This human-review checklist gates
+production deployment/release. Svein Tore explicitly authorized "Godkjenner og merge
+til main" on 2026-10-27, allowing the tested scoped Main promotion with these manual
+scenarios still Pending. No scenario execution or Reviewed status is inferred.
+
+- [ ] Compare admin list/search/model filtering, modal context and all 11 types/settings.
+- [ ] Create/edit/activate/deactivate and soft-delete via API; verify exact state and retained values.
+- [ ] Verify scoped native management, field visibility and denied/revoked actor/token access.
+- [ ] Retry identical/conflicting/stale/concurrent writes; confirm one effect and exact own receipts.
+- [ ] Compare Client/Site typed values, clearing, required/unique/search and UI/API flags.
+- [ ] Verify Ticket work-context/events/rule pinning, portal exclusion and unchanged disabled gates.
+- [ ] Review complete Swagger and actual BookStack content/access and Dev/Main/production status.
+
+Expected: current-browser operational parity without expanded native permissions.
+Deploy: exact additive 2026_10_27_050000_create_custom_field_api_commands migration;
+Swagger regeneration and normal caches. No provider/worker/scheduler activation.
+Risks: legacy discovery tightening, type/key changes, aliases and concurrent writes.
+Recovery: disable new write entry points and retain encrypted receipts and field values.
+Automated evidence: final Dev 676 tests / 46696 assertions passed; isolated initial
+Main features 572 / 7858 plus units 17 / 465. Seven success schemas, native database
+and trusted HTTPS checks pass. BookStack full sources/access are read back. No
+automated check marks a human scenario complete. Final rebased Main 236 / 9264 and
+scoped contracts 3 / 1481 pass without failures/skips. The authorized merge is ready.
+
 ## HR-2026-10-27-LEAD-INTELLIGENCE-API - Full Lead Intelligence Browser/API Coverage
 
 Status: Pending / Done On Dev; final Main candidate verified and promotion authorized.
