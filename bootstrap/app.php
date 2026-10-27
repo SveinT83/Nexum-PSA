@@ -115,6 +115,18 @@ return Application::configure(basePath: dirname(__DIR__))
             return \App\Modules\UserManagement\Support\UserManagementApiPrivacy::render($error, $request);
         });
 
+        // Relationship credentials, HMAC material and encrypted command results are not diagnostics.
+        $exceptions->dontFlash(['inbound_token', 'outbound_token', 'webhook_secret', 'plain_inbound_token']);
+        $exceptions->report(function (\Throwable $error) {
+            if (\App\Modules\Relationship\Support\RelationshipApiPrivacy::matches(request())) {
+                \Illuminate\Support\Facades\Log::error('Relationship operation failed.', ['exception_class' => get_class($error)]);
+                return false;
+            }
+        });
+        $exceptions->render(function (\Throwable $error, \Illuminate\Http\Request $request) {
+            return \App\Modules\Relationship\Support\RelationshipApiPrivacy::render($error, $request);
+        });
+
         $exceptions->shouldRenderJsonWhen(function ($request, Throwable $e) {
             if ($request->is('api/*')) {
                 return true;

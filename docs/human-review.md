@@ -95,6 +95,7 @@ authorized while this checklist remains visible.
 - [ ] Create/update draft/active synthetic relationships and pause/disable.
 - [ ] Verify narrow/native/token access, revoked rights and exact-parent history.
 - [ ] Set/rotate credentials; verify encrypted one-time result and same-key replay.
+- [ ] Confirm tokens, rotation results and encrypted credentials are absent from diagnostics and failed-form old input.
 - [ ] Preview content; reject internal, other-client and draft sources.
 - [ ] Push to an approved test instance; compare remote body separately from accepted ID.
 - [ ] Exercise conflict/timeout and no duplicate send, including after source editing.

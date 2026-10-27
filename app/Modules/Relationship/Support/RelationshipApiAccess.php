@@ -46,6 +46,6 @@ class RelationshipApiAccess
         self::permit($actor, $request->route()->defaults['relationship_permission']);
         abort_if(array_diff(array_keys($request->all()), $request->route()->defaults['relationship_fields'] ?? []), 422, 'Unsupported Relationship input fields.');
 
-        return $next($request);
+        return app(RelationshipApiPrivacy::class)->handle($request, $next);
     }
 }

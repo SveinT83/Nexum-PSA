@@ -121987,6 +121987,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
                     "503": {
                         "description": "Authority, validation, state or dependency failure",
                         "content": {
@@ -122139,6 +122149,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
                     "503": {
                         "description": "Authority, validation, state or dependency failure",
                         "content": {
@@ -122245,6 +122265,16 @@
                     },
                     "428": {
                         "description": "Authority, validation, state or dependency failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -122425,6 +122455,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
                     "503": {
                         "description": "Authority, validation, state or dependency failure",
                         "content": {
@@ -122581,6 +122621,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
                     "503": {
                         "description": "Authority, validation, state or dependency failure",
                         "content": {
@@ -122705,6 +122755,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
                     "503": {
                         "description": "Authority, validation, state or dependency failure",
                         "content": {
@@ -122821,6 +122881,16 @@
                     },
                     "428": {
                         "description": "Authority, validation, state or dependency failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -122979,6 +123049,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
                     "503": {
                         "description": "Authority, validation, state or dependency failure",
                         "content": {
@@ -123095,6 +123175,16 @@
                     },
                     "428": {
                         "description": "Authority, validation, state or dependency failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -123255,6 +123345,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
                     "503": {
                         "description": "Authority, validation, state or dependency failure",
                         "content": {
@@ -123375,6 +123475,16 @@
                     },
                     "428": {
                         "description": "Authority, validation, state or dependency failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -123547,6 +123657,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
                     "503": {
                         "description": "Authority, validation, state or dependency failure",
                         "content": {
@@ -123671,6 +123791,16 @@
                     },
                     "428": {
                         "description": "Authority, validation, state or dependency failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -123843,6 +123973,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
                     "503": {
                         "description": "Authority, validation, state or dependency failure",
                         "content": {
@@ -123967,6 +124107,16 @@
                     },
                     "428": {
                         "description": "Authority, validation, state or dependency failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -124139,6 +124289,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
                     "503": {
                         "description": "Authority, validation, state or dependency failure",
                         "content": {
@@ -124303,6 +124463,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
                     "503": {
                         "description": "Authority, validation, state or dependency failure",
                         "content": {
@@ -124437,6 +124607,16 @@
                     },
                     "428": {
                         "description": "Authority, validation, state or dependency failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -124623,6 +124803,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
                     "503": {
                         "description": "Authority, validation, state or dependency failure",
                         "content": {
@@ -124761,6 +124951,16 @@
                     },
                     "428": {
                         "description": "Authority, validation, state or dependency failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -124947,6 +125147,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
                     "503": {
                         "description": "Authority, validation, state or dependency failure",
                         "content": {
@@ -125069,6 +125279,16 @@
                     },
                     "428": {
                         "description": "Authority, validation, state or dependency failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -125215,6 +125435,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
                     "503": {
                         "description": "Authority, validation, state or dependency failure",
                         "content": {
@@ -125335,6 +125565,16 @@
                     },
                     "428": {
                         "description": "Authority, validation, state or dependency failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -125471,6 +125711,16 @@
                             }
                         }
                     },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
                     "503": {
                         "description": "Authority, validation, state or dependency failure",
                         "content": {
@@ -125591,6 +125841,16 @@
                     },
                     "428": {
                         "description": "Authority, validation, state or dependency failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RelationshipApiError"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failure without sensitive request or provider details",
                         "content": {
                             "application/json": {
                                 "schema": {

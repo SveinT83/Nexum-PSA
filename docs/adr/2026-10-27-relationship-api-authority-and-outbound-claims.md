@@ -17,6 +17,10 @@ and state preconditions. Reserve source-version/destination push before network 
 across browser/API; retain immutable encrypted results. Unresolved source attempts
 block later exports. API outbound stays default-off with explicit provider scope.
 Suppress redirects and unsafe provider text. Reads expose safe metadata.
+Discard sensitive Relationship request/background/query diagnostic copies, redact
+Nexum headers and JSON secret values, exclude browser credentials from flashed input,
+and render unexpected API errors without private details. Canonical encrypted
+receipts remain intact; diagnostics never substitute for that evidence.
 Use the existing configured Relationship creator for received Knowledge ownership;
 never choose an unrelated user, impersonate a login or bootstrap extra privileges.
 
