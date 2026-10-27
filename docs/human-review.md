@@ -2,7 +2,7 @@
 
 ## HR-2026-10-27-BOOKING-API - Full Booking Browser/API Coverage
 
-Status: Pending / automated verification complete; scoped Main merge explicitly authorized.
+Status: Pending / automated verification complete / Merged to Main in PR #339.
 Added: 2026-10-27. Owner: Codex. Intended named human reviewer: Svein Tore.
 Parent: rfc/2026-10-27-booking-full-api-parity.md (Approved).
 Scope: 13 native browser rows, all current embedded workflows and 17 implemented APIs.
@@ -35,6 +35,10 @@ verified. Every named human scenario remains unchecked; no automated result mark
 this checklist Reviewed. Production and API activation remain gated.
 
 
+
+Main merge 8006d0558079bfd8466978761d73a80ed340fa8a independently verified; tested
+application payload matches. Every manual check remains unchecked. This entry now
+gates production deployment/release and API activation, not the completed Main merge.
 
 ## HR-2026-10-27-CUSTOM-FIELD-API - Full CustomField Browser/API Coverage
 

@@ -281,5 +281,12 @@
     "assertions": 740,
     "failures": 0,
     "skips": 0
-  }
+  },
+  "main_promotion": {
+    "pull_request": 339,
+    "merge_commit": "8006d0558079bfd8466978761d73a80ed340fa8a",
+    "application_payload_matches_candidate": true,
+    "production_deployed": false
+  },
+  "status": "Done On Dev and merged to Main; human review Pending; production unchanged"
 }

@@ -3,10 +3,10 @@
 Status: Approved
 Date: 2026-10-27
 Owner: Codex. Product/release owner and intended named reviewer: Svein Tore.
-Human-review checklist: HR-2026-10-27-BOOKING-API (Pending; planned scope).
+Human-review checklist: HR-2026-10-27-BOOKING-API (Pending; implemented and merged).
 Coverage: ../plans/2026-10-27-booking-api-coverage-matrix.md and .json.
-Architecture: ../adr/2026-10-27-booking-api-authority-and-confirmation.md (Proposed).
-Slices: ../feature-slices/2026-10-27-booking-full-api-parity.md (Draft).
+Architecture: ../adr/2026-10-27-booking-api-authority-and-confirmation.md (Accepted).
+Slices: ../feature-slices/2026-10-27-booking-full-api-parity.md (Done On Dev/Main).
 
 ## Context
 
@@ -160,8 +160,8 @@ Run Booking, Calendar native/API contracts/parity and affected Commercial,
 UserManagement, Notification/account-mail, Integration/catalog/Swagger and Knowledge
 source-sync regression. Add isolated native MySQL concurrency probes and trusted
 HTTPS synthetic successful write/read-back with mocked delivery. Any unproven
-required guarantee is a blocker. Baseline 37/315 passes; full suite/future API tests
-have not run and no new API is claimed verified.
+required guarantee is a blocker. Planning baseline was 37/315. Completed verification is 189 Dev tests plus
+Main and native/HTTPS evidence in the verification report; full suite was not run.
 
 ## Documentation Plan
 
@@ -176,8 +176,8 @@ handoff after implementation with Dev-only/do-not-publish notes until production
 ## Open Questions
 
 No unresolved product choice for parity with supported native Booking. Explicit
-approval of this concrete RFC is required before Level 3 implementation. Named
-human review HR-2026-10-27-BOOKING-API remains a separate Main/production gate.
+approval was given for this RFC and the scoped Main merge. Named
+human review HR-2026-10-27-BOOKING-API now gates production/activation.
 
 ## Approval
 
@@ -190,3 +190,5 @@ Approved Dev implementation and scoped Main promotion; production and named manu
 scenario acceptance remain separate.
 
 Implementation evidence: ../plans/2026-10-27-booking-api-verification.md.
+
+Main status: merged in PR #339 at 8006d055; see the Main promotion report.

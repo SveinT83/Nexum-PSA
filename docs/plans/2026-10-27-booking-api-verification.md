@@ -99,3 +99,6 @@ activation and named manual checks remain separate from the authorized Main merg
 Latest Main integration: Intake changes were incorporated without changing their
 contracts. Focused Booking, API-key administration and source-sync regression then
 passed 48 tests / 740 assertions, zero failures/skips, on base f8180e6e.
+
+Main status: merged in PR #339 (8006d055), application payload independently
+verified against the tested candidate. Production and manual review remain separate.
