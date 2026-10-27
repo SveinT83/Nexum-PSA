@@ -219,4 +219,4 @@ Provider execution requires the appropriate token abilities and current native u
 including knowledge.sync_bookstack, plus the default-off Knowledge API execution switch.
 API support does not enable the integration, two-way policy, permissions or workers.
 Use the Knowledge API operating guide for idempotency, uncertain outcomes and reconciliation.
-Dev verification and Main/production availability remain separate.
+Knowledge API is merged to Main in PR #331. Production rollout and activation remain separate.

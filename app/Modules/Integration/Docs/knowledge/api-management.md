@@ -1425,5 +1425,5 @@ explicit provider-execution abilities. Token scopes never grant missing native u
 Article writes propose immutable revisions; publication and exact BookStack read-back remain
 separate. New writes require Idempotency-Key; ETag/If-Match detects stale observed state.
 The API provider execution switch remains disabled by default. Use the Knowledge API guide and
-installation Swagger for exact endpoints and contracts. Main promotion is in progress; production
-availability must be verified separately. No permissions or integration policy were enabled here.
+installation Swagger for exact endpoints and contracts. Knowledge is merged to Main in PR #331;
+production availability is separate. No permissions or integration policy were enabled here.

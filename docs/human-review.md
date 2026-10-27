@@ -31,7 +31,11 @@ earlier core 97 / 2663 and broader affected 252 / 3648 (overlap). Exact Dev migr
 batch 32, native MySQL, trusted HTTPS and actual handbook bodies/access were verified.
 Final isolated Main batch passed 326 / 5246; final Swagger checks 2 / 694.
 Evidence: plans/2026-10-27-knowledge-api-verification.md/.json. No human scenario execution
-is inferred. Main merge is authorized; production/activation remains blocked.
+is inferred. Main merge is completed in PR #331; production/activation remains blocked.
+
+Verified Main merge: https://github.com/SveinT83/Nexum-PSA/pull/331
+Named approval remains the direct Main instruction, not completed scenario review.
+This status-only follow-up does not change runtime code; application tests were not rerun.
 
 ## HR-2026-10-27-DOCUMENTATION-API - Full Documentation Browser/API Coverage
 

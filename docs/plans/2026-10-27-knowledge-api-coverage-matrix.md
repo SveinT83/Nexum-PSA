@@ -1,6 +1,6 @@
 # Knowledge Browser/API Coverage Baseline
 
-Status: Verified On Dev; isolated Main candidate verified; merge authorized; production unchanged.
+Status: Verified On Dev; Merged to Main in PR #331; production unchanged.
 Date: 2026-10-27. Owner: Codex.
 Baseline: 37 browser rows; 20 API rows / 24 HTTP operations (HEAD excluded).
 Final: all 37 rows plus embedded workflows; 44 typed HTTP operations / 38 schemas.
@@ -66,3 +66,10 @@ Documentation's own 30-row matrix is already verified and merged in PR #329.
 All mapped rows and the three embedded surfaces are implemented and verified on Dev.
 All 44 actual successful HTTP methods match Swagger; see knowledge-api-verification.md/.json
 for exact test batches, native/HTTPS/handbook evidence and independent review/deployment gates.
+
+## Verified Main Merge (2026-10-27)
+
+https://github.com/SveinT83/Nexum-PSA/pull/331 is merged at 5dab62d56c7663368de11d0f5961e08d7e269bd3.
+The merged tree equals the tested candidate: c134e03cc5cb5c1be5193f15993b5906d62f4102.
+No Main implementation action remains. Human scenarios and production gates remain separate.
+This status-only follow-up does not change runtime code; application tests were not rerun.

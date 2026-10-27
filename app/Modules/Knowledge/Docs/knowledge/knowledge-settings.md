@@ -26,4 +26,4 @@ control manual article defaults.
    `knowledge.manage_settings` permission and share validation with the browser settings page.
 
 Defaults apply to new proposals, not automatic approval/publication. Provider configuration remains
-Integration-owned. Main promotion and production deployment are separate from Dev verification.
+Integration-owned. The API is merged to Main in PR #331; production deployment remains separately gated.
