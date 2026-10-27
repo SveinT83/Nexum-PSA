@@ -73,3 +73,15 @@ https://github.com/SveinT83/Nexum-PSA/pull/331 is merged at 5dab62d56c7663368de1
 The merged tree equals the tested candidate: c134e03cc5cb5c1be5193f15993b5906d62f4102.
 No Main implementation action remains. Human scenarios and production gates remain separate.
 This status-only follow-up does not change runtime code; application tests were not rerun.
+
+## Named Human Acceptance (2026-10-27)
+
+Svein Tore explicitly accepted the completed Knowledge API handoff with
+"Godkjenner og merge til main". HR-2026-10-27-KNOWLEDGE-API is Reviewed.
+This records the named reviewer's acceptance of the presented scope; individual
+scenario executions were not separately reported and are not invented. Main was
+already merged in PR #331, with merge evidence reconciled in PR #332.
+The older HR-2026-09-04-001 and HR-2026-09-03-003 reviews remain independent and
+Pending. This acceptance does not authorize production deployment or provider activation.
+This follow-up changes documentation/acceptance status only; application tests were
+not rerun because executable code, configuration and OpenAPI are unchanged.

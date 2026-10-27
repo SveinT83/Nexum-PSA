@@ -1,6 +1,6 @@
 {
   "date": "2026-10-27",
-  "status": "Done On Dev / Merged To Main In PR #331 / Human Review Pending / Production unchanged",
+  "status": "Done On Dev / Merged To Main In PR #331 / Reviewed By Svein Tore / Production unchanged",
   "authorization": "Svein Tore: Ja og merge til main, 2026-10-27",
   "coverage": {
     "browser_rows": 37,
@@ -174,7 +174,7 @@
     "employee_openwebui_retrieval_tested": false,
     "dedicated_page_create": "Connector multi-character name/markdown pattern rejects creation; existing page updates/readback succeed.",
     "final_page_revisions": {
-      "382": 13,
+      "382": 14,
       "445": 11,
       "449": 150,
       "379": 53
@@ -187,13 +187,18 @@
   },
   "human_review": {
     "id": "HR-2026-10-27-KNOWLEDGE-API",
-    "status": "Pending",
+    "status": "Reviewed",
     "main_merge_explicitly_authorized": true,
     "production_blocked": true,
     "dependencies": [
       "HR-2026-09-04-001",
       "HR-2026-09-03-003"
-    ]
+    ],
+    "reviewer": "Svein Tore",
+    "reviewed_at": "2026-10-27",
+    "acceptance": "Godkjenner og merge til main",
+    "individual_scenario_execution_reported": false,
+    "production_authorized": false
   },
   "limitations": [
     "No production rollout",
@@ -240,5 +245,12 @@
     "exact_readback": true,
     "status": "klar for vurdering",
     "production_publication": "Ikke publiser"
+  },
+  "acceptance_readback": {
+    "knowledge_guide_id": 45,
+    "source_exact": true,
+    "bookstack_page_id": 382,
+    "bookstack_revision": 14,
+    "bookstack_body_exact": true
   }
 }

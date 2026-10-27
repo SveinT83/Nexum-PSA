@@ -1,7 +1,7 @@
 # Full Knowledge API Verification
 
 Date: 2026-10-27. Owner: Codex. Named human reviewer/release owner: Svein Tore.
-Status: Done On Dev; merged to Main in PR #331; human review Pending; production unchanged.
+Status: Done On Dev; merged to Main in PR #331; Reviewed by Svein Tore, 2026-10-27; production unchanged.
 Authorization: Svein Tore approved the concrete RFC and requested Main merge with
 "Ja og merge til main". This does not mark manual scenarios Reviewed.
 
@@ -72,9 +72,9 @@ previously tracked source drift and connector repair remain separate maintainer 
 
 Documentation's existing full current-browser parity is already merged in PR #329 and is
 regression-tested here; it was not duplicated. #265/#261 and #275 remain separate future work.
-Human-review checklist HR-2026-10-27-KNOWLEDGE-API remains Pending, alongside dependency
-reviews HR-2026-09-04-001 and HR-2026-09-03-003. Svein explicitly authorizes this Main merge
-with those manual scenarios still open. They continue to gate production/release/activation.
+Human-review checklist HR-2026-10-27-KNOWLEDGE-API is Reviewed by Svein Tore,
+2026-10-27. The separate dependency reviews HR-2026-09-04-001 and HR-2026-09-03-003
+remain Pending. Production/release/activation requires those gates and separate authorization.
 
 ## Deployment And Recovery
 Production is not deployed. A separately authorized rollout needs the exact additive migration,
@@ -104,3 +104,19 @@ Merge commit: 5dab62d56c7663368de11d0f5961e08d7e269bd3
 Tested and merged tree: c134e03cc5cb5c1be5193f15993b5906d62f4102
 A fresh fetch confirms exact tree equality. No Main implementation work remains. The
 follow-up only reconciles documentation/status; application tests were not rerun.
+
+## Named Human Acceptance (2026-10-27)
+
+Svein Tore explicitly accepted the completed Knowledge API handoff with
+"Godkjenner og merge til main". HR-2026-10-27-KNOWLEDGE-API is Reviewed.
+This records the named reviewer's acceptance of the presented scope; individual
+scenario executions were not separately reported and are not invented. Main was
+already merged in PR #331, with merge evidence reconciled in PR #332.
+The older HR-2026-09-04-001 and HR-2026-09-03-003 reviews remain independent and
+Pending. This acceptance does not authorize production deployment or provider activation.
+This follow-up changes documentation/acceptance status only; application tests were
+not rerun because executable code, configuration and OpenAPI are unchanged.
+
+Acceptance wording was published/read back in native Knowledge article 45 and actual
+BookStack page 382, revision 14. Existing permissions were retained. The website handoff
+was updated/read back for this review decision; its production publication gate stays in place.
