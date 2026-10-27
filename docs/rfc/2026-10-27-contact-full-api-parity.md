@@ -1,6 +1,6 @@
 # RFC: Full Contact Browser/API Parity
 
-Status: Approved by Svein Tore, 2026-10-27. Implementation: Done On Dev; scoped Main candidate verified.
+Status: Approved by Svein Tore, 2026-10-27. Implementation: Done On Dev; merged to Main in PR #341, 2026-10-27.
 Date: 2026-10-27
 Owner: Codex. Product owner and intended human reviewer: Svein Tore.
 Human-review checklist: HR-2026-10-27-CONTACT-API (Pending / planned scope).
