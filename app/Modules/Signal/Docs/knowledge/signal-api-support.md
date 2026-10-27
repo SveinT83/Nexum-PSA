@@ -1,5 +1,6 @@
-Availability: the complete extension is Dev-only. Main promotion, production deployment,
-human scenario review and external runtime activation are separate.
+Runtime availability: implemented and verified on Dev. The source implementation
+is merged to Main in PR #334. Production deployment and external runtime activation
+remain separate and have not been performed by this task.
 Human-review checklist HR-2026-10-27-SIGNAL-API is Reviewed by Svein Tore (2026-10-27).
 
 ## Prerequisites And Permissions

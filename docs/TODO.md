@@ -32,7 +32,7 @@ Human-review checklist HR-2026-10-27-MARKETING-API tracks the independent releas
 
 ## Full Signal browser/API coverage (2026-10-27)
 
-Status: Done On Dev / Reviewed by Svein Tore / Main promotion In Progress / Production unchanged.
+Status: Done On Dev / Reviewed by Svein Tore / Merged to Main in PR #334 / Production unchanged.
 Owner: Codex. Reviewer/release owner: Svein Tore. RFC approved with Godkjenner.
 RFC rfc/2026-10-27-signal-full-api-parity.md is Approved; ADR is Accepted; all five
 sequential slices are Done On Dev. Coverage: 18 browser rows / 24 mapped workflows,
@@ -58,10 +58,17 @@ The external API switch stays false; no role grants, AI/provider/worker/schedule
 activation, commit/push, Main or production action occurred. Other contributor work
 and independent #262/#285/Knowledge/Booking work remain preserved.
 Human-review checklist HR-2026-10-27-SIGNAL-API is Reviewed by Svein Tore.
-Named acceptance on 2026-10-27: "Godkjenner og merge til main".
-Next action (Codex): verify the isolated Main candidate and merge the approved Signal
-scope. Production deployment and provider activation still require separate authorization.
-A public-safe website handoff exists with production/publication gates preserved.
+Named acceptance and Main merge authorization: "Godkjenner og merge til main".
+PR #334 is merged: https://github.com/SveinT83/Nexum-PSA/pull/334
+Merge: be28f77d16f29e662b7b8585b27971e9c1e62438
+Tested and merged tree: 6d2a4a6961b22d7a6ee44a20a8d7f7ab86d3c28b (exact equality verified).
+Isolated Main candidate: 626 tests / 6271 assertions; final contract/source 2 / 310,
+zero failures/errors/skips. All 27 scoped PHP hashes match the actual merge.
+Only Signal additions were packaged; shared Dev code and its staged index are preserved.
+No Signal Main action remains. Next owner/action (Svein Tore): separately authorize
+production deployment/provider activation when desired. No production migration,
+worker/scheduler activation, broader key grant or real customer send was performed.
+Public-safe website handoff retains its production/publication gates.
 
 
 ## Full Knowledge browser/API coverage (2026-10-27)

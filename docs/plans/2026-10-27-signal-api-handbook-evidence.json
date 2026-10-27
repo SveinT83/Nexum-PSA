@@ -34,5 +34,17 @@
   },
   "connector_search_blocker": "Multi-character query rejected by connector pattern validator; normal page listing and exact body updates/read-back succeeded.",
   "native_sync_state": "pending_push; separate from actual BookStack publication evidence",
-  "final_intake_prefill_authority_section_read_back": true
+  "final_intake_prefill_authority_section_read_back": true,
+  "main_merge_publication_readback": {
+    "pages": [
+      530,
+      449
+    ],
+    "exact_readback": true,
+    "main_pr": 334,
+    "review_status": "Reviewed",
+    "production_deployed": false,
+    "other_sections_preserved": true,
+    "signal_api_section_restored_after_concurrent_publication": true
+  }
 }

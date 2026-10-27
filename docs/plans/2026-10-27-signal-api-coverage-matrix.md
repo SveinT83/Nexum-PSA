@@ -1,6 +1,6 @@
 # Signal Browser/API Coverage Matrix
 
-Status: Done On Dev / Human Review Reviewed. All mapped operations are implemented and verified.
+Status: Done On Dev / Reviewed by Svein Tore / Merged to Main in PR #334 / Production unchanged.
 Date: 2026-10-27. Source: authoritative /var/Projects/tdPSA on Dev.
 Baseline runtime discovery: 18 browser rows (10 canonical workflows / 8 aliases), 1 API
 operation. Final coverage has 19 API operations and 42 schemas. HEAD is excluded. Exact route/middleware/source hashes are in the JSON.
@@ -66,7 +66,16 @@ were observed and validated against their typed Swagger results; 42 schemas are 
 The reference catalog now includes the existing Sales needs field, and historical
 attempts/list-or-null payloads retain safe compatible read-back.
 Native MySQL, exact Dev migration, trusted HTTPS and handbook evidence are in
-2026-10-27-signal-api-verification.md/.json. Human review is Pending; no Main/production
-promotion or external runtime activation is performed by this task.
+2026-10-27-signal-api-verification.md/.json. Human review is Pending; Main source promotion is complete in PR #334; no production deployment or external runtime activation was performed.
 Earlier planned/proposed wording records the baseline; the approved RFC and final
 verification govern the implemented scope and compatibility requirements.
+
+## Verified Main Promotion (2026-10-27)
+
+Svein Tore accepted the completed scope and authorized Main merge. PR #334 is merged:
+https://github.com/SveinT83/Nexum-PSA/pull/334
+Merge: be28f77d16f29e662b7b8585b27971e9c1e62438
+Tested and merged tree: 6d2a4a6961b22d7a6ee44a20a8d7f7ab86d3c28b; exact equality verified by fresh fetch.
+Candidate: 626 tests / 6271 assertions; final contract/source: 2 / 310, zero failures/skips.
+All 27 tested PHP hashes match. Main action is complete; production/provider activation
+remains separately authorized. Shared Dev work and its staged index are preserved.
