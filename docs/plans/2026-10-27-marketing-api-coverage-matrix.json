@@ -3,7 +3,7 @@
   "runtime": "/var/Projects/tdPSA",
   "branch": "Dev",
   "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
-  "status": "Done On Dev / Main candidate verified / human scenarios Pending / production unchanged",
+  "status": "Done On Dev / Merged to Main in PR #350 / human scenarios Pending / production unchanged",
   "staff_rows": 28,
   "public_rows": 3,
   "api_route_rows": 24,
@@ -1954,5 +1954,11 @@
   "final_candidate_tests": {
     "passed": 87,
     "assertions": 1931
+  },
+  "main_merge": {
+    "pr": 350,
+    "sha": "1fc7bd9d88cef74ccede84cb1f067afcb8eac079",
+    "tested_tree": "cef2b084d278543cfc381dcddd989260b7ddcf61",
+    "fresh_fetch_tree_equal": true
   }
 }

@@ -2,7 +2,7 @@
 
 ## Full Marketing browser/API coverage (2026-10-27)
 
-Status: Done On Dev / Main Candidate Verification / Human Scenarios Pending / Production unchanged.
+Status: Done On Dev / Merged to Main in PR #350 / Human Scenarios Pending / Production unchanged.
 Owner: Codex; product/release owner and intended reviewer: Svein Tore.
 Authorization: "Godkjenner og merge til main", 2026-10-27. RFC/ADR approved/accepted;
 all MK01-MK06 slices are implemented. Coverage: 28 staff browser rows + 3 public
@@ -20,15 +20,15 @@ The first shared-Dev broad snapshot encountered concurrent UserManagement/Contac
 failures; selected reruns passed 9 / 51. Contact is now merged upstream and passes
 in the later isolated affected batch (233 tests / 3687 assertions). The earlier shared
 Dev snapshot is not a current whole-Dev pass claim.
-Next action (Codex): perform the explicitly authorized
-scoped Main merge. HR-2026-10-27-MARKETING-API remains Pending; no manual check is
+Main merged and read back in PR #350 (1fc7bd9d); tested/merged trees match.
+Next action (Svein Tore): complete the human scenarios before production rollout. HR-2026-10-27-MARKETING-API remains Pending; no manual check is
 inferred. Production deployment, provider execution and worker/scheduler activation are
 not authorized. API provider switch remains false. Production/release need human review.
 
 
 Final candidate and Dev Marketing runs each pass 88 tests / 2018 assertions.
 Populated field/receipt contracts, rendered-error privacy and browser/API rollback
-are explicitly covered. Main promotion is ready; manual scenarios remain Pending.
+are explicitly covered. Main merge is verified in PR #350; manual scenarios remain Pending.
 
 ## Full Relationship browser/API coverage (2026-10-27)
 

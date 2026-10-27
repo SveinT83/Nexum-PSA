@@ -341,7 +341,7 @@ signals. Sales does not own campaign execution, and Marketing does not own selle
 
 ## Full API Workflow Coverage (2026-10-27)
 
-Availability: implemented on Dev under the approved 2026-10-27 RFC. Main promotion is authorized and under verification. Production has not been deployed or activated. Do not describe these additions as available in production until separately verified.
+Availability: implemented and verified on Dev, and merged to Main in PR #350 on 2026-10-27. Production has not been deployed or activated. Human-review checklist HR-2026-10-27-MARKETING-API remains Pending and must be completed before production rollout. Do not describe these additions as available in production until separately verified.
 
 ## Prerequisites And Access
 

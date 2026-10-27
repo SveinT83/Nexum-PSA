@@ -1,6 +1,6 @@
 # Marketing API Verification
 
-Status: Done On Dev / final Main candidate verified / production unchanged.
+Status: Done On Dev / Merged to Main in PR #350 / production unchanged.
 
 - All 28 staff browser routes, three public capabilities and seven embedded/API-only
   groups are mapped; 37 API rows / 42 HTTP operations / 62 typed schemas.
@@ -33,3 +33,7 @@ a production/release gate. Preserve APP_KEY, receipts and historical delivery cl
 Final integration against Main e6a7c8ad: Marketing, Relationship and Lead Intelligence
 pass 168 tests / 5292 assertions, no failures/skips. All 33 scoped PHP files pass
 syntax/Pint; all 49 changed paths match the explicit promotion manifest.
+
+Main PR #350 merged as 1fc7bd9d88cef74ccede84cb1f067afcb8eac079. Fresh GitHub
+fetch confirms merged tree cef2b084d278543cfc381dcddd989260b7ddcf61 equals the
+final tested candidate tree. Production remains unchanged; manual scenarios Pending.

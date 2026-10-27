@@ -1,6 +1,6 @@
 # Marketing Browser/API Coverage Matrix
 
-Status: Done On Dev / Main candidate under final verification / human scenarios Pending.
+Status: Done On Dev / Merged to Main in PR #350 / human scenarios Pending.
 Date: 2026-10-27. Runtime: `/var/Projects/tdPSA`, branch `Dev`.
 28 staff browser route rows + 3 public capability rows; 24 API route rows / 29 HTTP
 operations excluding HEAD. Baseline Swagger had zero Marketing paths. Current coverage: 42 protected HTTP

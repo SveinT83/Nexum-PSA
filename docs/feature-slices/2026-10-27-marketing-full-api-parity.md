@@ -1,6 +1,6 @@
 # Feature Slices: Full Marketing API Parity
 
-Status: Done On Dev / final Main candidate verification / human scenarios Pending.
+Status: Done On Dev / Merged to Main in PR #350 / human scenarios Pending.
 Date: 2026-10-27
 Parent: ../rfc/2026-10-27-marketing-full-api-parity.md
 Owner: Codex. Intended reviewer: Svein Tore.
@@ -30,7 +30,7 @@ consent, suppression, approval and lifetime no-resend behavior is preserved.
 ## Out Of Scope
 
 New marketing features, repeat/resend, Google/social integrations, unsupported lifecycle
-controls, role grants, real customer emails, Main commit/push/merge or production deploy.
+controls, role grants, real customer emails or production deploy. Main merge was explicitly approved.
 
 ## Data Touched
 
