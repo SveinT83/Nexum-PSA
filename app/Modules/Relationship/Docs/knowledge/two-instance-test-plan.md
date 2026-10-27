@@ -132,3 +132,15 @@ The feature is ready for real use when:
 - BookStack contains the final operator documentation.
 - Relationship audit events explain successful and failed operations clearly.
 - The relevant automated tests pass on the dev server.
+
+
+## Full API verification additions (Dev only)
+
+Use synthetic records and approved test instances. Compare configuration and rotation
+against Admin > Integrations > Nexum relationships. Verify scoped/native rights and
+exact-parent history. Preview each push, then verify remote accepted identity and
+separately compare actual remote body. Exercise conflict and controlled timeout;
+retain unresolved evidence and prove no browser/API resend, including after source
+editing. Verify Published Ticket escalation, public reply/status and attachment policy.
+No real customer sends. Record a named review in HR-2026-10-27-RELATIONSHIP-API;
+automated provider fakes do not complete the human checklist.
