@@ -1,7 +1,7 @@
 {
   "date": "2026-10-27",
   "branch": "Dev",
-  "status": "Implemented on Dev; final verification and authorized Main promotion in progress",
+  "status": "Verified on Dev and merged to Main in PR #353; production not deployed; human review Pending.",
   "browser_rows": 49,
   "api_route_rows": 12,
   "api_http_operations": 13,
@@ -2419,5 +2419,14 @@
       "workflow": "Profile links to notifications and API key administration",
       "evidence": "Existing domain APIs retain their own rights; no token/notification ownership is moved into UserManagement."
     }
-  ]
+  ],
+  "main_promotion": {
+    "pr": 353,
+    "merge_sha": "65ffcb5e0491f5782b6c8d2873a3894fc1680cc4",
+    "tested_head": "0c15ac7ba1efa1070333c936be6850c47e41dbbe",
+    "tree": "02df918f8479d4d5f711a24b6c6907b4d8ae1bc2",
+    "exact_tested_tree": true,
+    "owned_files_verified": 65,
+    "production_deployed": false
+  }
 }

@@ -264,7 +264,7 @@ guide for timing, absence handling and Snooze.
 
 ## UserManagement API
 
-The full current workflow is available through typed UserManagement API operations on Dev.
+The full current workflow is verified on Dev and merged to Main in PR #353 through typed UserManagement API operations.
 It includes own profile/avatar/preferences, user lifecycle, role/permission administration,
 MFA policy, invitations and session-bound local security/SSO. API abilities always narrow
 the account's current ordinary permissions. See [User Management API](user-management-api.md)

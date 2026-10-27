@@ -88,4 +88,4 @@ login/link handoff, callback result, unlink/logout and redacted provider setting
 It retains the same first-party session, local password/factor verification, issuer/subject,
 nonce/state/PKCE and session revocation. An administrative bearer scope cannot substitute
 for the signed-in employee's local proof. See [User Management API](user-management-api.md).
-Availability is verified on Dev; this does not authorize provider or production activation.
+Availability is verified on Dev and merged to Main in PR #353; this does not authorize provider or production activation.

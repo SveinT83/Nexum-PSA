@@ -89,7 +89,7 @@
         "status": "published",
         "sync_status": "pending_push",
         "source_matches": true,
-        "published_revision_id": 192
+        "published_revision_id": 197
       },
       {
         "id": 69,
@@ -98,7 +98,7 @@
         "status": "published",
         "sync_status": "pending_push",
         "source_matches": true,
-        "published_revision_id": 164
+        "published_revision_id": 194
       },
       {
         "id": 70,
@@ -107,7 +107,7 @@
         "status": "published",
         "sync_status": "pending_push",
         "source_matches": true,
-        "published_revision_id": 193
+        "published_revision_id": 195
       },
       {
         "id": 71,
@@ -116,7 +116,7 @@
         "status": "published",
         "sync_status": "pending_push",
         "source_matches": true,
-        "published_revision_id": 166
+        "published_revision_id": 196
       },
       {
         "id": 72,
@@ -139,32 +139,35 @@
       {
         "id": 517,
         "name": "User Management API",
-        "updated_at": "2026-10-27T20:39:17.000000Z",
-        "revision_count": 5,
-        "content_verified": true,
-        "chapter_id": 368,
-        "book_id": 339,
-        "permissions_changed": false
-      },
-      {
-        "id": 384,
-        "name": "Profile And User Management",
-        "updated_at": "2026-10-27T19:43:22.000000Z",
+        "updated_at": "2026-10-27T20:50:49.000000Z",
         "revision_count": 6,
         "content_verified": true,
         "chapter_id": 368,
         "book_id": 339,
-        "permissions_changed": false
+        "permissions_changed": false,
+        "main_status_verified": true
+      },
+      {
+        "id": 384,
+        "name": "Profile And User Management",
+        "updated_at": "2026-10-27T20:50:41.000000Z",
+        "revision_count": 7,
+        "content_verified": true,
+        "chapter_id": 368,
+        "book_id": 339,
+        "permissions_changed": false,
+        "main_status_verified": true
       },
       {
         "id": 449,
         "name": "Api Management",
-        "updated_at": "2026-10-27T20:29:03.000000Z",
-        "revision_count": 161,
+        "updated_at": "2026-10-27T20:50:45.000000Z",
+        "revision_count": 162,
         "content_verified": true,
         "chapter_id": 374,
         "book_id": 339,
-        "permissions_changed": false
+        "permissions_changed": false,
+        "main_status_verified": true
       }
     ],
     "employee_scope": "Page 517/384 and chapter 368 inherit book 339; Viewer role has book/chapter/page-view-all. No permission changed.",
@@ -172,7 +175,7 @@
     "native_sync_status": "pending_push; no integration activation",
     "source_drift": "Pre-existing unrelated profile/API page text retained; only owned sections changed. Main API guide 517 matches repository source."
   },
-  "status": "Verified on Dev and isolated Main candidate; authorized promotion in progress; production unchanged.",
+  "status": "Verified on Dev and merged to Main in PR #353; production not deployed; human review Pending.",
   "test_batches": {
     "dev-final-tests.xml": {
       "tests": 236,
@@ -303,5 +306,87 @@
     "tests": 24,
     "assertions": 916,
     "failures": 0
+  },
+  "main_promotion": {
+    "pr": 353,
+    "merge_sha": "65ffcb5e0491f5782b6c8d2873a3894fc1680cc4",
+    "tested_head": "0c15ac7ba1efa1070333c936be6850c47e41dbbe",
+    "tree": "02df918f8479d4d5f711a24b6c6907b4d8ae1bc2",
+    "exact_tested_tree": true,
+    "owned_files_verified": 65,
+    "production_deployed": false
+  },
+  "tested_owned_file_hashes": {
+    "app/Modules/UserManagement/Actions/AcceptUserInvitation.php": "3500b4023f76749d60946dc81bbd9e52a7294cc385b2c25eda7301aa45f99d74",
+    "app/Modules/UserManagement/Actions/ConfirmUserTwoFactor.php": "e5a83cf46393bb8c1acde2fe8d6bc0ad32004d4f018c679987d375a81b165d99",
+    "app/Modules/UserManagement/Actions/DeleteUserPermission.php": "910681535c3c658a39db69f1bf17b82567b5346004aa1205112cd01847135005",
+    "app/Modules/UserManagement/Actions/DeleteUserRole.php": "9c9dbfce17a02cc3e7734db72ce31a243be2b03544d2f3be7af204fd3cacc3c9",
+    "app/Modules/UserManagement/Actions/EnsureUserProfile.php": "41cd6f7fc1459f3097eded45096eda71c71947ddde7597ed56317ca1c13571f5",
+    "app/Modules/UserManagement/Actions/ExecuteUserManagementApiCommand.php": "5c081c1330361d5b54c38ecba5c535faf30b1ee6958c7f052e69ca951e748b11",
+    "app/Modules/UserManagement/Actions/SetRolePermission.php": "9f47d158cce93138ab2d2150faa5cd00cd6359df42860d0a67e60fcb6be97e51",
+    "app/Modules/UserManagement/Actions/UpdatePermission.php": "2b16a3a5131b72c699e56cae7c767e1e14ebe338d9ae7c35648e00a4fbd10868",
+    "app/Modules/UserManagement/Actions/UpdateRole.php": "9f94b57495a8983568697a607b3ee1595dc7644cab9ed18ef46119b8ea9f9d83",
+    "app/Modules/UserManagement/Actions/UpdateUserProfile.php": "704dd8e30944e785a43de8483b785322772562e1e72afa2813a0e3b511b28d7f",
+    "app/Modules/UserManagement/Actions/UserAuthorizationApi.php": "6b6d9f38b0bed8aaaa0764c8b1afd0ec93de3d6709288e00116eafbc5ff085eb",
+    "app/Modules/UserManagement/Actions/UserProfileApi.php": "427cc3aacf293e2a561b481ec063b0135adc16ecb3d355a1e76bec01d87b8260",
+    "app/Modules/UserManagement/Actions/UserTwoFactorPolicy.php": "778bc7ca37b5b552b5e8d00663fa7867dd8c59401e78b263400e9b00aa6d97cc",
+    "app/Modules/UserManagement/Controllers/AcceptInviteController.php": "12c8ff1f4682900fc1cf9c2acc6094bd61403b0ee6955a2f588ceb1d6d836eeb",
+    "app/Modules/UserManagement/Controllers/ProfileController.php": "9d69dbb6a18330c87bc710c112cced050a4ef07e66eb37d950119a83082fcb25",
+    "app/Modules/UserManagement/Controllers/ProfileSecurityController.php": "7efda8fa66f51422eda85eaa4398342cc81f1413d4edcea99bbc432494d4fca5",
+    "app/Modules/UserManagement/Controllers/Admin/PermissionManagementController.php": "f3ece68ac443193228aae662824c6d3c37fb0be379f077b92f9f8bf0504a0004",
+    "app/Modules/UserManagement/Controllers/Admin/RolesManagementController.php": "d43fb945e73fffced81045dcde52cc630ac7bad80abea4fa6b015a67d3877a7a",
+    "app/Modules/UserManagement/Controllers/Admin/TwoFactorSettingsController.php": "511b29ed08d6c70a6474edba45bd5c26b68d00b9ef10af93372f3fe0a3df39e8",
+    "app/Modules/UserManagement/Controllers/Admin/UserManagementController.php": "06cbca8692e33494a533450ba986c54ee98728cf37bfed6d7a19ded75719b5ea",
+    "app/Modules/UserManagement/Controllers/Api/V1/AuthorizationApiController.php": "366e3cf188d58f84823029159c1ff5721ba7f5629de2a93a21f0ccb64ac575f2",
+    "app/Modules/UserManagement/Controllers/Api/V1/OperationApiController.php": "e3461734e0119cc732c00981c8384a2aa589a4b9877d17be754c062b75b3d766",
+    "app/Modules/UserManagement/Controllers/Api/V1/ProfileApiController.php": "9604b56f9f421e65902c4d3dd641b263181aed06558c87a88a59651c69493ef4",
+    "app/Modules/UserManagement/Controllers/Api/V1/PublicIdentityApiController.php": "e4a2153c36377d757f9be23e58bf0ee06ada9e941a1a69ff70fa6bc56f53cd7e",
+    "app/Modules/UserManagement/Controllers/Api/V1/SecurityApiController.php": "32daed5e63923fb547bcd4f3f2f4c47694d6d595521783d75a6aceef24f63b53",
+    "app/Modules/UserManagement/Controllers/Api/V1/SsoApiController.php": "8ee8058a3751f9e06bedeef33f79f5f96837110ed3ccedb3509fffe79e6f0ea4",
+    "app/Modules/UserManagement/Controllers/Api/V1/UserManagementController.php": "25fe3024e3540dcc7626d4796380c94a3e6e6ce7044522484a4349e35e2141de",
+    "app/Modules/UserManagement/Livewire/Roles/RolePermissions.php": "13e5d21a9cd7f7a1fb9910fa724ea9aaafb0d3435f427742570d306235041d79",
+    "app/Modules/UserManagement/Models/UserManagementApiCommand.php": "948ea3227fe124ab36fe3346f88b3548c01926a775afe91dcb4bc9d7b2482c28",
+    "app/Modules/UserManagement/Resources/Api/V1/UserManagementOpenApi.php": "7a5e834fda5b069bfbd6c8759cb3a843cc17d75deb423c76b21c225f97910afe",
+    "app/Modules/UserManagement/Support/UserManagementApiAccess.php": "af90d9379026ab4171c5397673f3f354f220859f57c7815edb0f8613f49613c1",
+    "app/Modules/UserManagement/Support/UserManagementApiPrivacy.php": "bac644b981c8a56ffc55b38dd832b8d834e6a9ae96018f83e836c494821680fd",
+    "app/Modules/UserManagement/Support/UserManagementApiState.php": "0a78b83f185ff1bf7cd1c6d17527c106fcddf8102bd71678f9b0f0e06202906f",
+    "app/Modules/UserManagement/Tests/Feature/UserManagementApiContractTest.php": "fef263b5e5e5acf1d3b81c0850845a013aa1bbdfaab88b967f70cb119c3042f0",
+    "app/Modules/UserManagement/Tests/Feature/UserManagementApiTest.php": "9528ff3c468688e1ef84d3312b9854ba9ccdb152c9503c8cdec10973f5031090",
+    "app/Modules/UserManagement/Tests/Feature/UserManagementFullApiTest.php": "a86c494981fb9ae5927597feeafa3b8706f1f3f493d6deab550d5e07b222e2d1",
+    "app/Modules/UserManagement/Tests/Feature/InternalSsoTest.php": "67cb85ebe89c39a8487958decc33de1da540ed2be1c56079cb2a438138210ac4",
+    "app/Modules/UserManagement/Tests/Support/ValidatesUserManagementApiResponses.php": "7c196775eb1d4d6a17e8ccd356cdc1d4400fbe7e0d88b0e20c99e1d4d0cccc14",
+    "app/Modules/UserManagement/routes.php": "7bb59c9293a8b72b41ebd553f28dd2fb5900616fd510a1307966826226d0a457",
+    "app/Modules/UserManagement/api.php": "c190b413b22dab5897f69d0f45bc9e11f5a591e574b0ecf4c41a2ce242c8bc56",
+    "app/Modules/Integration/Support/ApiAbilityCatalog.php": "03932f3116945db4d1a170088e73350af1562cb3b5e6ace09a7437d9c455a48c",
+    "app/Providers/TelescopeServiceProvider.php": "611a117978c3d5ace47ef047ccd288c1255f5f21a2427c75070af1b7518a8030",
+    "bootstrap/app.php": "dd05ff5aae84518231da40d73f95624e8fb02cbb8ecfbd23e01c52f20b75319a",
+    "routes/api.php": "e4484f2d12a8a135f4226a37b8d430c996904b483ff3a7f6e9aa428c1e8fae10",
+    "database/migrations/2026_10_27_030000_create_user_management_api_commands.php": "8d8a8cd2efaf1cbcdac78685dd593afa1f60b461afcd5b3b01bf082d2a9ec0d6",
+    "app/Modules/UserManagement/Docs/knowledge/profile-and-user-management.md": "fa2ffe6881d610d694c9932998772253b15351f747a674cf8da779119d2c5ebe",
+    "app/Modules/UserManagement/Docs/knowledge/work-account-sign-in.md": "ef31de0a008c7040ff9b1cca467698ac2cd82b692d54d7d1d17f89e7aa22c6e6",
+    "app/Modules/UserManagement/Docs/knowledge/user-management-api.md": "f555a9e759318de2837fcdb080974e3b1f70d2bd283526c1edddb458412aabd1",
+    "app/Modules/Integration/Docs/knowledge/api-management.md": "0ae890ec969fc931c83d9272f7842b2f81a0fc97d1c0de87da5760270d14e914",
+    "docs/rfc/2026-10-27-usermanagement-full-api-parity.md": "bd9efc39e61d6e3123d9b6b4ba620da2fb74dc4f6781754b1a50520247f5e1fe",
+    "docs/adr/2026-10-27-usermanagement-api-authority-and-sensitive-boundary.md": "785411563bc97726bb850da4c4de0597c1d953246add62fce45bd71e6ca4c626",
+    "docs/feature-slices/2026-10-27-usermanagement-full-api-parity.md": "912a8c5a58335cc5db3cef070164bbb783672c1705b370c94a62771b710a6648",
+    "docs/plans/2026-10-27-usermanagement-api-coverage-matrix.md": "f45874317559e871d424dd6682cf7239f4b2d51705bac920e272d80fd0a758bb",
+    "docs/plans/2026-10-27-usermanagement-api-coverage-matrix.json": "fcd12e4c08e905460f06ef8c90f750f84ac829022850f74fb12402f4e8fe3da4",
+    "docs/plans/2026-10-27-usermanagement-api-contract.json": "987eb25d84965876df610dd5815307de64f59977693f5ad1b5c0e0770ae496ae",
+    "app/Modules/UserManagement/Tests/Feature/SystemActorProtectionTest.php": "cd53a6631b4a1ea1f18a22e7602ebe1adf8c736e700a6b570ddbf424c380ef40",
+    "app/Modules/UserManagement/Tests/Feature/TwoFactorAuthenticationTest.php": "eb0cdb3d312368dffaab69246970777b151287273fdf2ebc1f13015e0d2aac9e",
+    "docs/plans/2026-10-27-usermanagement-api-verification.md": "1bdd60bf4243a426d591373db7ab3e1dc94433788e772579ecbcb7c70767f57b",
+    "docs/plans/2026-10-27-usermanagement-api-verification.json": "758fb8509537c5ebf01d04e902408b67d00d73cb24814d7c3903e42e9ac644e7",
+    "docs/TODO.md": "1f7805189c90b7d7cd633bc56bba64a96b28cc7ae579d4e437e0e5fc0de7a625",
+    "docs/human-review.md": "466cf0e8d5b663eb91b004ac6bf7e9df5fa1a3eba59686ece607c6151cea5c73",
+    "app/Modules/UserManagement/Views/Admin/form.blade.php": "21aeece1b6462fb90445edfbb3bd2e1cfcebe9978bd1eb11b8d984d6c016093b",
+    "storage/api-docs/api-docs.json": "57a7c052dbb7775670c83dc9d33ddbc0e5806e0b5d054a223ef5a61b7370995c",
+    "app/Http/Middleware/RequireTwoFactor.php": "ff6d024222ba2b2cd1fa693c74ceb8f1184622082757bfd8ebf32862e1d15c21",
+    "app/Modules/UserManagement/Support/UserManagementApiMfa.php": "c3980e58720f1e12dfb9fdeca98ba0c818bc3953dbf8230032fed3223f52bf86"
+  },
+  "website_handoff": {
+    "items_added": 1,
+    "status": "klar for vurdering",
+    "publication_gate": "Ikke publiser pending manual review and separate verified production rollout",
+    "exact_readback": true
   }
 }

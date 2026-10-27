@@ -1531,7 +1531,7 @@ HR-2026-10-27-MARKETING-API remains Pending for human scenarios before productio
 
 ## UserManagement operational API
 
-UserManagement now has typed current-browser coverage on Dev: user lifecycle, own profile
+UserManagement has verified typed current-browser coverage on Dev and Main (PR #353): user lifecycle, own profile
 and avatar, preferences, role/permission administration, MFA policy, invitation capabilities
 and existing session-bound SSO/local security. Use users.context.read for native capability
 discovery and the narrow users.profile/preferences/roles/permissions/settings/invite/operations
@@ -1541,5 +1541,5 @@ first-party session and existing local verification; a bearer key cannot replace
 New ordinary writes use Idempotency-Key and record ETags/If-Match, with owned operation
 read-back and explicit unknown-outcome reconciliation. Invitation queued is not inbox delivery.
 See the User Management API guide in the employee handbook (Profile And User Management)
-and Swagger's UserManagement group. Main/production deployment and provider activation
+and Swagger's UserManagement group. Production deployment and provider activation
 remain separate; verify the installed release before use.
