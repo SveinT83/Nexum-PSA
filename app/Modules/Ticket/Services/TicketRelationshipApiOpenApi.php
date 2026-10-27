@@ -1,0 +1,12 @@
+<?php
+
+namespace App\Modules\Ticket\Services;
+
+use OpenApi\Attributes as OA;
+
+/** Explicit API payload shapes; variable registry values retain their declared JSON types. */
+#[OA\Schema(schema: 'TicketRelationshipTargetReadback', type: 'object', properties: [new OA\Property(property: 'id', type: 'integer'), new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'direction', type: 'string'), new OA\Property(property: 'client_id', type: 'integer', nullable: true), new OA\Property(property: 'vendor_id', type: 'integer', nullable: true), new OA\Property(property: 'remote_organization_name', type: 'string', nullable: true), new OA\Property(property: 'status', type: 'string'), new OA\Property(property: 'health_status', type: 'string')])]
+#[OA\Schema(schema: 'TicketRelationshipLinkReadback', type: 'object', properties: [new OA\Property(property: 'id', type: 'integer'), new OA\Property(property: 'relationship_id', type: 'integer'), new OA\Property(property: 'ticket_id', type: 'integer'), new OA\Property(property: 'remote_id', type: 'string', nullable: true), new OA\Property(property: 'remote_url', type: 'string', nullable: true), new OA\Property(property: 'direction', type: 'string'), new OA\Property(property: 'sync_status', type: 'string'), new OA\Property(property: 'conflict_status', type: 'string', nullable: true), new OA\Property(property: 'last_synced_at', type: 'string', nullable: true)])]
+#[OA\Schema(schema: 'TicketRelationshipEscalationReadback', type: 'object', properties: [new OA\Property(property: 'id', type: 'integer'), new OA\Property(property: 'ticket_id', type: 'integer'), new OA\Property(property: 'relationship_id', type: 'integer'), new OA\Property(property: 'operation_status', type: 'string', enum: ['reserved', 'unresolved', 'completed', 'failed_pre_send']), new OA\Property(property: 'safe_reason_code', type: 'string', nullable: true), new OA\Property(property: 'sync_link', ref: '#/components/schemas/TicketRelationshipLinkReadback', nullable: true), new OA\Property(property: 'created_at', type: 'string', nullable: true), new OA\Property(property: 'updated_at', type: 'string', nullable: true), new OA\Property(property: 'readback_url', type: 'string')])]
+#[OA\Schema(schema: 'TicketRelationshipEscalationRequest', type: 'object', properties: [new OA\Property(property: 'relationship_id', type: 'integer', minimum: 1), new OA\Property(property: 'idempotency_key', type: 'string', maxLength: 191)], required: ['relationship_id', 'idempotency_key'])]
+final class TicketRelationshipApiOpenApi {}

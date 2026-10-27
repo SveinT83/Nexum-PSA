@@ -29,9 +29,48 @@ Final candidate and Dev Marketing runs each pass 88 tests / 2018 assertions.
 Populated field/receipt contracts, rendered-error privacy and browser/API rollback
 are explicitly covered. Main promotion is ready; manual scenarios remain Pending.
 
+## Full Relationship browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Merged to Main in PR #349 / Human Review Pending / Production unchanged.
+Owner: Codex. Approver/intended human reviewer: Svein Tore.
+Authorization: "Godkjenner og merge til main", 2026-10-27.
+Approved RFC: rfc/2026-10-27-relationship-full-api-parity.md.
+Accepted ADR: adr/2026-10-27-relationship-api-authority-and-outbound-claims.md.
+RL01-RL05: feature-slices/2026-10-27-relationship-full-api-parity.md (Done On Dev).
+Coverage: 10 browser rows, 21 staff APIs, 5 signed ingress and 5 reused Ticket APIs:
+31 HTTP operations and 33 typed schemas, with actual successful HTTP/schema evidence.
+Verification: plans/2026-10-27-relationship-api-verification.md/.json and coverage matrix.
+Broader Main candidate passes 338 / 7406. Latest Main integration bridge passes
+34 / 2910, no failures/errors/skips/warnings. Final Dev scoped
+suite passes 29 / 2821. Broad Dev set covered 656 cases; one shared Swagger read race
+was resolved by exact recheck (1 / 24). Native MySQL encryption, unique replay,
+competing row lock and rollback pass. Only the exact additive Relationship migration
+ran on Dev; API outbound remains default-off.
+BookStack 510/511 match the authoritative sources exactly; inherited employee access
+was verified without grants. Native Dev BookStack integration remains unconfigured;
+actual connected-plugin publication/read-back is distinct from native pending_push.
+Employee OpenWebUI retrieval and real two-instance/browser checks remain unperformed.
+Main initially lacked the reused Ticket adapters; only those bounded existing Dev
+dependencies/scopes and an idempotent compatibility loader accompany this release.
+The pre-existing validateTarget extraction is reused without rewriting shared Dev.
+Human-review checklist HR-2026-10-27-RELATIONSHIP-API remains Pending for production
+release/deployment; explicit scoped Main promotion is authorized separately.
+PR #349: https://github.com/SveinT83/Nexum-PSA/pull/349
+Main merge: ee2272b7bac566bfe57a3b61fada0ee0f7e67436. All scoped runtime files and the
+31-operation/33-schema Swagger contract match the tested candidate. Concurrent Main
+Lead/Nextcloud work is preserved; the complete repository trees are not called equal.
+Rollback retention is additionally verified (3 / 9) and on native MySQL.
+Next owner/action (Svein Tore): perform the Pending browser/two-instance human review
+before separately authorizing production rollout. No Main implementation action remains.
+Provider/worker/scheduler activation and employee OpenWebUI retrieval stay separate.
+
+
+
+
+
 ## Full Nextcloud browser/API coverage (2026-10-27)
 
-Status: Done On Dev / isolated Main candidate verified / Main merge authorized, pending recording.
+Status: Done On Dev / Merged To Main in PR #338 / production unchanged.
 Owner: Codex. RFC/Main authorizer and human-review/privacy owner: Svein Tore.
 Approved RFC: rfc/2026-10-27-nextcloud-full-api-parity.md; accepted ADR and five completed slices.
 All 19 browser rows and eight embedded workflows: 50 HTTP operations (36 new + 14 calendar)
@@ -48,9 +87,10 @@ HR-2026-10-27-NEXTCLOUD-API remains Pending; Main merge is explicitly authorized
 manual scenarios open. Production release/provider activation require separate authorization.
 Existing calendar pilot checklist remains In Review; no wider targets or historical cleanup.
 Issue #205 remains open and separate from current-browser API parity. Preserve contributor work.
-Next action (Codex): record the verified scoped PR/Main merge and independent read-back.
+Main merge verified: 0f062b9450de76cabdea269c55506e17d42bcef7. The merged tree
+8ce98ceb63f831d2345373941b5d1088c379a262 equals the verified candidate; all tested PHP hashes match.
+No Main action remains. Production and human-review gates remain separate.
 Future production owner/action (Svein Tore): complete manual review and authorize rollout.
-
 
 ## Full Booking browser/API coverage (2026-10-27)
 
@@ -132,7 +172,7 @@ RFC rfc/2026-10-27-lead-intelligence-full-api-parity.md Approved; ADR accepted;
 all six sequential slices Done On Dev. All 14 browser route rows and API-only
 capabilities covered: exact 17 operations / 47 typed Swagger schemas, 18 actual
 success-response contracts including pure promotion preview.
-Final domain: 52 tests / 474 assertions; final candidate: 54 / 483 incl. production
+Final domain: 53 tests / 484 assertions; final candidate: 54 / 483 incl. production
 Swagger and Knowledge source sync. Earlier full Main candidate affected batch:
 293 / 2887; overlapping suites, do not add totals. Dev affected batch's 14 failures
 were concurrent UserManagement hook / Contact import snapshots; current author fixes

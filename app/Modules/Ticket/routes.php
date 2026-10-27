@@ -13,6 +13,28 @@ use App\Modules\Ticket\Controllers\Tech\TicketSlaReportController;
 use App\Modules\Ticket\Controllers\Tech\TicketWorkflowController;
 use Illuminate\Support\Facades\Route;
 
+// A bounded compatibility entry also supports installations without the full Ticket parity loader.
+if (($ticketRelationshipApiRoutes ?? false) === true) {
+    if (! Route::has('api.v1.tickets.relationship-targets.index')) {
+        Route::get('tickets/{ticket}/relationship-targets', [\App\Modules\Ticket\Controllers\Api\V1\TicketRelationshipApiController::class, 'targets'])
+            ->name('tickets.relationship-targets.index')->middleware([\App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.view', \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':tickets.relationships.read', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':relationships.escalate'])
+            ->defaults('parity_domain', 'ticket')->defaults('parity_scope', 'tickets.relationships.read')->defaults('parity_permissions', 'relationships.escalate')->defaults('parity_additional_permissions', ['ticket.view']);
+        Route::post('tickets/{ticket}/relationships/escalate', [\App\Modules\Ticket\Controllers\Api\V1\TicketRelationshipApiController::class, 'escalate'])
+            ->name('tickets.relationships.escalate')->middleware([\App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.view', \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':tickets.relationships.escalate', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':relationships.escalate'])
+            ->defaults('parity_domain', 'ticket')->defaults('parity_scope', 'tickets.relationships.escalate')->defaults('parity_permissions', 'relationships.escalate')->defaults('parity_additional_permissions', ['ticket.view'])->defaults('parity_input_fields', ['idempotency_key', 'relationship_id'])->middleware(\App\Modules\Integration\Http\Middleware\RejectUnsupportedDomainApiInput::class);
+        Route::get('tickets/{ticket}/relationship-escalations', [\App\Modules\Ticket\Controllers\Api\V1\TicketRelationshipApiController::class, 'index'])
+            ->name('tickets.relationship-escalations.index')->middleware([\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':tickets.relationships.read', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.view'])
+            ->defaults('parity_domain', 'ticket')->defaults('parity_scope', 'tickets.relationships.read')->defaults('parity_permissions', 'ticket.view');
+        Route::get('tickets/{ticket}/relationship-escalations/{escalation}', [\App\Modules\Ticket\Controllers\Api\V1\TicketRelationshipApiController::class, 'show'])
+            ->whereNumber('escalation')->name('tickets.relationship-escalations.show')->middleware([\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':tickets.relationships.read', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.view'])
+            ->defaults('parity_domain', 'ticket')->defaults('parity_scope', 'tickets.relationships.read')->defaults('parity_permissions', 'ticket.view');
+        Route::get('tickets/{ticket}/relationship-links', [\App\Modules\Ticket\Controllers\Api\V1\TicketRelationshipApiController::class, 'links'])
+            ->name('tickets.relationship-links.index')->middleware([\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':tickets.relationships.read', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.view'])
+            ->defaults('parity_domain', 'ticket')->defaults('parity_scope', 'tickets.relationships.read')->defaults('parity_permissions', 'ticket.view');
+    }
+    return;
+}
+
 if (($ticketPortalRoutes ?? false) === true) {
     Route::middleware(['auth', EnsureCustomerPortalAccess::class])
         ->prefix('portal/tickets')

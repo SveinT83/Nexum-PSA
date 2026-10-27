@@ -10,7 +10,7 @@ credential metadata, sync identity mapping, health state, and audit events.
 - `NexumSyncLink` stores local-to-remote identity mapping per domain.
 - `NexumSyncEvent` stores append-only sync audit evidence.
 - Admin routes live in `app/Modules/Relationship/routes.php`.
-- Public signed API routes live in `app/Modules/Relationship/api-public.php`.
+- Signed and staff API routes are owned by routes.php; api.php/api-public.php preserve loading compatibility.
 
 Ticket, Documentation, and Knowledge still own their domain records and business
 rules. Relationship actions call those domain services instead of duplicating
@@ -93,3 +93,13 @@ Broad regression tests:
 ```bash
 HOME=/tmp php artisan test
 ```
+
+
+## Full Staff API
+
+All domain routes now live in Relationship/routes.php; api.php and api-public.php
+are compatibility loaders. The 21 staff APIs and five machine contracts are described
+in Docs/knowledge/nexum-relationships.md and Docs/OpenApi/RelationshipApiDocumentation.php.
+The existing five Ticket Relationship APIs remain authoritative. Native/token rights,
+strict input, If-Match, encrypted receipts and shared outbound claims are required.
+API execution remains default-off; Main/production and human review are separate.

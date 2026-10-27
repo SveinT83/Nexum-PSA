@@ -45,6 +45,44 @@ Final candidate and Dev Marketing runs each pass 88 tests / 2018 assertions.
 Populated field/receipt contracts, rendered-error privacy and browser/API rollback
 are explicitly covered. Main promotion is ready; manual scenarios remain Pending.
 
+## HR-2026-10-27-RELATIONSHIP-API - Full Relationship Browser/API Coverage
+
+Status: Pending. Owner: Codex. Intended named human reviewer: Svein Tore.
+Added: 2026-10-27.
+Scope: approved Relationship RFC, 10 browser rows, 21 staff operations, 5 signed
+machine operations and 5 reused Ticket operations.
+Svein Tore authorized RFC implementation and scoped Main promotion with
+"Godkjenner og merge til main". This does not assert execution of human scenarios.
+Pending checks gate production release/deployment; Main promotion is expressly
+authorized while this checklist remains visible.
+
+- [ ] Compare list/detail/context/lookups and every form setting through web/API.
+- [ ] Create/update draft/active synthetic relationships and pause/disable.
+- [ ] Verify narrow/native/token access, revoked rights and exact-parent history.
+- [ ] Set/rotate credentials; verify encrypted one-time result and same-key replay.
+- [ ] Preview content; reject internal, other-client and draft sources.
+- [ ] Push to an approved test instance; compare remote body separately from accepted ID.
+- [ ] Exercise conflict/timeout and no duplicate send, including after source editing.
+- [ ] Check Published Ticket escalation, public reply/status and attachment policy.
+- [ ] Verify signed auth and configured local ownership for new received Knowledge.
+- [ ] Review Swagger and BookStack guidance/access; employee AI retrieval is separate.
+
+Expected: complete current workflow coverage without extra grants, secret disclosure
+or false delivery/read-back claims. Deploy only the additive
+2026_10_27_060000_create_relationship_api_commands.php migration, normal optimize:clear
+and l5-swagger:generate. No new scheduler/worker/build. Outbound API stays default-off.
+Preserve APP_KEY/receipts/claims on rollback; reconcile uncertain effects.
+No production change or real customer test send is authorized. Automated evidence
+belongs in plans/2026-10-27-relationship-api-verification.md and does not mark Reviewed.
+
+
+
+
+
+Main promotion verified: PR #349, merge ee2272b7bac566bfe57a3b61fada0ee0f7e67436.
+Runtime scope and all 31 operation contracts match the tested release. The checklist
+remains Pending; no human scenario is marked performed by this Main merge.
+
 ## HR-2026-10-27-NEXTCLOUD-API - Full Nextcloud Browser/API Coverage
 
 Status: Pending / implementation and tested Main merge authorized by Svein Tore, 2026-10-27.
@@ -88,6 +126,11 @@ Actual handbook pages/employee inheritance read back. New provider execution sta
 No named human scenario has been checked off; Main merge authorized with scenarios Pending.
 Evidence: plans/2026-10-27-nextcloud-api-verification.md/.json.
 
+Main promotion independently verified: PR #338 merged 2026-10-27 as
+0f062b9450de76cabdea269c55506e17d42bcef7. Exact candidate/merge tree equality and all
+scoped tested PHP hashes pass. Final Main affected suite: 391 / 14397; final domain
+121 / 6518. This does not check off any human scenario. Status remains Pending,
+with production release/activation gated by the manual checks above.
 
 ## HR-2026-10-27-BOOKING-API - Full Booking Browser/API Coverage
 
@@ -194,7 +237,7 @@ Automated baseline: 33 tests / 277 assertions of existing behavior only; no manu
 scenario execution or review acceptance is inferred. No production checks claimed.
 
 
-Automated domain verification: 52 tests / 474 assertions; actual 17 operations / 47
+Automated domain verification: 53 tests / 484 assertions; actual 17 operations / 47
 schemas, native MySQL, trusted HTTPS and BookStack read-back pass. Final Main 54/483 and earlier affected candidate 293/2887 pass (overlapping). All
 14 concurrent-source Dev failures pass after current author fixes; no deferral.
 

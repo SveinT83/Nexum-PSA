@@ -14,29 +14,11 @@ use Illuminate\Validation\ValidationException;
 
 class EscalateTicketToRelationship
 {
-    public function __construct(private readonly NexumRelationshipHttpClient $client)
-    {
-    }
+    public function __construct(private readonly NexumRelationshipHttpClient $client) {}
 
     public function handle(Ticket $ticket, NexumRelationship $relationship, ?User $actor = null): NexumSyncLink
     {
-        if (! $ticket->isPortalVisible()) {
-            throw ValidationException::withMessages([
-                'relationship_id' => 'Publish the ticket before escalating it to a Nexum relationship.',
-            ]);
-        }
-
-        if (! $relationship->isActive() || ! $relationship->supports(RelationshipCapability::TICKET_SYNC)) {
-            throw ValidationException::withMessages([
-                'relationship_id' => 'The selected relationship is not active for ticket sync.',
-            ]);
-        }
-
-        if ($relationship->isProviderForClient() && (int) $ticket->client_id !== (int) $relationship->client_id) {
-            throw ValidationException::withMessages([
-                'relationship_id' => 'Provider relationships can only be used for tickets belonging to their linked client.',
-            ]);
-        }
+        $this->validateTarget($ticket, $relationship);
 
         $link = DB::transaction(function () use ($ticket, $relationship, $actor): NexumSyncLink {
             $link = NexumSyncLink::query()->firstOrCreate(
@@ -96,5 +78,28 @@ class EscalateTicketToRelationship
         }
 
         return $link->refresh();
+    }
+
+    /** Both transports recheck publication and configured destination ownership before reserving any outbound attempt. */
+    public function validateTarget(Ticket $ticket, NexumRelationship $relationship): void
+    {
+        if (! $ticket->isPortalVisible()) {
+            throw ValidationException::withMessages([
+                'relationship_id' => 'Publish the ticket before escalating it to a Nexum relationship.',
+            ]);
+        }
+
+        if (! $relationship->isActive() || ! $relationship->supports(RelationshipCapability::TICKET_SYNC)) {
+            throw ValidationException::withMessages([
+                'relationship_id' => 'The selected relationship is not active for ticket sync.',
+            ]);
+        }
+
+        if ($relationship->isProviderForClient() && (int) $ticket->client_id !== (int) $relationship->client_id) {
+            throw ValidationException::withMessages([
+                'relationship_id' => 'Provider relationships can only be used for tickets belonging to their linked client.',
+            ]);
+        }
+
     }
 }

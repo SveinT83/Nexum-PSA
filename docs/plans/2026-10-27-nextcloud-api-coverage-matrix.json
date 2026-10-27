@@ -1,5 +1,5 @@
 {
-  "status": "Done On Dev / isolated Main verified / merge authorized",
+  "status": "Done On Dev / Merged To Main in PR #338 / production unchanged",
   "date": "2026-10-27",
   "root": "/var/Projects/tdPSA",
   "branch": "Dev",
@@ -1934,5 +1934,16 @@
         "status": 200
       }
     }
+  },
+  "main_promotion": {
+    "pr": 338,
+    "url": "https://github.com/SveinT83/Nexum-PSA/pull/338",
+    "merge": "0f062b9450de76cabdea269c55506e17d42bcef7",
+    "candidate_head": "c326587d34b896ef0dee4b021ab0877a4ba3e465",
+    "tree": "8ce98ceb63f831d2345373941b5d1088c379a262",
+    "exact_tested_tree_match": true,
+    "all_tested_php_hashes_match": true,
+    "dev_head_preserved": true,
+    "dev_index_preserved": true
   }
 }
