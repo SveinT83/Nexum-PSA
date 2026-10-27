@@ -1,6 +1,6 @@
 # Feature Slices: Full Lead Intelligence API Parity
 
-Status: All six sequential slices Done On Dev; scoped Main candidate verified
+Status: All six sequential slices Done On Dev and merged to Main in PR #343
 Date: 2026-10-27
 Parent: ../rfc/2026-10-27-lead-intelligence-full-api-parity.md
 Owner: Codex
