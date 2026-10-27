@@ -14,7 +14,6 @@ use App\Modules\WorkContext\Support\WorkContextType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
-use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -44,6 +43,7 @@ class DocumentationModuleTest extends TestCase
         $this->tech->givePermissionTo([
             'documentation.view',
             'documentation.create',
+            'documentation.update', 'documentation.delete', 'documentation.manage_templates', 'taxonomy.manage_categories',
         ]);
     }
 
@@ -266,7 +266,7 @@ class DocumentationModuleTest extends TestCase
     #[Test]
     public function authenticated_api_user_can_manage_documentation_records_categories_and_templates(): void
     {
-        Sanctum::actingAs($this->tech, ['knowledge.read', 'knowledge.create', 'knowledge.update']);
+        $this->withToken($this->tech->createToken('Documentation test', ['knowledge.read', 'knowledge.create', 'knowledge.update'])->plainTextToken);
 
         $client = Client::factory()->create(['name' => 'API Documentation Client']);
         $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Main Office']);
@@ -372,7 +372,7 @@ class DocumentationModuleTest extends TestCase
     #[Test]
     public function knowledge_read_api_token_cannot_create_documentation_records(): void
     {
-        Sanctum::actingAs($this->tech, ['knowledge.read']);
+        $this->withToken($this->tech->createToken('Documentation test', ['knowledge.read'])->plainTextToken);
 
         $this->postJson(route('api.v1.knowledge.documentation-categories.store'), [
             'name' => 'Blocked Category',
@@ -382,7 +382,7 @@ class DocumentationModuleTest extends TestCase
     #[Test]
     public function documentation_api_validates_site_belongs_to_client(): void
     {
-        Sanctum::actingAs($this->tech, ['knowledge.create']);
+        $this->withToken($this->tech->createToken('Documentation test', ['knowledge.create'])->plainTextToken);
 
         $category = Category::query()->create([
             'name' => 'LAN',

@@ -16,8 +16,12 @@ class DocumentationResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'revision' => \App\Modules\Documentation\Support\DocumentationApiInput::revision($this->resource->getAttributes()),
             'title' => $this->title,
             'scope_type' => $this->scope_type,
+            'portal_visible' => $this->isPortalVisible(),
+            'portal_visible_at' => $this->portal_visible_at,
+            'portal_visible_by' => $this->portal_visible_by,
             'category_id' => $this->category_id,
             'template_id' => $this->template_id,
             'client_id' => $this->client_id,

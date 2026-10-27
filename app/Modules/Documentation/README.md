@@ -56,3 +56,12 @@ to the stored snapshot so the Tech UI renders the content.
 Documentation records expose `work_context_id` and `work_context`. The list endpoint supports
 `work_context_id` and `context_type` filters in addition to the existing `client_id`, `site_id`, and
 `scope_type` filters.
+
+## Full browser/API parity (2026-10-27)
+
+33 HTTP operations / 40 schemas cover current supported browser and portal flows.
+See Docs/knowledge/documentation-api.md for contracts, permissions, read-back,
+register ownership and #275 boundaries. routes.php owns all declarations; api.php
+is the compatibility loader. Additive migration: 2026_10_27_010000_create_documentation_api_commands.php.
+Human review HR-2026-10-27-DOCUMENTATION-API Reviewed by Svein Tore, 2026-10-27;
+Main/production unchanged and require separate authorization.

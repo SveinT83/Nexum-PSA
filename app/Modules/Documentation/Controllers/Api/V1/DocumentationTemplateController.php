@@ -13,6 +13,13 @@ class DocumentationTemplateController extends Controller
 {
     public function index(Request $request)
     {
+        $perPage = \App\Modules\Documentation\Support\DocumentationApiInput::page($request);
+        $request->validate(['q' => 'sometimes|nullable|string|max:255', 'include_inactive' => 'sometimes|boolean',
+            'category_id' => 'sometimes|integer|min:1', 'category_slug' => 'sometimes|string|max:255']);
+        if ($request->boolean('include_inactive')) {
+            \App\Modules\Documentation\Support\DocumentationApiAccess::authorize($request->user(),
+                ['documentation.manage_templates']);
+        }
         $query = DocumentationTemplate::query()
             ->with('category')
             ->whereHas('category', fn ($category) => $category->where('type', 'documentation'))
@@ -38,7 +45,7 @@ class DocumentationTemplateController extends Controller
             $query->whereHas('category', fn ($category) => $category->where('type', 'documentation')->where('slug', $request->input('category_slug')));
         }
 
-        return DocumentationTemplateResource::collection($query->paginate($request->integer('per_page') ?: 15));
+        return DocumentationTemplateResource::collection($query->paginate($perPage));
     }
 
     public function store(Request $request, DocumentationApiPayload $payload)
@@ -52,6 +59,9 @@ class DocumentationTemplateController extends Controller
             'fields' => $data['fields'] ?? [],
             'is_active' => $data['is_active'] ?? true,
         ]);
+
+        $request->route()->setParameter('documentationTemplate', $template);
+        $request->route()->defaults['documentation_target'] = 'documentationTemplate';
 
         return (new DocumentationTemplateResource($this->loadTemplate($template)))
             ->response()
@@ -88,7 +98,12 @@ class DocumentationTemplateController extends Controller
             'category_id' => [$creating ? 'required_without:category_slug' : 'sometimes', 'nullable', Rule::exists('categories', 'id')->where('type', 'documentation')],
             'category_slug' => [$creating ? 'required_without:category_id' : 'sometimes', 'nullable', 'string', Rule::exists('categories', 'slug')->where('type', 'documentation')],
             'name' => [$creating ? 'required' : 'sometimes', 'string', 'max:255'],
-            'fields' => ['sometimes', 'array'],
+            'fields' => ['sometimes', 'array', 'max:250'],
+            'fields.*' => ['array'],
+            'fields.*.layout' => ['nullable', 'string'],
+            'fields.*.labelName' => ['required', 'string', 'max:255'],
+            'fields.*.Name' => ['nullable', 'required_without:fields.*.layout', 'string', 'max:255'],
+            'fields.*.type' => ['nullable', 'required_without:fields.*.layout', 'string', 'max:64'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
     }
@@ -102,6 +117,6 @@ class DocumentationTemplateController extends Controller
 
     private function loadTemplate(DocumentationTemplate $template): DocumentationTemplate
     {
-        return $template->load('category');
+        return $template->refresh()->load('category');
     }
 }

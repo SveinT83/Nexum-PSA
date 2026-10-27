@@ -62,11 +62,8 @@ class ShippingCarrierController extends Controller
 
     public function store(ShippingCarrierRequest $request): RedirectResponse
     {
-        $carrier = ShippingCarrier::query()->create([
-            ...$request->carrierData(),
-            'created_by' => $request->user()?->id,
-            'updated_by' => $request->user()?->id,
-        ]);
+        $carrier = app(\App\Modules\Documentation\Actions\SaveShippingCarrier::class)
+            ->handle($request->carrierData(), $request->user());
 
         return redirect()
             ->route('tech.documentations.shipping-carriers.show', $carrier)
@@ -90,10 +87,8 @@ class ShippingCarrierController extends Controller
         ShippingCarrierRequest $request,
         ShippingCarrier $shippingCarrier,
     ): RedirectResponse {
-        $shippingCarrier->forceFill([
-            ...$request->carrierData(),
-            'updated_by' => $request->user()?->id,
-        ])->save();
+        app(\App\Modules\Documentation\Actions\SaveShippingCarrier::class)
+            ->handle($request->carrierData(), $request->user(), $shippingCarrier);
 
         return redirect()
             ->route('tech.documentations.shipping-carriers.show', $shippingCarrier)

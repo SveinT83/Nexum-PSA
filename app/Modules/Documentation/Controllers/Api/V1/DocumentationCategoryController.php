@@ -14,6 +14,13 @@ class DocumentationCategoryController extends Controller
 {
     public function index(Request $request)
     {
+        $perPage = \App\Modules\Documentation\Support\DocumentationApiInput::page($request);
+        $request->validate(['q' => 'sometimes|nullable|string|max:255', 'include_inactive' => 'sometimes|boolean',
+            'category_id' => 'sometimes|integer|min:1', 'category_slug' => 'sometimes|string|max:255']);
+        if ($request->boolean('include_inactive')) {
+            \App\Modules\Documentation\Support\DocumentationApiAccess::authorize($request->user(),
+                ['taxonomy.manage_categories']);
+        }
         $query = Category::query()
             ->where('type', 'documentation')
             ->with('parent')
@@ -33,7 +40,7 @@ class DocumentationCategoryController extends Controller
             });
         }
 
-        return DocumentationCategoryResource::collection($query->paginate($request->integer('per_page') ?: 15));
+        return DocumentationCategoryResource::collection($query->paginate($perPage));
     }
 
     public function store(Request $request)
@@ -43,6 +50,9 @@ class DocumentationCategoryController extends Controller
         $data['slug'] = $this->slugFor($data['name'], $data['slug'] ?? null);
 
         $category = Category::query()->create($data);
+
+        $request->route()->setParameter('category', $category);
+        $request->route()->defaults['documentation_target'] = 'category';
 
         return (new DocumentationCategoryResource($this->loadCategory($category)))
             ->response()
@@ -62,6 +72,15 @@ class DocumentationCategoryController extends Controller
 
         $data = $this->validatedCategory($request, creating: false, category: $category);
         unset($data['type']);
+        $parent = isset($data['parent_id']) ? Category::find($data['parent_id']) : null;
+        $seen = [];
+        while ($parent) {
+            if ($parent->id === $category->id || isset($seen[$parent->id])) {
+                throw ValidationException::withMessages(['parent_id' => 'A category cannot contain a parent cycle.']);
+            }
+            $seen[$parent->id] = true;
+            $parent = $parent->parent;
+        }
 
         if (array_key_exists('slug', $data) && filled($data['slug'])) {
             $data['slug'] = $this->slugFor($data['name'] ?? $category->name, $data['slug'], $category);
@@ -114,6 +133,6 @@ class DocumentationCategoryController extends Controller
 
     private function loadCategory(Category $category): Category
     {
-        return $category->load('parent')->loadCount('templates');
+        return $category->refresh()->load('parent')->loadCount('templates');
     }
 }

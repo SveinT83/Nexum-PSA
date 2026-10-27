@@ -14,6 +14,7 @@ class DocumentationCategoryResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'revision' => \App\Modules\Documentation\Support\DocumentationApiInput::revision(\Illuminate\Support\Arr::except($this->resource->getAttributes(), ['templates_count'])),
             'parent_id' => $this->parent_id,
             'name' => $this->name,
             'slug' => $this->slug,

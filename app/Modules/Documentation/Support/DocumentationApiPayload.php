@@ -11,15 +11,14 @@ use Illuminate\Validation\ValidationException;
 
 class DocumentationApiPayload
 {
-    public function __construct(private readonly ResolveWorkContext $workContexts)
-    {
-    }
+    public function __construct(private readonly ResolveWorkContext $workContexts) {}
 
     public function createPayload(array $data): array
     {
         $category = $this->categoryFromPayload($data);
         $template = $this->templateFromPayload($data, $category);
         $scope = $this->scopeFromPayload($data);
+        $this->validateExplicitScope($data, $scope);
         $documentData = $this->documentData($data);
         $snapshot = $this->snapshotForData($template->fields ?? [], $documentData);
 
@@ -59,6 +58,7 @@ class DocumentationApiPayload
             'site_id' => $documentation->site_id,
         ], array_intersect_key($data, array_flip(['client_id', 'site_id']))));
 
+        $this->validateExplicitScope($data, $scope);
         $documentData = $this->documentData($data, $documentation->data_json ?? []);
         $baseSnapshot = (int) $template->id === (int) $documentation->template_id
             ? ($documentation->template_snapshot_json ?? [])
@@ -97,6 +97,10 @@ class DocumentationApiPayload
             ]);
         }
 
+        if (! empty($data['category_slug']) && $category->slug !== $data['category_slug']) {
+            throw ValidationException::withMessages(['category_slug' => 'The category ID and slug must identify the same category.']);
+        }
+
         return $category;
     }
 
@@ -110,11 +114,12 @@ class DocumentationApiPayload
             $query->whereKey($data['template_id']);
         }
 
-        $template = $query->orderBy('id')->first();
+        $templates = $query->orderBy('name')->orderBy('id')->get();
+        $template = ! empty($data['template_id']) || $templates->count() === 1 ? $templates->first() : null;
 
         if (! $template) {
             throw ValidationException::withMessages([
-                'template_id' => 'An active documentation template is required for the selected category.',
+                'template_id' => 'Select an active template that belongs to the selected category; multiple templates require template_id.',
             ]);
         }
 
@@ -164,6 +169,13 @@ class DocumentationApiPayload
             'site_id' => null,
             'scope_type' => 'internal',
         ];
+    }
+
+    private function validateExplicitScope(array $data, array $scope): void
+    {
+        if (isset($data['scope_type']) && $data['scope_type'] !== $scope['scope_type']) {
+            throw ValidationException::withMessages(['scope_type' => 'Scope must match the selected client and site.']);
+        }
     }
 
     private function documentData(array $data, array $existing = []): array

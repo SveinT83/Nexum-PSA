@@ -1395,3 +1395,24 @@ restricted to the same actor/token with original rights rechecked. AI repair and
 API automation execution stay default-off and require explicit confirmation. A queued
 import or unknown provider result is not completion. This is a Dev-only update until
 separately promoted/deployed and reviewed under HR-2026-10-26-STORAGE-API.
+
+## Documentation browser/API parity (Dev, 2026-10-27)
+
+Documentation now has 33 typed HTTP operations and 40 schemas for current browser
+workflows, including canonical partner/carrier maintenance, safe tracking preview,
+explicit portal visibility, and own-membership portal reads. Legacy knowledge.*
+Documentation URLs remain supported with current actor permissions enforced.
+New documentation.* scopes narrow partner/carrier/portal/command access.
+
+Use **Documentation Overview -> Documentation API guide** and the target Swagger
+for exact contracts. New writes have stable request keys, encrypted local receipts,
+If-Match conflict checks, original-authority replay checks and exact record read-back.
+Portal data uses the same active account/contact/membership and Client/Site boundaries
+as web. Scope changes hide previously visible content pending explicit publication.
+No role/token grants or provider activation are performed by this release.
+
+This is Dev-only: Main/production are unchanged. The human checklist
+HR-2026-10-27-DOCUMENTATION-API was Reviewed by Svein Tore on 2026-10-27.
+Main promotion and production deployment require separate authorization.
+Issue #275's immutable Documentation revision/publication workflow remains open.
+API exposure and BookStack publication do not prove employee OpenWebUI retrieval.

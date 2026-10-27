@@ -14,6 +14,7 @@ class DocumentationTemplateResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'revision' => \App\Modules\Documentation\Support\DocumentationApiInput::revision($this->resource->getAttributes()),
             'category_id' => $this->category_id,
             'name' => $this->name,
             'fields' => $this->fields ?? [],

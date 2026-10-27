@@ -12,6 +12,7 @@ class PortalDocumentationAccess
     {
         return Documentation::query()
             ->whereNotNull('portal_visible_at')
+            ->whereIn('scope_type', ['client', 'site'])
             ->where('client_id', $context->client->id)
             ->when($context->site, fn (Builder $query) => $query->where(function (Builder $scope) use ($context): void {
                 $scope->whereNull('site_id')
@@ -21,7 +22,7 @@ class PortalDocumentationAccess
 
     public function canView(CustomerPortalContext $context, Documentation $documentation): bool
     {
-        if (! $documentation->isPortalVisible()) {
+        if (! $documentation->isPortalVisible() || ! in_array($documentation->scope_type, ['client', 'site'], true)) {
             return false;
         }
 

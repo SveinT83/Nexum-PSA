@@ -1,5 +1,56 @@
 # Human Review Register
 
+## HR-2026-10-27-DOCUMENTATION-API - Full Documentation Browser/API Coverage
+
+Status: Reviewed. Date: 2026-10-27.
+Human reviewer: Svein Tore. Accepted on 2026-10-27 with "Godkjenner" in direct
+response to the completed Dev handoff and its named human-review checklist.
+Owner: Codex. Named human reviewer/release owner: Svein Tore.
+Scope: RFC rfc/2026-10-27-documentation-full-api-parity.md; 28 staff and 2 portal
+browser routes, 33 typed HTTP operations and 40 schemas. Current workflows only.
+The human-review gate is satisfied by named acceptance. This approval does not
+authorize a commit, push, Main merge or production deployment. The earlier exact
+Dev-only additive migration and verification remain recorded separately.
+#275 immutable Documentation revisions remain a separate open design/implementation.
+
+- [ ] Compare document create, explicit multi-template selection, edit/snapshot,
+      filter/context and soft delete between web and API for internal/client/site data.
+- [ ] Create and edit a supplier and manufacturer, deactivate/reactivate, and confirm
+      Storage references the same canonical records without changes to stock or orders.
+- [ ] Maintain a carrier, validate allowed HTTPS tracking hosts and preview a link;
+      confirm historical shipment snapshots retain their original configuration.
+- [ ] Publish/hide one controlled client document; compare portal, audit and recipient
+      notifications. Edit visible content and confirm the intended update notification.
+- [ ] Move a visible document to another client/site/internal scope; verify it becomes
+      hidden until explicitly published for that audience. No automatic cross-client sharing.
+- [ ] Compare client-wide and site-specific portal memberships through web/session API
+      and bearer API; hidden/internal/other-client/other-site records must be unavailable.
+- [ ] Repeat the same command key without duplicate changes/notifications; use a stale
+      If-Match and revoke current rights/token to verify denied receipt access.
+- [ ] Check employee handbook and Swagger for truthful Dev/Main/production status.
+      Employee assistant retrieval remains separate from BookStack article publication.
+
+Deployment: additive migration 2026_10_27_010000_create_documentation_api_commands.php.
+No business backfill, permissions, provider activation, frontend build, queue or scheduler
+change. Regenerate Swagger and clear normal caches after future authorized deployment.
+Preserve APP_KEY and durable receipts during rollback. Restore code rather than dropping
+live command tables. Main/production commit/push/merge/deploy are not authorized here.
+Technical/native/HTTPS/handbook evidence is recorded in the linked verification report.
+This status is based on Svein Tore's explicit acceptance, not automated checks.
+The original scenario boxes are retained as the checklist; no individually witnessed
+manual execution is invented.
+
+
+Automated final evidence: 548 tests / 8201 assertions, no failures; 1 existing dedicated-MariaDB contract skip;
+103 / 3305 focused checks overlap that set. 33 successful typed HTTP operations,
+40 schemas, 37 syntax/Pint checks, native MySQL, Dev migration batch 30, trusted
+HTTPS/Swagger and actual handbook content/access read-back verified.
+Main/production and every manual checkbox remain unchanged.
+
+Main promotion explicitly authorized by Svein Tore on 2026-10-27: "Merge til main".
+A scoped isolated candidate is under verification. Production deployment remains separate.
+
+
 ### HR-2026-10-26-STORAGE-API - Full Storage Browser/API Coverage
 
 Status: Reviewed

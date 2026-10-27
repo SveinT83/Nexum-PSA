@@ -14,9 +14,19 @@ class DocumentationController extends Controller
 {
     public function index(Request $request)
     {
+        $perPage = \App\Modules\Documentation\Support\DocumentationApiInput::page($request);
+        $request->validate([
+            'q' => 'sometimes|nullable|string|max:255', 'category_id' => 'sometimes|integer|min:1',
+            'category_slug' => 'sometimes|string|max:255', 'template_id' => 'sometimes|integer|min:1',
+            'client_id' => 'sometimes|integer|min:1', 'site_id' => 'sometimes|integer|min:1',
+            'work_context_id' => 'sometimes|integer|min:1',
+            'scope_type' => ['sometimes', Rule::in(['internal', 'client', 'site'])],
+            'context_type' => ['sometimes', Rule::in(['internal', 'client'])],
+            'exclude_internal' => 'sometimes|boolean',
+        ]);
         $query = Documentation::query()
             ->with(['category', 'template', 'client', 'workContext', 'site'])
-            ->latest('updated_at');
+            ->latest('updated_at')->orderByDesc('id');
 
         if ($request->filled('q')) {
             $needle = '%'.trim((string) $request->input('q')).'%';
@@ -52,13 +62,20 @@ class DocumentationController extends Controller
             $query->whereHas('workContext', fn ($context) => $context->where('type', $request->input('context_type')));
         }
 
-        return DocumentationResource::collection($query->paginate($request->integer('per_page') ?: 15));
+        if ($request->boolean('exclude_internal')) {
+            $query->where('scope_type', '!=', 'internal');
+        }
+
+        return DocumentationResource::collection($query->paginate($perPage));
     }
 
     public function store(Request $request, DocumentationApiPayload $payload)
     {
         $data = $this->validatedDocumentation($request, creating: true);
         $documentation = Documentation::query()->create($payload->createPayload($data));
+
+        $request->route()->setParameter('documentation', $documentation);
+        $request->route()->defaults['documentation_target'] = 'documentation';
 
         return (new DocumentationResource($this->loadDocumentation($documentation)))
             ->response()
@@ -73,7 +90,8 @@ class DocumentationController extends Controller
     public function update(Request $request, Documentation $documentation, DocumentationApiPayload $payload)
     {
         $data = $this->validatedDocumentation($request, creating: false);
-        $documentation->forceFill($payload->updatePayload($documentation, $data))->save();
+        $documentation = app(\App\Modules\Documentation\Actions\UpdateDocumentation::class)
+            ->handle($documentation, $payload->updatePayload($documentation, $data));
 
         return new DocumentationResource($this->loadDocumentation($documentation));
     }
@@ -83,6 +101,15 @@ class DocumentationController extends Controller
         $documentation->delete();
 
         return response()->noContent();
+    }
+
+    public function visibility(Request $request, Documentation $documentation)
+    {
+        $data = $request->validate(['portal_visible' => 'required|boolean']);
+        $document = app(\App\Modules\Documentation\Actions\SetDocumentationPortalVisibility::class)
+            ->handle($documentation, (bool) $data['portal_visible'], $request);
+
+        return new DocumentationResource($this->loadDocumentation($document));
     }
 
     private function validatedDocumentation(Request $request, bool $creating): array
@@ -103,6 +130,6 @@ class DocumentationController extends Controller
 
     private function loadDocumentation(Documentation $documentation): Documentation
     {
-        return $documentation->load(['category', 'template', 'client', 'workContext', 'site']);
+        return $documentation->refresh()->load(['category', 'template', 'client', 'workContext', 'site']);
     }
 }
