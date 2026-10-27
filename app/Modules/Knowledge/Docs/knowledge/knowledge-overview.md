@@ -209,3 +209,14 @@ The general revision approval workflow requires migration
 rollback, and production checks in `HR-2026-09-04-001`.
 
 If Artisan commands cannot connect to the development MySQL server while the web application can, verify sandbox/network restrictions before changing `.env` or database settings.
+
+
+## Full Browser/API Support (Dev, 2026-10-27)
+
+The Knowledge API now covers the current library, hierarchy, article proposals, exact revision
+review/publication/retry/rollback, BookStack conflict/sync actions, live tags, defaults and scoped
+portal reads. User rights and token abilities are both required. Creating or editing text produces
+an immutable proposal; approval and verified publication remain separate. Repository-owned guides
+retain repository authority. Provider execution remains default-off. Main promotion is in progress;
+production availability is separate. See the full Knowledge API guide for exact steps, scopes,
+idempotent writes, ETag conflicts, encrypted operation read-back and uncertain-provider handling.

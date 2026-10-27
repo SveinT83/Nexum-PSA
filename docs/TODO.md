@@ -1,5 +1,32 @@
 # tdPSA Development TODO
 
+## Full Knowledge browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Main Merge Authorized / Isolated Main Candidate Verified.
+Owner: Codex. Approver, human reviewer and release owner: Svein Tore.
+Authorization: "Ja og merge til main", 2026-10-27. RFC/ADR are Approved/Accepted;
+all six Feature Slice scopes are complete. Coverage: all 37 browser rows and embedded
+Livewire/tag/Sync Now operations; 44 typed HTTP operations / 38 schemas.
+Evidence: plans/2026-10-27-knowledge-api-verification.md/.json and coverage matrix.
+Final Dev contract/parity: 16 / 1160; earlier core 97 / 2663 and broader 252 / 3648
+have overlapping coverage. Final isolated Main batch 326 / 5246; final Swagger contract/generation 2 / 694.
+Dev exact additive migration installed in batch 32; native MySQL locking/uniqueness/
+encryption/rollback and trusted HTTPS/schema are verified. No retained probe commands/tokens.
+Default-off provider execution stays false. No customer/provider/worker activation or production rollout.
+Five native Knowledge sources and actual BookStack 382/445/449/379 are exact-read-back;
+full API guide embedded in 382 because the existing connector cannot create normal named pages.
+Inherited access unchanged; employee OpenWebUI retrieval untested. Native pending_push does
+not represent the separate verified BookStack publication. Existing connector/source drift
+follow-up remains with the maintainer; no permission expansion or credential workaround.
+Documentation is already merged in PR #329 and its full current-browser APIs are regression-tested.
+#265/#261 audiences/AI retrieval and #275 Documentation revisions remain separate work.
+HR-2026-10-27-KNOWLEDGE-API remains Pending, with HR-2026-09-04-001 and HR-2026-09-03-003.
+Svein explicitly authorizes tested Main merge without marking those manual scenarios Reviewed;
+production/release/provider activation still requires their separate gates and authorization.
+Next action (Codex): merge the verified scoped candidate and independently verify exact Main tree.
+Next action (Svein Tore): perform the named manual checklists and separately authorize rollout.
+Preserve the shared Dev checkout/index and unrelated new Signal configuration.
+
 ## Full Documentation browser/API coverage (2026-10-27)
 
 Status: Done On Dev / Reviewed by Svein Tore / Merged to Main in PR #329 / Production unchanged.

@@ -64,6 +64,8 @@ class KnowledgeShelfController extends Controller
 
     public function show(Shelf $shelf)
     {
+        $shelf->load(['books' => fn ($q) => $q->orderBy('priority')->orderBy('name')->limit(100)]);
+
         return new KnowledgeShelfResource($this->loadShelf($shelf));
     }
 

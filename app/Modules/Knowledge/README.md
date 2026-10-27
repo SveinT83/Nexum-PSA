@@ -346,3 +346,16 @@ Likely future work:
 - Keep all Knowledge views in `app/Modules/Knowledge/Views`.
 - Keep Livewire classes and Livewire views inside this module.
 - Keep the `knowledge.article-form` alias stable unless all Blade usages are updated.
+
+
+## Full Browser/API Support (Dev, 2026-10-27)
+
+The Knowledge API now covers the current library, hierarchy, article proposals, exact revision
+review/publication/retry/rollback, BookStack conflict/sync actions, live tags, defaults and scoped
+portal reads. User rights and token abilities are both required. Creating or editing text produces
+an immutable proposal; approval and verified publication remain separate. Repository-owned guides
+retain repository authority. Provider execution remains default-off. Main promotion is in progress;
+production availability is separate. See the full Knowledge API guide for exact steps, scopes,
+idempotent writes, ETag conflicts, encrypted operation read-back and uncertain-provider handling.
+
+Full operating guide: `Docs/knowledge/knowledge-api.md`.

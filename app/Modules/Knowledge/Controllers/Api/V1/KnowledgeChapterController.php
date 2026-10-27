@@ -67,6 +67,8 @@ class KnowledgeChapterController extends Controller
 
     public function show(Chapter $chapter)
     {
+        $chapter->load(['pages' => fn ($q) => $q->orderBy('priority')->orderBy('id')->limit(100)]);
+
         return new KnowledgeChapterResource($this->loadChapter($chapter));
     }
 

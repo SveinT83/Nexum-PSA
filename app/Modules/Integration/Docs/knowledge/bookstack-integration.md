@@ -207,3 +207,16 @@ in `HR-2026-09-03-003`.
 The general Knowledge approval/publication layer additionally requires migration
 `2026_09_04_080000_add_knowledge_revision_workflow` and the permission, review, retry, and
 read-back checks in `HR-2026-09-04-001`.
+
+## Knowledge API Operations On Dev (2026-10-27)
+
+Knowledge's current browser workflows also have typed API operations for reading sync state,
+selecting a remote candidate for normal review, explicitly keeping the exact published Nexum
+revision, and running the library's Sync Now pull. These reuse the existing revision-safe
+Integration actions. Queued publication remains pending until exact provider read-back.
+
+Provider execution requires the appropriate token abilities and current native user rights,
+including knowledge.sync_bookstack, plus the default-off Knowledge API execution switch.
+API support does not enable the integration, two-way policy, permissions or workers.
+Use the Knowledge API operating guide for idempotency, uncertain outcomes and reconciliation.
+Dev verification and Main/production availability remain separate.

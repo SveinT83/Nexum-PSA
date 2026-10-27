@@ -14,6 +14,7 @@ class KnowledgeBookResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'pages' => KnowledgeArticleResource::collection($this->whenLoaded('pages')),
             'shelf_id' => $this->shelf_id,
             'name' => $this->name,
             'slug' => $this->slug,

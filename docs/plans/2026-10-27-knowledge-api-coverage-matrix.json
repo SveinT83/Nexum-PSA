@@ -1,0 +1,1245 @@
+{
+  "date": "2026-10-27",
+  "status": "Verified On Dev / isolated Main candidate verified; merge authorized",
+  "browser_rows": 37,
+  "api_rows": 20,
+  "api_http_operations": 24,
+  "rows": [
+    {
+      "id": "K01",
+      "browser_route": "customer-portal.knowledge.index",
+      "method": "GET",
+      "uri": "portal/knowledge",
+      "kind": "read",
+      "proposed_api": "GET knowledge/portal/articles",
+      "baseline_status": "Missing",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K02",
+      "browser_route": "customer-portal.knowledge.show",
+      "method": "GET",
+      "uri": "portal/knowledge/{article}",
+      "kind": "read",
+      "proposed_api": "GET knowledge/portal/articles/{article}",
+      "baseline_status": "Missing",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K03",
+      "browser_route": "tech.admin.settings.knowledge",
+      "method": "GET",
+      "uri": "tech/admin/settings/knowledge",
+      "kind": "read",
+      "proposed_api": "GET knowledge/settings",
+      "baseline_status": "Missing",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K04",
+      "browser_route": "tech.admin.settings.knowledge.update",
+      "method": "PUT",
+      "uri": "tech/admin/settings/knowledge",
+      "kind": "write",
+      "proposed_api": "PUT knowledge/settings",
+      "baseline_status": "Missing",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K05",
+      "browser_route": "tech.knowledge.index",
+      "method": "GET",
+      "uri": "tech/knowledge",
+      "kind": "read",
+      "proposed_api": "GET knowledge/articles; GET knowledge/shelves; GET knowledge/context",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K06",
+      "browser_route": "tech.knowledge.book",
+      "method": "GET",
+      "uri": "tech/knowledge/books/{book}",
+      "kind": "read",
+      "proposed_api": "GET knowledge/books/{book}",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K07",
+      "browser_route": "tech.knowledge.books.update",
+      "method": "PUT",
+      "uri": "tech/knowledge/books/{book}",
+      "kind": "write",
+      "proposed_api": "PUT/PATCH knowledge/books/{book}",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K08",
+      "browser_route": "tech.knowledge.books.destroy",
+      "method": "DELETE",
+      "uri": "tech/knowledge/books/{book}",
+      "kind": "write",
+      "proposed_api": "DELETE knowledge/books/{book}",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K09",
+      "browser_route": "tech.knowledge.chapters.store",
+      "method": "POST",
+      "uri": "tech/knowledge/books/{book}/chapters",
+      "kind": "write",
+      "proposed_api": "POST knowledge/chapters",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K10",
+      "browser_route": "tech.knowledge.chapters.create",
+      "method": "GET",
+      "uri": "tech/knowledge/books/{book}/chapters/create",
+      "kind": "read",
+      "proposed_api": "GET knowledge/context; GET knowledge/lookups",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K11",
+      "browser_route": "tech.knowledge.books.edit",
+      "method": "GET",
+      "uri": "tech/knowledge/books/{book}/edit",
+      "kind": "read",
+      "proposed_api": "GET knowledge/context; GET knowledge/lookups; GET knowledge/books/{book}",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K12",
+      "browser_route": "tech.knowledge.books.pages.create",
+      "method": "GET",
+      "uri": "tech/knowledge/books/{book}/pages/create",
+      "kind": "read",
+      "proposed_api": "GET knowledge/context; GET knowledge/lookups; POST knowledge/articles",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K13",
+      "browser_route": "tech.knowledge.chapters.update",
+      "method": "PUT",
+      "uri": "tech/knowledge/chapters/{chapter}",
+      "kind": "write",
+      "proposed_api": "PUT/PATCH knowledge/chapters/{chapter}",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K14",
+      "browser_route": "tech.knowledge.chapters.destroy",
+      "method": "DELETE",
+      "uri": "tech/knowledge/chapters/{chapter}",
+      "kind": "write",
+      "proposed_api": "DELETE knowledge/chapters/{chapter}",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K15",
+      "browser_route": "tech.knowledge.chapters.edit",
+      "method": "GET",
+      "uri": "tech/knowledge/chapters/{chapter}/edit",
+      "kind": "read",
+      "proposed_api": "GET knowledge/context; GET knowledge/lookups; GET knowledge/chapters/{chapter}",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K16",
+      "browser_route": "tech.knowledge.create",
+      "method": "GET",
+      "uri": "tech/knowledge/create",
+      "kind": "read",
+      "proposed_api": "GET knowledge/context; GET knowledge/lookups",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K17",
+      "browser_route": "tech.knowledge.destroy",
+      "method": "DELETE",
+      "uri": "tech/knowledge/destroy/{article}",
+      "kind": "write",
+      "proposed_api": "DELETE knowledge/articles/{article}",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K18",
+      "browser_route": "tech.knowledge.edit",
+      "method": "GET",
+      "uri": "tech/knowledge/edit/{article}",
+      "kind": "read",
+      "proposed_api": "GET knowledge/context; GET knowledge/lookups; GET knowledge/articles/{article}",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K19",
+      "browser_route": "tech.knowledge.revisions.show",
+      "method": "GET",
+      "uri": "tech/knowledge/revisions/{revision}",
+      "kind": "read",
+      "proposed_api": "GET knowledge/revisions/{revision}",
+      "baseline_status": "Missing",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K20",
+      "browser_route": "tech.knowledge.revisions.approve",
+      "method": "POST",
+      "uri": "tech/knowledge/revisions/{revision}/approve",
+      "kind": "action",
+      "proposed_api": "POST knowledge/revisions/{revision}/approve",
+      "baseline_status": "Missing",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K21",
+      "browser_route": "tech.knowledge.revisions.publish",
+      "method": "POST",
+      "uri": "tech/knowledge/revisions/{revision}/publish",
+      "kind": "action",
+      "proposed_api": "POST knowledge/revisions/{revision}/publish",
+      "baseline_status": "Missing",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K22",
+      "browser_route": "tech.knowledge.revisions.reject",
+      "method": "POST",
+      "uri": "tech/knowledge/revisions/{revision}/reject",
+      "kind": "action",
+      "proposed_api": "POST knowledge/revisions/{revision}/reject",
+      "baseline_status": "Missing",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K23",
+      "browser_route": "tech.knowledge.revisions.retry",
+      "method": "POST",
+      "uri": "tech/knowledge/revisions/{revision}/retry",
+      "kind": "action",
+      "proposed_api": "POST knowledge/revisions/{revision}/retry",
+      "baseline_status": "Missing",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K24",
+      "browser_route": "tech.knowledge.revisions.rollback",
+      "method": "POST",
+      "uri": "tech/knowledge/revisions/{revision}/rollback",
+      "kind": "action",
+      "proposed_api": "POST knowledge/revisions/{revision}/rollback",
+      "baseline_status": "Missing",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K25",
+      "browser_route": "tech.knowledge.shelves.store",
+      "method": "POST",
+      "uri": "tech/knowledge/shelves",
+      "kind": "write",
+      "proposed_api": "POST knowledge/shelves",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K26",
+      "browser_route": "tech.knowledge.shelves.create",
+      "method": "GET",
+      "uri": "tech/knowledge/shelves/create",
+      "kind": "read",
+      "proposed_api": "GET knowledge/context; GET knowledge/lookups",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K27",
+      "browser_route": "tech.knowledge.shelf",
+      "method": "GET",
+      "uri": "tech/knowledge/shelves/{shelf}",
+      "kind": "read",
+      "proposed_api": "GET knowledge/shelves/{shelf}",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K28",
+      "browser_route": "tech.knowledge.shelves.update",
+      "method": "PUT",
+      "uri": "tech/knowledge/shelves/{shelf}",
+      "kind": "write",
+      "proposed_api": "PUT/PATCH knowledge/shelves/{shelf}",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K29",
+      "browser_route": "tech.knowledge.shelves.destroy",
+      "method": "DELETE",
+      "uri": "tech/knowledge/shelves/{shelf}",
+      "kind": "write",
+      "proposed_api": "DELETE knowledge/shelves/{shelf}",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K30",
+      "browser_route": "tech.knowledge.books.store",
+      "method": "POST",
+      "uri": "tech/knowledge/shelves/{shelf}/books",
+      "kind": "write",
+      "proposed_api": "POST knowledge/books",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K31",
+      "browser_route": "tech.knowledge.books.create",
+      "method": "GET",
+      "uri": "tech/knowledge/shelves/{shelf}/books/create",
+      "kind": "read",
+      "proposed_api": "GET knowledge/context; GET knowledge/lookups",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K32",
+      "browser_route": "tech.knowledge.shelves.edit",
+      "method": "GET",
+      "uri": "tech/knowledge/shelves/{shelf}/edit",
+      "kind": "read",
+      "proposed_api": "GET knowledge/context; GET knowledge/lookups; GET knowledge/shelves/{shelf}",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K33",
+      "browser_route": "tech.knowledge.show",
+      "method": "GET",
+      "uri": "tech/knowledge/show/{article}",
+      "kind": "read",
+      "proposed_api": "GET knowledge/articles/{article}; GET knowledge/articles/{article}/revisions",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K34",
+      "browser_route": "tech.knowledge.store",
+      "method": "POST",
+      "uri": "tech/knowledge/store",
+      "kind": "write",
+      "proposed_api": "POST knowledge/articles",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K35",
+      "browser_route": "tech.knowledge.update",
+      "method": "PUT",
+      "uri": "tech/knowledge/update/{article}",
+      "kind": "write",
+      "proposed_api": "PUT/PATCH knowledge/articles/{article}",
+      "baseline_status": "Partial",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K36",
+      "browser_route": "tech.knowledge.book-stack.accept-remote",
+      "method": "POST",
+      "uri": "tech/knowledge/{article}/book-stack/accept-remote",
+      "kind": "action",
+      "proposed_api": "POST knowledge/articles/{article}/book-stack/accept-remote",
+      "baseline_status": "Missing",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    },
+    {
+      "id": "K37",
+      "browser_route": "tech.knowledge.book-stack.keep-nexum",
+      "method": "POST",
+      "uri": "tech/knowledge/{article}/book-stack/keep-nexum",
+      "kind": "action",
+      "proposed_api": "POST knowledge/articles/{article}/book-stack/keep-nexum",
+      "baseline_status": "Missing",
+      "evidence": "KnowledgeApiParityTest and KnowledgeApiContractTest; exact successful HTTP response schemas and native actor/token/object denials.",
+      "status": "Verified On Dev"
+    }
+  ],
+  "embedded_workflows": [
+    {
+      "surface": "Livewire ArticleForm selection/reset/save",
+      "proposed_coverage": "Context/lookups/validated article proposal; parent-child consistency",
+      "status": "Verified On Dev"
+    },
+    {
+      "surface": "Taxonomy TagManager attach/remove/create",
+      "proposed_coverage": "Knowledge-scoped tag discovery/create/attach/remove; module pivot",
+      "status": "Verified On Dev"
+    },
+    {
+      "surface": "Library Sync Now button (Integration-owned)",
+      "proposed_coverage": "Explicit provider pull action; current integration rights and sanitized exact result",
+      "status": "Verified On Dev"
+    }
+  ],
+  "final_http_operations": 44,
+  "typed_schemas": 38,
+  "api_operations": [
+    {
+      "methods": [
+        "get"
+      ],
+      "path": "knowledge/shelves",
+      "controller": "KnowledgeShelfController",
+      "action": "index",
+      "name": "knowledge.shelves.index",
+      "ability": "knowledge.read",
+      "permissions": [
+        "knowledge.view"
+      ],
+      "fields": [
+        "q",
+        "page",
+        "per_page",
+        "source_system",
+        "sync_status"
+      ],
+      "target": null,
+      "key_required": false,
+      "any_permissions": []
+    },
+    {
+      "methods": [
+        "post"
+      ],
+      "path": "knowledge/shelves",
+      "controller": "KnowledgeShelfController",
+      "action": "store",
+      "name": "knowledge.shelves.store",
+      "ability": "knowledge.create",
+      "permissions": [
+        "knowledge.create"
+      ],
+      "fields": [
+        "name",
+        "description",
+        "sync_to_book_stack"
+      ],
+      "target": null,
+      "key_required": false,
+      "any_permissions": []
+    },
+    {
+      "methods": [
+        "get"
+      ],
+      "path": "knowledge/shelves/{shelf}",
+      "controller": "KnowledgeShelfController",
+      "action": "show",
+      "name": "knowledge.shelves.show",
+      "ability": "knowledge.read",
+      "permissions": [],
+      "fields": [],
+      "target": "shelf",
+      "key_required": false,
+      "any_permissions": [
+        "knowledge.view",
+        "knowledge.update"
+      ]
+    },
+    {
+      "methods": [
+        "put",
+        "patch"
+      ],
+      "path": "knowledge/shelves/{shelf}",
+      "controller": "KnowledgeShelfController",
+      "action": "update",
+      "name": "knowledge.shelves.update",
+      "ability": "knowledge.update",
+      "permissions": [
+        "knowledge.update"
+      ],
+      "fields": [
+        "name",
+        "description",
+        "sync_to_book_stack"
+      ],
+      "target": "shelf",
+      "key_required": false,
+      "any_permissions": []
+    },
+    {
+      "methods": [
+        "delete"
+      ],
+      "path": "knowledge/shelves/{shelf}",
+      "controller": "KnowledgeShelfController",
+      "action": "destroy",
+      "name": "knowledge.shelves.destroy",
+      "ability": "knowledge.update",
+      "permissions": [
+        "knowledge.delete"
+      ],
+      "fields": [],
+      "target": "shelf",
+      "key_required": false,
+      "any_permissions": []
+    },
+    {
+      "methods": [
+        "get"
+      ],
+      "path": "knowledge/books",
+      "controller": "KnowledgeBookController",
+      "action": "index",
+      "name": "knowledge.books.index",
+      "ability": "knowledge.read",
+      "permissions": [
+        "knowledge.view"
+      ],
+      "fields": [
+        "q",
+        "page",
+        "per_page",
+        "source_system",
+        "sync_status",
+        "shelf_id"
+      ],
+      "target": null,
+      "key_required": false,
+      "any_permissions": []
+    },
+    {
+      "methods": [
+        "post"
+      ],
+      "path": "knowledge/books",
+      "controller": "KnowledgeBookController",
+      "action": "store",
+      "name": "knowledge.books.store",
+      "ability": "knowledge.create",
+      "permissions": [
+        "knowledge.create"
+      ],
+      "fields": [
+        "shelf_id",
+        "name",
+        "description",
+        "priority",
+        "sync_to_book_stack"
+      ],
+      "target": null,
+      "key_required": false,
+      "any_permissions": []
+    },
+    {
+      "methods": [
+        "get"
+      ],
+      "path": "knowledge/books/{book}",
+      "controller": "KnowledgeBookController",
+      "action": "show",
+      "name": "knowledge.books.show",
+      "ability": "knowledge.read",
+      "permissions": [],
+      "fields": [],
+      "target": "book",
+      "key_required": false,
+      "any_permissions": [
+        "knowledge.view",
+        "knowledge.update"
+      ]
+    },
+    {
+      "methods": [
+        "put",
+        "patch"
+      ],
+      "path": "knowledge/books/{book}",
+      "controller": "KnowledgeBookController",
+      "action": "update",
+      "name": "knowledge.books.update",
+      "ability": "knowledge.update",
+      "permissions": [
+        "knowledge.update"
+      ],
+      "fields": [
+        "shelf_id",
+        "name",
+        "description",
+        "priority",
+        "sync_to_book_stack"
+      ],
+      "target": "book",
+      "key_required": false,
+      "any_permissions": []
+    },
+    {
+      "methods": [
+        "delete"
+      ],
+      "path": "knowledge/books/{book}",
+      "controller": "KnowledgeBookController",
+      "action": "destroy",
+      "name": "knowledge.books.destroy",
+      "ability": "knowledge.update",
+      "permissions": [
+        "knowledge.delete"
+      ],
+      "fields": [],
+      "target": "book",
+      "key_required": false,
+      "any_permissions": []
+    },
+    {
+      "methods": [
+        "get"
+      ],
+      "path": "knowledge/chapters",
+      "controller": "KnowledgeChapterController",
+      "action": "index",
+      "name": "knowledge.chapters.index",
+      "ability": "knowledge.read",
+      "permissions": [
+        "knowledge.view"
+      ],
+      "fields": [
+        "q",
+        "page",
+        "per_page",
+        "source_system",
+        "sync_status",
+        "book_id"
+      ],
+      "target": null,
+      "key_required": false,
+      "any_permissions": []
+    },
+    {
+      "methods": [
+        "post"
+      ],
+      "path": "knowledge/chapters",
+      "controller": "KnowledgeChapterController",
+      "action": "store",
+      "name": "knowledge.chapters.store",
+      "ability": "knowledge.create",
+      "permissions": [
+        "knowledge.create"
+      ],
+      "fields": [
+        "book_id",
+        "name",
+        "description",
+        "priority",
+        "sync_to_book_stack"
+      ],
+      "target": null,
+      "key_required": false,
+      "any_permissions": []
+    },
+    {
+      "methods": [
+        "get"
+      ],
+      "path": "knowledge/chapters/{chapter}",
+      "controller": "KnowledgeChapterController",
+      "action": "show",
+      "name": "knowledge.chapters.show",
+      "ability": "knowledge.read",
+      "permissions": [],
+      "fields": [],
+      "target": "chapter",
+      "key_required": false,
+      "any_permissions": [
+        "knowledge.view",
+        "knowledge.update"
+      ]
+    },
+    {
+      "methods": [
+        "put",
+        "patch"
+      ],
+      "path": "knowledge/chapters/{chapter}",
+      "controller": "KnowledgeChapterController",
+      "action": "update",
+      "name": "knowledge.chapters.update",
+      "ability": "knowledge.update",
+      "permissions": [
+        "knowledge.update"
+      ],
+      "fields": [
+        "book_id",
+        "name",
+        "description",
+        "priority",
+        "sync_to_book_stack"
+      ],
+      "target": "chapter",
+      "key_required": false,
+      "any_permissions": []
+    },
+    {
+      "methods": [
+        "delete"
+      ],
+      "path": "knowledge/chapters/{chapter}",
+      "controller": "KnowledgeChapterController",
+      "action": "destroy",
+      "name": "knowledge.chapters.destroy",
+      "ability": "knowledge.update",
+      "permissions": [
+        "knowledge.delete"
+      ],
+      "fields": [],
+      "target": "chapter",
+      "key_required": false,
+      "any_permissions": []
+    },
+    {
+      "methods": [
+        "get"
+      ],
+      "path": "knowledge/articles",
+      "controller": "KnowledgeArticleController",
+      "action": "index",
+      "name": "knowledge.articles.index",
+      "ability": "knowledge.read",
+      "permissions": [
+        "knowledge.view"
+      ],
+      "fields": [
+        "q",
+        "page",
+        "per_page",
+        "status",
+        "visibility",
+        "book_id",
+        "shelf_id",
+        "chapter_id",
+        "category_id",
+        "client_scope_id",
+        "review_due"
+      ],
+      "target": null,
+      "key_required": false,
+      "any_permissions": []
+    },
+    {
+      "methods": [
+        "post"
+      ],
+      "path": "knowledge/articles",
+      "controller": "KnowledgeArticleController",
+      "action": "store",
+      "name": "knowledge.articles.store",
+      "ability": "knowledge.create",
+      "permissions": [
+        "knowledge.manage_drafts"
+      ],
+      "fields": [
+        "title",
+        "body_markdown",
+        "visibility",
+        "status",
+        "category_id",
+        "client_scope_id",
+        "knowledge_shelf_id",
+        "knowledge_book_id",
+        "knowledge_chapter_id",
+        "priority",
+        "next_review_at",
+        "sync_to_book_stack"
+      ],
+      "target": null,
+      "key_required": false,
+      "any_permissions": []
+    },
+    {
+      "methods": [
+        "get"
+      ],
+      "path": "knowledge/articles/{article}",
+      "controller": "KnowledgeArticleController",
+      "action": "show",
+      "name": "knowledge.articles.show",
+      "ability": "knowledge.read",
+      "permissions": [],
+      "fields": [],
+      "target": "article",
+      "key_required": false,
+      "any_permissions": [
+        "knowledge.view",
+        "knowledge.manage_drafts"
+      ]
+    },
+    {
+      "methods": [
+        "put",
+        "patch"
+      ],
+      "path": "knowledge/articles/{article}",
+      "controller": "KnowledgeArticleController",
+      "action": "update",
+      "name": "knowledge.articles.update",
+      "ability": "knowledge.update",
+      "permissions": [
+        "knowledge.manage_drafts"
+      ],
+      "fields": [
+        "title",
+        "body_markdown",
+        "visibility",
+        "status",
+        "category_id",
+        "client_scope_id",
+        "knowledge_shelf_id",
+        "knowledge_book_id",
+        "knowledge_chapter_id",
+        "priority",
+        "next_review_at",
+        "sync_to_book_stack"
+      ],
+      "target": "article",
+      "key_required": false,
+      "any_permissions": []
+    },
+    {
+      "methods": [
+        "delete"
+      ],
+      "path": "knowledge/articles/{article}",
+      "controller": "KnowledgeArticleController",
+      "action": "destroy",
+      "name": "knowledge.articles.destroy",
+      "ability": "knowledge.update",
+      "permissions": [
+        "knowledge.delete"
+      ],
+      "fields": [],
+      "target": "article",
+      "key_required": false,
+      "any_permissions": []
+    },
+    {
+      "methods": [
+        "get"
+      ],
+      "path": "knowledge/context",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "context",
+      "name": "knowledge.context",
+      "ability": "knowledge.read",
+      "permissions": [],
+      "fields": [],
+      "target": null,
+      "key_required": false,
+      "any_permissions": [
+        "knowledge.view",
+        "knowledge.manage_drafts",
+        "knowledge.create",
+        "knowledge.update",
+        "knowledge.manage_settings"
+      ]
+    },
+    {
+      "methods": [
+        "get"
+      ],
+      "path": "knowledge/lookups",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "lookups",
+      "name": "knowledge.lookups",
+      "ability": "knowledge.read",
+      "permissions": [],
+      "fields": [
+        "type",
+        "q",
+        "page",
+        "per_page",
+        "shelf_id",
+        "book_id"
+      ],
+      "target": null,
+      "key_required": false,
+      "any_permissions": [
+        "knowledge.view",
+        "knowledge.manage_drafts",
+        "knowledge.create",
+        "knowledge.update",
+        "knowledge.manage_settings"
+      ]
+    },
+    {
+      "methods": [
+        "get"
+      ],
+      "path": "knowledge/articles/{article}/revisions",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "revisions",
+      "name": "knowledge.revisions",
+      "ability": "knowledge.revisions.read",
+      "permissions": [
+        "knowledge.view"
+      ],
+      "fields": [
+        "page",
+        "per_page"
+      ],
+      "target": "article",
+      "key_required": false
+    },
+    {
+      "methods": [
+        "get"
+      ],
+      "path": "knowledge/revisions/{revision}",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "revision",
+      "name": "knowledge.revision",
+      "ability": "knowledge.revisions.read",
+      "permissions": [],
+      "fields": [],
+      "target": "revision",
+      "key_required": false,
+      "revision_access": "view"
+    },
+    {
+      "methods": [
+        "post"
+      ],
+      "path": "knowledge/revisions/{revision}/approve",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "approve",
+      "name": "knowledge.approve",
+      "ability": "knowledge.revisions.approve",
+      "permissions": [],
+      "fields": [
+        "note"
+      ],
+      "target": "revision",
+      "key_required": true,
+      "revision_access": "approve"
+    },
+    {
+      "methods": [
+        "post"
+      ],
+      "path": "knowledge/revisions/{revision}/reject",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "reject",
+      "name": "knowledge.reject",
+      "ability": "knowledge.revisions.approve",
+      "permissions": [
+        "knowledge.approve"
+      ],
+      "fields": [
+        "note"
+      ],
+      "target": "revision",
+      "key_required": true,
+      "revision_access": null
+    },
+    {
+      "methods": [
+        "post"
+      ],
+      "path": "knowledge/revisions/{revision}/publish",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "publish",
+      "name": "knowledge.publish",
+      "ability": "knowledge.revisions.publish",
+      "permissions": [
+        "knowledge.publish"
+      ],
+      "fields": [],
+      "target": "revision",
+      "key_required": true,
+      "revision_access": null
+    },
+    {
+      "methods": [
+        "post"
+      ],
+      "path": "knowledge/revisions/{revision}/retry",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "retry",
+      "name": "knowledge.retry",
+      "ability": "knowledge.revisions.publish",
+      "permissions": [
+        "knowledge.publish"
+      ],
+      "fields": [],
+      "target": "revision",
+      "key_required": true,
+      "revision_access": null
+    },
+    {
+      "methods": [
+        "post"
+      ],
+      "path": "knowledge/revisions/{revision}/rollback",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "rollback",
+      "name": "knowledge.rollback",
+      "ability": "knowledge.revisions.rollback",
+      "permissions": [
+        "knowledge.rollback"
+      ],
+      "fields": [],
+      "target": "revision",
+      "key_required": true,
+      "revision_access": null
+    },
+    {
+      "methods": [
+        "get"
+      ],
+      "path": "knowledge/articles/{article}/book-stack",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "syncState",
+      "name": "knowledge.syncState",
+      "ability": "knowledge.read",
+      "permissions": [
+        "knowledge.view"
+      ],
+      "fields": [],
+      "target": "article",
+      "key_required": false
+    },
+    {
+      "methods": [
+        "post"
+      ],
+      "path": "knowledge/articles/{article}/book-stack/accept-remote",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "acceptRemote",
+      "name": "knowledge.acceptRemote",
+      "ability": "knowledge.update",
+      "permissions": [
+        "knowledge.manage_drafts"
+      ],
+      "fields": [],
+      "target": "article",
+      "key_required": true
+    },
+    {
+      "methods": [
+        "post"
+      ],
+      "path": "knowledge/articles/{article}/book-stack/keep-nexum",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "keepNexum",
+      "name": "knowledge.keepNexum",
+      "ability": "knowledge.sync",
+      "permissions": [
+        "knowledge.update"
+      ],
+      "fields": [],
+      "target": "article",
+      "key_required": true,
+      "external": true
+    },
+    {
+      "methods": [
+        "get"
+      ],
+      "path": "knowledge/settings",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "settings",
+      "name": "knowledge.settings",
+      "ability": "knowledge.settings.read",
+      "permissions": [
+        "knowledge.manage_settings"
+      ],
+      "fields": [],
+      "target": null,
+      "key_required": false,
+      "settings": true
+    },
+    {
+      "methods": [
+        "put"
+      ],
+      "path": "knowledge/settings",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "updateSettings",
+      "name": "knowledge.updateSettings",
+      "ability": "knowledge.settings.write",
+      "permissions": [
+        "knowledge.manage_settings"
+      ],
+      "fields": [
+        "default_visibility",
+        "default_status",
+        "default_review_days",
+        "default_priority"
+      ],
+      "target": null,
+      "key_required": true,
+      "settings": true
+    },
+    {
+      "methods": [
+        "post"
+      ],
+      "path": "knowledge/articles/{article}/tags",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "attachTag",
+      "name": "knowledge.attachTag",
+      "ability": "knowledge.update",
+      "permissions": [
+        "knowledge.manage_drafts"
+      ],
+      "fields": [
+        "tag_id",
+        "name"
+      ],
+      "target": "article",
+      "key_required": true
+    },
+    {
+      "methods": [
+        "delete"
+      ],
+      "path": "knowledge/articles/{article}/tags/{tag}",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "removeTag",
+      "name": "knowledge.removeTag",
+      "ability": "knowledge.update",
+      "permissions": [
+        "knowledge.manage_drafts"
+      ],
+      "fields": [],
+      "target": "article",
+      "key_required": true
+    },
+    {
+      "methods": [
+        "post"
+      ],
+      "path": "knowledge/book-stack/pull",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "pull",
+      "name": "knowledge.pull",
+      "ability": "knowledge.sync",
+      "permissions": [
+        "integration.view"
+      ],
+      "fields": [],
+      "target": null,
+      "key_required": true,
+      "external": true
+    },
+    {
+      "methods": [
+        "get"
+      ],
+      "path": "knowledge/operations/{command}",
+      "controller": "KnowledgeWorkspaceController",
+      "action": "operation",
+      "name": "knowledge.operation",
+      "ability": "knowledge.operations.read",
+      "permissions": [],
+      "fields": [],
+      "target": null,
+      "key_required": false
+    }
+  ],
+  "actual_success_methods": {
+    "get /api/v1/knowledge/context": 200,
+    "post /api/v1/knowledge/shelves": 201,
+    "post /api/v1/knowledge/books": 201,
+    "post /api/v1/knowledge/chapters": 201,
+    "post /api/v1/knowledge/articles": 201,
+    "get /api/v1/knowledge/shelves": 200,
+    "get /api/v1/knowledge/books": 200,
+    "get /api/v1/knowledge/chapters": 200,
+    "get /api/v1/knowledge/articles": 200,
+    "get /api/v1/knowledge/shelves/{shelf}": 200,
+    "get /api/v1/knowledge/books/{book}": 200,
+    "get /api/v1/knowledge/chapters/{chapter}": 200,
+    "get /api/v1/knowledge/articles/{article}": 200,
+    "put /api/v1/knowledge/shelves/{shelf}": 200,
+    "patch /api/v1/knowledge/shelves/{shelf}": 200,
+    "put /api/v1/knowledge/books/{book}": 200,
+    "patch /api/v1/knowledge/books/{book}": 200,
+    "put /api/v1/knowledge/chapters/{chapter}": 200,
+    "patch /api/v1/knowledge/chapters/{chapter}": 200,
+    "put /api/v1/knowledge/articles/{article}": 200,
+    "patch /api/v1/knowledge/articles/{article}": 200,
+    "get /api/v1/knowledge/lookups": 200,
+    "get /api/v1/knowledge/settings": 200,
+    "put /api/v1/knowledge/settings": 200,
+    "post /api/v1/knowledge/articles/{article}/tags": 200,
+    "delete /api/v1/knowledge/articles/{article}/tags/{tag}": 200,
+    "get /api/v1/knowledge/operations/{command}": 200,
+    "delete /api/v1/knowledge/articles/{article}": 204,
+    "delete /api/v1/knowledge/chapters/{chapter}": 204,
+    "delete /api/v1/knowledge/books/{book}": 204,
+    "delete /api/v1/knowledge/shelves/{shelf}": 204,
+    "get /api/v1/knowledge/articles/{article}/revisions": 200,
+    "get /api/v1/knowledge/revisions/{revision}": 200,
+    "post /api/v1/knowledge/revisions/{revision}/approve": 200,
+    "post /api/v1/knowledge/revisions/{revision}/publish": 200,
+    "post /api/v1/knowledge/revisions/{revision}/reject": 200,
+    "post /api/v1/knowledge/revisions/{revision}/retry": 200,
+    "post /api/v1/knowledge/revisions/{revision}/rollback": 201,
+    "get /api/v1/knowledge/articles/{article}/book-stack": 200,
+    "post /api/v1/knowledge/articles/{article}/book-stack/accept-remote": 200,
+    "post /api/v1/knowledge/articles/{article}/book-stack/keep-nexum": 200,
+    "post /api/v1/knowledge/book-stack/pull": 200,
+    "get /api/v1/knowledge/portal/articles": 200,
+    "get /api/v1/knowledge/portal/articles/{article}": 200
+  }
+}
