@@ -1,0 +1,256 @@
+{
+  "date": "2026-10-27",
+  "status": "Done On Dev / Human Review Pending",
+  "tests": {
+    "tests_passed": 121,
+    "assertions": 1529,
+    "failures": 0,
+    "skips": 0,
+    "duration_seconds": 131.79,
+    "php_syntax_files": 24,
+    "pint_files": 24,
+    "system_operations": 19,
+    "system_schemas": 44,
+    "positive_schema_validated_operations": 19,
+    "migration": "2026_10_27_160000_create_system_api_commands",
+    "migration_batch": 43,
+    "manual_review_status": "Pending",
+    "main_promoted": false,
+    "production_deployed": false
+  },
+  "runtime_operations": 19,
+  "swagger_schemas": 44,
+  "migration": {
+    "path": "database/migrations/2026_10_27_160000_create_system_api_commands.php",
+    "dev_batch": 43
+  },
+  "deployment_commands": [
+    "php artisan migrate --path=database/migrations/2026_10_27_160000_create_system_api_commands.php --force",
+    "php artisan l5-swagger:generate",
+    "php artisan optimize:clear"
+  ],
+  "effects": {
+    "api_maintenance_enabled": false,
+    "live_queue_commands_executed": 0,
+    "main_promoted": false,
+    "production_deployed": false
+  },
+  "human_review": {
+    "id": "HR-2026-10-27-SYSTEM-API",
+    "status": "Pending",
+    "gates": [
+      "production deployment/release"
+    ]
+  },
+  "handbook": {
+    "date": "2026-10-27",
+    "publication_method": "Supported BookStack connector updates; complete API guide included as System API Support section in existing Company Profile And Branding page 366.",
+    "pages": [
+      {
+        "id": 366,
+        "title": "Company Profile And Branding",
+        "body_exact_after_terminal_newline_normalization": true,
+        "chapter_id": 416
+      },
+      {
+        "id": 367,
+        "title": "Queues And Workers",
+        "body_exact_after_terminal_newline_normalization": true,
+        "chapter_id": 416
+      },
+      {
+        "id": 438,
+        "title": "Admin Settings Navigation",
+        "body_exact_after_terminal_newline_normalization": true,
+        "chapter_id": 416
+      },
+      {
+        "id": 546,
+        "title": "Application Version And Update Status",
+        "body_exact_after_terminal_newline_normalization": true,
+        "chapter_id": 416
+      }
+    ],
+    "access": {
+      "pages": [
+        {
+          "id": 366,
+          "inherits": true,
+          "explicit_roles": []
+        },
+        {
+          "id": 367,
+          "inherits": true,
+          "explicit_roles": []
+        },
+        {
+          "id": 438,
+          "inherits": true,
+          "explicit_roles": []
+        },
+        {
+          "id": 546,
+          "inherits": true,
+          "explicit_roles": []
+        }
+      ],
+      "chapter416": "inherits book339",
+      "book339": "existing role overrides and fallback inheritance preserved",
+      "employee_role": {
+        "id": 2,
+        "name": "Editor",
+        "global_read_permissions_verified": [
+          "book-view-all",
+          "chapter-view-all",
+          "page-view-all"
+        ]
+      },
+      "permissions_changed": false,
+      "employee_openwebui_retrieval_tested": false
+    },
+    "native_sync": {
+      "integration_configured": false,
+      "status": "Six internal repository Knowledge articles synchronized; pending_push remains because Dev has no BookStack integration. Actual provider publication is verified independently through the supported connector.",
+      "remaining_action": "Svein Tore / Integration owner: configure the supported Dev BookStack integration and explicitly decide two-way sync, then reconcile repository article mappings before a future native push. No runtime activation performed."
+    },
+    "standalone_creation_blocker": "BookStack connector create validator incorrectly rejects multi-character name/markdown. Existing page updates and exact read-back succeeded; no duplicate page created.",
+    "provider_verified": true,
+    "api_guide_exact_in_page366": true
+  },
+  "implementation_files": [
+    "app/Http/Middleware/EnforceTechRoutePermission.php",
+    "app/Modules/Integration/Support/ApiAbilityCatalog.php",
+    "app/Modules/Integration/Tests/Feature/SwaggerProductionScanTest.php",
+    "app/Modules/System/Actions/ExecuteSystemSettingsCommand.php",
+    "app/Modules/System/Actions/QueueMaintenanceAction.php",
+    "app/Modules/System/Controllers/Admin/CompanyProfileController.php",
+    "app/Modules/System/Controllers/Api/V1/SystemController.php",
+    "app/Modules/System/Models/SystemApiCommand.php",
+    "app/Modules/System/Queries/QueueWorkerStatusQuery.php",
+    "app/Modules/System/Queries/SystemAdminNavigation.php",
+    "app/Modules/System/Resources/Api/V1/SystemApiOpenApi.php",
+    "app/Modules/System/Resources/Api/V1/SystemApiView.php",
+    "app/Modules/System/Support/CompanyProfileRules.php",
+    "app/Modules/System/Support/CompanyProfileSettings.php",
+    "app/Modules/System/Support/SystemApiAccess.php",
+    "app/Modules/System/Support/SystemApiInput.php",
+    "app/Modules/System/Support/SystemQueueMaintenance.php",
+    "app/Modules/System/Tests/Feature/SecurityHeadersTest.php",
+    "app/Modules/System/Tests/Feature/SystemApiContractTest.php",
+    "app/Modules/System/Tests/Feature/SystemApiParityTest.php",
+    "app/Modules/System/Tests/Support/ValidatesSystemApiResponses.php",
+    "app/Modules/System/Views/Admin/index.blade.php",
+    "app/Modules/System/api.php",
+    "app/Modules/System/routes.php",
+    "config/system_api.php",
+    "database/migrations/2026_10_27_160000_create_system_api_commands.php"
+  ],
+  "follow_up": [
+    {
+      "owner": "Svein Tore / Integration",
+      "action": "Configure approved native BookStack integration/mode and reconcile System article/page mappings before future native push; actual handbook connector publication is verified."
+    }
+  ],
+  "main_promotion": {
+    "authorization": "Svein Tore: Godkjenner og merge, 2026-10-27",
+    "status": "Candidate verified / Ready for scoped commit and PR",
+    "candidate_branch": "codex/system-api-20261027",
+    "base": "5de857fd6af5a230e6a36a8d15de01f9a646f86b",
+    "production_authorized": false,
+    "candidate_files": 46,
+    "swagger_non_system_paths_unchanged": true,
+    "swagger_non_system_schemas_unchanged": true,
+    "php_syntax_pint_files": 25,
+    "preserved_dev_head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+    "preserved_dev_index_tree": "0f6036684e44dc2cdabd264eba624e62bc88a5b7",
+    "navigation_reconciliation": "Candidate registry extracted from current Main; Dev-only pre-existing Workday conditional was not promoted.",
+    "verification_history": {
+      "original_run": {
+        "passed": 168,
+        "failed": 1,
+        "assertions": 2218,
+        "duration_seconds": 981.71,
+        "failed_test": "SwaggerProductionScanTest::swagger_generates_without_loading_development_only_module_test_parents",
+        "failure": "ProcessTimedOutException at 120 seconds"
+      },
+      "repair": {
+        "file": "app/Modules/Integration/Tests/Feature/SwaggerProductionScanTest.php",
+        "old_budget_seconds": 120,
+        "new_budget_seconds": 600,
+        "assertions_unchanged": true,
+        "implemented_on": "authoritative Dev",
+        "runtime_behavior_changed": false
+      },
+      "candidate_base": "86b82ed8625ff709c5a753b62614f22b46114b35",
+      "manifest_files": 45
+    },
+    "tests": {
+      "original_run": {
+        "passed": 168,
+        "failed": 1,
+        "assertions": 2218,
+        "duration_seconds": 981.71,
+        "failed_test": "SwaggerProductionScanTest::swagger_generates_without_loading_development_only_module_test_parents",
+        "failure": "ProcessTimedOutException at 120 seconds"
+      },
+      "repair": {
+        "file": "app/Modules/Integration/Tests/Feature/SwaggerProductionScanTest.php",
+        "old_budget_seconds": 120,
+        "new_budget_seconds": 600,
+        "assertions_unchanged": true,
+        "implemented_on": "authoritative Dev",
+        "runtime_behavior_changed": false
+      },
+      "candidate_base": "86b82ed8625ff709c5a753b62614f22b46114b35",
+      "manifest_files": 45,
+      "original_timeout_resolved": true,
+      "main_production_scan": {
+        "passed": 1,
+        "assertions": 2,
+        "duration_seconds": 353.48
+      },
+      "verified_combined": {
+        "passed": 169,
+        "assertions": 2220,
+        "unresolved_failures": 0,
+        "skipped": 0,
+        "runs": "168 successful affected tests, then unchanged production-compatibility assertions rerun successfully with the corrected bounded budget."
+      },
+      "dev_production_scan": {
+        "passed": 1,
+        "assertions": 2,
+        "duration_seconds": 401.05
+      },
+      "upstream_integration": {
+        "base": "5de857fd6af5a230e6a36a8d15de01f9a646f86b",
+        "passed": 44,
+        "assertions": 1420,
+        "duration_seconds": 416.39,
+        "failed": 0,
+        "skipped": 0,
+        "classes": [
+          "SystemApiParityTest",
+          "SystemApiContractTest",
+          "WarroomApiParityTest",
+          "WarroomApiContractTest",
+          "UserManagementApiTest"
+        ]
+      }
+    },
+    "swagger": {
+      "system_operations": 19,
+      "system_schemas": 44,
+      "non_system_path_changes": [],
+      "non_system_schema_changes": [],
+      "generated_sha256": "7c8e81a37af1fe9c645b0b37451ca030e3bec1770b40d00490c1de717717a250",
+      "unrelated_serialized_bytes_preserved": true,
+      "native_generator_path_schema_semantics_preserved": true,
+      "existing_tag_metadata_preserved": true,
+      "published_sha256": "2720b08ff1395bb4087a00afa43a3be70bb124453677e9f122efc4779d10007e",
+      "preserved_upstream_domains": [
+        "Warroom"
+      ]
+    },
+    "initial_base": "86b82ed8625ff709c5a753b62614f22b46114b35"
+  }
+}

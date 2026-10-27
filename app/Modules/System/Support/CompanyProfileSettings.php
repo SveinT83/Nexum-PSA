@@ -4,6 +4,7 @@ namespace App\Modules\System\Support;
 
 use App\Models\Settings\CommonSetting;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
@@ -184,142 +185,174 @@ class CompanyProfileSettings
         return $this->withComputedValues($this->normalize($payload));
     }
 
+    /** Every writer uses the same aggregate lock; stage files before replacing references. */
     public function update(
         array $data,
         ?UploadedFile $logo = null,
         ?UploadedFile $lightLogo = null,
         ?UploadedFile $darkLogo = null,
-    ): array
-    {
-        $current = $this->get();
-        $removeLogo = (bool) ($data['remove_logo'] ?? false);
-        $removeLightLogo = (bool) ($data['remove_light_logo'] ?? false);
-        $removeDarkLogo = (bool) ($data['remove_dark_logo'] ?? false);
-        unset($data['remove_logo'], $data['remove_light_logo'], $data['remove_dark_logo']);
+    ): array {
+        $staged = [];
+        try {
+            return $this->locked(function () use ($data, $logo, $lightLogo, $darkLogo, &$staged) {
+                $current = $this->get();
+                $payload = $this->normalize(array_merge($current, $data));
+                $slots = [
+                    ['logo_path', 'remove_logo', $logo],
+                    ['logo_light_path', 'remove_light_logo', $lightLogo],
+                    ['logo_dark_path', 'remove_dark_logo', $darkLogo],
+                ];
+                foreach ($slots as [$pathKey, $removeKey, $file]) {
+                    if (! empty($data[$removeKey])) {
+                        $payload[$pathKey] = null;
+                    }
+                    if ($file) {
+                        $path = $file->store('company-branding', 'public');
+                        if (! is_string($path) || $path === '') {
+                            throw new \RuntimeException('Company logo could not be stored.');
+                        }
+                        $staged[] = $path;
+                        request()->attributes->set('system_staged_files', array_merge(
+                            request()->attributes->get('system_staged_files', []), [$path]));
+                        $payload[$pathKey] = $path;
+                    }
+                }
 
-        $payload = $this->normalize(array_merge($current, $data));
-
-        if ($removeLogo && filled($current['logo_path'])) {
-            Storage::disk('public')->delete($current['logo_path']);
-            $payload['logo_path'] = null;
+                return $this->persist($payload, $current);
+            });
+        } catch (Throwable $error) {
+            $this->discardUnreferenced($staged);
+            throw $error;
         }
-
-        if ($logo) {
-            if (filled($current['logo_path'])) {
-                Storage::disk('public')->delete($current['logo_path']);
-            }
-
-            $payload['logo_path'] = $logo->store('company-branding', 'public');
-        }
-
-        if ($removeLightLogo && filled($current['logo_light_path'])) {
-            Storage::disk('public')->delete($current['logo_light_path']);
-            $payload['logo_light_path'] = null;
-        }
-
-        if ($lightLogo) {
-            if (filled($current['logo_light_path'])) {
-                Storage::disk('public')->delete($current['logo_light_path']);
-            }
-
-            $payload['logo_light_path'] = $lightLogo->store('company-branding', 'public');
-        }
-
-        if ($removeDarkLogo && filled($current['logo_dark_path'])) {
-            Storage::disk('public')->delete($current['logo_dark_path']);
-            $payload['logo_dark_path'] = null;
-        }
-
-        if ($darkLogo) {
-            if (filled($current['logo_dark_path'])) {
-                Storage::disk('public')->delete($current['logo_dark_path']);
-            }
-
-            $payload['logo_dark_path'] = $darkLogo->store('company-branding', 'public');
-        }
-
-        CommonSetting::query()->updateOrCreate(
-            ['type' => self::TYPE, 'name' => self::NAME],
-            [
-                'description' => 'Company profile and Bootstrap-compatible branding for the Nexum PSA shell.',
-                'value' => $payload['company_name'],
-                'json' => json_encode($payload),
-            ],
-        );
-
-        return $this->withComputedValues($payload);
     }
 
     public function resetBranding(): array
     {
-        $current = $this->get();
+        return $this->locked(function () {
+            $current = $this->get();
+            $payload = $current;
+            foreach ($this->brandingKeys() as $key) {
+                $payload[$key] = self::DEFAULTS[$key];
+            }
 
-        collect([
-            $current['logo_path'] ?? null,
-            $current['logo_light_path'] ?? null,
-            $current['logo_dark_path'] ?? null,
-        ])
-            ->filter()
-            ->unique()
-            ->each(fn (string $path) => Storage::disk('public')->delete($path));
-
-        $payload = $current;
-
-        foreach ($this->brandingKeys() as $key) {
-            $payload[$key] = self::DEFAULTS[$key];
-        }
-
-        $payload = $this->normalize($payload);
-
-        CommonSetting::query()->updateOrCreate(
-            ['type' => self::TYPE, 'name' => self::NAME],
-            [
-                'description' => 'Company profile and Bootstrap-compatible branding for the Nexum PSA shell.',
-                'value' => $payload['company_name'],
-                'json' => json_encode($payload),
-            ],
-        );
-
-        return $this->withComputedValues($payload);
+            return $this->persist($this->normalize($payload), $current);
+        });
     }
 
     public function applyPreset(string $presetKey): array
     {
-        $preset = self::THEME_PRESETS[$presetKey] ?? null;
+        return $this->locked(function () use ($presetKey) {
+            $current = $this->get();
+            $preset = self::THEME_PRESETS[$presetKey] ?? null;
+            if (! $preset) {
+                return $current;
+            }
+            $payload = $current;
+            foreach ($this->colorKeys() as $key) {
+                if (isset($preset[$key])) {
+                    $payload[$key] = $preset[$key];
+                }
+            }
 
-        if (! $preset) {
-            return $this->get();
-        }
+            return $this->persist($this->normalize($payload), $current);
+        });
+    }
 
-        $current = $this->get();
-        $payload = $current;
-
-        // Apply all color keys from the preset, preserving logos and company info
-        foreach ($this->colorKeys() as $key) {
-            if (isset($preset[$key])) {
-                $payload[$key] = $preset[$key];
+    /** Preview does not write settings/files or execute providers. */
+    public function preview(array $data): array
+    {
+        $values = $this->normalize(array_merge($this->get(), $data));
+        foreach (['remove_logo' => 'logo_path', 'remove_light_logo' => 'logo_light_path', 'remove_dark_logo' => 'logo_dark_path'] as $flag => $path) {
+            if (! empty($data[$flag])) {
+                $values[$path] = null;
             }
         }
 
-        // Apply brand-level color keys that aren't covered by colorKeys()
-        foreach (['primary_color', 'secondary_color', 'accent_color'] as $key) {
-            if (isset($preset[$key])) {
-                $payload[$key] = $preset[$key];
+        return $this->withComputedValues($values);
+    }
+
+    public static function presetValues(): array
+    {
+        return self::THEME_PRESETS;
+    }
+
+    /** Bind the returned fields and precondition to one committed settings snapshot. */
+    public function snapshot(?array $preview = null): array
+    {
+        return DB::transaction(function () use ($preview) {
+            if (Schema::hasTable('system_api_mutex')) {
+                DB::table('system_api_mutex')->where('id', 1)->lockForUpdate()->firstOrFail();
             }
-        }
+            $version = $this->version();
 
-        $payload = $this->normalize($payload);
+            return ['values' => $preview === null ? $this->get() : $this->preview($preview), 'version' => $version];
+        });
+    }
 
-        CommonSetting::query()->updateOrCreate(
-            ['type' => self::TYPE, 'name' => self::NAME],
-            [
-                'description' => 'Company profile and Bootstrap-compatible branding for the Nexum PSA shell.',
-                'value' => $payload['company_name'],
-                'json' => json_encode($payload),
-            ],
-        );
+    public function version(): string
+    {
+        $revision = Schema::hasTable('system_api_mutex')
+            ? (int) DB::table('system_api_mutex')->where('id', 1)->value('version') : 0;
+
+        return '"'.SystemApiInput::hash([$revision, $this->get()]).'"';
+    }
+
+    /** Legacy installations keep working; API mutations require the additive mutex migration. */
+    private function locked(callable $action): array
+    {
+        return DB::transaction(function () use ($action) {
+            $hasMutex = Schema::hasTable('system_api_mutex');
+            if ($hasMutex) {
+                DB::table('system_api_mutex')->where('id', 1)->lockForUpdate()->firstOrFail();
+            } else {
+                CommonSetting::where('type', self::TYPE)->where('name', self::NAME)->lockForUpdate()->first();
+            }
+            $result = $action();
+            if ($hasMutex) {
+                DB::table('system_api_mutex')->where('id', 1)->increment('version');
+            }
+
+            return $result;
+        });
+    }
+
+    private function persist(array $payload, array $previous): array
+    {
+        CommonSetting::updateOrCreate(['type' => self::TYPE, 'name' => self::NAME], [
+            'description' => 'Company profile and Bootstrap-compatible branding for the Nexum PSA shell.',
+            'value' => $payload['company_name'],
+            'json' => json_encode($payload, JSON_THROW_ON_ERROR),
+        ]);
+        $obsolete = array_values(array_diff($this->filePaths($previous), $this->filePaths($payload)));
+        DB::afterCommit(fn () => $this->discardUnreferenced($obsolete));
 
         return $this->withComputedValues($payload);
+    }
+
+    private function filePaths(array $values): array
+    {
+        return array_values(array_unique(array_filter([
+            $values['logo_path'] ?? null, $values['logo_light_path'] ?? null,
+            $values['logo_dark_path'] ?? null,
+        ])));
+    }
+
+    /** On rollback, clean only this request's staged files, never a referenced logo. */
+    public function discardUnreferenced(array $paths): void
+    {
+        $referenced = $this->filePaths($this->get());
+        foreach (array_diff($paths, $referenced) as $path) {
+            if (! str_starts_with($path, 'company-branding/')) {
+                continue;
+            }
+            try {
+                if (! Storage::disk('public')->delete($path)) {
+                    \Illuminate\Support\Facades\Log::warning('System branding obsolete-file cleanup requires review.');
+                }
+            } catch (Throwable) {
+                \Illuminate\Support\Facades\Log::warning('System branding obsolete-file cleanup requires review.');
+            }
+        }
     }
 
     public static function getPresets(): array

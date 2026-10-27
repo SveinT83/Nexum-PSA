@@ -16,6 +16,49 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// The API entry loader and the browser entry loader evaluate this file independently.
+if ($systemApiRoutes ?? false) {
+    $controller = \App\Modules\System\Controllers\Api\V1\SystemController::class;
+    $companyFields = array_keys(\App\Modules\System\Support\CompanyProfileRules::company());
+    $brandingFields = array_keys(\App\Modules\System\Support\CompanyProfileRules::branding());
+    Route::prefix('system')->name('system.')->middleware(\App\Modules\System\Support\SystemApiAccess::class)
+        ->group(function () use ($controller, $companyFields, $brandingFields) {
+            $register = function ($method, $path, $handler, $name, $scope, $permission, $fields = [], $action = null) use ($controller) {
+                $route = Route::$method($path, [$controller, $handler])->name($name)
+                    ->defaults('system_scope', $scope)->defaults('system_permission', $permission)
+                    ->defaults('system_fields', $fields);
+                if ($action) {
+                    $route->defaults('system_action', $action);
+                }
+            };
+            $register('get', '/context', 'context', 'context', 'system.read', 'system.view');
+            $register('get', '/version-status', 'version', 'version-status', 'system.read', 'system.view');
+            $register('get', '/company-profile', 'company', 'company-profile.show', 'system.settings.read', 'system.settings_manage');
+            $register('put', '/company-profile', 'updateCompany', 'company-profile.update', 'system.settings.write', 'system.settings_manage', $companyFields);
+            $register('get', '/branding', 'branding', 'branding.show', 'system.settings.read', 'system.settings_manage');
+            $register('put', '/branding', 'updateBranding', 'branding.update', 'system.settings.write', 'system.settings_manage', array_values(array_diff($brandingFields, ['logo', 'logo_light', 'logo_dark'])));
+            $register('post', '/branding', 'updateBranding', 'branding.upload', 'system.settings.write', 'system.settings_manage', $brandingFields);
+            $register('get', '/branding/presets', 'presets', 'branding.presets', 'system.settings.read', 'system.settings_manage');
+            $register('post', '/branding/preview', 'previewBranding', 'branding.preview', 'system.settings.read', 'system.settings_manage',
+                array_values(array_diff($brandingFields, ['logo', 'logo_light', 'logo_dark'])));
+            $register('post', '/branding/preset', 'applyPreset', 'branding.preset', 'system.settings.write', 'system.settings_manage', ['preset']);
+            $register('put', '/branding/reset', 'reset', 'branding.reset', 'system.settings.write', 'system.settings_manage');
+            $register('get', '/queues-workers', 'queues', 'queues-workers.show', 'system.queue.read', 'system.queue_manage');
+            $register('post', '/queues-workers/preview', 'previewMaintenance', 'queues-workers.preview', 'system.queue.read', 'system.queue_manage', ['action', 'queue', 'job_id', 'all']);
+            foreach (['restart' => 'restart', 'clear' => 'clear', 'failed/retry' => 'retry', 'failed/flush' => 'flush'] as $path => $action) {
+                $fields = match ($action) {
+                    'clear' => ['confirmation', 'queue'], 'retry' => ['confirmation', 'job_id', 'all'], default => ['confirmation'],
+                };
+                $register('post', '/queues-workers/'.$path, 'maintenance', 'queues-workers.'.$action,
+                    'system.queue.'.$action, 'system.queue_manage', $fields, $action);
+            }
+            $register('get', '/operations', 'operations', 'operations.index', 'system.operations.read', null, ['page', 'per_page']);
+            $register('get', '/operations/{operation}', 'operation', 'operations.show', 'system.operations.read', null);
+        });
+
+    return;
+}
+
 Route::middleware('admin')->group(function () {
     // -------------------------------------------------
     // Admin hub and deferred application status

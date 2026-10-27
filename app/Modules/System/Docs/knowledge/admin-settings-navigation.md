@@ -56,18 +56,14 @@ Admin page. The shared footer intentionally shows only the installed product ver
 See `Application Version And Update Status` for the release policy, environment settings, cache
 behavior, and failure states.
 
-## Future Settings Work
 
-Some active modules still need settings ownership decisions before they get admin routes.
+## API Discovery
 
-Examples:
+System API on Dev exposes permission-filtered admin destinations through
+GET /api/v1/system/context, requiring system.read and native system.view. It shares
+the browser registry, including other domains' additions. Each destination retains
+its permissions and API ownership; discovery grants no access to another module.
 
-- Assets.
-- Contacts.
-- Knowledge.
-- Risk.
-- Tasks.
-- Warroom.
-- Reports.
-
-Those settings should be designed through the missing settings ownership RFC before implementation.
+Company/branding uses system.settings_manage and queue operations use system.queue_manage;
+these actors do not additionally need system.view. See System Api Support for scopes,
+requests and exact results. Main/production are separate deployment claims.

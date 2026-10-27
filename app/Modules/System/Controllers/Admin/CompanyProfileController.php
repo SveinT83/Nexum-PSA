@@ -3,10 +3,10 @@
 namespace App\Modules\System\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Modules\System\Support\CompanyProfileRules;
 use App\Modules\System\Support\CompanyProfileSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class CompanyProfileController extends Controller
@@ -30,19 +30,7 @@ class CompanyProfileController extends Controller
 
     public function update(Request $request, CompanyProfileSettings $settings): RedirectResponse
     {
-        $data = $request->validate([
-            'company_name' => ['required', 'string', 'max:120'],
-            'legal_name' => ['nullable', 'string', 'max:160'],
-            'organization_number' => ['nullable', 'string', 'max:50'],
-            'address_line_1' => ['nullable', 'string', 'max:160'],
-            'address_line_2' => ['nullable', 'string', 'max:160'],
-            'postal_code' => ['nullable', 'string', 'max:30'],
-            'city' => ['nullable', 'string', 'max:80'],
-            'country' => ['nullable', 'string', 'max:80'],
-            'support_email' => ['nullable', 'email', 'max:160'],
-            'phone' => ['nullable', 'string', 'max:60'],
-            'website' => ['nullable', 'url', 'max:200'],
-        ]);
+        $data = $request->validate(CompanyProfileRules::company());
 
         $settings->update($data);
 
@@ -58,54 +46,7 @@ class CompanyProfileController extends Controller
 
     public function updateBranding(Request $request, CompanyProfileSettings $settings): RedirectResponse
     {
-        $data = $request->validate([
-            'primary_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'secondary_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'accent_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'default_theme' => ['required', Rule::in(['light', 'dark', 'system'])],
-            'light_header_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'light_header_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'light_footer_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'light_footer_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'light_left_sidebar_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'light_left_sidebar_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'light_main_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'light_right_sidebar_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'light_right_sidebar_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'light_page_header_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'light_page_header_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'light_card_header_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'light_card_header_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'light_content_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'light_primary_button_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'light_primary_button_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'light_secondary_button_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'light_secondary_button_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_header_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_header_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_footer_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_footer_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_left_sidebar_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_left_sidebar_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_main_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_right_sidebar_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_right_sidebar_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_page_header_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_page_header_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_card_header_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_card_header_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_content_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_primary_button_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_primary_button_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_secondary_button_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'dark_secondary_button_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'logo' => ['nullable', 'image', 'max:2048'],
-            'logo_light' => ['nullable', 'image', 'max:2048'],
-            'logo_dark' => ['nullable', 'image', 'max:2048'],
-            'remove_logo' => ['nullable', 'boolean'],
-            'remove_light_logo' => ['nullable', 'boolean'],
-            'remove_dark_logo' => ['nullable', 'boolean'],
-        ]);
+        $data = $request->validate(CompanyProfileRules::branding());
 
         $data['remove_logo'] = $request->boolean('remove_logo');
         $data['remove_light_logo'] = $request->boolean('remove_light_logo');
@@ -130,7 +71,7 @@ class CompanyProfileController extends Controller
 
     public function applyThemePreset(Request $request, CompanyProfileSettings $settings): RedirectResponse
     {
-        $presetKey = $request->validate(['preset' => ['required', 'string', Rule::in(array_keys(CompanyProfileSettings::getPresets()))]])['preset'];
+        $presetKey = $request->validate(CompanyProfileRules::preset())['preset'];
 
         $settings->applyPreset($presetKey);
 
