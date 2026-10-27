@@ -90,7 +90,7 @@ class RequestNextcloudSync
             ];
 
             $log->forceFill([
-                'status' => ($eventSummary['failed'] + $eventSummary['conflicts'] + ($eventSummary['skipped'] ?? 0)) > 0 ? 'partial' : 'success',
+                'status' => ($eventSummary['failed'] + $eventSummary['conflicts'] + ($eventSummary['skipped'] ?? 0) + $identitySummary['failed']) > 0 ? 'partial' : 'success',
                 'records_seen' => count($users) + count($groups) + count($calendars) + count($files) + $eventSummary['seen'] + $identitySummary['seen'],
                 'records_changed' => $eventSummary['changed'] + $identitySummary['changed'],
                 'records_failed' => $eventSummary['failed'] + $identitySummary['failed'],
@@ -197,13 +197,7 @@ class RequestNextcloudSync
                 : null;
 
             if (! $clientUser) {
-                $clientUser = ClientUser::query()->create([
-                    'client_site_id' => $site->id,
-                    'name' => $remoteUser,
-                    'email' => $email,
-                    'role' => $clientRole,
-                    'active' => true,
-                ]);
+                $clientUser = app(ImportNextcloudClientContact::class)->handle($connection, $remoteUser, $email, $clientRole);
 
                 $summary['imported']++;
                 $summary['changed']++;
@@ -216,6 +210,8 @@ class RequestNextcloudSync
                 $summary['updated']++;
                 $summary['changed']++;
             }
+
+            app(\App\Modules\Contact\Actions\MigrateClientUsersToContacts::class)->migrateOne($clientUser);
 
             NextcloudUserMapping::query()->updateOrCreate(
                 ['connection_id' => $connection->id, 'remote_user_id' => $remoteUser],

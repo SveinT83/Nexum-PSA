@@ -42,3 +42,14 @@ Calendar owns Nexum calendar records. Ticket will own ticket attachment records.
 sites, and contacts. UserManagement owns technician users, roles, and permissions. Nextcloud owns
 only the provider-specific state needed to connect these domains to Nextcloud.
 
+## Full operational API (2026-10-27)
+
+Availability: verified on Dev; production deployment remains separate.
+Production availability is not established by this work. New provider execution stays disabled
+by default; the already approved production work-calendar pilot is a separate operation.
+
+The official API covers current connection setup, credential rotation, scoped user/group/
+calendar/folder mappings, folder browsing/matching, full manual sync, diagnostics and Talk bot
+configuration/tests. Existing calendar-only operations and signed Talk webhook remain available.
+Read the full API guide for scopes, exact request/result contracts and safe retry procedures.
+API grants require the caller's current native rights; they do not grant administrator access.

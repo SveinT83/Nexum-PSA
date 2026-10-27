@@ -14,13 +14,20 @@ use Illuminate\Support\Str;
 class NextcloudConnection extends Model
 {
     use HasFactory;
+
     public const SCOPE_GLOBAL = 'global';
+
     public const SCOPE_CLIENT = 'client';
+
     public const SCOPE_SITE = 'site';
 
     public const MODE_READ_ONLY = 'read_only';
+
     public const MODE_SYNC = 'sync';
+
     public const MODE_MANAGED = 'managed';
+
+    protected $hidden = ['service_password', 'talk_bot_secret'];
 
     protected $fillable = [
         'uuid',

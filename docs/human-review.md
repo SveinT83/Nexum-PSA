@@ -1,5 +1,49 @@
 # Human Review Register
 
+## HR-2026-10-27-NEXTCLOUD-API - Full Nextcloud Browser/API Coverage
+
+Status: Pending / implementation and tested Main merge authorized by Svein Tore, 2026-10-27.
+Owner: Codex. Named intended human reviewer and privacy/release owner: Svein Tore.
+Scope: rfc/2026-10-27-nextcloud-full-api-parity.md (Approved), 19 browser rows plus
+embedded workflows; preserve 14 calendar API contracts and signed inbound webhook.
+This is a human-review checklist, separate from RFC approval; no scenario completed.
+Gate: named acceptance required before release. Merge/migration/deployment/live
+provider activation remain separate actions with their own authorization.
+HR-2026-10-22-NEXTCLOUD-CALENDAR-SYNC remains In Review and is not superseded.
+
+- [ ] Compare connection CRUD/defaults/PATCH/secret rotation; no secret output.
+- [ ] Verify global/client/site isolation and fresh native/token/revoked rights.
+- [ ] Exercise all user skip/map/import branches, Contact bridge, group roles/directions.
+- [ ] Verify calendar/folder mapping CRUD, ownership, exact collection/item read-back.
+- [ ] Browse permitted folders; review/apply exact deterministic/AI proposals safely.
+- [ ] Compare full sync contact/calendar effects with calendar-only sync and partial errors.
+- [ ] Review Talk setup and separately authorized exact-target message/read-back/unknown retry.
+- [ ] Verify legacy calendar claims/activation/privacy and HMAC/Notification regressions.
+- [ ] Test replay/stale/revoked commands; no duplicate effects or unauthorized receipt data.
+- [ ] Read Swagger and actual employee handbook; verify staff access and deployment status.
+
+Expected: all supported browser operations with typed results and equivalent current
+authority. Deployment: planned additive command schema; exact migration/cache/Swagger
+commands finalized and Dev/native verified after approval. New provider writes stay
+API-default-off. No new cron/frontend build expected; worker restart only for changed jobs.
+Risks: secret disclosure, wrong-client import, stale scope and duplicate provider effects.
+Recovery preserves APP_KEY, receipts, existing claims/mappings/history; reconcile unknown
+outcomes. Existing baseline: 84 tests / 385 assertions pass on Dev, not new API completion
+or named scenario acceptance. Evidence: plans/2026-10-27-nextcloud-api-baseline.md.
+
+
+Svein Tore explicitly authorized Godkjenner og merge til main. Tested Main promotion may
+proceed with these human scenarios Pending; no scenario is marked Reviewed. Production
+release/deployment/provider activation are outside this permission.
+
+Automated implementation verification completed 2026-10-27: all 50 HTTP operations and 47
+new schemas; Dev affected 373/13899, isolated Main 391/14397, final domain 121/6518 on both.
+Exact Dev migration/native locking/uniqueness/encryption/rollback and trusted HTTPS passed.
+Actual handbook pages/employee inheritance read back. New provider execution stays false.
+No named human scenario has been checked off; Main merge authorized with scenarios Pending.
+Evidence: plans/2026-10-27-nextcloud-api-verification.md/.json.
+
+
 ## HR-2026-10-27-BOOKING-API - Full Booking Browser/API Coverage
 
 Status: Pending / automated verification complete / Merged to Main in PR #339.

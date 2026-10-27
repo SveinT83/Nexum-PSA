@@ -355,23 +355,12 @@ class NextcloudTalkClient
      */
     private function throwUnlessSuccessful(Response $response, string $operation): void
     {
-        if ($response->status() === 201 || $response->successful()) {
+        $ocs = (int) ($response->json('ocs.meta.statuscode') ?? 0);
+        if ($response->successful() && in_array($ocs, [100, 200, 201], true)) {
             return;
         }
-
-        $status = $response->status();
-        $body = $response->body();
-
-        // Try to extract OCS error message
-        $ocsMessage = $response->json('ocs.meta.message') ?? '';
-        $detail = $ocsMessage ?: substr($body, 0, 200);
-
-        Log::warning("NextcloudTalk: {$operation} failed", [
-            'status' => $status,
-            'body' => $body,
-        ]);
-
-        throw new RuntimeException("Nextcloud Talk {$operation} failed with HTTP {$status}: {$detail}");
+        Log::warning('Nextcloud Talk provider request failed', ['operation' => $operation, 'http_status' => $response->status(), 'ocs_status' => $ocs]);
+        throw new RuntimeException('Nextcloud Talk request failed with HTTP '.$response->status().' and OCS '.$ocs.'.');
     }
 
     /**

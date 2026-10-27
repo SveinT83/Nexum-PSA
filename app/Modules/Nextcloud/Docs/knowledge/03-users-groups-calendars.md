@@ -146,3 +146,20 @@ operator can preview binding that identity without a second PUT. Recurring resou
 UIDs, participant-bearing events and unsupported provider fields remain blocked and retained.
 No conflict-resolution button has been added to the browser in this update. Contact the
 administrator with the connection and attempt ID; never delete copies or widen sharing as a repair.
+
+## API mapping and canonical contacts (2026-10-27)
+
+Availability: new full-domain API on Dev; production unchanged by this work.
+
+The `/api/v1/nextcloud/connections/{connection}/users`, `/groups`, `/calendars` and `/folders`
+resources support collection/exact reads, native create-or-update behavior and exact deletion.
+Customer user mappings support `skip`, `map_existing` and `import`. An import requires the
+connection's default import site, and that site must belong to the selected customer. Imports
+use Contact's canonical identity workflow and retain stable customer-contact bridge IDs.
+Wrong-customer contacts are refused; customer group roles do not grant technician roles.
+
+Full `/sync` can import/update customer contacts and synchronize enabled calendars. Obtain
+`/sync/preview` first, inspect the selected connection and affected groups/calendars, then submit
+its exact preview token with explicit confirmation. The pre-existing `/nextcloud/calendar/...`
+API runs calendar-only operations. A partial result retains conflicts/unsupported resources and
+is not complete synchronization. Review the exact attempt; never delete history to hide conflicts.

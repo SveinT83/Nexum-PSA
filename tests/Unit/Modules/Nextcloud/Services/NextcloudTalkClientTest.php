@@ -253,7 +253,7 @@ class NextcloudTalkClientTest extends TestCase
         ]);
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Conversation not found');
+        $this->expectExceptionMessage('HTTP 404 and OCS 404');
 
         $this->client->sendBotMessage($this->connection, 'abc123xyz', 'test');
     }
