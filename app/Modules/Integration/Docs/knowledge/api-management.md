@@ -1480,7 +1480,7 @@ Provider/AI/discovery execution from APIs defaults off. Unknown commands require
 reconciliation; queued is not completed research. Clients owns provider numbering,
 Contact owns identity/bridge, and Marketing suppression/exclusions remain authoritative.
 Full operator/API instructions are in Lead Intelligence Overview (BookStack page 496).
-Status: implemented/verified on Dev; Main promotion authorized and pending verification;
+Status: implemented/verified on Dev and merged to Main in PR #343;
 production unchanged. HR-2026-10-27-LEAD-INTELLIGENCE-API manual scenarios remain Pending.
 
 ## Full CustomField API Support (Dev Extension)

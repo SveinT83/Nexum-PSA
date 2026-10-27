@@ -837,7 +837,7 @@
       "required": "encrypted current-actor original-ability read-back without provider retry"
     }
   ],
-  "implementation_status": "Done On Dev; final scoped Main candidate verified",
+  "implementation_status": "Done On Dev / Merged To Main / Human Scenario Review Pending",
   "http_operations": 17,
   "typed_schemas": 47,
   "tests_final_domain": {
@@ -852,5 +852,12 @@
     "assertions": 483,
     "failed": 0,
     "skipped": 0
+  },
+  "main": {
+    "pr": 343,
+    "merge": "e42ecddb42a52e1b41931975e4760cf250e157cc",
+    "tree": "d65bf3c88356992667dc5154c79686527fef0e3f",
+    "candidate_tree_exact": true,
+    "production_deployed": false
   }
 }

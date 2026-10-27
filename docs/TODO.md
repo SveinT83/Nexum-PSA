@@ -71,7 +71,7 @@ Preserve the pre-existing module test and all unrelated contributor files/index.
 
 ## Full Lead Intelligence browser/API coverage (2026-10-27)
 
-Status: Done On Dev / Scoped Main Candidate Verified / Main Merge Authorized.
+Status: Done On Dev / Merged To Main in PR #343 / Human Scenario Review Pending.
 Owner: Codex. Approver/reviewer: Svein Tore, "Godkjenner og merge til main".
 RFC rfc/2026-10-27-lead-intelligence-full-api-parity.md Approved; ADR accepted;
 all six sequential slices Done On Dev. All 14 browser route rows and API-only
@@ -84,13 +84,16 @@ were concurrent UserManagement hook / Contact import snapshots; current author f
 and fresh 14-case retest (192 assertions) pass. No failed case is deferred.
 Exact additive migration 2026_10_27_040000 applied/read back on Dev, batch 35.
 Native MySQL locking/uniqueness/encryption/rollback and trusted HTTPS/Swagger pass.
-BookStack 496/3 and scoped 449/153 published/read back; native articles 52 and 3
+BookStack 496/4 and scoped 449/160 published/read back; native articles 52 and 3
 match internal source, existing access preserved. pending_push is not external proof.
 Evidence: plans/2026-10-27-lead-intelligence-api-verification.md and linked artifacts.
 Human-review checklist HR-2026-10-27-LEAD-INTELLIGENCE-API remains Pending; explicit
 Main authorization permits tested source promotion while manual scenarios still gate
 production release/provider activation. External API execution remains false.
-Next action (Codex): merge verified scoped PR and record exact Main identity.
+Main merge independently read back: e42ecddb42a52e1b41931975e4760cf250e157cc.
+Whole merged tree equals the verified candidate: d65bf3c88356992667dc5154c79686527fef0e3f.
+No Main action remains. Next (Svein Tore): perform the manual checklist and separately
+authorize production deployment/external API activation when ready.
 No production rollout, blanket grants, live provider/customer writes, worker/scheduler
 activation or business backfill. Other contributor work / #280 badge views preserved.
 
