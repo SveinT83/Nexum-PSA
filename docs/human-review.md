@@ -154,7 +154,7 @@ Automated baseline: 33 tests / 277 assertions of existing behavior only; no manu
 scenario execution or review acceptance is inferred. No production checks claimed.
 
 
-Automated domain verification: 52 tests / 474 assertions; actual 17 operations / 47
+Automated domain verification: 53 tests / 484 assertions; actual 17 operations / 47
 schemas, native MySQL, trusted HTTPS and BookStack read-back pass. Final Main 54/483 and earlier affected candidate 293/2887 pass (overlapping). All
 14 concurrent-source Dev failures pass after current author fixes; no deferral.
 

@@ -60,6 +60,24 @@ class LeadApiAccess
         Auth::setUser($actor);
     }
 
+    /** A worker or manual recovery call must not donate its actor to the next job. */
+    public static function scoped(LeadResearchRun $run, Closure $work): mixed
+    {
+        if (! $run->api_command_id) {
+            return $work();
+        }
+        $previous = Auth::user();
+        try {
+            return $work();
+        } finally {
+            if ($previous) {
+                Auth::setUser($previous);
+            } else {
+                Auth::forgetGuards();
+            }
+        }
+    }
+
     public function handle(Request $request, Closure $next)
     {
         $previous = $request->user();

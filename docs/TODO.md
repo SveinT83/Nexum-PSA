@@ -104,7 +104,7 @@ RFC rfc/2026-10-27-lead-intelligence-full-api-parity.md Approved; ADR accepted;
 all six sequential slices Done On Dev. All 14 browser route rows and API-only
 capabilities covered: exact 17 operations / 47 typed Swagger schemas, 18 actual
 success-response contracts including pure promotion preview.
-Final domain: 52 tests / 474 assertions; final candidate: 54 / 483 incl. production
+Final domain: 53 tests / 484 assertions; final candidate: 54 / 483 incl. production
 Swagger and Knowledge source sync. Earlier full Main candidate affected batch:
 293 / 2887; overlapping suites, do not add totals. Dev affected batch's 14 failures
 were concurrent UserManagement hook / Contact import snapshots; current author fixes

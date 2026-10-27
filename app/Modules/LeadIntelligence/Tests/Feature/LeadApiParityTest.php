@@ -411,6 +411,39 @@ class LeadApiParityTest extends TestCase
         $this->getJson('/api/v1/lead-intelligence/operations/'.$first->json('operation_id'))->assertOk()->assertJsonPath('data.reconciliation_required', true);
     }
 
+    #[Test]
+    public function queued_api_actor_is_restored_after_success_and_exception(): void
+    {
+        config(['lead-intelligence.api_external_execution' => true]);
+        $token = $this->actor->createToken('Internal worker context regression', ['lead-intelligence.run']);
+        $this->actor->withAccessToken($token->accessToken);
+        $this->actingAs($this->actor, 'sanctum');
+        $created = $this->write('POST', 'lead-research-runs', ['status' => 'queued'])->assertCreated();
+        $run = LeadResearchRun::findOrFail($created->json('data.id'));
+        \Illuminate\Support\Facades\Auth::forgetGuards();
+        $this->assertNull(\Illuminate\Support\Facades\Auth::user());
+        $executor = \Mockery::mock(\App\Modules\LeadIntelligence\Actions\ExecuteLeadResearchRun::class);
+        $executor->shouldReceive('handle')->once()->andReturnUsing(function ($row) {
+            $this->assertSame($this->actor->id, \Illuminate\Support\Facades\Auth::id());
+
+            return $row;
+        });
+        (new ExecuteLeadResearchRunJob($run->id))->handle($executor);
+        $this->assertNull(\Illuminate\Support\Facades\Auth::user(), 'The next native/system job must not inherit the API actor.');
+        $throwing = \Mockery::mock(\App\Modules\LeadIntelligence\Actions\ExecuteLeadResearchRun::class);
+        $throwing->shouldReceive('handle')->once()->andThrow(new \RuntimeException('Synthetic worker failure'));
+        try {
+            (new ExecuteLeadResearchRunJob($run->id))->handle($throwing);
+            $this->fail('Expected synthetic failure.');
+        } catch (\RuntimeException $error) {
+            $this->assertSame('Synthetic worker failure', $error->getMessage());
+        }
+        $this->assertNull(\Illuminate\Support\Facades\Auth::user());
+        $run->forceFill(['status' => 'draft'])->save();
+        app(\App\Modules\LeadIntelligence\Actions\ExecuteLeadResearchRun::class)->handle($run);
+        $this->assertNull(\Illuminate\Support\Facades\Auth::user(), 'Direct recovery execution must restore the previous actor too.');
+    }
+
     private function checkSchema(mixed $value, array $schema, array $schemas, string $path, array &$errors): void
     {
         if ($value === null && ($schema['nullable'] ?? false)) {
