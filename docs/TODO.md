@@ -5,17 +5,20 @@
 Status: In Progress. Owner: Codex / Svein Tore. Direct authorization: "Fix alt og merge til main".
 Finish the audited Issues sequentially, preserve concurrent domain work and merge only scoped,
 verified candidates. #254 is already completed/merged/closed independently; do not redo it.
-#269/#278: both slices Done On Dev; verified scoped Main promotion in PR #360 is authorized.
+#269/#278: Done On Dev / Merged To Main in PR #360 / Issues Closed Completed.
+Verified merge: 74d5d2ef1d1aa1e81bbeca8a36f083802a1b0731; merged tree exactly equals
+verified candidate tree 089cf90cc48515ad1311cdfe5c1c608dbbcb978a. Completion comments
+6456004525/6456004778 and both closed/completed states independently read back.
 RFC/ADR: 2026-10-27-ai-chat-input-and-error-boundaries. Dev 101 / 1147 plus consumer
 13 / 113 and Task 3 / 10; reconciled Main 132 / 1700 and final 54 / 711; overlapping.
-Knowledge 1/82 and exact BookStack 541/6 read back, access unchanged. No full suite or
-real model send. Main merge read-back and remaining Issues continue sequentially.
+Knowledge 1/82 and exact BookStack 541/7 final Main-status section read back, access unchanged. No full suite or
+real model send. Main merge is verified. Next sequential primary scope: #277 truthful AI cost telemetry.
 Human-review checklist HR-2026-10-27-AI-INPUT-ERRORS is Pending; tested Main merge is explicitly
 authorized, production scenario/release review remains separate. #262/#285 have independent
 active owners and are reconciled before promotion. #290 awaits actual recipient/provider/model
 and review facts requested from Svein; no external grant or provider decision is invented.
-Next: reproduce, fix and verify input/error boundaries, handbook, scoped Main candidate and
-Issue read-back; then continue remaining fixes. No production rollout/backlog retry is implied.
+Next: implement/verify #277 under the existing approved telemetry direction, then continue
+remaining fixes. No production rollout/backlog retry is implied.
 
 Operational completion during verification: #292 closed completed (GitHub comment 6455598251).
 Approved key SSH plus DPAPI-backed sudo verified the existing nonempty 0600 TLS key; root

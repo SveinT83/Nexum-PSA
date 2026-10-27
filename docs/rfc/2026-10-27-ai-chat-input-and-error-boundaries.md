@@ -103,3 +103,16 @@ unchanged. Employee OpenWebUI retrieval and physical browser/device checks are u
 Native pending_push is not a claim of native BookStack sync; Dev has no configured connector.
 PR #360 is the tested Main promotion. Production remains unchanged and the named
 human-review checklist remains Pending; Main authorization is not human scenario review.
+
+## Verified Main Promotion
+
+PR #360 merged as 74d5d2ef1d1aa1e81bbeca8a36f083802a1b0731. Independent fetch proves
+merged tree 089cf90cc48515ad1311cdfe5c1c608dbbcb978a equals the verified candidate tree.
+Issues #269/#278 are closed completed and completion comments are read back. No source
+or Main implementation action remains. Production and human review remain separate.
+This status/documentation follow-up changes no runtime code; application tests are not rerun.
+
+Final status read-back: BookStack 541 revision 7 states the verified Main promotion and
+preserves the Pending production gate; native Knowledge 1/82 exactly match the final source
+bodies after commit. Existing access is unchanged. One public-safe website handoff entry
+nexum-ai-chat-boundaries-2026-10-28 was written/read back with an explicit do-not-publish gate.
