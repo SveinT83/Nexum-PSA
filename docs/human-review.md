@@ -35,6 +35,10 @@ belongs in plans/2026-10-27-relationship-api-verification.md and does not mark R
 
 
 
+Main promotion verified: PR #349, merge ee2272b7bac566bfe57a3b61fada0ee0f7e67436.
+Runtime scope and all 31 operation contracts match the tested release. The checklist
+remains Pending; no human scenario is marked performed by this Main merge.
+
 ## HR-2026-10-27-NEXTCLOUD-API - Full Nextcloud Browser/API Coverage
 
 Status: Pending / implementation and tested Main merge authorized by Svein Tore, 2026-10-27.

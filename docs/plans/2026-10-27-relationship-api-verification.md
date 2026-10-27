@@ -1,7 +1,7 @@
 # Relationship API Verification
 
 Date: 2026-10-27. Owner: Codex.
-Status: Done On Dev / final Main candidate verified / merge authorized.
+Status: Done On Dev / Merged to Main in PR #349 / Human Review Pending / Production unchanged.
 
 ## Delivered scope
 All ten supported browser rows map to 21 staff operations, five unchanged signed
@@ -75,3 +75,23 @@ preserves those changes and is based on f91acc9045794ac4ede80a336f80974c17ab9bc4
 34 tests / 2910 assertions, no failures/errors/skips/warnings, including all 31
 Relationship/Ticket successful methods, API key administration, both repository doc
 counts and isolated production Swagger scanning. Non-owned Swagger bytes are preserved.
+
+
+## Verified Main promotion
+
+PR #349 is merged: https://github.com/SveinT83/Nexum-PSA/pull/349
+Merge: ee2272b7bac566bfe57a3b61fada0ee0f7e67436
+Tree: 860f4883b2ad4d7288583ff39d963b7fa1b980c3
+All scoped runtime files and all 31 HTTP/33 schema contracts match the tested
+candidate exactly. Main also contains concurrent unrelated Lead and Nextcloud work;
+the entire repository tree is therefore not claimed identical to the candidate.
+Additional rollback-retention checks pass on Dev and candidate (3 / 9 each) and on
+native MySQL: recorded commands/outbound claims block destructive rollback. Production
+remains undeployed and external execution off. HR-2026-10-27-RELATIONSHIP-API is Pending.
+
+
+Published Main critical read-back was independently rerun: 5 / 1644, including all
+31 successful HTTP operation bodies and API administration. Final guide Main status
+was source-synced (revisions 187/151) and actual BookStack 510 was read back exactly;
+511 remains unchanged and verified. Permissions remain inherited and unchanged.
+No application tests are repeated for this documentation-only status follow-up.
