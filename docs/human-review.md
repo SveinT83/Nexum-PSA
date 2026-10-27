@@ -1,5 +1,28 @@
 # Human Review Register
 
+## HR-2026-10-27-AI-INPUT-ERRORS - AI Chat Credentials And Safe Failures
+
+Status: Pending. Owner: Codex. Intended human reviewer: Svein Tore.
+Scope: Issues #269/#278; approved RFC/ADR 2026-10-27-ai-chat-input-and-error-boundaries.
+Svein explicitly authorized tested Main merge ("Fix alt og merge til main"). This review
+remains a production rollout/release gate and is not marked Reviewed by tests or merge.
+
+- [ ] In full AI Chat, submit a synthetic labelled credential in initial message, title and
+  follow-up; expect safe guidance, no chat/message/pending/job/provider side effect or old input.
+- [ ] Repeat in right-bar chat including malformed input; expect cleared input/snapshot and
+  no suspect value in response, history, session, audit, telemetry or provider request.
+- [ ] Send ordinary non-secret text; expect unchanged chat and page-context behavior.
+- [ ] With controlled fake provider failures, verify safe category/reference/next action for
+  timeout, authentication, throttling, invalid response and unknown errors; no raw diagnostics.
+- [ ] Verify permitted fallback records distinct attempts without leaking the rejected payload.
+- [ ] Confirm handbook steps/destination scope and unchanged egress policy/actor rights.
+
+No migration, secret rotation, new runtime or scheduler activation. Later approved rollout needs
+normal cache refresh and graceful refresh of existing approved workers. No real provider test
+or customer send is part of these synthetic checks. Risks: detector false positives, unlabelled
+opaque credentials, error compatibility and concurrent shared files; tests must cover them.
+
+
 ## HR-2026-10-27-SYSTEM-API - Full System Browser/API Coverage
 
 Status: Pending / Done On Dev / Merged To Main In PR #361, verified 2026-10-28.

@@ -81,7 +81,9 @@ class AiChatResponderAbsoluteBudgetTest extends TestCase
             );
             $this->fail('The exhausted fallback opened another provider socket.');
         } catch (RuntimeException $exception) {
-            $this->assertSame('AI provider request time budget exhausted.', $exception->getMessage());
+            $this->assertInstanceOf(\App\Modules\Integration\Exceptions\AiRuntimeFailure::class, $exception);
+            $this->assertSame('timeout', $exception->category);
+            $this->assertStringContainsString('Reference:', $exception->getMessage());
         }
 
         Http::assertSentCount(1);

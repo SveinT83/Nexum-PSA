@@ -37,8 +37,12 @@ class AiChatController extends Controller
     /**
      * Start a new chat with the selected available agent.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
     {
+        if ($rejection = $this->rejectCredentialInput($request)) {
+            return $rejection;
+        }
+
         $user = $request->user();
         $agent = app(AiAgentResolver::class)->availableAgents($user)->firstWhere('id', (int) $request->input('ai_agent_id'));
 
@@ -74,9 +78,13 @@ class AiChatController extends Controller
     /**
      * Add a user message to an existing technician-owned chat.
      */
-    public function message(Request $request, AiChat $chat): RedirectResponse
+    public function message(Request $request, AiChat $chat): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         abort_unless((int) $chat->user_id === (int) $request->user()->id, 403);
+
+        if ($rejection = $this->rejectCredentialInput($request)) {
+            return $rejection;
+        }
 
         $data = $request->validate([
             'message' => 'required|string|max:20000',
@@ -106,6 +114,23 @@ class AiChatController extends Controller
         ]);
         $chat->forceFill(['last_message_at' => now()])->save();
         GenerateAiChatResponse::dispatchAfterResponse($chat->id, $pending->id);
+    }
+
+    /** Reject before ordinary validation, whose old-input redirect can otherwise persist credentials. */
+    private function rejectCredentialInput(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse|null
+    {
+        if (! app(\App\Modules\Integration\Services\AiCredentialInputGuard::class)->rejects($request->input())) {
+            return null;
+        }
+        $message = app(\App\Modules\Integration\Services\AiCredentialGuidance::class)->message($request->user());
+        $request->replace([]);
+        if ($request->hasSession()) {
+            $request->session()->forget('_old_input');
+        }
+
+        return $request->expectsJson()
+            ? response()->json(['message' => $message, 'errors' => ['message' => [$message]]], 422)
+            : redirect()->route('tech.ai.chats.index')->withErrors(['message' => $message]);
     }
 
     private function selectedChat(Request $request, User $user): ?AiChat

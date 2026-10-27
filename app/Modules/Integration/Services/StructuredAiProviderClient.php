@@ -260,7 +260,7 @@ class StructuredAiProviderClient
                 finishReason: $finishReason,
                 httpStatus: $response->status(),
                 errorCategory: 'provider_http_error',
-                errorCode: $this->safeCode(data_get($payload, 'error.code')) ?: 'http_'.$response->status(),
+                errorCode: is_string(data_get($payload, 'error.code')) ? data_get($payload, 'error.code') : null,
             );
         }
 
@@ -338,16 +338,6 @@ class StructuredAiProviderClient
         return $this->stringValue(data_get($payload, 'id'))
             ?: $this->stringValue($response->header('x-request-id'))
             ?: $this->stringValue($response->header('openai-request-id'));
-    }
-
-    private function safeCode(mixed $value): ?string
-    {
-        $value = $this->stringValue($value);
-        if ($value === null) {
-            return null;
-        }
-
-        return substr(preg_replace('/[^a-zA-Z0-9_.-]+/', '_', $value) ?: '', 0, 80) ?: null;
     }
 
     private function stringValue(mixed $value): ?string

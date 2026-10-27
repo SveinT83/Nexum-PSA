@@ -159,16 +159,24 @@ final class AiModelResult
         string $errorCategory,
         ?string $errorCode = null,
     ): self {
+        // Error responses are not a trusted identity source. Local execution/attempt IDs
+        // remain the correlation authority; arbitrary error codes are never diagnostics.
+        $httpStatus = $httpStatus !== null && $httpStatus >= 100 && $httpStatus <= 599 ? $httpStatus : null;
+        $safeCodes = ['service_unavailable', 'rate_limit_exceeded', 'invalid_api_key',
+            'insufficient_quota', 'model_not_found', 'context_length_exceeded',
+            'transport_error', 'response_parse_error'];
+        $safeCategories = ['provider_http_error', 'empty_response', 'transport_error', 'response_parse_error'];
+
         return new self(
             successful: false,
             content: null,
             usage: $usage,
-            actualModel: $actualModel,
-            providerRequestId: $providerRequestId,
-            finishReason: $finishReason,
+            actualModel: null,
+            providerRequestId: null,
+            finishReason: null,
             httpStatus: $httpStatus,
-            errorCategory: $errorCategory,
-            errorCode: $errorCode,
+            errorCategory: in_array($errorCategory, $safeCategories, true) ? $errorCategory : 'provider_http_error',
+            errorCode: in_array($errorCode, $safeCodes, true) ? $errorCode : ($httpStatus ? 'http_'.$httpStatus : null),
         );
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Modules\Integration\Services;
 
+use App\Modules\Integration\Exceptions\AiRuntimeFailure;
 use App\Modules\Integration\Models\AiAgent;
 use App\Modules\Integration\Models\AiChat;
 use App\Modules\Integration\Models\AiSystemSetting;
@@ -11,7 +12,6 @@ use App\Modules\Integration\Support\AiModelResult;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 class AiChatResponder
 {
@@ -43,11 +43,12 @@ class AiChatResponder
             return;
         }
 
+        $context = AiExecutionContext::forChat($chat, $pendingMessageId);
         try {
             $reply = $this->send(
                 $agent,
                 $this->messagesForProvider($chat, $agent),
-                executionContext: AiExecutionContext::forChat($chat, $pendingMessageId),
+                executionContext: $context,
             );
             $this->storeAssistantMessage($chat, $reply, $pendingMessageId);
             $agent->provider?->forceFill([
@@ -55,12 +56,17 @@ class AiChatResponder
                 'last_error' => null,
             ])->save();
         } catch (\Throwable $exception) {
-            $agent->provider?->forceFill([
-                'is_healthy' => false,
-                'last_error' => $exception->getMessage(),
-            ])->save();
-
-            $this->storeAssistantMessage($chat, 'AI provider error: '.$exception->getMessage(), $pendingMessageId);
+            $failure = AiRuntimeFailure::fromThrowable($exception, $context->executionId);
+            try {
+                $agent->provider?->forceFill([
+                    'is_healthy' => false,
+                    'last_error' => $failure->getMessage(),
+                ])->save();
+                $this->storeAssistantMessage($chat, $failure->getMessage(), $pendingMessageId);
+            } catch (\Throwable) {
+                // A failing persistence/report path must never resurrect the unsafe original exception.
+                throw $failure;
+            }
         }
     }
 
@@ -74,13 +80,12 @@ class AiChatResponder
         ?AiExecutionContext $executionContext = null,
         ?int $absoluteBudgetSeconds = null,
     ): string {
-        return $this->send(
-            $agent,
-            $messages,
-            $timeoutSeconds,
-            $executionContext,
-            $absoluteBudgetSeconds,
-        );
+        $executionContext ??= AiExecutionContext::fallback();
+        try {
+            return $this->send($agent, $messages, $timeoutSeconds, $executionContext, $absoluteBudgetSeconds);
+        } catch (\Throwable $error) {
+            throw AiRuntimeFailure::fromThrowable($error, $executionContext->executionId);
+        }
     }
 
     /**
@@ -96,13 +101,13 @@ class AiChatResponder
         $provider = $agent->provider;
 
         if (! $provider || $provider->status !== 'active') {
-            throw new RuntimeException('The selected agent has no active provider.');
+            throw new AiRuntimeFailure('unavailable');
         }
 
         $model = $agent->model ?: $provider->default_model;
 
         if (! $model) {
-            throw new RuntimeException('Select a model for this agent or its provider before chatting.');
+            throw new AiRuntimeFailure('unavailable');
         }
 
         $timeoutSeconds = $timeoutSeconds ?: self::OPENAI_COMPATIBLE_TIMEOUT_SECONDS;
@@ -118,7 +123,7 @@ class AiChatResponder
             'mistral' => $this->openAiCompatible($agent, $provider->base_url ?: 'https://api.mistral.ai/v1', $provider->getSecret('api_key'), $model, $messages, $trace, $timeoutSeconds, absoluteDeadlineNanoseconds: $absoluteDeadlineNanoseconds),
             'openrouter' => $this->openAiCompatible($agent, $provider->base_url ?: 'https://openrouter.ai/api/v1', $provider->getSecret('api_key'), $model, $messages, $trace, $timeoutSeconds, absoluteDeadlineNanoseconds: $absoluteDeadlineNanoseconds),
             'ollama' => $this->ollama($agent, $provider->base_url, $model, $messages, $trace, $timeoutSeconds, $absoluteDeadlineNanoseconds),
-            default => throw new RuntimeException('Chat is not wired for '.$provider->provider_key.' yet.'),
+            default => throw new AiRuntimeFailure('unavailable'),
         };
     }
 
@@ -134,7 +139,7 @@ class AiChatResponder
         ?int $absoluteDeadlineNanoseconds = null,
     ): string {
         if (! $apiKey) {
-            throw new RuntimeException('API key is missing for this provider.');
+            throw new AiRuntimeFailure('unavailable');
         }
 
         if ($preferResponsesEndpoint) {
@@ -166,11 +171,11 @@ class AiChatResponder
                 return $this->openAiCompatibleCompletion($agent, $baseUrl, $apiKey, $model, $messages, $trace, $timeoutSeconds, $absoluteDeadlineNanoseconds);
             }
 
-            throw new RuntimeException($this->failureMessage($response->status(), $response->body()));
+            throw AiRuntimeFailure::fromHttp($response->status(), $trace->context->executionId);
         }
 
         if (! $attempt->result->successful) {
-            throw new RuntimeException('Provider returned an empty response.');
+            throw new AiRuntimeFailure('invalid_response', $trace->context->executionId);
         }
 
         return (string) $attempt->result->content;
@@ -208,11 +213,11 @@ class AiChatResponder
                 return $this->openAiCompatibleResponse($agent, $baseUrl, $apiKey, $model, $messages, $trace, min($timeoutSeconds, self::OPENAI_RESPONSES_TIMEOUT_SECONDS), $absoluteDeadlineNanoseconds);
             }
 
-            throw new RuntimeException($this->failureMessage($response->status(), $response->body()));
+            throw AiRuntimeFailure::fromHttp($response->status(), $trace->context->executionId);
         }
 
         if (! $attempt->result->successful) {
-            throw new RuntimeException('Provider returned an empty response.');
+            throw new AiRuntimeFailure('invalid_response', $trace->context->executionId);
         }
 
         return (string) $attempt->result->content;
@@ -250,11 +255,11 @@ class AiChatResponder
         $response = $attempt->response;
 
         if (! $response->successful()) {
-            throw new RuntimeException($this->failureMessage($response->status(), $response->body()));
+            throw AiRuntimeFailure::fromHttp($response->status(), $trace->context->executionId);
         }
 
         if (! $attempt->result->successful) {
-            throw new RuntimeException($this->emptyResponseMessage((array) $response->json()));
+            throw new AiRuntimeFailure('invalid_response', $trace->context->executionId);
         }
 
         return (string) $attempt->result->content;
@@ -270,7 +275,7 @@ class AiChatResponder
         ?int $absoluteDeadlineNanoseconds = null,
     ): string {
         if (! $baseUrl) {
-            throw new RuntimeException('Ollama URL is missing for this provider.');
+            throw new AiRuntimeFailure('unavailable');
         }
 
         $attempt = $this->modelExecutor->attempt(
@@ -290,11 +295,11 @@ class AiChatResponder
         $response = $attempt->response;
 
         if (! $response->successful()) {
-            throw new RuntimeException($this->failureMessage($response->status(), $response->body()));
+            throw AiRuntimeFailure::fromHttp($response->status(), $trace->context->executionId);
         }
 
         if (! $attempt->result->successful) {
-            throw new RuntimeException('Ollama returned an empty response.');
+            throw new AiRuntimeFailure('invalid_response', $trace->context->executionId);
         }
 
         return (string) $attempt->result->content;
@@ -481,21 +486,10 @@ class AiChatResponder
 
         $remainingSeconds = ($absoluteDeadlineNanoseconds - hrtime(true)) / 1_000_000_000;
         if ($remainingSeconds <= 0.05) {
-            throw new RuntimeException('AI provider request time budget exhausted.');
+            throw new AiRuntimeFailure('timeout');
         }
 
         return min($configuredTimeoutSeconds, $remainingSeconds);
-    }
-
-    private function emptyResponseMessage(array $payload): string
-    {
-        $details = array_filter([
-            data_get($payload, 'status') ? 'status='.data_get($payload, 'status') : null,
-            data_get($payload, 'incomplete_details.reason') ? 'reason='.data_get($payload, 'incomplete_details.reason') : null,
-            data_get($payload, 'error.message') ? 'error='.data_get($payload, 'error.message') : null,
-        ]);
-
-        return 'Provider returned an empty response'.($details ? ' ('.implode(', ', $details).').' : '.');
     }
 
     private function pageContextInstructions(AiChat $chat): string
@@ -652,10 +646,5 @@ class AiChatResponder
             ->first();
 
         return $pending && ($pending->metadata['status'] ?? null) === 'pending';
-    }
-
-    private function failureMessage(int $status, string $body): string
-    {
-        return 'HTTP '.$status.($body !== '' ? ': '.Str::limit($body, 220) : '');
     }
 }

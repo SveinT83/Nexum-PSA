@@ -102,8 +102,19 @@ class StructuredAiWorkloadExecutor implements RunsStructuredAiWorkloads
             return $this->audited($accessEvent, StructuredAiWorkloadResult::invalid($exception->reasonCode, $metadata), $startedAt);
         } catch (StructuredAiProviderUnavailableException $exception) {
             return $this->audited($accessEvent, StructuredAiWorkloadResult::unavailable($exception->reasonCode, $metadata), $startedAt);
+        } catch (\App\Modules\Integration\Exceptions\AiRuntimeFailure $failure) {
+            $result = $failure->category === 'invalid_response'
+                ? StructuredAiWorkloadResult::invalid('provider_response_invalid', $metadata)
+                : StructuredAiWorkloadResult::unavailable('provider_transport_error', $metadata);
+
+            return $this->audited($accessEvent, $result, $startedAt);
         } catch (ConnectionException) {
             return $this->audited($accessEvent, StructuredAiWorkloadResult::unavailable('provider_transport_error', $metadata), $startedAt);
+        } catch (\Throwable $error) {
+            // Unexpected SDK/runtime failures are also provider-neutral typed results, never raw failed jobs.
+            $failure = \App\Modules\Integration\Exceptions\AiRuntimeFailure::fromThrowable($error, $metadata->executionId);
+
+            return $this->audited($accessEvent, StructuredAiWorkloadResult::unavailable('provider_request_failed', $metadata), $startedAt);
         }
 
         if (! $modelResult->successful) {

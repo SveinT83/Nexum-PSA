@@ -13,14 +13,54 @@ use Livewire\Component;
 class ContextChat extends Component
 {
     public ?int $selectedAgentId = null;
+
     public ?int $chatId = null;
+
     public string $message = '';
+
     public ?string $domain = null;
+
     public ?string $routeName = null;
+
     public ?string $pageTitle = null;
+
     public ?string $pageUrl = null;
+
     public ?array $recordContext = null;
+
     public int $messageInputVersion = 0;
+
+    private bool $credentialInputRejected = false;
+
+    /** Deferred updates and polling must not echo credential text before the user presses Send. */
+    public function updated(string $property): void
+    {
+        $this->rejectCredentialInput();
+    }
+
+    public function dehydrate(): void
+    {
+        $this->rejectCredentialInput();
+    }
+
+    private function rejectCredentialInput(): bool
+    {
+        $guard = app(\App\Modules\Integration\Services\AiCredentialInputGuard::class);
+        if (! $guard->rejects([$this->message, $this->pageTitle, $this->pageUrl, $this->routeName, $this->domain, $this->recordContext])) {
+            return false;
+        }
+        $this->credentialInputRejected = true;
+        $this->message = '';
+        $this->pageTitle = null;
+        $this->pageUrl = null;
+        $this->routeName = null;
+        $this->domain = null;
+        $this->recordContext = null;
+        $this->messageInputVersion++;
+        $this->addError('message', app(\App\Modules\Integration\Services\AiCredentialGuidance::class)->message(request()->user()));
+
+        return true;
+    }
 
     public function mount(?string $pageTitle = null): void
     {
@@ -38,6 +78,10 @@ class ContextChat extends Component
 
     public function send(): void
     {
+        if ($this->credentialInputRejected || $this->rejectCredentialInput()) {
+            return;
+        }
+
         $this->validate([
             'selectedAgentId' => 'required|integer',
             'message' => 'required|string|max:20000',
@@ -101,6 +145,9 @@ class ContextChat extends Component
 
     public function processPendingResponse(AiChatResponder $responder): void
     {
+        if ($this->credentialInputRejected || $this->rejectCredentialInput()) {
+            return;
+        }
         $chat = $this->currentContextChat();
         $pending = $chat?->messages
             ->where('role', 'assistant')
@@ -116,6 +163,7 @@ class ContextChat extends Component
 
     public function render()
     {
+        $this->rejectCredentialInput();
         $agents = $this->availableAgents();
         $chat = $this->currentContextChat();
 

@@ -2,6 +2,7 @@
 
 namespace App\Modules\Integration\Services;
 
+use App\Modules\Integration\Exceptions\AiRuntimeFailure;
 use App\Modules\Integration\Models\AiAgent;
 use App\Modules\Integration\Support\AiExecutionTrace;
 use App\Modules\Integration\Support\AiModelResult;
@@ -42,11 +43,11 @@ class AiModelExecutor
                 finishReason: null,
                 httpStatus: null,
                 errorCategory: 'transport_error',
-                errorCode: class_basename($exception),
+                errorCode: 'transport_error',
             );
             $this->safeRecord($agent, $trace, $attemptNumber, $endpointKind, $requestedModel, $result, $startedAt, $startedAtNanoseconds);
 
-            throw $exception;
+            throw AiRuntimeFailure::fromThrowable($exception, $trace->context->executionId);
         }
 
         try {
@@ -55,15 +56,15 @@ class AiModelExecutor
             $result = AiModelResult::failure(
                 usage: AiModelUsage::unavailable(),
                 actualModel: null,
-                providerRequestId: $this->headerRequestId($response),
+                providerRequestId: null,
                 finishReason: null,
                 httpStatus: $response->status(),
                 errorCategory: 'response_parse_error',
-                errorCode: class_basename($exception),
+                errorCode: 'response_parse_error',
             );
             $this->safeRecord($agent, $trace, $attemptNumber, $endpointKind, $requestedModel, $result, $startedAt, $startedAtNanoseconds);
 
-            throw $exception;
+            throw new AiRuntimeFailure('invalid_response', $trace->context->executionId, $response->status());
         }
 
         $this->safeRecord($agent, $trace, $attemptNumber, $endpointKind, $requestedModel, $result, $startedAt, $startedAtNanoseconds);
