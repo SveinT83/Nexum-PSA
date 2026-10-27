@@ -1,0 +1,45 @@
+{
+  "overlapping_runs_do_not_sum": true,
+  "runs": [
+    {
+      "scope": "Final Warroom",
+      "passed": 31,
+      "assertions": 619,
+      "failures": 0,
+      "skips": 0,
+      "log": "/tmp/warroom-final-domain-tests.log"
+    },
+    {
+      "scope": "Broad affected source regressions",
+      "passed": 343,
+      "assertions": 5934,
+      "failures": 0,
+      "skips": 0,
+      "log": "/tmp/warroom-regression-tests.log"
+    },
+    {
+      "scope": "Warroom/Ticket/Task",
+      "passed": 189,
+      "assertions": 1773,
+      "failures": 0,
+      "skips": 0,
+      "log": "/tmp/warroom-final-tests.log"
+    },
+    {
+      "scope": "Warroom/Mail boundary",
+      "passed": 45,
+      "assertions": 807,
+      "failures": 0,
+      "skips": 0,
+      "log": "/tmp/warroom-boundary-final-tests.log"
+    },
+    {
+      "scope": "Availability and every operation",
+      "passed": 2,
+      "assertions": 54,
+      "failures": 0,
+      "skips": 0,
+      "log": "/tmp/warroom-final-availability.log"
+    }
+  ]
+}

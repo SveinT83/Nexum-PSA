@@ -1,0 +1,48 @@
+{
+    "environment": "authoritative Dev trusted HTTPS",
+    "operations": {
+        "get \/api\/v1\/warroom\/context": {
+            "status": 200,
+            "schema_valid": true,
+            "no_store": true
+        },
+        "get \/api\/v1\/warroom\/dashboard": {
+            "status": 200,
+            "schema_valid": true,
+            "no_store": true
+        },
+        "get \/api\/v1\/warroom\/my-day": {
+            "status": 200,
+            "schema_valid": true,
+            "no_store": true
+        },
+        "get \/api\/v1\/warroom\/my-day\/overdue": {
+            "status": 200,
+            "schema_valid": true,
+            "no_store": true
+        },
+        "get \/api\/v1\/warroom\/settings": {
+            "status": 200,
+            "schema_valid": true,
+            "no_store": true
+        },
+        "put \/api\/v1\/warroom\/settings": {
+            "status": 200,
+            "schema_valid": true,
+            "no_store": true
+        },
+        "get \/api\/v1\/warroom\/operations\/{command}": {
+            "status": 200,
+            "schema_valid": true,
+            "no_store": true
+        }
+    },
+    "origin": "https:\/\/dev.nexumpsa.eu",
+    "authentication_status": 401,
+    "scope_denial_status": 403,
+    "stale_status": 412,
+    "replay_verified": true,
+    "live_settings_values_preserved": true,
+    "published_swagger_status": 200,
+    "published_swagger_paths": 6
+}

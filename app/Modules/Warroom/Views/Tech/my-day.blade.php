@@ -19,6 +19,15 @@
 @endsection
 
 @section('content')
+    <!-- Source errors remain distinct from authorized empty queues. -->
+    @foreach($myDay['sources'] as $source => $state)
+        @if($state === 'unavailable')
+            <div class="alert alert-warning py-2" role="status">{{ ucfirst($source) }} data is unavailable.</div>
+        @endif
+    @endforeach
+    @if($myDay['overdue_state'] === 'unavailable')
+        <div class="alert alert-warning py-2" role="status">Overdue data is unavailable.</div>
+    @endif
     @php
         $metrics = [
             [
@@ -54,6 +63,13 @@
                 'aria_label' => 'Overdue tickets and tasks: '.$myDay['counts']['overdue'],
             ],
         ];
+        $visibleMetrics = [
+            'Tickets' => $myDay['sources']['tickets'] === 'available',
+            'Tasks' => $myDay['sources']['tasks'] === 'available',
+            'Events' => $myDay['sources']['calendar'] === 'available',
+            'Overdue' => $myDay['overdue_state'] === 'available',
+        ];
+        $metrics = array_filter($metrics, fn ($metric) => $visibleMetrics[$metric['label']]);
     @endphp
     <div class="row g-2 mb-3">
         @foreach($metrics as $metric)
@@ -75,7 +91,7 @@
         @endforeach
     </div>
 
-    @if(isset($myDay['overdue_items']))
+    @if(isset($myDay['overdue_items']) && $myDay['overdue_state'] === 'available')
         <div class="card mb-3 border-danger">
             <div class="card-header py-2 d-flex align-items-center justify-content-between bg-danger-subtle">
                 <h2 class="h6 mb-0 text-danger">Overdue Work Items</h2>
@@ -108,6 +124,19 @@
         </div>
     @endif
 
+    @if(isset($myDay['overdue_pagination']) && $myDay['overdue_pagination']['last_page'] > 1)
+        <nav class="d-flex gap-2 mb-3" aria-label="Overdue pages">
+            @if($myDay['overdue_pagination']['page'] > 1)
+                <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.my-day.index', ['focus' => 'overdue', 'page' => $myDay['overdue_pagination']['page'] - 1]) }}">Previous</a>
+            @endif
+            <span class="small text-muted">{{ $myDay['overdue_pagination']['total'] }} overdue items</span>
+            @if($myDay['overdue_pagination']['page'] < $myDay['overdue_pagination']['last_page'])
+                <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.my-day.index', ['focus' => 'overdue', 'page' => $myDay['overdue_pagination']['page'] + 1]) }}">Next</a>
+            @endif
+        </nav>
+    @endif
+
+    @if($myDay['sources']['calendar'] === 'available')
     <!-- Schedule -->
     <div class="card mb-3">
         <div class="card-header py-2 d-flex align-items-center justify-content-between">
@@ -143,8 +172,11 @@
         </div>
     </div>
 
+    @endif
+
     <!-- Work queues -->
     <div class="row g-3">
+        @if($myDay['sources']['tickets'] === 'available')
         <div class="col-12 col-xl-6">
             <div class="card h-100">
                 <div class="card-header py-2 d-flex align-items-center justify-content-between">
@@ -191,6 +223,8 @@
             </div>
         </div>
 
+        @endif
+        @if($myDay['sources']['tasks'] === 'available')
         <div class="col-12 col-xl-6">
             <div class="card h-100">
                 <div class="card-header py-2 d-flex align-items-center justify-content-between">
@@ -236,6 +270,7 @@
                 </div>
             </div>
         </div>
+        @endif
     </div>
 @endsection
 
@@ -261,18 +296,22 @@
             <h2 class="h6 mb-0">Queue</h2>
         </div>
         <div class="list-group list-group-flush">
+            @if($myDay['sources']['tickets'] === 'available')
             <a href="{{ route('tech.tickets.index', ['ownership' => 'mine', 'lifecycle' => 'open', 'unread' => 1]) }}" class="list-group-item list-group-item-action d-flex justify-content-between py-2 focus-ring" aria-label="Unread open tickets assigned to you: {{ $myDay['counts']['unread'] }}">
                 <span>Unread</span>
                 <span class="badge text-bg-{{ $myDay['counts']['unread'] > 0 ? 'warning' : 'light' }} {{ $myDay['counts']['unread'] > 0 ? '' : 'text-dark' }}">
                     {{ $myDay['counts']['unread'] }}
                 </span>
             </a>
+            @endif
+            @if($myDay['overdue_state'] === 'available')
             <a href="{{ route('tech.my-day.index', ['focus' => 'overdue']) }}" class="list-group-item list-group-item-action d-flex justify-content-between py-2 focus-ring" aria-label="Overdue tickets and tasks: {{ $myDay['counts']['overdue'] }}">
                 <span>Overdue</span>
                 <span class="badge text-bg-{{ $myDay['counts']['overdue'] > 0 ? 'danger' : 'success' }}">
                     {{ $myDay['counts']['overdue'] }}
                 </span>
             </a>
+            @endif
         </div>
     </div>
 @endsection
@@ -284,14 +323,18 @@
             <h2 class="h6 mb-0">Focus</h2>
         </div>
         <div class="list-group list-group-flush">
+            @if($myDay['sources']['calendar'] === 'available')
             <div class="list-group-item py-2 d-flex justify-content-between">
                 <span>Calendar</span>
                 <span class="fw-semibold">{{ $myDay['counts']['events'] }}</span>
             </div>
+            @endif
+            @if($myDay['overdue_state'] === 'available')
             <div class="list-group-item py-2 d-flex justify-content-between">
                 <span>Work items</span>
                 <span class="fw-semibold">{{ $myDay['counts']['tickets'] + $myDay['counts']['tasks'] }}</span>
             </div>
+            @endif
             <div class="list-group-item py-2 d-flex justify-content-between">
                 <span>Updated</span>
                 <span class="fw-semibold">{{ $myDay['generated_at']->format('H:i') }}</span>

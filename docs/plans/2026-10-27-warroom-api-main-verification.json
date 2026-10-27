@@ -1,0 +1,33 @@
+{
+  "base": "86b82ed8625ff709c5a753b62614f22b46114b35",
+  "candidate_branch": "codex/warroom-api-promotion-20261027",
+  "candidate_path": "/tmp/nexum-warroom-api-promotion-20261027",
+  "main_candidate_tests": {
+    "passed": 31,
+    "assertions": 619,
+    "failures": 0,
+    "skips": 0,
+    "duration_seconds": 475.53
+  },
+  "php_lint": {
+    "files": 22,
+    "failures": 0
+  },
+  "pint_passed": true,
+  "approved_source_hashes_match": 28,
+  "swagger": {
+    "other_paths_unchanged": true,
+    "other_schemas_unchanged": true,
+    "main_tag_metadata_preserved": true,
+    "warroom_paths": 6,
+    "warroom_operations": 7,
+    "warroom_schemas": 25
+  },
+  "human_review": {
+    "id": "HR-2026-10-27-WARROOM-API",
+    "status": "Reviewed",
+    "reviewer": "Svein Tore"
+  },
+  "authorization": "Svein Tore: Merge til main, 2026-10-27",
+  "production_deployment": false
+}
