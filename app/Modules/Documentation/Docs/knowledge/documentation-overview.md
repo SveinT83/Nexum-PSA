@@ -90,8 +90,9 @@ carriers/tracking rules, explicit portal visibility and membership-scoped portal
 Read **Documentation Overview -> Documentation API guide** for required scopes,
 user permissions, request keys, read-back, examples and troubleshooting.
 
-Main and production are unchanged; HR-2026-10-27-DOCUMENTATION-API was Reviewed
-by Svein Tore on 2026-10-27. Promotion and deployment require separate authorization.
+The implementation is merged to Main in PR #329; production is unchanged.
+HR-2026-10-27-DOCUMENTATION-API was Reviewed by Svein Tore on 2026-10-27.
+Production deployment requires separate authorization.
 Changing a visible document's Client/Site or moving it to internal scope hides it
 until explicitly published for its new audience. Multiple active templates require
 an explicit selection through the API as in web. Issue #275's immutable revision
@@ -99,10 +100,10 @@ and approval/publication lifecycle remains separate and unimplemented.
 
 ## Documentation API guide
 
-Verified on Dev on 2026-10-27. Main and production are unchanged. Human checklist
+Verified on Dev and merged to Main in PR #329 on 2026-10-27. Production is unchanged. Human checklist
 **HR-2026-10-27-DOCUMENTATION-API** was Reviewed by Svein Tore on 2026-10-27.
-Main promotion and production release require separate authorization. Do not describe
-these additions as production functionality.
+Main promotion is complete. Production release requires separate authorization.
+Do not describe these additions as production functionality.
 
 ## Prerequisites
 

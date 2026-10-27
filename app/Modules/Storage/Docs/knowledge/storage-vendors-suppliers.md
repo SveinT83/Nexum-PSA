@@ -59,5 +59,6 @@ documentation.view/create/update rights. Writes require a stable Idempotency-Key
 read the exact record first and use its ETag in If-Match for changes. No purchase,
 stock or supplier-import provenance changes are caused by maintaining this register.
 See **Documentation Overview -> Documentation API guide** for the end-to-end steps.
-Main/production are unchanged. HR-2026-10-27-DOCUMENTATION-API was Reviewed
-by Svein Tore on 2026-10-27; promotion/deployment requires separate authorization.
+The implementation is merged to Main in PR #329; production is unchanged.
+HR-2026-10-27-DOCUMENTATION-API was Reviewed by Svein Tore on 2026-10-27.
+Production deployment requires separate authorization.
