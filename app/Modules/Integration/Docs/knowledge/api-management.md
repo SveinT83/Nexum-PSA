@@ -1445,3 +1445,18 @@ authority. Queued is not delivered; ambiguous external outcomes require reconcil
 The exact Dev migration is 2026_10_27_030000_create_signal_api_commands.php.
 Human-review checklist HR-2026-10-27-SIGNAL-API is Pending. Main, production and
 provider/worker activation remain separate; this guide does not imply deployment.
+
+## Lead Intelligence Full API Coverage (2026-10-27)
+
+Dev now has 17 official HTTP operations / 47 typed Swagger schemas for the full
+current Lead Intelligence browser workflow and existing evaluation/promotion actions.
+Use lead-intelligence.read/manage/run together with the active user's sales.lead_manage
+permission. Includes pure context, settings, segment schedules/budgets, AI draft,
+Run Now, runs/evidence, scan ledger and current-token command-result read-back.
+Writes/actions require Idempotency-Key; use the exact GET ETag as If-Match for edits.
+Provider/AI/discovery execution from APIs defaults off. Unknown commands require
+reconciliation; queued is not completed research. Clients owns provider numbering,
+Contact owns identity/bridge, and Marketing suppression/exclusions remain authoritative.
+Full operator/API instructions are in Lead Intelligence Overview (BookStack page 496).
+Status: implemented/verified on Dev; Main promotion authorized and pending verification;
+production unchanged. HR-2026-10-27-LEAD-INTELLIGENCE-API manual scenarios remain Pending.

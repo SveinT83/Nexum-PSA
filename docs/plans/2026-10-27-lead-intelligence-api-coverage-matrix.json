@@ -1,0 +1,851 @@
+{
+  "date": "2026-10-27",
+  "branch": "Dev",
+  "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "browser_routes": [
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/admin/settings/lead-intelligence",
+      "name": "tech.admin.settings.lead-intelligence",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Admin\\LeadIntelligenceSettingsController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/admin/settings/lead-intelligence",
+      "name": "tech.admin.settings.lead-intelligence.update",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Admin\\LeadIntelligenceSettingsController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission",
+        "App\\Http\\Middleware\\AdminAccess"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS",
+      "uri": "tech/lead-intelligence",
+      "name": "tech.lead-intelligence.index",
+      "action": "Illuminate\\Routing\\RedirectController",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/lead-intelligence/runs",
+      "name": "tech.lead-intelligence.runs.index",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadResearchRunController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/lead-intelligence/runs",
+      "name": "tech.lead-intelligence.runs.store",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadResearchRunController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/lead-intelligence/runs/{run}",
+      "name": "tech.lead-intelligence.runs.show",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadResearchRunController@show",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/lead-intelligence/scan-ledger",
+      "name": "tech.lead-intelligence.scan-ledger.index",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadScanLedgerController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/lead-intelligence/segments",
+      "name": "tech.lead-intelligence.segments.index",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadSegmentController@index",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/lead-intelligence/segments",
+      "name": "tech.lead-intelligence.segments.store",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadSegmentController@store",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/lead-intelligence/segments/ai-draft",
+      "name": "tech.lead-intelligence.segments.ai-draft",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadSegmentController@draftWithAi",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/lead-intelligence/segments/create",
+      "name": "tech.lead-intelligence.segments.create",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadSegmentController@create",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PUT",
+      "uri": "tech/lead-intelligence/segments/{segment}",
+      "name": "tech.lead-intelligence.segments.update",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadSegmentController@update",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "tech/lead-intelligence/segments/{segment}/edit",
+      "name": "tech.lead-intelligence.segments.edit",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadSegmentController@edit",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "tech/lead-intelligence/segments/{segment}/run-now",
+      "name": "tech.lead-intelligence.segments.run-now",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadSegmentController@runNow",
+      "middleware": [
+        "web",
+        "Illuminate\\Auth\\Middleware\\Authenticate",
+        "App\\Http\\Middleware\\TechAccess",
+        "App\\Http\\Middleware\\RequireTwoFactor",
+        "App\\Http\\Middleware\\EnforceTechRoutePermission"
+      ],
+      "path": null
+    }
+  ],
+  "api_routes": [
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/lead-intelligence/evaluate-contact",
+      "name": "api.v1.lead-intelligence.evaluate-contact",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Api\\V1\\LeadIntelligenceEvaluationController@evaluateContact",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:lead-intelligence.run"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/lead-intelligence/promote-candidate",
+      "name": "api.v1.lead-intelligence.promote-candidate",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Api\\V1\\LeadIntelligencePromotionController@promoteCandidate",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:lead-intelligence.run"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/lead-intelligence/settings",
+      "name": "api.v1.lead-intelligence.settings.show",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Api\\V1\\LeadIntelligenceSettingsController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:lead-intelligence.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "api/v1/lead-intelligence/settings",
+      "name": "api.v1.lead-intelligence.settings.update",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Api\\V1\\LeadIntelligenceSettingsController@update",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:lead-intelligence.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/lead-research-runs",
+      "name": "api.v1.lead-research-runs.store",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Api\\V1\\LeadResearchRunController@store",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:lead-intelligence.run"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/lead-research-runs/{run}",
+      "name": "api.v1.lead-research-runs.show",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Api\\V1\\LeadResearchRunController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:lead-intelligence.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/lead-scan-ledger",
+      "name": "api.v1.lead-scan-ledger.index",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Api\\V1\\LeadScanLedgerController@index",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:lead-intelligence.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/lead-segments",
+      "name": "api.v1.lead-segments.index",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Api\\V1\\LeadSegmentController@index",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:lead-intelligence.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/lead-segments",
+      "name": "api.v1.lead-segments.store",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Api\\V1\\LeadSegmentController@store",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:lead-intelligence.manage"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/lead-segments/{segment}",
+      "name": "api.v1.lead-segments.show",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Api\\V1\\LeadSegmentController@show",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:lead-intelligence.read"
+      ],
+      "path": null
+    },
+    {
+      "domain": null,
+      "method": "PATCH",
+      "uri": "api/v1/lead-segments/{segment}",
+      "name": "api.v1.lead-segments.update",
+      "action": "App\\Modules\\LeadIntelligence\\Controllers\\Api\\V1\\LeadSegmentController@update",
+      "middleware": [
+        "api",
+        "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:lead-intelligence.manage"
+      ],
+      "path": null
+    }
+  ],
+  "swagger_operations": [],
+  "source_sha256": {
+    "app/Modules/LeadIntelligence/Actions/DraftLeadSegmentWithAi.php": "e59316d8bb08ec84b163fb0d9b5c49f910b60a1df7163a68921cfcbd420197fd",
+    "app/Modules/LeadIntelligence/Actions/EnsureLeadIntelligenceDefaults.php": "062b467d75888c6158ed629556d9f955be0eaf73569dff0524ba5f0cb2834b53",
+    "app/Modules/LeadIntelligence/Actions/ExecuteLeadResearchRun.php": "7c53c61fce5f7e9c919f8db97f3459a38e19e4321ff7cb8921522a4f631f4dd9",
+    "app/Modules/LeadIntelligence/Actions/LeadMarketingEligibilityEvaluator.php": "d6718fb79e1a81d681eb62a27aa0009162b31fef2037da57cd7159dc73b7deee",
+    "app/Modules/LeadIntelligence/Actions/PlanDueLeadResearchRuns.php": "0b5cb919ea51adda2bc69c1cb3927325ad995570ab7d725edc6635b4dba94ae6",
+    "app/Modules/LeadIntelligence/Actions/PlanLeadDiscoveryWithAi.php": "744a021194bee85a592cf813ae6ba94e0906d63aa74e35900ab4d1b177c2782c",
+    "app/Modules/LeadIntelligence/Actions/PlanMarketingListPromotion.php": "6ea47775b0828b2c4bc8e2d6ad078610475ad008707ad5cfa4c2787592d9cd56",
+    "app/Modules/LeadIntelligence/Actions/PromoteLeadCandidate.php": "6ee9ff63e077a04e24b6ffe644156468340d949747851a4064f8465739bdce7f",
+    "app/Modules/LeadIntelligence/Actions/ReviewLeadCandidateWithAi.php": "1ddf90885c6bd5d8a1b0722f4994e79d8c945df3d4d7a41b52a367d355516b17",
+    "app/Modules/LeadIntelligence/Actions/SearchLeadWebWithAi.php": "05edb6796f147601fb9e03ba4dc289f8b766ea0cf6328e248fdd803f7171d76a",
+    "app/Modules/LeadIntelligence/Controllers/Admin/LeadIntelligenceSettingsController.php": "7f715eb8d5d79a3807943eb0af5c27f99f0a7eed386204f41a0a5a652cb9ff44",
+    "app/Modules/LeadIntelligence/Controllers/Api/V1/LeadIntelligenceEvaluationController.php": "8ff78aebf8b95e008a1da5792de7177fc53243ac5608a5ecad2da11c043951c8",
+    "app/Modules/LeadIntelligence/Controllers/Api/V1/LeadIntelligencePromotionController.php": "5472d757a7525d24584c95389e96ce1b3376e7fb685ea8563fc53b4294570054",
+    "app/Modules/LeadIntelligence/Controllers/Api/V1/LeadIntelligenceSettingsController.php": "d373209f03e3b9f09551bb03fd28e169981d361407ddfa1dccee27f1ac4bd7cd",
+    "app/Modules/LeadIntelligence/Controllers/Api/V1/LeadResearchRunController.php": "c6109a0d8a6a5d544750ec8b3667544bb33903314103579f466bf9345f3bc62f",
+    "app/Modules/LeadIntelligence/Controllers/Api/V1/LeadScanLedgerController.php": "982d4f25a0d044aaa2df5ed591760d2477715021e68283e001c15d0e3ae666da",
+    "app/Modules/LeadIntelligence/Controllers/Api/V1/LeadSegmentController.php": "d7c608d94add6fddabedebb23f082977f0daaf6c9f318c015b1a4f77655309e0",
+    "app/Modules/LeadIntelligence/Controllers/Tech/LeadResearchRunController.php": "7017bf169ce8950964c5fc54cec69563343a8da90e8417b73a4338e01d381ce1",
+    "app/Modules/LeadIntelligence/Controllers/Tech/LeadScanLedgerController.php": "9c63dd56f12f4562fd9a101e1ffae956efaa5b73451722658f0853798b7e6b03",
+    "app/Modules/LeadIntelligence/Controllers/Tech/LeadSegmentController.php": "2b3b6c00c295f0a1d427eaae39feb0369ceaa9afa2ce62ab28d4bedbee51938a",
+    "app/Modules/LeadIntelligence/Docs/knowledge/lead-intelligence-overview.md": "e28e4e9f809df09246956745b73128bc7f99c0e00e5ff925747824507102c95d",
+    "app/Modules/LeadIntelligence/Jobs/ExecuteLeadResearchRunJob.php": "dbaa308a6374b3f31d3907e68a00f916d4a7f12e25ca5acb578197f1df2dc0a8",
+    "app/Modules/LeadIntelligence/Models/ContactMarketingEligibility.php": "fee8031dc01aa4c3abfdbcfef4242b0b631aae83cfc0f7ac7c36c124eb1e4f7b",
+    "app/Modules/LeadIntelligence/Models/LeadResearchRun.php": "55ed0300f37cbc022e7bcba85444d28360591afc9094e632117b148dbbf222d6",
+    "app/Modules/LeadIntelligence/Models/LeadScanLedger.php": "610f348e2e074202e3ff369d41f4e5ef5eb6b7409787b3ef2b2f824b9a08dd4f",
+    "app/Modules/LeadIntelligence/Models/LeadSegment.php": "78951a7f31c3865e57ac73863e3057cf33f8609634b3cb046d677ac451cbcef9",
+    "app/Modules/LeadIntelligence/Models/LeadSourceEvidence.php": "02a03a2b9da54f4a37d3c823352025fc753a750420528f7b078091a70f00e76e",
+    "app/Modules/LeadIntelligence/Models/MarketingSuppressionEntry.php": "362827bc1a296d413e50e47ffb0b3f9ddd9594d75c4432f20d31f955d9cb795a",
+    "app/Modules/LeadIntelligence/README.md": "39c0f69258fc076f803eff368824cfdfbad09da1bc07965e65cf369866a82c79",
+    "app/Modules/LeadIntelligence/Support/LeadIntelligenceSettings.php": "6d5c7526a132e2df146433e84c9611b2738757d5b914687123d3d05aa879a98a",
+    "app/Modules/LeadIntelligence/Tests/Feature/LeadIntelligenceModuleTest.php": "e003dae17d546c0382fa6bb4b1e3abfc85c58338075dbd0794efe8da2b6fc87f",
+    "app/Modules/LeadIntelligence/Views/Admin/Settings/edit.blade.php": "a8ebee39c4a1cf6679b8e0b5ed1287a6cb17ce1f5efc6ffebd02f45a0d872655",
+    "app/Modules/LeadIntelligence/Views/Tech/ledger/index.blade.php": "39dc3b16d6f751a467d94fc6263672be4c65ce56980d5fcf8d93cbd2e7d681a3",
+    "app/Modules/LeadIntelligence/Views/Tech/runs/index.blade.php": "2e2228768373f365841bab9d46b3b8d407bfff8c7c09db9f73376dd7d0cde8c1",
+    "app/Modules/LeadIntelligence/Views/Tech/runs/show.blade.php": "1dbc2147060c5826e9802bacbdccb25c85840a27eb83007f8e034bf61b5a3ded",
+    "app/Modules/LeadIntelligence/Views/Tech/segments/form.blade.php": "92f8c527ac8efc6f87467b2ec03cf1ac982405c63bb06ac497bae6334aa892f2",
+    "app/Modules/LeadIntelligence/Views/Tech/segments/index.blade.php": "ba2af0828a5607cabc104954093dfb24c6460e49bb5a59927602dad9e951acd5",
+    "app/Modules/LeadIntelligence/api.php": "e49d92f261d159b16be65cddc36025e16444b19469e32420141b5383c409c80c",
+    "app/Modules/LeadIntelligence/routes.php": "cfe858ab482e0e77f62c0f02c6468422a82e9c499a1f5ccd071d82cd28e188f7"
+  },
+  "dirty_module_paths": [
+    " M app/Modules/LeadIntelligence/Views/Tech/ledger/index.blade.php",
+    " M app/Modules/LeadIntelligence/Views/Tech/runs/index.blade.php",
+    " M app/Modules/LeadIntelligence/Views/Tech/runs/show.blade.php",
+    " M app/Modules/LeadIntelligence/Views/Tech/segments/form.blade.php",
+    " M app/Modules/LeadIntelligence/Views/Tech/segments/index.blade.php"
+  ],
+  "tests": {
+    "command": "HOME=/tmp php artisan test --compact --filter=LeadIntelligence",
+    "passed": 33,
+    "assertions": 277,
+    "duration_seconds": 44.34,
+    "failures": 0,
+    "skips": 0
+  },
+  "github": {
+    "280": "closed/completed; five existing admin-badge views preserved",
+    "154": "closed/completed; scheduler/queued planner regression covered"
+  },
+  "planning_only": false,
+  "coverage": [
+    {
+      "id": "LI01",
+      "browser": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/admin/settings/lead-intelligence",
+        "name": "tech.admin.settings.lead-intelligence",
+        "action": "App\\Modules\\LeadIntelligence\\Controllers\\Admin\\LeadIntelligenceSettingsController@edit",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "classification": "read",
+      "api_target": "GET /lead-intelligence/settings; GET /lead-intelligence/context",
+      "baseline": "Partial: actor/typed contract and context gaps",
+      "status": "Verified On Dev",
+      "verification_required": [
+        "active actor + sales.lead_manage + exact token ability",
+        "typed OpenAPI and actual response match",
+        "exact result/read-back and side effects or read purity"
+      ],
+      "evidence": "LeadApiParityTest and retained LeadIntelligenceModuleTest; exact runtime/Swagger and 18 successful response schemas"
+    },
+    {
+      "id": "LI02",
+      "browser": {
+        "domain": null,
+        "method": "PUT",
+        "uri": "tech/admin/settings/lead-intelligence",
+        "name": "tech.admin.settings.lead-intelligence.update",
+        "action": "App\\Modules\\LeadIntelligence\\Controllers\\Admin\\LeadIntelligenceSettingsController@update",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission",
+          "App\\Http\\Middleware\\AdminAccess"
+        ],
+        "path": null
+      },
+      "classification": "write",
+      "api_target": "PATCH /lead-intelligence/settings",
+      "baseline": "Partial: actor, endpoint validation, durable revision gaps",
+      "status": "Verified On Dev",
+      "verification_required": [
+        "active actor + sales.lead_manage + exact token ability",
+        "typed OpenAPI and actual response match",
+        "exact result/read-back and side effects or read purity"
+      ],
+      "evidence": "LeadApiParityTest and retained LeadIntelligenceModuleTest; exact runtime/Swagger and 18 successful response schemas"
+    },
+    {
+      "id": "LI03",
+      "browser": {
+        "domain": null,
+        "method": "GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS",
+        "uri": "tech/lead-intelligence",
+        "name": "tech.lead-intelligence.index",
+        "action": "Illuminate\\Routing\\RedirectController",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      "classification": "read/navigation",
+      "api_target": "GET /lead-intelligence/context; GET /lead-segments",
+      "baseline": "Redirect only; no mutation semantics despite route method list",
+      "status": "Verified On Dev",
+      "verification_required": [
+        "active actor + sales.lead_manage + exact token ability",
+        "typed OpenAPI and actual response match",
+        "exact result/read-back and side effects or read purity"
+      ],
+      "evidence": "LeadApiParityTest and retained LeadIntelligenceModuleTest; exact runtime/Swagger and 18 successful response schemas"
+    },
+    {
+      "id": "LI04",
+      "browser": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/lead-intelligence/runs",
+        "name": "tech.lead-intelligence.runs.index",
+        "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadResearchRunController@index",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      "classification": "read",
+      "api_target": "GET /lead-research-runs; GET /lead-intelligence/context",
+      "baseline": "Missing list and form context",
+      "status": "Verified On Dev",
+      "verification_required": [
+        "active actor + sales.lead_manage + exact token ability",
+        "typed OpenAPI and actual response match",
+        "exact result/read-back and side effects or read purity"
+      ],
+      "evidence": "LeadApiParityTest and retained LeadIntelligenceModuleTest; exact runtime/Swagger and 18 successful response schemas"
+    },
+    {
+      "id": "LI05",
+      "browser": {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/lead-intelligence/runs",
+        "name": "tech.lead-intelligence.runs.store",
+        "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadResearchRunController@store",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      "classification": "write/action",
+      "api_target": "POST /lead-research-runs",
+      "baseline": "Partial: actor, shared mutation and dispatch/replay gaps",
+      "status": "Verified On Dev",
+      "verification_required": [
+        "active actor + sales.lead_manage + exact token ability",
+        "typed OpenAPI and actual response match",
+        "exact result/read-back and side effects or read purity"
+      ],
+      "evidence": "LeadApiParityTest and retained LeadIntelligenceModuleTest; exact runtime/Swagger and 18 successful response schemas"
+    },
+    {
+      "id": "LI06",
+      "browser": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/lead-intelligence/runs/{run}",
+        "name": "tech.lead-intelligence.runs.show",
+        "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadResearchRunController@show",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      "classification": "read",
+      "api_target": "GET /lead-research-runs/{run}; GET /lead-research-runs/{run}/evidence",
+      "baseline": "Partial: missing Client/Contact identities and bounded evidence",
+      "status": "Verified On Dev",
+      "verification_required": [
+        "active actor + sales.lead_manage + exact token ability",
+        "typed OpenAPI and actual response match",
+        "exact result/read-back and side effects or read purity"
+      ],
+      "evidence": "LeadApiParityTest and retained LeadIntelligenceModuleTest; exact runtime/Swagger and 18 successful response schemas"
+    },
+    {
+      "id": "LI07",
+      "browser": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/lead-intelligence/scan-ledger",
+        "name": "tech.lead-intelligence.scan-ledger.index",
+        "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadScanLedgerController@index",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      "classification": "read",
+      "api_target": "GET /lead-scan-ledger",
+      "baseline": "Partial: actor, bounded inputs and typed contract gaps",
+      "status": "Verified On Dev",
+      "verification_required": [
+        "active actor + sales.lead_manage + exact token ability",
+        "typed OpenAPI and actual response match",
+        "exact result/read-back and side effects or read purity"
+      ],
+      "evidence": "LeadApiParityTest and retained LeadIntelligenceModuleTest; exact runtime/Swagger and 18 successful response schemas"
+    },
+    {
+      "id": "LI08",
+      "browser": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/lead-intelligence/segments",
+        "name": "tech.lead-intelligence.segments.index",
+        "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadSegmentController@index",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      "classification": "read",
+      "api_target": "GET /lead-segments",
+      "baseline": "Partial: browser count/context and typed authority gaps",
+      "status": "Verified On Dev",
+      "verification_required": [
+        "active actor + sales.lead_manage + exact token ability",
+        "typed OpenAPI and actual response match",
+        "exact result/read-back and side effects or read purity"
+      ],
+      "evidence": "LeadApiParityTest and retained LeadIntelligenceModuleTest; exact runtime/Swagger and 18 successful response schemas"
+    },
+    {
+      "id": "LI09",
+      "browser": {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/lead-intelligence/segments",
+        "name": "tech.lead-intelligence.segments.store",
+        "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadSegmentController@store",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      "classification": "write",
+      "api_target": "POST /lead-segments",
+      "baseline": "Partial: nested validation, actor and replay gaps",
+      "status": "Verified On Dev",
+      "verification_required": [
+        "active actor + sales.lead_manage + exact token ability",
+        "typed OpenAPI and actual response match",
+        "exact result/read-back and side effects or read purity"
+      ],
+      "evidence": "LeadApiParityTest and retained LeadIntelligenceModuleTest; exact runtime/Swagger and 18 successful response schemas"
+    },
+    {
+      "id": "LI10",
+      "browser": {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/lead-intelligence/segments/ai-draft",
+        "name": "tech.lead-intelligence.segments.ai-draft",
+        "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadSegmentController@draftWithAi",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      "classification": "action",
+      "api_target": "POST /lead-segments/ai-draft",
+      "baseline": "Missing; provider/AI approval and durable unknown state required",
+      "status": "Verified On Dev",
+      "verification_required": [
+        "active actor + sales.lead_manage + exact token ability",
+        "typed OpenAPI and actual response match",
+        "exact result/read-back and side effects or read purity"
+      ],
+      "evidence": "LeadApiParityTest and retained LeadIntelligenceModuleTest; exact runtime/Swagger and 18 successful response schemas"
+    },
+    {
+      "id": "LI11",
+      "browser": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/lead-intelligence/segments/create",
+        "name": "tech.lead-intelligence.segments.create",
+        "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadSegmentController@create",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      "classification": "read",
+      "api_target": "GET /lead-intelligence/context",
+      "baseline": "Missing pure defaults/enums/lists/AI availability",
+      "status": "Verified On Dev",
+      "verification_required": [
+        "active actor + sales.lead_manage + exact token ability",
+        "typed OpenAPI and actual response match",
+        "exact result/read-back and side effects or read purity"
+      ],
+      "evidence": "LeadApiParityTest and retained LeadIntelligenceModuleTest; exact runtime/Swagger and 18 successful response schemas"
+    },
+    {
+      "id": "LI12",
+      "browser": {
+        "domain": null,
+        "method": "PUT",
+        "uri": "tech/lead-intelligence/segments/{segment}",
+        "name": "tech.lead-intelligence.segments.update",
+        "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadSegmentController@update",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      "classification": "write",
+      "api_target": "PATCH /lead-segments/{segment}",
+      "baseline": "Partial: shared validation, revision and replay gaps",
+      "status": "Verified On Dev",
+      "verification_required": [
+        "active actor + sales.lead_manage + exact token ability",
+        "typed OpenAPI and actual response match",
+        "exact result/read-back and side effects or read purity"
+      ],
+      "evidence": "LeadApiParityTest and retained LeadIntelligenceModuleTest; exact runtime/Swagger and 18 successful response schemas"
+    },
+    {
+      "id": "LI13",
+      "browser": {
+        "domain": null,
+        "method": "GET|HEAD",
+        "uri": "tech/lead-intelligence/segments/{segment}/edit",
+        "name": "tech.lead-intelligence.segments.edit",
+        "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadSegmentController@edit",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      "classification": "read",
+      "api_target": "GET /lead-segments/{segment}; GET /lead-intelligence/context",
+      "baseline": "Partial: missing editable context",
+      "status": "Verified On Dev",
+      "verification_required": [
+        "active actor + sales.lead_manage + exact token ability",
+        "typed OpenAPI and actual response match",
+        "exact result/read-back and side effects or read purity"
+      ],
+      "evidence": "LeadApiParityTest and retained LeadIntelligenceModuleTest; exact runtime/Swagger and 18 successful response schemas"
+    },
+    {
+      "id": "LI14",
+      "browser": {
+        "domain": null,
+        "method": "POST",
+        "uri": "tech/lead-intelligence/segments/{segment}/run-now",
+        "name": "tech.lead-intelligence.segments.run-now",
+        "action": "App\\Modules\\LeadIntelligence\\Controllers\\Tech\\LeadSegmentController@runNow",
+        "middleware": [
+          "web",
+          "Illuminate\\Auth\\Middleware\\Authenticate",
+          "App\\Http\\Middleware\\TechAccess",
+          "App\\Http\\Middleware\\RequireTwoFactor",
+          "App\\Http\\Middleware\\EnforceTechRoutePermission"
+        ],
+        "path": null
+      },
+      "classification": "action",
+      "api_target": "POST /lead-segments/{segment}/run-now",
+      "baseline": "Missing; one queued job through shared pipeline required",
+      "status": "Verified On Dev",
+      "verification_required": [
+        "active actor + sales.lead_manage + exact token ability",
+        "typed OpenAPI and actual response match",
+        "exact result/read-back and side effects or read purity"
+      ],
+      "evidence": "LeadApiParityTest and retained LeadIntelligenceModuleTest; exact runtime/Swagger and 18 successful response schemas"
+    }
+  ],
+  "expected_api_operations": 17,
+  "additional_api_capabilities": [
+    {
+      "path": "POST /lead-intelligence/evaluate-contact",
+      "classification": "write",
+      "required": "existing typed eligibility result; exact authorized contact/client/evidence; suppression and durable replay"
+    },
+    {
+      "path": "POST /lead-intelligence/promote-candidate",
+      "classification": "action",
+      "required": "pure dry-run / exact applied result; target rights; Client provider authority; suppression/list exclusions and safe replay"
+    },
+    {
+      "path": "GET /lead-intelligence/operations/{command}",
+      "classification": "read",
+      "required": "encrypted current-actor original-ability read-back without provider retry"
+    }
+  ],
+  "implementation_status": "Implemented On Dev; affected regression/Main verification in progress",
+  "http_operations": 17,
+  "typed_schemas": 47,
+  "tests_final_domain": {
+    "passed": 51,
+    "assertions": 466,
+    "failures": 0,
+    "skips": 0,
+    "duration_seconds": 100.13
+  },
+  "contract_test": "LeadApiParityTest::every_runtime_operation_has_a_typed_contract_matching_actual_success"
+}

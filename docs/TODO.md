@@ -1,5 +1,28 @@
 # tdPSA Development TODO
 
+## Full Lead Intelligence browser/API coverage (2026-10-27)
+
+Status: In Progress on Dev / RFC Approved / Main Merge Authorized. Owner: Codex; approver/reviewer: Svein Tore.
+Request: LeadIntelligence 100% API support. Live Dev baseline: 14 browser rows,
+11 API operations, zero matching generated Swagger operations; 33 tests / 277 assertions.
+RFC: rfc/2026-10-27-lead-intelligence-full-api-parity.md (Approved).
+ADR: adr/2026-10-27-lead-intelligence-api-authority-and-execution.md (Accepted).
+Sequential slices: feature-slices/2026-10-27-lead-intelligence-full-api-parity.md (Draft).
+Coverage/baseline: plans/2026-10-27-lead-intelligence-api-coverage-matrix.md/.json and
+plans/2026-10-27-lead-intelligence-api-baseline.md. Expected target: 17 HTTP operations;
+final exact operation/schema/test mapping must be verified before completion.
+Includes all existing reads/writes/settings, AI draft, run list/Run Now, evidence/context,
+existing evaluation/promotion, exact actor+token authority, durable commands and safe
+provider/worker boundaries. Promotion must respect Clients-owned Tripletex numbering
+and explicit invoice email; existing suppression and Marketing exclusions remain.
+Human-review checklist HR-2026-10-27-LEAD-INTELLIGENCE-API is Pending/planned and gates
+future Main promotion and production deployment/release. Implementation is in progress; no production activation.
+Authorization: Svein Tore, 2026-10-27: "Godkjenner og merge til main".
+Next action (Codex): complete all sequential slices and verification on Dev, then
+package/verify an isolated scoped Main candidate and merge. Production remains separate.
+The human checklist stays Pending; design/Main approval is not scenario review.
+Other contributors' active work and five pre-existing badge views remain preserved.
+
 ## Full Signal browser/API coverage (2026-10-27)
 
 Status: Done On Dev / Reviewed by Svein Tore / Main promotion In Progress / Production unchanged.
