@@ -206,7 +206,10 @@ class CalendarApiParityTest extends TestCase
     public function test_own_calendar_preferences_do_not_mutate_theme_or_availability(): void
     {
         \App\Modules\UserManagement\Models\UserPreference::create(['user_id' => $this->actor->id, 'timezone' => 'Europe/Oslo', 'default_calendar_view' => 'week', 'workday_start' => '08:00', 'workday_end' => '16:00', 'settings' => ['theme' => 'dark', 'other' => 'preserved']]);
-        Sanctum::actingAs($this->actor, ['users.calendar-preferences.read', 'users.calendar-preferences.update']);
+        // Exercise the actual bearer boundary rather than a fabricated token identity.
+        $token = $this->actor->createToken('calendar-preferences-regression', ['users.calendar-preferences.read', 'users.calendar-preferences.update'])->plainTextToken;
+        $this->app['auth']->forgetGuards();
+        $this->withHeader('Authorization', 'Bearer '.$token);
         $data = $this->getJson('/api/v1/users/me/calendar-preferences')->assertOk()->json('data');
         $this->patchJson('/api/v1/users/me/calendar-preferences', ['revision' => $data['revision'], 'timezone' => 'UTC'])->assertOk()->assertJsonPath('data.timezone', 'UTC');
         $this->patchJson('/api/v1/users/me/calendar-preferences', ['revision' => $data['revision'], 'default_calendar_view' => 'day'])->assertConflict();

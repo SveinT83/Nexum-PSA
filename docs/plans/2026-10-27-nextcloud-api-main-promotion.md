@@ -17,7 +17,7 @@ Unrelated shared Dev changes, index, branch and production environment are exclu
 ## Verification
 
 All 50 operations have actual successful typed HTTP evidence (36 new, 14 calendar),
-47 new schemas. Dev affected 373/13899; Main candidate 347/13459, no failures/skips.
+47 new schemas. Dev affected 373/13899; Main candidate 391/14397, no failures/skips.
 Final Nextcloud/Talk after scoped privacy handling: 121/6518 on each runtime.
 Final HTTP status evidence rerun: 14/4956 on each. These test sets overlap.
 Native MySQL locking/unique/encryption/rollback, exact Dev migration and trusted HTTPS

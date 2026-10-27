@@ -26,6 +26,18 @@ class StoreContact
             $contact = $this->contactFromData($data);
             $contactAlreadyExisted = $contact !== null;
             $updateExisting = (bool) ($data['update_existing'] ?? false);
+            if ($contact && ($data['_reuse_unchanged'] ?? false)) {
+                $contact->load(['emails', 'phones', 'addresses']);
+                $email = $contact->emails->firstWhere('is_primary', true) ?: $contact->emails->first();
+                $phone = $contact->phones->firstWhere('is_primary', true) ?: $contact->phones->first();
+                $address = $contact->addresses->firstWhere('is_primary', true) ?: $contact->addresses->first();
+                $data = array_merge($data, $contact->only(['display_name', 'type', 'status', 'organization_name', 'job_title',
+                    'preferred_language', 'do_not_call', 'do_not_email', 'marketing_consent']),
+                    ['email' => $email?->email, 'phone' => $phone?->phone, 'sms_allowed' => (bool) $phone?->sms_allowed]);
+                foreach (['address', 'co_address', 'zip', 'city', 'county', 'country'] as $field) {
+                    $data[$field] = $address?->{$field};
+                }
+            }
 
             if ($contact) {
                 $this->syncContactFields($contact, $data, $updateExisting);
@@ -54,21 +66,31 @@ class StoreContact
                 $updateExisting,
                 array_key_exists('sms_allowed', $data) ? (bool) $data['sms_allowed'] : null,
             );
+            $contact->unsetRelation('emails')->unsetRelation('phones');
             $this->syncAddress($contact, $data, $updateExisting);
 
-            if ($updateExisting) {
+            if ($updateExisting && ! ($data['_preserve_context'] ?? false)) {
                 $this->replaceClientContext($contact, $site);
             }
 
             $relationType = $data['relation_type'] ?? $settings['default_relation_type'];
 
-            if ($client) {
+            if ($client && ! ($data['_preserve_context'] ?? false)) {
                 $this->syncRelation($contact, $client, $relationType, true);
             }
 
-            if ($site) {
+            if ($site && ! ($data['_preserve_context'] ?? false)) {
                 $this->syncRelation($contact, $site, $relationType, true);
                 $this->syncClientUserBridge($contact, $site, $data, $updateExisting);
+            }
+
+            if ($data['_preserve_context'] ?? false) {
+                // Identity edits update each active bridge in place without replacing relations.
+                foreach ($contact->clientUsers()->where('active', true)->with('site')->get() as $bridge) {
+                    if ($bridge->site) {
+                        $this->syncClientUserBridge($contact, $bridge->site, $data, false);
+                    }
+                }
             }
 
             $this->recordAudit($contact, $client, $site, $contactAlreadyExisted);
@@ -83,36 +105,22 @@ class StoreContact
             return Contact::query()->findOrFail($data['existing_contact_id']);
         }
 
-        $email = mb_strtolower(trim((string) ($data['email'] ?? '')));
-
-        if ($email !== '') {
-            $contact = Contact::query()
-                ->whereHas('emails', fn ($query) => $query->whereRaw('LOWER(email) = ?', [$email]))
-                ->first();
-
-            if ($contact) {
-                return $contact;
-            }
+        $matches = app(\App\Modules\Contact\Queries\ContactIdentityMatches::class)->handle($data['email'] ?? null, $data['phone'] ?? null);
+        if ($matches->count() > 1) {
+            throw ValidationException::withMessages(['identity' => 'Email and phone must identify one unambiguous Contact. Select and reconcile the exact Contact first.']);
         }
 
-        return $this->contactByPhone($data['phone'] ?? null);
+        return $matches->first();
     }
 
     private function contactByPhone(?string $phone): ?Contact
     {
-        $normalizedPhone = $this->normalizePhone($phone);
-
-        if ($normalizedPhone === '') {
-            return null;
+        $matches = app(\App\Modules\Contact\Queries\ContactIdentityMatches::class)->handle(null, $phone);
+        if ($matches->count() > 1) {
+            throw ValidationException::withMessages(['phone' => 'This phone number identifies more than one Contact.']);
         }
 
-        return Contact::query()
-            ->whereHas('phones')
-            ->with('phones')
-            ->get()
-            ->first(fn (Contact $contact) => $contact->phones->contains(
-                fn ($contactPhone) => $this->normalizePhone($contactPhone->phone) === $normalizedPhone
-            ));
+        return $matches->first();
     }
 
     private function syncContactFields(Contact $contact, array $data, bool $overwrite): void
@@ -121,6 +129,7 @@ class StoreContact
         $metadata['updated_from_contact_form'] = true;
 
         $contact->forceFill([
+            'type' => $data['type'] ?? $contact->type,
             'status' => array_key_exists('status', $data) ? $data['status'] : $contact->status,
             'display_name' => $overwrite ? $data['display_name'] : ($contact->display_name ?: $data['display_name']),
             'organization_name' => $overwrite ? ($data['organization_name'] ?? null) : ($contact->organization_name ?: ($data['organization_name'] ?? null)),
@@ -246,6 +255,10 @@ class StoreContact
         );
 
         if ($matchingPhone) {
+            if ($replacePrimary && ! $matchingPhone->is_primary) {
+                $contact->phones()->update(['is_primary' => false]);
+                $matchingPhone->forceFill(['is_primary' => true])->save();
+            }
             if ($smsAllowed !== null) {
                 $matchingPhone->forceFill(['sms_allowed' => $smsAllowed])->save();
             }

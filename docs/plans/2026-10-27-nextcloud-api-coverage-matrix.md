@@ -78,7 +78,7 @@ and typed read/write/action coverage. 50 HTTP operations = 36 full-domain additi
 compatible calendar operations. All 50 have actual successful response/schema evidence;
 each new operation includes native/token authorization and documented typed errors.
 47 new concrete response/component schemas; request schemas are inline static attributes.
-Dev affected: 373 / 13899; isolated Main: 347 / 13459. Final Nextcloud/Talk set after scoped
+Dev affected: 373 / 13899; isolated Main: 391 / 14397. Final Nextcloud/Talk set after scoped
 privacy handling: 121 / 6518 on both. Totals overlap and must not be added.
 Exact native MySQL lock/uniqueness/encrypted read-back/rollback and trusted HTTPS pass.
 Synthetic inactive HTTPS object was deleted/replayed; temporary token revoked. No live

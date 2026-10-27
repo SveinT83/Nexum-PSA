@@ -19,7 +19,6 @@ use App\Modules\Signal\Models\Signal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
-use Laravel\Sanctum\Sanctum;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Permission;
@@ -28,6 +27,7 @@ use Tests\TestCase;
 
 class ContactModuleTest extends TestCase
 {
+    use ContactApiContractAssertions { json as contractJson; }
     use RefreshDatabase;
 
     private User $techUser;
@@ -49,6 +49,30 @@ class ContactModuleTest extends TestCase
             'contact.update',
             'contact.manage_settings',
         ]);
+    }
+
+    /** Exercise actual bearer-token identity/scopes, including durable receipt binding. */
+    private function apiAs(User $actor, array $abilities): void
+    {
+        $this->withToken($actor->createToken('contact-api-test', $abilities)->plainTextToken);
+        app('auth')->forgetGuards();
+    }
+
+    /** Existing compatibility tests perform the now-required exact preview before execution. */
+    public function json($method, $uri, array $data = [], array $headers = [], $options = 0)
+    {
+        if (in_array(strtoupper($method), ['POST', 'DELETE'], true)
+            && preg_match('~/(move|bulk-fix|legacy-orphans/cleanup)$|/clients/[^/]+/contacts/[^/]+$~', $uri)
+            && ! ($data['dry_run'] ?? false)) {
+            $preview = $this->contractJson($method, $uri, array_merge($data, ['dry_run' => true]), [], $options);
+            if ($preview->status() >= 400) {
+                return $preview;
+            }
+            $headers['If-Match'] = $preview->headers->get('ETag');
+            $headers['Idempotency-Key'] = (string) \Illuminate\Support\Str::uuid();
+        }
+
+        return $this->contractJson($method, $uri, $data, $headers, $options);
     }
 
     #[Test]
@@ -348,7 +372,7 @@ class ContactModuleTest extends TestCase
             'is_primary' => true,
         ]);
 
-        Sanctum::actingAs($this->techUser, ['contacts.read']);
+        $this->apiAs($this->techUser, ['contacts.read']);
 
         $this->getJson(route('api.v1.contacts.index'))
             ->assertOk()
@@ -365,7 +389,7 @@ class ContactModuleTest extends TestCase
     #[Test]
     public function asset_read_api_token_cannot_read_contacts(): void
     {
-        Sanctum::actingAs($this->techUser, ['assets.read']);
+        $this->apiAs($this->techUser, ['assets.read']);
 
         $this->getJson(route('api.v1.contacts.index'))
             ->assertForbidden();
@@ -400,7 +424,7 @@ class ContactModuleTest extends TestCase
             'is_primary' => true,
         ]);
 
-        Sanctum::actingAs($this->techUser, ['contacts.read']);
+        $this->apiAs($this->techUser, ['contacts.read']);
 
         $this->getJson(route('api.v1.contacts.index', ['email' => 'lookup@example.test']))
             ->assertOk()
@@ -419,7 +443,7 @@ class ContactModuleTest extends TestCase
         $client = Client::factory()->create(['name' => 'API Client']);
         $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'API Default Site', 'is_default' => true]);
 
-        Sanctum::actingAs($this->techUser, ['contacts.create', 'contacts.update']);
+        $this->apiAs($this->techUser, ['contacts.create', 'contacts.update']);
 
         $this->postJson(route('api.v1.contacts.store'), [
             'display_name' => 'N8N Contact',
@@ -488,7 +512,7 @@ class ContactModuleTest extends TestCase
     #[Test]
     public function contact_read_api_token_cannot_create_contacts(): void
     {
-        Sanctum::actingAs($this->techUser, ['contacts.read']);
+        $this->apiAs($this->techUser, ['contacts.read']);
 
         $this->postJson(route('api.v1.contacts.store'), [
             'display_name' => 'Blocked API Contact',
@@ -527,7 +551,7 @@ class ContactModuleTest extends TestCase
             'is_primary' => true,
         ]);
 
-        Sanctum::actingAs($this->techUser, ['contacts.update']);
+        $this->apiAs($this->techUser, ['contacts.update']);
 
         $this->patchJson(route('api.v1.contacts.update', $contact), [
             'display_name' => 'Patch Contact Updated',
@@ -596,7 +620,7 @@ class ContactModuleTest extends TestCase
             'email' => 'legacy-only@example.test',
         ]);
 
-        Sanctum::actingAs($this->techUser, ['contacts.read']);
+        $this->apiAs($this->techUser, ['contacts.read']);
 
         $this->getJson(route('api.v1.clients.contacts.index', ['client' => '10186']))
             ->assertOk()
@@ -613,7 +637,7 @@ class ContactModuleTest extends TestCase
     {
         [$oldClient, $oldSite, $newClient, $newSite, $contact] = $this->ownershipMoveFixture();
 
-        Sanctum::actingAs($this->techUser, ['contacts.ownership_manage']);
+        $this->apiAs($this->techUser, ['contacts.ownership_manage']);
 
         $this->postJson(route('api.v1.contacts.move', $contact), [
             'target_client_number' => $newClient->client_number,
@@ -654,7 +678,7 @@ class ContactModuleTest extends TestCase
     {
         [$oldClient, $oldSite, $newClient, $newSite, $contact] = $this->ownershipMoveFixture();
 
-        Sanctum::actingAs($this->techUser, ['contacts.ownership_manage']);
+        $this->apiAs($this->techUser, ['contacts.ownership_manage']);
 
         $this->postJson(route('api.v1.contacts.move', $contact), [
             'target_client_number' => $newClient->client_number,
@@ -705,7 +729,7 @@ class ContactModuleTest extends TestCase
         $alreadyCorrect = $this->contactWithOwnership('Already Correct', 'correct@example.test', $targetClient, $targetSite);
         $moveCandidate = $this->contactWithOwnership('Move Candidate', 'candidate@example.test', $oldClient, $oldSite);
 
-        Sanctum::actingAs($this->techUser, ['contacts.ownership_manage']);
+        $this->apiAs($this->techUser, ['contacts.ownership_manage']);
 
         $this->postJson(route('api.v1.clients.contacts.bulk-fix', ['client' => $targetClient->client_number]), [
             'contact_ids' => [$alreadyCorrect->id, $moveCandidate->id, 999999],
@@ -734,7 +758,7 @@ class ContactModuleTest extends TestCase
             ->value('id');
         $this->assertNotNull($legacyClientUserId);
 
-        Sanctum::actingAs($this->techUser, ['contacts.ownership_manage']);
+        $this->apiAs($this->techUser, ['contacts.ownership_manage']);
 
         $this->deleteJson(route('api.v1.clients.contacts.detach', ['client' => $client->client_number, 'contact' => $contact]), [
             'reason' => 'Detach from wrong client.',
@@ -807,7 +831,7 @@ class ContactModuleTest extends TestCase
             'email' => 'other@example.test',
         ]);
 
-        Sanctum::actingAs($this->techUser, ['contacts.ownership_manage']);
+        $this->apiAs($this->techUser, ['contacts.ownership_manage']);
 
         $payload = [
             'client_user_ids' => [$orphanOne->id, $orphanTwo->id, $linkedRow->id, $otherRow->id, 999999],
@@ -869,7 +893,7 @@ class ContactModuleTest extends TestCase
             'display_name' => 'Blocked Move Contact',
         ]);
 
-        Sanctum::actingAs($this->techUser, ['contacts.update']);
+        $this->apiAs($this->techUser, ['contacts.update']);
 
         $this->postJson(route('api.v1.contacts.move', $contact), [
             'target_client_number' => $targetClient->client_number,

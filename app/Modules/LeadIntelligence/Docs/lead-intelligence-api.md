@@ -1,6 +1,6 @@
 ## Full API Support
 
-Availability: implemented on Dev; tested Main promotion is authorized. Production has
+Availability: implemented on Dev and merged to Main in PR #343. Production has
 not received this change. HR-2026-10-27-LEAD-INTELLIGENCE-API remains Pending for manual
 scenarios and production release. API-origin external execution is disabled by default.
 

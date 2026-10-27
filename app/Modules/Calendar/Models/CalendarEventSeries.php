@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CalendarEventSeries extends Model
 {
+    use \App\Modules\Calendar\Support\SerializesBookingCalendarWrites;
+
     protected $fillable = [
         'uuid',
         'calendar_id',

@@ -15,8 +15,8 @@
       "assertions": 13899
     },
     "candidate_affected": {
-      "passed": 347,
-      "assertions": 13459
+      "passed": 391,
+      "assertions": 14397
     },
     "dev_final_domain": {
       "passed": 121,
@@ -157,7 +157,7 @@
     "production_authorized": false
   },
   "shared_test_conflict": "An in-progress UserManagement error-handler method mismatch affected the first broad run. It was fixed by its owning work; rerun passed all 373 without editing or packaging that work.",
-  "candidate_reconciled_base": "ce004cf7150f846a95ba99a3ea500ab183bf6a2e",
+  "candidate_reconciled_base": "13dc4ef4d4ab0474515522fb3131dbe6d198c624",
   "knowledge": {
     "articles": [
       {

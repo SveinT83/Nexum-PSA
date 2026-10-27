@@ -8,7 +8,7 @@ Approved RFC: rfc/2026-10-27-nextcloud-full-api-parity.md; accepted ADR and five
 All 19 browser rows and eight embedded workflows: 50 HTTP operations (36 new + 14 calendar)
 and 47 new concrete schemas. All 50 successful HTTP results match Swagger. Native/token/tenant,
 local atomic receipts/audit, stale/replay/deleted-target and provider uncertainty verified.
-Dev affected 373/13899; Main candidate 347/13459; final domain 121/6518 on both (overlap).
+Dev affected 373/13899; Main candidate 391/14397; final domain 121/6518 on both (overlap).
 Exact additive Dev migration installed; native MySQL lock/unique/encryption/rollback and
 trusted HTTPS pass. Synthetic inactive API object deleted/replayed; temporary token revoked.
 Six Knowledge source articles and actual BookStack 417/419/420/425 plus scoped 449 read back.
@@ -23,9 +23,39 @@ Next action (Codex): record the verified scoped PR/Main merge and independent re
 Future production owner/action (Svein Tore): complete manual review and authorize rollout.
 
 
+## Full Booking browser/API coverage (2026-10-27)
+
+Status: Done On Dev / Isolated Main Candidate Verified / Main Merge Authorized.
+Owner: Codex; approver/intended named reviewer: Svein Tore.
+All 13 browser rows map to 17 implemented HTTP operations and 43 typed schemas.
+RFC: rfc/2026-10-27-booking-full-api-parity.md (Approved).
+ADR: adr/2026-10-27-booking-api-authority-and-confirmation.md (Accepted).
+Four slices: feature-slices/2026-10-27-booking-full-api-parity.md (Done On Dev).
+Evidence: plans/2026-10-27-booking-api-coverage-matrix.md/.json and
+plans/2026-10-27-booking-api-verification.md/.json.
+Dev: 189 tests / 2622 assertions; isolated Main: 189 / 2513, no failures/skips.
+Native MySQL decision/slot/writer locking, encrypted uniqueness/rollback, isolated
+trusted HTTPS all-17-operation flow and ordinary Dev HTTPS scoped reads/Swagger pass.
+Handbook: actual BookStack Booking Overview 543/revision 3 includes full API guide;
+exact body and unchanged inherited employee access read back. Dev native integration
+is unconfigured; pending_push is not claimed as native automated publication.
+Temporary BookStack placeholder removed. Native probe left only two disabled synthetic
+Dev users (6/7), without roles/tokens, because append-only authority evidence forbids
+physical deletion; all synthetic Booking/Calendar fixtures removed and no real sends.
+Human-review checklist HR-2026-10-27-BOOKING-API remains Pending; user explicitly
+approved scoped Main merge on 2026-10-27. Production/manual acceptance remain separate.
+Next action (Codex): merge the verified scoped candidate and record PR/merge/tree proof.
+Next action (Svein Tore): perform the named checklist before production deployment/
+API effect activation. Exact Dev migration 2026_10_27_040000 is applied; both ordinary
+Dev API write gates stay false. No production/worker/scheduler activation performed.
+Shared Intake catalog description repair is Dev-only and excluded from Main packaging;
+other contributor work and Dev HEAD/index remain outside this scoped promotion.
+
+
+
 ## Full CustomField browser/API coverage (2026-10-27)
 
-Status: Done On Dev / Verified Main Candidate Ready / Human Review Pending.
+Status: Done On Dev / Merged To Main In PR #344 / Human Review Pending / Production unchanged.
 Owner: Codex; approver/reviewer: Svein Tore. Request: CustomField 100% API support.
 RFC: rfc/2026-10-27-custom-field-full-api-parity.md (Approved).
 ADR: adr/2026-10-27-custom-field-api-authority-and-value-ownership.md (Accepted).
@@ -49,8 +79,13 @@ inheritance remains unchanged; employee OpenWebUI retrieval is untested. pending
 is not the evidence for this separate successful BookStack publication.
 Final rebased Main interoperability: 236 / 9264 passes with an isolated Blade cache;
 no failures/errors/skips. All other Main Swagger contracts are preserved.
-Next action (Codex): perform the explicitly authorized scoped Main merge and read back
-the exact merged revision/tree, then record completion.
+Main PR #344 is merged and independently read back:
+https://github.com/SveinT83/Nexum-PSA/pull/344
+Merge: f91acc9045794ac4ede80a336f80974c17ab9bc4.
+Merged tree 1ab76e6194ade260d77317739fa6c9a463362303 exactly equals the verified
+candidate. Final latest-parent contracts: 27 / 2042, no failures/errors/skips.
+No Main implementation action remains. Next owner/action (Svein Tore): perform the
+manual checklist and separately authorize production rollout when desired.
 No production deployment, provider activation, grants or real customer sends authorized.
 HR-2026-10-27-CUSTOM-FIELD-API remains Pending; manual definition administration,
 Client/Site/Ticket value and access/retry scenarios still require Svein Tore review
@@ -59,7 +94,7 @@ Preserve the pre-existing module test and all unrelated contributor files/index.
 
 ## Full Lead Intelligence browser/API coverage (2026-10-27)
 
-Status: Done On Dev / Scoped Main Candidate Verified / Main Merge Authorized.
+Status: Done On Dev / Merged To Main in PR #343 / Human Scenario Review Pending.
 Owner: Codex. Approver/reviewer: Svein Tore, "Godkjenner og merge til main".
 RFC rfc/2026-10-27-lead-intelligence-full-api-parity.md Approved; ADR accepted;
 all six sequential slices Done On Dev. All 14 browser route rows and API-only
@@ -72,13 +107,16 @@ were concurrent UserManagement hook / Contact import snapshots; current author f
 and fresh 14-case retest (192 assertions) pass. No failed case is deferred.
 Exact additive migration 2026_10_27_040000 applied/read back on Dev, batch 35.
 Native MySQL locking/uniqueness/encryption/rollback and trusted HTTPS/Swagger pass.
-BookStack 496/3 and scoped 449/153 published/read back; native articles 52 and 3
+BookStack 496/4 and scoped 449/160 published/read back; native articles 52 and 3
 match internal source, existing access preserved. pending_push is not external proof.
 Evidence: plans/2026-10-27-lead-intelligence-api-verification.md and linked artifacts.
 Human-review checklist HR-2026-10-27-LEAD-INTELLIGENCE-API remains Pending; explicit
 Main authorization permits tested source promotion while manual scenarios still gate
 production release/provider activation. External API execution remains false.
-Next action (Codex): merge verified scoped PR and record exact Main identity.
+Main merge independently read back: e42ecddb42a52e1b41931975e4760cf250e157cc.
+Whole merged tree equals the verified candidate: d65bf3c88356992667dc5154c79686527fef0e3f.
+No Main action remains. Next (Svein Tore): perform the manual checklist and separately
+authorize production deployment/external API activation when ready.
 No production rollout, blanket grants, live provider/customer writes, worker/scheduler
 activation or business backfill. Other contributor work / #280 badge views preserved.
 
@@ -2879,3 +2917,50 @@ Initial future scope:
 - Workflow form persists metadata, active/default flags, states, and transitions.
 - Transition requirements are stored for later enforcement.
 - Tests cover create and edit flows.
+
+## Full Contact browser/API coverage (2026-10-27)
+
+Status: Done On Dev / scoped Main candidate verified / Main merge explicitly authorized.
+Owner: Codex. Approver and intended human reviewer: Svein Tore.
+RFC rfc/2026-10-27-contact-full-api-parity.md Approved; ADR Accepted; six sequential slices complete
+on Dev. Coverage: 34 inventory rows, 19 typed HTTP operations / 45 schemas; exact successful
+HTTP/schema/native rights/read-back evidence is in plans/2026-10-27-contact-api-verification.md/.json.
+Contact/Portal: 101 tests / 1286 assertions. Scoped Main: 342 unique affected tests /
+4433 assertions after correcting the candidate-only ability-map assembly. Native MySQL,
+actual rollback-only Livewire portal fixtures, concurrency, encrypted receipts and trusted HTTPS pass.
+#254 all nine entry-point/role activation scenarios plus negatives/defaults/permissions/rollback/no-resend
+are verified. It is ready for an evidence-based completion comment/closure, not another implementation.
+Actual BookStack pages 364/514/449 were updated/read back with inherited scope unchanged.
+No employee OpenWebUI retrieval or human visual acceptance is claimed. Dev has no configured
+BookStack sync; local pending_push is not misreported as sync success.
+Human-review checklist HR-2026-10-27-CONTACT-API remains Pending. Svein Tore expressly authorized
+RFC and tested Main promotion with "Godkjenner og merge til main"; Pending checks gate production,
+not that Main merge. API invitation execution stays default-off; production deployment and runtime
+activation require separate authorization. No role grants, worker changes, real send or customer repair.
+Next: record the scoped Main result and #254 state, then Svein Tore performs the named human checklist
+before any production rollout. Preserve unrelated shared Dev work; the earlier broad Dev handler/schema
+race is recorded separately from the green scoped Contact/Main evidence.
+
+## Contact create portal role selection - Issue #254 (2026-10-09)
+
+Status: Dev Test-Data Simulation Verified / Parent Workstream Finalization In Progress.
+Owner: existing Contact API contributor; Codex performed independent #254 simulation.
+The prior Viewer-only blocker and historical verification failures are superseded by
+current source and the successful final run below. ContactForm offers authoritative
+predefined roles with Viewer default and transactional selected-role persistence.
+Contact and Customer Portal source guides now explain the role selector separately
+from job title and relation. Full create-to-activation simulation and invalid-create,
+permission, override, duplicate-access, rollback and no-resend regressions pass.
+Next: the existing Contact owner reconciles overall handbook evidence and Issue closure
+with the scoped parent handoff. HR-2026-10-27-CONTACT-API remains Pending for human review;
+this simulation does not approve production or start another implementation.
+
+Issue #254 test-data simulation, 2026-10-27: PASS. The new ContactPortalIssue254SimulationTest
+creates isolated test data and exercises all 3 entry points x all 3 portal roles,
+including activation, exact persisted membership/scope, audit and denied tech access.
+New simulation: 9 passed / 378 assertions. Final combined Contact/Portal verification:
+93 passed / 1224 assertions / 95.58s, exit 0. The earlier Signal fixture and
+mixed-order real-commit test failure are resolved in this final run. Evidence:
+[Issue #254 simulation](plans/2026-10-27-issue-254-testdata-simulation.md).
+Owner: Codex for this simulation; existing Contact owner for overall finish/Issue closure.
+Human review remains Pending; no production, real mail or manual review is claimed.

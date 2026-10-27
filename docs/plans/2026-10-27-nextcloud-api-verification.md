@@ -18,7 +18,7 @@ stale/denied/revoked rights, deleted-resource replay and uncertain provider outc
 
 ## Tests and native evidence
 
-Dev affected: 373 passed / 13899 assertions. Isolated Main: 347 / 13459. Different totals
+Dev affected: 373 passed / 13899 assertions. Isolated Main: 391 / 14397. Different totals
 reflect unpromoted contributor suites excluded from the candidate, not missing Nextcloud
 checks. Final Nextcloud/Talk suites after scoped privacy handling pass 121 / 6518 on both.
 Final HTTP evidence-only reruns: 14 / 4956 on each. Totals overlap; no sum is claimed.

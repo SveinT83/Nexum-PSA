@@ -144,3 +144,12 @@ No unresolved product decision is needed for current browser parity. No product 
 Approved by Svein Tore in conversation on 2026-10-27: "Godkjenner og merge til main".
 This explicitly authorizes Dev implementation and a verified scoped Main merge.
 Human scenario checks remain Pending and production activation is not authorized.
+
+## Implementation And Promotion
+
+All four slices are Done On Dev. Seven HTTP operations / 19 schemas, full current
+browser coverage and actual BookStack read-back are verified. Final Dev 676 / 46696,
+rebased interoperability 236 / 9264 and final latest-parent contracts 27 / 2042 pass.
+Main PR #344 is merged as f91acc9045794ac4ede80a336f80974c17ab9bc4, with exact
+verified candidate-tree equality. HR-2026-10-27-CUSTOM-FIELD-API remains Pending;
+production deployment/release/runtime activation are separate and not authorized.
