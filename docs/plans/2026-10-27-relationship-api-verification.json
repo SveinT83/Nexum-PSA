@@ -1,5 +1,5 @@
 {
-  "status": "Done On Dev / current Main candidate verified / merge authorized",
+  "status": "Done On Dev / Merged to Main / Human Review Pending / Production unchanged",
   "approved_by": "Svein Tore",
   "approval": "Godkjenner og merge til main",
   "date": "2026-10-27",
@@ -53,6 +53,19 @@
       "failures": 0,
       "skipped": 0,
       "base": "f91acc9045794ac4ede80a336f80974c17ab9bc4"
+    },
+    "post_merge_critical": {
+      "passed": 5,
+      "assertions": 1644,
+      "all_http_success_contracts": 31,
+      "merged_tree": "860f4883b2ad4d7288583ff39d963b7fa1b980c3"
+    },
+    "final_merge_ready": {
+      "passed": 5,
+      "assertions": 1644,
+      "base": "0f062b945",
+      "retention_additional_passed": 3,
+      "retention_assertions": 9
     }
   },
   "native_database": {
@@ -61,6 +74,7 @@
     "encrypted": true,
     "unique_replay": true,
     "concurrent_lock_blocked": true,
+    "retention_blocks_destructive_rollback": true,
     "rolled_back": true,
     "outbound_disabled": true
   },
@@ -70,7 +84,7 @@
       62
     ],
     "published_revisions": [
-      150,
+      187,
       151
     ],
     "bookstack_pages": [
@@ -81,7 +95,8 @@
     "existing_inherited_employee_scope_verified": true,
     "permissions_changed": false,
     "method": "Authoritative repository source sync, then connected BookStack plugin publication/read-back; native Dev BookStack integration is not configured.",
-    "openwebui_retrieval_verified": false
+    "openwebui_retrieval_verified": false,
+    "final_main_status_page_readback": true
   },
   "human_review": {
     "id": "HR-2026-10-27-RELATIONSHIP-API",
@@ -92,5 +107,40 @@
     "deployed": false,
     "provider_activation": false
   },
-  "migration": "2026_10_27_060000_create_relationship_api_commands.php"
+  "migration": "2026_10_27_060000_create_relationship_api_commands.php",
+  "main_promotion": {
+    "pr": 349,
+    "merge": "ee2272b7bac566bfe57a3b61fada0ee0f7e67436",
+    "tree": "860f4883b2ad4d7288583ff39d963b7fa1b980c3",
+    "exact_tested_scope_match": true,
+    "full_tree_matches_candidate": false,
+    "concurrent_main_changes": [
+      "app/Modules/LeadIntelligence/Actions/ExecuteLeadResearchRun.php",
+      "app/Modules/LeadIntelligence/Jobs/ExecuteLeadResearchRunJob.php",
+      "app/Modules/LeadIntelligence/Support/LeadApiAccess.php",
+      "app/Modules/LeadIntelligence/Tests/Feature/LeadApiParityTest.php",
+      "docs/TODO.md",
+      "docs/feature-slices/2026-10-27-nextcloud-full-api-parity.md",
+      "docs/human-review.md",
+      "docs/plans/2026-10-27-lead-intelligence-api-coverage-matrix.json",
+      "docs/plans/2026-10-27-lead-intelligence-api-coverage-matrix.md",
+      "docs/plans/2026-10-27-lead-intelligence-api-main-promotion.json",
+      "docs/plans/2026-10-27-lead-intelligence-api-verification.md",
+      "docs/plans/2026-10-27-nextcloud-api-coverage-matrix.json",
+      "docs/plans/2026-10-27-nextcloud-api-coverage-matrix.md",
+      "docs/plans/2026-10-27-nextcloud-api-main-promotion.json",
+      "docs/plans/2026-10-27-nextcloud-api-main-promotion.md",
+      "docs/plans/2026-10-27-nextcloud-api-verification.json",
+      "docs/plans/2026-10-27-nextcloud-api-verification.md",
+      "docs/rfc/2026-10-27-nextcloud-full-api-parity.md"
+    ],
+    "operations": 31,
+    "schemas": 33
+  },
+  "migration_retention": {
+    "dev_passed": 3,
+    "main_candidate_passed": 3,
+    "assertions": 9,
+    "native_mysql_verified": true
+  }
 }

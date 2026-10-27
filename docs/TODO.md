@@ -3,7 +3,7 @@
 
 ## Full Relationship browser/API coverage (2026-10-27)
 
-Status: Done On Dev / Current Main Candidate Verified / Main Merge Authorized.
+Status: Done On Dev / Merged to Main in PR #349 / Human Review Pending / Production unchanged.
 Owner: Codex. Approver/intended human reviewer: Svein Tore.
 Authorization: "Godkjenner og merge til main", 2026-10-27.
 Approved RFC: rfc/2026-10-27-relationship-full-api-parity.md.
@@ -27,8 +27,14 @@ dependencies/scopes and an idempotent compatibility loader accompany this releas
 The pre-existing validateTarget extraction is reused without rewriting shared Dev.
 Human-review checklist HR-2026-10-27-RELATIONSHIP-API remains Pending for production
 release/deployment; explicit scoped Main promotion is authorized separately.
-Next action (Codex): commit/push this tested candidate, create/merge its PR and read
-back Main. Production rollout and provider/worker/scheduler activation are not authorized.
+PR #349: https://github.com/SveinT83/Nexum-PSA/pull/349
+Main merge: ee2272b7bac566bfe57a3b61fada0ee0f7e67436. All scoped runtime files and the
+31-operation/33-schema Swagger contract match the tested candidate. Concurrent Main
+Lead/Nextcloud work is preserved; the complete repository trees are not called equal.
+Rollback retention is additionally verified (3 / 9) and on native MySQL.
+Next owner/action (Svein Tore): perform the Pending browser/two-instance human review
+before separately authorizing production rollout. No Main implementation action remains.
+Provider/worker/scheduler activation and employee OpenWebUI retrieval stay separate.
 
 
 

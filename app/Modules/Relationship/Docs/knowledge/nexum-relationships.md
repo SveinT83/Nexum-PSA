@@ -84,8 +84,7 @@ queue logs first.
 
 ## Official Relationship API
 
-Availability: implemented on Dev; Main promotion is authorized and verification is in
-progress. Production deployment and outbound activation have not been performed.
+Availability: verified on Dev and merged to Main in PR #349 (2026-10-27). Production deployment and outbound activation have not been performed.
 A Main merge does not make these operations available in production.
 
 Prerequisites:

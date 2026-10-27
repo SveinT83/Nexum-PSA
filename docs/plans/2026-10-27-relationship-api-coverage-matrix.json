@@ -1,6 +1,6 @@
 {
   "date": "2026-10-27",
-  "status": "Done On Dev / current Main candidate verified",
+  "status": "Done On Dev / Merged to Main in PR #349 / Production unchanged",
   "runtime": "/var/Projects/tdPSA",
   "branch": "Dev",
   "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
@@ -1234,5 +1234,34 @@
   "final_release_tests": {
     "passed": 338,
     "assertions": 7406
+  },
+  "main_promotion": {
+    "pr": 349,
+    "merge": "ee2272b7bac566bfe57a3b61fada0ee0f7e67436",
+    "tree": "860f4883b2ad4d7288583ff39d963b7fa1b980c3",
+    "exact_tested_scope_match": true,
+    "full_tree_matches_candidate": false,
+    "concurrent_main_changes": [
+      "app/Modules/LeadIntelligence/Actions/ExecuteLeadResearchRun.php",
+      "app/Modules/LeadIntelligence/Jobs/ExecuteLeadResearchRunJob.php",
+      "app/Modules/LeadIntelligence/Support/LeadApiAccess.php",
+      "app/Modules/LeadIntelligence/Tests/Feature/LeadApiParityTest.php",
+      "docs/TODO.md",
+      "docs/feature-slices/2026-10-27-nextcloud-full-api-parity.md",
+      "docs/human-review.md",
+      "docs/plans/2026-10-27-lead-intelligence-api-coverage-matrix.json",
+      "docs/plans/2026-10-27-lead-intelligence-api-coverage-matrix.md",
+      "docs/plans/2026-10-27-lead-intelligence-api-main-promotion.json",
+      "docs/plans/2026-10-27-lead-intelligence-api-verification.md",
+      "docs/plans/2026-10-27-nextcloud-api-coverage-matrix.json",
+      "docs/plans/2026-10-27-nextcloud-api-coverage-matrix.md",
+      "docs/plans/2026-10-27-nextcloud-api-main-promotion.json",
+      "docs/plans/2026-10-27-nextcloud-api-main-promotion.md",
+      "docs/plans/2026-10-27-nextcloud-api-verification.json",
+      "docs/plans/2026-10-27-nextcloud-api-verification.md",
+      "docs/rfc/2026-10-27-nextcloud-full-api-parity.md"
+    ],
+    "operations": 31,
+    "schemas": 33
   }
 }
