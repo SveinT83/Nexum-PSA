@@ -74,11 +74,11 @@ initial gaps as historical baseline and records each current route/ability/nativ
 operation ID, test files and exact success-method evidence. 42/42 protected HTTP methods
 have successful synthetic payloads validated against the fixed published schema snapshot.
 Public pixel/click tests and positive unsubscribe/suppression regression preserve capability
-semantics. The standalone Marketing tests pass 87 / 1931 on Dev. Native MySQL mutex,
+semantics. The standalone Marketing tests pass 88 / 2018 on Dev. Native MySQL mutex,
 uniqueness, encrypted read-back and rollback pass; exact Dev migration is installed.
 Seven trusted HTTPS reads, anonymous 401 and 42-operation Swagger are independently verified.
 Three Knowledge sources are exact-read-back internal published articles; full guide is
 published/read back in BookStack 449 with existing employee permissions unchanged.
 Standalone page creation is blocked by connector validation; existing-page publication
 is verified and is not a handbook-content blocker. OpenWebUI retrieval is untested.
-Main candidate broad tests: 488 / 7469 passed; final Marketing verification also passes 87 / 1931. Main/production and human scenario gates are separate.
+Main candidate broad tests: 488 / 7469 passed; final Marketing verification also passes 88 / 2018. Main/production and human scenario gates are separate.

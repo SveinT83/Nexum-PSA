@@ -13,6 +13,13 @@ trait CollectsMarketingApiSamples
             $document = json_decode(file_get_contents(getenv('MARKETING_API_CONTRACT_DOCUMENT') ?: storage_path('api-docs/api-docs.json')), true, 512, JSON_THROW_ON_ERROR);
             $contract = $document['paths']['/'.$route->uri()][strtolower($method)]['responses'][$response->status()] ?? null;
             $this->assertIsArray($contract, 'Every successful HTTP method/status must have a published Marketing contract.');
+            $operation = $document['paths']['/'.$route->uri()][strtolower($method)];
+            $input = $operation['requestBody']['content']['application/json']['schema'] ?? null;
+            if ($input && is_string($content) && $content !== '') {
+                $errors = [];
+                $this->checkSchema(json_decode($content, false, 512, JSON_THROW_ON_ERROR), $input, $document['components']['schemas'], '$request', $errors);
+                $this->assertSame([], $errors, $method.' /'.$route->uri().' request contract');
+            }
             if ($response->status() !== 204) {
                 $schema = $contract['content']['application/json']['schema'] ?? null;
                 $this->assertIsArray($schema);

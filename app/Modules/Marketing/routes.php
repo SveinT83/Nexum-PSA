@@ -18,7 +18,7 @@ if (($marketingApiRoutes ?? false) === true) {
             ->middleware(CheckAbilities::class.':marketing.read')
             ->defaults('marketing_ability', 'marketing.read')
             ->defaults('marketing_permissions', ['marketing.view'])
-            ->defaults('marketing_fields', ['q', 'status', 'audience_type', 'consent_category_id', 'marketing_list_id', 'email_account_id', 'per_page', 'page', 'include_recipients']);
+            ->defaults('marketing_fields', ['q', 'status', 'audience_type', 'consent_category_id', 'per_page', 'page']);
 
         Route::post('marketing/lists', [ApiList::class, 'store'])
             ->name('marketing.lists.store')
@@ -32,7 +32,7 @@ if (($marketingApiRoutes ?? false) === true) {
             ->middleware(CheckAbilities::class.':marketing.read')
             ->defaults('marketing_ability', 'marketing.read')
             ->defaults('marketing_permissions', ['marketing.view'])
-            ->defaults('marketing_fields', ['q', 'status', 'audience_type', 'consent_category_id', 'marketing_list_id', 'email_account_id', 'per_page', 'page', 'include_recipients']);
+            ->defaults('marketing_fields', []);
 
         Route::match(['put', 'patch'], 'marketing/lists/{list}', [ApiList::class, 'update'])
             ->name('marketing.lists.update')
@@ -53,7 +53,7 @@ if (($marketingApiRoutes ?? false) === true) {
             ->middleware(CheckAbilities::class.':marketing.read')
             ->defaults('marketing_ability', 'marketing.read')
             ->defaults('marketing_permissions', ['marketing.view'])
-            ->defaults('marketing_fields', ['q', 'status', 'audience_type', 'consent_category_id', 'marketing_list_id', 'email_account_id', 'per_page', 'page', 'include_recipients']);
+            ->defaults('marketing_fields', ['q', 'status', 'per_page', 'page']);
 
         Route::post('marketing/lists/{list}/refresh', [ApiList::class, 'refresh'])
             ->name('marketing.lists.refresh')
@@ -81,28 +81,28 @@ if (($marketingApiRoutes ?? false) === true) {
             ->middleware(CheckAbilities::class.':marketing.read')
             ->defaults('marketing_ability', 'marketing.read')
             ->defaults('marketing_permissions', ['marketing.view'])
-            ->defaults('marketing_fields', ['q', 'status', 'audience_type', 'consent_category_id', 'marketing_list_id', 'email_account_id', 'per_page', 'page', 'include_recipients']);
+            ->defaults('marketing_fields', ['q', 'status', 'email_account_id', 'marketing_list_id', 'per_page', 'page']);
 
         Route::post('marketing/campaigns', [ApiCampaign::class, 'store'])
             ->name('marketing.campaigns.store')
             ->middleware(CheckAbilities::class.':marketing.campaigns.create')
             ->defaults('marketing_ability', 'marketing.campaigns.create')
             ->defaults('marketing_permissions', ['marketing.campaign.create'])
-            ->defaults('marketing_fields', ['name', 'description', 'marketing_list_id', 'marketing_list_ids', 'marketing_list_ids.*', 'email_account_id', 'starts_at', 'schedule_frequency', 'first_send_date', 'send_time', 'send_weekday', 'month_day', 'custom_interval_value', 'custom_interval_unit', 'batch_size', 'send_interval_minutes', 'sequence_interval_value', 'sequence_interval_unit', 'new_recipient_policy', 'completion_behavior', 'repeat_interval_value', 'repeat_interval_unit', 'track_opens', 'track_clicks']);
+            ->defaults('marketing_fields', ['name', 'description', 'marketing_list_id', 'marketing_list_ids', 'email_account_id', 'starts_at', 'schedule_frequency', 'first_send_date', 'send_time', 'send_weekday', 'month_day', 'custom_interval_value', 'custom_interval_unit', 'batch_size', 'send_interval_minutes', 'sequence_interval_value', 'sequence_interval_unit', 'new_recipient_policy', 'completion_behavior', 'repeat_interval_value', 'repeat_interval_unit', 'track_opens', 'track_clicks']);
 
         Route::get('marketing/campaigns/{campaign}', [ApiCampaign::class, 'show'])
             ->name('marketing.campaigns.show')
             ->middleware(CheckAbilities::class.':marketing.read')
             ->defaults('marketing_ability', 'marketing.read')
             ->defaults('marketing_permissions', ['marketing.view'])
-            ->defaults('marketing_fields', ['q', 'status', 'audience_type', 'consent_category_id', 'marketing_list_id', 'email_account_id', 'per_page', 'page', 'include_recipients']);
+            ->defaults('marketing_fields', ['include_recipients']);
 
         Route::match(['put', 'patch'], 'marketing/campaigns/{campaign}', [ApiCampaign::class, 'update'])
             ->name('marketing.campaigns.update')
             ->middleware(CheckAbilities::class.':marketing.campaigns.update')
             ->defaults('marketing_ability', 'marketing.campaigns.update')
             ->defaults('marketing_permissions', ['marketing.campaign.edit'])
-            ->defaults('marketing_fields', ['name', 'description', 'marketing_list_id', 'marketing_list_ids', 'marketing_list_ids.*', 'email_account_id', 'starts_at', 'schedule_frequency', 'first_send_date', 'send_time', 'send_weekday', 'month_day', 'custom_interval_value', 'custom_interval_unit', 'batch_size', 'send_interval_minutes', 'sequence_interval_value', 'sequence_interval_unit', 'new_recipient_policy', 'completion_behavior', 'repeat_interval_value', 'repeat_interval_unit', 'track_opens', 'track_clicks']);
+            ->defaults('marketing_fields', ['name', 'description', 'marketing_list_id', 'marketing_list_ids', 'email_account_id', 'starts_at', 'schedule_frequency', 'first_send_date', 'send_time', 'send_weekday', 'month_day', 'custom_interval_value', 'custom_interval_unit', 'batch_size', 'send_interval_minutes', 'sequence_interval_value', 'sequence_interval_unit', 'new_recipient_policy', 'completion_behavior', 'repeat_interval_value', 'repeat_interval_unit', 'track_opens', 'track_clicks']);
 
         Route::post('marketing/campaigns/{campaign}/ai-plan', [ApiCampaign::class, 'draftPlanWithAi'])
             ->name('marketing.campaigns.ai-plan')
@@ -118,7 +118,7 @@ if (($marketingApiRoutes ?? false) === true) {
             ->middleware(CheckAbilities::class.':marketing.campaigns.update')
             ->defaults('marketing_ability', 'marketing.campaigns.update')
             ->defaults('marketing_permissions', ['marketing.campaign.edit'])
-            ->defaults('marketing_fields', ['name', 'description', 'marketing_list_id', 'marketing_list_ids', 'marketing_list_ids.*', 'email_account_id', 'starts_at', 'schedule_frequency', 'first_send_date', 'send_time', 'send_weekday', 'month_day', 'custom_interval_value', 'custom_interval_unit', 'batch_size', 'send_interval_minutes', 'sequence_interval_value', 'sequence_interval_unit', 'new_recipient_policy', 'completion_behavior', 'repeat_interval_value', 'repeat_interval_unit', 'track_opens', 'track_clicks']);
+            ->defaults('marketing_fields', ['starts_at', 'schedule_frequency', 'first_send_date', 'send_time', 'send_weekday', 'month_day', 'custom_interval_value', 'custom_interval_unit', 'batch_size', 'send_interval_minutes', 'sequence_interval_value', 'sequence_interval_unit', 'new_recipient_policy', 'completion_behavior', 'repeat_interval_value', 'repeat_interval_unit']);
 
         Route::post('marketing/campaigns/{campaign}/emails', [ApiCampaign::class, 'storeEmail'])
             ->name('marketing.campaigns.emails.store')
@@ -180,7 +180,7 @@ if (($marketingApiRoutes ?? false) === true) {
             ->middleware(CheckAbilities::class.':marketing.read')
             ->defaults('marketing_ability', 'marketing.read')
             ->defaults('marketing_permissions', ['marketing.settings.manage'])
-            ->defaults('marketing_fields', ['q', 'status', 'audience_type', 'consent_category_id', 'marketing_list_id', 'email_account_id', 'per_page', 'page', 'include_recipients']);
+            ->defaults('marketing_fields', []);
 
         Route::match(['put', 'patch'], 'marketing/settings', [ApiSettings::class, 'update'])
             ->name('marketing.settings.update')
@@ -257,7 +257,7 @@ if (($marketingApiRoutes ?? false) === true) {
             ->middleware(CheckAbilities::class.':marketing.campaigns.update')
             ->defaults('marketing_ability', 'marketing.campaigns.update')
             ->defaults('marketing_permissions', ['marketing.campaign.edit'])
-            ->defaults('marketing_fields', ['campaign_email_id', 'email_template_id', 'email_name', 'email_subject', 'body_html', 'body_text', 'sequence_order', 'delay_minutes', 'status'])
+            ->defaults('marketing_fields', ['campaign_email_id', 'email_template_id', 'email_name', 'email_subject', 'body_html', 'body_text'])
             ->defaults('marketing_preview', true);
 
         Route::post('marketing/campaigns/{campaign}/content-sources/wordpress', [\App\Modules\Marketing\Controllers\Api\V1\MarketingWorkspaceController::class, 'pullWordPress'])

@@ -25,6 +25,15 @@ class MarketingApiContractTest extends TestCase
                 $this->assertStringContainsString($route->defaults['marketing_ability'], $contract['description']);
                 $this->assertContains($route->defaults['marketing_ability'], app(ApiAbilityCatalog::class)->values());
                 $this->assertNotEmpty($contract['security']);
+                $fields = $route->defaults['marketing_fields'] ?? [];
+                if ($method === 'GET') {
+                    $this->assertEqualsCanonicalizing($fields, collect($contract['parameters'] ?? [])->where('in', 'query')->pluck('name')->all());
+                } elseif ($fields !== []) {
+                    $bodyRef = $contract['requestBody']['content']['application/json']['schema']['$ref'];
+                    $bodyFields = array_keys($document['components']['schemas'][basename($bodyRef)]['properties']);
+                    $this->assertEqualsCanonicalizing(array_values(array_diff($fields, ['repeat_interval_value', 'repeat_interval_unit'])), $bodyFields);
+                }
+
                 preg_match_all('/\{([^}]+)\}/', $route->uri(), $matches);
                 $this->assertEqualsCanonicalizing($matches[1], collect($contract['parameters'] ?? [])->where('in', 'path')->pluck('name')->all());
                 foreach ([401, 403, 404, 409, 412, 422, 428, 503] as $status) {

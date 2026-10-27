@@ -16,7 +16,7 @@ trait MarketingListInput
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
             'audience_type' => ['required', 'string', 'in:all_business_contacts,manual_contacts'],
-            'consent_category_id' => ['nullable', 'exists:marketing_consent_categories,id'],
+            'consent_category_id' => ['nullable', 'integer', 'exists:marketing_consent_categories,id'],
             'contact_tag_ids' => ['nullable', 'array'],
             'contact_tag_ids.*' => ['integer', 'exists:tags,id'],
             'client_tag_ids' => ['nullable', 'array'],
@@ -25,9 +25,9 @@ trait MarketingListInput
             'manual_contact_ids.*' => ['integer', 'exists:contacts,id'],
             'manual_client_user_ids' => ['nullable', 'array'],
             'manual_client_user_ids.*' => ['integer', 'exists:client_users,id'],
-            'postal_codes' => ['nullable'],
-            'counties' => ['nullable'],
-            'countries' => ['nullable'],
+            'postal_codes' => ['nullable', $this->locationValuesRule()],
+            'counties' => ['nullable', $this->locationValuesRule()],
+            'countries' => ['nullable', $this->locationValuesRule()],
             'sales_category_ids' => ['nullable', 'array'],
             'sales_category_ids.*' => ['integer', 'exists:categories,id'],
             'contract_filter' => ['nullable', 'string', Rule::in([
@@ -39,6 +39,18 @@ trait MarketingListInput
                 'won_contract',
             ])],
         ]);
+    }
+
+    /** Preserve text/numeric location inputs while rejecting nested or object payloads. */
+    private function locationValuesRule(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            $valid = is_string($value) || is_int($value)
+                || (is_array($value) && array_is_list($value) && collect($value)->every(fn ($item) => is_string($item) || is_int($item)));
+            if (! $valid) {
+                $fail('The '.$attribute.' field must be text, an integer, or a flat list of text/integer values.');
+            }
+        };
     }
 
     private function segmentCriteria(string $audienceType, Request $request, array|Collection $excludedContactIds = []): array

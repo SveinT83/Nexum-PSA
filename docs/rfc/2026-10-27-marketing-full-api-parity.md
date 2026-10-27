@@ -207,7 +207,7 @@ Main promotion with those checks outstanding, not production rollout or activati
 ## Implementation And Verification
 
 All six slices are Done On Dev. Final Dev and Main candidate Marketing checks each
-pass 87 tests / 1931 assertions; the affected Main batch passes 488 / 7469. Native
+pass 88 tests / 2018 assertions; the affected Main batch passes 488 / 7469. Native
 DB, trusted HTTPS, 42 operations / 62 schemas and actual BookStack 449 content/access
 are verified. Main promotion is explicitly authorized; production and human scenario
 review remain separate. See plans/2026-10-27-marketing-api-verification.md/.json.

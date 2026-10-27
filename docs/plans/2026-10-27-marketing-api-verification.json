@@ -51,8 +51,8 @@
     "put /api/v1/marketing/settings"
   ],
   "dev_marketing_tests": {
-    "passed": 87,
-    "assertions": 1931,
+    "passed": 88,
+    "assertions": 2018,
     "failures": 0,
     "skips": 0
   },
@@ -62,7 +62,7 @@
     "failures": 0,
     "skips": 0,
     "base": "be28f77d16f29e662b7b8585b27971e9c1e62438",
-    "later_main_changes": "documentation/status only, incorporated before final check"
+    "later_main_changes": "Additional code integrated and tested in subsequent affected batches; see candidate_integration_batches."
   },
   "native": {
     "driver": "mysql",
@@ -175,7 +175,7 @@
       "passed": 9,
       "assertions": 51
     },
-    "current_contact_recheck": "Two unrelated unmerged Contact API tests still failing; owned by active Contact workstream, excluded from the tested Main candidate"
+    "current_contact_recheck": "Superseded: Contact now merged upstream; latest isolated affected batch including Contact passed 233 tests / 3687 assertions. The earlier shared Dev snapshot is not a current whole-Dev pass claim."
   },
   "production_deployed": false,
   "runtime_provider_enabled": false,
@@ -191,8 +191,8 @@
   ],
   "preserved_contributor_view": "586fbd7bc9fa2b0202ddb3881868482cfebf3a9ff79bae4bde5b7d80dd0b0331",
   "candidate_final_marketing_tests": {
-    "passed": 87,
-    "assertions": 1931,
+    "passed": 88,
+    "assertions": 2018,
     "failures": 0,
     "skips": 0
   },
@@ -203,5 +203,21 @@
     "local API/browser rollback after Laravel-rendered errors",
     "debug response redaction",
     "HEAD purity and public unsubscribe"
-  ]
+  ],
+  "candidate_integration_batches": [
+    {
+      "passed": 406,
+      "assertions": 10418,
+      "failures": 0,
+      "skips": 0
+    },
+    {
+      "passed": 233,
+      "assertions": 3687,
+      "failures": 0,
+      "skips": 0,
+      "base": "6f57a7df22dcbb7e1a08790b90edd94ba8fbbab1"
+    }
+  ],
+  "schema_validation": "Frozen published OpenAPI request and response schemas checked for actual successful payloads covering all 42 protected methods."
 }

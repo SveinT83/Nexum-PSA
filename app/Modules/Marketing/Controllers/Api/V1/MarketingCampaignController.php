@@ -502,7 +502,7 @@ class MarketingCampaignController extends Controller
             'marketing_list_id' => [$listRule, 'integer', 'exists:marketing_lists,id'],
             'marketing_list_ids' => [$listIdsRule, 'array', 'min:1'],
             'marketing_list_ids.*' => ['integer', 'distinct', 'exists:marketing_lists,id'],
-            'email_account_id' => ['sometimes', 'nullable', 'exists:email_accounts,id'],
+            'email_account_id' => ['sometimes', 'nullable', 'integer', 'exists:email_accounts,id'],
             'starts_at' => ['nullable', 'date'],
             'schedule_frequency' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SCHEDULE_FREQUENCIES))],
             'first_send_date' => ['nullable', 'date_format:Y-m-d'],
@@ -576,7 +576,7 @@ class MarketingCampaignController extends Controller
         }
 
         return $request->validate([
-            'email_template_id' => [$creating ? 'required' : 'sometimes', 'exists:email_templates,id'],
+            'email_template_id' => [$creating ? 'required' : 'sometimes', 'integer', 'exists:email_templates,id'],
             'email_name' => ['nullable', 'string', 'max:255'],
             'email_subject' => ['required', 'string', 'max:255'],
             'body_html' => ['nullable', 'string'],

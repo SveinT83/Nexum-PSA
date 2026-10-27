@@ -36,12 +36,12 @@ if job code changes. No new scheduler cadence or frontend build is planned.
 Recovery/risks: scope-only token compatibility, PII, stale/concurrent audience changes,
 external URL fetches and ambiguous SMTP. Preserve APP_KEY, receipts and delivery history;
 disable new API entry/provider execution on failure and reconcile unknown outcomes.
-Automated evidence: 87 Marketing tests / 1931 assertions pass on Dev; 488 / 7469
+Automated evidence: 88 Marketing tests / 2018 assertions pass on Dev; 488 / 7469
 on the initial isolated affected Main candidate. All 42 successful API methods, native
 DB, exact Dev migration, HTTPS/Swagger and actual handbook 449 read-back are verified.
 Manual scenario boxes remain unchecked; this is not a claim that Svein executed them.
 
-Final candidate and Dev Marketing runs each pass 87 tests / 1931 assertions.
+Final candidate and Dev Marketing runs each pass 88 tests / 2018 assertions.
 Populated field/receipt contracts, rendered-error privacy and browser/API rollback
 are explicitly covered. Main promotion is ready; manual scenarios remain Pending.
 

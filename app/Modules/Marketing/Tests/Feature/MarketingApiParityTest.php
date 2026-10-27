@@ -76,6 +76,17 @@ class MarketingApiParityTest extends TestCase
     }
 
     #[Test]
+    public function location_and_reference_inputs_reject_structures_before_writing_and_keep_numeric_postcodes(): void
+    {
+        $before = MarketingList::count();
+        foreach (['postal_codes' => [['nested']], 'counties' => ['object' => 'value'], 'consent_category_id' => [1]] as $field => $invalid) {
+            $this->postJson($this->url('/lists'), ['name' => 'Invalid shape', 'audience_type' => 'manual_contacts', $field => $invalid])->assertUnprocessable();
+        }
+        $this->assertSame($before, MarketingList::count());
+        $this->postJson($this->url('/lists'), ['name' => 'Numeric postcodes', 'audience_type' => 'manual_contacts', 'postal_codes' => [7010, '7000']])->assertCreated()->assertJsonPath('data.segment_criteria.postal_codes', ['7010', '7000']);
+    }
+
+    #[Test]
     public function unexpected_local_errors_are_rolled_back_and_do_not_disclose_debug_payloads(): void
     {
         config(['app.debug' => true]);
@@ -398,6 +409,8 @@ class MarketingApiParityTest extends TestCase
             $this->$method($this->url('/settings'), ['default_batch_size' => 17])->assertOk()->assertJsonPath('data.default_batch_size', 17);
         }
         $this->patchJson($this->url('/settings'), ['secret_override' => 'no'])->assertUnprocessable();
+        $this->getJson($this->url('/settings?per_page=1'))->assertUnprocessable();
+        $this->patchJson($this->url('/campaigns/'.$this->campaign->id.'/schedule'), ['name' => 'Ignored fields are rejected'])->assertUnprocessable();
         $this->patchJson($this->url('/settings'), ['default_batch_size' => 0])->assertUnprocessable();
     }
 }

@@ -7,7 +7,7 @@ Owner: Codex; product/release owner and intended reviewer: Svein Tore.
 Authorization: "Godkjenner og merge til main", 2026-10-27. RFC/ADR approved/accepted;
 all MK01-MK06 slices are implemented. Coverage: 28 staff browser rows + 3 public
 capabilities, seven embedded/API-only groups, 42 protected HTTP operations / 62 schemas.
-Dev: 87 tests / 1931 assertions. Initial clean Main affected candidate: 488 / 7469; final Marketing candidate: 87 / 1931, no failures/skips. Exact Dev
+Dev: 88 tests / 2018 assertions. Initial clean Main affected candidate: 488 / 7469; final Marketing candidate: 88 / 2018, no failures/skips. Exact Dev
 migration, native MySQL locking/replay/encryption/rollback, trusted HTTPS and Swagger
 verified. Three internal Knowledge sources are exact-read-back; complete guide is
 published/read back in BookStack 449 with inherited employee access unchanged.
@@ -25,7 +25,7 @@ inferred. Production deployment, provider execution and worker/scheduler activat
 not authorized. API provider switch remains false. Production/release need human review.
 
 
-Final candidate and Dev Marketing runs each pass 87 tests / 1931 assertions.
+Final candidate and Dev Marketing runs each pass 88 tests / 2018 assertions.
 Populated field/receipt contracts, rendered-error privacy and browser/API rollback
 are explicitly covered. Main promotion is ready; manual scenarios remain Pending.
 
