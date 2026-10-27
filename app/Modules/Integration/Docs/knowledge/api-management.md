@@ -1445,3 +1445,69 @@ authority. Queued is not delivered; ambiguous external outcomes require reconcil
 The exact Dev migration is 2026_10_27_030000_create_signal_api_commands.php.
 Human-review checklist HR-2026-10-27-SIGNAL-API is Pending. Main, production and
 provider/worker activation remain separate; this guide does not imply deployment.
+
+## Marketing full API coverage (2026-10-27)
+
+Dev implementation: 42 protected HTTP operations, typed Swagger and complete current
+list/campaign/email/settings workflows. New abilities: marketing.context.read,
+marketing.providers.execute and marketing.operations.read. Existing Marketing scopes
+remain supported but must match current native user rights; settings require their
+native administration permission. Context also requires the matching action scope.
+Use Idempotency-Key and current If-Match for safe changes, and own-operation read-back
+for exact results. Legacy unkeyed requests retain compatibility with a retry warning.
+API AI/WordPress/test-send/due-send additionally require the default-off Marketing
+provider-execution guard. Queued/SMTP-accepted results do not prove inbox delivery.
+See the Marketing overview and full Marketing API guide for steps and troubleshooting.
+Main promotion is authorized and under verification; production/activation is unchanged.
+HR-2026-10-27-MARKETING-API remains Pending for human scenarios before production/release.
+
+## Lead Intelligence Full API Coverage (2026-10-27)
+
+Dev now has 17 official HTTP operations / 47 typed Swagger schemas for the full
+current Lead Intelligence browser workflow and existing evaluation/promotion actions.
+Use lead-intelligence.read/manage/run together with the active user's sales.lead_manage
+permission. Includes pure context, settings, segment schedules/budgets, AI draft,
+Run Now, runs/evidence, scan ledger and current-token command-result read-back.
+Writes/actions require Idempotency-Key; use the exact GET ETag as If-Match for edits.
+Provider/AI/discovery execution from APIs defaults off. Unknown commands require
+reconciliation; queued is not completed research. Clients owns provider numbering,
+Contact owns identity/bridge, and Marketing suppression/exclusions remain authoritative.
+Full operator/API instructions are in Lead Intelligence Overview (BookStack page 496).
+Status: implemented/verified on Dev; Main promotion authorized and pending verification;
+production unchanged. HR-2026-10-27-LEAD-INTELLIGENCE-API manual scenarios remain Pending.
+
+
+## Contact API extension on Dev - 27 October 2026
+
+The Contact domain exposes 19 typed HTTP operations for supported Contact browser workflows.
+Current native Contact rights are required in addition to token abilities. New abilities are
+contacts.settings.read, contacts.settings.manage, contacts.portal_invite and contacts.operations.read.
+No existing key, connector or human role receives these abilities automatically. Existing POST
+contacts remains an upsert requiring both contacts.create and contacts.update; explicit reuse
+preserves existing person/consent fields. Full parameter and response contracts are in Swagger.
+Repair/invitation execution uses an exact actor/token/action/body/state-bound preview, If-Match,
+Idempotency-Key and encrypted operation receipts. Receipt reads recheck original user/token rights.
+Contact API invitations default off; enabling them is a separate installation decision, with
+queued/unknown delivery reported truthfully. Refer to Contact Domain Overview for numbered steps.
+This is Dev availability; Main promotion and production rollout are separate verification claims.
+
+## Full Notification scopes (2026-10-27)
+
+Verified on Dev; production rollout is separate. See the Notification API guide for all
+30 operations and related Workday context. Own preferences/devices, explicit tests,
+channels, admin device revocation, portal actions and command outcome read-back have
+separate notifications.* abilities. Current native rights still apply; channel admin
+also requires notification.manage_channels. Real API tests default off. Queued/provider
+accepted does not prove delivery. Guarded writes use command keys/current channel state.
+Workday own/reminder scopes remain independent. Credential/device transport fields are
+write-only direct-form inputs and never assistant-discoverable inventory.
+
+## Nextcloud operational API (2026-10-27)
+
+Availability: Dev implementation; production deployment is separate. Nextcloud has full-domain
+connection/mapping/folder/sync/Talk operations alongside the compatible calendar-only API.
+Use the narrow Nextcloud scopes in API Management plus the caller's current native rights.
+Credentials additionally require `nextcloud.credentials.write`; new provider writes require
+`nextcloud.providers.execute`, explicit reviewed targets and the default-off API runtime switch.
+Read the connection ETag, use If-Match and Idempotency-Key, then read the exact resource/receipt.
+The Nextcloud full API guide describes all operations, errors, safe retries and availability.

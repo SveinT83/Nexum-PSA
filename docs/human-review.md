@@ -1,5 +1,44 @@
 # Human Review Register
 
+## HR-2026-10-27-MARKETING-API - Full Marketing Browser/API Coverage
+
+Status: Pending / Dev implementation and Main promotion authorized.
+Added: 2026-10-27. Owner: Codex. Intended human reviewer/release owner: Svein Tore.
+Scope: rfc/2026-10-27-marketing-full-api-parity.md (Approved), MK01-MK06, all 28 staff
+browser routes, 3 public recipient capability routes and embedded/API-only workflows.
+Svein Tore authorized "Godkjenner og merge til main" on 2026-10-27. Main promotion
+is explicitly authorized with manual scenarios Pending. This checklist gates production
+deployment/release; no manual checks are marked complete by RFC or merge approval.
+Existing HR-2026-08-24-002 remains Reviewed; no previous review is reopened.
+
+- [ ] Compare dashboard, list/campaign search/filter/pagination and exact detail/read-back.
+- [ ] Create/edit list criteria; add/remove/refresh eligible Contact and legacy members;
+      verify consent, suppressions, exclusions, deduplication and protected deletion.
+- [ ] Create/update campaign, multi-list audience, schedule and ordered email snapshots;
+      compare current template/sender choices, cached content and interest/progress summary.
+- [ ] Preview unsaved/snapshot content without saving, tracking or sending; test foreign
+      campaign-email rejection and restricted context/PII access with narrow rights.
+- [ ] Exercise controlled WordPress and AI actions with disabled/enabled API provider
+      guards; verify no provider activation or role grants from ordinary read requests.
+- [ ] Approve a controlled campaign, compare due-send intent/queue and provider binding;
+      verify quiet hours, consent/suppression and lifetime no-resend after refresh/edits.
+- [ ] Use fake/controlled test-send outcomes; distinguish acceptance, queued, unknown and
+      inbox receipt. Unknown transmissions must never be automatically replayed.
+- [ ] Repeat keyed commands, conflict payloads, stale/concurrent changes and revoke actor /
+      token rights; verify no duplicate records/sends or unauthorized receipt access.
+- [ ] Verify public open/click/unsubscribe URLs and employee handbook/Swagger accuracy.
+
+Expected: full supported operational parity with exact typed results and unchanged
+consent, suppression, evergreen sequencing and delivery claim invariants.
+Deploy: planned additive encrypted command schema, exact filename to be finalized only
+after approved implementation, regenerated Swagger, normal caches and worker restart
+if job code changes. No new scheduler cadence or frontend build is planned.
+Recovery/risks: scope-only token compatibility, PII, stale/concurrent audience changes,
+external URL fetches and ambiguous SMTP. Preserve APP_KEY, receipts and delivery history;
+disable new API entry/provider execution on failure and reconcile unknown outcomes.
+Baseline verification: 65 existing Marketing tests / 811 assertions pass on Dev.
+No future API success, manual scenario execution or handbook publication is claimed.
+
 ## HR-2026-10-27-SIGNAL-API - Full Signal Browser/API Coverage
 
 Status: Reviewed.

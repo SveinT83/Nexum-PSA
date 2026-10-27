@@ -1,5 +1,35 @@
 # tdPSA Development TODO
 
+## Full Marketing browser/API coverage (2026-10-27)
+
+Status: In Progress on Dev / RFC Approved / Main Merge Authorized. Owner: Codex;
+product/release owner and intended reviewer: Svein Tore. Request: 100% Marketing API.
+Authoritative Dev inventory: 28 staff browser rows + 3 public tracking/unsubscribe
+capability rows; 24 API route rows / 29 HTTP operations excluding HEAD. Generated
+Swagger currently has zero Marketing paths. Existing Dev baseline passes 65 tests /
+811 assertions. These are baseline tests, not proof of future full API coverage.
+RFC: rfc/2026-10-27-marketing-full-api-parity.md (Approved).
+ADR: adr/2026-10-27-marketing-api-authority-and-delivery.md (Accepted).
+Slices: feature-slices/2026-10-27-marketing-full-api-parity.md (MK01-MK06, In Progress).
+Coverage/evidence: plans/2026-10-27-marketing-api-coverage-matrix.md/.json and
+plans/2026-10-27-marketing-api-baseline.md. All 31 browser rows and seven embedded /
+API-only workflow groups are mapped; retain every existing API method and alias.
+Scope includes dashboard/context/lookups, current campaign/list/email/settings
+operations, exact recipient/content/interest read-back, preview, WordPress/AI/provider
+boundaries, native plus token rights, durable replay, complete Swagger and handbook.
+Preserve existing evergreen delivery ledger, Contact consent/suppression and Email
+provider bindings. Public tracking URLs remain capabilities, not new bearer CRUD.
+Open Marketing issue search found no matches; no GitHub Issue/comment was created.
+Existing one-line campaign-view contributor fix and all unrelated dirty Dev work are
+preserved. Knowledge's active approved implementation, Signal/UserManagement plans
+and shared Integration/Swagger ownership remain independent; no second code workstream
+has started. Coordinate shared-file edits after approval rather than overwrite them.
+Authorization: Svein Tore, 2026-10-27, "Godkjenner og merge til main".
+Next action (Codex): implement/verify MK01-MK06 sequentially on authoritative Dev,
+then build/test and merge a scoped Main candidate. Manual scenarios remain Pending;
+Main promotion is explicitly authorized with that status, production/activation is not.
+Human-review checklist HR-2026-10-27-MARKETING-API tracks the independent release gate.
+
 ## Full Signal browser/API coverage (2026-10-27)
 
 Status: Done On Dev / Reviewed by Svein Tore / Main promotion In Progress / Production unchanged.
