@@ -3,6 +3,8 @@
 ## HR-2026-10-28-AI-COST-EVIDENCE - Truthful AI Usage And Cost
 
 Status: Pending. Owner: Codex. Intended named reviewer: Svein Tore.
+Verified Main: PR #364, 7ce054a03923928f4488fbf52e40eb73749a281f; Issue closed completed.
+Automated evidence is recorded in the RFC; every manual check below remains unchecked.
 Scope: Issue #277 and RFC/ADR 2026-10-28-truthful-ai-cost-evidence / ai-cost-source-and-decimal-contract.
 Tested Main merge is explicitly authorized. This checklist gates production rollout/release;
 passing tests or Main merge never mark these human scenarios Reviewed.

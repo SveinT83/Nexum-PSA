@@ -69,7 +69,7 @@ make them differ.
 
 ## Availability And Access
 
-The Issue #277 cost correction is implemented and verified on Dev. Main merge is being verified;
+The Issue #277 cost correction is verified on Dev and merged to Main in PR #364 (7ce054a0);
 production has not been changed. Human-review checklist HR-2026-10-28-AI-COST-EVIDENCE remains
 Pending before production rollout. Employee assistant retrieval is a separate check.
 
