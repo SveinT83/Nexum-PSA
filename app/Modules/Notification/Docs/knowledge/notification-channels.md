@@ -458,7 +458,7 @@ IDs/state/reference hashes without message bodies, provider response copies or c
 
 ## Guided Web Push setup (Issue #258, 2026-10-28)
 
-Implementation is being verified on Dev; production installation and activation are separate.
+Verified on Dev and Main in PR #370 (2026-10-28). Production installation and activation remain separate.
 Administrators with notification.manage_channels open **Admin > Notification channels > Web Push >
 Setup and activation**. The installation owner must first provision the protected Linux private
 store and explicitly attest the complete web/worker runtime deployment through the managed Web Push
@@ -471,7 +471,7 @@ runbook. An unsupported installation shows a concrete setup requirement.
 2. Review HTTPS/service worker, identity, exact approved default-queue evidence and worker status.
    Select **Run readiness check**, then refresh. The check sends no notification and never
    starts workers or widens queue scope. HTTP success or queue admission alone is not readiness.
-3. Explicitly enable delivery only after all gates pass. **Disable Web Push** retains the stable
+3. Select the activation confirmation and **Enable Web Push** only after all gates pass. **Disable Web Push** retains the stable
    identity/history. Deployment force-off, lost/corrupt protected storage or revoked installation
    support prevents delivery even if a prior setting was enabled.
 4. Open **Profile > Notifications > Enable on this device** separately and grant browser permission.

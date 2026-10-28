@@ -6,7 +6,11 @@ Status: Pending. Owner: Codex. Intended named reviewer/operator: Svein Tore.
 Scope: #258 / RFC 2026-10-28-managed-webpush-setup. Tested Main implementation is authorized;
 this checklist blocks production installation attestation, activation and actual browser/device proof.
 
-Automated Main candidate: 158 tests / 7295 assertions, no errors/failures/skips.
+Verified Main: PR #370, merge 815d342794f59049626099a9de16cb70864dbe3c; exact tested tree
+0647ace051ef2bf6e347dbe300678947592e6651. Issue #258 closed completed, comment 6460655348.
+Automated Main: 158 tests / 7295 assertions, no errors/failures/skips. Dev: all 158 in completed batches.
+Final handbook: BookStack 383/12 and 516/7 exact content/access; native Knowledge 64/63 revisions
+213/212, source/access match; native sync status remains pending_push.
 Native mutex migration and rollback-only MySQL proof passed; temporary Linux metadata/store
 contract proof passed. Actual environment identity/activation was preserved.
 

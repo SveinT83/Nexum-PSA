@@ -138,7 +138,7 @@ blocked pending operator reconciliation.
 
 ### WP1 - Installation Store And Effective Runtime
 
-Status: Implemented; final Dev/Main regression verification in progress. Owner: Codex. Parent: this RFC / #258.
+Status: Done on Dev / verified Main. Owner: Codex. Parent: this RFC / #258.
 Scope: supported descriptor/private-store validation, encryption/atomic read-back/revisions,
 legacy identity detection, default-off managed setup and fresh final transport identity.
 Done: positive/negative filesystem/identity/secret-canary tests and legacy Web Push regressions
@@ -146,7 +146,7 @@ pass on Dev; no real identity generation or activation on native Dev.
 
 ### WP2 - Guided Readiness, Lifecycle And Worker Evidence
 
-Status: Implemented; final Dev/Main regression verification in progress. Owner: Codex. Parent: this RFC / #258.
+Status: Done on Dev / verified Main. Owner: Codex. Parent: this RFC / #258.
 Scope: safe trusted-origin/worker checks, read-only System queue evidence, bounded no-message
 worker canary, guarded setup/enable/disable/rotation/rollback and audit/read-back.
 Done: denied/stale/unsupported/failure/replay/rotation/rollback tests pass, registered-device
@@ -154,7 +154,7 @@ consent and unrelated queue scopes preserved. All actual operator/runtime activa
 
 ### WP3 - Admin, Official API, Documentation And Main
 
-Status: Implemented; final Main/handbook reconciliation in progress. Owner: Codex / Svein Tore. Parent: this RFC / #258.
+Status: Done on Dev / verified Main / handbook read back. Owner: Codex / Svein Tore. Parent: this RFC / #258.
 Scope: Bootstrap wizard, equivalent scoped API/Swagger, source/actual handbook and deployment
 runbook, exact latest-Main candidate, relevant regressions and independent merged-tree read-back.
 Done: every visible control implements a tested honest action; no private input/output; source
@@ -194,3 +194,24 @@ the current Main baseline. The read-only adapter resolves it only when installed
 wizard/API returns an explicit integration requirement and blocks activation. Its unmerged provider,
 scopes and worker controls are excluded from this Main package. Existing environment-only Web Push
 continues through its prior path. No hidden fallback health claim is introduced.
+
+
+## Completion And Main Read-Back
+
+Status: Done On Dev / Merged To Main / Issue Closed Completed. Owner: Codex / Svein Tore.
+PR #370; merge 815d342794f59049626099a9de16cb70864dbe3c; independent tree read-back matches
+tested 0647ace051ef2bf6e347dbe300678947592e6651. Completion comment 6460655348 read back.
+All 158 Notification tests are covered/passing on Dev in completed batches; exact isolated Main
+158 tests / 7295 assertions. Thirty-six owned PHP files pass Pint and syntax checks.
+Only the additive mutex migration was applied on native Dev. Temporary Linux metadata/store and
+rollback-only native MySQL registration/audit probes passed; actual environment identity/activation
+was preserved. No actual root profile, VAPID generation/rotation, worker restart or real push occurred.
+BookStack 383/12 and 516/7 exact Main sections/access read back; native Knowledge 64/63 revisions
+213/212 match source/access. Native sync remains pending_push; direct BookStack content is verified.
+RFC/ADR 2026-10-28-managed-webpush-setup / installation-owned-managed-webpush; WP1-WP3 Done.
+Runbook: docs/deployment/managed-webpush-setup-and-recovery.md.
+System #262 integration is consumed read-only and is absent from this Main baseline; the wizard
+explains that requirement and blocks activation rather than importing another owner's unfinished
+provider/scopes. Existing environment-only behavior remains available.
+HR-2026-10-28-WEBPUSH-SETUP Pending before production installation/whole-worker attestation,
+activation and real-browser proof. Main merge does not claim or authorize those checks.

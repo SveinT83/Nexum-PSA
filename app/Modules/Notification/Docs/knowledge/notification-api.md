@@ -268,7 +268,7 @@ currently eligible own copy. The bell shows the total unread count and ten recen
 ## Managed Web Push setup API (Issue #258, 2026-10-28)
 
 The six managed-setup operations extend the existing Notification inventory from 30 to 36.
-Implementation is being verified on Dev; production deployment/installation attestation is separate.
+Verified on Dev and Main in PR #370 (2026-10-28). Production deployment/installation attestation remains separate.
 
 | Method | Path under /api/v1/ | Token ability |
 | --- | --- | --- |
