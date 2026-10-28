@@ -28,3 +28,9 @@ Markdown syntax is visible when editing or reading raw APIs/plain MIME. Historic
 interpreted as Markdown on the affected read surfaces but is never rewritten. Attachments remain
 separate and guarded. Main can be tested/merged under Svein's explicit request; named production
 human review remains Pending. No schema or recipient/sender/visibility change.
+
+## Completion
+
+Implemented/verified on Dev and merged to Main in PR #366 (65c5d249). Both RFC slices are Done;
+source/API round-trip, Portal audience and mocked Ticket-email regressions pass. No production
+rollout or real send. HR-2026-10-28-TASK-TICKET-MARKDOWN remains Pending for named human review.

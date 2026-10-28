@@ -210,8 +210,8 @@ Important files:
 
 ## Markdown In Ticket Replies And Internal Notifications
 
-Availability: the Issue #328 formatting change is verified on Dev; scoped Main verification is in
-progress. Production is unchanged. HR-2026-10-28-TASK-TICKET-MARKDOWN remains Pending.
+Availability: the Issue #328 formatting change is verified on Dev and merged to Main in PR #366
+(65c5d249). Production is unchanged. HR-2026-10-28-TASK-TICKET-MARKDOWN remains Pending.
 
 The Ticket reply/internal-note source is ordinary text with optional Markdown. Line breaks,
 paragraphs, lists, bold/emphasis, code and safe links render in Ticket/Portal views and in

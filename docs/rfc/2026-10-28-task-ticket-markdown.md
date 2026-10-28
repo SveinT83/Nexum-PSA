@@ -45,7 +45,7 @@ Shared dirty Ticket/Email work is preserved; Main extraction uses only exact hun
 
 ## Feature Slice 1: Shared Markdown And Authorized Read Surfaces
 
-Status: Ready
+Status: Done
 Parent: this RFC / Issue #328
 Owner: Codex
 
@@ -82,7 +82,7 @@ and positive/negative renderer plus real-route feature checks pass on Dev and sc
 
 ## Feature Slice 2: Writing Guidance And Ticket Email Consistency
 
-Status: Ready
+Status: Done
 Parent: this RFC / Issue #328
 Owner: Codex
 
@@ -159,3 +159,21 @@ Native article lookup found no existing matching catalog entries, so none were i
 
 No migration, backfill, stored-template change, new dependency, asset build, recipient/grant or
 production rollout occurred. HR-2026-10-28-TASK-TICKET-MARKDOWN remains Pending before production.
+
+
+## Verified Main Completion
+
+Both slices are complete and merged in PR #366, merge
+65c5d249952ff357c364042f06befda3db5e72a7. Independent Git tree read-back exactly matches tested
+candidate d66fa5d87059e7fc6c8667e0432ab8d39cca7665. #328 is closed completed; completion comment
+6457398967 records scope and evidence. Its stale status:idea label was removed.
+Final Dev and Main literal-source/template/Ticket batches each passed 16 tests/96 assertions.
+Other verified batches are listed above; none are additive and no full suite/live send is claimed.
+Main extraction validated 26 owned hunks and 30 scoped files; the shared Dev index/branch remained
+unchanged. Production remains unchanged and the named human review remains Pending.
+
+
+Final Main availability sections were independently read back in BookStack 392/revision 10,
+409/revision 36 and 421/revision 35, exactly preserving the prior article plus the owned final
+section. Existing page/chapter/book access remains unchanged. The public-safe website handoff
+is editorial input only; it does not authorize publication or production claims.

@@ -219,7 +219,7 @@ Ticket UI must not expose unfinished controls. If a setting or button is visible
 
 ## Markdown In Descriptions And Conversations
 
-Availability: Issue #328 is verified on Dev; scoped Main verification is in progress. Production
+Availability: Issue #328 is verified on Dev and merged to Main in PR #366 (65c5d249). Production
 is unchanged. HR-2026-10-28-TASK-TICKET-MARKDOWN remains Pending before production.
 
 1. In **New Ticket** or **Edit Ticket**, write normal text or Markdown in **Description**.

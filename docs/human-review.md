@@ -3,6 +3,8 @@
 ## HR-2026-10-28-TASK-TICKET-MARKDOWN - Operational Text Formatting
 
 Status: Pending. Owner: Codex. Intended named reviewer: Svein Tore.
+Verified Main: PR #366, 65c5d249952ff357c364042f06befda3db5e72a7; Issue closed completed.
+Automated evidence is in the RFC; all manual checks below remain unchecked.
 Scope: Issue #328 / RFC 2026-10-28-task-ticket-markdown.
 Tested Main merge is explicitly authorized; this checklist gates production rollout/release.
 
@@ -19,6 +21,7 @@ Tested Main merge is explicitly authorized; this checklist gates production roll
 Deploy: no migration, stored-template rewrite, new package or asset build. Normal compiled
 Blade/cache refresh. Risks: historical text can have Markdown meaning, long nested blocks and
 custom email-template layout need human inspection. Source text, data and permissions are retained.
+
 
 ## HR-2026-10-28-AI-COST-EVIDENCE - Truthful AI Usage And Cost
 
