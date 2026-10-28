@@ -1,6 +1,6 @@
 # Feature Slice: Ticket Configuration And Assignment Administration
 
-Status: Implemented and automated-verified on Dev; Main promotion explicitly approved 2026-10-28; operational human review Pending
+Status: Implemented and verified on Dev; merged to Main in PR #379 on 2026-10-28; operational human review Pending
 Date: 2026-10-20
 Parent: ../rfc/2026-10-20-ticket-task-full-api-parity.md (Approved by Svein Tore)
 Owner: Codex
@@ -61,3 +61,5 @@ Swagger set passed 106 tests / 11,079 assertions (12 files). See final acceptanc
 and verification limits. No named human review was inferred from these automated results.
 
 Main promotion authorization and current-Main verification: [2026-10-28-ticket-task-api-main-promotion.md](../plans/2026-10-28-ticket-task-api-main-promotion.md).
+
+Main source verified: PR #379, f949c346347a037ea6e28a4a50e1f62bb0b9da48. Current complete coverage is 217 operations; production deployment and manual acceptance remain separate.

@@ -2,7 +2,7 @@
 
 Status: Approved
 Approved: 2026-10-20 by Svein Tore in conversation
-Implementation: All ten approved slices implemented and automated-verified on authoritative Dev. Svein Tore separately approved the scoped Main merge on 2026-10-28; operational human review, production deployment and BookStack publication remain separate.
+Implementation: All ten slices implemented and verified on Dev; source merged to Main in PR #379 on 2026-10-28. Operational human review, production deployment and BookStack publication remain separate.
 Date: 2026-10-20
 Owner: Codex; approval and Main/promotion owner: Svein Tore
 Change level: Level 3 - API, authorization, customer content, billing and cross-module actions
@@ -279,3 +279,5 @@ Svein Tore explicitly requested "Godkjenenr og merge" after the complete Dev han
 ## Final route audit (2026-10-28)
 
 The full target also includes the browser Task Docs Markdown file. GET /api/v1/tasks/docs now shares its authoritative reader with the browser and requires tasks.read plus current task.view. Final coverage is 217 operations (114 reads, 103 writes/actions), 130 browser rows and 63 Livewire public methods, with explicit classifications, API counterparts, contracts, scopes, tests and read-back references. Existing retry-key/rule-draft conflicts are documented as HTTP 409. These complete the approved parity target without changing business permissions or enabling runtime gates. See the current promotion record and coverage matrix.
+
+Verified Main source: PR #379, f949c346347a037ea6e28a4a50e1f62bb0b9da48, exact tested tree c55fc241f284f146193121245aaa820189195427.
