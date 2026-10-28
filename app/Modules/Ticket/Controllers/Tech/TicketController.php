@@ -780,61 +780,16 @@ class TicketController extends Controller
             ->with('success', 'Storage item picked and sent to Economy.');
     }
 
-    public function draftTimeEntryInvoiceText(Request $request, Ticket $ticket, AiAgentResolver $agentResolver, AiChatResponder $responder, TicketTimeRateOptions $timeRateOptions): JsonResponse
+    public function draftTimeEntryInvoiceText(Request $request, Ticket $ticket, \App\Modules\Ticket\Actions\DraftTicketTimeInvoiceText $draft): JsonResponse
     {
         $data = $request->validate([
             'existing_text' => 'nullable|string|max:2000',
             'rate_key' => 'nullable|string|max:100',
         ]);
-        $user = $request->user();
-        $agent = $user ? $agentResolver->defaultAgent($user, 'tickets') : null;
 
-        if (! $agent) {
-            return response()->json([
-                'message' => 'No active AI agent is available for tickets.',
-            ], 422);
-        }
-
-        $rateOption = filled($data['rate_key'] ?? null)
-            ? $timeRateOptions->findForTicket($ticket, $data['rate_key'])
-            : null;
-
-        $ticket->loadMissing(['status', 'client', 'contact', 'messages.author', 'timeEntries.user']);
-        $prompt = $this->timeInvoiceDraftPrompt($ticket, $data['existing_text'] ?? null, $rateOption);
-        $chat = AiChat::create([
-            'user_id' => $user->id,
-            'ai_agent_id' => $agent->id,
-            'title' => 'Ticket time invoice draft '.$ticket->ticket_key,
-            'status' => 'closed',
-            'metadata' => [
-                'source' => 'ticket_time_invoice_draft',
-                'ticket_id' => $ticket->id,
-            ],
-            'last_message_at' => now(),
-        ]);
-
-        $chat->messages()->create([
-            'user_id' => $user->id,
-            'role' => 'user',
-            'body' => $prompt,
-        ]);
-        $pending = $chat->messages()->create([
-            'role' => 'assistant',
-            'body' => 'AI is thinking...',
-            'metadata' => ['status' => 'pending'],
-        ]);
-
-        $responder->respond($chat, $pending->id);
-        $reply = trim((string) $pending->refresh()->body);
-
-        if (Str::startsWith($reply, 'AI provider error:')) {
-            return response()->json(['message' => $reply], 422);
-        }
-
-        return response()->json([
-            'text' => Str::limit($reply, 2000, ''),
-        ]);
+        return response()->json($draft->handle($ticket, $request->user(), $data));
     }
+
 
     public function downloadAttachment(Ticket $ticket, TicketAttachment $attachment): StreamedResponse
     {
@@ -1065,26 +1020,7 @@ class TicketController extends Controller
             'reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $event = TicketEvent::query()->create([
-            'ticket_id' => $ticket->id,
-            'actor_id' => $request->user()?->id,
-            'type' => 'documentation_requested',
-            'message' => $data['reason'] ?? 'Documentation follow-up requested from ticket.',
-            'metadata' => [
-                'ticket_key' => $ticket->ticket_key,
-                'category_id' => $ticket->category_id,
-                'client_id' => $ticket->client_id,
-                'source' => 'ticket_show',
-            ],
-        ]);
-        \App\Models\Knowledge\DocumentationRequest::query()->create([
-            'ticket_id' => $ticket->id,
-            'request_event_id' => $event->id,
-            'requested_by' => $request->user()?->id,
-            'status' => \App\Models\Knowledge\DocumentationRequest::STATUS_OPEN,
-            'reason' => $data['reason'] ?? null,
-        ]);
-        app(\App\Modules\Ticket\Actions\ApplyTicketWorkflowActionTrigger::class)->handle($ticket->refresh(), TicketAction::REQUEST_KNOWLEDGE_UPDATE, $request->user());
+        app(\App\Modules\Ticket\Actions\RequestTicketDocumentation::class)->handle($ticket, $request->user(), $data['reason'] ?? null);
 
         return redirect()->route('tech.tickets.show', $ticket)
             ->with('success', 'Documentation follow-up was created.');
@@ -1123,50 +1059,12 @@ class TicketController extends Controller
             ->with('success', 'Ticket is published in the customer portal.');
     }
 
-    public function markMessageRead(Request $request, Ticket $ticket, TicketMessage $message): RedirectResponse
+    public function markMessageRead(Request $request, Ticket $ticket, TicketMessage $message, \App\Modules\Ticket\Actions\AcknowledgeTicketMessage $acknowledge): RedirectResponse
     {
-        $messageWasUnread = blank($message->read_at);
-        abort_unless((int) $message->ticket_id === (int) $ticket->id, 404);
-
-        DB::transaction(function () use ($ticket, $message, $request) {
-            $wasUnread = blank($message->read_at);
-
-            if ($wasUnread) {
-                $message->forceFill(['read_at' => now()])->save();
-            }
-
-            // Keep the ticket unread until every customer-authored reply has been handled.
-            $hasUnreadCustomerReplies = $ticket->messages()
-                ->whereIn('author_type', ['contact', 'portal_user'])
-                ->whereNull('read_at')
-                ->exists();
-
-            $ticket->forceFill([
-                'is_unread' => $hasUnreadCustomerReplies,
-                'updated_by' => $request->user()?->id,
-            ])->save();
-
-            if ($wasUnread) {
-                TicketEvent::create([
-                    'ticket_id' => $ticket->id,
-                    'actor_id' => $request->user()?->id,
-                    'type' => 'message_marked_read',
-                    'message' => 'Ticket reply marked as read.',
-                    'after' => [
-                        'message_id' => $message->id,
-                        'is_unread' => $hasUnreadCustomerReplies,
-                    ],
-                ]);
-            }
-        });
-
-        if ($messageWasUnread) {
-            app(\App\Modules\Ticket\Actions\ApplyTicketWorkflowActionTrigger::class)->handle($ticket->refresh(), TicketAction::MARK_READ, $request->user());
-        }
-
-        return redirect()->route('tech.tickets.show', $ticket->refresh())
-            ->with('success', 'Reply marked as read.');
+        $acknowledge->handle($ticket, $message, $request->user());
+        return redirect()->route('tech.tickets.show', $ticket->refresh())->with('success', 'Reply marked as read.');
     }
+
 
     public function markMessageSolution(Request $request, Ticket $ticket, TicketMessage $message, MarkTicketMessageSolution $markSolution): RedirectResponse
     {
@@ -1267,30 +1165,7 @@ class TicketController extends Controller
             'reason' => 'nullable|string|max:255',
         ]);
 
-        $ticketIds = collect($data['ticket_ids'])
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->values();
-
-        $tickets = Ticket::query()
-            ->whereIn('id', $ticketIds)
-            ->get();
-
-        if ($tickets->count() !== $ticketIds->count()) {
-            return back()->withErrors(['ticket_ids' => 'One or more tickets could not be found.']);
-        }
-
-        for ($left = 0; $left < $tickets->count(); $left++) {
-            for ($right = $left + 1; $right < $tickets->count(); $right++) {
-                TicketMergeSuggestionDismissal::updateOrCreate(
-                    TicketMergeSuggestionDismissal::pairIds($tickets[$left], $tickets[$right]),
-                    [
-                        'dismissed_by' => $request->user()?->id,
-                        'reason' => $data['reason'] ?? 'Dismissed from ticket list.',
-                    ]
-                );
-            }
-        }
+        app(\App\Modules\Ticket\Actions\DismissTicketMergeSuggestion::class)->handle($data['ticket_ids'], $request->user(), $data['reason'] ?? null);
 
         return back()->with('success', 'Merge suggestion dismissed.');
     }
@@ -1338,30 +1213,12 @@ class TicketController extends Controller
             ->with('success', 'Ticket '.$ticket->ticket_key.' returned to Inbox. '.$emailCount.' email(s) tagged as not-ticket.');
     }
 
-    public function destroy(Request $request, Ticket $ticket): RedirectResponse
+    public function destroy(Request $request, Ticket $ticket, \App\Modules\Ticket\Actions\SoftDeleteTicket $delete): RedirectResponse
     {
-        DB::transaction(function () use ($ticket, $request) {
-            TicketEvent::create([
-                'ticket_id' => $ticket->id,
-                'actor_id' => $request->user()?->id,
-                'type' => 'deleted',
-                'message' => 'Ticket deleted from the ticket list.',
-                'before' => [
-                    'ticket_key' => $ticket->ticket_key,
-                    'subject' => $ticket->subject,
-                ],
-            ]);
-
-            $ticket->forceFill([
-                'updated_by' => $request->user()?->id,
-            ])->save();
-
-            $ticket->delete();
-        });
-
-        return redirect()->route('tech.tickets.index')
-            ->with('success', 'Ticket '.$ticket->ticket_key.' deleted.');
+        $delete->handle($ticket, $request->user());
+        return redirect()->route('tech.tickets.index')->with('success', 'Ticket '.$ticket->ticket_key.' deleted.');
     }
+
 
     private function technicians()
     {
@@ -1405,59 +1262,6 @@ class TicketController extends Controller
             ]);
     }
 
-    private function timeInvoiceDraftPrompt(Ticket $ticket, ?string $existingText = null, ?array $rateOption = null): string
-    {
-        $messages = $ticket->messages
-            ->sortByDesc('created_at')
-            ->take(10)
-            ->reverse()
-            ->map(function (TicketMessage $message) {
-                $author = $message->author_type === 'contact'
-                    ? 'Customer'
-                    : ($message->author?->name ?? 'Technician');
-
-                return '['.$message->type.' / '.$message->visibility.'] '.$author.': '.Str::limit(trim((string) $message->body), 1200);
-            })
-            ->implode("\n");
-        $previousTimeTexts = $ticket->timeEntries
-            ->sortByDesc('created_at')
-            ->take(8)
-            ->map(function ($entry) {
-                return '- '.$entry->minutes.' min / '.($entry->rate_name ?: 'unknown rate').': '.Str::limit(trim((string) ($entry->invoice_text ?: $entry->note)), 500);
-            })
-            ->filter(fn (string $line) => filled(trim($line, "- \t\n\r\0\x0B")))
-            ->implode("\n");
-
-        $rateText = strtolower(implode(' ', array_filter([
-            $rateOption['label'] ?? null,
-            $rateOption['rate_name'] ?? null,
-            $rateOption['rate_code'] ?? null,
-            $rateOption['rate_type'] ?? null,
-        ])));
-        $isTravelRate = Str::contains($rateText, ['driving', 'drive', 'travel', 'kjøring', 'kjoring', 'reise']);
-
-        return trim(implode("\n\n", array_filter([
-            'Write one short invoice/work description for registered ticket time.',
-            'Return only the concrete work performed. No greeting, no markdown, no bullet list.',
-            'Do not include ticket numbers, customer names, "billing", "invoice", or phrases like "registered time".',
-            'Prefer a compact noun phrase such as "oppdatering av skjermkortdriver og Steam-konfigurasjon".',
-            'Do not copy a previous time entry unless the selected rate and current draft clearly describe the same work.',
-            'If an existing draft is provided, improve or normalize that draft instead of ignoring it.',
-            $isTravelRate ? 'CRITICAL: The selected rate is driving/travel. Return a driving/travel description only. Do not mention technical work such as drivers, Steam, troubleshooting, repair, configuration, or updates.' : null,
-            $isTravelRate ? 'Good examples for this selected rate: "kjøring til og fra kunde", "reise i forbindelse med supportoppdrag", "kjøring til kunde".' : null,
-            ! $isTravelRate ? 'If the selected rate is technical labor, describe the technical work performed.' : null,
-            'Use the same language as the technician work when obvious.',
-            $rateOption ? 'Selected time rate: '.$rateOption['label'].' (type: '.($rateOption['rate_type'] ?? 'unknown').', unit: '.($rateOption['rate_unit'] ?? 'unknown').')' : null,
-            'Ticket: '.$ticket->ticket_key,
-            'Subject: '.$ticket->subject,
-            'Client: '.($ticket->client?->name ?? 'Unknown'),
-            'Contact: '.($ticket->contact?->name ?? 'Unknown'),
-            'Description: '.Str::limit(trim((string) $ticket->description), 1500),
-            filled($existingText) ? 'Existing draft: '.$existingText : null,
-            filled($previousTimeTexts) ? "Previous registered time texts on this ticket:\n".$previousTimeTexts : null,
-            filled($messages) ? "Recent replies and notes:\n".$messages : null,
-        ])));
-    }
 
     private function ccContactSuggestions(Ticket $ticket): Collection
     {
@@ -1614,22 +1418,9 @@ class TicketController extends Controller
 
     private function resolveTagIds(array $tagNames): array
     {
-        return collect($tagNames)
-            ->map(fn (?string $name) => trim((string) $name))
-            ->filter()
-            ->unique(fn (string $name) => Str::lower($name))
-            ->map(function (string $name) {
-                return Tag::query()->firstOrCreate(
-                    ['slug' => Str::slug($name)],
-                    [
-                        'name' => $name,
-                        'active' => true,
-                    ],
-                )->id;
-            })
-            ->values()
-            ->all();
+        return app(\App\Modules\Ticket\Support\TicketFormValues::class)->resolveTagIds($tagNames);
     }
+
 
     private function ticketCategoryRule(): Exists
     {
@@ -1736,30 +1527,8 @@ class TicketController extends Controller
 
     private function resolveSiteId(?int $clientId, ?int $siteId = null, ?int $contactId = null, ?int $assetId = null): ?int
     {
-        if (! $clientId) {
-            return null;
-        }
-
-        if ($contactId) {
-            return ClientUser::whereKey($contactId)
-                ->whereHas('site', fn ($query) => $query->where('client_id', $clientId))
-                ->value('client_site_id');
-        }
-
-        if ($siteId) {
-            return ClientSite::where('client_id', $clientId)->findOrFail($siteId)->id;
-        }
-
-        if ($assetId) {
-            return Asset::where('client_id', $clientId)->findOrFail($assetId)->site_id;
-        }
-
-        $sites = ClientSite::where('client_id', $clientId)->get(['id', 'is_default']);
-
-        if ($sites->count() === 1) {
-            return $sites->first()->id;
-        }
-
-        return $sites->firstWhere('is_default', true)?->id;
+        return app(\App\Modules\Ticket\Support\TicketFormValues::class)->resolveSiteId($clientId, $siteId, $contactId, $assetId);
     }
+
+
 }

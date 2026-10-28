@@ -15,6 +15,12 @@ class TicketIndexQuery
 {
     public function paginate(array $filters = [], int $perPage = 25): LengthAwarePaginator
     {
+        return $this->query($filters)->paginate($perPage)->withQueryString();
+    }
+
+    /** The same operational filters and sorting serve browser and bearer clients. */
+    public function query(array $filters = []): \Illuminate\Database\Eloquent\Builder
+    {
         $query = Ticket::query()
             ->with(['queue', 'status', 'priority', 'sla', 'category', 'client', 'workContext', 'owner'])
             ->when($filters['q'] ?? null, function ($query, string $search) {
@@ -41,6 +47,12 @@ class TicketIndexQuery
                         ->orWhereNull('owner_id');
                 });
             });
+
+        foreach (['owner_id', 'site_id', 'contact_id', 'asset_id', 'work_context_id'] as $field) {
+            if (isset($filters[$field])) { $query->where($field, $filters[$field]); }
+        }
+        if (isset($filters['context_type'])) { $query->whereHas('workContext', fn ($context) => $context->where('type', $filters['context_type'])); }
+        if (isset($filters['tag_id'])) { $query->whereHas('tags', fn ($tags) => $tags->where('tags.id', $filters['tag_id'])); }
 
         $sort = $filters['sort'] ?? 'newest';
         $direction = ($filters['direction'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
@@ -77,6 +89,6 @@ class TicketIndexQuery
             default => $query->latest('updated_at'),
         };
 
-        return $query->paginate($perPage)->withQueryString();
+        return $query->orderByDesc('tickets.id');
     }
 }

@@ -29,7 +29,7 @@ final class TicketRuleExecutionIndexQuery
 
         $query = TicketRuleRun::query()
             ->with([
-                'ticket:id,ticket_key,work_context_id',
+                'ticket:id,ticket_key,work_context_id,client_id',
                 'retryOf:id,status,started_at',
                 'executions' => fn ($query) => $query
                     ->with([

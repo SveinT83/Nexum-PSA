@@ -1,0 +1,839 @@
+{
+  "date": "2026-10-28",
+  "main_base": "81d1eb2a59ceabc0b36d4d65721cad6f7658f5ca",
+  "scope": "Reviewed Ticket/Task API source, current-Main reconciliation, final Task guide read and required schema/audit dependencies. Excludes unrelated shared Dev work.",
+  "files": [
+    {
+      "path": "app/Modules/Integration/Support/ApiAbilityCatalog.php",
+      "sha256": "037210bb03ad442ebe68aff4c9440a4892d30f1572c1aa9f300d52e6b8cf9bc1"
+    },
+    {
+      "path": "app/Modules/Integration/Support/DomainApiReadOpenApi.php",
+      "sha256": "dac4430a903ba7560f6a3b17026943738da66a863312a5dccb0e13cb124d1a9f"
+    },
+    {
+      "path": "app/Modules/Task/Actions/ApplyTaskTemplate.php",
+      "sha256": "9a546898c5427d0276ad22d328201d29a5a4b1c4d842e1afe9919a4da1f55e76"
+    },
+    {
+      "path": "app/Modules/Task/Actions/RunTaskTemplateSchedule.php",
+      "sha256": "9baa9be979f363f0e3fc15fb533707e469fb5104d288e19f7954c7193c6e4b7d"
+    },
+    {
+      "path": "app/Modules/Task/Actions/SuggestTaskFieldsWithAi.php",
+      "sha256": "766768f2df5b7ab452b9ef4abcf22029d7d2481d522040b18f3f31d6d6df82da"
+    },
+    {
+      "path": "app/Modules/Task/Controllers/Admin/TaskSettingsController.php",
+      "sha256": "3c8aa72bd74d9cb663e9540eb92cef8721a462b57cecf63ba4b4c4ad2660c4bf"
+    },
+    {
+      "path": "app/Modules/Task/Controllers/Admin/TaskTemplateController.php",
+      "sha256": "1496b7094fcdd58d4fdf58bbbb5932ddb530fb17e6f3f79333bb9f368aac39f0"
+    },
+    {
+      "path": "app/Modules/Task/Controllers/Api/V1/StaleTaskController.php",
+      "sha256": "fa7121969fa04904fc6f63517ab106d8fa9fd838f9ad1ac41c97da664ad0a3aa"
+    },
+    {
+      "path": "app/Modules/Task/Controllers/Api/V1/TaskController.php",
+      "sha256": "765a04ff4d5179c0b9d8a3ba15aca2a21b8426503e170563115911fe0f0376e4"
+    },
+    {
+      "path": "app/Modules/Task/Controllers/Tech/TaskController.php",
+      "sha256": "5b2779685d2b6ac130467cb5a91e27565811ba22a97178c470464b0473f77043"
+    },
+    {
+      "path": "app/Modules/Task/Queries/TaskIndexQuery.php",
+      "sha256": "0e10ccd940b7621cfa1ad7494e4cb1c8a1e0b6588e069c85a90630f77f154292"
+    },
+    {
+      "path": "app/Modules/Task/Resources/Api/V1/TaskResource.php",
+      "sha256": "71e238e846ac2b9eebd70e413231e868121c3287a102acf44841c1bf7645f07d"
+    },
+    {
+      "path": "app/Modules/Task/Support/TaskSettings.php",
+      "sha256": "3519e33707f9412e7640f8d3383baf3e7950f10bac40dcdb9cb4d686b87ee70b"
+    },
+    {
+      "path": "app/Modules/Task/api.php",
+      "sha256": "96fba1bda2f26b01b2ed2b3851ff8e13681a48aadf4f561a3015c0f559e90181"
+    },
+    {
+      "path": "app/Modules/Task/routes.php",
+      "sha256": "0adea5303de89ba7b8c24ee0f0ad629b6e56e9be35ac69ad0d434e2bb1b3e0ff"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/LegacyTicketRuleMutationBoundary.php",
+      "sha256": "41168f857a9a0c8f81ccfca15e58f0a2790b45fd30a9a06c383a3243a1087268"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/MergeTickets.php",
+      "sha256": "a5efbfbeb2b94e9b0057830e340d039b4c02c80f254b14c356059e52aa51d783"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/PrepareTicketEmailCommunication.php",
+      "sha256": "ed231776091dec46c1f079e747b4578d3fa37c0e63c6e4200aaaff236f1b7351"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/StoreIdempotentTicketCustomerReply.php",
+      "sha256": "65cb4c3590d2fe42eceb44b9790222df7c1fe2df706d68d6f2d25a614f9789f4"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/UpdateTicketFields.php",
+      "sha256": "cc44c5a271d5f3296225d6c1aff370f820669c7cc5b1457b1dd0c51e25670dcb"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Admin/AssignmentRuleAdminController.php",
+      "sha256": "385c1b0b84bd009da529ca80717be147b48cd87090cdf186836ffe8b10e64e8b"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Admin/TicketAssignmentSettingsAdminController.php",
+      "sha256": "5645bcf24ef2c1be336bc66b330c5be4967af262117f95dec3a1cf58d8fda95c"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Admin/TicketSettingsController.php",
+      "sha256": "3ef247d5f3b203679b09d9e0bea252802052a009a442a687b186ff481bd299d1"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/StaleTicketController.php",
+      "sha256": "2fbeeebafb965108d63785b91d9e57fc830b360f82cc08b18805b769d240b708"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketController.php",
+      "sha256": "e9502a538c301cc6c54299d505155dac0d3394c749a0e7394a603a370b7d844d"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketMessageController.php",
+      "sha256": "9a3a2e5d58782b53497c579f1b64cd53fa92dd1f4d12f1f1ac451c7a6595a550"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketWorkflowActionController.php",
+      "sha256": "2a25181a543caa05ed60a8c59afa22696fe74f0ce4aa018860566b35e3eb2859"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketWorkflowDefinitionController.php",
+      "sha256": "b472d8a7fb26c99e438b64c1380635bcb23621a44da65ae6a8cb9175db11048f"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Portal/PortalTicketController.php",
+      "sha256": "7d4728debe0d6d0e98d58d4f9613feb4f93cbde38da79cfbb398d64d9a70b49f"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Tech/TicketAssignmentSettingsController.php",
+      "sha256": "d5fb091642f64c32ea9727a3cbbbbebc8d6a39852f974fb202f6bd6e72d3a668"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Tech/TicketController.php",
+      "sha256": "982651944817dbdd90a00e11474e5e7e98359dec2b92ae1a98fb830028611565"
+    },
+    {
+      "path": "app/Modules/Ticket/Queries/TicketIndexQuery.php",
+      "sha256": "3536fba9d56c9c0c91ba394a8da4c2a65bc46eb99963d91420f2323232594d36"
+    },
+    {
+      "path": "app/Modules/Ticket/Queries/TicketRuleAdminIndexQuery.php",
+      "sha256": "11be0d7b18b5a678cabcc3d0a92be6c9203c86257f2df5a458bf6ff86a8c971a"
+    },
+    {
+      "path": "app/Modules/Ticket/Queries/TicketRuleExecutionIndexQuery.php",
+      "sha256": "64da8cde71d643c8a824fed9b4e191132757b0b2c2feba832d9ce23329276ede"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketMessageResource.php",
+      "sha256": "05b821d86a359c67efff8d019e6eeee40c30419b5a5ce0e27e4627f048c54773"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketResource.php",
+      "sha256": "9c03c47339b9cea01a2c63f93aa47786fb9be9f9a5616feed129a4a3c1b78c04"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketMutationScopeGuard.php",
+      "sha256": "0f73e42a9a8434934c65bddb4994dcf49f8e23c606082b8d4ae8a7d5d8f91cad"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketWorkflowDefinitionService.php",
+      "sha256": "1a64e7877b4fdb9513db4cfda4fd9495077a069af1fb396b5c813852005dc33d"
+    },
+    {
+      "path": "app/Modules/Ticket/Tests/Feature/TicketCustomFieldSurfaceTest.php",
+      "sha256": "c35d49ecb91b91077f9d645a38ef1db6341dd7b088f02d108789149940cf0c71"
+    },
+    {
+      "path": "app/Modules/Ticket/Tests/Feature/TicketCustomerCompletionApiTest.php",
+      "sha256": "f2c0a2f7b82e66c7b6ddaf7657d5b32810a4b9392580da242ff2c3aec8f51b38"
+    },
+    {
+      "path": "app/Modules/Ticket/Tests/Feature/TicketExternalMessageApiTest.php",
+      "sha256": "76e41aebfa81fa00db9a3fb7b26f1b51a354542d815b1c5696cf272db9e8b0ab"
+    },
+    {
+      "path": "app/Modules/Ticket/Tests/Feature/TicketMessageReadApiTest.php",
+      "sha256": "9a43aca09492f642707a381e0d7119d709b2a6a8332bf6c2d11782655ddf515a"
+    },
+    {
+      "path": "app/Modules/Ticket/Tests/Feature/TicketModuleTest.php",
+      "sha256": "eabffedf2ecc689a03721e641fa4219ab896313c72cecdccc8dd689408ff1293"
+    },
+    {
+      "path": "app/Modules/Ticket/Tests/Feature/TicketWorkflowV3Test.php",
+      "sha256": "67983b820aa5b9ab911cdbf89d3660c52d96586e60e5e2e7d6e2beea4723935a"
+    },
+    {
+      "path": "app/Modules/Ticket/api.php",
+      "sha256": "0aba018ca3a7714d08633665b95bb9026088986225b727cb3c9c5be6ac75324c"
+    },
+    {
+      "path": "app/Modules/Ticket/routes.php",
+      "sha256": "b3b8fd2ecea6ab008b77d222214bf7a609115cd9752fe031a315ef74f1971a83"
+    },
+    {
+      "path": "docs/TODO.md",
+      "sha256": "67c38413cdfb5d11babc25f4c9b41eacb4421b9022869513f06309590c8bdbdc"
+    },
+    {
+      "path": "docs/human-review.md",
+      "sha256": "c401f527becd426e1a504b59e3520ce4012c3162ec25283d141d6fa4fb935f29"
+    },
+    {
+      "path": "routes/api.php",
+      "sha256": "e5b82b70bbcbc9e9d0a256185a3d0a3ed9964721efe58d18b3f5704ec9e2f91e"
+    },
+    {
+      "path": "app/Modules/CustomerPortal/Middleware/RequireCustomerPortalApiContext.php",
+      "sha256": "87cab520280dd4eeb8261b3ff59ceeb41a1f717d207f420598867d6ee1f3a2f6"
+    },
+    {
+      "path": "app/Modules/Integration/Docs/knowledge/ticket-task-api-read-scopes.md",
+      "sha256": "c67f0fa1d9e3c68138f4dd6835cfa4e1f23cc9302ccf2d10c861fb267b81a567"
+    },
+    {
+      "path": "app/Modules/Integration/Resources/Api/V1/DomainApiAuditResource.php",
+      "sha256": "81c1d69aaaaab65804563ec68128cd571b6122c0cbf67df6c9505aae78b7ad22"
+    },
+    {
+      "path": "app/Modules/Task/Actions/ApplyTaskTemplateViaApi.php",
+      "sha256": "bd0c22a9cf41b7d30701ed00a227496a10c9d581979e25b86e6345d0d8c6e729"
+    },
+    {
+      "path": "app/Modules/Task/Actions/AssignTask.php",
+      "sha256": "4b37e5f4fa222f9eb9976a49f96654e5613614f3851a987752aabccc571d3e85"
+    },
+    {
+      "path": "app/Modules/Task/Actions/ChangeTaskStatus.php",
+      "sha256": "a16f9dcedb320f6e5dd5afd26b479a73adee1cbb1769dad6ed033bcd3fe2233a"
+    },
+    {
+      "path": "app/Modules/Task/Actions/DeleteTaskRecurringSchedule.php",
+      "sha256": "b3c1915a2a87726b74104d74b6aa4459625d3cff2fc314fa2b895ce42a646f81"
+    },
+    {
+      "path": "app/Modules/Task/Actions/DeleteTaskTemplateGroup.php",
+      "sha256": "37f438bec5341c0c91a4b70767d2bf246358195f81884eccd17b4326d82cb08b"
+    },
+    {
+      "path": "app/Modules/Task/Actions/DeleteTaskTemplateItem.php",
+      "sha256": "f5d5ae68c524eda263696176c5cac010f8743341d4b9548713e7dc42acfe5525"
+    },
+    {
+      "path": "app/Modules/Task/Actions/RegisterIdempotentTaskApiTime.php",
+      "sha256": "2205e8912fbdd44f16f857ae6ca30176b81db587a331b750fc80f95d582601b1"
+    },
+    {
+      "path": "app/Modules/Task/Actions/RunTaskScheduleViaApi.php",
+      "sha256": "8a35e64235b0482c0b05bc5aa75c15def6d421f4fc1647576e62990846d5e4d6"
+    },
+    {
+      "path": "app/Modules/Task/Actions/SaveTaskRecurringSchedule.php",
+      "sha256": "1a823892d5e11da943a603202f99f862494db0c748c3814b0d10c3262644b2aa"
+    },
+    {
+      "path": "app/Modules/Task/Actions/SaveTaskTemplateGroup.php",
+      "sha256": "60d9b858bcb1f4b16f8f9137e7aa9af3fa7f6e6575381ea6acbc6e4bf95a9d34"
+    },
+    {
+      "path": "app/Modules/Task/Actions/SaveTaskTemplateItem.php",
+      "sha256": "aecd459ba4a2b0f5b50af98ab4adaa0f1f2c377aae9b4baa612bb0ae1ae5cb07"
+    },
+    {
+      "path": "app/Modules/Task/Actions/SetTaskChecklistState.php",
+      "sha256": "dc2fa359ae24f8f08d848a9b64a0bb0e6a447b115f55a5541d6d90ab0d662c7d"
+    },
+    {
+      "path": "app/Modules/Task/Actions/SetTaskRecurringScheduleActive.php",
+      "sha256": "f66236844d528774cb3d2b1699e8f1563b83f83f5a9cca5a048787cf4ccb73b1"
+    },
+    {
+      "path": "app/Modules/Task/Actions/UpdateTaskSettings.php",
+      "sha256": "7bcbe49864faf7083e3a9e11c47baa1b52f396d8c3c932fa2aa0e5801fcc0ee1"
+    },
+    {
+      "path": "app/Modules/Task/Controllers/Api/V1/TaskOperationController.php",
+      "sha256": "cc941639fc96ee6761f3c7278c43209b563cedefae626cf54e6974c03578562c"
+    },
+    {
+      "path": "app/Modules/Task/Controllers/Api/V1/TaskReadbackController.php",
+      "sha256": "87ae2b0b3946047b8b866c5bb491a7daf42469161031c0b701be70805cdb6b6e"
+    },
+    {
+      "path": "app/Modules/Task/Controllers/Api/V1/TaskScheduleApiController.php",
+      "sha256": "fa2de200718d8b857804e925abc7ea1cf91fd670be55c32e79ddcf0a2cd41cac"
+    },
+    {
+      "path": "app/Modules/Task/Controllers/Api/V1/TaskSettingsApiController.php",
+      "sha256": "71c55bd7fddf9b0543ba649456b823f004ddbf2af33f9b4b74919b890776ccba"
+    },
+    {
+      "path": "app/Modules/Task/Controllers/Api/V1/TaskTemplateApiController.php",
+      "sha256": "a9b982530c6c0190f1f436fa760f389e9a963bc5128dd0849f1a35eb7d065741"
+    },
+    {
+      "path": "app/Modules/Task/Docs/knowledge/api-context-and-readback.md",
+      "sha256": "accd938a94b1e24efcaaa0123d9e381e7e174c4ff966d13ea11b10940ce2e218"
+    },
+    {
+      "path": "app/Modules/Task/Docs/knowledge/api-task-operations.md",
+      "sha256": "7c18e197f23a8705898b5ca9d99667c904fcd7a7cd2ba2baf1cca0bf4068773f"
+    },
+    {
+      "path": "app/Modules/Task/Docs/knowledge/api-templates-and-schedules.md",
+      "sha256": "271e52df2d99efbe29cdcf0e460a39f36c17efe3c4d1531bf7ded6e3a595b10d"
+    },
+    {
+      "path": "app/Modules/Task/Resources/Api/V1/TaskActivityResource.php",
+      "sha256": "f337da675a5f89f0ef24f71ad6d5925bf38969b34d7ffa93e672bb9348c376fc"
+    },
+    {
+      "path": "app/Modules/Task/Resources/Api/V1/TaskRecurringScheduleResource.php",
+      "sha256": "34a03581cecd1894449de998d3dcb009f349ac16f420d9f1cb1a7d18ac017016"
+    },
+    {
+      "path": "app/Modules/Task/Resources/Api/V1/TaskSummaryResource.php",
+      "sha256": "1c108a56eb092061b6b8d330c8bbbb678db0011024727601fa33875aeb1513a5"
+    },
+    {
+      "path": "app/Modules/Task/Resources/Api/V1/TaskTemplateGroupResource.php",
+      "sha256": "a91a0e1d344add36f3904cf02fdf366149ae60ebf4b5491f15e0721df41eaa56"
+    },
+    {
+      "path": "app/Modules/Task/Resources/Api/V1/TaskTemplateItemResource.php",
+      "sha256": "7703b9d15ac5184444a6543773c571d531dc1277e216261adaad2fdf207ee325"
+    },
+    {
+      "path": "app/Modules/Task/Resources/Api/V1/TaskTemplateRunResource.php",
+      "sha256": "ae54e0a25645087c2946b45cb403bf97e3228e3906ede947199fe449b6e6f7b1"
+    },
+    {
+      "path": "app/Modules/Task/Resources/Api/V1/TaskTimeEntryResource.php",
+      "sha256": "f1f238072426706b3ce5a3fd2ffd7a588f6ac0e206f112e9add015e8388cf13c"
+    },
+    {
+      "path": "app/Modules/Task/Services/TaskApiPayload.php",
+      "sha256": "806f48bc3fc80662af9800a2db132f83b11449ed2d88e94ba2b10d3531b3ca07"
+    },
+    {
+      "path": "app/Modules/Task/Services/TaskOperationOpenApi.php",
+      "sha256": "911cb4c558b6e3d4d8806d83bb0f0699730a864857b899b1e1e5be1f6d2a0a1a"
+    },
+    {
+      "path": "app/Modules/Task/Services/TaskTemplateApiOpenApi.php",
+      "sha256": "5fea46ec8e927dadefc36a594cf42efc67a84255d3899ea96dced626b30028b1"
+    },
+    {
+      "path": "app/Modules/Task/Services/TaskTemplateForm.php",
+      "sha256": "46ffc2ff4eaceeb10f27ff947e4e5eccec7576d413d5acc6a4b78baf3e9016db"
+    },
+    {
+      "path": "app/Modules/Task/Services/TaskTemplateReferenceQuery.php",
+      "sha256": "27ffc1580f93c5c3aa73713547eeeb8cc33c3ede27b8ba9f8f3467e0896193e6"
+    },
+    {
+      "path": "app/Modules/Task/Services/TaskTemplateSnapshot.php",
+      "sha256": "c6b1426dc4ae11e8d44d6aebfb82612c2491e8de728e4a3f2cf933d6646de2ec"
+    },
+    {
+      "path": "app/Modules/Task/Support/TaskDocumentation.php",
+      "sha256": "490c8368ec7d12cd3b6d32e4c1b03fc81c178760cef7bb8ee06a6b449f229896"
+    },
+    {
+      "path": "app/Modules/Task/Support/TaskFormValues.php",
+      "sha256": "2cd967a9e2eac0e1144f217f7807cde3282c299559a87cd69308bb664a35ddc6"
+    },
+    {
+      "path": "app/Modules/Task/Support/TaskSettingsPayload.php",
+      "sha256": "3bc51be5144cbace0551f0ad39a4a1a883a0719c398516c8b48b9add09f0b579"
+    },
+    {
+      "path": "app/Modules/Task/Tests/Feature/TaskFormApiTest.php",
+      "sha256": "cdd364916e95849a3c37dbe9f1a9ecafd1750e950cdd3a785c61d6da2eb676b5"
+    },
+    {
+      "path": "app/Modules/Task/Tests/Feature/TaskOperationApiTest.php",
+      "sha256": "3ab640168cb2adc257759106c391c5b93ef1e1b06ac0a28e01c07a2ce88555ce"
+    },
+    {
+      "path": "app/Modules/Task/Tests/Feature/TaskReadbackApiTest.php",
+      "sha256": "644ec61fa8ae84032e15379c81ae95d246ef0bfd03afd3e33c865feae88c243a"
+    },
+    {
+      "path": "app/Modules/Task/Tests/Feature/TaskScheduleSettingsApiTest.php",
+      "sha256": "93c9107bb7bb0173b4894a8075eeccda6c4408ca5b6fa011bf184f7d0d84f78d"
+    },
+    {
+      "path": "app/Modules/Task/Tests/Feature/TaskTemplateApiTest.php",
+      "sha256": "8c7d74e1912abc4f47239357890f297659163d8f486bc4f8b2004ad5f2aaaa92"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/AcknowledgeTicketMessage.php",
+      "sha256": "3ab11fb3426e263baa36fa956bf2aa3a487f9cb2ef3d52d093d63f379d310f73"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/AddPortalTicketMessage.php",
+      "sha256": "b8d2ee02500c591ab3233a0c7b4812c614ba79828fa3b3d94304e95e8b938b4f"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/AddPortalTicketReply.php",
+      "sha256": "918b1ad5a7b430b743af3af94f9c66bf68302b2c689c9c2b8a214270ef1cb49b"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/DismissTicketMergeSuggestion.php",
+      "sha256": "d475010ea647432099e1fbb50a3324eaf541fadad0310322cc3810837ae4250b"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/DraftTicketTimeInvoiceText.php",
+      "sha256": "fe5a62067f724d7bdf536862338a42d084cbf1576b4ff8877efae3175824aaa0"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/ExecuteIdempotentTicketRuleApiCommand.php",
+      "sha256": "48834ffbb6ee2675aa12ca82f2098f2f67eee73970a16e42214ecc208372b1db"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/MergeTicketsViaApi.php",
+      "sha256": "64cdc2d33880863dcd9388ce0000c2e7201c8a2ac3338f6f0b055da63969e37e"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/PortalTicketApiCommands.php",
+      "sha256": "fc5954bc41ceffe7dbfb0269360d7d5acb203f0f0574ee4f6d7dcd02bcf7696b"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/PrepareTicketEmailDraftViaApi.php",
+      "sha256": "f46c7034e50904975bb1334167e7951020cbdf6183923e3d4e21478cfdade3e1"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/ReconcileTicketOwnedWork.php",
+      "sha256": "3f3c310779580ba1cefb89fdf766c84a7df049cb491b1491f4eeb907bbc4eb89"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/RequestTicketDocumentation.php",
+      "sha256": "af5e56f97ba4bb1e3955afb8e858d39f45fdf25721d042d1943aa31f4d33608d"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/SoftDeleteTicket.php",
+      "sha256": "92e4510c32a7fd3b36110c0e72696174ab90e38a2ee5098f7bee3f8bfc89b058"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/StoreIdempotentTicketApiNote.php",
+      "sha256": "54b328d173e97ef39853acc963633a30b1acf02b7d3d8eab9d76795958d4584c"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/StoreIdempotentTicketAssignmentRule.php",
+      "sha256": "44f69b4bc521c3ab1a410a41e8e14806de78467ebed0ab42d0c74c6916952ce2"
+    },
+    {
+      "path": "app/Modules/Ticket/Actions/StorePortalTicket.php",
+      "sha256": "3b48eaaec78f705c410bf4b4c0e8027fb3b6f1d9304c762e391c9b8c68d2be07"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/PortalTicketApiController.php",
+      "sha256": "451f9dc8690cc2b39c4e99387459b4571bd78563ec718b2a2e98b2da21969ff3"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketAssignmentApiController.php",
+      "sha256": "87130b713b75b29575d74591dc4834630d5c1d2952e728ad69f2846f86baf102"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketCatalogApiController.php",
+      "sha256": "b9796405273760c0408b645d78fa3b806135be0f1ceaa4bcc9b0f7b223354d00"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketConversationController.php",
+      "sha256": "065f11023bdec1dabb662f2dae15cb5c3c8be7abdc0ecfe2790ae271e71d8e04"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketEmailDraftApiController.php",
+      "sha256": "33db3ea07a12efeae52e5e2c22f2d70a25f97e66fa713904983ba90f2ca27560"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketFollowUpApiController.php",
+      "sha256": "86756a2e266ee7581b407fadfe1a343793e0dc3592baf423d0029846c496271b"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketHistoryApiController.php",
+      "sha256": "41fe4dfb486ef2a21551ac6022352b03460c5f47f2cf61f9d5dc162bf65cff70"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketLedgerController.php",
+      "sha256": "8feef40371ea0af07d01b54c1035319ba1d6ab4984d28c7f0b05c0a993a784e8"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketLifecycleController.php",
+      "sha256": "ed260c925aeca85792113b35e7d7bcb767f1a0335c90984c1c08351bb1ee7501"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketMergeApiController.php",
+      "sha256": "a8a8f64c92b43c872d720b1e40dc785437caf012a321327c01c81e350bf25612"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketReadbackController.php",
+      "sha256": "128142a00964a95ee3b9d368f6e439377ff5bba0796781b3aea7391244feef4e"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketRuleApiController.php",
+      "sha256": "199339b290f257f321bc12fa419a86f735d5cb79c735ad69d09c732cba76b456"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketRuleExecutionApiController.php",
+      "sha256": "2fb74d7b9a963e25edf722b0a2b6a8b8e16357be39a415d69ef817511df7dbcc"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketSettingsApiController.php",
+      "sha256": "ebab5d3b72c656c6e3a9cc52675493a7bc0d520e095bc5f2cb1721abf612d001"
+    },
+    {
+      "path": "app/Modules/Ticket/Controllers/Api/V1/TicketWorkflowReadbackApiController.php",
+      "sha256": "fef7e11b4c9047b45c75af00443b8bf0117fac8112990e69d9258f3f70b27005"
+    },
+    {
+      "path": "app/Modules/Ticket/Docs/knowledge/api-administration-and-rules.md",
+      "sha256": "ce6821b16e1ba2f07f53dbb61332ece3673c4495593bf0949a8b9909f8abe99f"
+    },
+    {
+      "path": "app/Modules/Ticket/Docs/knowledge/api-context-and-readback.md",
+      "sha256": "6c0291a97aacd56e94a75664c19307524c441fc5aefb2785b51c6b4e14d3cc15"
+    },
+    {
+      "path": "app/Modules/Ticket/Docs/knowledge/api-cross-domain-and-portal.md",
+      "sha256": "da10be0d1ff9f7f7e4a5a343a90747dc7eb44ca7664fe4971128515cdae6a33b"
+    },
+    {
+      "path": "app/Modules/Ticket/Docs/knowledge/api-messages-and-ledgers.md",
+      "sha256": "8ed08e9fb40c672dc1c1adf8a3d9857e60b03cb15e6dfeb4d4b03d53943fc423"
+    },
+    {
+      "path": "app/Modules/Ticket/Queries/TicketApiReferenceQuery.php",
+      "sha256": "24e121602fef80356ddfa649d7c34dd3c840d338f9de8569a2c8c1e2f4c3f662"
+    },
+    {
+      "path": "app/Modules/Ticket/Queries/TicketSettingsReferenceQuery.php",
+      "sha256": "9b508d7caadeab8b7d328c1c0baf9207d12140e1c52342b6e9f5450b039d88f2"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/PortalTicketApiResource.php",
+      "sha256": "c062052c17bfa7a960fa8a3d3337879570556a49e2164ae2a01ecc25a8de760d"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/PortalTicketAttachmentApiResource.php",
+      "sha256": "eb16ab4488e8839d6a392a824958d564d56514cf438b25b9135827348f0fe413"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/PortalTicketMessageApiResource.php",
+      "sha256": "9733d2f76f40501f037771be0c38dc58e1e3a9f6a38239bdc8f09b890a8c617f"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketAssignmentProfileResource.php",
+      "sha256": "f01261eff46e5d36dca9ac63e97a2aa2f82592a526058fdb9b92708b34a168d0"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketAssignmentRuleResource.php",
+      "sha256": "0931556af2fa6dd66dd402b6dd0770be6c49170b19e08844819ea7a3aa13ca4e"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketAttachmentResource.php",
+      "sha256": "6ef2d4416331a0d020b932491d78a63efbf2ce905e522f799e0b09bdc9027011"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketConversationResource.php",
+      "sha256": "c4cc685eecd2c89358441a1e4d3f8698dcff1a6d8c79252f856cf43d73cf0a21"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketCostEntryResource.php",
+      "sha256": "0b4697493492f1b997d1849e22339b7386cdfa96d6efc95b408f1e5f493955ab"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketDocumentationRequestResource.php",
+      "sha256": "8d7f00ab343d6e6b92fbebc0f83f60457c25d5a3f41e3d67d6961312372e5f4b"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketEmailCommunicationApiResource.php",
+      "sha256": "89b347661e16987dec1c411259f4309c5426452d9883fd82aab4e0557706ae88"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketHistoryApiResource.php",
+      "sha256": "ad6a4224e5304ca6129bbfa194da74cce2f32c847d136beff0c202be09e07dd0"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketLifecycleResource.php",
+      "sha256": "57bcc80a892b2e7c46a658193833239728360a65288f6c350048506e0d500d73"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketPlannedLineResource.php",
+      "sha256": "e89a2b7a3145b3e7e96fc1a67b2cc1bf29aaf0ae2a3834a1fee70ddb1236466d"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketPriorityResource.php",
+      "sha256": "79be2ca59e35ca9962a3878e8cd0626e9b4d2821739690e1f6ea08d6ab3f2f1c"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketQueueResource.php",
+      "sha256": "f75c4cd027e6efc3296b3b539ad5d91511687a95068968454c91fbf017f06f0b"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketQuoteLineRecordResource.php",
+      "sha256": "b1a96803fede5637493906558d4f47448a452f42cfe0f02b87eea41ec8322cc9"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketQuoteVersionRecordResource.php",
+      "sha256": "32100f683a84329221604e319bd2b92ffac6b19d5b3c58d020fb821d53ed8005"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketRuleApiResource.php",
+      "sha256": "e5b65607d74ff1c7623b8da3ed2b7957034257927c12c1675ea7b171e15bc4e1"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketRuleVersionApiResource.php",
+      "sha256": "aeb4f68d2b8647eedb31b9b5e59d33a2b75e42949f7a10394888268843a0b14d"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketStatusResource.php",
+      "sha256": "ec8f38937a5a7e150fdc37bcdf3ce0c38b5501ac8aa3250225e54adfbbdcf91a"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketTimeEntryResource.php",
+      "sha256": "44bcc60e3b1f833ae8ae8f7df5eb5a551a31d74b96cdb508e41d7dbbef02037b"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketTypeResource.php",
+      "sha256": "2d0f41dc26c66cd81fbb03b798b0089fcb1f610a5a07cd9d0db06ff76f3a6408"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketWorkflowEvidenceRecordResource.php",
+      "sha256": "745a18bb47ca31c27053b987765e2a3dacf8eb1cd764988058132fac6fab18ed"
+    },
+    {
+      "path": "app/Modules/Ticket/Resources/Api/V1/TicketWorkflowReviewRecordResource.php",
+      "sha256": "68d4dd928c900d012c6d57eeb75d6810e9b449696dbd4b6cf59ae9c6e10ceadc"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/PortalTicketApiOpenApi.php",
+      "sha256": "2ab38fb237a2a17abb3399cc8b30ccb5ece4abddb7ecddaca0f1a197e36e39d0"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketApiPayload.php",
+      "sha256": "93c3b7e23bb5765f33c2ac31202818ddeba8caa048f3531df9025bde98e743dd"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketAssignmentProfileEditor.php",
+      "sha256": "057de22662985ae6090ace580746dc231eb329210f1d660831bbb195c33338e7"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketAssignmentRuleEditor.php",
+      "sha256": "129e82f5befbb5c34601a2b4bb8439f32ce396b45d4fbfb31281f4ffcbb6a992"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketCatalogEditor.php",
+      "sha256": "2c0a6e260db3275927aa39a3619fc96a82b2941757e9178dbd1849dfcb1e4c64"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketCostPickPreview.php",
+      "sha256": "cc6f3450a06a0c9c6774ccfe9271df377221912284fa057efaa5bbb8f1359ebe"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketFollowUpApiOpenApi.php",
+      "sha256": "429302b3112ec74dba02e59f0e3a4b4ad7ad29ee98c1cd2b7715434eb7598095"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketHistoryApiOpenApi.php",
+      "sha256": "5ebdb9982f5387da4c4615abc848324cbfec14081fe00853113cedfccec6fea2"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketLegacyApiOpenApi.php",
+      "sha256": "98950871b62469d99133ac7e4669302a19dae53f49ac85098f30090e80e273b8"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketLegacyRuleForm.php",
+      "sha256": "9ae5d208c5f98ef995fd7a01bb7793cf5027b07780da8fe5b7be167a8990acc3"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketMergeApiOpenApi.php",
+      "sha256": "1e6b0f92ad1efdf4a4e595d9133d39054de08738cbcbd86d78d19aacef8b3791"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketRuleApiDefinition.php",
+      "sha256": "c79610646d8b9a719ffb63b1a36653f92e85024064825bbfc1f5b691f2935206"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketRuleApiFailure.php",
+      "sha256": "c6687c7194427d3161bdc97b42c1989b481f8fea2086ca8dcd68b63b226c6870"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketRuleApiOpenApi.php",
+      "sha256": "57283b7a369dd3e49361af72d5ca3f2bcdc689db732b216e6bc8fc4b0211f9e0"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketSettingsApiOpenApi.php",
+      "sha256": "7c353ea3a6474ec122d0e13ec34a480db505188bbbcc81dd46b91af1d825c9e8"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketSettingsEditor.php",
+      "sha256": "bdf4019726d0940db177f5c781f62c94cf71d5b287b0ea9582780731bf9ba12a"
+    },
+    {
+      "path": "app/Modules/Ticket/Services/TicketWorkflowReadbackApiOpenApi.php",
+      "sha256": "6f5eb69b82f9cae518284bc505aa543cf97bff9bdedd9b554c46637defd0d26d"
+    },
+    {
+      "path": "app/Modules/Ticket/Support/TicketFormValues.php",
+      "sha256": "847453c1bdf419d72b117ea282289346f353ab7a4478f77f483db52cacda7d7a"
+    },
+    {
+      "path": "app/Modules/Ticket/Support/TicketMergeSettings.php",
+      "sha256": "3a704c851913134cc4a1e6d6c9e07bbafea0af946a7ccc156f4c567998bf67ea"
+    },
+    {
+      "path": "app/Modules/Ticket/Support/TicketMessageFingerprint.php",
+      "sha256": "b1f4904fd52afbbd6699e0244582ba75f96a5dcffb5246129e1b1298194218ec"
+    },
+    {
+      "path": "app/Modules/Ticket/Support/TicketSettingsPayload.php",
+      "sha256": "cd98873bece69edd0925757b8ce0083bef62e9a6b000eb243e38e37b415b74de"
+    },
+    {
+      "path": "app/Modules/Ticket/Tests/Feature/PortalTicketApiTest.php",
+      "sha256": "d28366ee706144ae64699b0c0c181e94df0cba99cf6204e0083fdbb110ba1c2c"
+    },
+    {
+      "path": "app/Modules/Ticket/Tests/Feature/TicketAdministrationApiTest.php",
+      "sha256": "5a7485ccde9000771079cb24a100801f13965a3f1e024249f5992d057f9da96f"
+    },
+    {
+      "path": "app/Modules/Ticket/Tests/Feature/TicketApiParityBoundaryTest.php",
+      "sha256": "e08ddb526bf65f3560b9b21d5100bb1d20a16dcc8cc1addb93a81ebab5b63a79"
+    },
+    {
+      "path": "app/Modules/Ticket/Tests/Feature/TicketConversationApiTest.php",
+      "sha256": "f833a8ca4bc10b22993247655943f2287d8520e089f80a834e80bd02e50119d1"
+    },
+    {
+      "path": "app/Modules/Ticket/Tests/Feature/TicketEmailDraftApiTest.php",
+      "sha256": "cb24ba5f9853fee79a56286ed917cb515ddf26ab87041f68e2ca37a4561bca88"
+    },
+    {
+      "path": "app/Modules/Ticket/Tests/Feature/TicketFollowUpApiTest.php",
+      "sha256": "4339ff726659e053c574fcf656484e60874ee2860734c7d4d1e1646a3dc98b51"
+    },
+    {
+      "path": "app/Modules/Ticket/Tests/Feature/TicketLedgerApiTest.php",
+      "sha256": "c2502691e741969f3f86198fe9599c459888251caab35b1a6f95036281452a2a"
+    },
+    {
+      "path": "app/Modules/Ticket/Tests/Feature/TicketLifecycleApiTest.php",
+      "sha256": "0e1245cb96318a1390400186a7d7f7c813e569595f31f9bcc78ce577749ef077"
+    },
+    {
+      "path": "app/Modules/Ticket/Tests/Feature/TicketReadbackApiTest.php",
+      "sha256": "5597006cad1280321b249e8a9e1ce91a025b16c729c30013c1d31596aeccdb0e"
+    },
+    {
+      "path": "app/Modules/Ticket/Tests/Feature/TicketRuleApiTest.php",
+      "sha256": "102923b4ecb23689315b753e5593cff9a427cdd2b3d552a3a696ec3c2269748d"
+    },
+    {
+      "path": "app/Modules/Ticket/Tests/Feature/TicketTaskParityOpenApiTest.php",
+      "sha256": "9475a33976b56bc3082313a23998694e9b5f17e13c12d4247b82207e6cac10a4"
+    },
+    {
+      "path": "docs/adr/2026-10-20-domain-api-authorization-and-audit-reuse.md",
+      "sha256": "204e635f56c3bb7d42c07cfdc50f822b95188abb588980f63f60d5e02f3a36f4"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-20-ticket-task-api-01-context-readback.md",
+      "sha256": "1b4cb7436a8695f9188a26cc27035a9e6bd1853dd38cfbc410abfced72502587"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-20-ticket-task-api-02-conversation.md",
+      "sha256": "7b41e6f930e0d94dcbabd1bf6bfb2c224ec448308a67c3da065e0cbda4962f61"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-20-ticket-task-api-03-ledger.md",
+      "sha256": "56be471a2cf9418f5f82829071ba1cb812a2dd391b22551f4b868b959de9ced6"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-20-ticket-task-api-04-ticket-lifecycle.md",
+      "sha256": "3e2e1b330125bb264e04b694048db2206d403a929b25d3f36a478b9952d610b2"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-20-ticket-task-api-05-task-operations.md",
+      "sha256": "efd40e27fc7de374a97e6ef236a8b67700ddd2203c40d3e2d4453b6984b9d81c"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-20-ticket-task-api-06-task-templates.md",
+      "sha256": "5a9e557c278048ebbbd0fef240946a76652e490288b020114df3576ebd50c1df"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-20-ticket-task-api-07-task-schedules.md",
+      "sha256": "c91d66f07539a6ba652d38663589c79364d33e1ad43b3136ce40a53f7b2e341c"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-20-ticket-task-api-08-ticket-administration.md",
+      "sha256": "0901c0723974a5f533ceaa95b58ce51510f77b49aa92ca5f58a7aceaf16dbe2b"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-20-ticket-task-api-09-ticket-rules.md",
+      "sha256": "9fa8fe4eced08a9ca104dff6761babbe8a4d254fd9ebde91739060f2ddb08fa3"
+    },
+    {
+      "path": "docs/feature-slices/2026-10-20-ticket-task-api-10-cross-domain-acceptance.md",
+      "sha256": "1ece5d3c435129a35634024f54c60e4d281a844a25032315b8b3ff9d83d066e4"
+    },
+    {
+      "path": "docs/plans/2026-10-20-ticket-task-api-acceptance.md",
+      "sha256": "802f5167d6f967d9f5a1b024ccda838675a1e7a153a6c96cb78616fe51edd9ec"
+    },
+    {
+      "path": "docs/plans/2026-10-20-ticket-task-api-gap-matrix.json",
+      "sha256": "09b85c6d765855fe349a95bd03980846eb7246cddf9747be22ec8b1fff8d30c0"
+    },
+    {
+      "path": "docs/plans/2026-10-20-ticket-task-api-gap-matrix.md",
+      "sha256": "ca3aaeb680e506ea732b6bb1505e78d887017780d659cdface05ea5d8da5f939"
+    },
+    {
+      "path": "docs/plans/2026-10-28-ticket-task-api-coverage.md",
+      "sha256": "37c9b768527518c819d25466f4c8a8d861baa7743bb876ecf968d7169d1bd6fb"
+    },
+    {
+      "path": "docs/rfc/2026-10-20-ticket-task-full-api-parity.md",
+      "sha256": "28ca2ce61623aa4d353326113ac282c5e0b56535cc94f2e0da34554de7988746"
+    }
+  ],
+  "verification": {
+    "dev": {
+      "unique_tests": 582,
+      "assertions": 47313,
+      "unresolved_test_issues": {}
+    },
+    "main": {
+      "unique_tests": 581,
+      "assertions": 47309,
+      "unresolved_test_issues": {}
+    }
+  },
+  "coverage": {
+    "browser_routes": 130,
+    "livewire_methods": 63,
+    "api_rows": 215,
+    "http_operations": 217,
+    "write_action_operations": 103
+  },
+  "manifest_note": "The manifest and promotion record are excluded from their own file hashes. Merge result is verified by Git tree identity."
+}

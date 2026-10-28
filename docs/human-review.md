@@ -13457,3 +13457,68 @@ and the updated Issue body were independently read back.
 HR-2026-10-27-OPS-RULES-COORDINATOR remains In Review. Historical HR-2026-08-25-013 stays Reviewed.
 No production setting, published Rule/version, capability, worker, cache or recipient was changed.
 No full application suite or manual visual acceptance is claimed.
+
+## [HR-2026-10-20-TICKET-TASK-API] Complete Ticket/Task API parity
+
+Status: Pending
+Owner: Codex; named human reviewer: Svein Tore. Main promotion explicitly approved 2026-10-28; individual operational checks remain unconfirmed.
+Parent: rfc/2026-10-20-ticket-task-full-api-parity.md
+Scope: All ten approved slices, 41 functional groups, 130 browser routes, 63 Livewire public methods and 217 API HTTP
+operations (114 reads and 103 writes/actions). Code is implemented on authoritative Dev.
+Svein Tore explicitly approved Main promotion on 2026-10-28 ("Godkjenenr og merge"). That approval permits this scoped merge; remaining manual/provider/deployment/release checks below are not inferred complete. RFC approval authorizes coding;
+passing automated tests does not complete this named human review.
+
+- [ ] Compare same-account API and browser create/edit, tags, schedules, context/catalog choices,
+      archive reads and active-user/private/nested/field permission denials. A broad token must not
+      exceed the user's current rights. Unsupported write fields must return validation errors.
+- [ ] Verify notes, selected-technician notifications, solution marking, multipart replies/files,
+      downloads and read receipts. Check current notification settings before any controlled send;
+      verify exact delivery state independently instead of equating queued/accepted with receipt.
+- [ ] Test cross-client merge without preview using controlled records. Tasks and active reservations
+      follow the target, actual time/recorded rates remain, unallocated foreign contracts detach,
+      allocated customer/contract snapshots and existing orders remain intact. Exact retries must
+      not repeat effects. Verify retired keys, retained source history and MailOrganize authority.
+- [ ] Verify time/cost corrections and protected billed/picked/ordered rows, actor-bound stock-pick
+      preview and exact stock/billing read-back. Test Task actual versus cumulative minimum billing,
+      completion dependencies/children/checklist, checklist state setters and current rate selection.
+- [ ] Verify template graph CRUD/reference guards, stale-preview application, generation history,
+      schedule owner/creator/timezone/active setter/manual run, failure evidence and repeated defaults.
+      Verify the installation's external once-per-minute scheduler and queue separately.
+- [ ] Verify settings/catalog/assignment administration and atomic journal receipts, workflow editor,
+      immutable publication/automatic migration, quote/review/evidence and close outcomes. Runtime
+      Rules, Custom Field and AI gates must retain their existing configuration.
+- [ ] Verify Rules draft/checksum/fence/preservation placeholders, synthetic preview/publication,
+      versions/history, action retry and independently gated full rerun with the exact current grants.
+- [ ] Verify selected Mail relationship/draft public IDs, native lease/preview/send/submission links,
+      revoked mailbox rights on replay and provider reconciliation. An unresolved Relationship
+      submission must be reconciled by the owning operator before a new send; no blind retry.
+- [ ] Verify Portal using the customer's existing supported authentication: active account/contact,
+      exact selected membership/Site, create/reply/public files and revoked/inactive/foreign denials.
+      No internal fields, notes, ledgers or technician roles may appear through Portal APIs.
+- [ ] Exercise real-database concurrency for request keys, time/pick/merge, template generation and
+      publication using controlled data. SQLite tests establish rollback/replay behavior only.
+- [ ] Verify deployed Swagger against the real endpoint and payloads, then publish only the reviewed
+      Knowledge sources through the configured supported BookStack path; read back exact content
+      and employee access. Employee assistant retrieval is a separate verification claim.
+
+Expected: permitted API and browser outcomes agree; exact records/side effects can be read back;
+no duplicate effects, silent ignored writes or misleading external completion state.
+Automated evidence: 66-file affected-domain run passed 560 tests / 15,569 assertions on Dev.
+After the final legacy-internal-Task fix, 12 affected files passed 106 tests / 11,079 assertions. Full details:
+plans/2026-10-20-ticket-task-api-acceptance.md and the scoped changed-file inventory.
+Trusted HTTPS Swagger UI/JSON returned 200; all 216 method/path pairs and schema references
+were verified. Live read-only schema preflight checked 57 models with no missing tables/fields.
+No new migration/package/build is introduced. After separately approved deployment, run optimize:clear,
+l5-swagger:generate and the normal queue-worker restart; verify existing runtime prerequisites.
+The 2026-10-20 evidence preceded any commit/push/Main promotion. Scoped Main promotion was
+separately approved on 2026-10-28; production deployment and runtime-switch/token changes are not authorized by that approval.
+
+Open handbook follow-up: at the 2026-10-20 Dev handoff no supported BookStack integration/access
+was configured for this publication. Exact-source publication and actual article/access read-back
+for this API delivery remain unverified; unrelated pending articles must not be bulk-pushed. Svein owns configuration; Codex owns exact-source
+publication, content read-back and employee access verification afterward. All manual boxes remain
+open. Only explicit confirmation from Svein may change this entry to Reviewed.
+
+Promotion record: plans/2026-10-28-ticket-task-api-main-promotion.md.
+
+2026-10-28 current-Main verification: Dev 582 tests / 47,313 assertions; Main candidate 581 / 47,309. All 177 changed PHP files pass lint. The two previously time-limited schema scans are fully rechecked with the established 600-second budget; all assertions remain. Task Docs native/API exact Markdown bytes, range headers and token/current-actor denials pass; all 130 browser routes and 63 component methods have named API/test/read-back counterparts. Production no-dev sentinel scans pass. No production deployment or manual checkbox completion is inferred.

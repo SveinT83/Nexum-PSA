@@ -47,40 +47,15 @@ class TicketAssignmentSettingsAdminController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $request->validate([
-            'user_id' => 'required|integer|exists:' . (new User())->getTable() . ',id|unique:ticket_assignment_settings,user_id',
-        ]);
-
-        TicketAssignmentSetting::create([
-            'user_id' => $data['user_id'],
-            'is_assignable' => true,
-            'max_open_tickets' => 10,
-        ]);
-
+        app(\App\Modules\Ticket\Services\TicketAssignmentProfileEditor::class)->create($request);
         return back()->with('success', 'Ticket assignment settings created.');
     }
 
     private function updateProfile(Request $request, TicketAssignmentSetting $profile): void
     {
-        $data = $request->validate([
-            'is_assignable' => 'nullable|boolean',
-            'max_open_tickets' => 'required|integer|min:1|max:500',
-            'category_ids' => 'nullable|array',
-            'category_ids.*' => 'integer|exists:categories,id',
-            'tag_ids' => 'nullable|array',
-            'tag_ids.*' => 'integer|exists:tags,id',
-            'notes' => 'nullable|string|max:5000',
-        ]);
-
-        $profile->update([
-            'is_assignable' => (bool) ($data['is_assignable'] ?? false),
-            'max_open_tickets' => (int) $data['max_open_tickets'],
-            'notes' => $data['notes'] ?? null,
-        ]);
-
-        $profile->categories()->sync($data['category_ids'] ?? []);
-        $profile->tags()->sync($data['tag_ids'] ?? []);
+        app(\App\Modules\Ticket\Services\TicketAssignmentProfileEditor::class)->update($request, $profile);
     }
+
 
     private function viewData(TicketAssignmentSetting $profile): array
     {

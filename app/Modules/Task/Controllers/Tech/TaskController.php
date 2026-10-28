@@ -240,78 +240,28 @@ class TaskController extends Controller
         }
     }
 
-    public function updateStatus(Request $request, Task $task): RedirectResponse
+    public function updateStatus(Request $request, Task $task, \App\Modules\Task\Actions\ChangeTaskStatus $changeStatus): RedirectResponse
     {
-        $data = $request->validate([
-            'status_id' => ['required', 'integer', 'exists:task_statuses,id'],
-        ]);
-
-        $oldStatus = $task->status?->name;
-        $task->forceFill(['status_id' => $data['status_id']])->save();
-        $task->load('status');
-
-        TaskActivity::query()->create([
-            'task_id' => $task->id,
-            'user_id' => $request->user()?->id,
-            'type' => 'status_changed',
-            'visibility' => Task::VISIBILITY_INTERNAL,
-            'body' => 'Status changed.',
-            'changes' => [
-                'from' => $oldStatus,
-                'to' => $task->status?->name,
-            ],
-        ]);
-
+        $data = $request->validate(['status_id' => ['required', 'integer', 'exists:task_statuses,id']]);
+        $changeStatus->handle($task, $data['status_id'], $request->user());
         return back()->with('success', 'Task status updated.');
     }
 
-    public function assign(Request $request, Task $task): RedirectResponse
+
+    public function assign(Request $request, Task $task, \App\Modules\Task\Actions\AssignTask $assign): RedirectResponse
     {
-        $data = $request->validate([
-            'assigned_to' => ['nullable', 'integer', Rule::exists((new User)->getTable(), 'id')],
-        ]);
-
-        $oldAssignee = $task->assignee?->name;
-        $task->forceFill(['assigned_to' => $data['assigned_to'] ?? null])->save();
-        $task->load('assignee');
-
-        TaskActivity::query()->create([
-            'task_id' => $task->id,
-            'user_id' => $request->user()?->id,
-            'type' => 'assigned',
-            'visibility' => Task::VISIBILITY_INTERNAL,
-            'body' => 'Task assignment changed.',
-            'changes' => [
-                'from' => $oldAssignee,
-                'to' => $task->assignee?->name,
-            ],
-        ]);
-
+        $data = $request->validate(['assigned_to' => ['nullable', 'integer', Rule::exists((new User)->getTable(), 'id')]]);
+        $assign->handle($task, $data['assigned_to'] ?? null, $request->user());
         return back()->with('success', 'Task assignment updated.');
     }
 
-    public function toggleChecklistItem(Request $request, Task $task, TaskChecklistItem $item): RedirectResponse
+
+    public function toggleChecklistItem(Request $request, Task $task, TaskChecklistItem $item, \App\Modules\Task\Actions\SetTaskChecklistState $setState): RedirectResponse
     {
-        abort_unless($item->task_id === $task->id, 404);
-
-        $checked = ! $item->is_checked;
-
-        $item->forceFill([
-            'is_checked' => $checked,
-            'checked_by' => $checked ? $request->user()?->id : null,
-            'checked_at' => $checked ? now() : null,
-        ])->save();
-
-        TaskActivity::query()->create([
-            'task_id' => $task->id,
-            'user_id' => $request->user()?->id,
-            'type' => $checked ? 'checklist_checked' : 'checklist_unchecked',
-            'visibility' => Task::VISIBILITY_INTERNAL,
-            'body' => ($checked ? 'Checklist item completed: ' : 'Checklist item reopened: ').$item->title,
-        ]);
-
+        $setState->handle($task, $item, ! $item->is_checked, $request->user());
         return back()->with('success', 'Checklist updated.');
     }
+
 
     public function complete(Request $request, Task $task, CompleteTask $completeTask, TicketTimeRateOptions $timeRateOptions): RedirectResponse
     {
@@ -391,11 +341,7 @@ class TaskController extends Controller
 
     public function docs()
     {
-        $path = app_path('Modules/Task/Docs/knowledge/task-overview.md');
-
-        abort_unless(file_exists($path), 404);
-
-        return response()->file($path, ['Content-Type' => 'text/markdown']);
+        return app(\App\Modules\Task\Support\TaskDocumentation::class)->response();
     }
 
     private function formData(array $extra = []): array
@@ -523,46 +469,12 @@ class TaskController extends Controller
 
     private function parseChecklist(?string $text): array
     {
-        if (blank($text)) {
-            return [];
-        }
-
-        return collect(preg_split('/\r\n|\r|\n/', $text))
-            ->map(fn (string $line) => trim($line))
-            ->filter()
-            ->values()
-            ->map(fn (string $line, int $index) => [
-                'title' => $line,
-                'sort_order' => ($index + 1) * 10,
-            ])
-            ->all();
+        return app(\App\Modules\Task\Support\TaskFormValues::class)->parseChecklist($text);
     }
+
 
     private function resolveTagIds(array $tagNames): array
     {
-        return collect($tagNames)
-            ->map(fn (?string $name) => trim((string) $name))
-            ->filter()
-            ->unique(fn (string $name) => Str::lower($name))
-            ->map(function (string $name) {
-                $slug = Str::slug($name);
-
-                $tag = Tag::query()
-                    ->where('slug', $slug)
-                    ->orWhere('name', $name)
-                    ->first();
-
-                if (! $tag) {
-                    $tag = Tag::query()->create([
-                        'slug' => $slug,
-                        'name' => $name,
-                        'active' => true,
-                    ]);
-                }
-
-                return $tag->id;
-            })
-            ->values()
-            ->all();
+        return app(\App\Modules\Task\Support\TaskFormValues::class)->resolveTagIds($tagNames);
     }
 }

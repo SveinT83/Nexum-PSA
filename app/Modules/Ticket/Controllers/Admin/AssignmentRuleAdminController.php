@@ -36,54 +36,14 @@ class AssignmentRuleAdminController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'weight' => 'required|integer|min:0|max:100000',
-            'is_active' => 'nullable|boolean',
-            'stop_processing' => 'nullable|boolean',
-            'conditions' => 'required|array|min:1',
-            'conditions.*.field' => 'required|string|in:client_id,contact_id,queue_id,category_id,tag_ids,priority_id,ticket_type_id,channel',
-            'conditions.*.operator' => 'required|string|in:equals,not_equals,contains,present',
-            'conditions.*.value' => 'nullable|string|max:255',
-            'action_value' => ['required', Rule::exists((new User())->getTable(), 'id')],
-        ]);
-
-        $conditions = collect($data['conditions'])
-            ->filter(fn (array $condition) => ($condition['operator'] ?? 'equals') === 'present' || trim((string) ($condition['value'] ?? '')) !== '')
-            ->map(fn (array $condition) => [
-                'field' => $condition['field'],
-                'operator' => $condition['operator'],
-                'value' => $condition['value'] ?? '',
-            ])
-            ->values();
-
-        if ($conditions->isEmpty()) {
-            return back()
-                ->withErrors(['conditions' => 'Add at least one assignment condition.'])
-                ->withInput();
-        }
-
-        TicketAssignmentRule::create([
-            'name' => $data['name'],
-            'description' => $data['description'] ?? null,
-            'weight' => $data['weight'],
-            'is_active' => (bool) ($data['is_active'] ?? false),
-            'stop_processing' => (bool) ($data['stop_processing'] ?? true),
-            'conditions_json' => $conditions->all(),
-            'action_type' => 'assign_user',
-            'action_value' => (string) $data['action_value'],
-            'created_by' => $request->user()?->id,
-            'updated_by' => $request->user()?->id,
-        ]);
-
+        $editor = app(\App\Modules\Ticket\Services\TicketAssignmentRuleEditor::class);
+        $editor->create($editor->data($request), $request->user());
         return back()->with('success', 'Assignment rule created.');
     }
 
-    public function destroy(TicketAssignmentRule $rule): RedirectResponse
+    public function destroy(Request $request, TicketAssignmentRule $rule): RedirectResponse
     {
-        $rule->delete();
-
+        app(\App\Modules\Ticket\Services\TicketAssignmentRuleEditor::class)->delete($rule, $request->user());
         return back()->with('success', 'Assignment rule deleted.');
     }
 }

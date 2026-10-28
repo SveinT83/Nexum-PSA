@@ -6428,7 +6428,7 @@ class TicketModuleTest extends TestCase
         $defaults = app(EnsureTicketDefaults::class)->handle();
         $contact?->loadMissing('site');
 
-        return Ticket::create(array_merge([
+        $values = array_merge([
             'ticket_key' => 'TD-2026-999100',
             'queue_id' => $defaults['queue']->id,
             'ticket_type_id' => $defaults['type']->id,
@@ -6443,7 +6443,11 @@ class TicketModuleTest extends TestCase
             'channel' => 'manual',
             'subject' => 'Ticket helper subject',
             'is_unread' => false,
-        ], $overrides));
+        ], $overrides);
+        if (! empty($values['client_id'])) {
+            $values['work_context_id'] = app(\App\Modules\WorkContext\Actions\ResolveWorkContext::class)->fromClientId($values['client_id'])->id;
+        }
+        return Ticket::create($values);
     }
 
     private function createSla(string $name, bool $isDefault, int $lowFirstResponse, int $mediumFirstResponse, int $highFirstResponse): Sla

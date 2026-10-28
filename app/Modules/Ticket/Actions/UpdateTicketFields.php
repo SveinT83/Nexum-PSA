@@ -63,6 +63,7 @@ class UpdateTicketFields
                 'urgency',
             ];
             $trackedFields = array_values(array_unique(array_merge($fields, [
+                'type',
                 'work_context_id',
                 'sla_source',
                 'sla_source_id',
@@ -74,6 +75,10 @@ class UpdateTicketFields
                 ->mapWithKeys(fn (string $field): array => [$field => $ticket->{$field}])
                 ->all();
             $updates = array_intersect_key($data, array_flip($fields));
+            // Preserve the legacy type discriminator when the authoritative catalog ID changes.
+            if (filled($updates['ticket_type_id'] ?? null)) {
+                $updates['type'] = \App\Modules\Ticket\Models\TicketType::query()->findOrFail($updates['ticket_type_id'])->slug;
+            }
             $before = [];
             $after = [];
 
@@ -183,6 +188,9 @@ class UpdateTicketFields
             }
 
             $ticket = $ticket->refresh();
+            if (array_key_exists('client_id', $after) || array_key_exists('work_context_id', $after)) {
+                app(ReconcileTicketOwnedWork::class)->handle((int) $ticket->id, $ticket, $actor, ! $this->valuesEquivalent($initialState['client_id'], $ticket->client_id));
+            }
             $ticketChangedBeforeClaim = collect($trackedFields)->contains(
                 fn (string $field): bool => ! $this->valuesEquivalent($initialState[$field] ?? null, $ticket->{$field}),
             );

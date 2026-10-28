@@ -15,6 +15,12 @@ class TaskIndexQuery
      */
     public function paginate(Request $request): LengthAwarePaginator
     {
+        return $this->query($request)->paginate(25)->withQueryString();
+    }
+
+    /** Browser defaults are optional so established API callers keep their all-record list. */
+    public function query(Request $request, bool $browserDefaults = true): Builder
+    {
         $sort = $request->input('sort');
         $direction = $request->input('direction') === 'asc' ? 'asc' : 'desc';
 
@@ -33,7 +39,7 @@ class TaskIndexQuery
 
         if ($statusId = $request->integer('status_id')) {
             $query->where('status_id', $statusId);
-        } elseif (! $request->has('include_done') || ! $request->boolean('include_done')) {
+        } elseif (($browserDefaults && ! $request->has('include_done')) || ($request->has('include_done') && ! $request->boolean('include_done'))) {
             $query->open();
         }
 
@@ -47,7 +53,7 @@ class TaskIndexQuery
 
         if ($assignedTo = $request->integer('assigned_to')) {
             $query->where('assigned_to', $assignedTo);
-        } elseif (($request->has('mine') && $request->boolean('mine')) || (! $request->has('mine') && ! $request->has('assigned_to'))) {
+        } elseif (($request->has('mine') && $request->boolean('mine')) || ($browserDefaults && ! $request->has('mine') && ! $request->has('assigned_to'))) {
             if ($request->user() instanceof User) {
                 $query->where('assigned_to', $request->user()->id);
             }
@@ -55,7 +61,7 @@ class TaskIndexQuery
 
         $this->applySort($query, $sort, $direction);
 
-        return $query->paginate(25)->withQueryString();
+        return $query;
     }
 
     private function applySort(Builder $query, ?string $sort, string $direction): void

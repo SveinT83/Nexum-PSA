@@ -36,6 +36,8 @@ class TicketExternalMessageApiTest extends TestCase
     {
         $ticket = $this->createTicket();
         $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        \Spatie\Permission\Models\Permission::findOrCreate('ticket.update', 'web');
+        $user->givePermissionTo('ticket.update');
 
         Sanctum::actingAs($user, ['tickets.read']);
 
@@ -50,6 +52,8 @@ class TicketExternalMessageApiTest extends TestCase
 
         $ticket = $this->createTicket();
         $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        \Spatie\Permission\Models\Permission::findOrCreate('ticket.update', 'web');
+        $user->givePermissionTo('ticket.update');
 
         Sanctum::actingAs($user, ['tickets.update']);
 

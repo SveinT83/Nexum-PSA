@@ -28,6 +28,12 @@ final class LegacyTicketRuleMutationBoundary
     /**
      * @param  array<string, mixed>  $attributes
      */
+    /** Revalidate the original command's action authority before returning a transport receipt. */
+    public function authorizeActions(?User $operator, array $actions): void
+    {
+        $this->assertActionPermissions($this->currentOperator($operator), $actions);
+    }
+
     public function create(?User $operator, array $attributes): TicketRule
     {
         $operator = $this->currentOperator($operator);

@@ -20,6 +20,13 @@ final class TicketMutationScopeGuard
             ]);
         }
 
+        $this->assertReadable($ticket);
+    }
+
+    /** Archived browser detail/history remains readable with the same customer-context invariant. */
+    public function assertReadable(Ticket $ticket): void
+    {
+        if (! $ticket->exists) { throw ValidationException::withMessages(['ticket' => 'An existing Ticket is required.']); }
         if ($ticket->work_context_id === null && $ticket->client_id === null) {
             // Legacy internal Tickets predate the work-context column.
             return;

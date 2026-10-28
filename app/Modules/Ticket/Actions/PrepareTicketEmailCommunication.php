@@ -44,16 +44,8 @@ class PrepareTicketEmailCommunication
             throw ValidationException::withMessages(['mode' => 'Choose Reply or Reply all.']);
         }
 
-        $this->assertTicketAndRelationship($ticket, $relationship, $actor);
-        $placement = $this->sourcePlacement($relationship);
+        $placement = $this->authorizePreparation($ticket, $relationship, $actor);
         $account = $placement->account;
-
-        if (! $account
-            || ! $this->mailboxAccess->canAccessAccount($actor, $account, MailboxAccess::VIEW)
-            || ! $this->mailboxAccess->canAccessAccount($actor, $account, MailboxAccess::SEND)
-            || ! $this->providerRuntime->databaseReady($account)) {
-            throw new AuthorizationException('Current ordinary Mail View and Send access is required for this conversation.');
-        }
 
         $conversation = $this->conversations->assignPlacement($placement);
         if (! $conversation) {
@@ -139,6 +131,22 @@ class PrepareTicketEmailCommunication
 
             return $communication->fresh(['draft', 'sourcePlacement']);
         });
+    }
+
+    /** Recheck current Ticket policy, Mail View/Send and provider binding even when returning an API retry receipt. */
+    public function authorizePreparation(Ticket $ticket, EmailTicketConversationLink $relationship, User $actor): EmailMailboxPlacement
+    {
+        $this->assertTicketAndRelationship($ticket, $relationship, $actor);
+        $placement = $this->sourcePlacement($relationship);
+        $account = $placement->account;
+
+        if (! $account
+            || ! $this->mailboxAccess->canAccessAccount($actor, $account, MailboxAccess::VIEW)
+            || ! $this->mailboxAccess->canAccessAccount($actor, $account, MailboxAccess::SEND)
+            || ! $this->providerRuntime->databaseReady($account)) {
+            throw new AuthorizationException('Current ordinary Mail View and Send access is required for this conversation.');
+        }
+        return $placement;
     }
 
     private function assertTicketAndRelationship(Ticket $ticket, EmailTicketConversationLink $relationship, User $actor): void

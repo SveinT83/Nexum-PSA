@@ -87,6 +87,9 @@ class TicketResource extends JsonResource
                 'version' => $this->workflowVersion?->version,
                 'status' => $this->workflowVersion?->status,
             ]),
+            'category_id' => $this->category_id,
+            'sla_id' => $this->sla_id,
+            'tags' => $this->whenLoaded('tags', fn () => $this->tags->map(fn ($tag) => $tag->only(['id', 'name', 'slug']))->values()),
             'metadata' => $this->metadata,
             'custom_fields' => $this->customFieldsFor($request),
             'created_at' => $this->created_at,
@@ -114,7 +117,7 @@ class TicketResource extends JsonResource
         }
 
         try {
-            app(TicketMutationScopeGuard::class)->assert($this->resource);
+            app(TicketMutationScopeGuard::class)->assertReadable($this->resource);
         } catch (ValidationException) {
             return [];
         }

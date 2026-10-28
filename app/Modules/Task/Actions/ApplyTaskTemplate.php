@@ -67,6 +67,10 @@ class ApplyTaskTemplate
                     throw ValidationException::withMessages(['template' => 'The selected Task template is inactive.']);
                 }
 
+                if (isset($options['_expected_template_snapshot']) && ! hash_equals(app(\App\Modules\Task\Services\TaskTemplateSnapshot::class)->fingerprint($locked), $options['_expected_template_snapshot'])) {
+                    throw ValidationException::withMessages(['expected_template_snapshot' => 'The template changed. Review a fresh preview before applying it.']);
+                }
+
                 $items = $locked->allItems()->with(['checklistItems', 'dependencies', 'tags'])->get();
                 $this->graphs->handle($items);
                 $created = [];

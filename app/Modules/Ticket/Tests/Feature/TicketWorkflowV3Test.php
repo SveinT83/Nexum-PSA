@@ -924,7 +924,8 @@ class TicketWorkflowV3Test extends TestCase
     public function workflow_definition_api_preserves_published_versions_until_explicit_publish(): void
     {
         Permission::findOrCreate('ticket.workflow_publish', 'web');
-        $this->tech->givePermissionTo('ticket.workflow_publish');
+        Permission::findOrCreate('ticket.manage_workflows', 'web');
+        $this->tech->givePermissionTo(['ticket.manage_workflows', 'ticket.workflow_publish']);
         Sanctum::actingAs($this->tech, ['tickets.workflow.manage', 'tickets.workflow.publish']);
 
         $status = app(EnsureTicketDefaults::class)->handle()['status'];
@@ -1232,7 +1233,8 @@ class TicketWorkflowV3Test extends TestCase
 
         $this->assertSame($versionOne->id, $ticket->workflow_version_id);
         Permission::findOrCreate('ticket.workflow_migrate', 'web');
-        $this->tech->givePermissionTo('ticket.workflow_migrate');
+        Permission::findOrCreate('ticket.manage_workflows', 'web');
+        $this->tech->givePermissionTo(['ticket.manage_workflows', 'ticket.workflow_migrate']);
         Sanctum::actingAs($this->tech, ['tickets.workflow.manage', 'tickets.workflow.publish']);
         $this->postJson(route('api.v1.ticket-workflows.migration-preview', $workflow->refresh()), [
             'target_version_id' => $versionTwo->id,
@@ -1345,7 +1347,8 @@ class TicketWorkflowV3Test extends TestCase
         $versionTwo = $definitions->publish($workflow, $this->tech);
 
         Permission::findOrCreate('ticket.workflow_migrate', 'web');
-        $this->tech->givePermissionTo('ticket.workflow_migrate');
+        Permission::findOrCreate('ticket.manage_workflows', 'web');
+        $this->tech->givePermissionTo(['ticket.manage_workflows', 'ticket.workflow_migrate']);
         Sanctum::actingAs($this->tech, ['tickets.workflow.manage', 'tickets.workflow.publish']);
         $preview = $this->postJson(route('api.v1.ticket-workflows.migration-preview', $workflow), [
             'target_version_id' => $versionTwo->id,
@@ -1427,7 +1430,8 @@ class TicketWorkflowV3Test extends TestCase
         $versionTwo = $definitions->publish($workflow, $this->tech);
 
         Permission::findOrCreate('ticket.workflow_migrate', 'web');
-        $this->tech->givePermissionTo('ticket.workflow_migrate');
+        Permission::findOrCreate('ticket.manage_workflows', 'web');
+        $this->tech->givePermissionTo(['ticket.manage_workflows', 'ticket.workflow_migrate']);
         Sanctum::actingAs($this->tech, ['tickets.workflow.manage', 'tickets.workflow.publish']);
         $this->postJson(route('api.v1.ticket-workflows.migration-preview', $workflow), [
             'target_version_id' => $versionTwo->id,

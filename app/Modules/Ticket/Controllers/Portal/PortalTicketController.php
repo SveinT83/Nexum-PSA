@@ -60,62 +60,7 @@ class PortalTicketController extends Controller
             'description' => ['required', 'string', 'max:5000'],
         ]);
 
-        $ticket = DB::transaction(function () use ($request, $storeTicket, $access, $audit, $portalNotifications, $context, $validated): Ticket {
-            $site = $access->resolveSite($context, filled($validated['site_id'] ?? null) ? (int) $validated['site_id'] : null);
-            $clientUser = $access->clientUserFor($context, $site);
-            $ticket = $storeTicket->handle([
-                'channel' => 'customer_portal',
-                'client_id' => $context->client->id,
-                'site_id' => $site?->id,
-                'contact_id' => $clientUser?->id,
-                'subject' => $validated['subject'],
-                'description' => null,
-            ], $request->user());
-
-            $ticket->forceFill([
-                'portal_visible_at' => now(),
-                'portal_visible_by' => $request->user()?->id,
-                'is_unread' => true,
-                'metadata' => array_merge($ticket->metadata ?? [], [
-                    'customer_portal' => [
-                        'created_by_account_id' => $context->account->id,
-                        'created_by_contact_id' => $context->contact->id,
-                    ],
-                ]),
-            ])->save();
-
-            $message = $this->createPortalMessage(
-                $ticket,
-                $request,
-                $context,
-                $validated['description'],
-                triggerWorkflow: false,
-                sourceAction: 'PortalTicketController.store',
-            );
-
-            $audit->handle('portal_ticket_created', $context->account, $request->user(), $context->contact, $context->client, $site, [
-                'ticket_id' => $ticket->id,
-                'ticket_key' => $ticket->ticket_key,
-                'message_id' => $message->id,
-            ], $request);
-
-            $portalNotifications->handle(
-                type: 'portal_ticket_created',
-                clientId: (int) $context->client->id,
-                siteId: $site?->id,
-                title: 'Ticket '.$ticket->ticket_key.' was created',
-                body: $ticket->subject,
-                url: route('customer-portal.tickets.show', $ticket),
-                sourceType: Ticket::class,
-                sourceId: $ticket->id,
-                metadata: [
-                    'ticket_key' => $ticket->ticket_key,
-                    'message_id' => $message->id,
-                ],
-            );
-
-            return $ticket;
-        });
+        $ticket = app(\App\Modules\Ticket\Actions\StorePortalTicket::class)->handle($request, $context, $validated);
 
         return redirect()->route('customer-portal.tickets.show', $ticket)
             ->with('success', 'Ticket '.$ticket->ticket_key.' was created.');
@@ -150,22 +95,7 @@ class PortalTicketController extends Controller
             'body' => ['required', 'string', 'max:5000'],
         ]);
 
-        DB::transaction(function () use ($request, $ticket, $context, $validated, $audit): void {
-            $message = $this->createPortalMessage(
-                $ticket,
-                $request,
-                $context,
-                $validated['body'],
-                triggerWorkflow: true,
-                sourceAction: 'PortalTicketController.reply',
-            );
-
-            $audit->handle('portal_ticket_reply_created', $context->account, $request->user(), $context->contact, $context->client, $context->site, [
-                'ticket_id' => $ticket->id,
-                'ticket_key' => $ticket->ticket_key,
-                'message_id' => $message->id,
-            ], $request);
-        });
+        app(\App\Modules\Ticket\Actions\AddPortalTicketReply::class)->handle($request, $ticket, $context, $validated['body']);
 
         return redirect()->route('customer-portal.tickets.show', $ticket)
             ->with('success', 'Reply added.');
