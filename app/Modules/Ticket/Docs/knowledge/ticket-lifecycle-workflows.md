@@ -67,6 +67,10 @@ The dedicated Close shortcut still uses `ChangeTicketStatus`. Tickets with an as
 follow the workflow transition rules before closing. Older or imported tickets without an assigned
 workflow can be closed directly after action guards and unresolved-task checks pass.
 
+The Tasks panel on the ticket page lists every unresolved linked task before the most recently
+completed tasks. This keeps every task that can block closure visible even when the ticket has more
+than six linked tasks.
+
 ## Automatic Action Triggers
 
 Workflow transitions can be linked to ticket actions. When the action completes, the workflow can auto-advance if all transition requirements are satisfied.
@@ -141,3 +145,15 @@ Important files:
 - `app/Modules/Ticket/Actions/MarkTicketMessageSolution.php`
 - `app/Modules/Ticket/Support/TicketAction.php`
 - `app/Modules/Ticket/Livewire/Admin/WorkflowEditor.php`
+
+## Repeated Scheduled Occurrences (Dev, 2026-10-27)
+
+The scheduled occurrence boundary now locks its parent Ticket before checking the occurrence time.
+A repeated scheduler or transport delivery returns the existing occurrence and does not clone a
+second Ticket, internal note, attachment or Task group. A deliberately removed occurrence retains
+its identity and is not silently recreated. One-time scheduled activation also locks and rechecks
+the current due schedule before changing it.
+
+The regression was reproduced before the fix. Two independent processes against the Dev MySQL
+database then returned the same occurrence with one cloned note; the owned internal test Tickets
+were removed afterwards. This correction is Dev-only until separately promoted and deployed.

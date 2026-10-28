@@ -13341,3 +13341,56 @@ Main promotion and Issue reconciliation verified 2026-10-27: PR #341 merged as
 13dc4ef4d4ab0474515522fb3131dbe6d198c624, exact candidate tree verified. #254 closed
 completed with evidence comment 6452232330. Status remains Pending: Svein Tore performs
 the listed human visual/production checks before production rollout. No checkbox changed.
+
+## HR-2026-10-27-OPS-RULES-COORDINATOR - Issues 262, 285 And 290 Completion
+
+Status: In Review
+Owner: Codex. Named intended reviewer: Svein Tore.
+This is a human-review checklist. The separately approved RFC authorized controlled Dev reconciliation, which has been performed. Final operating acceptance, autonomous activation and #285 production release remain gated; no completed manual acceptance is inferred. Svein separately authorized verified Main promotion
+on 2026-10-28 ("Fix alt og merge til main"); this does not authorize cold/failed-cohort effects or production.
+Historical HR-2026-08-25-013 remains Reviewed and is not reopened.
+
+Scope: #285 draft summary/publication help corrections, #262 shared runtime reconciliation and
+implemented health contract, #290 narrow external Worklog setup. Evidence:
+[completion plan](plans/2026-10-27-issues-262-285-290-completion.md);
+[Approved runtime RFC](rfc/2026-10-27-shared-scheduler-queue-runtime-health.md).
+
+Automated Dev evidence: 82 tests / 916 assertions pass across Rule builder, Workflow v3,
+Workflow action/creation parity, retry/full-rerun and coordinator governance. Four new UI
+regressions pass (30 assertions); two UI regressions were reproduced before the fix.
+No manual acceptance is inferred. Existing authenticated browser session was not available.
+
+- [ ] Svein: inspect Rule list with draft-only and published-plus-edited-draft examples; counts,
+  trigger, flow and distinct published version must be truthful.
+- [ ] Svein: inspect Workflows and the Rule builder at desktop and mobile width; unpublished
+  workflow help and missing permission/runtime/capability messages give a concrete next step.
+  Publishing never silently activates Rules or migrates existing pinned Tickets.
+- [x] Svein Tore approved the exact #262 RFC on 2026-10-27: "Ja godkjenner".
+- [ ] Svein: review the completed privileged runner inventory and Dev coexistence/fairness decision,
+  duplicate-dispatch evidence and owned queue/side-effect cohorts; confirm acceptance before further activation.
+- [ ] Operator: verify scheduler across consecutive external ticks after restart/reboot, and isolated
+  queue canary completion without consuming historical backlog. Check fresh/stale/blocked/unknown.
+- [ ] Release owner: approve exact #285 cutover candidate and minimal capabilities after immutable
+  production identity, backups, permissions, schema, compatibility and worker/cache preflight.
+- [ ] Svein/operator: verify Implementering match and another-queue non-match across UI/email/API/
+  integration creation in an internal approved context, then read back workflow/state/execution.
+- [ ] Svein/integration owner: supply actual recipient/provider/model/mode and review records for
+  #290. Review purpose, pseudonymized profile, source rights, <=7-day expiry and dedicated connection.
+- [ ] Operator: perform the exact one-day/one-row authorized request and deny-path checks; retain
+  request reference and counts only. Verify shared consumers and token revocation rollback.
+- [ ] Verify affected employee handbook content and inherited staff scope. OpenWebUI employee
+  retrieval is separate and is not implied by BookStack API read-back.
+
+Deploy actions: #285 UI correction needs normal PHP/Blade deployment after source review; no new
+migration, asset build, queue or scheduler action for the correction itself. Production activation
+needs the separate exact checklist. #262 migrations 180000/181000 ran only on Dev in batches 45/46; actual health and three owned workers are verified. Cold queues and historical failed-job recovery remain blocked.
+Risks: historical side effects, worker timeout/retry mismatch, stale authority/configuration,
+overbroad shared credentials, missing governance facts. No backlog retry/purge, production
+mutation, token issuance, commit/push/Main action occurred.
+
+
+Operational handbook evidence (2026-10-27): pages 426/34, 532/23 and 541/5 read back exactly; staff-internal/authenticated read scope and inheritance checked. OpenWebUI retrieval remains separate. Existing Email/Storage runtime guard batch passes 32 / 237; no live cutover is inferred.
+
+Runtime verification (2026-10-28): plans/2026-10-28-runtime-health-verification.md. Native concurrent publishers emitted one probe; an isolated worker completed it. Native Ticket contention produced one occurrence/note and fixtures were removed. Final health tests 15 / 96; domain matrix 117 / 817; System regression 29 / 885 (overlap). Code approval and these automated checks do not mark this checklist Reviewed.
+
+Email runtime follow-up under HR-2026-10-27-OPS-RULES-COORDINATOR: bounded provider-lock deferral is verified (16 tests / 117 assertions), and exact read-only probe UUID discovery/recovery passes 1 / 14. Historical failures remain preserved; no silent account success/failure or provider-policy bypass. Human acceptance remains In Review.
