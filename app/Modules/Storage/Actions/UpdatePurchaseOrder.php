@@ -41,7 +41,6 @@ class UpdatePurchaseOrder
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('storage_purchase_orders', 'po_number')->ignore($purchaseOrder->id),
             ],
             'vendor_id' => ['sometimes', 'required', 'integer', 'exists:vendors,id'],
             'deliver_to_warehouse_id' => [
@@ -72,6 +71,11 @@ class UpdatePurchaseOrder
                 throw ValidationException::withMessages([
                     'purchase_order' => 'Only draft or ordered purchase orders can be edited.',
                 ]);
+            }
+
+            if (array_key_exists('po_number', $validated)
+                && (string) $validated['po_number'] !== (string) $locked->po_number) {
+                throw ValidationException::withMessages(['po_number' => 'The generated Nexum order number cannot be changed.']);
             }
 
             $requestedStatus = $validated['status'] ?? $locked->status;
@@ -155,7 +159,6 @@ class UpdatePurchaseOrder
 
             $statusChanged = $requestedStatus !== $locked->status;
             $attributes = [
-                'po_number' => $validated['po_number'] ?? $locked->po_number,
                 'vendor_id' => $vendorId,
                 'supplier_name_snapshot' => $vendorId !== (int) $locked->vendor_id
                     ? $vendor->name

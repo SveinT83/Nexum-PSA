@@ -194,7 +194,7 @@ class SupplierOrderAiAutomationTest extends TestCase
 
         $this->assertTrue($result->successful());
         $this->assertCount(1, $fake->requests);
-        $this->assertSame('0.75', $fake->requests[0]->maxProviderReportedCost);
+        $this->assertSame('0.750000000000', $fake->requests[0]->maxProviderReportedCost);
         $this->assertSame('USD', $fake->requests[0]->costCurrency);
         $this->assertSame('0.25', data_get($result->metadata, 'ai_budget.spent'));
         $this->assertSame('0.75', data_get($result->metadata, 'ai_budget.remaining'));
@@ -1288,7 +1288,6 @@ TEXT;
         [, $revision] = $this->policy();
         $item = $this->item('LOCKED-PO-ITEM', 4);
         $purchaseOrder = app(StorePurchaseOrder::class)->handle([
-            'po_number' => 'PO-LOCKED-REPAIR',
             'vendor_id' => $this->supplier->id,
             'deliver_to_warehouse_id' => $this->warehouse->id,
             'status' => PurchaseOrder::STATUS_ORDERED,
@@ -1459,7 +1458,7 @@ TEXT;
         $repaired = app(RepairPurchaseOrderImportWithAi::class)->handle($import, $this->actor);
 
         $this->assertCount(1, $fake->requests);
-        $this->assertSame('0.75', $fake->requests[0]->maxProviderReportedCost);
+        $this->assertSame('0.750000000000', $fake->requests[0]->maxProviderReportedCost);
         $this->assertSame('USD', $fake->requests[0]->costCurrency);
         $this->assertSame('0.25', data_get($repaired->repairs->sole()->decision_summary, 'ai_budget.spent'));
         $this->assertSame('0.75', data_get($repaired->repairs->sole()->decision_summary, 'ai_budget.remaining'));
@@ -1738,7 +1737,7 @@ TEXT;
     private function purchaseOrderForRepair(Item $item, string $poNumber): PurchaseOrder
     {
         return app(StorePurchaseOrder::class)->handle([
-            'po_number' => $poNumber,
+            'notes' => $poNumber, // Fixture label; the canonical identity is generated.
             'vendor_id' => $this->supplier->id,
             'deliver_to_warehouse_id' => $this->warehouse->id,
             'status' => PurchaseOrder::STATUS_ORDERED,

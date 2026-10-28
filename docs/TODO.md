@@ -1,5 +1,21 @@
 # tdPSA Development TODO
 
+## Canonical Purchase Order Numbering - Issue #286 (2026-10-28)
+
+Status: Done On Dev / Scoped Main Candidate Verified / Merge And Handbook Read-Back Pending.
+Owner: Codex / Svein Tore, building on TD-Jonathan's staged allocator. RFC/ADR canonical contract.
+Manual/API/import share one locked sequence; existing identities and supplier deduplication stay.
+Dev core 130 and Main Storage feature/unit 296 distinct tests covered in completed runs; the
+existing 12-decimal AI cap test expectations were reconciled and the entire 34/404 class rerun
+successfully on both. No unresolved failures/skips; no full application suite claimed.
+Exact native Dev migration, encrypted preflight and two-process ten-order concurrency proof pass.
+Synthetic procurement/master fixtures removed; counter retained. Immutable Mail access evidence
+keeps synthetic user ID 9 disabled without roles/permissions/tokens; see deployment recovery guide.
+Staged contributor work, Dev HEAD and original index digest were preserved.
+Plan: plans/2026-10-28-canonical-purchase-order-numbering-main.md.
+HR-2026-10-28-PO-NUMBERING Pending before production/manual acceptance. Production unchanged.
+
+
 ## Knowledge Audience And Context Contract - Issues #265 / #261 (2026-10-28)
 
 Status: Baseline Complete / Blocked On Team-Membership Source Decision / No Implementation Started.

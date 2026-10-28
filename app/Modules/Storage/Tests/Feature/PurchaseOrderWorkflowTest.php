@@ -363,7 +363,6 @@ class PurchaseOrderWorkflowTest extends TestCase
 
         $this->actingAs($this->tech)
             ->postJson(route('tech.storage.purchase-orders.store'), [
-                'po_number' => 'PO-MALFORMED-CREATE',
                 'vendor_id' => $this->supplier->id,
                 'deliver_to_warehouse_id' => $this->warehouse->id,
                 'status' => PurchaseOrder::STATUS_ORDERED,
@@ -399,9 +398,7 @@ class PurchaseOrderWorkflowTest extends TestCase
                 'lines.'.$line->id,
             ]);
 
-        $this->assertDatabaseMissing('storage_purchase_orders', [
-            'po_number' => 'PO-MALFORMED-CREATE',
-        ]);
+        $this->assertDatabaseCount('storage_purchase_orders', 1);
         $this->assertSame(0, $order->shipments()->count());
         $this->assertSame(0, $order->receipts()->count());
     }
@@ -414,7 +411,6 @@ class PurchaseOrderWorkflowTest extends TestCase
 
         $response = $this->actingAs($this->tech)
             ->post(route('tech.storage.purchase-orders.store'), [
-                'po_number' => 'PO-2026-1001',
                 'vendor_id' => $this->supplier->id,
                 'deliver_to_warehouse_id' => $this->warehouse->id,
                 'status' => 'ordered',
@@ -447,7 +443,7 @@ class PurchaseOrderWorkflowTest extends TestCase
             ->get(route('tech.storage.purchase-orders.show', $order))
             ->assertOk()
             ->assertViewIs('storage::Tech.Storage.purchase-orders.show')
-            ->assertSee('PO-2026-1001')
+            ->assertSee($order->po_number)
             ->assertSee('4 units outstanding')
             ->assertSee('Add Shipment')
             ->assertDontSee('Receive Goods');
@@ -458,7 +454,6 @@ class PurchaseOrderWorkflowTest extends TestCase
     {
         $item = $this->item('METADATA-BOUNDARY', 'Metadata Boundary Item');
         $order = app(StorePurchaseOrder::class)->handle([
-            'po_number' => 'PO-METADATA-BOUNDARY',
             'vendor_id' => $this->supplier->id,
             'deliver_to_warehouse_id' => $this->warehouse->id,
             'status' => PurchaseOrder::STATUS_ORDERED,
@@ -569,7 +564,6 @@ class PurchaseOrderWorkflowTest extends TestCase
             'qty_cancelled' => 0,
         ];
         $baseData = [
-            'po_number' => 'PO-MASTER-BASE',
             'vendor_id' => $this->supplier->id,
             'deliver_to_warehouse_id' => $this->warehouse->id,
             'status' => PurchaseOrder::STATUS_ORDERED,
@@ -581,43 +575,36 @@ class PurchaseOrderWorkflowTest extends TestCase
 
         $this->assertValidationError('vendor_id', fn () => $store->handle(
             array_replace($baseData, [
-                'po_number' => 'PO-INACTIVE-SUPPLIER',
                 'vendor_id' => $inactiveSupplier->id,
             ]),
             $this->tech
         ));
         $this->assertValidationError('vendor_id', fn () => $store->handle(
             array_replace($baseData, [
-                'po_number' => 'PO-NOT-SUPPLIER',
                 'vendor_id' => $notSupplier->id,
             ]),
             $this->tech
         ));
         $this->assertValidationError('deliver_to_warehouse_id', fn () => $store->handle(
             array_replace($baseData, [
-                'po_number' => 'PO-INACTIVE-WAREHOUSE',
                 'deliver_to_warehouse_id' => $inactiveWarehouse->id,
             ]),
             $this->tech
         ));
         $this->assertValidationError('lines.0.item_id', fn () => $store->handle(
             array_replace($baseData, [
-                'po_number' => 'PO-INACTIVE-ITEM',
                 'lines' => [$lineInput($inactiveItem)],
             ]),
             $this->tech
         ));
         $this->assertValidationError('lines.0.item_id', fn () => $store->handle(
             array_replace($baseData, [
-                'po_number' => 'PO-NOT-ORDERABLE-ITEM',
                 'lines' => [$lineInput($notOrderableItem)],
             ]),
             $this->tech
         ));
 
-        $order = $store->handle(array_replace($baseData, [
-            'po_number' => 'PO-HISTORICAL-MASTER',
-        ]), $this->tech);
+        $order = $store->handle($baseData, $this->tech);
         $line = $order->lines->sole();
 
         $this->supplier->update(['is_supplier' => false, 'is_active' => false]);
@@ -723,7 +710,6 @@ class PurchaseOrderWorkflowTest extends TestCase
 
         $response = $this->actingAs($this->tech)
             ->post(route('tech.storage.purchase-orders.store'), [
-                'po_number' => 'PO-SUPPLIER-DEFAULTS',
                 'vendor_id' => $this->supplier->id,
                 'deliver_to_warehouse_id' => $this->warehouse->id,
                 'status' => 'ordered',
@@ -740,7 +726,6 @@ class PurchaseOrderWorkflowTest extends TestCase
             ]);
 
         $order = PurchaseOrder::query()
-            ->where('po_number', 'PO-SUPPLIER-DEFAULTS')
             ->with('lines')
             ->firstOrFail();
 

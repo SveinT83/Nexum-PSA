@@ -73,7 +73,8 @@ names and the physical receiving checklist cannot be rearranged accidentally.
    date defaults to today and may be changed when the supplier order was placed on another date.
 4. Add the ordered Storage items and quantities. The supplier SKU and unit cost are prefilled from
    the item's supplier record when available and may be corrected for this order.
-5. Save the order.
+5. Save the order. Nexum assigns the read-only **Nexum order number** when creation succeeds.
+   Read the saved number on the order; never predict it or enter a replacement.
 
 Nexum snapshots supplier, item, SKU, price, currency, and delivery details on the order. Later
 changes to catalogue or supplier master data do not rewrite historical order or receipt context.
@@ -89,6 +90,15 @@ active or soft-deleted duplicate, including case/surrounding-space variants, and
 the existing order. If a trusted supplier confirmation later arrives for a compatible manual order,
 it confirms and links that order instead of creating another. After confirmation, ordinary editing
 cannot change the supplier identity; a mismatch is held for review and never changes stock.
+
+## Immutable Nexum Order Identity
+
+The generated number is separate from the database record ID and supplier reference.
+Create displays **Assigned when saved**; Edit displays the stored number read-only.
+An ordinary UI/API update cannot rename it. Existing custom, numeric and deleted-order
+identities stay unchanged. Never edit the database to resolve a displayed numbering error.
+A failed creation rolls back its order and number reservation together; numbering gaps
+are allowed. Ask an operator to inspect schema/counter health for a numbering 503.
 
 ## Shipments And Tracking
 
@@ -209,11 +219,12 @@ or link.
 - Movement history, immutable receipts, reversals, actor snapshots, and timestamps are the audit
   record for every inventory effect.
 
-## Full Storage API coverage (Dev, 2026-10-26)
+## Full Storage API Coverage And Canonical Numbering
 
 The Storage API guide documents the complete supported browser/API workflow,
 required token scopes and current user permissions, supplier lookup, inventory and
 incoming quantities, purchasing/receiving, picking, import review, profiles and
-settings. This update is verified on Dev; Main, production and named human review
-are separate gates. See **Storage Inventory -> Storage API guide** in the handbook and Swagger on the
-target installation. The separate Issue #286 numbering contract remains open.
+settings. Full API code is present on Main; production deployment and named human review
+remain separate gates. See **Storage Inventory -> Storage API guide** in the handbook and Swagger on
+the target installation. Canonical numbering is verified on Dev under Issue #286; check the target installation's
+deployment before relying on this update.

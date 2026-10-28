@@ -379,6 +379,7 @@ class SupplierOrderImportPipelineTest extends TestCase
             quantity: 2,
             status: PurchaseOrder::STATUS_DRAFT,
         );
+        $originalNumber = $manual->po_number;
         $originalUpdatedAt = $manual->getRawOriginal('updated_at');
         $originalLineUpdatedAt = $manual->lines->sole()->getRawOriginal('updated_at');
         $before = $this->stockSnapshot($item);
@@ -409,7 +410,7 @@ class SupplierOrderImportPipelineTest extends TestCase
         $this->assertSame($manual->id, $confirmed?->id);
         $this->assertSame(PurchaseOrder::STATUS_DRAFT, $manual->status);
         $this->assertSame('supplier-confirm-42', $manual->vendor_ref);
-        $this->assertSame('MANUAL-CONFIRM-1', $manual->po_number);
+        $this->assertSame($originalNumber, $manual->po_number);
         $this->assertSame($originalUpdatedAt, $manual->getRawOriginal('updated_at'));
         $this->assertSame($originalLineUpdatedAt, $manual->lines->sole()->getRawOriginal('updated_at'));
         $this->assertSame(PurchaseOrderImport::STATUS_IMPORTED, $linkedImport->status);
@@ -1296,7 +1297,7 @@ class SupplierOrderImportPipelineTest extends TestCase
         $supplier ??= $this->supplier;
 
         return app(StorePurchaseOrder::class)->handle([
-            'po_number' => $poNumber,
+            'notes' => $poNumber, // Fixture label; the canonical identity is generated.
             'vendor_id' => $supplier->id,
             'deliver_to_warehouse_id' => $this->warehouse->id,
             'status' => $status,

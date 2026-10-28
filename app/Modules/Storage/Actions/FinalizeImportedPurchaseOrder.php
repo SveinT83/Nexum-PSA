@@ -18,12 +18,12 @@ use App\Modules\Storage\Support\SupplierOrderSourceIntegrity;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class FinalizeImportedPurchaseOrder
 {
     public function __construct(
+        private readonly AllocatePurchaseOrderNumber $allocatePoNumber,
         private readonly StorePurchaseOrder $storePurchaseOrder,
         private readonly SupplierOrderCanonicalValidator $canonicalValidator,
         private readonly SupplierOrderConfirmationComparator $confirmationComparator,
@@ -40,7 +40,7 @@ class FinalizeImportedPurchaseOrder
             return null;
         }
 
-        return DB::transaction(function () use ($import, $policy, $decision): ?PurchaseOrder {
+        return $this->allocatePoNumber->withinSequence(function () use ($import, $policy, $decision): ?PurchaseOrder {
             $locked = PurchaseOrderImport::query()
                 ->with(['lines.item', 'vendor', 'profileVersion'])
                 ->lockForUpdate()
@@ -147,7 +147,6 @@ class FinalizeImportedPurchaseOrder
                 : PurchaseOrder::STATUS_DRAFT;
             try {
                 $purchaseOrder = $this->storePurchaseOrder->handle([
-                    'po_number' => $this->internalPoNumber($locked),
                     'vendor_id' => $vendorId,
                     'deliver_to_warehouse_id' => $warehouseId,
                     'status' => $status,
@@ -212,7 +211,7 @@ class FinalizeImportedPurchaseOrder
             ])->save();
 
             return $purchaseOrder;
-        }, 3);
+        });
     }
 
     private function purchaseOrderByIdentity(
@@ -471,11 +470,6 @@ class FinalizeImportedPurchaseOrder
         } catch (\Throwable) {
             throw ValidationException::withMessages(['purchase_order' => 'Pinned source received_at is invalid.']);
         }
-    }
-
-    private function internalPoNumber(PurchaseOrderImport $import): string
-    {
-        return 'AUTO-'.now()->format('Y').'-'.str_pad((string) $import->id, 8, '0', STR_PAD_LEFT);
     }
 
     private function notes(PurchaseOrderImport $import): string
