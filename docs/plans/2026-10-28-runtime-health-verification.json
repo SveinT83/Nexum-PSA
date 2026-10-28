@@ -1,0 +1,578 @@
+{
+  "authority": "Dev /var/Projects/tdPSA",
+  "verification_date": "2026-10-28",
+  "tests": {
+    "domain": {
+      "log": "/tmp/nexum-262-domain-runtime-tests.log",
+      "result": "117 passed (817 assertions)"
+    },
+    "system": {
+      "log": "/tmp/nexum-262-system-regressions.log",
+      "result": "29 passed (885 assertions)"
+    },
+    "health": {
+      "log": "/tmp/nexum-262-health-final.log",
+      "result": "15 passed (96 assertions)"
+    },
+    "email_lock": {
+      "log": "/tmp/nexum-262-email-lock-final.log",
+      "result": "16 passed (117 assertions)"
+    },
+    "probe_cli": {
+      "log": "/tmp/nexum-262-probe-cli-final.log",
+      "result": "1 passed (14 assertions)"
+    }
+  },
+  "test_totals_overlap": true,
+  "php_lint_count": 18,
+  "xml_valid": true,
+  "full_application_suite_run": false,
+  "rollout": {
+    "at": "2026-10-27T22:43:32.228133+00:00",
+    "removed_redundant_operations": [
+      "artisan storage:supplier-orders dispatch",
+      "artisan storage:supplier-orders heartbeat",
+      "artisan storage:supplier-orders health",
+      "artisan storage:supplier-orders retention",
+      "artisan storage:supplier-orders digest",
+      "artisan email:poll"
+    ],
+    "retained_worker_queues": [
+      "email",
+      "default",
+      "supplier-orders"
+    ],
+    "email_default_retry_after": 2100,
+    "supplier_retry_after": 300,
+    "maximum_default_job_timeout": 1800,
+    "before_sha256": "d7d90998c58ea2d0dc48bcf3d29d687646eb86ba7a7a0463d6d4744e2edc362d",
+    "candidate_sha256": "56e9724c9757fedb6d232099aef20759370bd16c386b19d749ff136800e0628b",
+    "applied": true,
+    "applied_at": "2026-10-27T22:52:43.444493+00:00",
+    "readback_sha256": "f737c6613c206887ab60a045f05e982b7e203a123405b98f1775409758622faa",
+    "health_profile": {
+      "runtime_key": "dev",
+      "probe_queues": [
+        "default",
+        "email",
+        "supplier-orders"
+      ],
+      "blocked_queues": [
+        "economy",
+        "email-live",
+        "notifications"
+      ]
+    },
+    "fairness_applied_at": "2026-10-27T23:01:20.790232+00:00",
+    "fairness_reason": "email_first_starved_default_canary",
+    "default_cohort_review": "Only current scheduler dispatchers/telemetry; marketing campaigns, Ticket schedules and Signal webhook deliveries empty; CloudFactory disabled and no BookStack integration."
+  },
+  "native_probe": {
+    "preflight": {
+      "driver": "mysql",
+      "existing_jobs": 0,
+      "existing_evidence": 0
+    },
+    "claims": [
+      {
+        "status": "recorded",
+        "probes_dispatched": 0
+      },
+      {
+        "status": "recorded",
+        "probes_dispatched": 1
+      }
+    ],
+    "controlled_worker": {
+      "queued_before": 1,
+      "remaining": 0,
+      "worker_exit": 0,
+      "health": {
+        "observed_at": "2026-10-27T22:36:27+00:00",
+        "status": "healthy",
+        "reason_code": "fresh_component_evidence",
+        "components": [
+          {
+            "kind": "scheduler",
+            "last_observed_at": "2026-10-27 22:36:22.000000",
+            "status": "healthy",
+            "reason_code": "fresh_evidence",
+            "age_seconds": 5
+          },
+          {
+            "threshold_seconds": 300,
+            "kind": "queue",
+            "connection": "database",
+            "queue": "runtime-health-acceptance",
+            "driver": "database",
+            "last_completed_at": "2026-10-27 22:36:27.000000",
+            "pending_since": null,
+            "status": "healthy",
+            "reason_code": "fresh_evidence",
+            "age_seconds": 0
+          }
+        ],
+        "coverage": "scheduler_tick_and_allowlisted_queue_probes_only",
+        "business_delivery_verified": false,
+        "runtime_key": "acceptance-20261027",
+        "thresholds": {
+          "scheduler_stale_seconds": 180,
+          "worker_stale_seconds": 300,
+          "probe_interval_seconds": 60
+        }
+      }
+    }
+  },
+  "native_ticket": {
+    "results": [
+      {
+        "occurrence_id": 2
+      },
+      {
+        "occurrence_id": 2
+      }
+    ],
+    "verification": {
+      "owned_ticket_count": 2,
+      "occurrence_count": 1,
+      "cloned_note_count": 1,
+      "remaining_fixture_rows": 0
+    }
+  },
+  "live": {
+    "observed_at": "2026-10-27T23:20:21+00:00",
+    "status": "blocked",
+    "reason_code": "component_blocked",
+    "components": [
+      {
+        "kind": "scheduler",
+        "last_observed_at": "2026-10-27 23:20:13.000000",
+        "status": "healthy",
+        "reason_code": "fresh_evidence",
+        "age_seconds": 8
+      },
+      {
+        "threshold_seconds": 300,
+        "kind": "queue",
+        "connection": "database",
+        "queue": "default",
+        "driver": "database",
+        "pending_probe_id": null,
+        "completed_probe_id": "3161c74d-0aa4-43d1-b181-0e9b25a27c99",
+        "last_completed_at": "2026-10-27 23:20:14.000000",
+        "queue_latency_seconds": 1,
+        "pending_since": null,
+        "status": "healthy",
+        "reason_code": "fresh_evidence",
+        "age_seconds": 7
+      },
+      {
+        "threshold_seconds": 300,
+        "kind": "queue",
+        "connection": "database",
+        "queue": "email",
+        "driver": "database",
+        "pending_probe_id": null,
+        "completed_probe_id": "b3f6b396-e4e7-4f66-8be5-80e9addfd1c5",
+        "last_completed_at": "2026-10-27 23:20:14.000000",
+        "queue_latency_seconds": 1,
+        "pending_since": null,
+        "status": "healthy",
+        "reason_code": "fresh_evidence",
+        "age_seconds": 7
+      },
+      {
+        "threshold_seconds": 300,
+        "kind": "queue",
+        "connection": "database",
+        "queue": "supplier-orders",
+        "driver": "database",
+        "pending_probe_id": null,
+        "completed_probe_id": "59624d6f-2256-4982-bf2a-9a728a259efd",
+        "last_completed_at": "2026-10-27 23:20:14.000000",
+        "queue_latency_seconds": 1,
+        "pending_since": null,
+        "status": "healthy",
+        "reason_code": "fresh_evidence",
+        "age_seconds": 7
+      },
+      {
+        "threshold_seconds": 300,
+        "kind": "queue",
+        "connection": "database",
+        "queue": "economy",
+        "driver": "database",
+        "pending_probe_id": null,
+        "completed_probe_id": null,
+        "last_completed_at": null,
+        "queue_latency_seconds": null,
+        "pending_since": null,
+        "status": "blocked",
+        "reason_code": "operator_review_required"
+      },
+      {
+        "threshold_seconds": 300,
+        "kind": "queue",
+        "connection": "database",
+        "queue": "email-live",
+        "driver": "database",
+        "pending_probe_id": null,
+        "completed_probe_id": null,
+        "last_completed_at": null,
+        "queue_latency_seconds": null,
+        "pending_since": null,
+        "status": "blocked",
+        "reason_code": "operator_review_required"
+      },
+      {
+        "threshold_seconds": 300,
+        "kind": "queue",
+        "connection": "database",
+        "queue": "notifications",
+        "driver": "database",
+        "pending_probe_id": null,
+        "completed_probe_id": null,
+        "last_completed_at": null,
+        "queue_latency_seconds": null,
+        "pending_since": null,
+        "status": "blocked",
+        "reason_code": "operator_review_required"
+      }
+    ],
+    "coverage": "scheduler_tick_and_allowlisted_queue_probes_only",
+    "business_delivery_verified": false,
+    "runtime_key": "dev",
+    "thresholds": {
+      "scheduler_stale_seconds": 180,
+      "worker_stale_seconds": 300,
+      "probe_interval_seconds": 60
+    }
+  },
+  "domain_before": {
+    "at": "2026-10-27T22:47:52+00:00",
+    "environment": "local",
+    "config_cached": false,
+    "app_url": "https://dev.nexumpsa.eu",
+    "email": {
+      "overall": "error",
+      "items": [
+        {
+          "label": "Active accounts",
+          "status": "ok"
+        },
+        {
+          "label": "Ingest",
+          "status": "ok"
+        },
+        {
+          "label": "Scheduler poll",
+          "status": "ok"
+        },
+        {
+          "label": "Last fetch",
+          "status": "ok"
+        },
+        {
+          "label": "Account errors",
+          "status": "ok"
+        },
+        {
+          "label": "Queue worker",
+          "status": "error"
+        }
+      ]
+    },
+    "storage": {
+      "state": "disabled",
+      "runtime_mode": "off",
+      "scheduler": {
+        "healthy": true,
+        "last_heartbeat_at": "2026-10-27T22:47:31+00:00",
+        "age_seconds": 21
+      },
+      "worker": {
+        "healthy": true,
+        "last_heartbeat_at": "2026-10-27T22:47:37+00:00",
+        "age_seconds": 15,
+        "queue_latency_seconds": 2,
+        "latency_healthy": true
+      }
+    },
+    "pending": [
+      {
+        "queue": "default",
+        "count": 38,
+        "oldest": 1793140450,
+        "reserved_count": "0"
+      },
+      {
+        "queue": "email",
+        "count": 23,
+        "oldest": 1793140661,
+        "reserved_count": "0"
+      },
+      {
+        "queue": "email-live",
+        "count": 74794,
+        "oldest": 1788459302,
+        "reserved_count": "0"
+      },
+      {
+        "queue": "notifications",
+        "count": 69183,
+        "oldest": 1788459302,
+        "reserved_count": "0"
+      }
+    ],
+    "failed": [
+      {
+        "queue": "default",
+        "count": 4,
+        "oldest": "2026-09-03 18:15:04"
+      },
+      {
+        "queue": "email",
+        "count": 1,
+        "oldest": "2026-10-27 22:37:33"
+      }
+    ],
+    "health": {
+      "observed_at": "2026-10-27T22:48:05+00:00",
+      "status": "blocked",
+      "reason_code": "runtime_health_disabled",
+      "components": [],
+      "coverage": "scheduler_tick_and_allowlisted_queue_probes_only",
+      "business_delivery_verified": false
+    }
+  },
+  "domain_final": {
+    "at": "2026-10-27T23:16:24+00:00",
+    "environment": "local",
+    "config_cached": false,
+    "app_url": "https://dev.nexumpsa.eu",
+    "email": {
+      "overall": "error",
+      "items": [
+        {
+          "label": "Active accounts",
+          "status": "ok"
+        },
+        {
+          "label": "Ingest",
+          "status": "ok"
+        },
+        {
+          "label": "Scheduler poll",
+          "status": "ok"
+        },
+        {
+          "label": "Last fetch",
+          "status": "ok"
+        },
+        {
+          "label": "Account errors",
+          "status": "ok"
+        },
+        {
+          "label": "Queue worker",
+          "status": "error"
+        }
+      ]
+    },
+    "storage": {
+      "state": "disabled",
+      "runtime_mode": "off",
+      "scheduler": {
+        "healthy": true,
+        "last_heartbeat_at": "2026-10-27T23:15:24+00:00",
+        "age_seconds": 60
+      },
+      "worker": {
+        "healthy": true,
+        "last_heartbeat_at": "2026-10-27T23:14:24+00:00",
+        "age_seconds": 120,
+        "queue_latency_seconds": 9,
+        "latency_healthy": true
+      }
+    },
+    "pending": [
+      {
+        "queue": "default",
+        "count": 1,
+        "oldest": 1793142960,
+        "reserved_count": "0"
+      },
+      {
+        "queue": "email",
+        "count": 1,
+        "oldest": 1793142960,
+        "reserved_count": "0"
+      },
+      {
+        "queue": "email-live",
+        "count": 74814,
+        "oldest": 1788459302,
+        "reserved_count": "0"
+      },
+      {
+        "queue": "notifications",
+        "count": 69203,
+        "oldest": 1788459302,
+        "reserved_count": "0"
+      },
+      {
+        "queue": "supplier-orders",
+        "count": 1,
+        "oldest": 1793142981,
+        "reserved_count": "0"
+      }
+    ],
+    "failed": [
+      {
+        "queue": "default",
+        "count": 9,
+        "oldest": "2026-09-03 18:15:04"
+      },
+      {
+        "queue": "email",
+        "count": 1,
+        "oldest": "2026-10-27 22:37:33"
+      }
+    ],
+    "health": {
+      "observed_at": "2026-10-27T23:16:35+00:00",
+      "status": "blocked",
+      "reason_code": "component_blocked",
+      "components": [
+        {
+          "kind": "scheduler",
+          "last_observed_at": "2026-10-27 23:15:18.000000",
+          "status": "healthy",
+          "reason_code": "fresh_evidence",
+          "age_seconds": 77
+        },
+        {
+          "threshold_seconds": 300,
+          "kind": "queue",
+          "connection": "database",
+          "queue": "default",
+          "driver": "database",
+          "last_completed_at": "2026-10-27 23:15:19.000000",
+          "queue_latency_seconds": 1,
+          "pending_since": null,
+          "status": "healthy",
+          "reason_code": "fresh_evidence",
+          "age_seconds": 76
+        },
+        {
+          "threshold_seconds": 300,
+          "kind": "queue",
+          "connection": "database",
+          "queue": "email",
+          "driver": "database",
+          "last_completed_at": "2026-10-27 23:15:18.000000",
+          "queue_latency_seconds": 0,
+          "pending_since": null,
+          "status": "healthy",
+          "reason_code": "fresh_evidence",
+          "age_seconds": 77
+        },
+        {
+          "threshold_seconds": 300,
+          "kind": "queue",
+          "connection": "database",
+          "queue": "supplier-orders",
+          "driver": "database",
+          "last_completed_at": "2026-10-27 23:15:18.000000",
+          "queue_latency_seconds": 0,
+          "pending_since": null,
+          "status": "healthy",
+          "reason_code": "fresh_evidence",
+          "age_seconds": 77
+        },
+        {
+          "threshold_seconds": 300,
+          "kind": "queue",
+          "connection": "database",
+          "queue": "economy",
+          "driver": "database",
+          "last_completed_at": null,
+          "queue_latency_seconds": null,
+          "pending_since": null,
+          "status": "blocked",
+          "reason_code": "operator_review_required"
+        },
+        {
+          "threshold_seconds": 300,
+          "kind": "queue",
+          "connection": "database",
+          "queue": "email-live",
+          "driver": "database",
+          "last_completed_at": null,
+          "queue_latency_seconds": null,
+          "pending_since": null,
+          "status": "blocked",
+          "reason_code": "operator_review_required"
+        },
+        {
+          "threshold_seconds": 300,
+          "kind": "queue",
+          "connection": "database",
+          "queue": "notifications",
+          "driver": "database",
+          "last_completed_at": null,
+          "queue_latency_seconds": null,
+          "pending_since": null,
+          "status": "blocked",
+          "reason_code": "operator_review_required"
+        }
+      ],
+      "coverage": "scheduler_tick_and_allowlisted_queue_probes_only",
+      "business_delivery_verified": false,
+      "runtime_key": "dev",
+      "thresholds": {
+        "scheduler_stale_seconds": 180,
+        "worker_stale_seconds": 300,
+        "probe_interval_seconds": 60
+      }
+    }
+  },
+  "bookstack": [
+    {
+      "page": 367,
+      "revision": 11,
+      "exact_readback": true
+    },
+    {
+      "page": 424,
+      "revision": 34,
+      "exact_readback": true
+    }
+  ],
+  "staff_access": "Existing Editor /staff-internal read permission and page/chapter/book inheritance verified; unchanged.",
+  "http_smoke": {
+    "url": "https://dev.nexumpsa.eu/up",
+    "status": 200,
+    "certificate_validation": true
+  },
+  "logrotate": {
+    "path": "/etc/logrotate.d/nexum-tdpsa-runtime",
+    "sha256": "506f3d1ead3c6bf361a8416c45b25ca3c0ab13d5592443916baf8faca7cd6e92",
+    "debug_validation_exit": 0,
+    "os_timer_active": true,
+    "forced_rotation": false
+  },
+  "main_or_production_actions": false,
+  "historical_failed_retry_or_purge": false,
+  "human_review": {
+    "id": "HR-2026-10-27-OPS-RULES-COORDINATOR",
+    "status": "In Review"
+  },
+  "scoped_diff_check_exit": 0,
+  "github": {
+    "issue": 262,
+    "state": "open",
+    "comment_id": 6456083329,
+    "body_and_comment_read_back": true
+  }
+}

@@ -6,6 +6,7 @@ use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailHealthCheck;
 use App\Modules\Email\Services\EmailAccountProviderRuntimeResolver;
 use App\Modules\Email\Services\EmailTestService;
+use App\Modules\Integration\Exceptions\EmailProviderSecurityException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -19,6 +20,12 @@ class EmailAccountHealthCheckJob implements ShouldQueue
     // Must exceed the maximum 120-second provider deadline, five-second
     // cleanup grace, database persistence, and worker shutdown margin.
     public int $timeout = 240;
+
+    // Provider synchronization legitimately owns the same account lock. Defer only
+    // that transient contention, with finite attempts; other exceptions still fail once.
+    public int $tries = 20;
+
+    public int $maxExceptions = 1;
 
     public ?int $providerBindingVersion = null;
 
@@ -50,7 +57,16 @@ class EmailAccountHealthCheckJob implements ShouldQueue
             return;
         }
 
-        $result = $tester->run($account, $this->providerBindingVersion);
+        try {
+            $result = $tester->run($account, $this->providerBindingVersion);
+        } catch (EmailProviderSecurityException $error) {
+            if ($error->reasonCode !== 'provider_work_locked' || $this->attempts() >= $this->tries) {
+                throw $error;
+            }
+            $this->release(30);
+
+            return;
+        }
         $imapStatus = $result->imap_ok ? 'OK' : 'Error';
         $smtpStatus = $result->smtp_ok ? 'OK' : 'Error';
         $errorCode = $result->imap_error_code ?: $result->smtp_error_code;

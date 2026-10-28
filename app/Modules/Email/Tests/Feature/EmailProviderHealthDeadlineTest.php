@@ -226,6 +226,45 @@ class EmailProviderHealthDeadlineTest extends TestCase
         $this->assertDatabaseMissing('jobs', ['queue' => $queueName]);
     }
 
+    #[Test]
+    public function health_job_defers_provider_lock_contention_without_recording_a_false_check(): void
+    {
+        $account = $this->activeIntegrationAccount();
+        $tester = Mockery::mock(EmailTestService::class);
+        $tester->shouldReceive('run')->once()
+            ->andThrow(new EmailProviderSecurityException('provider_work_locked'));
+        $job = (new EmailAccountHealthCheckJob($account->id))->withFakeQueueInteractions();
+
+        $job->handle($tester);
+
+        $job->assertReleased(30);
+        $this->assertSame(0, EmailHealthCheck::query()->count());
+        $this->assertSame(20, $job->tries);
+        $this->assertSame(1, $job->maxExceptions);
+    }
+
+    #[Test]
+    public function health_job_retains_provider_denials_and_has_a_finite_lock_wait(): void
+    {
+        $account = $this->activeIntegrationAccount();
+        foreach (['provider_binding_stale', 'provider_work_locked'] as $reason) {
+            $tester = Mockery::mock(EmailTestService::class);
+            $tester->shouldReceive('run')->once()->andThrow(new EmailProviderSecurityException($reason));
+            $queueJob = Mockery::mock(\Illuminate\Contracts\Queue\Job::class);
+            $queueJob->shouldReceive('attempts')->andReturn(20);
+            $queueJob->shouldNotReceive('release');
+            $job = new EmailAccountHealthCheckJob($account->id);
+            $job->setJob($queueJob);
+            try {
+                $job->handle($tester);
+                $this->fail('Provider denials and exhausted lock waits must remain failures.');
+            } catch (EmailProviderSecurityException $error) {
+                $this->assertSame($reason, $error->reasonCode);
+            }
+        }
+        $this->assertSame(0, EmailHealthCheck::query()->count());
+    }
+
     private function activeIntegrationAccount(): EmailAccount
     {
         $id = (string) Str::uuid();

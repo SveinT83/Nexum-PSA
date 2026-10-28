@@ -40,7 +40,17 @@ class ProcessScheduledTickets implements ShouldQueue
 
         foreach ($dueSchedules as $schedule) {
             DB::transaction(function () use ($schedule) {
-                $ticket = $schedule->ticket;
+                // Match ordinary Ticket mutation lock order, then recheck the due row.
+                $ticket = Ticket::query()->whereKey($schedule->ticket_id)->lockForUpdate()->first();
+                if ($ticket === null) {
+                    return;
+                }
+                $schedule = TicketSchedule::query()->whereKey($schedule->id)->lockForUpdate()->first();
+                if ($schedule === null || $schedule->status !== 'scheduled'
+                    || $schedule->schedule_type !== 'one_time'
+                    || $schedule->planned_start_at->isFuture()) {
+                    return;
+                }
 
                 // Change status from 'scheduled' (usually hidden/pending) to initial 'new' status
                 $initialStatus = TicketStatus::query()->where('is_default', true)->first()
@@ -93,6 +103,7 @@ class ProcessScheduledTickets implements ShouldQueue
         while ($cursor->lte($lookAhead)) {
             if ($cursor->isPast()) {
                 $this->advanceCursor($cursor, $frequency);
+
                 continue;
             }
 
@@ -109,7 +120,9 @@ class ProcessScheduledTickets implements ShouldQueue
             $this->advanceCursor($cursor, $frequency);
 
             // Safety break to prevent infinite loops if RRULE is weird
-            if ($cursor->gt($lookAhead->copy()->addYears(1))) break;
+            if ($cursor->gt($lookAhead->copy()->addYears(1))) {
+                break;
+            }
         }
     }
 

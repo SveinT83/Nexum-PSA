@@ -1,5 +1,14 @@
 # tdPSA Development TODO
 
+## Runtime Health Main Promotion - Issue #262 (2026-10-28)
+
+Status: In Progress / Existing Dev Implementation Verified / Operational Issue Still Open.
+Owner: Codex / Svein Tore. The completed earlier session's owned hashes match current source.
+Current direct user authorization covers verified Main promotion. Exact scope and independent
+System/Notification integration checks: plans/2026-10-28-runtime-health-main-promotion.md.
+Keep current queue scope, cold/failed history and production unchanged.
+HR-2026-10-27-OPS-RULES-COORDINATOR In Review; final cohort/human acceptance remains required.
+
 ## Managed Web Push Setup - Issue #258 (2026-10-28)
 
 Status: Done On Dev / Merged To Main / Issue Closed Completed. Owner: Codex / Svein Tore.

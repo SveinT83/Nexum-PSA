@@ -20,6 +20,17 @@ class StoreScheduledTicketOccurrence
     public function handle(Ticket $parent, \Carbon\Carbon $plannedStart): Ticket
     {
         return DB::transaction(function () use ($parent, $plannedStart) {
+            // Serialize by parent before checking the occurrence identity. Scheduler and
+            // transport retries must not clone a second Ticket, note or Task group.
+            $parent = Ticket::query()->whereKey($parent->id)->lockForUpdate()->firstOrFail();
+            $existing = Ticket::withTrashed()
+                ->where('metadata->parent_ticket_id', $parent->id)
+                ->where('metadata->occurrence_planned_start', $plannedStart->toISOString())
+                ->first();
+            if ($existing !== null) {
+                // A deliberately removed occurrence keeps its identity and is not recreated.
+                return $existing;
+            }
             $schedule = $parent->schedule()->with('taskTemplateGroup')->first();
 
             $actor = $parent->created_by
