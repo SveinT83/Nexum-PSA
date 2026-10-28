@@ -13410,3 +13410,9 @@ Issue #262 stays open: named cold/failed-cohort disposition, duplicate-path oper
 and HR-2026-10-27-OPS-RULES-COORDINATOR (In Review) remain. Comment 6460873462 and Issue body Main
 status were independently read back. No cron/configuration/worker scope, historical job or
 production runtime changed in this promotion. Deployment defaults remain disabled/empty-scoped.
+
+
+Issue #285 source-only Main promotion is explicitly authorized (2026-10-28).
+Fresh UI/runtime regressions and current Main checks are recorded in
+plans/2026-10-28-ticket-rule-ui-main-promotion.md. The existing OPS checklist stays In Review;
+manual desktop/mobile and exact production match/non-match acceptance remain separate.

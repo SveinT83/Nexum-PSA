@@ -121,7 +121,12 @@
                     <tbody>
                         @forelse($rules as $rule)
                             @php
-                                $definition = (array) $rule->publishedVersion?->definition_json;
+                                // Saved drafts are editorial state; published versions remain runtime authority.
+                                $draftDefinition = data_get($rule->draft_payload_json, 'definition');
+                                $hasDraftDefinition = is_array($draftDefinition);
+                                $definition = $hasDraftDefinition
+                                    ? $draftDefinition
+                                    : (array) $rule->publishedVersion?->definition_json;
                                 $thenActions = $definition !== []
                                     ? (array) ($definition['then_actions'] ?? [])
                                     : (array) $rule->actions_json;
@@ -142,7 +147,10 @@
                             @endphp
                             <tr>
                                 <td>
-                                    <div class="fw-semibold">{{ $rule->name }}</div>
+                                    <div class="fw-semibold">{{ data_get($rule->draft_payload_json, 'name', $rule->name) }}</div>
+                                    @if($hasDraftDefinition && $rule->publishedVersion)
+                                        <div class="small text-muted">Published: {{ $rule->publishedVersion->name }}</div>
+                                    @endif
                                     <div class="small text-muted">
                                         Weight {{ $rule->publishedVersion?->weight ?? $rule->weight }}
                                         · ID {{ $rule->id }}
@@ -173,6 +181,7 @@
                                     @endif
                                 </td>
                                 <td>
+                                    <div class="small text-muted">{{ $hasDraftDefinition ? 'Draft definition' : ($rule->publishedVersion ? 'Published definition' : 'Legacy definition') }}</div>
                                     <div>{{ Str::headline(str_replace('ticket.', '', (string) $trigger)) }}</div>
                                     <div class="small text-muted">Then {{ $thenCount }} · Else {{ $elseCount }}</div>
                                     <div class="small text-muted">Flow: {{ $stopProcessing ? 'Stop' : 'Continue' }}</div>

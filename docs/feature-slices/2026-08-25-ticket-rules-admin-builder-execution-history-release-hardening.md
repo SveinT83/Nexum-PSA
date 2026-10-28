@@ -9,7 +9,7 @@ Parent: ../rfc/2026-08-25-ticket-rules-triggers-actions-execution.md (Slice 6)
 Owner: Svein / Codex
 Related ADR: ../adr/2026-08-25-ticket-rule-versioning-authority-execution-boundary.md
 Related issue: GitHub #231
-Human review: [HR-2026-08-25-013](../human-review.md#hr-2026-08-25-013-ticket-rules-triggers-actions-and-audited-execution) (Pending)
+Human review: [HR-2026-08-25-013](../human-review.md#hr-2026-08-25-013-ticket-rules-triggers-actions-and-audited-execution) (Reviewed by Svein on 2026-08-26)
 
 ## Goal
 
@@ -176,7 +176,7 @@ through a separately authorized, current-state-validated operation. Customers se
 
 The Slice 6 implementation and automated Dev verification are complete on authoritative Dev.
 Authenticated builder interaction and responsive/keyboard/touch review remain named human checks
-under Pending checklist `HR-2026-08-25-013`; they do not authorize runtime activation or release.
+under the checklist subsequently Reviewed by Svein on 2026-08-26, `HR-2026-08-25-013`; they do not authorize runtime activation or release.
 
 - The final post-format Issue #231 plus Workflow matrix passes 198 tests / 2,419 assertions in
   106.37 seconds. The earlier complete Issue-only matrix passes 173 / 2,128 in 95.31 seconds.
@@ -226,13 +226,13 @@ under Pending checklist `HR-2026-08-25-013`; they do not authorize runtime activ
   Blade was recached.
 - The in-app browser loaded `nexum-psa.local`; the direct Ticket Rules URL redirected to
   `/login` because no authenticated session was available. Authenticated interaction,
-  responsive, keyboard, and touch verification therefore remains in the Pending human review.
+  responsive, keyboard, and touch verification was subsequently approved by Svein on 2026-08-26.
 - Publish creates an immutable schema-2 version but preserves inactive state. Separate enable/disable
   requires active v2 capability and authority, manage plus publish permissions, immutable
   checksum/eligibility, and current actor/target checks. Schema-1 compatibility toggles remain on the
   legacy boundary.
 - Runtime authority remains `legacy`; v2, every trigger/action/Custom Field capability, and full
-  rerun remain off. Human review `HR-2026-08-25-013` remains Pending.
+  rerun remain off. Human review `HR-2026-08-25-013` was Reviewed by Svein on 2026-08-26. Production activation remains separate under Issue #285.
 
 ## Dependencies And Rollback
 
