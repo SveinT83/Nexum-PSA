@@ -1,7 +1,7 @@
 # Ticket/Task API: scoped Main promotion
 
 Date: 2026-10-28. Owner: Codex. Named approval and release owner: Svein Tore.
-Status: approved Main candidate; automated verification in progress.
+Status: source merged and independently verified on Main in PR #379; operational human review and production release remain separate.
 
 ## Authority and exact scope
 
@@ -108,3 +108,20 @@ Unauthenticated /api/v1/tasks/docs with Accept: text/markdown returns JSON HTTP 
 Authenticated success, exact source bytes, byte ranges and current-role/scope denials are
 verified with isolated synthetic HTTP feature tests; no real token grants or provider actions
 were changed. These are Dev observations, not production deployment evidence.
+
+## Verified Main result
+
+PR #379: https://github.com/SveinT83/Nexum-PSA/pull/379
+Main merge: f949c346347a037ea6e28a4a50e1f62bb0b9da48
+Tested candidate: 3caa463029925b6245c7805370af1fefa916b629
+Independently fetched merge tree: c55fc241f284f146193121245aaa820189195427 (exactly equals the tested candidate tree).
+GitHub reported no check runs or external statuses on the exact PR head. The merge used an
+expected-head guard and no administrative bypass. Main is verified; this task did not deploy
+or verify production, activate providers/runtime gates or publish BookStack articles.
+
+Relevant open manual review entries remain unchanged: HR-2026-10-20-TICKET-TASK-API,
+HR-2026-09-03-001 (Task Templates), HR-2026-09-04-001 (Knowledge revision/publication),
+HR-2026-10-27-RELATIONSHIP-API, HR-2026-10-27-CUSTOM-FIELD-API and
+HR-2026-10-28-TASK-TICKET-MARKDOWN are Pending; HR-2026-10-27-OPS-RULES-COORDINATOR
+is In Review. The earlier Stopwatch and Ticket Rules review entries remain Reviewed.
+The separately approved Main merge does not mark any of these pending scenarios performed.

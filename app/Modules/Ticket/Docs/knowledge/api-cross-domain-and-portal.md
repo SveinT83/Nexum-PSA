@@ -1,4 +1,4 @@
-Availability: Dev implementation verified on 2026-10-20; scoped Main merge approved by Svein Tore on 2026-10-28. Production deployment and BookStack publication are separate, unverified steps for this API delivery. HR-2026-10-20-TICKET-TASK-API remains Pending for operational human checks; Main approval does not mark them performed.
+Availability: implemented and verified on Dev; source merged to Main in PR #379 on 2026-10-28. Production deployment and exact BookStack article/access read-back are not verified for this delivery. HR-2026-10-20-TICKET-TASK-API remains Pending for operational human checks.
 
 ## Merge and lifecycle
 

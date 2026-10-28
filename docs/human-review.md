@@ -13464,7 +13464,7 @@ Status: Pending
 Owner: Codex; named human reviewer: Svein Tore. Main promotion explicitly approved 2026-10-28; individual operational checks remain unconfirmed.
 Parent: rfc/2026-10-20-ticket-task-full-api-parity.md
 Scope: All ten approved slices, 41 functional groups, 130 browser routes, 63 Livewire public methods and 217 API HTTP
-operations (114 reads and 103 writes/actions). Code is implemented on authoritative Dev.
+operations (114 reads and 103 writes/actions). Code is implemented on authoritative Dev and merged to Main in PR #379.
 Svein Tore explicitly approved Main promotion on 2026-10-28 ("Godkjenenr og merge"). That approval permits this scoped merge; remaining manual/provider/deployment/release checks below are not inferred complete. RFC approval authorizes coding;
 passing automated tests does not complete this named human review.
 
@@ -13522,3 +13522,5 @@ open. Only explicit confirmation from Svein may change this entry to Reviewed.
 Promotion record: plans/2026-10-28-ticket-task-api-main-promotion.md.
 
 2026-10-28 current-Main verification: Dev 582 tests / 47,313 assertions; Main candidate 581 / 47,309. All 177 changed PHP files pass lint. The two previously time-limited schema scans are fully rechecked with the established 600-second budget; all assertions remain. Task Docs native/API exact Markdown bytes, range headers and token/current-actor denials pass; all 130 browser routes and 63 component methods have named API/test/read-back counterparts. Production no-dev sentinel scans pass. No production deployment or manual checkbox completion is inferred.
+
+Verified Main source (2026-10-28): PR #379, f949c346347a037ea6e28a4a50e1f62bb0b9da48, exact tested tree c55fc241f284f146193121245aaa820189195427. All operational checkboxes remain open; production deployment/release and exact BookStack article/access read-back remain separate.

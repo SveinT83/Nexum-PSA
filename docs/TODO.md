@@ -3,7 +3,7 @@
 
 ## Ticket and Task complete API parity (2026-10-20)
 
-Status: Main Promotion Approved By Svein Tore (2026-10-28); isolated current-Main verification in progress. Human operational checks and handbook publication remain separate.
+Status: Merged And Independently Verified On Main In PR #379 (2026-10-28). Human operational checks, production deployment and handbook publication remain separate.
 Owner: Codex; reviewer/promotion owner: Svein Tore. Approved parent:
 rfc/2026-10-20-ticket-task-full-api-parity.md. All ten slices and all 41 baseline functional groups
 are implemented, including full reads/writes/actions and legacy workflow operations.
@@ -36,6 +36,8 @@ Promotion record: plans/2026-10-28-ticket-task-api-main-promotion.md.
 
 
 Current 2026-10-28 verification: Dev 582 tests / 47,313 assertions; isolated Main 581 / 47,309. All 177 changed PHP files pass lint. GET tasks/docs closes the raw Markdown source gap; 14 retry/draft conflicts now have explicit Swagger 409 contracts. Current route/component classifications, exact API counterparts, scopes, schemas, test and read-back links are in plans/2026-10-28-ticket-task-api-coverage.md and the expanded JSON matrix. Earlier scan time limits are resolved by the full 600-second checks.
+
+Verified Main merge: f949c346347a037ea6e28a4a50e1f62bb0b9da48; exact tested tree c55fc241f284f146193121245aaa820189195427. The scoped API source is on Main; no production deployment or BookStack publication was performed by this task.
 
 ## Audited Issue Completion And Remaining Decisions (2026-10-28)
 

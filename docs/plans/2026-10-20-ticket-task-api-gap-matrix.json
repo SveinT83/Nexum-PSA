@@ -1,7 +1,7 @@
 {
   "metadata": {
     "date": "2026-10-28",
-    "projection": "Isolated current-Main candidate; authoritative implementation on Dev",
+    "projection": "Verified Main source from PR #379; production remains separate",
     "main_base": "81d1eb2a59ceabc0b36d4d65721cad6f7658f5ca",
     "browser_route_rows": 130,
     "api_route_rows": 215,
@@ -70,6 +70,12 @@
         "human_review": "Pending",
         "bookstack_publication": "Blocked"
       }
+    },
+    "main_merge": {
+      "pull_request": 379,
+      "sha": "f949c346347a037ea6e28a4a50e1f62bb0b9da48",
+      "tree": "c55fc241f284f146193121245aaa820189195427",
+      "exact_tested_tree": true
     }
   },
   "functional_matrix": [
