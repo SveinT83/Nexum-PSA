@@ -1,6 +1,6 @@
-Availability: the full Storage API is present on Main. Canonical numbering is verified on Dev
-on 2026-10-28 and its Main promotion is tracked with Issue #286. Production deployment and
-the human scenario checklist remain separate gates.
+Availability: the full Storage API and canonical numbering are verified on Dev and present
+on Main (numbering PR #377, 2026-10-28). Production deployment and the human scenario
+checklist remain separate gates. Production numbering has not been changed by this work.
 Use this guide only against an installation where this API update is deployed.
 
 ## Prerequisites

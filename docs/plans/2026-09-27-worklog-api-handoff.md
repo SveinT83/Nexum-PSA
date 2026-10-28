@@ -3,6 +3,17 @@
 Status: implemented and verified on authoritative Dev; production export NOT verified.
 Date: 2026-09-27. Scope approved by Svein in this conversation.
 
+## Current Reconciliation (2026-10-28)
+
+The historical snapshot below is retained. Issue #289 is now closed completed: trusted production
+OpenAPI publishes both Worklog paths and the exact completeness/scopes/profile/denial contracts.
+Production's safe local version query reports cb41582026166bfa7c2d51c545f5e16b67e99df6;
+five deployed source hashes match it and current Main. Fresh Dev contract/build tests pass 3/34.
+Completion comment 6462326799 and closed state were independently read back. No production
+code/configuration/grant changed. #288's positive deployed fixture and #290's legitimate narrow
+workload scenario remain open. This is not a production time export or human-review approval.
+See 2026-10-28-issue-reconciliation-and-main-status.md for current per-Issue gates.
+
 ## Outcome by need
 
 | Need | Classification and Dev result | Production / next gate |

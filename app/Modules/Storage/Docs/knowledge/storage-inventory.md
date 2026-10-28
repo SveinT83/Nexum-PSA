@@ -171,14 +171,15 @@ required token scopes and current user permissions, supplier lookup, inventory a
 incoming quantities, purchasing/receiving, picking, import review, profiles and
 settings. Full API code is present on Main; production deployment and named human review
 remain separate gates. See **Storage Inventory -> Storage API guide** in the handbook and Swagger on
-the target installation. Canonical numbering is verified on Dev under Issue #286; check the target installation's
-deployment before relying on this update.
+the target installation. Canonical numbering is verified on Dev and merged to Main in PR #377 under Issue #286.
+Production deployment and HR-2026-10-28-PO-NUMBERING manual acceptance remain pending;
+check the target installation before relying on this update.
 
 ## Storage API Guide
 
-Availability: the full Storage API is present on Main. Canonical numbering is verified on Dev
-on 2026-10-28 and its Main promotion is tracked with Issue #286. Production deployment and
-the human scenario checklist remain separate gates.
+Availability: the full Storage API and canonical numbering are verified on Dev and present
+on Main (numbering PR #377, 2026-10-28). Production deployment and the human scenario
+checklist remain separate gates. Production numbering has not been changed by this work.
 Use this guide only against an installation where this API update is deployed.
 
 ## Prerequisites
