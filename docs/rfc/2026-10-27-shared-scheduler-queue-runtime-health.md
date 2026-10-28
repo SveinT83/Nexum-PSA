@@ -142,3 +142,23 @@ Approved by Svein Tore on 2026-10-27 in this conversation: "Ja godkjenner" in di
 ## Implementation Status (2026-10-28)
 
 Implemented and verified on authoritative Dev under the explicit approval above. Detailed sequential slice status: ../feature-slices/2026-10-28-shared-runtime-health-reconciliation.md. Verification: ../plans/2026-10-28-runtime-health-verification.md. The earlier privileged inventory gap is resolved. Two forward migrations create the metadata table and add queue latency; deployment defaults remain off, while the approved Dev profile is active for existing owned queues only. Final cold/failed-cohort recovery and named human acceptance remain outstanding; no Main, production or autonomous activation is implied.
+
+
+## Authorized Main Promotion (2026-10-28)
+
+Svein separately requested "Fix alt og merge til main". The source-only promotion extends the
+earlier Dev approval without approving cold/failed cohorts or production.
+
+Verified Main: PR #372, a5ad470991d84a487e574fb901bba910c11c8d84; independent exact tested tree
+6c1695a0107aa8e1a76c21af2f359d0d0e7ea70e. Dev 22/169; latest-Main matrix 139/7321, all passing.
+Nineteen PHP syntax checks, XML and scoped whitespace pass. No full application suite was run.
+All promoted runtime/Ticket/Email code matched the completed owner's final snapshot; Dev branch,
+index and unrelated staged Storage work were preserved.
+Actual BookStack Main sections 367/12 and 424/35 were independently read back with inherited access
+preserved. System Knowledge 79 revision 214 matches source/access; native sync remains pending_push.
+No new Ticket Knowledge article was invented; its authoritative source guide and actual BookStack
+runtime section were updated. Unrelated older Ticket-handbook paragraphs remain a #265 follow-up.
+Issue #262 stays open: named cold/failed-cohort disposition, duplicate-path operating acceptance
+and HR-2026-10-27-OPS-RULES-COORDINATOR (In Review) remain. Comment 6460873462 and Issue body Main
+status were independently read back. No cron/configuration/worker scope, historical job or
+production runtime changed in this promotion. Deployment defaults remain disabled/empty-scoped.

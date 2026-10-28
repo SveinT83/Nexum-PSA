@@ -2,12 +2,21 @@
 
 ## Runtime Health Main Promotion - Issue #262 (2026-10-28)
 
-Status: In Progress / Existing Dev Implementation Verified / Operational Issue Still Open.
-Owner: Codex / Svein Tore. The completed earlier session's owned hashes match current source.
-Current direct user authorization covers verified Main promotion. Exact scope and independent
-System/Notification integration checks: plans/2026-10-28-runtime-health-main-promotion.md.
-Keep current queue scope, cold/failed history and production unchanged.
-HR-2026-10-27-OPS-RULES-COORDINATOR In Review; final cohort/human acceptance remains required.
+Status: Done On Dev / Merged To Main / Operational Issue Still Open. Owner: Codex / Svein Tore.
+Verified Main: PR #372, a5ad470991d84a487e574fb901bba910c11c8d84; independent exact tested tree
+6c1695a0107aa8e1a76c21af2f359d0d0e7ea70e. Dev 22/169; latest-Main matrix 139/7321, all passing.
+Nineteen PHP syntax checks, XML and scoped whitespace pass. No full application suite was run.
+All promoted runtime/Ticket/Email code matched the completed owner's final snapshot; Dev branch,
+index and unrelated staged Storage work were preserved.
+Actual BookStack Main sections 367/12 and 424/35 were independently read back with inherited access
+preserved. System Knowledge 79 revision 214 matches source/access; native sync remains pending_push.
+No new Ticket Knowledge article was invented; its authoritative source guide and actual BookStack
+runtime section were updated. Unrelated older Ticket-handbook paragraphs remain a #265 follow-up.
+Issue #262 stays open: named cold/failed-cohort disposition, duplicate-path operating acceptance
+and HR-2026-10-27-OPS-RULES-COORDINATOR (In Review) remain. Comment 6460873462 and Issue body Main
+status were independently read back. No cron/configuration/worker scope, historical job or
+production runtime changed in this promotion. Deployment defaults remain disabled/empty-scoped.
+
 
 ## Managed Web Push Setup - Issue #258 (2026-10-28)
 
@@ -23,11 +32,12 @@ BookStack 383/12 and 516/7 exact Main sections/access read back; native Knowledg
 213/212 match source/access. Native sync remains pending_push; direct BookStack content is verified.
 RFC/ADR 2026-10-28-managed-webpush-setup / installation-owned-managed-webpush; WP1-WP3 Done.
 Runbook: docs/deployment/managed-webpush-setup-and-recovery.md.
-System #262 integration is consumed read-only and is absent from this Main baseline; the wizard
-explains that requirement and blocks activation rather than importing another owner's unfinished
-provider/scopes. Existing environment-only behavior remains available.
+System #262 integration is now available on Main through PR #372 and remains read-only here.
+Its deployment health switch/scope, protected installation support and fresh worker evidence
+remain explicit prerequisites; no operator activation is inferred. Existing environment-only behavior remains available.
 HR-2026-10-28-WEBPUSH-SETUP Pending before production installation/whole-worker attestation,
 activation and real-browser proof. Main merge does not claim or authorize those checks.
+
 
 ## Per-Connection Talk Notification Destinations - Issue #205 (2026-10-28)
 
