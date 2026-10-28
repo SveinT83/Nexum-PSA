@@ -13,7 +13,7 @@ class RunTaskTemplateSchedule
 {
     public function __construct(private readonly ApplyTaskTemplate $templates) {}
 
-    public function handle(TaskRecurringTemplate $schedule, ?CarbonInterface $scheduledFor = null, bool $manual = false): TaskTemplateRun
+    public function handle(TaskRecurringTemplate $schedule, ?CarbonInterface $scheduledFor = null, bool $manual = false, ?string $manualIdempotencyKey = null, array $manualContext = []): TaskTemplateRun
     {
         $schedule->loadMissing(['templateGroup', 'owner', 'creator']);
         if (! $schedule->is_active || ! $schedule->templateGroup?->is_active) {
@@ -25,7 +25,7 @@ class RunTaskTemplateSchedule
 
         $occurrence = ($scheduledFor ?: now())->copy();
         $key = $manual
-            ? 'task-schedule:'.$schedule->id.':manual:'.str()->uuid()
+            ? ($manualIdempotencyKey ?? 'task-schedule:'.$schedule->id.':manual:'.str()->uuid())
             : 'task-schedule:'.$schedule->id.':'.$occurrence->utc()->format('YmdHis');
 
         try {
@@ -42,6 +42,8 @@ class RunTaskTemplateSchedule
                     'anchor_at' => $occurrence,
                     'due_offset_minutes' => $schedule->due_offset_minutes,
                     'assigned_to' => $schedule->assigned_to,
+                    '_expected_template_snapshot' => $manualContext['expected_template_snapshot'] ?? null,
+                    'metadata' => $manualContext['metadata'] ?? null,
                 ],
             );
             $schedule->forceFill([

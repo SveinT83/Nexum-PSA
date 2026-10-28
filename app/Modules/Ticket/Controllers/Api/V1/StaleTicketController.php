@@ -10,14 +10,16 @@ use App\Modules\Ticket\Models\Ticket;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use OpenApi\Attributes as OA;
 
 class StaleTicketController extends Controller
 {
+    #[OA\Get(path: '/api/v1/tickets/stale', operationId: 'ticketStaleTicketControllerindexGet', description: 'Pseudonymized coordinator contract. Requires a bound, usable read-only workload token, permitted networks, current policy/budgets and actor rights. Broad/write tokens are rejected. It does not expose customer content or replace ordinary operational API access.', security: [['bearerAuth' => []]], tags: ['Tickets'], parameters: [new OA\Parameter(name: 'stale_days', in: 'query', schema: new OA\Schema(type: 'integer', nullable: true, minimum: 1, maximum: 365)), new OA\Parameter(name: 'page', in: 'query', schema: new OA\Schema(type: 'integer', nullable: true, minimum: 1)), new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer', nullable: true, minimum: 1))], x: ['required-scopes' => ['tickets.read'], 'domain-permissions' => 'ticket.view', 'additional-domain-permissions' => []], responses: [new OA\Response(response: 200, description: 'Persisted domain result', content: new OA\JsonContent(type: 'object', properties: [new OA\Property(property: 'data', type: 'array', items: new OA\Items(ref: '#/components/schemas/StaleTicketApiRecord')), new OA\Property(property: 'meta', ref: '#/components/schemas/CoordinatorResultMeta')], required: ['data', 'meta'])), new OA\Response(response: 401, description: 'Authentication, current permission, context, stale state or validation failure', content: new OA\JsonContent(ref: '#/components/schemas/ParityReadError')), new OA\Response(response: 403, description: 'Authentication, current permission, context, stale state or validation failure', content: new OA\JsonContent(ref: '#/components/schemas/ParityReadError')), new OA\Response(response: 404, description: 'Authentication, current permission, context, stale state or validation failure', content: new OA\JsonContent(ref: '#/components/schemas/ParityReadError')), new OA\Response(response: 409, description: 'Authentication, current permission, context, stale state or validation failure', content: new OA\JsonContent(ref: '#/components/schemas/ParityReadError')), new OA\Response(response: 422, description: 'Authentication, current permission, context, stale state or validation failure', content: new OA\JsonContent(ref: '#/components/schemas/ParityReadError')), new OA\Response(response: 429, description: 'Authentication, current permission, context, stale state or validation failure', content: new OA\JsonContent(ref: '#/components/schemas/ParityReadError'))])]
     public function index(Request $request, CoordinatorPseudonymizer $aliases): JsonResponse
     {
         abort_unless($request->user()?->can('ticket.view'), 403);
         $limits = $request->attributes->get('coordinator_policy_limits');
-        $validated = $request->validate([
+        $validated = \App\Modules\Integration\Support\DomainApiInput::validate($request, [
             'stale_days' => ['nullable', 'integer', 'min:1', 'max:365'],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:'.$limits['maximum_page_size']],

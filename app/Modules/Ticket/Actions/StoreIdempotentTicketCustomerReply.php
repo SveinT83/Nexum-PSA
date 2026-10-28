@@ -26,6 +26,7 @@ class StoreIdempotentTicketCustomerReply
     public function handle(Ticket $ticket, array $data, ?User $actor): array
     {
         $this->authorize($actor);
+        app(\App\Modules\Ticket\Services\TicketMutationScopeGuard::class)->assert($ticket);
 
         $key = (string) $data['idempotency_key'];
         $fingerprint = $this->fingerprint($data);
@@ -124,11 +125,17 @@ class StoreIdempotentTicketCustomerReply
             ->values()
             ->all();
 
-        return hash('sha256', json_encode([
+        $payload = [
             'body' => (string) $data['body'],
             'reply_intent' => (string) ($data['reply_intent'] ?? TicketAction::CUSTOMER_UPDATE),
             'reply_contact_id' => isset($data['reply_contact_id']) ? (int) $data['reply_contact_id'] : null,
             'cc' => $cc,
-        ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        ];
+        // Preserve existing no-file fingerprints, including previously persisted retry keys.
+        if (! empty($data['attachments'])) {
+            $payload['attachments'] = \App\Modules\Ticket\Support\TicketMessageFingerprint::attachments($data['attachments']);
+        }
+
+        return hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
     }
 }

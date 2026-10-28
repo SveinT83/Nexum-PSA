@@ -21,6 +21,7 @@ class TicketMessageResource extends JsonResource
             'body' => $this->body,
             'metadata' => $this->metadata,
             'idempotency_key' => $this->idempotency_key,
+            'attachments' => TicketAttachmentResource::collection($this->fileAttachments()->where('ticket_id', $this->ticket_id)->with('ticket')->get()),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
             'links' => [

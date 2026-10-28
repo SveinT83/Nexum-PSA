@@ -49,10 +49,10 @@ class TaskTemplateController extends Controller
     public function store(Request $request)
     {
         $this->manage($request);
-        $template = TaskTemplateGroup::query()->create($this->templateData($request));
-
+        $template = app(\App\Modules\Task\Actions\SaveTaskTemplateGroup::class)->handle($this->templateData($request), $request->user());
         return redirect()->route('tech.admin.task-templates.show', $template)->with('success', 'Task template created.');
     }
+
 
     public function edit(Request $request, TaskTemplateGroup $template)
     {
@@ -64,10 +64,10 @@ class TaskTemplateController extends Controller
     public function update(Request $request, TaskTemplateGroup $template)
     {
         $this->manage($request);
-        $template->update($this->templateData($request, $template));
-
+        app(\App\Modules\Task\Actions\SaveTaskTemplateGroup::class)->handle($this->templateData($request, $template), $request->user(), $template);
         return redirect()->route('tech.admin.task-templates.show', $template)->with('success', 'Task template updated. Future applications use these values.');
     }
+
 
     public function show(Request $request, TaskTemplateGroup $template)
     {
@@ -87,103 +87,59 @@ class TaskTemplateController extends Controller
     public function destroy(Request $request, TaskTemplateGroup $template)
     {
         $this->manage($request);
-        if ($template->runs()->exists() || $template->recurringTemplates()->exists()) {
-            return back()->withErrors(['template' => 'Deactivate a used or scheduled template instead of deleting it.']);
-        }
-        $template->delete();
-
+        app(\App\Modules\Task\Actions\DeleteTaskTemplateGroup::class)->handle($template, $request->user());
         return redirect()->route('tech.admin.task-templates.index')->with('success', 'Unused Task template deleted.');
     }
+
 
     public function storeItem(Request $request, TaskTemplateGroup $template, ValidateTaskTemplateGraph $graphs)
     {
         $this->manage($request);
-        $item = DB::transaction(function () use ($request, $template, $graphs): TaskTemplateItem {
-            $item = $template->allItems()->create($this->itemData($request, $template));
-            $this->syncItemDetails($item, $request, $template);
-            $graphs->handle($template->allItems()->with('dependencies')->get());
-
-            return $item;
-        });
-
-        return back()
-            ->with('success', 'Template Task added.')
-            ->with('expanded_template_item_id', $item->id);
+        $item = app(\App\Modules\Task\Actions\SaveTaskTemplateItem::class)->handle($template, $request);
+        return back()->with('success', 'Template Task added.')->with('expanded_template_item_id', $item->id);
     }
+
 
     public function updateItem(Request $request, TaskTemplateGroup $template, TaskTemplateItem $item, ValidateTaskTemplateGraph $graphs)
     {
         $this->manage($request);
-        abort_unless($item->template_group_id === $template->id, 404);
-        DB::transaction(function () use ($request, $template, $item, $graphs): void {
-            $item->update($this->itemData($request, $template, $item));
-            $this->syncItemDetails($item, $request, $template);
-            $graphs->handle($template->allItems()->with('dependencies')->get());
-        });
-
+        app(\App\Modules\Task\Actions\SaveTaskTemplateItem::class)->handle($template, $request, $item);
         return back()->with('success', 'Template Task updated.');
     }
+
 
     public function destroyItem(Request $request, TaskTemplateGroup $template, TaskTemplateItem $item)
     {
         $this->manage($request);
-        abort_unless($item->template_group_id === $template->id, 404);
-        if ($template->allItems()->where('parent_id', $item->id)->exists()
-            || TaskTemplateDependency::query()->where('depends_on_template_item_id', $item->id)->exists()) {
-            return back()->withErrors(['item' => 'Remove child and dependency references before deleting this Template Task.']);
-        }
-        $item->delete();
-
+        app(\App\Modules\Task\Actions\DeleteTaskTemplateItem::class)->handle($template, $item, $request->user());
         return back()->with('success', 'Template Task removed.');
     }
+
 
     public function storeSchedule(Request $request, TaskTemplateGroup $template)
     {
         $this->manage($request);
         $owner = $this->owner($request, false, ['user', 'client']);
-        $data = $this->scheduleData($request);
-        TaskRecurringTemplate::query()->create([
-            'template_group_id' => $template->id,
-            'name' => $data['schedule_name'],
-            'owner_type' => $owner->getMorphClass(),
-            'owner_id' => $owner->getKey(),
-            'created_by' => $request->user()->id,
-            'interval' => $data['interval'],
-            'timezone' => $data['timezone'],
-            'due_offset_minutes' => $data['due_offset_minutes'] ?? null,
-            'assigned_to' => $data['assigned_to'] ?? null,
-            'next_run_at' => CarbonImmutable::parse($data['next_run_at'], $data['timezone'])->utc(),
-            'is_active' => true,
-        ]);
-
+        app(\App\Modules\Task\Actions\SaveTaskRecurringSchedule::class)->handle($template, $owner, $this->scheduleData($request), $request->user());
         return back()->with('success', 'Recurring schedule created.');
     }
+
 
     public function updateSchedule(Request $request, TaskTemplateGroup $template, TaskRecurringTemplate $schedule)
     {
         $this->manage($request);
         $this->scheduleBelongsTo($template, $schedule);
         $owner = $this->owner($request, false, ['user', 'client']);
-        $data = $this->scheduleData($request);
-        $schedule->update([
-            'name' => $data['schedule_name'],
-            'owner_type' => $owner->getMorphClass(),
-            'owner_id' => $owner->getKey(),
-            'interval' => $data['interval'],
-            'timezone' => $data['timezone'],
-            'due_offset_minutes' => $data['due_offset_minutes'] ?? null,
-            'assigned_to' => $data['assigned_to'] ?? null,
-            'next_run_at' => CarbonImmutable::parse($data['next_run_at'], $data['timezone'])->utc(),
-        ]);
-
+        app(\App\Modules\Task\Actions\SaveTaskRecurringSchedule::class)->handle($template, $owner, $this->scheduleData($request), $request->user(), $schedule);
         return back()->with('success', 'Recurring schedule updated. Future runs use these values.');
     }
+
 
     public function toggleSchedule(Request $request, TaskTemplateGroup $template, TaskRecurringTemplate $schedule)
     {
         $this->manage($request);
         $this->scheduleBelongsTo($template, $schedule);
-        $schedule->update(['is_active' => ! $schedule->is_active]);
+        $schedule = app(\App\Modules\Task\Actions\SetTaskRecurringScheduleActive::class)->handle($template, $schedule, ! $schedule->is_active, $request->user());
 
         return back()->with('success', $schedule->is_active ? 'Recurring schedule activated.' : 'Recurring schedule deactivated.');
     }
@@ -192,7 +148,7 @@ class TaskTemplateController extends Controller
     {
         $this->manage($request);
         $this->scheduleBelongsTo($template, $schedule);
-        $schedule->delete();
+        app(\App\Modules\Task\Actions\DeleteTaskRecurringSchedule::class)->handle($template, $schedule, $request->user());
 
         return back()->with('success', 'Recurring schedule removed. Generation history was preserved.');
     }
@@ -201,7 +157,7 @@ class TaskTemplateController extends Controller
     {
         $this->manage($request);
         abort_unless($schedule->template_group_id === $template->id, 404);
-        $run = $runner->handle($schedule, now(), true);
+        $run = $runner->handle($schedule, now(), true, null, ['metadata' => ['manual_requested_by' => $request->user()->id]]);
 
         return redirect()->route('tech.admin.task-templates.show', $template)->with('success', "Generated {$run->task_count} Tasks.");
     }
@@ -241,8 +197,9 @@ class TaskTemplateController extends Controller
         $data = $request->validate([
             'idempotency_key' => ['required', 'string', 'max:191'],
             'anchor_at' => ['nullable', 'date'],
-            'assigned_to' => ['nullable', 'integer', Rule::exists('core_users', 'id')->where('status', User::STATUS_ACTIVE)],
+            'assigned_to' => ['nullable', 'integer', Rule::exists((new User)->getTable(), 'id')->where('status', User::STATUS_ACTIVE)],
         ]);
+        if (! empty($data['anchor_at'])) { $data['anchor_at'] = \Carbon\Carbon::parse($data['anchor_at']); }
         $run = $templates->handle($template, $request->user(), $owner, 'manual', $data['idempotency_key'], $data);
         $message = "Generated {$run->task_count} Tasks from {$template->name}.";
 
@@ -259,109 +216,44 @@ class TaskTemplateController extends Controller
 
     private function templateData(Request $request, ?TaskTemplateGroup $template = null): array
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255', Rule::unique('task_template_groups', 'slug')->ignore($template?->id)],
-            'description' => ['nullable', 'string', 'max:10000'],
-            'is_active' => ['nullable', 'boolean'],
-        ]);
-        $data['slug'] = filled($data['slug'] ?? null) ? Str::slug($data['slug']) : Str::slug($data['name']);
-        $data['is_active'] = $request->boolean('is_active');
-
-        return $data;
+        return app(\App\Modules\Task\Services\TaskTemplateForm::class)->templateData($request, $template);
     }
+
 
     private function itemData(Request $request, TaskTemplateGroup $template, ?TaskTemplateItem $item = null): array
     {
-        $data = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:10000'],
-            'parent_id' => ['nullable', 'integer', Rule::exists('task_template_items', 'id')->where('template_group_id', $template->id)],
-            'status_id' => ['nullable', 'integer', Rule::exists('task_statuses', 'id')->where('is_active', true)],
-            'queue_id' => ['nullable', 'integer', Rule::exists('ticket_queues', 'id')->where('is_active', true)],
-            'priority_id' => ['nullable', 'integer', Rule::exists('ticket_priorities', 'id')->where('is_active', true)],
-            'category_id' => ['nullable', 'integer', Rule::exists('categories', 'id')->where('is_active', true)],
-            'assigned_to' => ['nullable', 'integer', Rule::exists('core_users', 'id')->where('status', User::STATUS_ACTIVE)],
-            'estimated_minutes' => ['nullable', 'integer', 'min:1', 'max:10080'],
-            'due_offset_minutes' => ['nullable', 'integer', 'min:-525600', 'max:525600'],
-            'scheduled_start_offset_minutes' => ['nullable', 'integer', 'min:-525600', 'max:525600'],
-            'scheduled_end_offset_minutes' => ['nullable', 'integer', 'min:-525600', 'max:525600'],
-            'sort_order' => ['nullable', 'integer', 'min:0', 'max:100000'],
-            'blocks_owner_completion' => ['nullable', 'boolean'],
-            'checklist_text' => ['nullable', 'string', 'max:20000'],
-            'tag_names' => ['nullable', 'string', 'max:2000'],
-            'depends_on_ids' => ['nullable', 'array'],
-            'depends_on_ids.*' => ['integer', Rule::exists('task_template_items', 'id')->where('template_group_id', $template->id)],
-        ]);
-        if ($item && (int) ($data['parent_id'] ?? 0) === $item->id) {
-            abort(422, 'A Task cannot be its own parent.');
-        }
-
-        return collect($data)->only([
-            'title', 'description', 'parent_id', 'status_id', 'queue_id', 'priority_id', 'category_id', 'assigned_to', 'estimated_minutes', 'due_offset_minutes',
-            'scheduled_start_offset_minutes', 'scheduled_end_offset_minutes', 'sort_order', 'blocks_owner_completion',
-        ])->merge(['blocks_owner_completion' => $request->boolean('blocks_owner_completion')])->all();
+        return app(\App\Modules\Task\Services\TaskTemplateForm::class)->itemData($request, $template, $item);
     }
+
 
     private function syncItemDetails(TaskTemplateItem $item, Request $request, TaskTemplateGroup $template): void
     {
-        $item->checklistItems()->delete();
-        collect(preg_split('/\R/', (string) $request->input('checklist_text')))->map(fn ($line) => trim($line))->filter()
-            ->each(fn ($title, $index) => TaskTemplateChecklistItem::query()->create(['template_item_id' => $item->id, 'title' => $title, 'sort_order' => ($index + 1) * 10]));
-        $item->dependencies()->delete();
-        collect($request->input('depends_on_ids', []))->unique()->reject(fn ($id) => (int) $id === $item->id)
-            ->each(fn ($id) => TaskTemplateDependency::query()->create([
-                'template_item_id' => $item->id,
-                'depends_on_template_item_id' => $id,
-                'dependency_type' => TaskDependency::TYPE_BLOCKS_COMPLETION,
-                'is_required' => true,
-            ]));
-        $tagIds = collect(explode(',', (string) $request->input('tag_names')))->map(fn ($name) => trim($name))->filter()->unique()
-            ->map(fn ($name) => Tag::query()->firstOrCreate(['slug' => Str::slug($name)], ['name' => $name, 'active' => true])->id)->all();
-        $item->tags()->syncWithPivotValues($tagIds, ['module' => 'Task']);
+        app(\App\Modules\Task\Services\TaskTemplateForm::class)->syncItemDetails($item, $request, $template);
     }
+
 
     private function scheduleData(Request $request): array
     {
-        return $request->validate([
-            'schedule_name' => ['required', 'string', 'max:255'],
-            'interval' => ['required', Rule::in(['daily', 'weekly', 'monthly', 'quarterly'])],
-            'next_run_at' => ['required', 'date'],
-            'timezone' => ['required', 'timezone'],
-            'due_offset_minutes' => ['nullable', 'integer', 'min:-525600', 'max:525600'],
-            'assigned_to' => ['nullable', 'integer', Rule::exists('core_users', 'id')->where('status', User::STATUS_ACTIVE)],
-        ]);
+        return app(\App\Modules\Task\Services\TaskTemplateForm::class)->scheduleData($request);
     }
+
 
     private function scheduleBelongsTo(TaskTemplateGroup $template, TaskRecurringTemplate $schedule): void
     {
-        abort_unless($schedule->template_group_id === $template->id, 404);
+        app(\App\Modules\Task\Services\TaskTemplateForm::class)->scheduleBelongsTo($template, $schedule);
     }
+
 
     private function owner(Request $request, bool $authorizeVisibility = false, array $allowedOwnerTypes = ['user', 'client', 'ticket']): Model
     {
-        $data = $request->validate(['owner_type' => ['required', Rule::in($allowedOwnerTypes)], 'owner_id' => ['required', 'integer', 'min:1']]);
-        $owner = match ($data['owner_type']) {
-            'client' => Client::query()->where('active', true)->findOrFail($data['owner_id']),
-            'ticket' => Ticket::query()->findOrFail($data['owner_id']),
-            default => User::query()->where('status', User::STATUS_ACTIVE)->findOrFail($data['owner_id']),
-        };
-
-        if ($authorizeVisibility) {
-            $allowed = match ($data['owner_type']) {
-                'client' => $request->user()?->can('client.view'),
-                'ticket' => $request->user()?->can('ticket.view'),
-                default => (int) $request->user()?->id === (int) $owner->getKey()
-                    || $request->user()?->can('task.manage_templates'),
-            };
-            abort_unless($allowed, 403);
-        }
-
-        return $owner;
+        return app(\App\Modules\Task\Services\TaskTemplateForm::class)->owner($request, $authorizeVisibility, $allowedOwnerTypes);
     }
+
 
     private function manage(Request $request): void
     {
-        abort_unless($request->user()?->can('task.manage_templates'), 403);
+        app(\App\Modules\Task\Services\TaskTemplateForm::class)->manage($request);
     }
+
+
 }

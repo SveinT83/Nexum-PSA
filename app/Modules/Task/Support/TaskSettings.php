@@ -66,7 +66,8 @@ class TaskSettings
                 ->findOrFail($statusId);
 
             TaskStatus::query()->update(['is_default' => false]);
-            $status->forceFill(['is_default' => true])->save();
+            // The bulk reset bypasses this model's original attributes; reload before setting it again.
+            $status->refresh()->forceFill(['is_default' => true])->save();
         });
     }
 

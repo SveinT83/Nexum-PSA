@@ -67,7 +67,10 @@ class TicketMessageReadApiTest extends TestCase
             'body' => 'Other Ticket content.',
         ], $respondedAt);
 
-        Sanctum::actingAs(User::factory()->create(['status' => User::STATUS_ACTIVE]), ['tickets.read']);
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        \Spatie\Permission\Models\Permission::findOrCreate('ticket.view', 'web');
+        $user->givePermissionTo('ticket.view');
+        Sanctum::actingAs($user, ['tickets.read']);
 
         $response = $this->getJson(route('api.v1.tickets.messages.index', [
             'ticket' => $ticket,
@@ -117,7 +120,10 @@ class TicketMessageReadApiTest extends TestCase
     {
         $ticket = $this->createTicket('TD-2026-995243');
 
-        Sanctum::actingAs(User::factory()->create(['status' => User::STATUS_ACTIVE]), ['tickets.read']);
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        \Spatie\Permission\Models\Permission::findOrCreate('ticket.view', 'web');
+        $user->givePermissionTo('ticket.view');
+        Sanctum::actingAs($user, ['tickets.read']);
 
         $this->getJson(route('api.v1.tickets.messages.index', [
             'ticket' => $ticket,

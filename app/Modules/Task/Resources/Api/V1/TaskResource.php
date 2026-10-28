@@ -60,9 +60,13 @@ class TaskResource extends JsonResource
             'checklist_items' => $this->whenLoaded('checklistItems', fn () => $this->checklistItems->map(fn ($item) => [
                 'id' => $item->id,
                 'title' => $item->title,
+                'description' => $item->description,
                 'is_checked' => (bool) $item->is_checked,
+                'checked_by' => $item->checked_by,
+                'checked_at' => $item->checked_at,
                 'sort_order' => $item->sort_order,
             ])->values()),
+            'tags' => $this->whenLoaded('tags', fn () => $this->tags->map(fn ($tag) => $tag->only(['id', 'name', 'slug']))->values()),
             'metadata' => $this->metadata,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

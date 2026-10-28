@@ -73,206 +73,128 @@ class TicketSettingsController extends Controller
 
     public function storeQueue(Request $request): RedirectResponse
     {
-        $data = $this->validatedQueue($request);
-
-        TicketQueue::create($data);
-
-        $this->ensureSingleDefaultQueue();
-
+        app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->saveQueue($request);
         return back()->with('success', 'Ticket queue created.');
     }
 
+
     public function updateQueue(Request $request, TicketQueue $queue): RedirectResponse
     {
-        $queue->update($this->validatedQueue($request, $queue));
-
-        $this->ensureSingleDefaultQueue($queue);
-
+        app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->saveQueue($request, $queue);
         return back()->with('success', 'Ticket queue updated.');
     }
 
-    public function destroyQueue(TicketQueue $queue): RedirectResponse
+
+    public function destroyQueue(Request $request, TicketQueue $queue): RedirectResponse
     {
-        if ($queue->tickets()->exists() || $this->ticketRuleReferences('set_queue', $queue->id)) {
-            return back()->withErrors(['queue' => 'Queue cannot be deleted while tickets use it.']);
-        }
 
-        $queue->delete();
-
+        app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->deleteQueue($request, $queue);
         return back()->with('success', 'Ticket queue deleted.');
     }
 
+
     public function storeType(Request $request): RedirectResponse
     {
-        TicketType::create($this->validatedType($request));
-
+        app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->saveType($request);
         return back()->with('success', 'Ticket type created.');
     }
 
+
     public function updateType(Request $request, TicketType $type): RedirectResponse
     {
-        $type->update($this->validatedType($request, $type));
-
+        app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->saveType($request, $type);
         return back()->with('success', 'Ticket type updated.');
     }
 
-    public function destroyType(TicketType $type): RedirectResponse
+
+    public function destroyType(Request $request, TicketType $type): RedirectResponse
     {
-        if (! $type->is_deletable || $type->tickets()->exists() || $this->ticketRuleReferences('set_ticket_type', $type->id)) {
-            return back()->withErrors(['type' => 'Ticket type cannot be deleted while it is protected or in use.']);
-        }
 
-        $type->delete();
-
+        app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->deleteType($request, $type);
         return back()->with('success', 'Ticket type deleted.');
     }
 
+
     public function storeStatus(Request $request): RedirectResponse
     {
-        // Status records control lifecycle behavior, so default normalization stays in this controller.
-        $data = $this->validatedStatus($request);
-
-        TicketStatus::create($data);
-
-        $this->ensureSingleDefaultStatus();
-
+        app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->saveStatus($request);
         return back()->with('success', 'Ticket status created.');
     }
 
+
     public function updateStatus(Request $request, TicketStatus $status): RedirectResponse
     {
-        $status->update($this->validatedStatus($request, $status));
-
-        $this->ensureSingleDefaultStatus($status);
-
+        app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->saveStatus($request, $status);
         return back()->with('success', 'Ticket status updated.');
     }
 
-    public function destroyStatus(TicketStatus $status): RedirectResponse
+
+    public function destroyStatus(Request $request, TicketStatus $status): RedirectResponse
     {
-        if ($status->tickets()->exists()) {
-            return back()->withErrors(['status' => 'Ticket status cannot be deleted while tickets use it.']);
-        }
 
-        $status->delete();
-
+        app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->deleteStatus($request, $status);
         return back()->with('success', 'Ticket status deleted.');
     }
 
+
     public function storePriority(Request $request): RedirectResponse
     {
-        // Priority levels are shared by ticket sorting, forms, and Ticket Rule actions.
-        $data = $this->validatedPriority($request);
-
-        TicketPriority::create($data);
-
-        $this->ensureSingleDefaultPriority();
-
+        app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->savePriority($request);
         return back()->with('success', 'Ticket priority created.');
     }
 
+
     public function updatePriority(Request $request, TicketPriority $priority): RedirectResponse
     {
-        $priority->update($this->validatedPriority($request, $priority));
-
-        $this->ensureSingleDefaultPriority($priority);
-
+        app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->savePriority($request, $priority);
         return back()->with('success', 'Ticket priority updated.');
     }
 
-    public function destroyPriority(TicketPriority $priority): RedirectResponse
+
+    public function destroyPriority(Request $request, TicketPriority $priority): RedirectResponse
     {
-        if ($priority->tickets()->exists() || $this->ticketRuleReferences('set_priority', $priority->id)) {
-            return back()->withErrors(['priority' => 'Ticket priority cannot be deleted while tickets or rules use it.']);
-        }
 
-        $priority->delete();
-
+        app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->deletePriority($request, $priority);
         return back()->with('success', 'Ticket priority deleted.');
     }
+
 
     public function updateDefaultEmailAccount(
         Request $request,
         UpdateDefaultTicketEmailAccount $updateDefaultTicketEmailAccount
     ): RedirectResponse {
-        $data = $request->validate([
-            'email_account_id' => 'nullable|exists:email_accounts,id',
-        ]);
-
-        $selectedAccount = isset($data['email_account_id'])
-            ? EmailAccount::where('is_active', true)->findOrFail($data['email_account_id'])
-            : null;
-
-        $updateDefaultTicketEmailAccount->handle($selectedAccount);
-
+        app(\App\Modules\Ticket\Services\TicketSettingsEditor::class)->updateEmail($request);
         return back()->with('success', 'Default ticket email account updated.');
     }
 
+
     public function updateSolutionPolicy(Request $request, TicketSolutionPolicy $solutionPolicy): RedirectResponse
     {
-        $data = $request->validate([
-            'allow_internal_solution_notes' => 'nullable|boolean',
-        ]);
-
-        $solutionPolicy->update([
-            'allow_internal_solution_notes' => (bool) ($data['allow_internal_solution_notes'] ?? false),
-        ]);
-
+        app(\App\Modules\Ticket\Services\TicketSettingsEditor::class)->updateSolution($request);
         return back()->with('success', 'Ticket solution policy updated.');
     }
 
+
     public function updatePortalPolicy(Request $request, TicketPortalPolicy $portalPolicy): RedirectResponse
     {
-        $data = $request->validate([
-            'default_customer_visibility' => ['required', 'string', 'in:'.implode(',', array_keys(TicketPortalPolicy::visibilityOptions()))],
-        ]);
-
-        $portalPolicy->update($data);
-
+        app(\App\Modules\Ticket\Services\TicketSettingsEditor::class)->updatePortal($request);
         return back()->with('success', 'Ticket customer portal policy updated.');
     }
 
+
     public function updateQuoteCostPolicy(Request $request, TicketQuoteCostPolicy $quoteCostPolicy): RedirectResponse
     {
-        $data = $request->validate([
-            'quote_required_cost_threshold' => 'nullable|numeric|min:0|max:9999999999.99',
-        ]);
-
-        $quoteCostPolicy->update([
-            'quote_required_cost_threshold' => filled($data['quote_required_cost_threshold'] ?? null)
-                ? (float) $data['quote_required_cost_threshold']
-                : null,
-        ]);
-
+        app(\App\Modules\Ticket\Services\TicketSettingsEditor::class)->updateQuote($request);
         return back()->with('success', 'Ticket quote cost policy updated.');
     }
 
+
     public function updateMergeSettings(Request $request): RedirectResponse
     {
-        $data = $request->validate([
-            'auto_merge_enabled' => 'nullable|boolean',
-            'ai_merge_enabled' => 'nullable|boolean',
-            'ai_similarity_threshold' => 'required|integer|min:70|max:100',
-        ]);
-
-        $settings = [
-            'auto_merge_enabled' => (bool) ($data['auto_merge_enabled'] ?? false),
-            'ai_merge_enabled' => (bool) ($data['ai_merge_enabled'] ?? false),
-            'ai_similarity_threshold' => (int) $data['ai_similarity_threshold'],
-        ];
-
-        foreach ($settings as $name => $value) {
-            CommonSetting::updateOrCreate(
-                ['type' => 'ticket_merge', 'name' => $name],
-                [
-                    'description' => 'Ticket merge automation setting.',
-                    'value' => is_bool($value) ? ($value ? '1' : '0') : (string) $value,
-                ],
-            );
-        }
-
+        app(\App\Modules\Ticket\Services\TicketSettingsEditor::class)->updateMerge($request);
         return back()->with('success', 'Ticket merge settings updated.');
     }
+
 
     public function rules(
         Request $request,
@@ -508,41 +430,16 @@ class TicketSettingsController extends Controller
 
     private function validatedQueue(Request $request, ?TicketQueue $queue = null): array
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:ticket_queues,slug,'.($queue?->id ?? 'NULL'),
-            'description' => 'nullable|string',
-            'email_address' => 'nullable|email|max:255',
-            'is_default' => 'nullable|boolean',
-            'is_active' => 'nullable|boolean',
-            'sort_order' => 'nullable|integer|min:0|max:100000',
-        ]);
-
-        $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
-        $this->ensureUniqueSlug(TicketQueue::class, $data['slug'], $queue?->id, 'queue');
-        $data['is_default'] = (bool) ($data['is_default'] ?? false);
-        $data['is_active'] = (bool) ($data['is_active'] ?? false);
-        $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
-
-        return $data;
+        return app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->validatedQueue($request, $queue);
     }
+
 
     private function ticketMergeSettings(): array
     {
-        $settings = CommonSetting::query()
-            ->where('type', 'ticket_merge')
-            ->pluck('value', 'name');
-
-        return [
-            'auto_merge_enabled' => $settings->get('auto_merge_enabled', '0') === '1',
-            'ai_merge_enabled' => $settings->get('ai_merge_enabled', '0') === '1',
-            'ai_similarity_threshold' => (int) ($settings->get('ai_similarity_threshold', '90') ?: 90),
-        ];
+        return app(\App\Modules\Ticket\Support\TicketMergeSettings::class)->settings();
     }
 
-    /**
-     * @return array{workflow: array<string, mixed>, definition: array<string, mixed>}
-     */
+
     private function validatedWorkflow(Request $request, ?TicketWorkflow $workflow = null): array
     {
         $this->normalizeLegacyWorkflowInput($request);
@@ -879,128 +776,25 @@ class TicketSettingsController extends Controller
 
     private function validatedType(Request $request, ?TicketType $type = null): array
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:ticket_types,slug,'.($type?->id ?? 'NULL'),
-            'description' => 'nullable|string',
-            'is_active' => 'nullable|boolean',
-            'is_deletable' => 'nullable|boolean',
-            'sort_order' => 'nullable|integer|min:0|max:100000',
-        ]);
-
-        $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
-        $this->ensureUniqueSlug(TicketType::class, $data['slug'], $type?->id, 'type');
-        $data['is_active'] = (bool) ($data['is_active'] ?? false);
-        $data['is_deletable'] = $type?->is_system ? (bool) $type->is_deletable : (bool) ($data['is_deletable'] ?? true);
-        $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
-
-        return $data;
+        return app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->validatedType($request, $type);
     }
+
 
     private function validatedStatus(Request $request, ?TicketStatus $status = null): array
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:ticket_statuses,slug,'.($status?->id ?? 'NULL'),
-            'state' => 'required|string|in:open,waiting,resolved,closed',
-            'is_default' => 'nullable|boolean',
-            'is_closed' => 'nullable|boolean',
-            'is_active' => 'nullable|boolean',
-            'sort_order' => 'nullable|integer|min:0|max:100000',
-        ]);
-
-        $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
-        $this->ensureUniqueSlug(TicketStatus::class, $data['slug'], $status?->id, 'status');
-        $data['is_default'] = (bool) ($data['is_default'] ?? false);
-        $data['is_closed'] = (bool) ($data['is_closed'] ?? false);
-        $data['is_active'] = (bool) ($data['is_active'] ?? false);
-        $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
-
-        return $data;
+        return app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->validatedStatus($request, $status);
     }
+
 
     private function validatedPriority(Request $request, ?TicketPriority $priority = null): array
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:ticket_priorities,slug,'.($priority?->id ?? 'NULL'),
-            'level' => 'required|integer|min:1|max:255',
-            'is_default' => 'nullable|boolean',
-            'is_active' => 'nullable|boolean',
-            'sort_order' => 'nullable|integer|min:0|max:100000',
-        ]);
-
-        $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
-        $this->ensureUniqueSlug(TicketPriority::class, $data['slug'], $priority?->id, 'priority');
-        $data['is_default'] = (bool) ($data['is_default'] ?? false);
-        $data['is_active'] = (bool) ($data['is_active'] ?? false);
-        $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
-
-        return $data;
+        return app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->validatedPriority($request, $priority);
     }
+
 
     private function validatedRule(Request $request): array
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'weight' => 'required|integer|min:0|max:100000',
-            'is_active' => 'nullable|boolean',
-            'stop_processing' => 'nullable|boolean',
-            'conditions' => 'required|array|min:1',
-            'conditions.*.field' => 'required|string|in:channel,subject,description,from_email,from_domain,email_tags,client_known,client_has_active_contract',
-            'conditions.*.operator' => 'required|string|in:contains,equals,not_equals,starts_with,ends_with,regex,present',
-            'conditions.*.value' => 'nullable|string|max:1000',
-            'actions' => 'required|array|min:1',
-            'actions.*.type' => 'required|string|in:set_ticket_type,set_queue,set_priority,set_sla,set_category,add_tag,emit_signal',
-            'actions.*.value' => 'required|string|max:255',
-            'actions.*.severity' => 'nullable|string|in:info,warning,error,critical',
-            'actions.*.confidence' => 'nullable|integer|min:0|max:100',
-            'actions.*.summary' => 'nullable|string|max:255',
-            'actions.*.payload_note' => 'nullable|string|max:1000',
-        ]);
-
-        $actions = collect($data['actions'])
-            ->map(function (array $action): array {
-                $mapped = [
-                    'type' => $action['type'],
-                    'value' => $action['type'] === 'emit_signal'
-                        ? $this->normalizeSignalType($action['value'])
-                        : $action['value'],
-                ];
-
-                if ($action['type'] === 'emit_signal') {
-                    $mapped['signal_type'] = $mapped['value'];
-                    foreach (['severity', 'confidence', 'summary', 'payload_note'] as $field) {
-                        if (array_key_exists($field, $action) && filled($action[$field])) {
-                            $mapped[$field] = $action[$field];
-                        }
-                    }
-                }
-
-                return $mapped;
-            })
-            ->values()
-            ->all();
-
-        $this->validateRuleActionTargets($actions);
-
-        return [
-            'name' => $data['name'],
-            'description' => $data['description'] ?? null,
-            'weight' => $data['weight'],
-            'is_active' => (bool) ($data['is_active'] ?? false),
-            'stop_processing' => (bool) ($data['stop_processing'] ?? false),
-            'conditions_json' => collect($data['conditions'])
-                ->map(fn (array $condition) => [
-                    'field' => $condition['field'],
-                    'operator' => $condition['operator'],
-                    'value' => $condition['value'] ?? '',
-                ])
-                ->values()
-                ->all(),
-            'actions_json' => $actions,
-        ];
+        return app(\App\Modules\Ticket\Services\TicketLegacyRuleForm::class)->validatedRule($request);
     }
 
     private function validateRuleActionTargets(array $actions): void
@@ -1038,76 +832,32 @@ class TicketSettingsController extends Controller
 
     private function ensureSingleDefaultQueue(?TicketQueue $defaultQueue = null): void
     {
-        // Only a submitted default should clear competing defaults; ordinary edits must not unset them.
-        if ($defaultQueue && ! $defaultQueue->is_default) {
-            return;
-        }
-
-        $defaultQueue ??= TicketQueue::where('is_default', true)->orderBy('sort_order')->first();
-
-        if (! $defaultQueue) {
-            return;
-        }
-
-        TicketQueue::where('id', '!=', $defaultQueue->id)->update(['is_default' => false]);
+        app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->ensureSingleDefaultQueue($defaultQueue);
     }
+
 
     private function ensureSingleDefaultStatus(?TicketStatus $defaultStatus = null): void
     {
-        if ($defaultStatus && ! $defaultStatus->is_default) {
-            return;
-        }
-
-        $defaultStatus ??= TicketStatus::where('is_default', true)->orderBy('sort_order')->first();
-
-        if (! $defaultStatus) {
-            return;
-        }
-
-        TicketStatus::where('id', '!=', $defaultStatus->id)->update(['is_default' => false]);
+        app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->ensureSingleDefaultStatus($defaultStatus);
     }
+
 
     private function ensureSingleDefaultPriority(?TicketPriority $defaultPriority = null): void
     {
-        if ($defaultPriority && ! $defaultPriority->is_default) {
-            return;
-        }
-
-        $defaultPriority ??= TicketPriority::where('is_default', true)->orderBy('level')->first();
-
-        if (! $defaultPriority) {
-            return;
-        }
-
-        TicketPriority::where('id', '!=', $defaultPriority->id)->update(['is_default' => false]);
+        app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->ensureSingleDefaultPriority($defaultPriority);
     }
+
 
     private function ensureUniqueSlug(string $modelClass, string $slug, ?int $ignoreId, string $field): void
     {
-        $exists = $modelClass::query()
-            ->where('slug', $slug)
-            ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
-            ->exists();
-
-        if ($exists) {
-            throw ValidationException::withMessages([
-                $field => 'Slug is already in use.',
-            ]);
-        }
+        app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->ensureUniqueSlug($modelClass, $slug, $ignoreId, $field);
     }
+
 
     private function ticketRuleReferences(string $actionType, int $id): bool
     {
-        return TicketRule::query()
-            ->get()
-            ->contains(function (TicketRule $rule) use ($actionType, $id) {
-                foreach ((array) $rule->actions_json as $action) {
-                    if (($action['type'] ?? '') === $actionType && (int) ($action['value'] ?? 0) === $id) {
-                        return true;
-                    }
-                }
-
-                return false;
-            });
+        return app(\App\Modules\Ticket\Services\TicketCatalogEditor::class)->ticketRuleReferences($actionType, $id);
     }
+
+
 }

@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 final class TicketRuleAdminIndexQuery
 {
     /** @return LengthAwarePaginator<int, TicketRule> */
-    public function get(Request $request): LengthAwarePaginator
+    public function get(Request $request, int $perPage = 25): LengthAwarePaginator
     {
         $sort = in_array($request->string('sort')->toString(), [
             'name', 'weight', 'published_at', 'draft_updated_at', 'updated_at',
@@ -40,7 +40,7 @@ final class TicketRuleAdminIndexQuery
             ->when($request->string('state')->toString() === 'draft', fn ($query) => $query->whereNotNull('draft_payload_json'))
             ->orderBy($sort, $direction)
             ->orderBy('id')
-            ->paginate(25)
+            ->paginate(min(100, max(1, $perPage)))
             ->withQueryString();
     }
 }

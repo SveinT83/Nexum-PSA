@@ -22,8 +22,7 @@ class TicketAssignmentSettingsController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
-        $profile = $this->profileFor($request->user());
-        $this->updateProfile($request, $profile);
+        app(\App\Modules\Ticket\Services\TicketAssignmentProfileEditor::class)->saveOwn($request);
 
         return back()->with('success', 'Ticket assignment settings updated.');
     }
@@ -41,29 +40,9 @@ class TicketAssignmentSettingsController extends Controller
 
     protected function updateProfile(Request $request, TicketAssignmentSetting $profile): void
     {
-        $data = $request->validate([
-            'is_assignable' => 'nullable|boolean',
-            'max_open_tickets' => 'required|integer|min:1|max:500',
-            'category_ids' => 'nullable|array',
-            'category_ids.*' => 'integer|exists:categories,id',
-            'tag_ids' => 'nullable|array',
-            'tag_ids.*' => 'integer|exists:tags,id',
-            'notes' => 'nullable|string|max:5000',
-        ]);
-
-        $profile->update([
-            'is_assignable' => (bool) ($data['is_assignable'] ?? false),
-            'max_open_tickets' => (int) $data['max_open_tickets'],
-            'notes' => $data['notes'] ?? null,
-        ]);
-
-        // Matching signals are stored as explicit pivots so assignment scoring can query them efficiently.
-        $profile->categories()->sync($data['category_ids'] ?? []);
-        $profile->tags()->sync($data['tag_ids'] ?? []);
-
-        // Ticket assignment notes stay in Ticket. General profile notes belong
-        // to User Management and are edited from the unified profile page.
+        app(\App\Modules\Ticket\Services\TicketAssignmentProfileEditor::class)->update($request, $profile);
     }
+
 
     protected function viewData(TicketAssignmentSetting $profile): array
     {

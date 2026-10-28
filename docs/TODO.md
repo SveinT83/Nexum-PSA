@@ -1,5 +1,42 @@
 # tdPSA Development TODO
 
+
+## Ticket and Task complete API parity (2026-10-20)
+
+Status: Main Promotion Approved By Svein Tore (2026-10-28); isolated current-Main verification in progress. Human operational checks and handbook publication remain separate.
+Owner: Codex; reviewer/promotion owner: Svein Tore. Approved parent:
+rfc/2026-10-20-ticket-task-full-api-parity.md. All ten slices and all 41 baseline functional groups
+are implemented, including full reads/writes/actions and legacy workflow operations.
+Current inventory: 130 browser route rows and 63 Livewire public methods; 215 API route rows / 217 HTTP operations, of which
+103 write/action operations. Every actual HTTP method/path is in Swagger with payload/result/error,
+binary/multipart and cumulative/conditional authorization contracts. Fixed input lists reject
+unsupported writes even across multi-stage form validation. Matrix JSON retains historical gaps.
+Historical 2026-10-20 verification: 66 affected-domain files, 560 tests / 15,569 assertions passed. Trusted HTTPS Swagger
+UI/JSON returned 200; 57-model live schema preflight found no missing tables/fields. After the legacy-internal-Task regression/fix, 12 affected files passed 106 tests / 11,079 assertions. See
+plans/2026-10-20-ticket-task-api-acceptance.md and plans/2026-10-20-ticket-task-api-files.json.
+
+Remaining operational review: HR-2026-10-20-TICKET-TASK-API Pending. Main merge was separately approved by Svein Tore on 2026-10-28. Svein must perform its concrete
+same-account, billing/stock/merge, Portal/Mail/provider, scheduler and real-database concurrency checks
+before production deployment/release. Existing #285 Rules activation, #262 scheduler/queue and #275 Knowledge
+revision/publication ownership remain separate. Unresolved external Relationship submissions require
+owner reconciliation before any resend; API exposure does not prove exactly-once remote delivery.
+
+Handbook follow-up: at the 2026-10-20 Dev handoff, no supported publication integration/access was configured for this delivery. Exact-source BookStack publication and actual content/employee-access read-back remain unverified.
+Repository Knowledge sources are updated; unrelated pre-existing pending articles must not be
+bulk-pushed. BookStack book 339 is development documentation; employee article/retrieval scope remains
+unverified. Owner Svein: establish the intended supported publication path. Owner Codex: sync only the
+reviewed source articles and verify actual content and employee access, then separately verify
+employee assistant retrieval when authorized. Do not call publication complete until read-back.
+
+No new migration/package/frontend build is introduced. The scoped commit/push/Main merge is expressly approved; production deployment, runtime activation and token widening are separate.
+Preserve the shared dirty checkout and all unrelated contributions. Deployment instructions and
+rollback constraints are recorded in the acceptance report and current promotion record; Svein owns release.
+
+Promotion record: plans/2026-10-28-ticket-task-api-main-promotion.md.
+
+
+Current 2026-10-28 verification: Dev 582 tests / 47,313 assertions; isolated Main 581 / 47,309. All 177 changed PHP files pass lint. GET tasks/docs closes the raw Markdown source gap; 14 retry/draft conflicts now have explicit Swagger 409 contracts. Current route/component classifications, exact API counterparts, scopes, schemas, test and read-back links are in plans/2026-10-28-ticket-task-api-coverage.md and the expanded JSON matrix. Earlier scan time limits are resolved by the full 600-second checks.
+
 ## Audited Issue Completion And Remaining Decisions (2026-10-28)
 
 Status: Nine Of Nineteen Closed / Ten Explicit Gates Remain. Owner: Svein Tore / Codex.

@@ -158,10 +158,34 @@ class SuggestTaskFieldsWithAi
 
     private function sanitize(array $suggestions, array $context): array
     {
-        $suggestions = collect($suggestions)
-            ->only(['title', 'description', 'ticket_id', 'estimated_minutes', 'ticket_rate_key', 'queue_id', 'priority_id', 'category_id', 'tag_names', 'assigned_to', 'checklist_items'])
-            ->filter(fn ($value) => $value !== null && $value !== '')
-            ->all();
+        // Provider output is untrusted draft input: expose only typed, allowed suggestions.
+        $clean = [];
+        foreach (['title' => 255, 'description' => 20000] as $field => $limit) {
+            if (is_string($suggestions[$field] ?? null) && trim($suggestions[$field]) !== '') {
+                $clean[$field] = Str::limit(trim($suggestions[$field]), $limit, '');
+            }
+        }
+        $optionKeys = ['ticket_id' => 'related_tickets', 'queue_id' => 'allowed_options.queues', 'priority_id' => 'allowed_options.priorities',
+            'category_id' => 'allowed_options.categories', 'assigned_to' => 'allowed_options.technicians'];
+        foreach ($optionKeys as $field => $optionKey) {
+            $value = $suggestions[$field] ?? null;
+            if ((is_int($value) || (is_string($value) && ctype_digit($value))) && (int) $value > 0
+                && collect(data_get($context, $optionKey, []))->contains(fn ($option) => (int) data_get($option, 'id') === (int) $value)) {
+                $clean[$field] = (int) $value;
+            }
+        }
+        $minutes = $suggestions['estimated_minutes'] ?? null;
+        if ((is_int($minutes) || (is_string($minutes) && ctype_digit($minutes))) && (int) $minutes > 0 && (int) $minutes <= 525600) {
+            $clean['estimated_minutes'] = (int) $minutes;
+        }
+        foreach (['tag_names' => 80, 'checklist_items' => 255] as $field => $limit) {
+            if (is_array($suggestions[$field] ?? null)) {
+                $clean[$field] = collect($suggestions[$field])->filter(fn ($value) => is_string($value) && trim($value) !== '')
+                    ->map(fn ($value) => Str::limit(trim($value), $limit, ''))->unique()->take(100)->values()->all();
+            }
+        }
+        if (is_string($suggestions['ticket_rate_key'] ?? null)) { $clean['ticket_rate_key'] = $suggestions['ticket_rate_key']; }
+        $suggestions = $clean;
 
         $suggestions['ticket_rate_key'] = $this->normalizeTicketRateKey($suggestions['ticket_rate_key'] ?? null, data_get($context, 'allowed_options.ticket_rates', []));
 

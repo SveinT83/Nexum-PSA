@@ -116,7 +116,18 @@ class MergeTickets
         });
     }
 
-    private function authorizeEmailLinkChanges(Ticket $source, Ticket $target, ?User $actor): void
+    /** API callers do not need a preview: freeze current rows after acquiring the complete ordered lock set. */
+    public function handleManyCurrent(Collection $sources, Ticket $target, ?User $actor, ?string $reason = null): Ticket
+    {
+        return DB::transaction(function () use ($sources, $target, $actor, $reason) {
+            $ids = $sources->pluck('id')->push($target->id)->unique()->sort()->values();
+            $locked = Ticket::withTrashed()->whereIn('id', $ids)->orderBy('id')->lockForUpdate()->get();
+            $snapshots = $locked->mapWithKeys(fn (Ticket $ticket) => [$ticket->id => TicketMergeSnapshot::fingerprint($ticket)])->all();
+            return $this->handleMany($sources, $target, $actor, $reason, $snapshots);
+        }, 3);
+    }
+
+    public function authorizeEmailLinkChanges(Ticket $source, Ticket $target, ?User $actor): void
     {
         $links = EmailTicketConversationLink::query()
             ->whereIn('ticket_id', [$source->id, $target->id])
@@ -160,6 +171,7 @@ class MergeTickets
             'updated_by' => $actor?->id,
         ])->save();
 
+        app(ReconcileTicketOwnedWork::class)->handle((int) $source->id, $target, $actor, (int) $source->client_id !== (int) $target->client_id);
         TicketMessage::where('ticket_id', $source->id)->update(['ticket_id' => $target->id]);
         TicketAttachment::where('ticket_id', $source->id)->update(['ticket_id' => $target->id]);
         TicketTimeEntry::where('ticket_id', $source->id)->update(['ticket_id' => $target->id]);

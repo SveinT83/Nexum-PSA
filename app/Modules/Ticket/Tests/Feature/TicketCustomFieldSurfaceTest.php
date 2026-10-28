@@ -381,8 +381,7 @@ class TicketCustomFieldSurfaceTest extends TestCase
         $noTicketView = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         Sanctum::actingAs($noTicketView, ['tickets.read']);
         $this->getJson(route('api.v1.tickets.show', $ticket))
-            ->assertOk()
-            ->assertJsonPath('data.custom_fields', []);
+            ->assertForbidden();
 
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $admin->assignRole('Admin');
@@ -420,8 +419,7 @@ class TicketCustomFieldSurfaceTest extends TestCase
 
         Sanctum::actingAs($this->tech, ['tickets.read']);
         $this->getJson(route('api.v1.tickets.show', $ticket))
-            ->assertOk()
-            ->assertJsonPath('data.custom_fields', []);
+            ->assertUnprocessable()->assertJsonValidationErrors('ticket');
 
         Sanctum::actingAs($this->tech, ['tickets.update']);
         $this->patchJson(route('api.v1.tickets.update', $ticket), [

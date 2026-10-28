@@ -281,7 +281,7 @@ class TicketWorkflowDefinitionService
     public function tree(?array $tree): array
     {
         return [
-            'match' => in_array(($tree['match'] ?? 'all'), ['all', 'any'], true) ? $tree['match'] : 'all',
+            'match' => in_array(($tree['match'] ?? 'all'), ['all', 'any'], true) ? ($tree['match'] ?? 'all') : 'all',
             'groups' => array_values(array_filter($tree['groups'] ?? [], 'is_array')),
         ];
     }

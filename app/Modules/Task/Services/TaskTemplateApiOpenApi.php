@@ -1,0 +1,13 @@
+<?php
+
+namespace App\Modules\Task\Services;
+
+use OpenApi\Attributes as OA;
+
+/** Explicit preview/configuration schemas exclude arbitrary source and runtime metadata. */
+#[OA\Schema(schema: 'TaskTemplateChecklistReadback', type: 'object', properties: [new OA\Property(property: 'id', type: 'integer'), new OA\Property(property: 'template_item_id', type: 'integer'), new OA\Property(property: 'title', type: 'string'), new OA\Property(property: 'description', type: 'string', nullable: true), new OA\Property(property: 'sort_order', type: 'integer')])]
+#[OA\Schema(schema: 'TaskTemplateDependencyReadback', type: 'object', properties: [new OA\Property(property: 'id', type: 'integer'), new OA\Property(property: 'template_item_id', type: 'integer'), new OA\Property(property: 'depends_on_template_item_id', type: 'integer'), new OA\Property(property: 'dependency_type', type: 'string'), new OA\Property(property: 'is_required', type: 'boolean')])]
+#[OA\Schema(schema: 'TaskTemplateApplicationPreview', type: 'object', properties: [new OA\Property(property: 'template_id', type: 'integer'), new OA\Property(property: 'owner_type', type: 'string'), new OA\Property(property: 'owner_id', type: 'integer'), new OA\Property(property: 'will_create_task_count', type: 'integer'), new OA\Property(property: 'expected_template_snapshot', type: 'string'), new OA\Property(property: 'items_url', type: 'string'), new OA\Property(property: 'anchor_at', type: 'string', nullable: true)])]
+#[OA\Schema(schema: 'TaskScheduleRunPreview', type: 'object', properties: [new OA\Property(property: 'schedule_id', type: 'integer'), new OA\Property(property: 'template_id', type: 'integer'), new OA\Property(property: 'will_create_task_count', type: 'integer'), new OA\Property(property: 'configured_creator_id', type: 'integer'), new OA\Property(property: 'owner_type', type: 'string'), new OA\Property(property: 'owner_id', type: 'integer'), new OA\Property(property: 'active', type: 'boolean'), new OA\Property(property: 'expected_schedule_snapshot', type: 'string'), new OA\Property(property: 'expected_template_snapshot', type: 'string'), new OA\Property(property: 'items_url', type: 'string')])]
+#[OA\Schema(schema: 'TaskSettingsReadback', type: 'object', properties: [new OA\Property(property: 'default_status_id', type: 'integer', nullable: true), new OA\Property(property: 'default_priority_id', type: 'integer', nullable: true), new OA\Property(property: 'default_estimated_minutes', type: 'integer', nullable: true), new OA\Property(property: 'ticket_billing_minutes_mode', type: 'string')])]
+final class TaskTemplateApiOpenApi {}
