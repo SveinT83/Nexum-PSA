@@ -467,6 +467,25 @@ class PortalTicketTest extends TestCase
     /**
      * @return array{0: Client, 1: ClientSite, 2: Contact, 3: User}
      */
+    #[Test]
+    public function portal_markdown_keeps_internal_notes_hidden_and_source_intact(): void
+    {
+        Queue::fake();
+        [$client, $site, $contact, $portalUser] = $this->portalFixture('markdown-portal@example.test');
+        $ticket = $this->ticketFor($client, $site, $contact, ['portal_visible_at' => now()]);
+        $source = "**Kundebeskjed**\nNeste linje\n\n- Første punkt\n\n<script>danger</script>";
+        $message = TicketMessage::create(['ticket_id' => $ticket->id, 'author_type' => 'user',
+            'type' => 'customer_reply', 'visibility' => 'public', 'body' => $source]);
+        TicketMessage::create(['ticket_id' => $ticket->id, 'author_type' => 'user',
+            'type' => 'internal_note', 'visibility' => 'internal', 'body' => '**INTERNAL-MARKDOWN-CANARY**']);
+        $this->actingAs($portalUser)->get(route('customer-portal.tickets.show', $ticket))
+            ->assertOk()->assertSee('<strong>Kundebeskjed</strong>', false)
+            ->assertSee('<li>Første punkt</li>', false)->assertDontSee('<script>', false)
+            ->assertDontSee('INTERNAL-MARKDOWN-CANARY')->assertSee('Markdown supported');
+        $this->assertSame($source, $message->fresh()->body);
+        Queue::assertNotPushed(SendTicketReplyEmail::class);
+    }
+
     private function portalFixture(string $email): array
     {
         $client = Client::factory()->create(['name' => 'Portal Ticket Client AS']);

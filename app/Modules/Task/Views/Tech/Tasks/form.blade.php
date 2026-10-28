@@ -75,6 +75,7 @@
                     <div class="col-12">
                         <label class="form-label" for="description">Description</label>
                         <textarea class="form-control" id="description" name="description" rows="4" data-task-ai-required>{{ old('description', $task?->description ?? ($prefill['description'] ?? null)) }}</textarea>
+                        <x-content.markdown-help />
                     </div>
                 </div>
             </div>

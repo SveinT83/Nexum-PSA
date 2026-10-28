@@ -207,3 +207,29 @@ Important files:
 - `app/Modules/Ticket/Jobs/SendTicketWorkflowCustomerUpdate.php`
 - `app/Modules/Ticket/Support/TicketWorkflowCustomerNotificationPolicy.php`
 - `app/Modules/Ticket/Actions/UpdateDefaultTicketEmailAccount.php`
+
+## Markdown In Ticket Replies And Internal Notifications
+
+Availability: the Issue #328 formatting change is verified on Dev; scoped Main verification is in
+progress. Production is unchanged. HR-2026-10-28-TASK-TICKET-MARKDOWN remains Pending.
+
+The Ticket reply/internal-note source is ordinary text with optional Markdown. Line breaks,
+paragraphs, lists, bold/emphasis, code and safe links render in Ticket/Portal views and in
+Ticket-generated HTML email. The plain-text MIME part retains the original readable Markdown;
+subjects, sender account, recipients, publish rules, threading, attachment handling and delivery
+ledger keep their existing behavior.
+
+1. Write the reply or note in the existing Ticket composer, using its **Markdown supported** help.
+2. Review whether it is public or internal and use the normal send/save action. Formatting does
+   not publish an unpublished Ticket, add recipients or send a second message.
+3. In the resulting conversation or controlled email verification, expect the same visible
+   formatting. A sent/accepted status still does not prove inbox receipt.
+4. For custom email templates, keep the standalone `{{ message_body }}` placeholder in a block
+   container. A full paragraph containing only that placeholder becomes a div wrapper at render
+   time when receiving formatted block content; its attributes are retained and the stored
+   template is not rewritten. Other template calls without HTML overrides keep their behavior.
+
+Raw HTML in message text is escaped, unsafe links are disabled, and Markdown images do not make
+automatic remote-image requests. Use existing attachments instead. Mail-owned rich-HTML drafts and
+their source capture keep Mail's existing editor/sanitization rules; this feature does not replace
+the Mail composer. No notification preferences, provider settings or live recipients are changed.

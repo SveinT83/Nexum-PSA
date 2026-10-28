@@ -54,6 +54,7 @@
                     <div class="mb-0">
                         <label for="description" class="form-label">Description</label>
                         <textarea id="description" name="description" rows="11" class="form-control @error('description') is-invalid @enderror">{{ old('description') }}</textarea>
+                        <x-content.markdown-help />
                         @error('description')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </x-card.default>

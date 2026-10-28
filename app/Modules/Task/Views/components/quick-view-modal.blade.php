@@ -32,7 +32,7 @@
 
             <div class="modal-body">
                 @if(filled($task->description))
-                    <div class="mb-3" style="white-space: pre-wrap;">{{ $task->description }}</div>
+                    <x-content.markdown :source="$task->description" class="mb-3" />
                 @endif
 
                 <div class="row g-3 mb-3">

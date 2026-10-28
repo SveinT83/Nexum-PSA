@@ -45,3 +45,41 @@ AI may suggest a clearer title and description, ticket link, estimate, ticket
 rate, queue, priority, category, tags, assignee, and checklist items. These are
 only form values in the browser. The task is not created, completed, timed, or
 otherwise changed until the technician reviews the result and saves the form.
+
+## Markdown In Task Descriptions
+
+Availability: Issue #328 is implemented and tested on Dev; scoped Main verification is in progress.
+Production is unchanged. Human-review checklist HR-2026-10-28-TASK-TICKET-MARKDOWN remains Pending.
+
+Prerequisite: ordinary Task create/update/view access. No new permission is granted.
+
+1. Open **Tasks > New Task**, or open an existing Task and select its edit action.
+2. In **Description**, write normal text or Markdown: **bold**, *emphasis*, lists, code and safe
+   links. One newline stays a visible line break; blank lines separate paragraphs.
+3. Select the existing save action. Open the Task detail or quick-view modal to read formatting.
+4. Select **Edit Task** again to edit the original Markdown. API description strings also retain
+   the original source; display HTML is never written over it.
+5. Task template item descriptions and quick-create forms use the same source convention when
+   they create Tasks.
+
+Examples:
+
+```text
+First line
+Second line
+
+**Important**
+- Check the service
+- Record the result
+
+1. Prepare
+2. Verify
+
+`code` and [documentation](https://example.com)
+```
+
+Raw HTML is shown as text, unsafe link targets are disabled, and Markdown images show their alt
+text without loading remote images. Use existing attachment controls where available. Other
+Task fields, system activity, unrelated modules and Mail's rich-HTML editor keep their own rules.
+Historical description text is not rewritten. If legacy text happens to contain Markdown syntax,
+escape it with a backslash or use a code block when it must stay literal.

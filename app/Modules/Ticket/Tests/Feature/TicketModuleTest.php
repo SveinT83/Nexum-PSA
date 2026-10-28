@@ -6255,6 +6255,149 @@ class TicketModuleTest extends TestCase
         return compact('item', 'reservation', 'entry');
     }
 
+    #[Test]
+    public function ticket_reply_email_renders_markdown_html_and_keeps_plain_source(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $client = Client::factory()->create();
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Ada Contact',
+            'email' => 'ada@example.com',
+        ]);
+        $account = EmailAccount::create($this->emailAccountData([
+            'address' => 'support@example.com',
+            'defaults_for' => ['tickets'],
+        ]));
+        EmailTemplate::create([
+            'scope' => 'tickets',
+            'key' => 'ticket_reply',
+            'name' => 'Ticket reply',
+            'subject' => '[{{ ticket_key }}] {{ ticket_subject }}',
+            'body_html' => '<p>{{ message_body }}</p>',
+            'body_text' => '{{ message_body }}',
+            'variables' => ['ticket_key', 'ticket_subject', 'contact_name', 'message_body', 'technician_name'],
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+
+        $ticket = Ticket::create([
+            'ticket_key' => 'TD-2026-999004',
+            'queue_id' => $defaults['queue']->id,
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+            'client_id' => $client->id,
+            'contact_id' => $contact->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'SMTP job ticket',
+            'is_unread' => false,
+        ]);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => "**Viktig**\nAndre linje\n\n- Ett\n- To\n\n![Diagram](https://tracker.example.test/pixel)\n\n<script>danger</script>",
+        ]);
+
+        $this->mock(SmtpAccountMailer::class, function ($mock) use ($account) {
+            $mock->shouldReceive('generateMessageId')->once()->andReturn('<reserved-ticket-reply@example.com>');
+            $mock->shouldReceive('send')
+                ->once()
+                ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text, $attachments = []) => $resolvedAccount->is($account)
+                    && $toEmail === 'ada@example.com'
+                    && $toName === 'Ada Contact'
+                    && $subject === '[TD-2026-999004] SMTP job ticket'
+                    && str_contains($html, '<strong>Viktig</strong>')
+                    && str_contains($html, '<li>Ett</li>')
+                    && ! str_contains($html, '<script>')
+                    && ! str_contains($html, 'tracker.example.test')
+                    && str_contains($html, '--- Please reply above this line ---')
+                    && str_contains($text, '**Viktig**') && str_contains($text, '![Diagram]')
+                    && str_contains($text, '--- Please reply above this line ---')
+                    && $attachments === []
+                )
+                ->andReturn('<message-id@example.com>');
+        });
+
+        app(SendTicketReplyEmail::class, ['ticketMessageId' => $message->id])->handle(
+            app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class),
+            app(\App\Modules\Email\Services\EmailTemplateRenderer::class),
+            app(SmtpAccountMailer::class)
+        );
+
+        $this->assertDatabaseHas('email_logs', [
+            'direction' => 'outbound',
+            'account_id' => $account->id,
+            'scope' => 'tickets',
+            'level' => 'info',
+            'code' => 'TICKET_EMAIL_SENT',
+            'rfc_message_id' => '<message-id@example.com>',
+        ]);
+        $this->assertDatabaseCount('email_logs', 1);
+        $this->assertNotNull(EmailLog::query()->sole()->idempotency_key);
+    }
+
+    #[Test]
+    public function internal_note_notification_formats_markdown_without_changing_recipient(): void
+    {
+        $recipient = User::factory()->create([
+            'name' => 'Notify Tech',
+            'email' => 'notify-tech@example.com',
+            'status' => User::STATUS_ACTIVE,
+        ]);
+        $account = EmailAccount::create($this->emailAccountData([
+            'address' => 'support-internal@example.com',
+            'defaults_for' => ['tickets'],
+        ]));
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999043',
+            'subject' => 'Internal notify ticket',
+        ]);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'internal_note',
+            'visibility' => 'internal',
+            'body' => "**Review**\n\n- This note",
+            'metadata' => ['notify_user_id' => $recipient->id],
+        ]);
+
+        $this->mock(SmtpAccountMailer::class, function ($mock) use ($account) {
+            $mock->shouldReceive('send')
+                ->once()
+                ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text) => $resolvedAccount->is($account)
+                    && $toEmail === 'notify-tech@example.com'
+                    && $toName === 'Notify Tech'
+                    && $subject === '[TD-2026-999043] Internal note notification'
+                    && str_contains($text, '**Review**')
+                    && str_contains($html, '<strong>Review</strong>')
+                    && str_contains($html, '<li>This note</li>')
+                )
+                ->andReturn('<internal-notify@example.com>');
+        });
+
+        app(SendTicketInternalNotificationEmail::class, ['ticketMessageId' => $message->id])->handle(
+            app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class),
+            app(SmtpAccountMailer::class)
+        );
+
+        $this->assertDatabaseHas('email_logs', [
+            'direction' => 'outbound',
+            'account_id' => $account->id,
+            'scope' => 'tickets',
+            'level' => 'info',
+            'code' => 'TICKET_INTERNAL_NOTIFY_SENT',
+            'rfc_message_id' => '<internal-notify@example.com>',
+        ]);
+    }
+
     private function emailAccountData(array $overrides = []): array
     {
         return array_merge([

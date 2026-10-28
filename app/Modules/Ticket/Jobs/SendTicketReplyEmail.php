@@ -112,6 +112,8 @@ class SendTicketReplyEmail implements ShouldQueue
                 'contact_name' => $contact->name,
                 'message_body' => $message->body,
                 'technician_name' => $message->author?->name ?? 'Support',
+            ], [
+                'message_body' => app(\App\Modules\System\Actions\RenderOperationalMarkdown::class)->handle($message->body),
             ]);
             $attachments = $this->attachmentsForMailer($message);
             $ccRecipients = $this->ccRecipients($message);

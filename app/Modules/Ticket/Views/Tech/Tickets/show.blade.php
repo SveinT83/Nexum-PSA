@@ -218,7 +218,7 @@
                 <div class="card-body">
                     @if(filled($ticket->description))
                         <!-- The ticket description is the original request text and should stay above the conversation timeline. -->
-                        <div style="white-space: pre-wrap;">{{ $ticket->description }}</div>
+                        <x-content.markdown :source="$ticket->description" />
                     @else
                         <p class="text-muted mb-0">No initial description provided.</p>
                     @endif
@@ -637,7 +637,7 @@
                                             @elseif (in_array($message->type, ['customer_reply', 'status_update'], true) && in_array($message->author_type, ['user', 'system'], true))
                                                 <div class="small text-muted mb-2">Email queued or waiting for delivery log.</div>
                                             @endif
-                                            <div style="white-space: pre-wrap;">{{ $message->body }}</div>
+                                            <x-content.markdown :source="$message->body" />
                                             @if($message->fileAttachments->isNotEmpty())
                                                 <!-- Attachments are stored as ticket-owned records even when they originated from inbound email. -->
                                                 <div class="mt-3">
@@ -799,6 +799,7 @@
                                 <div class="form-group">
                                     <label for="body">Message</label>
                                     <textarea id="body" name="body" rows="5" class="form-control @error('body') is-invalid @enderror" required>{{ old('body') }}</textarea>
+                                    <x-content.markdown-help />
                                     @error('body')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                 </div>
                                 <div class="form-group mt-3">

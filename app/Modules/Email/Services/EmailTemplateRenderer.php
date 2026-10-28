@@ -22,14 +22,24 @@ class EmailTemplateRenderer
         private readonly OutboundEmailHtmlPolicy $htmlPolicy,
     ) {}
 
-    public function render(EmailTemplate $template, array $variables): array
+    public function render(EmailTemplate $template, array $variables, array $htmlVariables = []): array
     {
         $variables = array_merge($this->brandingVariables(), $variables);
         unset($variables['email_body']);
 
         $this->htmlPolicy->assertBody($template->body_html);
-        $body = $this->replace($template->body_html ?? '', $variables);
-        $layout = $this->replace($this->materializeLayout($template), $variables);
+        // Only internal callers supply pre-rendered HTML; subject/plain MIME keep original values.
+        $htmlValues = array_replace($variables, $htmlVariables);
+        unset($htmlValues['email_body']);
+        $bodyTemplate = $template->body_html ?? '';
+        foreach (array_keys($htmlVariables) as $key) {
+            // A standalone paragraph slot becomes a valid block wrapper; stored templates stay intact.
+            $pattern = '~<p(\s[^>]*)?>\s*\{\{\s*'.preg_quote($key, '~').'\s*\}\}\s*</p>~i';
+            $bodyTemplate = preg_replace_callback($pattern,
+                static fn ($match) => '<div'.($match[1] ?? '').'>{{ '.$key.' }}</div>', $bodyTemplate) ?? $bodyTemplate;
+        }
+        $body = $this->replace($bodyTemplate, $htmlValues, $htmlVariables !== []);
+        $layout = $this->replace($this->materializeLayout($template), $htmlValues, $htmlVariables !== []);
         $html = preg_replace_callback(
             OutboundEmailHtmlPolicy::BODY_SLOT_PATTERN,
             static fn (): string => $body,
@@ -38,9 +48,9 @@ class EmailTemplateRenderer
         ) ?? $layout;
 
         return [
-            'subject' => $this->replace($template->subject, $variables),
+            'subject' => $this->replace($template->subject, $variables, $htmlVariables !== []),
             'html' => $html,
-            'text' => $this->replace($template->body_text ?? '', $variables),
+            'text' => $this->replace($template->body_text ?? '', $variables, $htmlVariables !== []),
         ];
     }
 
@@ -178,8 +188,18 @@ class EmailTemplateRenderer
         );
     }
 
-    private function replace(string $content, array $variables): string
+    private function replace(string $content, array $variables, bool $once = false): string
     {
+        if ($once) {
+            // Rendered message text is data, even when it contains another template placeholder.
+            $tokens = [];
+            foreach ($variables as $key => $value) {
+                $tokens['{{ '.$key.' }}'] = (string) $value;
+                $tokens['{{'.$key.'}}'] = (string) $value;
+            }
+            return strtr($content, $tokens);
+        }
+
         foreach ($variables as $key => $value) {
             $content = str_replace('{{ '.$key.' }}', (string) $value, $content);
             $content = str_replace('{{'.$key.'}}', (string) $value, $content);

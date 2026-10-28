@@ -299,7 +299,7 @@
                             <div class="col-md-4"><label class="form-label">Quantity</label><input name="quantity" type="number" step="0.01" min="0.01" value="1" class="form-control" required></div>
                             <div class="col-md-4"><label class="form-label">Price ex VAT</label><input name="unit_price_ex_vat" type="number" step="0.01" min="0" class="form-control"></div>
                             <div class="col-md-4"><label class="form-label">VAT %</label><input name="vat_rate" type="number" step="0.01" min="0" max="100" value="25" class="form-control"></div>
-                            <div class="col-12"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="3"></textarea></div>
+                            <div class="col-12"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="3"></textarea><x-content.markdown-help /></div>
                         </div>
                     </div>
                     <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Add quote line</button></div>
