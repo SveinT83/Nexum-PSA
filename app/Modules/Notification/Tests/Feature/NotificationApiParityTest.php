@@ -210,7 +210,9 @@ class NotificationApiParityTest extends TestCase
         $this->callApi('portal.open', ['notification' => $pid]);
         $this->callApi('portal.read-all')->assertJsonPath('data.updated', 0);
         $this->assertSame(1, $portal->unreadNotifications()->count());
-        $this->assertEqualsCanonicalizing(array_map(fn ($x) => substr($x, strlen('notifications.')), array_keys($this->manifest)), array_unique($this->observed));
+        // Managed installation lifecycle is independently exercised for all six operations in ManagedWebPushApiSurfaceTest.
+        $ordinary = array_filter(array_keys($this->manifest), fn ($name) => ! str_starts_with($name, 'notifications.webpush.setup.'));
+        $this->assertEqualsCanonicalizing(array_map(fn ($x) => substr($x, strlen('notifications.')), $ordinary), array_unique($this->observed));
     }
 
     #[Test]

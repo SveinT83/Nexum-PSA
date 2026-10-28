@@ -170,10 +170,18 @@
             const supportedEncodings = PushManager.supportedContentEncodings || [];
 
             return {
+                application_server_key: encodedApplicationServerKey(subscription),
                 endpoint: payload.endpoint,
                 keys: payload.keys,
                 content_encoding: supportedEncodings[0] || 'aes128gcm',
             };
+        }
+
+        function encodedApplicationServerKey(subscription) {
+            const key = subscription.options && subscription.options.applicationServerKey;
+            if (!key) return null;
+            return window.btoa(String.fromCharCode(...new Uint8Array(key)))
+                .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
         }
 
         function publicKeyBytes(value) {
@@ -362,6 +370,13 @@
                 const registration = await sharedWorkerRegistration();
                 currentSubscription = await registration.pushManager.getSubscription();
 
+                // The user's explicit Enable action renews a stale local identity after managed rotation.
+                const expectedKey = window.btoa(String.fromCharCode(...publicKeyBytes(readiness.public_key)))
+                    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                if (currentSubscription && encodedApplicationServerKey(currentSubscription) !== expectedKey) {
+                    await currentSubscription.unsubscribe();
+                    currentSubscription = null;
+                }
                 if (!currentSubscription) {
                     currentSubscription = await registration.pushManager.subscribe({
                         userVisibleOnly: true,

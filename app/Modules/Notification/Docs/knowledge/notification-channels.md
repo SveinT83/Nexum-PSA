@@ -454,3 +454,36 @@ paired connection/token are resolved server-side. Global channel tests use notif
 the current channel If-Match and the separately controlled external-test runtime gate. No scopes,
 provider gates or recipient grants are activated by this implementation. Receipts retain bounded
 IDs/state/reference hashes without message bodies, provider response copies or credentials.
+
+
+## Guided Web Push setup (Issue #258, 2026-10-28)
+
+Implementation is being verified on Dev; production installation and activation are separate.
+Administrators with notification.manage_channels open **Admin > Notification channels > Web Push >
+Setup and activation**. The installation owner must first provision the protected Linux private
+store and explicitly attest the complete web/worker runtime deployment through the managed Web Push
+runbook. An unsupported installation shows a concrete setup requirement.
+
+1. Choose a stable mailto: or HTTPS contact subject and confirm **Configure with delivery disabled**.
+   Valid existing environment keys are retained without being shown or silently rotated. Incomplete
+   legacy configuration needs the installation owner's correction. Adopting setup explicitly pauses
+   an already-enabled environment identity.
+2. Review HTTPS/service worker, identity, exact approved default-queue evidence and worker status.
+   Select **Run readiness check**, then refresh. The check sends no notification and never
+   starts workers or widens queue scope. HTTP success or queue admission alone is not readiness.
+3. Explicitly enable delivery only after all gates pass. **Disable Web Push** retains the stable
+   identity/history. Deployment force-off, lost/corrupt protected storage or revoked installation
+   support prevents delivery even if a prior setting was enabled.
+4. Open **Profile > Notifications > Enable on this device** separately and grant browser permission.
+   Use **Send test to this device** only for an authorized owned device and verify actual receipt.
+   Event preferences remain user-owned; Admin activation does not subscribe everyone.
+5. **Rotate identity with delivery disabled** and restoring a previous encrypted identity require their displayed typed
+   confirmations. They disable delivery, revoke/audit old registrations and leave the resulting
+   identity disabled. All affected browsers must explicitly subscribe again. Resolve a recorded
+   pending operation before attempting another intent.
+
+No setup form/API accepts or displays a VAPID private key. Private key material stays encrypted in
+the installation-owned store, outside ordinary database/audit/session/history data. Troubleshoot
+TLS through the installation owner without bypassing certificate validation. Missing/different
+service worker and stale/unapproved queues remain distinct blockers. HR-2026-10-28-WEBPUSH-SETUP
+records the separate production, whole-worker and real-browser checks.

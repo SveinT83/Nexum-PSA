@@ -92,7 +92,8 @@
     "fields": [
       "endpoint",
       "keys",
-      "content_encoding"
+      "content_encoding",
+      "application_server_key"
     ],
     "defaults": {},
     "portal": false,
@@ -446,5 +447,124 @@
     },
     "portal": true,
     "response_schema": "NotificationApiOpen"
+  },
+  {
+    "method": "get",
+    "path": "notifications/web-push/setup",
+    "name": "notifications.webpush.setup.context",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\WebPushSetupController",
+    "action": "context",
+    "ability": "notifications.channels.read",
+    "fields": [],
+    "defaults": {
+      "notification_admin": true
+    },
+    "portal": false,
+    "response_schema": "NotificationWebPushSetupResponse"
+  },
+  {
+    "method": "post",
+    "path": "notifications/web-push/setup/initialize",
+    "name": "notifications.webpush.setup.initialize",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\WebPushSetupController",
+    "action": "initialize",
+    "ability": "notifications.channels.write",
+    "fields": [
+      "revision",
+      "subject",
+      "confirm"
+    ],
+    "defaults": {
+      "notification_admin": true,
+      "notification_command": true,
+      "notification_external": true
+    },
+    "portal": false,
+    "response_schema": "NotificationWebPushMutationResponse",
+    "request_schema": "NotificationWebPushInitializeInput"
+  },
+  {
+    "method": "post",
+    "path": "notifications/web-push/setup/check",
+    "name": "notifications.webpush.setup.check",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\WebPushSetupController",
+    "action": "check",
+    "ability": "notifications.channels.test",
+    "fields": [
+      "revision",
+      "confirm"
+    ],
+    "defaults": {
+      "notification_admin": true,
+      "notification_command": true,
+      "notification_external": true
+    },
+    "portal": false,
+    "response_schema": "NotificationWebPushMutationResponse",
+    "request_schema": "NotificationWebPushCheckInput"
+  },
+  {
+    "method": "patch",
+    "path": "notifications/web-push/setup/activation",
+    "name": "notifications.webpush.setup.activation",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\WebPushSetupController",
+    "action": "activation",
+    "ability": "notifications.channels.write",
+    "fields": [
+      "revision",
+      "enabled",
+      "confirm"
+    ],
+    "defaults": {
+      "notification_admin": true,
+      "notification_command": true,
+      "notification_external": true
+    },
+    "portal": false,
+    "response_schema": "NotificationWebPushMutationResponse",
+    "request_schema": "NotificationWebPushActivationInput"
+  },
+  {
+    "method": "post",
+    "path": "notifications/web-push/setup/rotate",
+    "name": "notifications.webpush.setup.rotate",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\WebPushSetupController",
+    "action": "rotate",
+    "ability": "notifications.channels.write",
+    "fields": [
+      "revision",
+      "confirmation",
+      "confirm"
+    ],
+    "defaults": {
+      "notification_admin": true,
+      "notification_command": true,
+      "notification_external": true
+    },
+    "portal": false,
+    "response_schema": "NotificationWebPushMutationResponse",
+    "request_schema": "NotificationWebPushRotateInput"
+  },
+  {
+    "method": "post",
+    "path": "notifications/web-push/setup/rollback",
+    "name": "notifications.webpush.setup.rollback",
+    "controller": "App\\Modules\\Notification\\Controllers\\Api\\V1\\WebPushSetupController",
+    "action": "rollback",
+    "ability": "notifications.channels.write",
+    "fields": [
+      "revision",
+      "archive_revision",
+      "confirmation",
+      "confirm"
+    ],
+    "defaults": {
+      "notification_admin": true,
+      "notification_command": true,
+      "notification_external": true
+    },
+    "portal": false,
+    "response_schema": "NotificationWebPushMutationResponse",
+    "request_schema": "NotificationWebPushRollbackInput"
   }
 ]

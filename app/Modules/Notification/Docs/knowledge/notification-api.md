@@ -1,4 +1,4 @@
-Verified on Dev, 2026-10-27. This guide describes all 30 Notification API operations
+Verified on Dev, 2026-10-27. This guide describes the original 30 Notification API operations
 and related Workday context. Production deployment is separate. Swagger or handbook
 availability alone does not prove that these operations are deployed in production.
 
@@ -83,9 +83,9 @@ VAPID keys, changes device permission or enables a global channel.
    public UUID with a command key to revoke it with the native lifecycle audit.
 
 Use notifications.channels.read/write/test or notifications.devices.manage, plus native
-notification.manage_channels. SMS dry-run needs no external-provider activation. Future
-Talk conversation selection (#205), VAPID wizard (#258) and runtime reconciliation (#262)
-remain separate and are not delivered by this API-parity change.
+notification.manage_channels. SMS dry-run needs no external-provider activation. Talk conversation selection (#205) is available in the separately verified Nextcloud API.
+Managed Web Push setup (#258) adds the six operations documented below. Runtime reconciliation
+(#262) retains independent System ownership and queue scope.
 
 ## Retry and exact operation outcome
 
@@ -263,3 +263,41 @@ coordinator denial remain mandatory. GET /api/v1/workday-reminders/{id} returns 
 own reminder and Workday navigation link without acknowledging it. Existing versioned
 snooze preserves generation-based retry. Explicit open/acknowledgement accepts only a
 currently eligible own copy. The bell shows the total unread count and ten recent copies.
+
+
+## Managed Web Push setup API (Issue #258, 2026-10-28)
+
+The six managed-setup operations extend the existing Notification inventory from 30 to 36.
+Implementation is being verified on Dev; production deployment/installation attestation is separate.
+
+| Method | Path under /api/v1/ | Token ability |
+| --- | --- | --- |
+| GET | notifications/web-push/setup | notifications.channels.read |
+| POST | notifications/web-push/setup/initialize | notifications.channels.write |
+| POST | notifications/web-push/setup/check | notifications.channels.test |
+| PATCH | notifications/web-push/setup/activation | notifications.channels.write |
+| POST | notifications/web-push/setup/rotate | notifications.channels.write |
+| POST | notifications/web-push/setup/rollback | notifications.channels.write |
+
+Every operation also checks current active native notification.manage_channels authority. GET returns
+a safe context and exact ETag. Writes require that quoted If-Match, revision, Idempotency-Key and
+confirm=true. Initialize accepts a stable subject; activation accepts enabled. Rotation requires
+ROTATE WEB PUSH; rollback requires ROLL BACK WEB PUSH and archive_revision. No private key, path,
+command, arbitrary probe URL or push-message body is accepted or returned. Typed Swagger documents
+the exact request/result schemas and durable command outcomes.
+
+Managed API mutations additionally default off through
+NOTIFICATION_API_MANAGED_WEBPUSH_EXECUTION_ENABLED. The explicit check does not send a message;
+it validates trusted same-installation HTTPS/service-worker bytes and a bounded worker canary on
+the existing approved healthy default queue. It never starts a worker or enables a blocked queue.
+Read current context after the worker runs; a pending/unknown check cannot enable delivery.
+Missing/stale If-Match, revoked scope/native rights, unsupported private storage and incomplete
+readiness fail safely. Reuse an exact command key only with the identical request; reconcile an
+unknown claim before trying another operation.
+
+Browser registration on a managed installation also supplies application_server_key from the actual
+browser PushSubscription.options.applicationServerKey. It must match the current public identity.
+Registration and rotation cleanup share a database mutex; old browser subscriptions cannot silently
+survive identity replacement. Browser permission and business-event preferences remain separate.
+The deployment runbook and HR-2026-10-28-WEBPUSH-SETUP cover operator provisioning, secret recovery,
+whole-worker attestation and real-device verification.

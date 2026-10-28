@@ -54,56 +54,58 @@ class WebPushSubscriptionController extends Controller
         WebPushDeviceDetector $deviceDetector,
         RecordWebPushSubscriptionEvent $recordEvent,
     ): JsonResponse {
-        if (! $readiness->isReady()) {
-            return response()->json([
-                'message' => 'Web Push is not ready in this environment.',
-                'readiness' => $readiness->toArray(),
-            ], 503);
-        }
+        return app(\App\Modules\Notification\Actions\GuardWebPushRegistration::class)->run($request, function () use ($request, $readiness, $deviceDetector, $recordEvent) {
+            if (! $readiness->isReady()) {
+                return response()->json([
+                    'message' => 'Web Push is not ready in this environment.',
+                    'readiness' => $readiness->toArray(),
+                ], 503);
+            }
 
-        /** @var User $user */
-        $user = $request->user();
-        $data = $request->validated();
-        $existing = WebPushSubscription::findByEndpoint($data['endpoint']);
+            /** @var User $user */
+            $user = $request->user();
+            $data = $request->validated();
+            $existing = WebPushSubscription::findByEndpoint($data['endpoint']);
 
-        if ($existing && ! $existing->belongsToUser($user)) {
-            return response()->json([
-                'message' => 'This browser subscription belongs to another account and cannot be transferred.',
-            ], 409);
-        }
+            if ($existing && ! $existing->belongsToUser($user)) {
+                return response()->json([
+                    'message' => 'This browser subscription belongs to another account and cannot be transferred.',
+                ], 409);
+            }
 
-        $created = $existing === null;
-        $device = $deviceDetector->detect($request->userAgent());
-        $subscription = $user->updatePushSubscription(
-            endpoint: $data['endpoint'],
-            key: $data['keys']['p256dh'],
-            token: $data['keys']['auth'],
-            contentEncoding: $data['content_encoding'] ?? 'aes128gcm',
-        );
-
-        if (! $subscription instanceof WebPushSubscription) {
-            abort(500, 'The configured Web Push subscription model is invalid.');
-        }
-
-        $subscription->forceFill([
-            'device_label' => $device['label'],
-            'browser_family' => $device['browser'],
-            'platform_family' => $device['platform'],
-            'last_seen_at' => now(),
-        ])->save();
-
-        if ($created) {
-            $recordEvent->handle(
-                subscription: $subscription,
-                targetUser: $user,
-                actor: $user,
-                action: 'registered',
+            $created = $existing === null;
+            $device = $deviceDetector->detect($request->userAgent());
+            $subscription = $user->updatePushSubscription(
+                endpoint: $data['endpoint'],
+                key: $data['keys']['p256dh'],
+                token: $data['keys']['auth'],
+                contentEncoding: $data['content_encoding'] ?? 'aes128gcm',
             );
-        }
 
-        return response()->json([
-            'device' => $subscription->fresh()->safeSummary(),
-        ], $created ? 201 : 200);
+            if (! $subscription instanceof WebPushSubscription) {
+                abort(500, 'The configured Web Push subscription model is invalid.');
+            }
+
+            $subscription->forceFill([
+                'device_label' => $device['label'],
+                'browser_family' => $device['browser'],
+                'platform_family' => $device['platform'],
+                'last_seen_at' => now(),
+            ])->save();
+
+            if ($created) {
+                $recordEvent->handle(
+                    subscription: $subscription,
+                    targetUser: $user,
+                    actor: $user,
+                    action: 'registered',
+                );
+            }
+
+            return response()->json([
+                'device' => $subscription->fresh()->safeSummary(),
+            ], $created ? 201 : 200);
+        });
     }
 
     public function destroy(

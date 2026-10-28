@@ -41,13 +41,13 @@ class NotificationApiContractTest extends TestCase
         $published = [];
         foreach ($document['paths'] as $path => $item) {
             foreach ($item as $method => $operation) {
-                if (in_array($method, ['get', 'post', 'put', 'delete'], true) && in_array('Notifications', $operation['tags'] ?? [], true)) {
+                if (in_array($method, ['get', 'post', 'put', 'patch', 'delete'], true) && in_array('Notifications', $operation['tags'] ?? [], true)) {
                     $published[] = $method.' '.$path;
                     $this->assertNotEmpty($operation['responses'][200]['content'] ?? $operation['responses'][202]['content'] ?? null);
                 }
             }
         }
-        $this->assertCount(30, $runtime);
+        $this->assertCount(36, $runtime);
         $this->assertEqualsCanonicalizing($runtime, $published);
         $schemas = $document['components']['schemas'];
         $check = function (mixed $node) use (&$check, $schemas): void {
@@ -62,11 +62,12 @@ class NotificationApiContractTest extends TestCase
             }
         };
         foreach ($schemas as $name => $schema) {
-            if (str_starts_with($name, 'NotificationApi')) {
+            if (str_starts_with($name, 'NotificationApi') || str_starts_with($name, 'NotificationWebPush')) {
                 $check($schema);
             }
         }
         $this->assertCount(39, array_filter(array_keys($schemas), fn ($name) => str_starts_with($name, 'NotificationApi')));
+        $this->assertCount(11, array_filter(array_keys($schemas), fn ($name) => str_starts_with($name, 'NotificationWebPush')));
         foreach (['endpoint', 'public_key', 'auth_token', 'secrets'] as $secret) {
             $this->assertArrayNotHasKey($secret, $schemas['NotificationApiDevice']['properties']);
             $this->assertArrayNotHasKey($secret, $schemas['NotificationApiChannel']['properties']);

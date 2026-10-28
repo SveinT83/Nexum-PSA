@@ -1,5 +1,33 @@
 # Human Review Register
 
+## HR-2026-10-28-WEBPUSH-SETUP - Managed Web Push Installation And Activation
+
+Status: Pending. Owner: Codex. Intended named reviewer/operator: Svein Tore.
+Scope: #258 / RFC 2026-10-28-managed-webpush-setup. Tested Main implementation is authorized;
+this checklist blocks production installation attestation, activation and actual browser/device proof.
+
+Automated Main candidate: 158 tests / 7295 assertions, no errors/failures/skips.
+Native mutex migration and rollback-only MySQL proof passed; temporary Linux metadata/store
+contract proof passed. Actual environment identity/activation was preserved.
+
+
+- [ ] Verify the supported installation descriptor, protected private volume/ownership, APP_KEY
+  backup/recovery and whole-worker reload/runtime contract through the deployment runbook.
+- [ ] Verify existing-key detection and unsupported/partial/corrupt/permission/force-off failures
+  without showing a private key or changing the prior environment identity.
+- [ ] Inspect Admin and official API setup/check/enable/disable with fresh authority, exact revisions,
+  replay, trusted HTTPS/service worker and current approved default-queue evidence.
+- [ ] Confirm the internal canary proves the exact worker identity revision without sending a push
+  or changing blocked queue scope. Queue acceptance is not worker/browser delivery.
+- [ ] After separate explicit device authorization, register one owned browser and verify one
+  controlled notification end to end. Event preferences remain opt-in per user.
+- [ ] Review managed rotation/rollback warnings, disabled failure recovery, retained encrypted
+  history and audited registration renewal on an isolated test installation.
+- [ ] Check mobile/desktop layout, safe errors/diagnostics, operator guide and actual handbook access.
+
+No production migration, .env write, key export, device grant, worker restart, queue/backlog release
+or real test message is implied by Main merge. Automated tests do not mark this entry Reviewed.
+
 ## HR-2026-10-28-TALK-DESTINATIONS - Per-Connection Talk Notifications
 
 Status: Pending. Owner: Codex. Intended named reviewer: Svein Tore.
