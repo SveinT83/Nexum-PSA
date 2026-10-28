@@ -157,3 +157,16 @@ the current due schedule before changing it.
 The regression was reproduced before the fix. Two independent processes against the Dev MySQL
 database then returned the same occurrence with one cloned note; the owned internal test Tickets
 were removed afterwards. This correction is Dev-only until separately promoted and deployed.
+
+## Scheduled Ticket runtime protection on Main (Issue #262, 2026-10-28)
+
+The tested occurrence-idempotency protection is available on Dev and Main in PR #372.
+Repeated delivery for the same parent Ticket and exact planned occurrence reuses one Ticket and
+does not clone its notes, attachments or Task group again. A deliberately removed occurrence keeps
+its identity and is not silently recreated. One-time activation locks and rechecks the current due
+schedule before changing state.
+
+This protects the supported current runtime path. It does not retry or delete historical failed
+jobs, approve a blocked queue, change Ticket Rules production activation, or claim customer
+notification delivery. HR-2026-10-27-OPS-RULES-COORDINATOR remains In Review; the named runtime/Email
+owners must review the exact pending/failed cohorts before further operating activation.

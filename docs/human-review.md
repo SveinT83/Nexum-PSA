@@ -13386,7 +13386,7 @@ migration, asset build, queue or scheduler action for the correction itself. Pro
 needs the separate exact checklist. #262 migrations 180000/181000 ran only on Dev in batches 45/46; actual health and three owned workers are verified. Cold queues and historical failed-job recovery remain blocked.
 Risks: historical side effects, worker timeout/retry mismatch, stale authority/configuration,
 overbroad shared credentials, missing governance facts. No backlog retry/purge, production
-mutation, token issuance, commit/push/Main action occurred.
+mutation or token issuance occurred in that original session. The later verified Main promotion is recorded below.
 
 
 Operational handbook evidence (2026-10-27): pages 426/34, 532/23 and 541/5 read back exactly; staff-internal/authenticated read scope and inheritance checked. OpenWebUI retrieval remains separate. Existing Email/Storage runtime guard batch passes 32 / 237; no live cutover is inferred.
@@ -13394,3 +13394,19 @@ Operational handbook evidence (2026-10-27): pages 426/34, 532/23 and 541/5 read 
 Runtime verification (2026-10-28): plans/2026-10-28-runtime-health-verification.md. Native concurrent publishers emitted one probe; an isolated worker completed it. Native Ticket contention produced one occurrence/note and fixtures were removed. Final health tests 15 / 96; domain matrix 117 / 817; System regression 29 / 885 (overlap). Code approval and these automated checks do not mark this checklist Reviewed.
 
 Email runtime follow-up under HR-2026-10-27-OPS-RULES-COORDINATOR: bounded provider-lock deferral is verified (16 tests / 117 assertions), and exact read-only probe UUID discovery/recovery passes 1 / 14. Historical failures remain preserved; no silent account success/failure or provider-policy bypass. Human acceptance remains In Review.
+
+
+Main promotion evidence (2026-10-28; checklist remains In Review):
+Verified Main: PR #372, a5ad470991d84a487e574fb901bba910c11c8d84; independent exact tested tree
+6c1695a0107aa8e1a76c21af2f359d0d0e7ea70e. Dev 22/169; latest-Main matrix 139/7321, all passing.
+Nineteen PHP syntax checks, XML and scoped whitespace pass. No full application suite was run.
+All promoted runtime/Ticket/Email code matched the completed owner's final snapshot; Dev branch,
+index and unrelated staged Storage work were preserved.
+Actual BookStack Main sections 367/12 and 424/35 were independently read back with inherited access
+preserved. System Knowledge 79 revision 214 matches source/access; native sync remains pending_push.
+No new Ticket Knowledge article was invented; its authoritative source guide and actual BookStack
+runtime section were updated. Unrelated older Ticket-handbook paragraphs remain a #265 follow-up.
+Issue #262 stays open: named cold/failed-cohort disposition, duplicate-path operating acceptance
+and HR-2026-10-27-OPS-RULES-COORDINATOR (In Review) remain. Comment 6460873462 and Issue body Main
+status were independently read back. No cron/configuration/worker scope, historical job or
+production runtime changed in this promotion. Deployment defaults remain disabled/empty-scoped.

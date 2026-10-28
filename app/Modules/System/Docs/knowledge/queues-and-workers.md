@@ -201,3 +201,27 @@ Do not clear history or start a cold-queue worker just to make the dashboard gre
 Runtime logs include scheduler, default, Email and Supplier files under the tested rotation policy.
 The approved crontab and exact rollback candidates are protected under
 /home/sveintore/.local/state/nexum-runtime/20261027-issue262. No environment credentials were copied.
+
+## Runtime health availability on Main (Issue #262, 2026-10-28)
+
+The verified runtime-health foundation is available on Dev and Main in PR #372. Production rollout,
+cold-queue recovery and named operating acceptance remain separate. Deployment defaults are off
+with no implicit queue allowlist.
+
+1. An authorized installation operator can read **system:runtime-health** through the existing
+   server CLI. Reading it neither writes evidence nor starts workers or consumes business work.
+2. Read scheduler and each owned queue separately. Healthy, stale, blocked and unknown describe
+   evidence freshness and approved scope. A healthy default worker does not make a blocked
+   notification or live-Email cohort healthy. Business delivery is explicitly unverified.
+3. Outstanding canaries remain bounded to one exact pending identity per owned queue. Reconcile
+   an unknown probe only after exact transport/non-delivery review; observation never blindly
+   republishes or clears a historical job.
+4. Keep existing domain health, queue ownership, visibility/timeout alignment and protected
+   stop/rollback procedures. Main availability does not repeat the already-applied Dev cutover.
+   Do not enable cold queues to make the status green.
+5. Web Push consumes only fresh evidence for its exact already-approved default queue. Its own
+   protected installation profile, worker check and explicit activation are still required.
+
+Fresh promotion tests passed on Dev (22 tests) and the isolated Main candidate (139 tests).
+HR-2026-10-27-OPS-RULES-COORDINATOR remains In Review for named cohort/operating checks. No production
+configuration, historical retry/purge, new worker scope or autonomous activation was performed.

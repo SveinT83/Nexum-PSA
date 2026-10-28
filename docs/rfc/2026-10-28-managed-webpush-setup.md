@@ -189,8 +189,8 @@ for non-root callers, encrypted synthetic read-back/replay, restrictive permissi
 symlink rejection and lost-profile fail-closed behavior. Temporary artifacts were removed and
 default /etc/nexum descriptors remained unchanged. This is not a live operator/worker attestation.
 
-System's RuntimeHealth implementation is independent active work under #262 and is absent from
-the current Main baseline. The read-only adapter resolves it only when installed; otherwise the
+At the PR #370 baseline, System's independently owned RuntimeHealth implementation under #262
+was absent from Main. The read-only adapter resolves it only when installed; otherwise the
 wizard/API returns an explicit integration requirement and blocks activation. Its unmerged provider,
 scopes and worker controls are excluded from this Main package. Existing environment-only Web Push
 continues through its prior path. No hidden fallback health claim is introduced.
@@ -215,3 +215,9 @@ explains that requirement and blocks activation rather than importing another ow
 provider/scopes. Existing environment-only behavior remains available.
 HR-2026-10-28-WEBPUSH-SETUP Pending before production installation/whole-worker attestation,
 activation and real-browser proof. Main merge does not claim or authorize those checks.
+
+
+Subsequent dependency availability: the verified #262 runtime-health code is now on Main via
+PR #372 (a5ad470991d84a487e574fb901bba910c11c8d84), with 139/7321 fresh Main checks. Its default-off
+configuration/queue scope and actual installation/operator evidence still gate managed activation.
+No Web Push identity, device, runtime switch or worker scope was changed by that promotion.
