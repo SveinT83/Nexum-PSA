@@ -328,7 +328,18 @@ separate human/release approval before use.
 4. Existing Tickets remain pinned to their existing version. Use the explicit migration workflow
    when a deliberate version change is required; publishing does not migrate Tickets automatically.
 
-The Dev overview now shows **Publication**, **No published version**, and **Edit and publish**.
-This display correction is Dev-only until deployed. Production inspection on 2026-10-27 confirms
+The verified Dev/Main overview shows **Publication**, **No published version**, and **Edit and publish**.
+This display correction is on Main in PR #374 (2026-10-28); production deployment is separate. Production inspection on 2026-10-27 confirms
 that **Implementering** is already active and published (version ID 5). A disabled Rule **Publish**
 or **Enable** control is a separate permission/capability/runtime question.
+
+## Main verification and remaining acceptance (Issue #285, 2026-10-28)
+
+The source-only promotion in PR #374 passed four fresh Dev regressions and a 76-test Main
+Rules/Workflow/customer-notification matrix. Saved drafts and published runtime versions remain
+distinct. The UI explains permission, workflow publication, capability and runtime requirements;
+it does not enable them.
+
+Issue #285 remains open for its approved production cutover, exact match/non-match evidence and
+manual desktop/mobile review. HR-2026-10-27-OPS-RULES-COORDINATOR stays In Review. Main availability
+does not publish or activate a Rule, migrate pinned Tickets or change production settings.
