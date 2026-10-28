@@ -1,5 +1,15 @@
 # tdPSA Development TODO
 
+## Knowledge Audience And Context Contract - Issues #265 / #261 (2026-10-28)
+
+Status: Baseline Complete / Blocked On Team-Membership Source Decision / No Implementation Started.
+Owner: Codex (source audit); Svein (membership source decision). Native schema/source inventory
+found no existing Team authority; the question was asked once in this task. The two Issues require
+one Knowledge-owned access contract and cannot safely use competing temporary rules.
+Resume when the membership source is selected. Exact queries, consumers, privacy/Work Context
+boundaries and full target are documented in plans/2026-10-28-knowledge-context-authority-baseline.md.
+No Knowledge grant, audience/data migration, provider activation or live AI request occurred.
+
 ## Ticket Rules UI Main Promotion - Issue #285 (2026-10-28)
 
 Status: Done On Dev / Merged To Main / Production Acceptance Pending. Owner: Codex / Svein Tore.
