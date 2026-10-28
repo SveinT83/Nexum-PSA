@@ -48,7 +48,7 @@ otherwise changed until the technician reviews the result and saves the form.
 
 ## Markdown In Task Descriptions
 
-Availability: Issue #328 is implemented and tested on Dev; scoped Main verification is in progress.
+Availability: Issue #328 is verified on Dev and merged to Main in PR #366 (65c5d249).
 Production is unchanged. Human-review checklist HR-2026-10-28-TASK-TICKET-MARKDOWN remains Pending.
 
 Prerequisite: ordinary Task create/update/view access. No new permission is granted.

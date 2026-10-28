@@ -2,14 +2,20 @@
 
 ## Task And Ticket Markdown - Issue #328 (2026-10-28)
 
-Status: Done On Dev / Main Candidate Verified / Tested Main Merge Authorized. Owner: Codex / Svein Tore.
-Target: existing Task/Ticket description and conversation formatting, safe shared rendering,
-English writing guidance, existing Portal audience and Ticket-generated HTML email consistency.
-Source/API/plain MIME text stays intact. No schema/backfill, rich-editor replacement, remote-image
-loads, recipient/role/provider changes or production rollout. Preserve shared dirty domain work.
-RFC 2026-10-28-task-ticket-markdown and ADR 2026-10-28-shared-operational-markdown-presentation.
-Two sequential slices and concrete done criteria live in the RFC.
-HR-2026-10-28-TASK-TICKET-MARKDOWN Pending before production; tested Main merge explicitly authorized.
+Status: Done On Dev / Merged To Main / Issue Closed Completed. Owner: Codex / Svein Tore.
+PR #366; merge 65c5d249952ff357c364042f06befda3db5e72a7. Independent tree read-back equals
+tested candidate d66fa5d87059e7fc6c8667e0432ab8d39cca7665. Completion comment 6457398967.
+Shared safe renderer covers Task detail/quick view, Ticket description/messages, authorized Portal
+and Ticket-generated HTML email. Raw source is preserved in editing/API/plain MIME; existing
+audience, recipient, sender and delivery guards remain. No remote Markdown-image loads.
+Dev workflows/API/Portal 44/325 and final template/Ticket 16/96; Main 54/345 and final 16/96,
+all passing, overlapping batches. Five new PHP files pass Pint and 10 scoped PHP syntax checks pass.
+Final Main guide sections read back in BookStack 392/10, 409/36 and 421/35, existing
+article content and access preserved; exact evidence is recorded in the RFC.
+RFC/ADR 2026-10-28-task-ticket-markdown / shared-operational-markdown-presentation; both slices Done.
+HR-2026-10-28-TASK-TICKET-MARKDOWN Pending before production. No schema/backfill, stored-template
+rewrite, package/asset build, recipient/grant, live SMTP send or production rollout.
+Next primary scope: #205 per-connection Talk destinations. #290 still requires actual recipient facts.
 
 ## Truthful AI Cost Evidence - Issue #277 (2026-10-28)
 
@@ -26,7 +32,7 @@ Native Knowledge article 2/revision 203 and actual BookStack page 545/revision 6
 with exact Main-status guide and access unchanged.
 HR-2026-10-28-AI-COST-EVIDENCE Pending before production. No full suite, real provider call,
 production migration, FX/pricing/provider grant, backlog release or historical backfill.
-Next primary scope: #328 Task/Ticket Markdown. #290 still needs actual receiver/provider/model/review facts.
+Next primary scope: #205 per-connection Talk destinations. #290 still needs actual receiver/provider/model/review facts.
 
 ## Approved Open-Issue Completion And Main Promotion (2026-10-27)
 
@@ -40,12 +46,12 @@ verified candidate tree 089cf90cc48515ad1311cdfe5c1c608dbbcb978a. Completion com
 RFC/ADR: 2026-10-27-ai-chat-input-and-error-boundaries. Dev 101 / 1147 plus consumer
 13 / 113 and Task 3 / 10; reconciled Main 132 / 1700 and final 54 / 711; overlapping.
 Knowledge 1/82 and exact BookStack 541/7 final Main-status section read back, access unchanged. No full suite or
-real model send. Main merge is verified. #277 is also complete in PR #364; next sequential primary scope: #328.
+real model send. Main merge is verified. #277 is also complete in PR #364; next sequential primary scope: #205.
 Human-review checklist HR-2026-10-27-AI-INPUT-ERRORS is Pending; tested Main merge is explicitly
 authorized, production scenario/release review remains separate. #262/#285 have independent
 active owners and are reconciled before promotion. #290 awaits actual recipient/provider/model
 and review facts requested from Svein; no external grant or provider decision is invented.
-Next: implement/verify #328 Task/Ticket Markdown, then continue remaining audited fixes. No production rollout/backlog retry is implied.
+Next: implement/verify #205 per-connection Talk destinations, then continue remaining audited fixes. No production rollout/backlog retry is implied.
 
 Operational completion during verification: #292 closed completed (GitHub comment 6455598251).
 Approved key SSH plus DPAPI-backed sudo verified the existing nonempty 0600 TLS key; root
