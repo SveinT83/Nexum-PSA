@@ -94,3 +94,13 @@ are never resent with the same key. Inspect the actual provider conversation bef
 with a new intent. Raw remote errors and shared secrets are not exposed. The independent signed
 inbound webhook and Notification-owned channel preferences remain in their existing domains.
 The proposed multi-destination service-user setup in Issue #205 is a separate feature.
+
+
+## Ordinary notification setup (Issue #205, 2026-10-28)
+
+Availability: Dev implementation; Main verification is in progress and production is unchanged.
+For ordinary notifications, use the connection's Talk Notifications panel and Notification
+Channels to select an exact service-user conversation. A Bot ID/secret or webhook URL is not
+required. The Bot setup above remains an advanced compatibility option; HTTP acceptance alone
+does not verify delivery. See Nextcloud Admin Setup for target selection, safe tests and migration
+of existing personal legacy targets. HR-2026-10-28-TALK-DESTINATIONS remains Pending.

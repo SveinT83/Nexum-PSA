@@ -56,11 +56,18 @@ class NotificationApiSafetyTest extends TestCase
     private function talk(): NotificationChannel
     {
         $connection = NextcloudConnection::create(['name' => 'Internal cloud', 'scope' => 'global',
-            'mode' => 'sync', 'is_default' => true, 'is_active' => true, 'base_url' => 'https://cloud.example.test']);
+            'mode' => 'sync', 'is_default' => true, 'is_active' => true, 'base_url' => 'https://cloud.example.test',
+            'service_username' => 'fixture', 'service_password' => 'synthetic-not-a-credential']);
 
+        $registry = app(\App\Modules\Nextcloud\Services\TalkDestinationRegistry::class);
+        $registry->saveSettings($connection, ['enabled' => true]);
+        $destination = \App\Modules\Nextcloud\Models\NextcloudTalkDestination::create(['connection_id' => $connection->id,
+            'provider_binding' => $registry->binding($connection->fresh()), 'conversation_token' => 'safe123', 'name' => 'Approved',
+            'is_enabled' => true, 'is_available' => true, 'health_status' => 'available']);
         return NotificationChannel::updateOrCreate(['name' => 'nextcloud_talk'], ['label' => 'Nextcloud Talk',
             'driver' => 'nextcloud_talk', 'is_enabled' => true,
-            'config' => ['nextcloud_connection_id' => $connection->id, 'default_webhook_url' => 'https://cloud.example.test/SECRET-webhook']]);
+            'config' => ['nextcloud_connection_id' => $connection->id, 'talk_destination_id' => $destination->id,
+                'talk_conversation_token' => 'safe123', 'delivery_mode' => 'conversation']]);
     }
 
     #[Test]
@@ -68,17 +75,35 @@ class NotificationApiSafetyTest extends TestCase
     {
         config(['notification-api.external_tests_enabled' => true]);
         $channel = $this->talk();
-        Http::fake(['*' => Http::response('SECRET-body', 200)]);
-        $success = $this->postJson('/api/v1/notifications/channels/'.$channel->id.'/test', [], $this->key())
+        Http::fake(function ($request) {
+            $data = str_contains($request->url(), '/api/v4/room/')
+                ? ['token' => 'safe123', 'readOnly' => 0, 'permissions' => 128]
+                : ($request->method() === 'POST' ? ['id' => 91, 'token' => 'safe123'] : []);
+            return Http::response(['ocs' => ['meta' => ['statuscode' => 100], 'data' => $data]]);
+        });
+        $etag = \App\Modules\Notification\Actions\ExecuteNotificationApiCommand::etag($channel->fresh());
+        $success = $this->postJson('/api/v1/notifications/channels/'.$channel->id.'/test', [], $this->key() + ['If-Match' => $etag])
             ->assertOk()->assertJsonPath('data.state', 'provider_accepted')->assertJsonPath('data.delivery_confirmed', false);
         $this->assertStringNotContainsString('SECRET', $success->getContent());
-        Http::fake(fn () => throw new ConnectionException('SECRET-exception'));
-        $key = $this->key();
+        // A successful re-discovery is explicit; uncertain cached destinations cannot be retried blindly.
+        $destination = \App\Modules\Nextcloud\Models\NextcloudTalkDestination::firstOrFail();
+        $destination->update(['health_status' => 'available']);
+        Http::swap(new \Illuminate\Http\Client\Factory);
+        Http::preventStrayRequests();
+        Http::fake(function ($request) {
+            if ($request->method() === 'GET') {
+                return Http::response(['ocs' => ['meta' => ['statuscode' => 100], 'data' => ['token' => 'safe123', 'readOnly' => 0, 'permissions' => 128]]]);
+            }
+            throw new ConnectionException('SECRET-exception');
+        });
+        $key = $this->key() + ['If-Match' => \App\Modules\Notification\Actions\ExecuteNotificationApiCommand::etag($channel->fresh())];
         $first = $this->postJson('/api/v1/notifications/channels/'.$channel->id.'/test', [], $key)
             ->assertAccepted()->assertJsonPath('data.state', 'unknown');
         $this->assertStringNotContainsString('SECRET', $first->getContent());
         $this->assertSame('unknown', NotificationApiCommand::findOrFail($first->json('operation_id'))->state);
         $this->bearer();
+        Http::swap(new \Illuminate\Http\Client\Factory);
+        Http::preventStrayRequests();
         Http::fake(['*' => Http::response('Should never be sent', 200)]);
         $this->postJson('/api/v1/notifications/channels/'.$channel->id.'/test', [], $key)
             ->assertAccepted()->assertJsonPath('replayed', true);

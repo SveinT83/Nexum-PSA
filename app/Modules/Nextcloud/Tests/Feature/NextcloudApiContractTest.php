@@ -54,12 +54,12 @@ class NextcloudApiContractTest extends TestCase
                 }
             }
         }
-        $this->assertCount(50, $actual);
-        $this->assertSame(36, $new);
+        $this->assertCount(55, $actual);
+        $this->assertSame(41, $new);
         $this->assertEqualsCanonicalizing($actual, $published);
         $this->assertArrayNotHasKey('service_password', $doc['components']['schemas']['NextcloudApiConnection']['properties']);
         $this->assertArrayNotHasKey('talk_bot_secret', $doc['components']['schemas']['NextcloudApiTalk']['properties']);
         $web = collect(Route::getRoutes())->filter(fn ($route) => str_starts_with($route->uri(), 'tech/admin/system/nextcloud'));
-        $this->assertCount(19, $web);
+        $this->assertCount(23, $web);
     }
 }

@@ -17,7 +17,7 @@ use Illuminate\View\View;
 /**
  * Admin controller for managing system-wide notification channels.
  *
- * Configure external integrations like Nextcloud Talk webhooks,
+ * Configure external integrations like Nextcloud Talk conversations,
  * test connectivity, and enable/disable channels.
  */
 class NotificationChannelController extends Controller
@@ -45,18 +45,15 @@ class NotificationChannelController extends Controller
      */
     public function edit(NotificationChannel $channel): View
     {
-        $nextcloudConnections = $channel->driver === 'nextcloud_talk'
-            ? $this->activeNextcloudConnections()
-            : collect();
-        $nextcloudConnection = $channel->driver === 'nextcloud_talk'
-            ? $this->selectedNextcloudConnection($channel)
-            : null;
+        $talkConnections = $channel->driver === 'nextcloud_talk'
+            ? app(\App\Modules\Nextcloud\Services\TalkDestinationRegistry::class)->globalChoices() : [];
+        $talkReady = collect($talkConnections)->flatMap(fn ($connection) => $connection['destinations'])
+            ->contains(fn ($destination) => $destination['eligible']);
 
         return view('notification::Admin.channels.edit', [
             'channel' => $channel,
-            'nextcloudConnections' => $nextcloudConnections,
-            'nextcloudConnection' => $nextcloudConnection,
-            'nextcloudReady' => (bool) $nextcloudConnection,
+            'talkConnections' => $talkConnections,
+            'nextcloudReady' => $talkReady,
             'smsTemplates' => $channel->driver === 'sms' ? $this->activeSmsTemplates() : collect(),
             'smsTestContacts' => $channel->driver === 'sms' ? $this->smsTestContacts() : collect(),
         ]);
@@ -70,7 +67,7 @@ class NotificationChannelController extends Controller
         app(\App\Modules\Notification\Actions\ManageNotificationChannels::class)->update($request, $channel);
 
         return redirect()->route('tech.admin.notification-channels.edit', $channel)
-            ->with($channel->driver === 'nextcloud_talk' && ! $channel->is_enabled && ! NextcloudConnection::where('is_active', true)->exists() ? 'warning' : 'success',
+            ->with('success',
                 'Notification channel settings saved.');
     }
 
@@ -93,40 +90,6 @@ class NotificationChannelController extends Controller
             ->orderByRaw("case when scope = 'global' then 1 else 0 end desc")
             ->orderBy('name')
             ->get();
-    }
-
-    /**
-     * Resolve the configured Nextcloud connection, falling back to global default.
-     */
-    private function selectedNextcloudConnection(NotificationChannel $channel): ?NextcloudConnection
-    {
-        $connectionId = $channel->config['nextcloud_connection_id'] ?? null;
-
-        if ($connectionId) {
-            $connection = NextcloudConnection::query()
-                ->where('is_active', true)
-                ->find($connectionId);
-
-            if ($connection) {
-                return $connection;
-            }
-        }
-
-        return $this->defaultNextcloudConnection();
-    }
-
-    /**
-     * Prefer the active global default Nextcloud connection when no explicit choice exists.
-     */
-    private function defaultNextcloudConnection(): ?NextcloudConnection
-    {
-        return NextcloudConnection::query()
-            ->where('is_active', true)
-            ->orderByRaw("case when scope = 'global' and is_default = 1 then 1 else 0 end desc")
-            ->orderByDesc('is_default')
-            ->orderByRaw("case when scope = 'global' then 1 else 0 end desc")
-            ->orderBy('name')
-            ->first();
     }
 
     private function activeSmsTemplates()

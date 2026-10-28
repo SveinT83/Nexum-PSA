@@ -115,8 +115,8 @@
                                             @if($channels['nextcloud_talk'])
                                                 <div class="form-check form-switch">
                                                     <input type="checkbox" name="settings[{{ $settingIndex }}][nextcloud_talk_enabled]" value="1"
-                                                           class="form-check-input js-talk-toggle" id="talk_{{ $type }}"
-                                                           data-webhook-input="talk_url_{{ $type }}" {{ $talkOn ? 'checked' : '' }}>
+                                                           class="form-check-input" id="talk_{{ $type }}"
+                                                           {{ $talkOn ? 'checked' : '' }}>
                                                     <label class="form-check-label" for="talk_{{ $type }}">Nextcloud Talk</label>
                                                 </div>
                                             @else
@@ -126,11 +126,15 @@
 
                                         @if($channels['nextcloud_talk'])
                                             <div class="col-12 col-xl-4">
-                                                <label for="talk_url_{{ $type }}" class="form-label small mb-1">Talk webhook URL</label>
-                                                <input type="url" name="settings[{{ $settingIndex }}][nextcloud_talk_webhook_url]"
-                                                       id="talk_url_{{ $type }}" class="form-control form-control-sm"
-                                                       value="{{ old("settings.{$settingIndex}.nextcloud_talk_webhook_url", $talkUrl) }}"
-                                                       placeholder="https://cloud.example.com/apps/webhook/..." {{ $talkOn ? '' : 'disabled' }}>
+                                                <p class="small text-muted mb-1">Talk uses the conversation configured in Notification Channels.</p>
+                                                @if(filled($talkUrl))
+                                                    <div class="form-check">
+                                                        <input type="checkbox" class="form-check-input" id="talk_clear_{{ $type }}"
+                                                            name="settings[{{ $settingIndex }}][nextcloud_talk_webhook_url]" value="">
+                                                        <label class="form-check-label small" for="talk_clear_{{ $type }}">Clear my legacy target and use the configured conversation</label>
+                                                    </div>
+                                                    <div class="form-text">Your legacy target stays unchanged unless you explicitly clear it.</div>
+                                                @endif
                                             </div>
                                         @endif
                                     @endif
@@ -160,21 +164,7 @@
         <li>Web Push is opt-in per device and event.</li>
         <li>Unavailable event channels show the policy reason.</li>
         @if($talkEnabled)
-            <li>Nextcloud Talk can use a per-user webhook or the system default.</li>
+            <li>Nextcloud Talk uses the configured conversation. Existing personal legacy targets require explicit migration.</li>
         @endif
     </ul>
-@endsection
-
-@section('scripts')
-@parent
-<script>
-    document.querySelectorAll('.js-talk-toggle').forEach(function (checkbox) {
-        checkbox.addEventListener('change', function () {
-            const input = document.getElementById(this.dataset.webhookInput);
-            if (!input) return;
-            input.disabled = !this.checked;
-            if (!this.checked) input.value = '';
-        });
-    });
-</script>
 @endsection

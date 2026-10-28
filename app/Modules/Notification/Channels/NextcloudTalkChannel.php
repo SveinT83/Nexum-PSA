@@ -11,29 +11,9 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Sends notifications to Nextcloud Talk conversations.
- *
- * Supports two delivery modes:
- *
- * 1. **Bot API** (preferred, NC 27.1+ / Talk 17.1+): Sends HMAC-SHA256 signed
- *    messages via the Talk Bot API endpoint. Requires a bot installed on the
- *    Nextcloud server (`./occ talk:bot:install`) and the bot ID + secret stored
- *    in the NextcloudConnection. Supports rich Markdown formatting, reference IDs,
- *    silent messages, and future command processing.
- *
- * 2. **Webhook** (fallback): Sends simple `{ "message": "..." }` POSTs to a
- *    Talk webhook URL. Works with any Talk version but only supports plain text
- *    messages without signing or deduplication.
- *
- * Delivery mode is determined automatically:
- * - If the active NextcloudConnection has `talk_bot_id` and `talk_bot_secret`
- *   configured, Bot API is used.
- * - Otherwise, if a webhook URL is configured (system-wide or per-user),
- *   webhook delivery is used.
- *
- * Setup instructions:
- * - Bot API: See NextcloudConnection admin settings and the Talk bot setup guide.
- * - Webhook: Create a webhook in Talk conversation settings and paste the URL.
+ * Ordinary notifications use an explicit paired service-user Talk destination.
+ * Existing Bot/webhook configuration is a hidden migration compatibility path.
+ * Global/connection/destination guards and durable receipts remain authoritative.
  */
 class NextcloudTalkChannel
 {
@@ -73,6 +53,11 @@ class NextcloudTalkChannel
             return $this->suppressed('nextcloud_talk_channel_disabled');
         }
 
+        if (($channelConfig->config['delivery_mode'] ?? null) === 'conversation'
+            || array_key_exists('talk_destination_id', $channelConfig->config ?? [])) {
+            return $this->sendViaConversation($notifiable, $notification, $channelConfig, $exactAuthority, $exactWebhookUrl);
+        }
+
         $connection = $this->configuredNextcloudConnection($channelConfig);
         if (! $connection) {
             Log::debug('NextcloudTalk: Channel is enabled, but no active Nextcloud integration exists.');
@@ -107,6 +92,60 @@ class NextcloudTalkChannel
             $exactAuthority,
             $exactWebhookUrl,
         );
+    }
+
+    /** New mode never inherits a different personal legacy target or a first-active connection. */
+    private function sendViaConversation(object $notifiable, Notification $notification, NotificationChannel $config,
+        bool $exactAuthority, #[\SensitiveParameter] ?string $exactWebhookUrl): array
+    {
+        if (! method_exists($notification, 'toNextcloudTalk')) {
+            return $this->suppressed('nextcloud_talk_notification_unsupported');
+        }
+        if ($notifiable instanceof \App\Models\Core\User && ! $notifiable->fresh()?->isActive()) {
+            return $this->suppressed('nextcloud_talk_recipient_inactive');
+        }
+        if ($this->hasPersonalLegacyTarget($notifiable, $notification, $exactAuthority, $exactWebhookUrl)) {
+            return $this->suppressed('nextcloud_talk_legacy_target_requires_migration');
+        }
+        $service = app(\App\Modules\Nextcloud\Services\TalkNotificationDelivery::class);
+        $destination = $service->globalDestination($config);
+        if (! $destination) {
+            return $this->suppressed('nextcloud_talk_destination_missing');
+        }
+        $identity = $notification instanceof \App\Modules\Notification\Notifications\InboundEmailRoutedNotification
+            ? $notification->databaseNotificationId : $notification->id;
+        if (! is_string($identity) || $identity === '') {
+            return $this->suppressed('nextcloud_talk_notification_identity_missing');
+        }
+        $outcome = $service->send($destination, $this->formatMessage($notification->toNextcloudTalk($notifiable)),
+            $identity, 'notification', isset($notifiable->id) ? (int) $notifiable->id : null);
+        return $outcome + ['status' => $outcome['state'] === 'confirmed' ? 'delivered'
+            : ($outcome['state'] === 'blocked' ? 'suppressed' : 'unresolved')];
+    }
+
+    private function hasPersonalLegacyTarget(object $notifiable, Notification $notification, bool $exact,
+        #[\SensitiveParameter] ?string $url): bool
+    {
+        if ($exact) {
+            return filled($url);
+        }
+        if (! $notifiable instanceof \App\Models\Core\User) {
+            return false;
+        }
+        $type = $notification instanceof \App\Modules\Notification\Notifications\InboundEmailRoutedNotification
+            ? ($notification->payload['type'] ?? null) : null;
+        if (! $type) {
+            $types = collect(\App\Modules\Notification\Support\NotificationTypeRegistry::all())
+                ->filter(fn ($definition) => data_get($definition, 'web_push.notification_class') === $notification::class)->keys();
+            $type = $types->count() === 1 ? $types->first() : null;
+        }
+        $query = \App\Modules\Notification\Models\NotificationSetting::where('user_id', $notifiable->id)
+            ->where('nextcloud_talk_enabled', true)->whereNotNull('nextcloud_talk_webhook_url')
+            ->where('nextcloud_talk_webhook_url', '!=', '');
+        if ($type) {
+            $query->where('notification_type', $type);
+        }
+        return $query->exists();
     }
 
     /**
@@ -402,13 +441,11 @@ class NextcloudTalkChannel
             ->first();
     }
 
-    /** @return array{status:'delivered',reason_code:string} */
+    /** Legacy HTTP/Bot acceptance is terminal but does not prove conversation storage. */
     private function delivered(): array
     {
-        return [
-            'status' => 'delivered',
-            'reason_code' => 'nextcloud_talk_delivery_confirmed',
-        ];
+        return ['status' => 'unresolved', 'reason_code' => 'nextcloud_talk_legacy_acceptance_unverified',
+            'state' => 'provider_accepted', 'delivery_confirmed' => false];
     }
 
     /** @return array{status:'suppressed',reason_code:string} */

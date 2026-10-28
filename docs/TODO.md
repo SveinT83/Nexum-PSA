@@ -1,5 +1,16 @@
 # tdPSA Development TODO
 
+## Per-Connection Talk Notification Destinations - Issue #205 (2026-10-28)
+
+Status: Done On Dev / Main Candidate Tested / External Verification Pending. Owner: Codex / Svein Tore.
+RFC 2026-10-28-talk-notification-destinations and ADR explicit-talk-destinations-and-evidence.
+Provider storage/delivery/UI/API slices are verified. Dev 46/1389; exact isolated Main 78/10459.
+Current room v4/private-group contracts, paired provider-bound targets, durable truthful receipts,
+independent kill switches, five typed API actions and hidden legacy compatibility are implemented. Preserve independent existing
+Nextcloud/Notification work, legacy target authority and default-off runtime/provider gates.
+No real recipient send, activation, role grant or production action is inferred.
+HR-2026-10-28-TALK-DESTINATIONS Pending; an exact live-message test needs recipient authorization.
+
 ## Task And Ticket Markdown - Issue #328 (2026-10-28)
 
 Status: Done On Dev / Merged To Main / Issue Closed Completed. Owner: Codex / Svein Tore.
