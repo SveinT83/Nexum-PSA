@@ -2,16 +2,23 @@
 
 ## Managed Web Push Setup - Issue #258 (2026-10-28)
 
-Status: In Progress - approved implementation scope, live setup/activation not authorized by code tests.
-Owner: Codex / Svein Tore. RFC 2026-10-28-managed-webpush-setup; ADR installation-owned-managed-webpush.
-Three slices: private installation store/runtime; readiness/lifecycle/worker evidence; Admin/API/docs/Main.
-Reuse System RuntimeHealth read-only; do not overlap #262's worker/cohort scope or release queues.
-Preserve stable keys and user consent. No native VAPID generation, rotation or global activation
-without the explicit supported-installation workflow. HR-2026-10-28-WEBPUSH-SETUP Pending.
-
-Automated Main candidate: 158 tests / 7295 assertions, no errors/failures/skips.
-Native mutex migration and rollback-only MySQL proof passed; temporary Linux metadata/store
-contract proof passed. Actual environment identity/activation was preserved.
+Status: Done On Dev / Merged To Main / Issue Closed Completed. Owner: Codex / Svein Tore.
+PR #370; merge 815d342794f59049626099a9de16cb70864dbe3c; independent tree read-back matches
+tested 0647ace051ef2bf6e347dbe300678947592e6651. Completion comment 6460655348 read back.
+All 158 Notification tests are covered/passing on Dev in completed batches; exact isolated Main
+158 tests / 7295 assertions. Thirty-six owned PHP files pass Pint and syntax checks.
+Only the additive mutex migration was applied on native Dev. Temporary Linux metadata/store and
+rollback-only native MySQL registration/audit probes passed; actual environment identity/activation
+was preserved. No actual root profile, VAPID generation/rotation, worker restart or real push occurred.
+BookStack 383/12 and 516/7 exact Main sections/access read back; native Knowledge 64/63 revisions
+213/212 match source/access. Native sync remains pending_push; direct BookStack content is verified.
+RFC/ADR 2026-10-28-managed-webpush-setup / installation-owned-managed-webpush; WP1-WP3 Done.
+Runbook: docs/deployment/managed-webpush-setup-and-recovery.md.
+System #262 integration is consumed read-only and is absent from this Main baseline; the wizard
+explains that requirement and blocks activation rather than importing another owner's unfinished
+provider/scopes. Existing environment-only behavior remains available.
+HR-2026-10-28-WEBPUSH-SETUP Pending before production installation/whole-worker attestation,
+activation and real-browser proof. Main merge does not claim or authorize those checks.
 
 ## Per-Connection Talk Notification Destinations - Issue #205 (2026-10-28)
 
