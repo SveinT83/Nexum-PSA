@@ -330,3 +330,26 @@ Important files:
 - `app/Modules/Ticket/Controllers/Admin/AssignmentRuleAdminController.php`
 - `app/Modules/Ticket/Controllers/Admin/TicketAssignmentSettingsAdminController.php`
 - `app/Modules/Ticket/Controllers/Tech/TicketAssignmentSettingsController.php`
+
+## Workflow Selection And Publication Checks (2026-10-27)
+
+Prerequisites: Ticket Rules management permission; publication additionally requires
+`ticket.rule_publish`, the action's publication permission, an available protected actor and
+the reviewed runtime/capability configuration.
+
+1. Open **Admin > Ticket Settings > Workflows** and locate the intended workflow.
+2. **Active** controls availability; it does not mean a version was published. Open **Edit**,
+   save the draft, and choose **Validate and publish new version** if no usable version exists.
+3. Return to **Ticket Rules**, choose **Ticket created**, the queue condition, and **Select Workflow**.
+   Only published versions of active workflows are selectable. Existing Tickets keep pinned versions.
+4. Choose **Save Draft**. Saving does not publish or activate the rule. Publish creates an immutable
+   version, and enablement is a separate supported operation after runtime authority is ready.
+5. If publication is unavailable, distinguish missing publication/action permission, disabled runtime,
+   disabled trigger/action capability, invalid references and protected-actor readiness. Contact the
+   release owner for configuration gates; publishing a workflow cannot enable Rule capabilities.
+
+Production read-back on 2026-10-27: **Implementering** is active and already has published version
+ID 5; do not create or publish a duplicate to solve a Rule gate. **Implementering from Que** is
+still an inactive unpublished draft. v2 runtime and all capabilities remain disabled.
+The corrected draft summaries, publication column and visible builder diagnostics are verified on
+Dev only; production availability of these corrections requires a separately approved deployment.

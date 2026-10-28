@@ -1035,6 +1035,108 @@ class TicketRuleBuilderSlice6Test extends TestCase
             ->assertSee('Selector results are bounded for safe loading.');
     }
 
+    #[Test]
+    public function issue285_index_shows_saved_draft_and_keeps_publication_distinct(): void
+    {
+        $definition = $this->schema2Definition();
+        $definition['then_actions'] = [['type' => 'set_queue', 'input' => ['queue_id' => $this->defaults['queue']->id]]];
+        $definition['else_actions'] = [['type' => 'add_internal_note', 'input' => ['body' => 'Internal fixture']]];
+        $definition['flow']['stop_processing'] = true;
+        $rule = app(SaveTicketRuleDraft::class)->handle(
+            null,
+            $this->draftPayload('Issue 285 draft summary', $definition),
+            $this->manager,
+            creationToken: (string) Str::uuid(),
+        );
+
+        $this->get(route('tech.admin.settings.tickets.rules'))
+            ->assertOk()
+            ->assertSee('Issue 285 draft summary')
+            ->assertSee('Draft definition')
+            ->assertSee('Then 1 · Else 1')
+            ->assertSee('Flow: Stop')
+            ->assertSee('Draft only');
+
+        $this->assertNull($rule->fresh()->published_version_id);
+        $this->assertFalse($rule->fresh()->is_active);
+    }
+
+    #[Test]
+    public function issue285_draft_summary_does_not_replace_the_published_runtime_definition(): void
+    {
+        $this->enableCreatedPublication();
+        $rule = app(SaveTicketRuleDraft::class)->handle(
+            null,
+            $this->draftPayload('Published Issue 285', $this->schema2Definition()),
+            $this->manager,
+            creationToken: (string) Str::uuid(),
+        );
+        $version = app(PublishTicketRuleDraft::class)->handle($rule, $this->manager, (string) $rule->draft_checksum);
+        $publishedDefinition = $version->definition_json;
+        $definition = $this->schema2Definition();
+        $definition['trigger'] = 'ticket.updated';
+        $definition['then_actions'] = [['type' => 'set_queue', 'input' => ['queue_id' => $this->defaults['queue']->id]]];
+        app(SaveTicketRuleDraft::class)->handle(
+            $rule->fresh(),
+            $this->draftPayload('Edited Issue 285', $definition),
+            $this->manager,
+            expectedNoDraft: true,
+        );
+
+        $this->get(route('tech.admin.settings.tickets.rules'))
+            ->assertOk()
+            ->assertSee('Edited Issue 285')
+            ->assertSee('Published: Published Issue 285')
+            ->assertSee('Draft definition')
+            ->assertSee('Updated')
+            ->assertSee('Then 1 · Else 0');
+
+        $this->assertSame($version->id, $rule->fresh()->published_version_id);
+        $this->assertSame($publishedDefinition, $version->fresh()->definition_json);
+        $this->assertFalse($rule->fresh()->is_active);
+    }
+
+    #[Test]
+    public function issue285_builder_explains_independent_gates_without_enabling_them(): void
+    {
+        Livewire::test(RuleBuilder::class, ['ruleId' => null])
+            ->assertSee('Ticket Rules runtime capability is disabled.')
+            ->assertSee('Trigger capability is disabled: Ticket created.')
+            ->assertSee('Only published versions of active workflows are selectable.')
+            ->assertSee('Validate and publish new version');
+
+        $this->manager->revokePermissionTo('ticket.rule_publish');
+        $this->manager->unsetRelation('permissions');
+
+        Livewire::test(RuleBuilder::class, ['ruleId' => null])
+            ->assertSee('Publication requires the ticket.rule_publish permission.');
+
+        $this->assertFalse((bool) config('ticket_rules.v2_enabled'));
+        $this->assertSame('legacy', TicketRuleAuthorityFence::query()->firstOrFail()->runtime_authority);
+    }
+
+    #[Test]
+    public function issue285_workflow_overview_distinguishes_active_from_published(): void
+    {
+        Permission::findOrCreate('ticket.manage_settings', 'web');
+        $this->manager->givePermissionTo('ticket.manage_settings');
+        $workflow = TicketWorkflow::query()->create([
+            'name' => 'Issue 285 unpublished workflow',
+            'slug' => 'issue285-unpublished',
+            'is_active' => true,
+            'is_default' => false,
+        ]);
+
+        $this->get(route('tech.admin.settings.tickets.workflows'))
+            ->assertOk()
+            ->assertSee('Issue 285 unpublished workflow')
+            ->assertSee('No published version')
+            ->assertSee('Validate and publish new version')
+            ->assertDontSee('A full workflow editor can build on this model later');
+
+        $this->assertNull($workflow->fresh()->published_version_id);
+    }
+
     private function legacyRule(
         string $name,
         bool $active = false,

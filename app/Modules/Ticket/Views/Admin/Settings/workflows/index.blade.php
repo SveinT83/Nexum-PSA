@@ -24,6 +24,7 @@
                     <tr>
                         <th>Name</th>
                         <th>Status</th>
+                        <th>Publication</th>
                         <th>Default</th>
                         <th>States</th>
                         <th>Transitions</th>
@@ -44,6 +45,15 @@
                                 </span>
                             </td>
                             <td>
+                                @if($workflow->publishedVersion?->status === 'published')
+                                    <span>Published v{{ $workflow->publishedVersion->version }}</span>
+                                    <div class="small text-muted">{{ $workflow->is_active ? 'Available for selection' : 'Activate the workflow to make it selectable' }}</div>
+                                @else
+                                    <span class="text-muted">No published version</span>
+                                    <div class="small"><a href="{{ route('tech.admin.settings.tickets.workflows.edit', $workflow) }}">Edit and publish</a></div>
+                                @endif
+                            </td>
+                            <td>
                                 @if($workflow->is_default)
                                     <span class="badge text-bg-primary">Global</span>
                                 @else
@@ -59,7 +69,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">No workflows yet.</td>
+                            <td colspan="8" class="text-center text-muted py-4">No workflows yet.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -73,8 +83,10 @@
 @endsection
 
 @section('rightbar')
-    <x-card.default title="Workflow v1">
-        <p class="small text-muted mb-2">The default workflow is generated from ticket statuses.</p>
-        <p class="small text-muted mb-0">A full workflow editor can build on this model later without changing ticket runtime behavior.</p>
+    {{-- Publication help: activity and immutable version availability are separate. --}}
+    <x-card.default title="Workflow publication">
+        <p class="small text-muted mb-2">Active controls availability. A published version is also required before a workflow can be selected in Ticket Rules.</p>
+        <p class="small text-muted mb-2">Open Edit, save the draft, then choose Validate and publish new version.</p>
+        <p class="small text-muted mb-0">Existing Tickets keep their pinned workflow version. Publishing a workflow does not publish or enable a Ticket Rule.</p>
     </x-card.default>
 @endsection

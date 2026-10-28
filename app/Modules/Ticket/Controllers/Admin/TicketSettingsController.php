@@ -408,6 +408,7 @@ class TicketSettingsController extends Controller
         return view()->exists('ticket::Admin.Settings.workflows.index')
             ? view('ticket::Admin.Settings.workflows.index', [
                 'workflows' => TicketWorkflow::query()
+                    ->with('publishedVersion')
                     ->withCount(['states', 'transitions'])
                     ->orderByDesc('is_default')
                     ->orderBy('sort_order')

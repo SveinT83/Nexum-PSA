@@ -1,5 +1,13 @@
 # tdPSA Development TODO
 
+## Ticket Rules UI Main Promotion - Issue #285 (2026-10-28)
+
+Status: In Progress / Existing Dev UI Corrections Verified / Production Acceptance Pending.
+Owner: Codex / Svein Tore. Source files match the completed owner's final snapshot.
+Promote the narrow draft/publication UI corrections; isolate the shared controller eager-load from
+unrelated in-progress refactoring. Plan: plans/2026-10-28-ticket-rule-ui-main-promotion.md.
+HR-2026-10-27-OPS-RULES-COORDINATOR In Review; production/capabilities and published versions stay unchanged.
+
 ## Runtime Health Main Promotion - Issue #262 (2026-10-28)
 
 Status: Done On Dev / Merged To Main / Operational Issue Still Open. Owner: Codex / Svein Tore.

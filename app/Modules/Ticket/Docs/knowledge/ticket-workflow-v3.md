@@ -318,3 +318,17 @@ manual action policy intact. The stored reason is bounded and audit-sanitized.
 All Workflow Ticket Rule triggers and actions remain default-off while runtime authority is
 `legacy`. They require the relevant capability gates, v2 authority, the fixed non-login actor, and
 separate human/release approval before use.
+
+## Finding A Usable Published Workflow (2026-10-27)
+
+1. Open **Admin > Ticket Settings > Workflows**.
+2. Check both activity and publication. **Active** permits selection only when a usable published
+   version exists. Open **Edit**, save the draft, then **Validate and publish new version** if needed.
+3. Return to the Ticket Rule's workflow selector. Published active versions are selectable.
+4. Existing Tickets remain pinned to their existing version. Use the explicit migration workflow
+   when a deliberate version change is required; publishing does not migrate Tickets automatically.
+
+The Dev overview now shows **Publication**, **No published version**, and **Edit and publish**.
+This display correction is Dev-only until deployed. Production inspection on 2026-10-27 confirms
+that **Implementering** is already active and published (version ID 5). A disabled Rule **Publish**
+or **Enable** control is a separate permission/capability/runtime question.

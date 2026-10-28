@@ -7,6 +7,13 @@
         <div class="alert alert-danger" role="alert">{{ $error }}</div>
     @endif
     @error('draft') <div class="alert alert-danger" role="alert">{{ $message }}</div> @enderror
+    {{-- Workflow publication is separate from activity and rule activation. --}}
+    <div class="small text-muted mb-2">
+        Only published versions of active workflows are selectable.
+        <a href="{{ route('tech.admin.settings.tickets.workflows') }}">Manage workflows</a>:
+        open Edit, save the draft, then choose Validate and publish new version.
+    </div>
+
     {{-- Bounded selector notice --}}
     @if(data_get($catalog, 'limits.workflow_versions_truncated') || data_get($catalog, 'limits.custom_fields_truncated'))
         <div class="alert alert-info" role="status">
@@ -1140,6 +1147,19 @@
         @endif
     </x-card.default>
 
+    {{-- Visible publication diagnostics remain useful on touch devices without tooltips. --}}
+    @php($publicationBlockedReasons = $this->publicationBlockedReasons())
+    @if($publicationBlockedReasons !== [])
+        <div class="alert alert-warning py-2" role="status">
+            <div class="fw-semibold">Publication unavailable</div>
+            <ul class="mb-0">
+                @foreach($publicationBlockedReasons as $reason)
+                    <li>{{ $reason }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     {{-- Builder actions --}}
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
         <a href="{{ route('tech.admin.settings.tickets.rules') }}" class="btn btn-outline-secondary">Cancel</a>
@@ -1153,7 +1173,7 @@
                 wire:click="publish"
                 wire:loading.attr="disabled"
                 @disabled(! $this->publicationReady())
-                title="{{ $this->publicationReady() ? 'Publish an immutable version' : 'Publication permission, reviewed gates, and known typed nodes are required' }}"
+                title="{{ $this->publicationReady() ? 'Publish an immutable version' : implode(' ', $publicationBlockedReasons) }}"
             >
                 Publish
             </button>

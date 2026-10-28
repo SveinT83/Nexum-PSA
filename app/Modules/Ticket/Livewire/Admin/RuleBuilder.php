@@ -537,6 +537,51 @@ final class RuleBuilder extends Component
         }
     }
 
+    /**
+     * Explain disabled publication using known registry labels only. The authoritative
+     * publication action still performs every permission, capability and target check.
+     *
+     * @return list<string>
+     */
+    public function publicationBlockedReasons(): array
+    {
+        $reasons = [];
+        if (! $this->operator()->can('ticket.rule_publish')) {
+            $reasons[] = 'Publication requires the ticket.rule_publish permission.';
+        }
+        if (! (bool) config('ticket_rules.v2_enabled', false)) {
+            $reasons[] = 'Ticket Rules runtime capability is disabled. Ask the release owner to complete the reviewed activation checklist.';
+        }
+        if ($this->hasUnknownNodes()) {
+            $reasons[] = 'The draft contains unsupported nodes. Resolve the compatibility warnings before publication.';
+        }
+
+        $triggers = app(TicketRuleTriggerRegistry::class);
+        $trigger = $triggers->definition($this->trigger);
+        if ($trigger !== null && ! $triggers->enabled($this->trigger)) {
+            $reasons[] = 'Trigger capability is disabled: '.$trigger['label'].'.';
+        }
+        $providers = app(TicketRuleActionProviderRegistry::class);
+        foreach (array_merge($this->thenActions, $this->elseActions) as $action) {
+            $type = is_array($action) ? ($action['type'] ?? null) : null;
+            $provider = $providers->definition($type);
+            if ($provider === null) {
+                continue;
+            }
+            if (! $providers->enabled((string) $type)) {
+                $reasons[] = 'Action capability is disabled: '.$provider['label'].'.';
+            }
+            if (! $this->operator()->can((string) $provider['publication_permission'])) {
+                $reasons[] = 'Publication requires the '.$provider['publication_permission'].' action permission.';
+            }
+        }
+        if ($reasons === [] && ! $this->publicationReady()) {
+            $reasons[] = 'Check the typed draft, current target availability and protected automation actor permissions before publication.';
+        }
+
+        return array_values(array_unique($reasons));
+    }
+
     public function render(): View
     {
         $this->authorizeManager();
