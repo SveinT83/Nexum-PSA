@@ -1,5 +1,29 @@
 # Human Review Register
 
+## HR-2026-10-28-TALK-DESTINATIONS - Per-Connection Talk Notifications
+
+Status: Pending. Owner: Codex. Intended named reviewer: Svein Tore.
+Scope: Issue #205 / RFC 2026-10-28-talk-notification-destinations.
+Automated evidence: Dev 46/1389; exact latest-Main candidate 78/10459, all passing.
+Native MySQL rollback-only probe passed; actual BookStack 419/383/425 read back as 5/8/6.
+Native Dev has zero Nextcloud connections; no actual external test or activation occurred.
+Tested Main merge is explicitly authorized. This entry gates production/manual external scenarios.
+
+- [ ] Inspect two connection panels with multiple selected destinations and independent defaults.
+  Normal flow uses service-user credentials; optional Bot settings remain advanced.
+- [ ] Choose the exact global default and test each kill switch. A missing/unhealthy/foreign target
+  must fail clearly, with no first-active connection fallback or unrelated Nextcloud disablement.
+- [ ] After explicit recipient authorization, perform one controlled fixed test and independently
+  verify message ID/token/read-back in that exact conversation. Distinguish stored from human read.
+- [ ] Verify duplicate/timeout/stale-binding behavior without blind replay; reconcile an unknown
+  result before any new test. Inspect existing personal legacy targets before migration.
+- [ ] Review source/API/handbook matching, privacy-safe diagnostics, mobile/desktop UI and optional
+  private-group creation. No role/provider gate/global enablement is implied by Main merge.
+
+Deploy: exact additive migration and cache/Swagger refresh; protected config preflight and receipt
+retention required. No production migration, worker/scheduler change, backlog release or live send
+is performed by code verification. Keep production disabled/unpromoted pending named review.
+
 ## HR-2026-10-28-TASK-TICKET-MARKDOWN - Operational Text Formatting
 
 Status: Pending. Owner: Codex. Intended named reviewer: Svein Tore.

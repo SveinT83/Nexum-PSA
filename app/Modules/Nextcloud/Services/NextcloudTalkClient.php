@@ -140,26 +140,37 @@ class NextcloudTalkClient
     public function listConversations(NextcloudConnection $connection): array
     {
         $baseUrl = rtrim($connection->base_url, '/');
-        $endpoint = '/ocs/v2.php/apps/spreed/api/v1/room';
+        $endpoint = '/ocs/v2.php/apps/spreed/api/v4/room';
 
         $response = $this->ocs($connection)
             ->acceptJson()
-            ->get("{$baseUrl}{$endpoint}");
+            ->get("{$baseUrl}{$endpoint}", ['noStatusUpdate' => 1]);
 
         $this->throwUnlessSuccessful($response, 'list conversations');
 
-        $conversations = $response->json('ocs.data') ?? [];
-
-        return collect($conversations)->map(fn (array $room) => [
-            'token' => $room['token'] ?? '',
-            'name' => $room['name'] ?? '',
-            'displayName' => $room['displayName'] ?? $room['name'] ?? '',
-            'type' => $room['type'] ?? 0,
-            'typeLabel' => $this->roomTypeLabel($room['type'] ?? 0),
-            'participantType' => $room['participantType'] ?? 0,
-            'hasPassword' => $room['hasPassword'] ?? false,
-            'lastActivity' => $room['lastActivity'] ?? 0,
-        ])->values()->all();
+        $conversations = $response->json('ocs.data');
+        if (! is_array($conversations) || ! array_is_list($conversations) || count($conversations) > 2000) {
+            throw new RuntimeException('Talk conversation discovery returned an unsupported response.');
+        }
+        return collect($conversations)->map(function ($room) {
+            if (! is_array($room) || ! is_string($room['token'] ?? null)
+                || ! preg_match('/^[A-Za-z0-9_-]{1,128}$/', $room['token'])) {
+                throw new RuntimeException('Talk conversation discovery returned an invalid identifier.');
+            }
+            $type = (int) ($room['type'] ?? 0);
+            return [
+                'token' => $room['token'],
+                'name' => mb_substr(is_string($room['name'] ?? null) ? $room['name'] : '', 0, 255),
+                'displayName' => mb_substr(is_string($room['displayName'] ?? null)
+                    ? $room['displayName'] : (is_string($room['name'] ?? null) ? $room['name'] : ''), 0, 512),
+                'type' => $type, 'typeLabel' => $this->roomTypeLabel($type),
+                'participantType' => (int) ($room['participantType'] ?? 0),
+                'readOnly' => (int) ($room['readOnly'] ?? 0),
+                'permissions' => isset($room['permissions']) ? (int) $room['permissions'] : null,
+                'hasPassword' => (bool) ($room['hasPassword'] ?? false),
+                'lastActivity' => max(0, (int) ($room['lastActivity'] ?? 0)),
+            ];
+        })->values()->all();
     }
 
     /**
@@ -172,11 +183,11 @@ class NextcloudTalkClient
     public function getConversation(NextcloudConnection $connection, string $conversationToken): array
     {
         $baseUrl = rtrim($connection->base_url, '/');
-        $endpoint = "/ocs/v2.php/apps/spreed/api/v1/room/{$conversationToken}";
+        $endpoint = "/ocs/v2.php/apps/spreed/api/v4/room/{$conversationToken}";
 
         $response = $this->ocs($connection)
             ->acceptJson()
-            ->get("{$baseUrl}{$endpoint}");
+            ->get("{$baseUrl}{$endpoint}", ['noStatusUpdate' => 1]);
 
         $this->throwUnlessSuccessful($response, 'get conversation');
 
@@ -188,14 +199,14 @@ class NextcloudTalkClient
      *
      * @param  NextcloudConnection  $connection  The Nextcloud connection to use
      * @param  string  $roomName  The name for the new conversation
-     * @param  int  $roomType  1=group, 2=public, 3=one-to-one (deprecated), 4=changelog
+     * @param  int  $roomType  1=one-to-one, 2=private group, 3=public, 4=changelog
      * @param  array  $options  Optional: password, object, invite users/groups
      * @return array Created conversation data
      */
-    public function createConversation(NextcloudConnection $connection, string $roomName, int $roomType = 1, array $options = []): array
+    public function createConversation(NextcloudConnection $connection, string $roomName, int $roomType = 2, array $options = []): array
     {
         $baseUrl = rtrim($connection->base_url, '/');
-        $endpoint = '/ocs/v2.php/apps/spreed/api/v1/room';
+        $endpoint = '/ocs/v2.php/apps/spreed/api/v4/room';
 
         $body = [
             'roomType' => $roomType,
@@ -217,6 +228,36 @@ class NextcloudTalkClient
         $this->throwUnlessSuccessful($response, 'create conversation');
 
         return $response->json('ocs.data') ?? [];
+    }
+
+    /**
+     * Independently read one exact receipt without marking chat, notifications or presence read.
+     * Return metadata only; provider message text never enters a delivery receipt.
+     */
+    public function readMessageReceipt(NextcloudConnection $connection, string $token, int $messageId): ?array
+    {
+        if (! preg_match('/^[A-Za-z0-9_-]{1,128}$/', $token) || $messageId < 1) {
+            throw new RuntimeException('Invalid Talk message receipt identity.');
+        }
+        $url = rtrim($connection->base_url, '/').'/ocs/v2.php/apps/spreed/api/v1/chat/'.$token;
+        $response = $this->ocs($connection)->acceptJson()->get($url, [
+            'lookIntoFuture' => 0, 'limit' => 1, 'lastKnownMessageId' => $messageId,
+            'includeLastKnown' => 1, 'setReadMarker' => 0, 'noStatusUpdate' => 1,
+            'markNotificationsAsRead' => 0,
+        ]);
+        $this->throwUnlessSuccessful($response, 'read message receipt');
+        $rows = $response->json('ocs.data');
+        if (! is_array($rows) || ! array_is_list($rows)) {
+            throw new RuntimeException('Talk message read-back returned an unsupported response.');
+        }
+        foreach ($rows as $row) {
+            if (is_array($row) && (string) ($row['id'] ?? '') === (string) $messageId
+                && ($row['token'] ?? null) === $token) {
+                return ['message_id' => $messageId, 'conversation_token' => $token,
+                    'reference_id' => is_string($row['referenceId'] ?? null) ? $row['referenceId'] : null];
+            }
+        }
+        return null;
     }
 
     /**
@@ -379,9 +420,9 @@ class NextcloudTalkClient
     private function roomTypeLabel(int $type): string
     {
         return match ($type) {
-            1 => 'group',
-            2 => 'public',
-            3 => 'one-to-one',
+            1 => 'one-to-one',
+            2 => 'group',
+            3 => 'public',
             4 => 'changelog',
             5 => 'one-to-one', // former one-to-one
             6 => 'note-to-self',

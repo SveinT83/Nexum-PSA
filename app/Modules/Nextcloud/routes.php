@@ -28,6 +28,27 @@ if (($tdpsaLoadingNextcloudCalendarApiRoutes ?? false) === true) {
     \Illuminate\Support\Facades\Route::post('nextcloud/calendar/connections/{connection}/conflicts/{conflict}/preview', [\App\Modules\Nextcloud\Controllers\Api\V1\CalendarConflictController::class, 'preview'])->name('nextcloud.calendar.conflict.preview')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':nextcloud.calendar.reconcile');
     \Illuminate\Support\Facades\Route::post('nextcloud/calendar/connections/{connection}/conflicts/{conflict}/apply', [\App\Modules\Nextcloud\Controllers\Api\V1\CalendarConflictController::class, 'apply'])->name('nextcloud.calendar.conflict.apply')->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':nextcloud.calendar.reconcile');
 
+    // Issue #205: the ordinary service-user Talk workflow shares native authority and command receipts.
+    foreach ([
+        ['get', 'talk-notifications', 'context', ['nextcloud.talk.read'], [], false, false],
+        ['post', 'talk-notifications/refresh', 'refresh', ['nextcloud.talk.write'], ['revision'], true, false],
+        ['patch', 'talk-notifications', 'update', ['nextcloud.talk.write'], ['revision', 'enabled', 'destination_ids', 'default_destination_id'], false, false],
+        ['post', 'talk-notifications/conversations', 'create', ['nextcloud.talk.write', 'nextcloud.providers.execute'], ['revision', 'name', 'confirm'], true, true],
+        ['post', 'talk-notifications/destinations/{destination}/test', 'test', ['nextcloud.talk.execute', 'nextcloud.providers.execute'], ['revision', 'confirm'], true, true],
+    ] as [$method, $path, $action, $abilities, $fields, $external, $write]) {
+        \Illuminate\Support\Facades\Route::$method('nextcloud/connections/{connection}/'.$path,
+            [\App\Modules\Nextcloud\Controllers\Api\V1\TalkNotificationController::class, $action])
+            ->name('nextcloud.full.talkNotifications'.ucfirst($action))
+            ->middleware([\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':'.implode(',', $abilities),
+                \App\Modules\Nextcloud\Support\NextcloudApiAccess::class,
+                \App\Modules\Nextcloud\Actions\ExecuteNextcloudApiCommand::class])
+            ->defaults('nextcloud_fields', $fields)
+            ->defaults('nextcloud_permissions', ['nextcloud.connection_manage', 'nextcloud.talk_manage'])
+            ->defaults('nextcloud_abilities', $abilities)->defaults('nextcloud_key_required', $method !== 'get')
+            ->defaults('nextcloud_preview', false)->defaults('nextcloud_external', $external)
+            ->defaults('nextcloud_provider_write', $write)->defaults('nextcloud_talk_destination', true);
+    }
+
     // Full operational Nextcloud API, separate from compatible calendar-only commands.
     \Illuminate\Support\Facades\Route::get('nextcloud/context', [\App\Modules\Nextcloud\Controllers\Api\V1\ConnectionController::class, 'context'])
         ->name('nextcloud.full.nextcloudApiConnectionContextGlobal')->middleware([\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':nextcloud.connections.read', \App\Modules\Nextcloud\Support\NextcloudApiAccess::class, \App\Modules\Nextcloud\Actions\ExecuteNextcloudApiCommand::class])
@@ -160,6 +181,17 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware('admin')->group(function () {
+    // Ordinary Talk setup is connection-scoped; no arbitrary webhook URL is accepted.
+    foreach (['refresh' => 'post', 'update' => 'patch', 'create' => 'post', 'test' => 'post'] as $action => $method) {
+        $path = '/admin/system/nextcloud/connections/{connection}/talk-notifications';
+        $path .= match ($action) {
+            'refresh' => '/refresh', 'create' => '/conversations', 'test' => '/destinations/{destination}/test', default => '',
+        };
+        Route::$method($path, [\App\Modules\Nextcloud\Controllers\Admin\TalkNotificationController::class, $action])
+            ->name('admin.nextcloud.talk-notifications.'.$action);
+    }
+
+
     Route::get('/admin/system/nextcloud', [NextcloudConnectionController::class, 'index'])
         ->name('admin.nextcloud.connections.index');
 

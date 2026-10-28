@@ -255,25 +255,22 @@ class NotificationSystemTest extends TestCase
 
         $channel = NotificationChannel::where('driver', 'nextcloud_talk')->first();
 
+        $registry = app(\App\Modules\Nextcloud\Services\TalkDestinationRegistry::class);
+        $registry->saveSettings($connection, ['enabled' => true]);
+        $destination = \App\Modules\Nextcloud\Models\NextcloudTalkDestination::create(['connection_id' => $connection->id,
+            'provider_binding' => $registry->binding($connection->fresh()), 'conversation_token' => 'admin123', 'name' => 'Approved',
+            'is_enabled' => true, 'is_available' => true, 'health_status' => 'available']);
         $response = $this->actingAs($admin)
             ->put(route('tech.admin.notification-channels.update', $channel), [
-                'is_enabled' => '1',
-                'config' => [
-                    'nextcloud_connection_id' => $connection->id,
-                    'default_webhook_url' => 'https://cloud.example.com/apps/webhook/abc123',
-                ],
-                'secrets' => [
-                    'api_token' => 'unused-token',
-                ],
+                'is_enabled' => '1', 'revision' => \App\Modules\Notification\Actions\ExecuteNotificationApiCommand::etag($channel),
+                'config' => ['talk_destination_id' => $destination->id],
             ]);
-
-        $response->assertRedirect();
-
+        $response->assertRedirect()->assertSessionHasNoErrors();
         $channel->refresh();
         $this->assertTrue($channel->is_enabled);
-        $this->assertEquals($connection->id, $channel->config['nextcloud_connection_id']);
-        $this->assertEquals('https://cloud.example.com/apps/webhook/abc123', $channel->config['default_webhook_url']);
-        $this->assertArrayNotHasKey('base_url', $channel->config);
+        $this->assertSame($connection->id, $channel->config['nextcloud_connection_id']);
+        $this->assertSame('admin123', $channel->config['talk_conversation_token']);
+        $this->assertEmpty($channel->config['default_webhook_url'] ?? null);
         $this->assertArrayNotHasKey('api_token', $channel->secrets ?? []);
     }
 
@@ -294,16 +291,14 @@ class NotificationSystemTest extends TestCase
                 ],
             ]);
 
-        $response->assertRedirect();
-        $response->assertSessionHas('warning');
-
+        $response->assertRedirect()->assertSessionHasErrors('config');
         $channel->refresh();
         $this->assertFalse($channel->is_enabled);
-        $this->assertEquals('https://cloud.example.com/apps/webhook/abc123', $channel->config['default_webhook_url']);
+        $this->assertEmpty($channel->config['default_webhook_url'] ?? null);
     }
 
     #[Test]
-    public function nextcloud_talk_channel_defaults_to_global_default_connection()
+    public function nextcloud_talk_channel_requires_explicit_destination_without_default_fallback()
     {
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         Role::firstOrCreate(['name' => 'Admin']);
@@ -331,21 +326,17 @@ class NotificationSystemTest extends TestCase
 
         $response = $this->actingAs($admin)
             ->put(route('tech.admin.notification-channels.update', $channel), [
-                'is_enabled' => '1',
-                'config' => [
-                    'default_webhook_url' => 'https://cloud.example.com/apps/webhook/abc123',
-                ],
+                'is_enabled' => '1', 'revision' => \App\Modules\Notification\Actions\ExecuteNotificationApiCommand::etag($channel),
+                'config' => [],
             ]);
-
-        $response->assertRedirect();
-
+        $response->assertRedirect()->assertSessionHasErrors('config.talk_destination_id');
         $channel->refresh();
-        $this->assertTrue($channel->is_enabled);
-        $this->assertEquals($defaultConnection->id, $channel->config['nextcloud_connection_id']);
+        $this->assertFalse($channel->is_enabled);
+        $this->assertArrayNotHasKey('nextcloud_connection_id', $channel->config ?? []);
     }
 
     #[Test]
-    public function nextcloud_talk_edit_form_uses_nextcloud_integration_and_only_requests_webhook_url()
+    public function nextcloud_talk_edit_form_groups_conversations_and_hides_legacy_webhook_setup()
     {
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         Role::firstOrCreate(['name' => 'Admin']);
@@ -366,9 +357,10 @@ class NotificationSystemTest extends TestCase
             ->get(route('tech.admin.notification-channels.edit', $channel));
 
         $response->assertOk();
-        $response->assertSee('Nextcloud Integration');
-        $response->assertSee('Default Webhook URL');
-        $response->assertSee('https://cloud.example.com');
+        $response->assertSee('Talk notification destinations');
+        $response->assertSee('Internal Nextcloud');
+        $response->assertSee('No discovered conversations.');
+        $response->assertDontSee('Default Webhook URL');
         $response->assertDontSee('Nextcloud Base URL');
         $response->assertDontSee('API Token');
     }

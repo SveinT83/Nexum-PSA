@@ -17,28 +17,16 @@ class ManageNotificationChannels
 {
     public function update(Request $request, NotificationChannel $channel): array
     {
+        if ($channel->driver === 'nextcloud_talk') {
+            $updated = app(ConfigureTalkNotificationChannel::class)->update($request, $channel);
+            return $this->summary($updated);
+        }
+
         $configFields = match ($channel->driver) {
             'sms' => 'provider,sender_name,default_country_code',
-            'nextcloud_talk' => 'nextcloud_connection_id,default_webhook_url',
             default => 'default_webhook_url,base_url',
         };
         $request->validate(['config' => 'nullable|array:'.$configFields, 'secrets' => $request->routeIs('api.*') && in_array($channel->driver, ['sms', 'nextcloud_talk'], true) ? 'prohibited' : 'nullable|array:api_token']);
-        // An absent API credential/config field means retain, never expose and resubmit.
-        if ($request->routeIs('api.*') && $channel->driver === 'nextcloud_talk') {
-            $input = $request->input('config', []);
-            if (! array_key_exists('default_webhook_url', $input)) {
-                $input['default_webhook_url'] = $channel->config['default_webhook_url'] ?? null;
-            }
-            if (! array_key_exists('nextcloud_connection_id', $input)) {
-                $input['nextcloud_connection_id'] = $channel->config['nextcloud_connection_id'] ?? null;
-            }
-            $request->merge(['config' => $input]);
-        }
-
-        if ($channel->driver === 'nextcloud_talk') {
-            return $this->updateNextcloudTalkChannel($request, $channel);
-        }
-
         if ($channel->driver === 'sms') {
             return $this->updateSmsChannel($request, $channel);
         }
@@ -96,55 +84,6 @@ class ManageNotificationChannels
     }
 
     /**
-     * Update Nextcloud Talk settings while keeping Nextcloud connection data in the Nextcloud domain.
-     */
-    private function updateNextcloudTalkChannel(Request $request, NotificationChannel $channel): array
-    {
-        $fallbackConnection = $this->defaultNextcloudConnection();
-        $wantsEnabled = $request->boolean('is_enabled');
-
-        $validated = $request->validate([
-            'is_enabled' => 'nullable|boolean',
-            'config' => 'nullable|array',
-            'config.nextcloud_connection_id' => [
-                'nullable',
-                'integer',
-                Rule::exists('nextcloud_connections', 'id')->where('is_active', true),
-            ],
-            'config.default_webhook_url' => [$wantsEnabled && $fallbackConnection ? 'required' : 'nullable', 'url:https', 'max:500'],
-        ]);
-
-        $config = $channel->config ?? [];
-        unset($config['base_url']);
-
-        $selectedConnectionId = $validated['config']['nextcloud_connection_id'] ?? $fallbackConnection?->id;
-
-        if ($selectedConnectionId) {
-            $config['nextcloud_connection_id'] = (int) $selectedConnectionId;
-        } else {
-            unset($config['nextcloud_connection_id']);
-        }
-
-        if (array_key_exists('default_webhook_url', $validated['config'] ?? [])) {
-            $config['default_webhook_url'] = $validated['config']['default_webhook_url'];
-        }
-
-        $secrets = $channel->secrets ?? [];
-        unset($secrets['api_token']);
-
-        $channel->config = $config;
-        $channel->secrets = $secrets ?: null;
-        $channel->is_enabled = $selectedConnectionId ? $wantsEnabled : false;
-        $channel->save();
-
-        if (! $selectedConnectionId) {
-            return $this->summary($channel);
-        }
-
-        return $this->summary($channel);
-    }
-
-    /**
      * Test the connection to a notification channel.
      */
     public function test(Request $request, NotificationChannel $channel): array
@@ -154,7 +93,7 @@ class ManageNotificationChannels
         }
         $result = $this->testChannelConnection($channel, $request);
         $result['state'] ??= $result['success'] ? ($channel->driver === 'sms' ? 'dry_run' : 'provider_accepted') : 'blocked';
-        $result['delivery_confirmed'] = false;
+        $result['delivery_confirmed'] ??= false;
         $channel->forceFill(['last_tested_at' => now(), 'last_test_result' => $result['message']])->save();
 
         return $result;
@@ -168,29 +107,7 @@ class ManageNotificationChannels
         }
 
         if ($channel->driver === 'nextcloud_talk') {
-            if (! $this->selectedNextcloudConnection($channel)) {
-                return ['success' => false, 'message' => 'Nextcloud integration is not configured.'];
-            }
-
-            $webhookUrl = $channel->config['default_webhook_url'] ?? null;
-
-            if (empty($webhookUrl)) {
-                return ['success' => false, 'message' => 'No default webhook URL configured.'];
-            }
-
-            try {
-                $response = Http::timeout(10)->post($webhookUrl, [
-                    'message' => 'Test notification from '.config('app.name', 'Nexum PSA').' - '.now()->toDateTimeString(),
-                ]);
-
-                if ($response->successful()) {
-                    return ['success' => true, 'state' => 'provider_accepted', 'message' => 'Webhook accepted the request; Talk delivery is unverified.'];
-                }
-
-                return ['success' => false, 'state' => 'failed', 'message' => 'Provider rejected the notification request.'];
-            } catch (Exception $e) {
-                return ['success' => false, 'state' => 'unknown', 'message' => 'Provider outcome is unknown; reconcile before sending again.'];
-            }
+            return app(ConfigureTalkNotificationChannel::class)->test($request, $channel);
         }
 
         return ['success' => false, 'message' => 'No test available for this channel driver.'];
@@ -293,7 +210,9 @@ class ManageNotificationChannels
             'driver' => $channel->driver, 'is_enabled' => (bool) $channel->is_enabled,
             'config' => ['provider' => $config['provider'] ?? null, 'sender_name' => $config['sender_name'] ?? null,
                 'default_country_code' => $config['default_country_code'] ?? null,
-                'nextcloud_connection_id' => isset($config['nextcloud_connection_id']) ? (int) $config['nextcloud_connection_id'] : null],
+                'nextcloud_connection_id' => isset($config['nextcloud_connection_id']) ? (int) $config['nextcloud_connection_id'] : null,
+                'talk_destination_id' => isset($config['talk_destination_id']) ? (int) $config['talk_destination_id'] : null,
+                'talk_delivery_mode' => ($config['delivery_mode'] ?? null) === 'conversation' ? 'conversation' : 'legacy'],
             'webhook_configured' => filled($config['default_webhook_url'] ?? null),
             'base_url_configured' => filled($config['base_url'] ?? null),
             'api_token_configured' => filled($channel->secrets['api_token'] ?? null),
@@ -306,6 +225,8 @@ class ManageNotificationChannels
     public function context(NotificationChannel $channel): array
     {
         return ['channel' => $this->summary($channel),
+            'talk_connections' => $channel->driver === 'nextcloud_talk'
+                ? app(\App\Modules\Nextcloud\Services\TalkDestinationRegistry::class)->globalChoices() : [],
             'nextcloud_connections' => $channel->driver === 'nextcloud_talk'
                 ? $this->activeNextcloudConnections()->map(fn ($c) => ['id' => $c->id, 'name' => $c->name, 'is_default' => (bool) $c->is_default])->all() : [],
             'sms_templates' => $channel->driver === 'sms'

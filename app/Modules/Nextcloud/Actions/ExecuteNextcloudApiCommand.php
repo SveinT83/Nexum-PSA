@@ -182,7 +182,9 @@ class ExecuteNextcloudApiCommand
             throw new \Illuminate\Http\Exceptions\HttpResponseException($response);
         }
         $decoded = $response->getStatusCode() === 204 ? null : json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
-        $command->state = is_array($decoded) && ($decoded['state'] ?? null) === 'unknown' ? 'unknown' : 'completed';
+        $talkUnknown = ($request->route()->defaults['nextcloud_talk_destination'] ?? false)
+            && in_array(data_get($decoded, 'data.state'), ['unknown', 'provider_accepted'], true);
+        $command->state = (is_array($decoded) && ($decoded['state'] ?? null) === 'unknown') || $talkUnknown ? 'unknown' : 'completed';
         $authority = $command->result;
         $authority['permissions'] = array_values(array_unique(array_merge($authority['permissions'] ?? [],
             $request->attributes->get('nextcloud_response_permissions', []))));

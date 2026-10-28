@@ -600,12 +600,17 @@
         </div>
     </div>
 
+    {{-- Ordinary Talk delivery uses the service user; bot configuration remains advanced. --}}
+    @if(auth()->user()->can('nextcloud.talk_manage'))
+        @include('nextcloud::Admin.connections.partials.talk-notifications')
+    @endif
+
     <!-- Talk Bot Configuration -->
     <div class="card mb-3">
         <div class="card-header py-2 d-flex align-items-center justify-content-between">
             <button class="btn btn-sm btn-link link-dark text-decoration-none p-0 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#talkBotConfigCollapse" aria-expanded="false" aria-controls="talkBotConfigCollapse">
                 <i class="bi bi-chevron-right me-1" aria-hidden="true"></i>
-                Talk Bot Configuration
+                Advanced: Talk Bot Configuration
             </button>
             <div class="d-flex align-items-center gap-2">
                 @if($connection->hasTalkBot())
