@@ -3375,3 +3375,19 @@ mixed-order real-commit test failure are resolved in this final run. Evidence:
 [Issue #254 simulation](plans/2026-10-27-issue-254-testdata-simulation.md).
 Owner: Codex for this simulation; existing Contact owner for overall finish/Issue closure.
 Human review remains Pending; no production, real mail or manual review is claimed.
+
+## Scoped Pre-Merge Acceptance - Issues 262, 285 And 290 (2026-10-28)
+
+Status: Ready For Scoped PR / Operational Issues Remain Open. Owner: Codex / Svein Tore.
+Core #262 and #285 UI source is already Main in PR #372/#374. New minimal Implementering workflow
+acceptance passes 4 / 80; fresh Dev matrix 69 / 720 and isolated latest-Main matrix 68 / 691 pass.
+Only the new test, missing narrow coordinator guide and scoped readiness/review records are selected.
+HR-2026-10-27-OPS-RULES-COORDINATOR: completed Dev implementation Reviewed by Svein Tore
+("Godkjent"); overall In Review for remaining operational steps. #262 still needs exact historical/
+cold-cohort disposition and operating acceptance. #285 still needs separately authorized production
+cutover and deployed match/non-match. #290 receiver is now identified as Paperclip via NexumMCP
+with an OpenAI-backed CEO adapter; actual model/mode/review records and the bound authorized read
+remain unresolved. Next owner: Svein/runtime/integration owners for those explicit decisions.
+No Main availability, canary or owner approval is treated as a production/export result.
+Evidence: plans/2026-10-28-issues-262-285-290-merge-readiness.md; BookStack 541/9 read back,
+existing employee access unchanged. No operational queue/token/provider setting changed.
