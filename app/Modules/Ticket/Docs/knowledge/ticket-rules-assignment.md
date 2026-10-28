@@ -352,4 +352,15 @@ Production read-back on 2026-10-27: **Implementering** is active and already has
 ID 5; do not create or publish a duplicate to solve a Rule gate. **Implementering from Que** is
 still an inactive unpublished draft. v2 runtime and all capabilities remain disabled.
 The corrected draft summaries, publication column and visible builder diagnostics are verified on
-Dev only; production availability of these corrections requires a separately approved deployment.
+Dev and Main in PR #374 (2026-10-28); production availability requires a separately approved deployment.
+
+## Main verification and remaining acceptance (Issue #285, 2026-10-28)
+
+The source-only promotion in PR #374 passed four fresh Dev regressions and a 76-test Main
+Rules/Workflow/customer-notification matrix. Saved drafts and published runtime versions remain
+distinct. The UI explains permission, workflow publication, capability and runtime requirements;
+it does not enable them.
+
+Issue #285 remains open for its approved production cutover, exact match/non-match evidence and
+manual desktop/mobile review. HR-2026-10-27-OPS-RULES-COORDINATOR stays In Review. Main availability
+does not publish or activate a Rule, migrate pinned Tickets or change production settings.

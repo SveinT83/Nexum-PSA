@@ -2,11 +2,21 @@
 
 ## Ticket Rules UI Main Promotion - Issue #285 (2026-10-28)
 
-Status: In Progress / Existing Dev UI Corrections Verified / Production Acceptance Pending.
-Owner: Codex / Svein Tore. Source files match the completed owner's final snapshot.
-Promote the narrow draft/publication UI corrections; isolate the shared controller eager-load from
-unrelated in-progress refactoring. Plan: plans/2026-10-28-ticket-rule-ui-main-promotion.md.
-HR-2026-10-27-OPS-RULES-COORDINATOR In Review; production/capabilities and published versions stay unchanged.
+Status: Done On Dev / Merged To Main / Production Acceptance Pending. Owner: Codex / Svein Tore.
+Verified Main: PR #374, df33c58613b8537ec7b83489d727bcec8226b228; independent exact tested tree
+9acb897481fab116b75296af90a5d8a9f40732fe. Fresh Dev 4/30; Main Rules/Workflow/customer-notification
+matrix 76/798, all passing. Scoped Pint, three PHP syntax checks and whitespace pass.
+Only one publishedVersion eager-load line was promoted from the shared controller; unrelated
+CRUD/API refactoring and Dev branch/index/staged Storage work were preserved.
+Actual BookStack owned Main sections 426/35 and 532/24 were independently read back with inherited
+access preserved. Source guides identify Main availability and retain production warnings.
+Issue #285 remains open. Four proven implementation criteria are checked; explicit production
+cutover/match/non-match and manual desktop/mobile criteria remain unchecked. Comment 6461039725
+and the updated Issue body were independently read back.
+HR-2026-10-27-OPS-RULES-COORDINATOR remains In Review. Historical HR-2026-08-25-013 stays Reviewed.
+No production setting, published Rule/version, capability, worker, cache or recipient was changed.
+No full application suite or manual visual acceptance is claimed.
+
 
 ## Runtime Health Main Promotion - Issue #262 (2026-10-28)
 
