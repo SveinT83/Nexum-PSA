@@ -135,7 +135,7 @@ Done criteria: all new UI actions have typed/tested API coverage; normal webhook
 
 ### Slice TN4: Verified Main Candidate And Handoff
 
-Status: Tested Main Candidate - merge/read-back pending. Owner: Codex / Svein Tore. Parent: this RFC.
+Status: Done On Dev And Main - actual external verification remains open. Owner: Codex / Svein Tore. Parent: this RFC.
 Goal/user behavior: tested implementation available in Main with honest deployment status.
 Scope/data: exact manifest/hunks from shared Dev, latest-Main reconciliation, relevant tests,
 Issue/TODO/RFC/ADR/slice/handbook and public-safe handoff. No other contributor overwrite.
@@ -147,6 +147,10 @@ be proven. If a real external result cannot be proven safely, ask the author one
 and retain that criterion/Issue open without repeating unchanged requests.
 
 ## Verification Evidence - 2026-10-28
+
+Main PR #368 merged as 917de21a021f8f4fe4e657edf6f2b60203dfa807. Independent fetched tree
+f0fe6969c8662e36ce67f64dc7cb1df02bb6ced2 exactly equals the tested candidate. No required
+GitHub checks were reported for this branch; all required Dev/candidate runtime checks above ran.
 
 - Final authoritative Dev batch: 46 tests / 1,389 assertions, all passing. This includes five
   new scoped API/native-surface cases, ten destination/runtime/negative-delivery cases, four
@@ -178,6 +182,8 @@ and retain that criterion/Issue open without repeating unchanged requests.
   including existing full Nextcloud/Notification API, signed inbound webhook and system workflows.
 - No real test message/group, new credential/role/provider grant, global activation, backlog
   release, production migration/deploy or browser human-review approval occurred.
+
+Final Main handbook availability read-back: BookStack 419/6, 383/9 and 425/7; native Knowledge 56/59/64 revisions 207/208/209. Access preserved; native sync status remains pending_push.
 
 ## Deployment, Risks And Human Review
 

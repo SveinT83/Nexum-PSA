@@ -67,7 +67,7 @@ scope changes pause affected automatic calendar consent. Review targets before e
 
 ## Service-user Talk notification destinations (Issue #205, 2026-10-28)
 
-Availability: implemented on Dev; Main verification is in progress. Production has not been
+Availability: verified on Dev and merged to Main in PR #368 (917de21a021f8f4fe4e657edf6f2b60203dfa807). Production has not been
 promoted or activated. The human-review checklist HR-2026-10-28-TALK-DESTINATIONS remains
 Pending before production and any external test. The older webhook/Bot setup above describes
 legacy compatibility; ordinary setup uses the service account and the steps below.

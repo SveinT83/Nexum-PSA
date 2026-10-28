@@ -4,8 +4,10 @@
 
 Status: Pending. Owner: Codex. Intended named reviewer: Svein Tore.
 Scope: Issue #205 / RFC 2026-10-28-talk-notification-destinations.
+Verified Main: PR #368, 917de21a021f8f4fe4e657edf6f2b60203dfa807; exact tested tree f0fe6969c8662e36ce67f64dc7cb1df02bb6ced2.
 Automated evidence: Dev 46/1389; exact latest-Main candidate 78/10459, all passing.
 Native MySQL rollback-only probe passed; actual BookStack 419/383/425 read back as 5/8/6.
+Final Main handbook availability read-back: BookStack 419/6, 383/9 and 425/7; native Knowledge 56/59/64 revisions 207/208/209. Access preserved; native sync status remains pending_push.
 Native Dev has zero Nextcloud connections; no actual external test or activation occurred.
 Tested Main merge is explicitly authorized. This entry gates production/manual external scenarios.
 
@@ -23,6 +25,7 @@ Tested Main merge is explicitly authorized. This entry gates production/manual e
 Deploy: exact additive migration and cache/Swagger refresh; protected config preflight and receipt
 retention required. No production migration, worker/scheduler change, backlog release or live send
 is performed by code verification. Keep production disabled/unpromoted pending named review.
+
 
 ## HR-2026-10-28-TASK-TICKET-MARKDOWN - Operational Text Formatting
 

@@ -98,7 +98,7 @@ The proposed multi-destination service-user setup in Issue #205 is a separate fe
 
 ## Ordinary notification setup (Issue #205, 2026-10-28)
 
-Availability: Dev implementation; Main verification is in progress and production is unchanged.
+Availability: verified on Dev and merged to Main in PR #368; production is unchanged.
 For ordinary notifications, use the connection's Talk Notifications panel and Notification
 Channels to select an exact service-user conversation. A Bot ID/secret or webhook URL is not
 required. The Bot setup above remains an advanced compatibility option; HTTP acceptance alone
