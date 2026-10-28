@@ -1,5 +1,18 @@
 # tdPSA Development TODO
 
+## Managed Web Push Setup - Issue #258 (2026-10-28)
+
+Status: In Progress - approved implementation scope, live setup/activation not authorized by code tests.
+Owner: Codex / Svein Tore. RFC 2026-10-28-managed-webpush-setup; ADR installation-owned-managed-webpush.
+Three slices: private installation store/runtime; readiness/lifecycle/worker evidence; Admin/API/docs/Main.
+Reuse System RuntimeHealth read-only; do not overlap #262's worker/cohort scope or release queues.
+Preserve stable keys and user consent. No native VAPID generation, rotation or global activation
+without the explicit supported-installation workflow. HR-2026-10-28-WEBPUSH-SETUP Pending.
+
+Automated Main candidate: 158 tests / 7295 assertions, no errors/failures/skips.
+Native mutex migration and rollback-only MySQL proof passed; temporary Linux metadata/store
+contract proof passed. Actual environment identity/activation was preserved.
+
 ## Per-Connection Talk Notification Destinations - Issue #205 (2026-10-28)
 
 Status: Done On Dev / Merged To Main / Actual External Verification Pending. Owner: Codex / Svein Tore.

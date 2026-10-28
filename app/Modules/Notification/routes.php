@@ -78,6 +78,16 @@ Route::middleware(['auth'])->group(function () {
 
 // Admin notification channel management
 Route::middleware(['admin'])->group(function () {
+    // Managed Web Push remains installation-owned; ordinary setup never asks for key material.
+    Route::prefix('/admin/notification-channels/web-push/setup')->name('admin.notification-channels.web-push.setup.')->group(function () {
+        Route::get('', [\App\Modules\Notification\Controllers\Admin\WebPushSetupController::class, 'index'])->name('index');
+        Route::post('/initialize', [\App\Modules\Notification\Controllers\Admin\WebPushSetupController::class, 'initialize'])->name('initialize');
+        Route::post('/check', [\App\Modules\Notification\Controllers\Admin\WebPushSetupController::class, 'check'])->name('check');
+        Route::patch('/activation', [\App\Modules\Notification\Controllers\Admin\WebPushSetupController::class, 'activation'])->name('activation');
+        Route::post('/rotate', [\App\Modules\Notification\Controllers\Admin\WebPushSetupController::class, 'rotate'])->name('rotate');
+        Route::post('/rollback', [\App\Modules\Notification\Controllers\Admin\WebPushSetupController::class, 'rollback'])->name('rollback');
+    });
+
     Route::get('/admin/notification-channels/web-push/devices', [AdminWebPushDeviceController::class, 'index'])
         ->name('admin.notification-channels.web-push.devices.index');
     Route::delete('/admin/notification-channels/web-push/devices/{subscription}', [AdminWebPushDeviceController::class, 'destroy'])

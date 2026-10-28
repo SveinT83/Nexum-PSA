@@ -18,6 +18,7 @@ class StoreWebPushSubscriptionRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'application_server_key' => ['nullable', 'string', 'max:160', 'regex:/^[A-Za-z0-9_+\/-]+={0,2}$/'],
             'endpoint' => ['required', 'string', 'max:500', 'url:https'],
             'keys' => ['required', 'array'],
             'keys.p256dh' => [

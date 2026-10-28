@@ -28,6 +28,7 @@
                     </p>
                 </div>
                 <div class="d-flex align-items-center gap-3">
+                    <a href="{{ route('tech.admin.notification-channels.web-push.setup.index') }}" class="btn btn-sm btn-primary">Setup and activation</a>
                     @if($webPushReadiness['ready'])
                         <span class="badge bg-success">Ready</span>
                     @else

@@ -2,14 +2,13 @@
 
 namespace App\Modules\Notification\Support;
 
-use Illuminate\Support\Str;
-
 class WebPushReadiness
 {
     public function isReady(): bool
     {
-        return (bool) config('webpush.enabled', false)
-            && $this->configurationIssues() === [];
+        $effective = app(\App\Modules\Notification\Services\WebPushManagedRuntime::class)->effective();
+
+        return $effective['enabled'] && $effective['issues'] === [];
     }
 
     /**
@@ -19,8 +18,9 @@ class WebPushReadiness
      */
     public function toArray(): array
     {
-        $enabled = (bool) config('webpush.enabled', false);
-        $issues = $this->configurationIssues();
+        $effective = app(\App\Modules\Notification\Services\WebPushManagedRuntime::class)->effective();
+        $enabled = $effective['enabled'];
+        $issues = $effective['issues'];
         $ready = $enabled && $issues === [];
 
         return [
@@ -36,7 +36,7 @@ class WebPushReadiness
                 $issues !== [] => 'Web Push configuration is incomplete. Contact an administrator.',
                 default => 'Web Push is available on supported secure browsers.',
             },
-            'public_key' => $ready ? (string) config('webpush.vapid.public_key') : null,
+            'public_key' => $ready ? (string) $effective['public_key'] : null,
         ];
     }
 
@@ -45,37 +45,6 @@ class WebPushReadiness
      */
     public function configurationIssues(): array
     {
-        $issues = [];
-
-        if (blank(config('webpush.vapid.public_key'))) {
-            $issues[] = 'public_key';
-        }
-
-        if (blank(config('webpush.vapid.private_key'))) {
-            $issues[] = 'private_key';
-        }
-
-        if (! $this->validSubject(config('webpush.vapid.subject'))) {
-            $issues[] = 'subject';
-        }
-
-        return $issues;
-    }
-
-    private function validSubject(mixed $subject): bool
-    {
-        if (! is_string($subject) || trim($subject) === '') {
-            return false;
-        }
-
-        if (Str::startsWith($subject, 'mailto:')) {
-            return filter_var(Str::after($subject, 'mailto:'), FILTER_VALIDATE_EMAIL) !== false;
-        }
-
-        if (! Str::startsWith($subject, 'https://')) {
-            return false;
-        }
-
-        return filter_var($subject, FILTER_VALIDATE_URL) !== false;
+        return app(\App\Modules\Notification\Services\WebPushManagedRuntime::class)->effective()['issues'];
     }
 }
