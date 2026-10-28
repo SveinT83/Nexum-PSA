@@ -39,7 +39,7 @@ repricing/backfill is rejected because current rate cards do not prove historica
 
 ## Follow-Up
 
-Complete both slices/tests/handbook and Main verification. HR-2026-10-28-AI-COST-EVIDENCE stays
+Both slices/tests/handbook and exact Main verification completed in PR #364 (7ce054a0). HR-2026-10-28-AI-COST-EVIDENCE stays
 Pending until named manual review; production deployment, pricing and provider activation separate.
 
 Precision clarification: reported amounts that cannot be represented exactly at 12 fractional

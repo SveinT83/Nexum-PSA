@@ -92,3 +92,32 @@ named human review remains Pending for production, not this explicitly requested
 Precision clarification: reported amounts that cannot be represented exactly at 12 fractional
 places stay unavailable. This prevents a sub-scale overage from rounding down below a strict cap;
 rate-card estimates may round to 12 places but positive underflow remains unknown.
+
+## Completion And Verification
+
+Both slices are Done On Dev and merged Main in PR #364, merge
+7ce054a03923928f4488fbf52e40eb73749a281f; independent merged tree equals candidate
+606711e511a835c8ca5adb0e8c724afd367a5bbe. #277 closed completed; comment 6456681801.
+Pre-fix regression reproduced dropped cost persistence and missing-card zero before changes.
+
+Dev: 49 tests/392 assertions, final read/UI/API 14/145, final precision/budget 26/126.
+Isolated latest-Main candidate: 52/416, then final precision/budget 33/157. All pass; batches
+overlap and are not additive. Generated Swagger validates real typed API responses; 22 scoped PHP
+syntax checks and Pint pass. No full suite or real provider execution is claimed.
+
+Dev MySQL exact migration 2026_10_28_003000_expand_ai_usage_cost_precision applied after protected
+encrypted preflight and decrypt/read-back. Preflight ledger count was zero; no backfill/history
+rewrite. All three cost columns now decimal(24,12). Native transactional synthetic probe verified
+exact large/tiny decimal behavior, per-currency summary, refusal of lossy rollback and cleanup.
+Trusted public read probes return HTTP 401 without authentication. Existing Dev branch/index/WIP
+are preserved; all source implementation occurred in the authoritative Dev copy.
+
+Knowledge article 2 body/access/placement independently match the source; native connector remains
+pending_push, which is not an external-sync claim. Actual BookStack page 545 revision 5 matched
+the complete pre-merge guide with identical inherited access. Final Main availability status is
+independently read back in BookStack revision 6 and native article revision 203, with body matching
+the exact source; employee OpenWebUI retrieval remains untested.
+
+Production is unchanged. HR-2026-10-28-AI-COST-EVIDENCE stays Pending for named human production
+review. Production migration/cache/Swagger refresh is separate. No provider activation, role/token
+grant, pricing mutation, FX, customer billing, backlog replay, purge or historical rewrite occurred.

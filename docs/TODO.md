@@ -2,17 +2,20 @@
 
 ## Truthful AI Cost Evidence - Issue #277 (2026-10-28)
 
-Status: In Progress On Dev / RFC Approved / Tested Main Merge Authorized. Owner: Codex / Svein Tore.
-Parent approved July telemetry RFC; current RFC 2026-10-28-truthful-ai-cost-evidence and accepted
-ADR 2026-10-28-ai-cost-source-and-decimal-contract. Two sequential slices: exact nullable attempt
-cost/budget/storage, then shared UI/typed API/currency summaries and documentation. Source schema,
-casts, normalization, aggregation and budget gaps are inventoried in the RFC before edits.
-One precision-expansion migration needs protected preflight/backup and exact Dev read-back.
-No historical backfill, currency conversion, pricing/provider change or production deployment.
-HR-2026-10-28-AI-COST-EVIDENCE Pending for production; user explicitly authorized tested Main merge.
-#269/#278 are complete and merged (PR #360; merge-record PR #363), not another active implementation.
-Next: reproduce both zero/mass-assignment gaps, implement/verify slices, handbook, exact Main and
-Issue completion. #290 still awaits actual receiver/provider/model/review facts from Svein.
+Status: Done On Dev / Merged To Main / Issue Closed Completed. Owner: Codex / Svein Tore.
+PR #364; merge 7ce054a03923928f4488fbf52e40eb73749a281f. Independent merged tree matches the
+tested candidate 606711e511a835c8ca5adb0e8c724afd367a5bbe. Completion comment 6456681801.
+Approved RFC/accepted ADR define nullable reported/estimated/unknown costs, 24,12 decimals,
+exact conservative caps, per-attempt totals and per-currency mixed/partial source evidence.
+Dev 49/392, final UI/API 14/145, final precision/budget 26/126; Main 52/416 plus final
+precision/budget 33/157; overlapping batches all pass. Typed Swagger, 22 PHP lint and Pint pass.
+MySQL decimal read-back, rollback refusal and synthetic transaction cleanup pass. Exact Dev
+migration applied after encrypted read-back-verified preflight; no existing rows were rewritten.
+Native Knowledge article 2/revision 203 and actual BookStack page 545/revision 6 read back
+with exact Main-status guide and access unchanged.
+HR-2026-10-28-AI-COST-EVIDENCE Pending before production. No full suite, real provider call,
+production migration, FX/pricing/provider grant, backlog release or historical backfill.
+Next primary scope: #328 Task/Ticket Markdown. #290 still needs actual receiver/provider/model/review facts.
 
 ## Approved Open-Issue Completion And Main Promotion (2026-10-27)
 
@@ -26,13 +29,12 @@ verified candidate tree 089cf90cc48515ad1311cdfe5c1c608dbbcb978a. Completion com
 RFC/ADR: 2026-10-27-ai-chat-input-and-error-boundaries. Dev 101 / 1147 plus consumer
 13 / 113 and Task 3 / 10; reconciled Main 132 / 1700 and final 54 / 711; overlapping.
 Knowledge 1/82 and exact BookStack 541/7 final Main-status section read back, access unchanged. No full suite or
-real model send. Main merge is verified. Next sequential primary scope: #277 truthful AI cost telemetry.
+real model send. Main merge is verified. #277 is also complete in PR #364; next sequential primary scope: #328.
 Human-review checklist HR-2026-10-27-AI-INPUT-ERRORS is Pending; tested Main merge is explicitly
 authorized, production scenario/release review remains separate. #262/#285 have independent
 active owners and are reconciled before promotion. #290 awaits actual recipient/provider/model
 and review facts requested from Svein; no external grant or provider decision is invented.
-Next: implement/verify #277 under the existing approved telemetry direction, then continue
-remaining fixes. No production rollout/backlog retry is implied.
+Next: implement/verify #328 Task/Ticket Markdown, then continue remaining audited fixes. No production rollout/backlog retry is implied.
 
 Operational completion during verification: #292 closed completed (GitHub comment 6455598251).
 Approved key SSH plus DPAPI-backed sudo verified the existing nonempty 0600 TLS key; root
