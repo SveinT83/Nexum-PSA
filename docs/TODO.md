@@ -2,14 +2,18 @@
 
 ## Per-Connection Talk Notification Destinations - Issue #205 (2026-10-28)
 
-Status: Done On Dev / Main Candidate Tested / External Verification Pending. Owner: Codex / Svein Tore.
+Status: Done On Dev / Merged To Main / Actual External Verification Pending. Owner: Codex / Svein Tore.
 RFC 2026-10-28-talk-notification-destinations and ADR explicit-talk-destinations-and-evidence.
+PR #368; merge 917de21a021f8f4fe4e657edf6f2b60203dfa807. Independently verified exact tested tree
+f0fe6969c8662e36ce67f64dc7cb1df02bb6ced2. Issue remains open only for the actual controlled integration criterion.
 Provider storage/delivery/UI/API slices are verified. Dev 46/1389; exact isolated Main 78/10459.
 Current room v4/private-group contracts, paired provider-bound targets, durable truthful receipts,
 independent kill switches, five typed API actions and hidden legacy compatibility are implemented. Preserve independent existing
 Nextcloud/Notification work, legacy target authority and default-off runtime/provider gates.
 No real recipient send, activation, role grant or production action is inferred.
+Final Main handbook availability read-back: BookStack 419/6, 383/9 and 425/7; native Knowledge 56/59/64 revisions 207/208/209. Access preserved; native sync status remains pending_push.
 HR-2026-10-28-TALK-DESTINATIONS Pending; an exact live-message test needs recipient authorization.
+
 
 ## Task And Ticket Markdown - Issue #328 (2026-10-28)
 

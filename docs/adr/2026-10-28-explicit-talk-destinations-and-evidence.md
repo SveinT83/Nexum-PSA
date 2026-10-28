@@ -30,3 +30,14 @@ are required. Human receipt is distinct from provider conversation-storage verif
 migration may block old targets until deliberately reconciled. Runtime kill switches cannot recall
 already accepted messages. Production and an exact real-message recipient remain separate from
 the explicitly authorized tested Main merge. HR-2026-10-28-TALK-DESTINATIONS stays Pending.
+
+
+## Verified Implementation - 2026-10-28
+
+Main PR #368 / 917de21a021f8f4fe4e657edf6f2b60203dfa807 independently matches the tested tree
+f0fe6969c8662e36ce67f64dc7cb1df02bb6ced2. Dev 46/1389 and isolated Main 78/10459 pass.
+Only the two named additive Talk migrations were applied on Dev; native rollback-only MySQL
+probe and exact actual BookStack read-back passed. Existing internal catalog article visibility
+and publication placement are preserved. No provider/recipient/global activation or production
+deployment occurred. HR-2026-10-28-TALK-DESTINATIONS stays Pending. Issue #205 retains its
+actual external integration criterion until an explicitly authorized connection/conversation is verified.
