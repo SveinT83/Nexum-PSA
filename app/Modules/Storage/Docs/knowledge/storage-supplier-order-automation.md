@@ -456,5 +456,6 @@ required token scopes and current user permissions, supplier lookup, inventory a
 incoming quantities, purchasing/receiving, picking, import review, profiles and
 settings. Full API code is present on Main; production deployment and named human review
 remain separate gates. See **Storage Inventory -> Storage API guide** in the handbook and Swagger on
-the target installation. Canonical numbering is verified on Dev under Issue #286; check the target installation's
-deployment before relying on this update.
+the target installation. Canonical numbering is verified on Dev and merged to Main in PR #377 under Issue #286.
+Production deployment and HR-2026-10-28-PO-NUMBERING manual acceptance remain pending;
+check the target installation before relying on this update.

@@ -2,7 +2,7 @@
 
 Date: 2026-10-28. Owner: Codex / Svein Tore. Main promotion explicitly authorized.
 Candidate base: 84b82cad2768b4f688dd750d1506c092ef7e0e3c.
-Status: Done On Dev / Scoped Main Candidate Verified / Merge Pending.
+Status: Done On Dev / Merged To Main / Issue Closed Completed.
 
 ## Scope And Contributor Preservation
 
@@ -59,3 +59,13 @@ are not reset or broadened. Tests never mark a human review complete.
 Four authoritative Storage guides were updated first. Actual BookStack/Knowledge publication and
 read-back, Main merge/tree read-back, Issue completion and final status are recorded below when
 verified; no local/queued publication is called a completed handbook update.
+
+## Independently Verified Completion
+
+PR #377 merged as d29aa879a2ebcf608dacbe11299f7abf14bd7626; exact tested tree
+9cd877a014491a22b708583efd986857bfd324ad independently fetched and matched. Issue #286 closed
+completed with comment 6462452186, exact body and closed/completed state independently read back.
+Actual BookStack 550/6, 551/6, 386/14 and 548/2 match owned edits exactly; all four permission
+read-backs are unchanged. Native Knowledge 35/36/39/40 revisions 215/216/217/218 match source,
+access and mappings; native sync remains pending_push. HR remains Pending; production unchanged.
+Public-safe website handoff updated with an explicit DO NOT PUBLISH entry.

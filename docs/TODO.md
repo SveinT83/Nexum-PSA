@@ -1,20 +1,35 @@
 # tdPSA Development TODO
 
+## Audited Issue Completion And Remaining Decisions (2026-10-28)
+
+Status: Nine Of Nineteen Closed / Ten Explicit Gates Remain. Owner: Svein Tore / Codex.
+Current authoritative per-Issue status, tested Main merges, production read-back and next work:
+plans/2026-10-28-issue-reconciliation-and-main-status.md. #254 was already independently closed;
+this task closed #258/#269/#277/#278/#286/#289/#292/#328 with read-back evidence.
+#289 production docs/build are verified (cb415820...), comment 6462326799; #288/#290 remain open.
+#228 and #275 now have concrete Level 3 RFC drafts ready for approval, not implementation or
+inferred approval. Their exact policy questions and the missing shared Team source are recorded.
+Questions were asked once in this task. #261/#265 require the same authority decision.
+Fresh #224 package audit is clean; #292 is closed. Retain the previously requested rollback /
+all-vhost evidence rather than rerun package repair. #262 fresh 06:39 UTC health remains overall
+blocked with economy/email-live/notifications operator-review blocked; no cold work was activated.
+Production, external recipient/workload and manual gates remain distinct from Main availability.
+
 ## Canonical Purchase Order Numbering - Issue #286 (2026-10-28)
 
-Status: Done On Dev / Scoped Main Candidate Verified / Merge And Handbook Read-Back Pending.
-Owner: Codex / Svein Tore, building on TD-Jonathan's staged allocator. RFC/ADR canonical contract.
-Manual/API/import share one locked sequence; existing identities and supplier deduplication stay.
-Dev core 130 and Main Storage feature/unit 296 distinct tests covered in completed runs; the
-existing 12-decimal AI cap test expectations were reconciled and the entire 34/404 class rerun
-successfully on both. No unresolved failures/skips; no full application suite claimed.
-Exact native Dev migration, encrypted preflight and two-process ten-order concurrency proof pass.
-Synthetic procurement/master fixtures removed; counter retained. Immutable Mail access evidence
-keeps synthetic user ID 9 disabled without roles/permissions/tokens; see deployment recovery guide.
-Staged contributor work, Dev HEAD and original index digest were preserved.
-Plan: plans/2026-10-28-canonical-purchase-order-numbering-main.md.
-HR-2026-10-28-PO-NUMBERING Pending before production/manual acceptance. Production unchanged.
-
+Status: Done On Dev / Merged To Main / Issue Closed Completed. Owner: Codex / Svein Tore.
+PR #377 merge d29aa879a2ebcf608dacbe11299f7abf14bd7626 independently matches tested tree
+9cd877a014491a22b708583efd986857bfd324ad. Completion comment 6462452186 read back.
+Dev core 130 and Main Storage feature/unit 296 distinct tests covered in completed runs;
+corrected entire AI class passes 34/404 on both. No unresolved failures/skips or full-app claim.
+Native exact migration, encrypted preflight and two-process ten-order concurrency proof pass.
+Source/actual handbook: BookStack 550/6, 551/6, 386/14, 548/2 exact owned edits/access; Knowledge
+35/36/39/40 revisions 215/216/217/218 source/access preserved, sync pending_push.
+Synthetic procurement/master fixtures removed and used counter retained. Immutable Mail evidence
+keeps synthetic user 9 disabled without roles/permissions/tokens; preserve this audit residue.
+TD-Jonathan's staged work, Dev HEAD/index and root helper preserved. Production unchanged.
+HR-2026-10-28-PO-NUMBERING remains Pending before production/manual create/edit/import/layout.
+Plan: plans/2026-10-28-canonical-purchase-order-numbering-main.md; exact deploy/recovery guide linked.
 
 ## Knowledge Audience And Context Contract - Issues #265 / #261 (2026-10-28)
 

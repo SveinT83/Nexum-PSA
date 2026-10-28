@@ -8,8 +8,10 @@ rollout and manual create/edit/import acceptance.
 
 Automated Dev core 130 and latest-Main Storage feature/unit 296 distinct cases are covered
 in completed runs; the corrected entire AI class passes 34/404 on both. Native exact migration,
-encrypted preflight and ten-order two-process concurrency proof passed. Main merge and actual
-handbook read-back remain to be recorded. Synthetic user 9 is disabled without privileges;
+encrypted preflight and ten-order two-process concurrency proof passed. Main PR #377 merged as d29aa879a2ebcf608dacbe11299f7abf14bd7626, matching tested tree
+9cd877a014491a22b708583efd986857bfd324ad. Actual BookStack 550/6, 551/6, 386/14, 548/2
+read back exactly with unchanged access; native Knowledge revisions 215/216/217/218 match
+source (sync still pending_push). Issue #286 closed completed, comment 6462452186 read back. Synthetic user 9 is disabled without privileges;
 immutable Mail access evidence is preserved. No production change occurred.
 
 - [ ] Verify protected identity/counter backup, exact additive migration and used-counter retention.
