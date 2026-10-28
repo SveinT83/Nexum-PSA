@@ -63,6 +63,7 @@
                 <div class="mb-3">
                     <label class="form-label" for="{{ $modalId }}Description">Description</label>
                     <textarea class="form-control" id="{{ $modalId }}Description" name="description" rows="3"></textarea>
+                    <x-content.markdown-help />
                 </div>
 
                 <div class="mb-3">

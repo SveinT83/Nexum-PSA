@@ -62,7 +62,8 @@ class SendTicketInternalNotificationEmail implements ShouldQueue
         $subject = '[' . $ticket->ticket_key . '] Internal note notification';
         $author = $message->author?->name ?? 'A technician';
         $text = $author . " added an internal note:\n\n" . $message->body;
-        $html = '<p>' . e($author) . ' added an internal note:</p><div style="white-space:pre-wrap;">' . e($message->body) . '</div>';
+        $html = '<p>' . e($author) . ' added an internal note:</p>'
+            .app(\App\Modules\System\Actions\RenderOperationalMarkdown::class)->handle($message->body);
 
         $messageId = $mailer->send(
             $account,

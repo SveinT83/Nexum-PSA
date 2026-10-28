@@ -33,7 +33,7 @@
                                 </div>
                                 <div class="small text-muted">{{ $message->created_at?->format('Y-m-d H:i') }}</div>
                             </div>
-                            <div style="white-space: pre-wrap;">{{ $message->body }}</div>
+                            <x-content.markdown :source="$message->body" />
 
                             @if($message->fileAttachments->isNotEmpty())
                                 <div class="mt-3 d-flex flex-wrap gap-2">
@@ -64,6 +64,7 @@
                         <div class="mb-3">
                             <label for="body" class="form-label">Message</label>
                             <textarea id="body" name="body" rows="7" class="form-control @error('body') is-invalid @enderror" required>{{ old('body') }}</textarea>
+                            <x-content.markdown-help />
                             @error('body') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         <div class="d-flex justify-content-end">

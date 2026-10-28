@@ -216,3 +216,26 @@ are mapped through relationship policy and do not receive arbitrary access to
 local workflow transitions.
 
 Ticket UI must not expose unfinished controls. If a setting or button is visible, the underlying behavior must be implemented, tested, and honest about what it does.
+
+## Markdown In Descriptions And Conversations
+
+Availability: Issue #328 is verified on Dev; scoped Main verification is in progress. Production
+is unchanged. HR-2026-10-28-TASK-TICKET-MARKDOWN remains Pending before production.
+
+1. In **New Ticket** or **Edit Ticket**, write normal text or Markdown in **Description**.
+2. In the Ticket conversation composer, use the existing reply/internal-note selection and write
+   the message. Use **bold**, *emphasis*, lists, code and safe links as needed.
+3. One newline remains a line break; a blank line starts a separate paragraph. For example,
+   `- Check service` starts a list, `**Important**` emphasizes a word, and
+   `[documentation](https://example.com)` creates a safe link.
+4. Save or send through the existing workflow. Ticket detail shows formatted description and
+   conversation text; editing and API description/body fields retain the original Markdown.
+5. Customer Portal public conversations support the same formatting. Existing visibility rules
+   still control which messages appear; internal notes do not become public through formatting.
+
+Raw HTML is displayed as text. Unsafe link targets are disabled, and Markdown image syntax
+displays alt text without loading remote images. Use the existing attachment workflow for files.
+Ticket-generated HTML replies/internal notifications preserve the same formatting; their plain-text
+versions retain readable source. See **Ticket Email And Communication** for delivery boundaries.
+No schema, audience, recipient or role changes are part of this feature. Historical text remains
+stored exactly as before; escape Markdown punctuation or use a code block for literal syntax.

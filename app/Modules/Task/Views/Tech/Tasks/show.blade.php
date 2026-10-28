@@ -44,7 +44,7 @@
         </div>
         <div class="card-body">
             @if($task->description)
-                <p>{{ $task->description }}</p>
+                <x-content.markdown :source="$task->description" />
             @endif
 
             <div class="row g-3 small">

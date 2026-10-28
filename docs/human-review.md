@@ -1,5 +1,25 @@
 # Human Review Register
 
+## HR-2026-10-28-TASK-TICKET-MARKDOWN - Operational Text Formatting
+
+Status: Pending. Owner: Codex. Intended named reviewer: Svein Tore.
+Scope: Issue #328 / RFC 2026-10-28-task-ticket-markdown.
+Tested Main merge is explicitly authorized; this checklist gates production rollout/release.
+
+- [ ] Create/edit Task and Ticket text with Norwegian letters, normal line breaks, paragraphs,
+  lists, bold and code. Expect readable detail/quick-view output and exact source while editing.
+- [ ] Check Ticket replies/notes and Portal public conversation on desktop/mobile. Existing
+  audience rules hold; internal notes and unauthorized Tickets stay hidden.
+- [ ] Paste synthetic raw HTML, unsafe links and remote-image syntax. No script, unsafe target
+  or remote-image request should appear; ordinary safe links/attachment controls still work.
+- [ ] In controlled internal verification, compare Ticket reply/internal-notification HTML with
+  plain-text MIME, subject, threading and existing custom template layout.
+- [ ] Confirm handbook instructions match the deployed version. No production/real send is implied.
+
+Deploy: no migration, stored-template rewrite, new package or asset build. Normal compiled
+Blade/cache refresh. Risks: historical text can have Markdown meaning, long nested blocks and
+custom email-template layout need human inspection. Source text, data and permissions are retained.
+
 ## HR-2026-10-28-AI-COST-EVIDENCE - Truthful AI Usage And Cost
 
 Status: Pending. Owner: Codex. Intended named reviewer: Svein Tore.

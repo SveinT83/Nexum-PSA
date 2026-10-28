@@ -1,5 +1,16 @@
 # tdPSA Development TODO
 
+## Task And Ticket Markdown - Issue #328 (2026-10-28)
+
+Status: Done On Dev / Main Candidate Verified / Tested Main Merge Authorized. Owner: Codex / Svein Tore.
+Target: existing Task/Ticket description and conversation formatting, safe shared rendering,
+English writing guidance, existing Portal audience and Ticket-generated HTML email consistency.
+Source/API/plain MIME text stays intact. No schema/backfill, rich-editor replacement, remote-image
+loads, recipient/role/provider changes or production rollout. Preserve shared dirty domain work.
+RFC 2026-10-28-task-ticket-markdown and ADR 2026-10-28-shared-operational-markdown-presentation.
+Two sequential slices and concrete done criteria live in the RFC.
+HR-2026-10-28-TASK-TICKET-MARKDOWN Pending before production; tested Main merge explicitly authorized.
+
 ## Truthful AI Cost Evidence - Issue #277 (2026-10-28)
 
 Status: Done On Dev / Merged To Main / Issue Closed Completed. Owner: Codex / Svein Tore.
