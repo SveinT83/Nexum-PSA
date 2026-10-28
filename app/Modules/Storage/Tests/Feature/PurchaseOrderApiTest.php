@@ -150,7 +150,6 @@ class PurchaseOrderApiTest extends TestCase
         Sanctum::actingAs($this->actor, ['storage.purchase.manage']);
 
         $create = $this->postJson(route('api.v1.storage.purchase-orders.store'), [
-            'po_number' => 'API-PO-MANAGED',
             'vendor_id' => $this->vendor->id,
             'deliver_to_warehouse_id' => $this->warehouse->id,
             'status' => 'ordered',
@@ -458,7 +457,6 @@ class PurchaseOrderApiTest extends TestCase
         $this->sequence++;
 
         return app(StorePurchaseOrder::class)->handle([
-            'po_number' => 'API-ORDER-'.$this->sequence,
             'vendor_id' => $this->vendor->id,
             'deliver_to_warehouse_id' => $this->warehouse->id,
             'status' => PurchaseOrder::STATUS_ORDERED,

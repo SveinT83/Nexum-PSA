@@ -164,19 +164,21 @@ Deleting items:
 - Delete is available from the item detail page and through `DELETE /api/v1/storage/items/{item}`.
 - The API delete route uses the existing `storage.update` scope.
 
-## Full Storage API coverage (Dev, 2026-10-26)
+## Full Storage API Coverage And Canonical Numbering
 
 The Storage API guide documents the complete supported browser/API workflow,
 required token scopes and current user permissions, supplier lookup, inventory and
 incoming quantities, purchasing/receiving, picking, import review, profiles and
-settings. This update is verified on Dev; Main, production and named human review
-are separate gates. See **Storage Inventory -> Storage API guide** in the handbook and Swagger on the
-target installation. The separate Issue #286 numbering contract remains open.
+settings. Full API code is present on Main; production deployment and named human review
+remain separate gates. See **Storage Inventory -> Storage API guide** in the handbook and Swagger on
+the target installation. Canonical numbering is verified on Dev under Issue #286; check the target installation's
+deployment before relying on this update.
 
-## Storage API guide (Dev, 2026-10-26)
+## Storage API Guide
 
-Availability: implemented on authoritative Dev on 2026-10-26. Main promotion,
-production deployment and the human scenario checklist are separate gates.
+Availability: the full Storage API is present on Main. Canonical numbering is verified on Dev
+on 2026-10-28 and its Main promotion is tracked with Issue #286. Production deployment and
+the human scenario checklist remain separate gates.
 Use this guide only against an installation where this API update is deployed.
 
 ## Prerequisites
@@ -213,9 +215,12 @@ a stale edit. Do not use a new key to repeat a result whose outcome is unknown.
    quantity. It is separate from qty_on_hand, qty_reserved and qty_available.
    Only explicit receiving or other supported inventory actions change stock.
 
-The separate purchase-order numbering change in Issue #286 is still under review.
-Do not assume that canonical-number immutability or a redesigned allocator has been
-released by this API work. Read the saved po_number; never predict the next value.
+Nexum generates the canonical numeric po_number on successful creation. Omit po_number
+from POST input; a nonempty caller-selected number returns 422. Read the returned value
+and retain it as the Nexum business identity; never predict the next value. PUT may echo
+the identical saved value for compatibility, but an attempted change returns 422. Existing
+legacy identities and the separate external supplier reference are preserved. A numbering
+503 requires operator reconciliation of the exact schema/counter, never a caller fallback.
 
 ## Inventory, boxes and picking
 Use the item filters, summary, supplier lines and movement history to inspect stock.

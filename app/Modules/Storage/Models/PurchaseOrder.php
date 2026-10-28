@@ -9,10 +9,52 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class PurchaseOrder extends Model
 {
     use SoftDeletes;
+
+    private const PENDING_NUMBER_PREFIX = 'pending-db-id-';
+
+    private bool $assigningGeneratedNumber = false;
+
+    protected static function booted(): void
+    {
+        static::updating(function (PurchaseOrder $order): void {
+            if ($order->isDirty('po_number') && ! $order->assigningGeneratedNumber) {
+                throw ValidationException::withMessages(['po_number' => 'The generated Nexum order number cannot be changed.']);
+            }
+        });
+    }
+
+    public static function pendingNumber(): string
+    {
+        return self::PENDING_NUMBER_PREFIX.(string) Str::uuid();
+    }
+
+    public static function isPendingNumber(mixed $number): bool
+    {
+        return is_string($number) && str_starts_with($number, self::PENDING_NUMBER_PREFIX)
+            && Str::isUuid(substr($number, strlen(self::PENDING_NUMBER_PREFIX)));
+    }
+
+    /** @internal Only the shared allocator assigns a freshly created pending record inside its transaction. */
+    public function assignGeneratedNumber(string $number): void
+    {
+        if (! $this->exists || ! $this->wasRecentlyCreated || $this->getConnection()->transactionLevel() < 1
+            || ! self::isPendingNumber($this->getRawOriginal('po_number'))
+            || ! preg_match('/\A[1-9][0-9]{0,18}\z/D', $number)) {
+            throw ValidationException::withMessages(['po_number' => 'Only original creation may assign a Nexum order number.']);
+        }
+        $this->assigningGeneratedNumber = true;
+        try {
+            $this->forceFill(['po_number' => $number])->save();
+        } finally {
+            $this->assigningGeneratedNumber = false;
+        }
+    }
 
     public const STATUS_DRAFT = 'draft';
 

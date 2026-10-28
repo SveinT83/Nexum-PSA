@@ -1556,7 +1556,6 @@ class PurchaseReceivingActionsTest extends TestCase
         $this->orderSequence++;
 
         return app(StorePurchaseOrder::class)->handle($overrides + [
-            'po_number' => 'PO-TEST-'.$this->orderSequence,
             'vendor_id' => $this->vendor->id,
             'deliver_to_warehouse_id' => $this->warehouse->id,
             'status' => PurchaseOrder::STATUS_ORDERED,

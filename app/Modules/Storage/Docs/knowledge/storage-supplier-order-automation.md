@@ -2,6 +2,14 @@ Supplier Order Automation turns explicitly selected inbound supplier confirmatio
 Storage imports. When policy permits, a validated import can register a Purchase Order for goods
 that were already ordered outside Nexum. It never places an order with the supplier.
 
+## Canonical Nexum Order Number
+
+A newly finalized import uses the same generated numeric **Nexum order number** as manual
+and API registration. The supplier order number remains the separate supplier reference.
+Confirmation and duplicate reconciliation retain an existing order's number, including legacy
+values; they do not allocate a replacement or create another order. Existing import policy,
+review, supplier identity, stock and delivery controls still apply.
+
 ## Unified Supplier Orders List
 
 Open **Storage > Supplier Orders** to follow supplier confirmations, registered Purchase Orders, and
@@ -39,7 +47,7 @@ order created from supplier email do not live in separate lists. The source icon
 order was registered manually, created from supplier email, or registered manually and later
 confirmed by a supplier email.
 
-The **Nexum order number** is the internal reference. The separate **Supplier order number** is the
+The **Nexum order number** is the generated immutable internal identity. The separate **Supplier order number** is the
 number assigned by that supplier. Nexum uses the exact normalized combination of supplier and
 supplier order number to prevent duplicates across manual registration and email automation. The
 database removes only surrounding spaces and normalizes letter case; leading zeros, punctuation,
@@ -441,11 +449,12 @@ permission, and exact current alert target. Lock-screen content identifies only 
 or digest and links to the guarded Storage page. It does not expose Supplier identity, order numbers,
 line data, error details, source Email, attachment names, model/provider output, or credentials.
 
-## Full Storage API coverage (Dev, 2026-10-26)
+## Full Storage API Coverage And Canonical Numbering
 
 The Storage API guide documents the complete supported browser/API workflow,
 required token scopes and current user permissions, supplier lookup, inventory and
 incoming quantities, purchasing/receiving, picking, import review, profiles and
-settings. This update is verified on Dev; Main, production and named human review
-are separate gates. See **Storage Inventory -> Storage API guide** in the handbook and Swagger on the
-target installation. The separate Issue #286 numbering contract remains open.
+settings. Full API code is present on Main; production deployment and named human review
+remain separate gates. See **Storage Inventory -> Storage API guide** in the handbook and Swagger on
+the target installation. Canonical numbering is verified on Dev under Issue #286; check the target installation's
+deployment before relying on this update.

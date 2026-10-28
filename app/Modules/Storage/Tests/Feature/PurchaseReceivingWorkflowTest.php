@@ -121,9 +121,8 @@ class PurchaseReceivingWorkflowTest extends TestCase
             $item = $this->item('RCV-SORT-ITEM-'.$suffix, 'Receiving sort item '.$suffix, [
                 'warehouse_id' => $warehouse->id,
             ]);
-            $order = $this->placedOrder([['item' => $item, 'quantity' => 10]]);
+            $order = $this->placedOrder([['item' => $item, 'quantity' => 10]], 'PO-RSORT-'.$suffix);
             $order->update([
-                'po_number' => 'PO-RSORT-'.$suffix,
                 'vendor_id' => $supplier->id,
                 'supplier_name_snapshot' => $supplier->name,
                 'deliver_to_warehouse_id' => $warehouse->id,
@@ -649,10 +648,10 @@ class PurchaseReceivingWorkflowTest extends TestCase
         ]);
     }
 
-    private function placedOrder(array $lineInputs): PurchaseOrder
+    private function placedOrder(array $lineInputs, ?string $legacyNumber = null): PurchaseOrder
     {
         $order = PurchaseOrder::query()->create([
-            'po_number' => 'PO-RCV-'.str()->random(6),
+            'po_number' => $legacyNumber ?? 'PO-RCV-'.str()->random(6),
             'vendor_id' => $this->supplier->id,
             'supplier_name_snapshot' => $this->supplier->name,
             'deliver_to_warehouse_id' => $this->warehouse->id,

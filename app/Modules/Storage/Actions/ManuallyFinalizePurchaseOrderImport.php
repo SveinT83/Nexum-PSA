@@ -8,12 +8,12 @@ use App\Modules\Storage\Models\PurchaseOrderImport;
 use App\Modules\Storage\Support\PurchaseOrderImportManualMutationGuard;
 use App\Modules\Storage\Support\SupplierOrderCanonicalValidator;
 use App\Modules\Storage\Support\SupplierOrderPolicyDecision;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ManuallyFinalizePurchaseOrderImport
 {
     public function __construct(
+        private readonly AllocatePurchaseOrderNumber $allocatePoNumber,
         private readonly ResolveEffectivePurchaseOrderAutomationPolicy $effectivePolicy,
         private readonly SupplierOrderCanonicalValidator $canonicalValidator,
         private readonly ResolveSupplierOrderItems $resolveItems,
@@ -29,7 +29,7 @@ class ManuallyFinalizePurchaseOrderImport
         }
 
         /** @var array{purchase_order: ?PurchaseOrder, error: ?string} $result */
-        $result = DB::transaction(function () use ($import, $actor): array {
+        $result = $this->allocatePoNumber->withinSequence(function () use ($import, $actor): array {
             // Hold the import lock across resolution and finalization so the worker cannot interleave.
             $locked = PurchaseOrderImport::query()
                 ->with(['policyRevision', 'profile', 'profileVersion'])

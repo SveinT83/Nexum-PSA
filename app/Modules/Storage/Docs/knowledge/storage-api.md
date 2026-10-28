@@ -1,5 +1,6 @@
-Availability: implemented on authoritative Dev on 2026-10-26. Main promotion,
-production deployment and the human scenario checklist are separate gates.
+Availability: the full Storage API is present on Main. Canonical numbering is verified on Dev
+on 2026-10-28 and its Main promotion is tracked with Issue #286. Production deployment and
+the human scenario checklist remain separate gates.
 Use this guide only against an installation where this API update is deployed.
 
 ## Prerequisites
@@ -36,9 +37,12 @@ a stale edit. Do not use a new key to repeat a result whose outcome is unknown.
    quantity. It is separate from qty_on_hand, qty_reserved and qty_available.
    Only explicit receiving or other supported inventory actions change stock.
 
-The separate purchase-order numbering change in Issue #286 is still under review.
-Do not assume that canonical-number immutability or a redesigned allocator has been
-released by this API work. Read the saved po_number; never predict the next value.
+Nexum generates the canonical numeric po_number on successful creation. Omit po_number
+from POST input; a nonempty caller-selected number returns 422. Read the returned value
+and retain it as the Nexum business identity; never predict the next value. PUT may echo
+the identical saved value for compatibility, but an attempted change returns 422. Existing
+legacy identities and the separate external supplier reference are preserved. A numbering
+503 requires operator reconciliation of the exact schema/counter, never a caller fallback.
 
 ## Inventory, boxes and picking
 Use the item filters, summary, supplier lines and movement history to inspect stock.

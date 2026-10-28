@@ -9,7 +9,6 @@ use App\Modules\Storage\Models\Warehouse;
 use App\Modules\Storage\Support\SupplierOrderIdentity;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -34,7 +33,7 @@ class StorePurchaseOrder
         $data['currency'] = strtoupper((string) ($data['currency'] ?? 'NOK'));
 
         $validated = Validator::make($data, [
-            'po_number' => ['nullable', 'string', 'max:255', 'unique:storage_purchase_orders,po_number'],
+            'po_number' => ['prohibited'],
             'vendor_id' => ['required', 'integer', 'exists:vendors,id'],
             'deliver_to_warehouse_id' => ['required', 'integer', 'exists:storage_warehouses,id'],
             'status' => ['required', Rule::in([
@@ -56,7 +55,7 @@ class StorePurchaseOrder
             ]);
         }
 
-        return DB::transaction(function () use ($validated, $actor): PurchaseOrder {
+        return $this->allocatePoNumber->withinSequence(function () use ($validated, $actor): PurchaseOrder {
             $vendorId = (int) $validated['vendor_id'];
             $vendorRef = SupplierOrderIdentity::storedReference($validated['vendor_ref'] ?? null);
             // Lock the PO identity before related master data. Update follows the
@@ -83,9 +82,7 @@ class StorePurchaseOrder
                 : [];
 
             $attributes = [
-                'po_number' => filled($validated['po_number'] ?? null)
-                    ? trim($validated['po_number'])
-                    : 'pending-db-id-'.str()->uuid(),
+                'po_number' => PurchaseOrder::pendingNumber(),
                 'vendor_id' => $vendor->id,
                 'supplier_name_snapshot' => $vendor->name,
                 'deliver_to_warehouse_id' => $validated['deliver_to_warehouse_id'],
@@ -103,10 +100,7 @@ class StorePurchaseOrder
             ];
             try {
                 $purchaseOrder = PurchaseOrder::query()->create($attributes);
-                $purchaseOrder = $this->allocatePoNumber->handle(
-                    $purchaseOrder,
-                    $validated['po_number'] ?? null,
-                );
+                $purchaseOrder = $this->allocatePoNumber->handle($purchaseOrder);
             } catch (QueryException $exception) {
                 EnsurePurchaseOrderSupplierIdentityAvailable::throwWhenConstraintWasRaced($exception);
 
@@ -121,6 +115,6 @@ class StorePurchaseOrder
                 'deliverToWarehouse',
                 'lines.item',
             ]);
-        }, 3);
+        });
     }
 }

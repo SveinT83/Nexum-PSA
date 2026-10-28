@@ -1,5 +1,28 @@
 # Human Review Register
 
+## HR-2026-10-28-PO-NUMBERING - Canonical Immutable Purchase Order Identity
+
+Status: Pending. Owner: Codex. Intended named reviewer: Svein Tore.
+Scope: #286. Verified Main promotion is authorized; this checklist gates production schema/code
+rollout and manual create/edit/import acceptance.
+
+Automated Dev core 130 and latest-Main Storage feature/unit 296 distinct cases are covered
+in completed runs; the corrected entire AI class passes 34/404 on both. Native exact migration,
+encrypted preflight and ten-order two-process concurrency proof passed. Main merge and actual
+handbook read-back remain to be recorded. Synthetic user 9 is disabled without privileges;
+immutable Mail access evidence is preserved. No production change occurred.
+
+- [ ] Verify protected identity/counter backup, exact additive migration and used-counter retention.
+- [ ] Create a manual order without selecting a number; verify the read-only saved identity.
+- [ ] Edit an existing legacy order and verify its number and supplier reference remain unchanged.
+- [ ] Verify an authorized API cannot choose/rename the number; unchanged legacy echo is compatible.
+- [ ] Finalize/reconcile an approved supplier import and verify shared numbering and supplier dedup.
+- [ ] Inspect concurrent creation, rollback, receiving/history and failed validation behavior.
+- [ ] Review source/API/actual handbook wording and desktop/mobile field presentation.
+
+No supplier message, inventory movement, provider/runtime activation or production action is
+implied by Main merge. Automated tests do not mark this entry Reviewed.
+
 ## HR-2026-10-28-WEBPUSH-SETUP - Managed Web Push Installation And Activation
 
 Status: Pending. Owner: Codex. Intended named reviewer/operator: Svein Tore.

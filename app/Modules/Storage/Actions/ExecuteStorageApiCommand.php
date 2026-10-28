@@ -56,6 +56,10 @@ class ExecuteStorageApiCommand
 
                     return ['replayed' => true, 'command' => $existing];
                 }
+                // Finalization shares the worker/browser lock order: numbering before the import target.
+                if (($request->route()->defaults['storage_operation'] ?? null) === 'import-finalize') {
+                    app(AllocatePurchaseOrderNumber::class)->lockForCreation();
+                }
                 StorageApiRevision::lockTarget($request);
                 // Models were bound before the mutex; refresh before validation/persistence.
                 foreach ($request->route()->parameters() as $value) {

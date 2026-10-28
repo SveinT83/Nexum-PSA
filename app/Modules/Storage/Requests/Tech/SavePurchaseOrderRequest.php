@@ -27,10 +27,11 @@ class SavePurchaseOrderRequest extends FormRequest
             ->values()
             ->all();
 
+        if (is_string($this->input('po_number'))) {
+            $this->merge(['po_number' => trim($this->input('po_number'))]);
+        }
+
         $this->merge([
-            'po_number' => filled($this->input('po_number'))
-                ? trim((string) $this->input('po_number'))
-                : null,
             'vendor_ref' => filled($this->input('vendor_ref'))
                 ? trim((string) $this->input('vendor_ref'))
                 : null,
@@ -43,7 +44,7 @@ class SavePurchaseOrderRequest extends FormRequest
     {
         return [
             'po_number' => $this->isMethod('post')
-                ? ['nullable', 'string', 'max:100']
+                ? ['prohibited']
                 : ['sometimes', 'required', 'string', 'max:100'],
             'vendor_id' => ['required', 'integer', 'exists:vendors,id'],
             'deliver_to_warehouse_id' => ['required', 'integer', 'exists:storage_warehouses,id'],
