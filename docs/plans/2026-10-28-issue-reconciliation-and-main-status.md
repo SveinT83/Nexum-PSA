@@ -1,5 +1,14 @@
 # GitHub Issue Reconciliation And Main Status
 
+## Closure Policy Supersession - 2026-10-29
+
+Svein explicitly closed #224 and instructed that finished development work must be on Main
+before Issue closure. The final #205 legacy test corrections and #288 closure records are
+scoped in plans/2026-10-29-completed-issue-closure.md; close both only after verified merge.
+This supersedes the historical table below for their closure policy. Real Talk/deployed Worklog
+checks remain unchecked under their existing human-review entries, owned by Svein.
+#262/#290 retain genuine operational work; #228/#261/#265/#275 remain unfinished.
+
 Verified: 2026-10-28. Owner: Codex / Svein Tore. Scope: the 19 audited Issues and the direct
 instruction to implement and merge to Main. This record distinguishes source, Dev, Main,
 production, actual integration delivery and named human review.

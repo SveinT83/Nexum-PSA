@@ -197,3 +197,11 @@ cross-connection misrouting. Meaningful negative/concurrency tests and current r
 HR-2026-10-28-TALK-DESTINATIONS gates production/manual scenarios; tests never mark it Reviewed.
 An external real-message test needs an explicitly authorized exact recipient/conversation before
 sending. No hard recipient choice or live activation is inferred from the broad code/Main request.
+
+## Closure Decision - 2026-10-29
+
+Svein explicitly requires completed work on Main before Issue closure. The implementation
+is already merged through #368. Promote the final two legacy test corrections and closure
+records, then close #205. This supersedes TN4 wording that held the development Issue open
+for a real external message. HR-2026-10-28-TALK-DESTINATIONS stays Pending; Svein owns the
+real-recipient and manual checks. No live message or human-review result is inferred.

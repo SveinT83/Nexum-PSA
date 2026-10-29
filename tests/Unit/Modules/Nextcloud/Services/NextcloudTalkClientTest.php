@@ -95,7 +95,7 @@ class NextcloudTalkClientTest extends TestCase
     public function it_lists_conversations(): void
     {
         Http::fake([
-            'nextcloud.example.com/ocs/v2.php/apps/spreed/api/v1/room' => Http::response([
+            'nextcloud.example.com/ocs/v2.php/apps/spreed/api/v4/room?noStatusUpdate=1' => Http::response([
                 'ocs' => [
                     'meta' => ['status' => 'ok', 'statuscode' => 200],
                     'data' => [
@@ -111,8 +111,8 @@ class NextcloudTalkClientTest extends TestCase
         $this->assertCount(2, $conversations);
         $this->assertEquals('abc123', $conversations[0]['token']);
         $this->assertEquals('General', $conversations[0]['displayName']);
-        $this->assertEquals('public', $conversations[0]['typeLabel']);
-        $this->assertEquals('group', $conversations[1]['typeLabel']);
+        $this->assertEquals('group', $conversations[0]['typeLabel']);
+        $this->assertEquals('one-to-one', $conversations[1]['typeLabel']);
     }
 
     #[Test]
