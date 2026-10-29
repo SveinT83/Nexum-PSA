@@ -175,3 +175,48 @@ missing/inconsistent Work Context cannot fall back to broader access. Worklog re
 ticket.view and task.view; Commercial adds its existing view/timebank permissions. Internal-model
 workloads cannot use coordinator tokens. No settings or token grants are automatically changed.
 See Report and Commercial Knowledge contracts and HR-2026-09-27-WORKLOG before activation.
+
+## Narrow External Worklog Setup (Issue 290, 2026-10-27)
+
+Use **Admin > Integrations > Privacy & Coordinator** for this setup. It requires the existing
+policy/governance/workload administrator permissions and two-factor authenticated access.
+Do not use the broad **Activate AI** shortcut for a pseudonymized coordinator purpose.
+
+1. Record the real receiving service, provider, model and processing mode, existing provider/model
+   review references, and the purpose **time-data quality review**. Employee ranking is outside
+   this purpose. A remote receiver cannot be labelled `local_only` to avoid external policy checks.
+2. Review the existing installation policy and actual provider/model approvals before any change.
+   Limit the approved data profile to `pseudonymized`, keep employee identification and payload
+   retention disabled, and preserve existing context, query/page/result/rate bounds. Missing provider
+   facts or review records must be supplied by the owner; do not invent them.
+3. Create a separate coordinator workload and token with `time-entries.read`, the necessary
+   `report.view` source authorization, and an expiry no more than seven days away. The actor must
+   retain the current source read permissions required by the endpoint. Add `worklog.read` only
+   if an aggregate request is separately needed. Never select full access or write abilities.
+4. Use a separate receiving connection. Before replacing any existing shared credential, inventory
+   its consumers and define restoration; a new purpose-specific token avoids disrupting them.
+   Store the token only through approved secure credential configuration.
+5. First request only
+   `GET /api/v1/worklog/time-entries?date_from=2026-08-31&date_to=2026-08-31&page=1&per_page=1`.
+   Check HTTP status, request ID, count and the metadata audit. Do not place returned rows, names,
+   free text, credentials or raw responses in Issue evidence. An authorized empty result does not
+   prove that time data exists for that date.
+6. Confirm unbound/expired/out-of-scope requests stay denied. Revoke only the new purpose-specific
+   token to roll back, preserve audit metadata, and independently verify other consumers still work.
+
+Production inspection on 2026-10-27: installation revision 1 still has AI/external processing off,
+`local_only` and `aggregate` maximum, with no provider governance, model policy, workload or token
+binding. No policy was widened and no authorized production time-data read was performed.
+A read-only follow-up on 2026-10-28 identifies the intended receiving chain as Paperclip via
+NexumMCP. The TRN-2 data-foundation task is assigned to the CEO agent, whose current adapter is
+codex_local with an OpenAI AI connection. Its model is not explicitly set in the agent configuration;
+this does not establish the effective model, provider/model approval or a permitted processing mode.
+Do not label this external model route local_only or reuse a general connection token as approval.
+Dev still has installation revision 1 with AI/external processing disabled, aggregate maximum,
+and no provider governance, model policy, workload or token binding. The owner has not supplied
+additional recipient/model/review facts. Resolve and record the actual model, permitted processing
+mode and approval evidence before creating the separate short-lived connection.
+
+The Report discovery API returns report metadata; it does not replace an authorized Worklog data
+read or provide an approved export alternative. Keep external Worklog access disabled until the
+supported coordinator setup and exact bounded read-back are complete.
