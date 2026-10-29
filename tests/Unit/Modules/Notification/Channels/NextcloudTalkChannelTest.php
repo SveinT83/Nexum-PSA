@@ -85,7 +85,11 @@ class NextcloudTalkChannelTest extends TestCase
                 && $request->hasHeader('X-Nextcloud-Talk-Bot-Signature')
                 && $request->hasHeader('OCS-APIRequest');
         });
-        $this->assertSame('delivered', $result['status']);
+        // Provider acceptance does not prove that the conversation stored the message.
+        $this->assertSame('unresolved', $result['status']);
+        $this->assertSame('provider_accepted', $result['state']);
+        $this->assertFalse($result['delivery_confirmed']);
+        $this->assertSame('nextcloud_talk_legacy_acceptance_unverified', $result['reason_code']);
     }
 
     #[Test]
@@ -215,7 +219,11 @@ class NextcloudTalkChannelTest extends TestCase
             $exactUrl,
         );
 
-        $this->assertSame('delivered', $result['status']);
+        // Provider acceptance does not prove that the conversation stored the message.
+        $this->assertSame('unresolved', $result['status']);
+        $this->assertSame('provider_accepted', $result['state']);
+        $this->assertFalse($result['delivery_confirmed']);
+        $this->assertSame('nextcloud_talk_legacy_acceptance_unverified', $result['reason_code']);
         Http::assertSentCount(1);
         Http::assertSent(fn ($request): bool => str_contains(
             $request->url(),

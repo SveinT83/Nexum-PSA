@@ -1,5 +1,18 @@
 # Human Review Register
 
+## Main-Based Development Issue Closure (2026-10-29)
+
+Svein Tore explicitly instructed Main merge before closure of completed work.
+The #205 and #288 development Issues close after the scoped remaining Talk tests/records
+are merged. #224 was separately closed on his instruction. This changes closure tracking,
+not the outcome of any human check. HR-2026-10-28-TALK-DESTINATIONS stays Pending and
+HR-2026-09-27-WORKLOG retains its actual status; all unchecked real-recipient, production
+and cap-boundary scenarios stay unchecked, owned by Svein. These practical checks no longer
+block the authorized source merge or those two development-Issue closures.
+HR-2026-10-27-OPS-RULES-COORDINATOR remains In Review; #262/#290 operational work stays open.
+No provider activation, message delivery, permission/token change, queue replay or deployment
+is authorized or performed by this record. See plans/2026-10-29-completed-issue-closure.md.
+
 ## HR-2026-10-28-PO-NUMBERING - Canonical Immutable Purchase Order Identity
 
 Status: Pending. Owner: Codex. Intended named reviewer: Svein Tore.

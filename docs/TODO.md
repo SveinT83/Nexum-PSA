@@ -1,5 +1,27 @@
 # tdPSA Development TODO
 
+## Completed Issue Closure Policy - Issues 205, 224 And 288 (2026-10-29)
+
+Status: Done On Dev / Existing Core Merged To Main / Final Scoped Promotion And Closure Authorized.
+Owner: Codex. Closure and Main promotion authorized by Svein Tore.
+Svein instructed that completed work must be merged to Main before closing its Issue.
+For #205 and #288, verified implementation on Main completes the development Issue;
+close after the remaining Talk test corrections and this coordination record are merged.
+This supersedes older wording that kept these development Issues open solely for external
+or production acceptance. No unperformed acceptance check is marked passed or Reviewed.
+#224 was already closed by Svein's explicit instruction after fresh clean package read-back.
+#205 source: PR #368 (917de21a021f8f4fe4e657edf6f2b60203dfa807).
+#288 source: 19db1113, already an ancestor of Main; current Report controller matches Main.
+Two legacy Talk test files are corrected to the existing v4 room/type contract and
+provider-accepted/unverified legacy delivery contract; no runtime behavior changes.
+HR-2026-10-28-TALK-DESTINATIONS remains Pending for the named real-conversation/manual checks.
+HR-2026-09-27-WORKLOG retains its existing status and unperformed deployed cap-boundary checks.
+Svein owns those practical checks; they do not block this expressly authorized source merge
+or development-Issue closure. Do not send messages, issue tokens, change permissions,
+activate queues/providers, deploy or mark human checks Reviewed from this closure.
+#262 and #290 remain open for actual historical/cold-queue operating work and authorized
+external Worklog setup/read-back, respectively. #228/#261/#265/#275 remain unfinished.
+Evidence: plans/2026-10-29-completed-issue-closure.md.
 
 ## Ticket and Task complete API parity (2026-10-20)
 
