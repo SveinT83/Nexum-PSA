@@ -13370,8 +13370,9 @@ the listed human visual/production checks before production rollout. No checkbox
 ## HR-2026-10-27-OPS-RULES-COORDINATOR - Issues 262, 285 And 290 Completion
 
 Status: In Review
-Owner: Codex. Named intended reviewer: Svein Tore.
-This is a human-review checklist. The separately approved RFC authorized controlled Dev reconciliation, which has been performed. Final operating acceptance, autonomous activation and #285 production release remain gated; no completed manual acceptance is inferred. Svein separately authorized verified Main promotion
+Owner: Codex. Named reviewer: Svein Tore.
+Dev implementation review: Reviewed by Svein Tore on 2026-10-28, explicit reply "Godkjent" to the Dev handoff/manual-review request. Overall checklist remains In Review for the unperformed production/cohort/coordinator steps below.
+This is a human-review checklist. The separately approved RFC authorized controlled Dev reconciliation, which has been performed. Svein has explicitly accepted the completed Dev implementation. Remaining cold/failed-cohort decisions, autonomous activation and #285 production release remain gated. Svein separately authorized verified Main promotion
 on 2026-10-28 ("Fix alt og merge til main"); this does not authorize cold/failed-cohort effects or production.
 Historical HR-2026-08-25-013 remains Reviewed and is not reopened.
 
@@ -13383,24 +13384,24 @@ implemented health contract, #290 narrow external Worklog setup. Evidence:
 Automated Dev evidence: 82 tests / 916 assertions pass across Rule builder, Workflow v3,
 Workflow action/creation parity, retry/full-rerun and coordinator governance. Four new UI
 regressions pass (30 assertions); two UI regressions were reproduced before the fix.
-No manual acceptance is inferred. Existing authenticated browser session was not available.
+The original automated verification did not include an authenticated browser session. Svein subsequently supplied explicit Dev acceptance ("Godkjent"); no additional browser observations or production execution evidence were supplied.
 
-- [ ] Svein: inspect Rule list with draft-only and published-plus-edited-draft examples; counts,
+- [x] Svein: accepted the Dev Rule list checks; inspect Rule list with draft-only and published-plus-edited-draft examples; counts,
   trigger, flow and distinct published version must be truthful.
-- [ ] Svein: inspect Workflows and the Rule builder at desktop and mobile width; unpublished
+- [x] Svein: accepted the Dev Workflow/builder checks; inspect Workflows and the Rule builder at desktop and mobile width; unpublished
   workflow help and missing permission/runtime/capability messages give a concrete next step.
   Publishing never silently activates Rules or migrates existing pinned Tickets.
 - [x] Svein Tore approved the exact #262 RFC on 2026-10-27: "Ja godkjenner".
-- [ ] Svein: review the completed privileged runner inventory and Dev coexistence/fairness decision,
-  duplicate-dispatch evidence and owned queue/side-effect cohorts; confirm acceptance before further activation.
-- [ ] Operator: verify scheduler across consecutive external ticks after restart/reboot, and isolated
+- [x] Svein: accepted the completed Dev privileged runner inventory and Dev coexistence/fairness decision,
+  duplicate-dispatch evidence and existing queue/side-effect inventory. This accepts the completed Dev changes, not execution or disposition of blocked/failed cohorts.
+- [x] Dev runtime verification accepted by Svein: scheduler across consecutive external ticks after restart/reboot, and isolated
   queue canary completion without consuming historical backlog. Check fresh/stale/blocked/unknown.
 - [ ] Release owner: approve exact #285 cutover candidate and minimal capabilities after immutable
   production identity, backups, permissions, schema, compatibility and worker/cache preflight.
 - [ ] Svein/operator: verify Implementering match and another-queue non-match across UI/email/API/
   integration creation in an internal approved context, then read back workflow/state/execution.
-- [ ] Svein/integration owner: supply actual recipient/provider/model/mode and review records for
-  #290. Review purpose, pseudonymized profile, source rights, <=7-day expiry and dedicated connection.
+- [ ] Svein/integration owner: supply actual model/mode and provider/model review records for
+  #290; Paperclip/NexumMCP and the OpenAI provider are now identified. Review purpose, pseudonymized profile, source rights, <=7-day expiry and dedicated connection.
 - [ ] Operator: perform the exact one-day/one-row authorized request and deny-path checks; retain
   request reference and counts only. Verify shared consumers and token revocation rollback.
 - [ ] Verify affected employee handbook content and inherited staff scope. OpenWebUI employee
@@ -13418,7 +13419,7 @@ Operational handbook evidence (2026-10-27): pages 426/34, 532/23 and 541/5 read 
 
 Runtime verification (2026-10-28): plans/2026-10-28-runtime-health-verification.md. Native concurrent publishers emitted one probe; an isolated worker completed it. Native Ticket contention produced one occurrence/note and fixtures were removed. Final health tests 15 / 96; domain matrix 117 / 817; System regression 29 / 885 (overlap). Code approval and these automated checks do not mark this checklist Reviewed.
 
-Email runtime follow-up under HR-2026-10-27-OPS-RULES-COORDINATOR: bounded provider-lock deferral is verified (16 tests / 117 assertions), and exact read-only probe UUID discovery/recovery passes 1 / 14. Historical failures remain preserved; no silent account success/failure or provider-policy bypass. Human acceptance remains In Review.
+Email runtime follow-up under HR-2026-10-27-OPS-RULES-COORDINATOR: bounded provider-lock deferral is verified (16 tests / 117 assertions), and exact read-only probe UUID discovery/recovery passes 1 / 14. Historical failures remain preserved; no silent account success/failure or provider-policy bypass. Completed Dev implementation acceptance is Reviewed; the overall multi-scope checklist remains In Review.
 
 
 Main promotion evidence (2026-10-28; checklist remains In Review):
@@ -13437,12 +13438,6 @@ status were independently read back. No cron/configuration/worker scope, histori
 production runtime changed in this promotion. Deployment defaults remain disabled/empty-scoped.
 
 
-Issue #285 source-only Main promotion is explicitly authorized (2026-10-28).
-Fresh UI/runtime regressions and current Main checks are recorded in
-plans/2026-10-28-ticket-rule-ui-main-promotion.md. The existing OPS checklist stays In Review;
-manual desktop/mobile and exact production match/non-match acceptance remain separate.
-
-
 Issue #285 verified Main UI promotion (2026-10-28; checklist stays In Review):
 Verified Main: PR #374, df33c58613b8537ec7b83489d727bcec8226b228; independent exact tested tree
 9acb897481fab116b75296af90a5d8a9f40732fe. Fresh Dev 4/30; Main Rules/Workflow/customer-notification
@@ -13457,6 +13452,8 @@ and the updated Issue body were independently read back.
 HR-2026-10-27-OPS-RULES-COORDINATOR remains In Review. Historical HR-2026-08-25-013 stays Reviewed.
 No production setting, published Rule/version, capability, worker, cache or recipient was changed.
 No full application suite or manual visual acceptance is claimed.
+
+Explicit human acceptance (2026-10-28): Svein Tore replied "Godkjent" to the completed Dev handoff and named review request. The checked Dev items above record his acceptance, not a new AI-run visual test. Unchecked production end-to-end, cold/failed-cohort disposition, #290 receiver/governance/read-back and employee assistant retrieval are not proven or authorized by that reply. No Main/production or queue/token operation was performed in this approval-recording session.
 
 Pre-merge acceptance follow-up (2026-10-28): Svein Tore explicitly accepted the completed Dev implementation with "Godkjent". This satisfies the completed Dev review scope; the overall checklist remains In Review for unperformed production/cohort/coordinator items. New minimal Implementering queue/workflow acceptance passes 4 / 80 across manual/email/API/integration channel contexts at the canonical StoreTicket boundary. Fresh affected Dev matrix 69 / 720 and private latest-Main matrix 68 / 691 pass; totals overlap. No live transport or production activation is inferred. Paperclip/NexumMCP and the CEO's OpenAI adapter are identified; the effective model/mode and provider/model review facts remain unresolved. Actual BookStack 541 revision 9 is read back, access unchanged. See plans/2026-10-28-issues-262-285-290-merge-readiness.md. No cold/failed job, worker scope, policy, token or production object was changed.
 
