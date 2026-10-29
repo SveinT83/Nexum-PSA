@@ -2,11 +2,13 @@
 
 ## Completed Issue Closure Policy - Issues 205, 224 And 288 (2026-10-29)
 
-Status: Done On Dev / Existing Core Merged To Main / Final Scoped Promotion And Closure Authorized.
+Status: Done On Dev / Merged To Main / Issues 205, 224 And 288 Closed Completed.
 Owner: Codex. Closure and Main promotion authorized by Svein Tore.
 Svein instructed that completed work must be merged to Main before closing its Issue.
 For #205 and #288, verified implementation on Main completes the development Issue;
-close after the remaining Talk test corrections and this coordination record are merged.
+Final Talk test corrections/records merged in PR #383 (01f1400b4ec954d468895e9c8ec7d19009a42007);
+#205 and #288 are closed completed, comments 6506032739 and 6506033768. Independent fetch
+confirmed tree 03e1bb6ff8d57d7ec3bc7778a0d02d7a1a4554f9 equals the tested candidate.
 This supersedes older wording that kept these development Issues open solely for external
 or production acceptance. No unperformed acceptance check is marked passed or Reviewed.
 #224 was already closed by Svein's explicit instruction after fresh clean package read-back.
