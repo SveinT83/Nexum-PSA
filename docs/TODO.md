@@ -3378,7 +3378,7 @@ Human review remains Pending; no production, real mail or manual review is claim
 
 ## Scoped Pre-Merge Acceptance - Issues 262, 285 And 290 (2026-10-28)
 
-Status: Ready For Scoped PR / Operational Issues Remain Open. Owner: Codex / Svein Tore.
+Status: Done On Dev / Merged To Main (PR #381) / Production Testing Owned By Svein Tore. Owner: Codex / Svein Tore.
 Core #262 and #285 UI source is already Main in PR #372/#374. New minimal Implementering workflow
 acceptance passes 4 / 80; fresh Dev matrix 69 / 720 and isolated latest-Main matrix 68 / 691 pass.
 Only the new test, missing narrow coordinator guide and scoped readiness/review records are selected.
@@ -3391,3 +3391,5 @@ remain unresolved. Next owner: Svein/runtime/integration owners for those explic
 No Main availability, canary or owner approval is treated as a production/export result.
 Evidence: plans/2026-10-28-issues-262-285-290-merge-readiness.md; BookStack 541/9 read back,
 existing employee access unchanged. No operational queue/token/provider setting changed.
+
+Verified merge 2bff45703db4ce5fd82210b8c8f79c9e2142d111; tree 8cfea0cdcced6023601f1d825818b97c4a7b8ffb exactly matches the tested candidate. Svein explicitly owns production testing and authorized Codex to decide/fix/merge remaining scoped work on 2026-10-29. The source work is complete; no production configuration or old queue work was activated. Existing operational Issue criteria remain tracked without blocking this completed merge.
