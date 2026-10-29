@@ -3,8 +3,8 @@
 ## Main-Based Development Issue Closure (2026-10-29)
 
 Svein Tore explicitly instructed Main merge before closure of completed work.
-The #205 and #288 development Issues close after the scoped remaining Talk tests/records
-are merged. #224 was separately closed on his instruction. This changes closure tracking,
+The #205 and #288 development Issues are closed completed after PR #383 merged and
+independent read-back confirmed the exact tested tree. #224 was separately closed on his instruction. This changes closure tracking,
 not the outcome of any human check. HR-2026-10-28-TALK-DESTINATIONS stays Pending and
 HR-2026-09-27-WORKLOG retains its actual status; all unchecked real-recipient, production
 and cap-boundary scenarios stay unchecked, owned by Svein. These practical checks no longer

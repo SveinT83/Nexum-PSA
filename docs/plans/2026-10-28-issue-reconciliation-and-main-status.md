@@ -4,7 +4,8 @@
 
 Svein explicitly closed #224 and instructed that finished development work must be on Main
 before Issue closure. The final #205 legacy test corrections and #288 closure records are
-scoped in plans/2026-10-29-completed-issue-closure.md; close both only after verified merge.
+merged in PR #383; #205/#288 are closed completed after independent merged-tree read-back.
+Evidence: plans/2026-10-29-completed-issue-closure.md.
 This supersedes the historical table below for their closure policy. Real Talk/deployed Worklog
 checks remain unchecked under their existing human-review entries, owned by Svein.
 #262/#290 retain genuine operational work; #228/#261/#265/#275 remain unfinished.
