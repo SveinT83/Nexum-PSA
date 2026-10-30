@@ -5,7 +5,9 @@
 Status: Pending. Owner: Codex. Named human reviewer: Svein Tore.
 Approved scope: rfc/2026-10-30-existing-nexum-workday-gateway.md.
 This checklist gates human acceptance. Svein separately approved Main merge and production deployment on 2026-10-30; no manual check is inferred from that approval.
-Runtime adapter activation and the narrow profile correction are authorized in the conversation.
+Runtime adapter activation/profile correction and the separately approved source rollout are
+verified complete: main PR #387, scoped production source/hash read-back and winter/summer/midnight
+checks passed. All checkboxes remain human acceptance, not inferred from automated evidence.
 No automated test or configuration write marks this checklist Reviewed.
 
 - [ ] In the existing ChatGPT plugin, Norum uses nexumpsa Workday list/date context without selecting another connection or managing a LiteLLM key.
@@ -14,11 +16,12 @@ No automated test or configuration write marks this checklist Reviewed.
 - [ ] Missing/revoked personal credentials give a clear reconnect/configuration error; the shared credential is never used for Workday.
 - [ ] Jo Eskil's corrected profile/plan uses Europe/Oslo; unchanged weekly clocks, five custom exceptions and saved history are verified. A retained UTC day's timezone is not silently rewritten.
 - [ ] Check the local Ticket/Task display after separately authorized source promotion/deployment under HR-2026-10-29-LOCAL-TIME.
-- [ ] Verify handbook instructions through the employee assistant separately from BookStack publication/read-back.
+- [ ] Verify handbook instructions through the employee assistant separately from BookStack publication/read-back. Existing employee-7 BookStack probe fails with MCP -32600 Requested resource not found; Svein / Integration owns diagnosis without permission expansion.
 
 Deploy/rollback: bounded gateway manager/spec/registration/binding preimages; revoke only newly
 issued tokens and restore only owned changes. No PSA schema migration, queue/scheduler/build
-is included. Main/source deployment is now separately approved; verification is in progress.
+is included. Main PR #387 and the scoped production patch are independently verified;
+backup is in the protected site owner .codex-backups/nexum-timezone-20261030-095042Z folder.
 
 ## HR-2026-10-29-LOCAL-TIME - Ticket/Task local display and Workday diagnostics
 
@@ -33,6 +36,8 @@ with all weekly clocks, five exceptions and saved history preserved. Original 42
 Fresh Dev regressions pass 9 / 163; all human checks below remain unchecked.
 This checklist gates human acceptance. Svein explicitly approved the tested Main merge and
 production deployment on 2026-10-30. No check is marked passed by automation or handbook publication.
+Main PR #387 and the production source patch are verified installed on 30 October; compiled
+views and actual-profile formatter checks passed. Named browser acceptance still remains.
 Deploy: shared UserManagement formatter and eight Ticket/Task views; refresh compiled views
 as the site owner with normal group-writable permissions. No migration/build/queue/provider action.
 Recovery: restore only the nine owned runtime source preimages, preserving unrelated contributor work.

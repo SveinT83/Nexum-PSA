@@ -240,9 +240,10 @@ versions retain readable source. See **Ticket Email And Communication** for deli
 No schema, audience, recipient or role changes are part of this feature. Historical text remains
 stored exactly as before; escape Markdown punctuation or use a code block for literal syntax.
 
-## Local timestamp display correction - Dev, 29 October 2026
+## Local timestamp display - production update, 30 October 2026
 
-Verified on Dev only; this display correction has not been merged or deployed to production.
+Merged to main in PR #387 and installed as a scoped production patch on 30 October 2026.
+Production source/hash and formatter checks passed. Employee browser acceptance remains Pending.
 
 Ticket scheduled time, Created, Updated, Resolved, Closed, documentation-request timestamps,
 quote/workflow evidence and SLA deadlines use the viewing employee's existing profile timezone.

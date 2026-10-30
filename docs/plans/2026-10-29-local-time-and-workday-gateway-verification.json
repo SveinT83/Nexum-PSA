@@ -1,0 +1,161 @@
+{
+  "bookstack": [
+    {
+      "id": 384,
+      "revision": 10,
+      "exactOwnedSection": true,
+      "previousContentPreserved": true,
+      "book_id": 339,
+      "chapter_id": 368
+    },
+    {
+      "id": 409,
+      "revision": 39,
+      "exactOwnedSection": true,
+      "previousContentPreserved": true
+    },
+    {
+      "id": 398,
+      "revision": 11,
+      "exactOwnedSection": true,
+      "previousContentPreserved": true
+    }
+  ],
+  "tests": [
+    {
+      "label": "Affected profile/Workday/Ticket/Task matrix",
+      "tests": 53,
+      "assertions": 564,
+      "status": "passed",
+      "log": "/tmp/nexum-385-386-final-affected.log"
+    },
+    {
+      "label": "SLA/index/linked Task supplemental matrix",
+      "tests": 3,
+      "assertions": 28,
+      "status": "passed",
+      "log": "/tmp/nexum-385-extra-surfaces.log"
+    },
+    {
+      "label": "Unmodified original Ticket allocation baseline",
+      "tests": 1,
+      "assertions": 5,
+      "status": "passed",
+      "log": "/tmp/nexum-385-ticket-baseline-stall.log"
+    }
+  ],
+  "unique_affected_cases": 55,
+  "full_application_suite": false,
+  "interrupted_broad_selection": {
+    "status": "interrupted",
+    "visible_passing_markers": 66,
+    "not_a_failure_proof": true,
+    "log": "/tmp/nexum-385-386-regression.log"
+  },
+  "production": {
+    "read_only": true,
+    "profile_timezone": "UTC",
+    "legacy_calendar_preference_timezone": "Europe/Oslo",
+    "employee_identity_verified_for_gateway": false,
+    "original_validation_fields_obtained": false,
+    "existing_workday_preserved": true,
+    "profile_correction_approval": "pending",
+    "workday_runtime_matches_dev": {
+      "app/Modules/Workday/Actions/MutateWorkday.php": "a6097d822bdfa3542dc1d38be882d4f04a2e2e30dd2a2c719ec00c1774193217",
+      "app/Modules/Workday/Controllers/Tech/WorkdayController.php": "be6038384e69451931c4ac634c2d31574ceffb6e695cd68c12aa69fbe21ecf3c",
+      "app/Modules/Workday/Support/WorkdayTime.php": "66bf4577cf20823ab9003a605317fdf9728439a11d18c5e900850067919a4046"
+    },
+    "logged_draft_requests_do_not_execute_effective_save_future_check": true
+  },
+  "human_review": {
+    "id": "HR-2026-10-29-LOCAL-TIME",
+    "status": "Pending"
+  },
+  "main": {
+    "committed": false,
+    "pushed": false,
+    "merged": false,
+    "deployed": false
+  },
+  "timestamp_utc": "2026-10-29T20:54:07.098225+00:00",
+  "runtime_files": [
+    "app/Modules/UserManagement/Support/UserDateTime.php",
+    "app/Modules/Ticket/Views/Tech/Tickets/show.blade.php",
+    "app/Modules/Ticket/Views/Tech/Tickets/index.blade.php",
+    "app/Modules/Ticket/Views/Tech/Reports/sla.blade.php",
+    "app/Modules/Ticket/Views/Tech/Tickets/partials/accepted-quote-history-panel.blade.php",
+    "app/Modules/Ticket/Views/Tech/Tickets/partials/workflow-v3-panel.blade.php",
+    "app/Modules/Task/Views/Tech/Tasks/show.blade.php",
+    "app/Modules/Task/Views/Tech/Tasks/index.blade.php",
+    "app/Modules/Task/Views/components/quick-view-modal.blade.php"
+  ],
+  "test_files": [
+    "app/Modules/UserManagement/Tests/Feature/UserDateTimeTest.php",
+    "app/Modules/Workday/Tests/Feature/WorkdaySaveValidationTest.php",
+    "app/Modules/Ticket/Tests/Feature/TicketModuleTest.php",
+    "app/Modules/Task/Tests/Feature/TaskModuleTest.php"
+  ],
+  "source_docs": [
+    "docs/integrations/workday-api-consumer.md",
+    "app/Modules/Workday/Docs/knowledge/workday-api.md",
+    "app/Modules/Workday/Docs/knowledge/workday.md",
+    "app/Modules/UserManagement/Docs/knowledge/profile-and-user-management.md",
+    "app/Modules/Ticket/Docs/knowledge/ticket-overview.md",
+    "app/Modules/Task/Docs/knowledge/task-overview.md"
+  ],
+  "sha256": {
+    "app/Modules/UserManagement/Support/UserDateTime.php": "577c98ba7f86ba050ae4a8d4b46323d427d93c4ea45213539d42e6c01b30dec8",
+    "app/Modules/Ticket/Views/Tech/Tickets/show.blade.php": "d9ff4cf65e35df5ea05c13d9ad9fb443d4045b3b65f7a62d5add66742ca454aa",
+    "app/Modules/Ticket/Views/Tech/Tickets/index.blade.php": "b4425e1cdd5353615399ea96272145649cf149d36b2fbad59d04efbe56dfe0c3",
+    "app/Modules/Ticket/Views/Tech/Reports/sla.blade.php": "2619370f7d852d0659f04161cd21a5085deabc17ae42cc3d95a4d92083aabb1b",
+    "app/Modules/Ticket/Views/Tech/Tickets/partials/accepted-quote-history-panel.blade.php": "629fe2725282fe6f86b9cea11f4fc073f7714f0e9142d1e12ee65c5be97d7502",
+    "app/Modules/Ticket/Views/Tech/Tickets/partials/workflow-v3-panel.blade.php": "78060b7875099d09a90d4d4d3d1e399d30399ac300297c08bd55b141c694cffe",
+    "app/Modules/Task/Views/Tech/Tasks/show.blade.php": "a7baed232a7aec3fcce2661156ea73e9a4a7e1b37dfbc1ee130150c5b09b07eb",
+    "app/Modules/Task/Views/Tech/Tasks/index.blade.php": "cf644f874caaef428416e1a9988b39b971c2b32367708c27f2191a98edfcbc50",
+    "app/Modules/Task/Views/components/quick-view-modal.blade.php": "959f935fa44925c1e11b381a48370467377912cf4f7aacc4cd7bbe4694e35587",
+    "app/Modules/UserManagement/Tests/Feature/UserDateTimeTest.php": "57eebdd7b937bab9dc5b89e5e02df007b66b2604e84c837c930acc8c8a084877",
+    "app/Modules/Workday/Tests/Feature/WorkdaySaveValidationTest.php": "3cabe86aba40e901af3b22da6869ed7994e94e05e60fe3f95cb4a8b40a5c50ae",
+    "app/Modules/Ticket/Tests/Feature/TicketModuleTest.php": "cdfec0a544a4426c1887f630c666e478450383d504c31ca8a31be677ad856d05",
+    "app/Modules/Task/Tests/Feature/TaskModuleTest.php": "2b974d53d7ca6346b675478332c3b55b6520dcf2b71801a7881179580b1436b6",
+    "docs/integrations/workday-api-consumer.md": "39997d3ada95520a54a3b10d0b84cf99900d374da56285487e2b821bae905ce2",
+    "app/Modules/Workday/Docs/knowledge/workday-api.md": "c87de1930124c01846e84bfb54967d07f2f3962b80a463ae85664cdb115f0f40",
+    "app/Modules/Workday/Docs/knowledge/workday.md": "2bb128f70a0efba20420c19562337244d8fb438fc4eaec61ba0b9347f06893c5",
+    "app/Modules/UserManagement/Docs/knowledge/profile-and-user-management.md": "dec38d6670fd3a242febe7cc6ebca0ff7213471a05be617fb338040bbed6baff",
+    "app/Modules/Ticket/Docs/knowledge/ticket-overview.md": "9ed0261dadd04145cd5fc395d013ffc9adc9fd634505132406839e21d4c409f2",
+    "app/Modules/Task/Docs/knowledge/task-overview.md": "5586f8f573e76cbdaa18897d90d3c8bebf283f44456c6177115885a6d327e7c6"
+  },
+  "owned_added_whitespace_utf8_and_permissions_pass": true,
+  "dev_branch": "Dev",
+  "dev_head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
+  "github_comments": [
+    {
+      "issue": 385,
+      "comment_id": 6508133706,
+      "exact_independent_read_back": true
+    },
+    {
+      "issue": 386,
+      "comment_id": 6508134022,
+      "exact_independent_read_back": true
+    }
+  ],
+  "handbook_access": {
+    "page_permissions_independently_unchanged": [
+      384,
+      409,
+      398
+    ],
+    "chapters_inherit": [
+      368,
+      369,
+      370
+    ],
+    "book": 339,
+    "no_permission_mutations": true
+  },
+  "scoped_pint": {
+    "five_files_passed": true,
+    "latest_modified_ticket_test_rechecked": true
+  },
+  "source_hashes_still_match_verified_candidates": true
+}

@@ -66,9 +66,10 @@ Ticket Work Context. API responses expose `work_context_id` and `work_context` a
 existing `client_id`. The list endpoint supports `work_context_id` and `context_type` filters for
 `internal` and `client`.
 
-## Local timestamp display correction - Dev, 29 October 2026
+## Local timestamp display - production update, 30 October 2026
 
-Verified on Dev only; this display correction has not been merged or deployed to production.
+Merged to main in PR #387 and installed as a scoped production patch on 30 October 2026.
+Production source/hash and formatter checks passed. Employee browser acceptance remains Pending.
 
 The Task list, details and quick-view modal show deadlines in the viewing employee's existing
 profile timezone.
