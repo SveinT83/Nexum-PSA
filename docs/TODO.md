@@ -1,5 +1,25 @@
 # tdPSA Development TODO
 
+## Workday main gateway and local time - Issues #385 / #386 (2026-10-30)
+
+Status: Gateway Active / Oslo Profile Corrected / Main Merge And Production Deployment Approved, In Progress.
+Owner: Codex. Reviewers/remaining employee acceptance: Svein Tore.
+RFC: rfc/2026-10-30-existing-nexum-workday-gateway.md.
+ADR: adr/2026-10-30-personal-workday-existing-nexum-gateway.md.
+Evidence: plans/2026-10-30-workday-gateway-timezone-delivery.md.
+Existing nexumpsa now resolves configured employee credentials for own Workday; no separate
+employee-facing Workday/LiteLLM access. Both incident employees have verified list/context reads;
+cross-employee, settings and missing-binding denials passed. Separate registration retired.
+Jo Eskil profile/plan uses Europe/Oslo; five custom Calendar exceptions, weekly clocks and
+saved Workday/history/receipts are unchanged. Historical fixed UTC day is not reinterpreted.
+Latest-main source candidate: 12 / 184 plus two view tests / 17 passed; adapter 16 tests.
+BookStack 384 revision 11 source section read back; inherited access retained.
+Next: exact Main merge, scoped deployment/read-back and final catalog/evidence reconciliation.
+HR-2026-10-30-NEXUM-GATEWAY-WORKDAY and HR-2026-10-29-LOCAL-TIME remain Pending for
+human checks; explicit merge/deployment approval is not human review. Original #386 legacy
+422 payload/fields and actual employee ChatGPT/valid-save acceptance remain unproven.
+Both Issues remain open. No unrelated native grants or employee-time write is authorized.
+
 ## Completed Issue Closure Policy - Issues 205, 224 And 288 (2026-10-29)
 
 Status: Done On Dev / Merged To Main / Issues 205, 224 And 288 Closed Completed.

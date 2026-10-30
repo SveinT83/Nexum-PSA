@@ -1,5 +1,11 @@
 @extends('layouts.default_tech')
 
+@php
+    $dateTime = app(\App\Modules\UserManagement\Support\UserDateTime::class);
+@endphp
+
+
+
 @section('title', 'Tickets')
 
 @section('pageName')
@@ -282,7 +288,7 @@
                                     <span class="badge text-bg-primary ms-1">Unread</span>
                                 @endif
                                 @if ($ticket->schedule)
-                                    <span class="badge text-bg-info ms-1" title="Scheduled: {{ $ticket->schedule->planned_start_at->format('Y-m-d H:i') }}">
+                                    <span class="badge text-bg-info ms-1" title="Scheduled: {{ $dateTime->format($ticket->schedule->planned_start_at) }}">
                                         <i class="bi bi-calendar-event"></i>
                                     </span>
                                 @endif

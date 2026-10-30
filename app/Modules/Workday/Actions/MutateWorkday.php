@@ -157,9 +157,19 @@ class MutateWorkday
             app(\App\Modules\Integration\Services\Tripletex\TripletexTimeMapping::class)->validateRows($user->id, $snapshot);
         }
         if ($effective) {
-            abort_if($date > now($input['timezone'])->toDateString(), 422, 'Actual time cannot be saved for a future date.');
-            foreach ($snapshot['intervals'] as $interval) {
-                abort_if(CarbonImmutable::parse($interval['end'])->isFuture(), 422, 'Actual work must have ended before saving.');
+            // Field validation keeps rejected input in the editor and gives API clients useful errors.
+            $current = CarbonImmutable::now($input['timezone']);
+            if ($date > $current->toDateString()) {
+                throw ValidationException::withMessages([
+                    'work_date' => 'Actual time cannot be saved for a future date. The current date in '.$input['timezone'].' is '.$current->toDateString().'.',
+                ]);
+            }
+            foreach ($snapshot['intervals'] as $index => $interval) {
+                if (CarbonImmutable::parse($interval['end'])->gt($current)) {
+                    throw ValidationException::withMessages([
+                        "intervals.$index.end" => 'Actual work must have ended before saving. The current time in '.$input['timezone'].' is '.$current->format('Y-m-d H:i').'. Check End and the workday timezone.',
+                    ]);
+                }
             }
         }
         $expiry = $this->time->expiresAt($date, $input['timezone']);

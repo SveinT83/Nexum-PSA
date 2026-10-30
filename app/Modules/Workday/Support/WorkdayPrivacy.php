@@ -43,7 +43,7 @@ class WorkdayPrivacy
                 'tech.workdays.allocations' => app(SourceController::class)->index($read, $id),
                 'tech.workdays.task-conversions.preview', 'tech.workdays.task-conversions.store' => app(TaskConversionController::class)->create($read, $id),
                 'tech.admin.settings.workday.update' => app(WorkdaySettingsController::class)->settings($read),
-                'tech.workdays.draft' => self::draft($read, $request),
+                'tech.workdays.draft', 'tech.workdays.save' => self::draft($read, $request),
                 'tech.workdays.preview', 'tech.workdays.confirm', 'tech.workdays.correction' => app(WorkdayController::class)->show($read, $id),
                 default => null,
             };

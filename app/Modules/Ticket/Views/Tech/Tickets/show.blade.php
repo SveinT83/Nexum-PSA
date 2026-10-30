@@ -1,5 +1,9 @@
 @extends('layouts.default_tech')
 
+@php
+    $dateTime = app(\App\Modules\UserManagement\Support\UserDateTime::class);
+@endphp
+
 @section('title', $ticket->ticket_key)
 
 @section('pageName')
@@ -17,7 +21,7 @@
                 @if ($ticket->schedule)
                     <span class="badge text-bg-info">
                         <i class="bi bi-calendar-event me-1"></i>
-                        Scheduled: {{ $ticket->schedule->planned_start_at->format('Y-m-d H:i') }}
+                        Scheduled: {{ $dateTime->format($ticket->schedule->planned_start_at) }}
                     </span>
                 @endif
             </div>
@@ -1687,7 +1691,7 @@
                                 <div class="small text-muted">
                                     {{ $task->assignee?->name ?? 'Unassigned' }}
                                     @if($task->due_at)
-                                        <span class="ms-1">Due {{ $task->due_at->format('Y-m-d') }}</span>
+                                        <span class="ms-1">Due {{ $dateTime->format($task->due_at, 'Y-m-d') }}</span>
                                     @endif
                                 </div>
                             </button>
@@ -2023,10 +2027,11 @@
                                 'Site' => $ticket->site?->name,
                                 'Asset' => $ticket->asset?->name,
                                 'Channel' => ucfirst($ticket->channel),
-                                'Resolved' => $ticket->resolved_at?->format('Y-m-d H:i'),
-                                'Closed' => $ticket->closed_at?->format('Y-m-d H:i'),
-                                'Created' => $ticket->created_at?->format('Y-m-d H:i'),
-                                'Updated' => $ticket->updated_at?->format('Y-m-d H:i'),
+                                'Resolved' => $dateTime->format($ticket->resolved_at),
+                                'Closed' => $dateTime->format($ticket->closed_at),
+                                'Timezone' => $dateTime->timezone(),
+                                'Created' => $dateTime->format($ticket->created_at),
+                                'Updated' => $dateTime->format($ticket->updated_at),
                             ];
                         @endphp
 
@@ -2115,7 +2120,7 @@
                             @foreach($documentationRequests->take(3) as $documentationRequest)
                                 <div class="border rounded px-2 py-1 mb-1 small">
                                     <div class="d-flex justify-content-between gap-2">
-                                        <span class="fw-semibold">{{ $documentationRequest->created_at?->format('Y-m-d H:i') }}</span>
+                                        <span class="fw-semibold">{{ $dateTime->format($documentationRequest->created_at) }}</span>
                                         <span class="badge text-bg-{{ $documentationRequest->status === 'completed' ? 'success' : ($documentationRequest->status === 'publication_failed' ? 'danger' : 'warning') }}">
                                             {{ str_replace('_', ' ', $documentationRequest->status) }}
                                         </span>
@@ -2205,16 +2210,16 @@
                         <div class="col-6">
                             <div class="border rounded bg-light px-2 py-1 h-100">
                                 <div class="text-muted text-uppercase" style="font-size: .68rem;">First response</div>
-                                <div class="fw-semibold {{ $firstResponseClass }}">{{ $ticket->first_response_due_at?->format('Y-m-d H:i') ?? '-' }}</div>
+                                <div class="fw-semibold {{ $firstResponseClass }}">{{ $dateTime->format($ticket->first_response_due_at) ?? '-' }}</div>
                                 @if($ticket->first_responded_at)
-                                    <div class="text-muted" style="font-size: .72rem;">Done {{ $ticket->first_responded_at->format('Y-m-d H:i') }}</div>
+                                    <div class="text-muted" style="font-size: .72rem;">Done {{ $dateTime->format($ticket->first_responded_at) }}</div>
                                 @endif
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded bg-light px-2 py-1 h-100">
                                 <div class="text-muted text-uppercase" style="font-size: .68rem;">Resolve</div>
-                                <div class="fw-semibold {{ $resolveClass }}">{{ $ticket->resolve_due_at?->format('Y-m-d H:i') ?? '-' }}</div>
+                                <div class="fw-semibold {{ $resolveClass }}">{{ $dateTime->format($ticket->resolve_due_at) ?? '-' }}</div>
                             </div>
                         </div>
                     </div>

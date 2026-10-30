@@ -1289,4 +1289,21 @@ class TaskModuleTest extends TestCase
             'reviewed_at' => now(),
         ]);
     }
+
+    #[Test]
+    public function task_timestamp_display_uses_viewer_timezone_without_changing_due_or_minutes(): void
+    {
+        \App\Modules\UserManagement\Models\UserProfile::create(['user_id' => $this->tech->id, 'timezone' => 'Europe/Oslo']);
+        $task = app(StoreTask::class)->handle([
+            'title' => 'Synthetic local deadline', 'due_at' => '2026-10-29 19:58:00',
+            'assigned_to' => $this->tech->id,
+            'estimated_minutes' => 45,
+        ], $this->tech);
+        $before = $task->fresh()->getRawOriginal('due_at');
+        $this->actingAs($this->tech)->get(route('tech.tasks.show', $task))
+            ->assertOk()->assertSee('2026-10-29 20:58')->assertSee('Europe/Oslo');
+        $this->get(route('tech.tasks.index'))->assertOk()->assertSee('2026-10-29 20:58');
+        $this->assertSame($before, $task->fresh()->getRawOriginal('due_at'));
+        $this->assertSame(45, $task->fresh()->estimated_minutes);
+    }
 }

@@ -65,3 +65,18 @@ assignee context from the Ticket unless the payload overrides those fields. It a
 Ticket Work Context. API responses expose `work_context_id` and `work_context` alongside the
 existing `client_id`. The list endpoint supports `work_context_id` and `context_type` filters for
 `internal` and `client`.
+
+## Local timestamp display correction - Dev, 29 October 2026
+
+Verified on Dev only; this display correction has not been merged or deployed to production.
+
+The Task list, details and quick-view modal show deadlines in the viewing employee's existing
+profile timezone.
+The due column/detail identifies the timezone. Task completion and activity timestamps use
+the same conversion. With Europe/Oslo, 19:58 UTC displays as 20:58 in winter or 21:58 in summer.
+Legacy preferences are used only without a profile timezone, then the application timezone.
+Check **Profile > Work plan** if those settings disagree.
+
+Stored UTC instants, sort order, date-only values, registered minutes, estimates and billing
+totals stay unchanged. API timestamps keep their explicit offset. This display fix does not
+reinterpret stored deadlines or change Task scheduling/input semantics.

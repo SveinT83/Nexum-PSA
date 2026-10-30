@@ -65,9 +65,13 @@ dated Calendar projection apply to today/future dates only, without inventing hi
 Existing saved actual time always takes precedence. Employee access requires both Workday
 activation settings; the Dev pilot is active and production review remains pending.
 
-## Save, review and confirm
+## Legacy draft, review and confirm compatibility
 
-1. **Save interval** or **Save day details** stores a new private draft revision.
+This section applies only to clients deliberately using the legacy draft API. The current
+**Save interval** and **Save day details** buttons record effective time immediately and do
+not require these separate confirmation steps.
+
+1. The legacy draft endpoint stores a new private draft revision.
 2. **Review saved draft** displays exactly that saved revision and its totals.
 3. Check the confirmation statement and choose **Confirm my workday**.
 
@@ -78,9 +82,10 @@ before confirmation.
 Your own confirmation completes the Nexum workflow. No manager approval or invoice line is
 created. Work plans are context; they do not establish or approve actual time.
 
-## Correct a confirmed day
+## Legacy confirmed-day correction compatibility
 
-Enter a reason and choose **Start correction**. Edit and save the replacement draft, then review
+Current effective Save can edit a legacy confirmed day directly, retaining its history.
+Only the legacy API correction workflow uses these steps: enter a reason and choose **Start correction**. Edit and save the replacement draft, then review
 and confirm it. The last confirmed version remains effective while the correction is pending.
 Its intervals remain reserved against overlaps until replacement confirmation.
 
@@ -114,3 +119,35 @@ After saving a day, open **Review sources and allocations**. Task/Ticket time an
 selected Calendar evidence can explain minutes within your actual total. Date-only sources do
 not invent intervals. Estimates and calendar plans require explicit verification. Review the
 source-reconciliation guide for limits, placement, source changes and privacy.
+
+## Workday through the existing ChatGPT connection - 30 October 2026
+
+For employees whose personal Nexum connection has been configured, use the existing
+**Trønder Data – MCP** plugin in ChatGPT. Workday runs through its existing **nexumpsa**
+connection. You do not need a separate Workday integration or a manually managed LiteLLM key.
+
+1. Select the existing **Trønder Data – MCP** plugin in ChatGPT.
+2. Ask it to read your Workday for the intended date before recording anything. The date
+   context must show your own day, current version and record timezone. A plan or suggestion
+   is not proof of work performed.
+3. State the actual intervals and whether each break is included. Review the date, timezone
+   and total before instructing the assistant to save. The current API action is **workdaySave**.
+4. After saving, ask for a fresh read of that same day and compare intervals, breaks and total.
+   Do not blindly repeat a failed save with a new retry key.
+
+Access remains personal: another employee's day and administrative settings are not included.
+A missing or revoked personal connection must fail rather than use a shared administrator.
+For 401, ask the integration administrator to check the personal Nexum binding. For 403,
+ask them to check the token scope and native Workday permission. For 422, obtain the exact
+field error before changing the request. Never paste passwords or tokens into the chat.
+
+For Norwegian local input, check **Profile > Work hours** and the date context for
+**Europe/Oslo**. Profile/work-plan settings take precedence over older Preferences values.
+A previously saved day keeps its own timezone: changing the profile does not reinterpret
+historical intervals or change recorded minutes. Ask an administrator before correcting a
+historical timezone; do not shift recorded work to compensate manually.
+
+Availability: the gateway's personal list/date-context reads and denial checks are verified
+for the configured incident accounts in production. Actual employee ChatGPT use and a real
+employee-approved save remain human acceptance. The Ticket/Task local-display source fix is
+still Dev-only until separately approved Main promotion and production deployment.

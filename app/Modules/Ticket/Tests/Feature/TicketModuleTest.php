@@ -6447,6 +6447,7 @@ class TicketModuleTest extends TestCase
         if (! empty($values['client_id'])) {
             $values['work_context_id'] = app(\App\Modules\WorkContext\Actions\ResolveWorkContext::class)->fromClientId($values['client_id'])->id;
         }
+
         return Ticket::create($values);
     }
 
@@ -6485,5 +6486,30 @@ class TicketModuleTest extends TestCase
             'is_default' => true,
             'is_active' => true,
         ], $overrides);
+    }
+
+    #[Test]
+    public function ticket_timestamp_display_uses_viewer_timezone_and_preserves_stored_instants(): void
+    {
+        \App\Modules\UserManagement\Models\UserProfile::create(['user_id' => $this->tech->id, 'timezone' => 'Europe/Oslo']);
+        $instant = \Illuminate\Support\Carbon::parse('2026-10-29T19:58:00Z');
+        $ticket = $this->createTicket(null, [
+            'created_at' => $instant, 'updated_at' => $instant,
+            'first_response_due_at' => $instant, 'resolve_due_at' => $instant,
+        ]);
+        $before = $ticket->fresh()->getRawOriginal();
+        app(StoreTask::class)->handle([
+            'title' => 'Synthetic linked local deadline', 'due_at' => $instant,
+            'assigned_to' => $this->tech->id,
+        ], $this->tech, $ticket);
+        $this->actingAs($this->tech)->get(route('tech.tickets.show', $ticket))
+            ->assertOk()->assertSee('2026-10-29 20:58')->assertSee('Europe/Oslo')
+            ->assertSee('Due 2026-10-29 20:58');
+        $this->get(route('tech.reports.tickets.sla', ['period' => 'all', 'context' => 'all']))
+            ->assertOk()->assertSee('2026-10-29 20:58');
+        $after = $ticket->fresh();
+        foreach (['created_at', 'updated_at', 'first_response_due_at', 'resolve_due_at'] as $field) {
+            $this->assertSame($before[$field], $after->getRawOriginal($field));
+        }
     }
 }
