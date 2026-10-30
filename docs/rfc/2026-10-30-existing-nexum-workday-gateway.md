@@ -108,3 +108,11 @@ Svein Tore explicitly required the existing Nexum connection in LiteLLM and exis
 approved preserving verified personal employee identity, then instructed: "Ja kjør på og så med
 dette tidssone feilen må også fixes" on 2026-10-30. This authorizes the stated scope and reversible
 implementation defaults. It does not mark human review completed or authorize Main operations.
+
+## Execution and separate source release approval
+
+The bounded repair was executed and verified on 30 October. Svein then separately approved:
+"Ja, merge til Main og rull ut i produksjon". PR #387 is merged and the scoped production source
+patch is independently verified. See the delivery plan for exact evidence. This extends release
+authorization without changing native rights, delegation or historical time. Human acceptance
+remains Pending and is not inferred from that approval.

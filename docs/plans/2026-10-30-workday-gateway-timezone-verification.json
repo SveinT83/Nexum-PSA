@@ -1,0 +1,116 @@
+{
+  "date": "2026-10-30",
+  "issues": [
+    385,
+    386
+  ],
+  "main": {
+    "pr": 387,
+    "merge": "a80e4f26d551bc89f155ccf9d99a79e914e6d712",
+    "tested_tree": "80600ff74d06a77a4f44946136588aaf6e3d6a6b",
+    "exact_tree_verified": true
+  },
+  "tests": {
+    "isolated_main": {
+      "tests": 14,
+      "assertions": 201
+    },
+    "dev_work_plan_formatter": {
+      "tests": 16,
+      "assertions": 110
+    },
+    "gateway_adapter": {
+      "tests": 16
+    },
+    "pint_files": 7,
+    "full_suite": false
+  },
+  "production": {
+    "scoped_runtime_files": 11,
+    "changed_files": 9,
+    "already_installed_hotfixes": 2,
+    "all_source_hashes_verified": true,
+    "compiled_view_files_group_writable": 474,
+    "formatter_winter_summer_midnight_cases": 3,
+    "public_https_login": 200,
+    "backup": "/var/www/vhosts/tronderdata.no/.codex-backups/nexum-timezone-20261030-095042Z",
+    "all_unrelated_main_deployed": false,
+    "migration": false,
+    "build": false,
+    "queue_scheduler_provider_change": false
+  },
+  "gateway": {
+    "connection": "nexumpsa",
+    "personal_bindings": 3,
+    "own_workday_tools": 11,
+    "technician_catalog_tools": 50,
+    "separate_workday_tools": 0,
+    "plugin_catalog_tools": 450,
+    "plugin_write_tools": 417,
+    "plugin_read_tools": 33,
+    "public_mcp_call_verified": true,
+    "foreign_day_denied": true,
+    "settings_denied": true,
+    "missing_personal_binding_denied": true,
+    "invalid_save_422": true,
+    "unrelated_encrypted_credentials_preserved": 55,
+    "temporary_keys": 0,
+    "private_transfer_key_removed": true,
+    "native_roles_permissions_unchanged": true,
+    "actual_employee_chat_or_valid_production_save": false
+  },
+  "timezone": {
+    "employee_id": 2,
+    "profile": "Europe/Oslo",
+    "new_date_context": "Europe/Oslo",
+    "weekly_clocks_preserved": true,
+    "custom_calendar_exceptions_preserved": 5,
+    "saved_workday_revisions_receipts_unchanged": true,
+    "global_application_timezone": "UTC",
+    "historical_day_timezone_unchanged": true
+  },
+  "handbook": {
+    "pages": [
+      {
+        "id": 384,
+        "revision": 13
+      },
+      {
+        "id": 409,
+        "revision": 40
+      },
+      {
+        "id": 398,
+        "revision": 12
+      }
+    ],
+    "source_updated": true,
+    "administrative_readback_verified": true,
+    "permission_inheritance_unchanged": true,
+    "employee_read": {
+      "native_user_id": 7,
+      "status": "blocked",
+      "error": "MCP -32600: Requested resource not found",
+      "cause_confirmed": false,
+      "owner": "Svein Tore / Integration",
+      "no_permission_expansion": true
+    },
+    "employee_openwebui_retrieval": false
+  },
+  "human_review": [
+    {
+      "id": "HR-2026-10-29-LOCAL-TIME",
+      "status": "Pending"
+    },
+    {
+      "id": "HR-2026-10-30-NEXUM-GATEWAY-WORKDAY",
+      "status": "Pending"
+    }
+  ],
+  "remaining": [
+    "Named employee ChatGPT/browser acceptance",
+    "Explicit real-employee save/read-back acceptance",
+    "Original historical gateway 422 fields/payload",
+    "Employee handbook binding/resource/access diagnosis without permission expansion"
+  ]
+}

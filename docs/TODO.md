@@ -2,7 +2,7 @@
 
 ## Workday main gateway and local time - Issues #385 / #386 (2026-10-30)
 
-Status: Gateway Active / Oslo Profile Corrected / Main Merge And Production Deployment Approved, In Progress.
+Status: Implemented / Main Merged (PR #387) / Scoped Production Patch Verified / Human Acceptance Pending.
 Owner: Codex. Reviewers/remaining employee acceptance: Svein Tore.
 RFC: rfc/2026-10-30-existing-nexum-workday-gateway.md.
 ADR: adr/2026-10-30-personal-workday-existing-nexum-gateway.md.
@@ -14,11 +14,19 @@ Jo Eskil profile/plan uses Europe/Oslo; five custom Calendar exceptions, weekly 
 saved Workday/history/receipts are unchanged. Historical fixed UTC day is not reinterpreted.
 Latest-main source candidate: 12 / 184 plus two view tests / 17 passed; adapter 16 tests.
 BookStack 384 revision 11 source section read back; inherited access retained.
-Next: exact Main merge, scoped deployment/read-back and final catalog/evidence reconciliation.
+Main a80e4f26 and exact tested tree verified; production 11-file scoped patch read back, 474
+compiled views group-writable, production winter/summer/midnight checks and HTTPS 200 passed.
+Final technician catalog: 50 tools, eleven main Workday tools, no separate Workday tools.
+Next owner: Svein performs the named browser/ChatGPT checks; obtain original 422 field evidence.
 HR-2026-10-30-NEXUM-GATEWAY-WORKDAY and HR-2026-10-29-LOCAL-TIME remain Pending for
 human checks; explicit merge/deployment approval is not human review. Original #386 legacy
 422 payload/fields and actual employee ChatGPT/valid-save acceptance remain unproven.
 Both Issues remain open. No unrelated native grants or employee-time write is authorized.
+Handbook text/publication/admin read-back is verified on 384/13, 409/40 and 398/12.
+Employee handbook retrieval remains blocked: existing employee-7 BookStack binding returns
+MCP -32600 Requested resource not found. Owner Svein / Integration must diagnose binding,
+resource and intended article scope before claiming employee/OpenWebUI retrieval. No content
+permissions were broadened. One editorial handoff item is verified with publication prohibited.
 
 ## Completed Issue Closure Policy - Issues 205, 224 And 288 (2026-10-29)
 

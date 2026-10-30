@@ -21,7 +21,7 @@ The profile workspace uses a shared side menu with these sections:
 - Preferences
 - Security / 2FA
 - Notifications
-- Work hours
+- Work plan
 - Ticket assignment
 - Integrations
 - View
@@ -320,7 +320,7 @@ For 401, ask the integration administrator to check the personal Nexum binding. 
 ask them to check the token scope and native Workday permission. For 422, obtain the exact
 field error before changing the request. Never paste passwords or tokens into the chat.
 
-For Norwegian local input, check **Profile > Work hours** and the date context for
+For Norwegian local input, check **Profile > Work plan** and the date context for
 **Europe/Oslo**. Profile/work-plan settings take precedence over older Preferences values.
 A previously saved day keeps its own timezone: changing the profile does not reinterpret
 historical intervals or change recorded minutes. Ask an administrator before correcting a
@@ -328,5 +328,6 @@ historical timezone; do not shift recorded work to compensate manually.
 
 Availability: the gateway's personal list/date-context reads and denial checks are verified
 for the configured incident accounts in production. Actual employee ChatGPT use and a real
-employee-approved save remain human acceptance. The Ticket/Task local-display source fix is
-still Dev-only until separately approved Main promotion and production deployment.
+employee-approved save remain human acceptance. The Ticket/Task local-display fix was merged in PR #387 and installed as a scoped production
+patch on 30 October 2026. Automated source, formatter and HTTPS checks passed; employee browser
+and ChatGPT acceptance remain separate human checks.
