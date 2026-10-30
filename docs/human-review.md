@@ -1,5 +1,56 @@
 # Human Review Register
 
+## HR-2026-10-30-NEXUM-GATEWAY-WORKDAY - Existing Nexum Connection And Oslo Profile
+
+Status: Pending. Owner: Codex. Named human reviewer: Svein Tore.
+Approved scope: rfc/2026-10-30-existing-nexum-workday-gateway.md.
+This checklist gates human acceptance. Svein separately approved Main merge and production deployment on 2026-10-30; no manual check is inferred from that approval.
+Runtime adapter activation and the narrow profile correction are authorized in the conversation.
+No automated test or configuration write marks this checklist Reviewed.
+
+- [ ] In the existing ChatGPT plugin, Norum uses nexumpsa Workday list/date context without selecting another connection or managing a LiteLLM key.
+- [ ] The returned plan/day belongs to the authenticated employee; another employee's day remains inaccessible.
+- [ ] An explicitly authorized own-day Save preserves exact intervals, breaks, date, timezone and minutes; separate read-back and retry do not duplicate records.
+- [ ] Missing/revoked personal credentials give a clear reconnect/configuration error; the shared credential is never used for Workday.
+- [ ] Jo Eskil's corrected profile/plan uses Europe/Oslo; unchanged weekly clocks, five custom exceptions and saved history are verified. A retained UTC day's timezone is not silently rewritten.
+- [ ] Check the local Ticket/Task display after separately authorized source promotion/deployment under HR-2026-10-29-LOCAL-TIME.
+- [ ] Verify handbook instructions through the employee assistant separately from BookStack publication/read-back.
+
+Deploy/rollback: bounded gateway manager/spec/registration/binding preimages; revoke only newly
+issued tokens and restore only owned changes. No PSA schema migration, queue/scheduler/build
+is included. Main/source deployment is now separately approved; verification is in progress.
+
+## HR-2026-10-29-LOCAL-TIME - Ticket/Task local display and Workday diagnostics
+
+Status: Pending. Owner: Codex. Named human reviewer/production owner: Svein Tore.
+Scope: Level 1 display correction and existing own-Workday contract regression investigation
+for Issues #385/#386. No new permissions, API operation, storage, delegation or global timezone.
+Evidence: plans/2026-10-29-local-time-and-workday-gateway.md.
+Follow-up evidence: plans/2026-10-30-workday-gateway-readback.md. Norum personal reads now
+previously failed upstream 401 because token 16 was absent. That block is now repaired through
+the existing main connection and independently verified. Jo Eskil profile is corrected to Oslo
+with all weekly clocks, five exceptions and saved history preserved. Original 422 fields remain unknown.
+Fresh Dev regressions pass 9 / 163; all human checks below remain unchecked.
+This checklist gates human acceptance. Svein explicitly approved the tested Main merge and
+production deployment on 2026-10-30. No check is marked passed by automation or handbook publication.
+Deploy: shared UserManagement formatter and eight Ticket/Task views; refresh compiled views
+as the site owner with normal group-writable permissions. No migration/build/queue/provider action.
+Recovery: restore only the nine owned runtime source preimages, preserving unrelated contributor work.
+
+- [ ] With a Europe/Oslo profile, verify known 19:58 UTC Ticket lifecycle/SLA and Task timestamps
+  display 20:58 in winter and 21:58 in summer, with the effective timezone visible.
+- [ ] Verify local date around midnight, deadline sorting, unchanged registered/billed minutes
+  and unchanged stored/API instants. A date-only work_date must not shift.
+- [ ] Resolve the employee profile UTC / preference-Calendar Europe/Oslo conflict explicitly;
+  preserve weekly clocks, five custom exceptions and the existing saved Workday. A fixed
+  existing day cannot be silently reinterpreted by a profile change.
+- [ ] Obtain the reported gateway's exact safe 422 field response and verified personal identity,
+  then run one authorized synthetic own-date Save/read-back through that actual gateway.
+  Plans and actual time remain distinct; retry must not duplicate a day.
+- [ ] Verify no cross-employee access and clear field-specific guidance for rejected input.
+  Employee OpenWebUI handbook retrieval is a separate unperformed check.
+
+
 ## Main-Based Development Issue Closure (2026-10-29)
 
 Svein Tore explicitly instructed Main merge before closure of completed work.

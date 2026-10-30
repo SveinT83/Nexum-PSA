@@ -1,4 +1,8 @@
 @php
+    $dateTime = app(\App\Modules\UserManagement\Support\UserDateTime::class);
+@endphp
+
+@php
     $voidQuoteDecision = $voidQuoteDecision ?? ['visible' => false, 'allowed' => false, 'reason' => null];
 @endphp
 
@@ -26,7 +30,7 @@
                             <div class="fw-semibold">{{ $acceptedQuote->quote?->quote_key }} v{{ $acceptedQuote->version_number }}</div>
                             <div class="small text-muted">
                                 Accepted by {{ $acceptedQuote->accepted_by_name ?: 'customer' }}
-                                {{ $acceptedQuote->accepted_at ? $acceptedQuote->accepted_at->format('Y-m-d H:i') : '' }}
+                                {{ $acceptedQuote->accepted_at ? $dateTime->format($acceptedQuote->accepted_at) : '' }}
                                 &middot; {{ number_format((float) $acceptedQuote->acceptedTotalExVat(), 2, ',', ' ') }} NOK ex VAT
                             </div>
                         </div>

@@ -1,3 +1,7 @@
+@php
+    $dateTime = app(\App\Modules\UserManagement\Support\UserDateTime::class);
+@endphp
+
 {{--
     Reusable Task quick-view modal.
 
@@ -23,7 +27,7 @@
                     <div class="small text-muted">
                         {{ $task->status?->name ?? 'Open' }}
                         @if($task->due_at)
-                            <span class="ms-2">Due {{ $task->due_at->format('Y-m-d H:i') }}</span>
+                            <span class="ms-2">Due {{ $dateTime->format($task->due_at) }}</span>
                         @endif
                     </div>
                 </div>

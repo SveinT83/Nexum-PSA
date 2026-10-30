@@ -1,17 +1,19 @@
 # Workday API Consumer Guide
 
-## Approved upcoming contract change - 2026-10-05
+## Current effective Save contract - 2026-10-29
 
-The [automatic Workday/Tripletex RFC](../rfc/2026-10-05-workday-tripletex-automatic-time-sync.md)
-will introduce effective Save and duration-only entries without separate employee confirmation.
-Implementation and API compatibility work have not started. This guide continues documenting
-the currently implemented API; do not omit its current confirmation steps until the new contract
-is implemented, versioned/documented and activated.
+The implemented [automatic Workday/Tripletex RFC](../rfc/2026-10-05-workday-tripletex-automatic-time-sync.md)
+provides PUT /api/v1/workdays/{work_date}/save. An explicit Save records effective actual
+time immediately; a separate preview/confirmation is not required. The legacy draft,
+preview, confirm and corrections endpoints retain their compatibility semantics.
+Use the generated contract from the target installation to verify deployment availability.
+The former statement that Save was not implemented was stale and is superseded here.
 
 Scope approved by Svein Tore on 2026-10-02: PSA delivers the APIs needed for later tooling.
-LiteLLM replaces NexumMCP as the intended external direction. MCP/gateway adapters and live
-tool testing are deferred. This guide describes the PSA contract, with no dependency on a
-particular gateway, model, SDK or MCP server.
+LiteLLM is the existing external gateway. A bounded own-day adapter is active through the
+existing nexumpsa registration for configured incident employees from 30 October 2026.
+This guide describes the authoritative PSA contract; broader API availability does not imply
+that every operation is configured in every gateway/team. See the incident verification plan.
 
 ## Contract and availability
 
@@ -19,7 +21,7 @@ Canonical generated OpenAPI: https://dev.nexumpsa.eu/docs (JSON).
 Interactive documentation: use the installation's existing API documentation entry point.
 Base origin on Dev: https://dev.nexumpsa.eu. Paths below already include /api/v1.
 
-The contract contains 35 operations across Workday, UserManagement and Calendar.
+This guide covers the related Workday, UserManagement and Calendar operations.
 Every operation has a stable operationId, bearerAuth, explicit x-required-scopes and a
 success schema. All scopes listed for an operation are required together; user permissions
 and ownership remain additional server checks. Generate payloads from request schemas,
@@ -64,6 +66,7 @@ Calendar plan-block {event} is its numeric data.id, not its UUID.
 | GET | workdays/{work_date}/entry | workdays.read |
 | GET | workdays/{id} | workdays.read |
 | GET | workdays/{id}/history | workdays.read |
+| PUT | workdays/{work_date}/save | workdays.write |
 | PUT | workdays/{work_date}/draft | workdays.write |
 | POST | workdays/{id}/preview | workdays.read |
 | POST | workdays/{id}/confirm | workdays.confirm |
@@ -90,7 +93,7 @@ Calendar plan-block {event} is its numeric data.id, not its UUID.
 | PATCH | workday-settings | workdays.settings |
 | POST | workday-settings/retention-preview | workdays.settings |
 
-Own day reads require workday.view_own; draft/allocation/correction/Task conversion requires
+Own day reads require workday.view_own; save/draft/allocation/correction/Task conversion requires
 workday.manage_own; confirmation requires workday.confirm_own. Absence uses
 workday.absence_view_own / workday.absence_manage_own. Reminders require all three own-day
 permissions. Settings require workday.manage_settings; Task conversion also requires
@@ -106,7 +109,7 @@ are rechecked at save, preview and confirmation; merely holding workdays.write i
 
 | Workflow | Concurrency / retry rule |
 | --- | --- |
-| Workday draft, preview, confirmation, correction, allocations and Task preview/create | Current integer version (0 for first draft) and Idempotency-Key. Retry the identical method/path/body/key after a timeout. |
+| Workday save, draft, preview, confirmation, correction, allocations and Task preview/create | Current integer version (0 for first draft) and Idempotency-Key. Retry the identical method/path/body/key after a timeout. |
 | Absence create/update/cancel | Same header rule; version 0 to create, current version to change/cancel. |
 | Settings PATCH | Current settings version and Idempotency-Key. Only enabled is configurable here; retention remains three years. |
 | Weekly plan PATCH | GET returns an opaque revision. Send revision, timezone, all seven working_hours days, and optional accept_calendar_conflicts. A stale revision returns 409. After a timeout, GET and compare before retrying; there is no mutation receipt header for this operation. |
@@ -134,8 +137,9 @@ The read result is private/no-store. Existing day timezone wins over later profi
 - suggested_interval is at most 60 minutes in record-local time with an explicit offset.
   Its length is only a default: a meeting can be 45 minutes or any supported whole-minute duration.
   It is null without write capability, when no free planned time exists, or at the interval limit.
-- can_edit reflects current draft state, the employee manage permission and workdays.write ability.
-  requires_correction identifies a confirmed day. Every save still rechecks permissions/version.
+- can_edit reflects the employee manage permission and workdays.write ability for effective Save.
+  Effective Save also edits legacy confirmed days without a separate correction flow;
+  requires_correction is false in this entry contract. Every save rechecks permissions/version.
 - reserved_intervals includes only time boundaries from the same employee's retained neighboring
   work dates (four dates on either side), including a confirmed revision while correction is pending.
   It contains no other employee data or absence reasons.
@@ -144,7 +148,7 @@ The read result is private/no-store. Existing day timezone wins over later profi
 
 ### Save one meeting
 
-Read the date context first. If no day exists, a first PUT workdays/2026-10-05/draft can be:
+Read the date context first. If no day exists, a first PUT workdays/2026-10-05/save can be:
 
 ~~~json
 {
@@ -163,14 +167,15 @@ then GET the date context again. Never save suggested_interval as actual work wi
 
 ### Add, edit or remove one interval
 
-The existing PUT draft operation replaces the COMPLETE intervals and breaks arrays, just as the
+The current PUT save operation replaces the COMPLETE intervals and breaks arrays, just as the
 modal submits the current day snapshot. It is not an append or a single-block PATCH.
 
 1. GET the latest context/day and copy the currently saved intervals and breaks.
 2. Keep only writable fields: intervals use start/end/description, breaks use start/end/included.
    Do not send response-only minutes, totals, revision IDs, state or UI editor_index.
 3. Add a new interval, replace the intended interval, or omit the intended interval to remove it.
-   Preserve every other interval and break. Removing the last interval is invalid.
+   Preserve every other interval and break. Empty intervals explicitly remove the last interval
+   through effective Save; the legacy draft endpoint still rejects an empty day.
 4. Send the current version and a new Idempotency-Key. Intervals support whole minutes and
    touching boundaries. Overlap within the day or with adjacent records returns 422.
 5. GET the day again to verify exactly what persisted. After 409, reread and review the changes;
@@ -179,9 +184,10 @@ modal submits the current day snapshot. It is not an append or a single-block PA
    version, not stable interval identities; reread before selecting a block for a later update.
 
 allocations can be omitted to preserve existing source attribution, or explicitly replaced.
-Preserved allocations/breaks must still fit the new intervals. Confirmed days must first use
-workdayCorrection, then save/preview/explicitly confirm; prior confirmed history is preserved.
-Saving, editing or removing intervals never implies confirmation, Task creation or billing.
+Preserved allocations/breaks must still fit the new intervals. Effective Save changes the current
+effective revision and preserves prior history. No separate employee confirmation is required.
+The legacy draft API still needs correction/preview/confirmation for legacy confirmed days.
+Saving never implies payroll approval, Task creation or billing.
 
 ### Later MCP tool mapping
 
@@ -191,14 +197,17 @@ Use generated operationId and request/response schemas as the adapter contract:
 | --- | --- |
 | Read a date, plan and available time | workdayEntry |
 | List or inspect saved actual time | workdayIndex / workdayShow / workdayHistory |
-| Add/edit/remove minute intervals and breaks | workdayDraft |
+| Add/edit/remove minute intervals and breaks | workdaySave |
 | Preview the exact saved revision | workdayPreview |
 | Explicitly confirm own work | workdayConfirm |
 | Start a traceable correction | workdayCorrection |
 
 Each connection must preserve the actual employee identity. The adapter must obtain explicit
 confirmation before workdayConfirm and handle version conflicts/retries using the rules above.
-This is a handoff for later MCP development; no MCP server or gateway connection is implemented.
+The existing nexumpsa gateway registration now includes the eleven own-day tools for configured
+employees; it selects their personal user/server binding and never falls back to the shared
+credential for employee APIs. No separate employee-facing Workday server or LiteLLM key is required.
+The broader operation inventory above remains the PSA contract, not a claim of full gateway rollout.
 
 ## Employee confirmation sequence
 
@@ -278,4 +287,33 @@ PSA contracts; they do not claim a LiteLLM adapter, MCP session or production de
 Human-review entry HR-2026-10-01-WORKDAY remains In Review for the combined pilot.
 Svein Tore approved the calendar/modal UX on 2026-10-05. Remaining explicit device, API identity,
 real opted-in channel receipt and operational backup/restore checks are tracked there.
-MCP/LiteLLM work is explicitly deferred by Svein and is not a blocker for this API handoff.
+The earlier API-only handoff is supplemented by the 30 October bounded main-connection adapter.
+Actual employee ChatGPT acceptance remains HR-2026-10-30-NEXUM-GATEWAY-WORKDAY Pending.
+
+
+## Diagnose a rejected gateway save
+
+1. Use the same verified personal employee credential for identity, plan, date context, Save
+   and read-back. A person's name in an assistant conversation is not authenticated identity.
+2. GET workdays/{work_date}/entry for that date with no extra body/query fields. Use its
+   timezone, version and saved day. planned_minutes is a plan, not saved actual_minutes;
+   480 planned minutes and 300 actual minutes can legitimately coexist.
+3. PUT workdays/{work_date}/save with the current version and Idempotency-Key. Only send
+   writable fields; omit owner/user IDs, response-only minutes, state and editor fields.
+   Breaks require an explicit included boolean, including false for an excluded break.
+4. Preserve the structured errors object from a 422, exact method/path and safe request
+   reference. Report the field and message to the employee. Never log credentials or
+   full employee descriptions. A 422 alone does not establish an identity error.
+5. Local clock input is interpreted in the request's record timezone. For Europe/Oslo,
+   20:40 on 29 October 2026 is 19:40Z; on a summer date it is 18:40Z. Offsets must
+   match that timezone/date. Use the saved day timezone rather than reinterpreting history.
+6. Compare the error's current time with End in the same zone. At local 20:45, 20:40
+   is complete and 20:46 is future. Correct the field before retrying. Rejected validation
+   does not create a day, revision or mutation receipt.
+7. Read the saved UUID/date context back using that same credential and compare date,
+   intervals, break treatment and totals. Identical timeout retries use the same body/key;
+   a 409 requires a fresh read and review. Never switch to a shared administrator token.
+
+Dev regression coverage verifies separate 480/300-minute employee plans, own successful Save
+and read-back, preserved ownership, winter/summer completed-time acceptance, future rejection
+and retry safety. This does not establish which credential or payload the reported gateway used.

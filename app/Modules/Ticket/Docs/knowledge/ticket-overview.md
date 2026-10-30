@@ -239,3 +239,19 @@ Ticket-generated HTML replies/internal notifications preserve the same formattin
 versions retain readable source. See **Ticket Email And Communication** for delivery boundaries.
 No schema, audience, recipient or role changes are part of this feature. Historical text remains
 stored exactly as before; escape Markdown punctuation or use a code block for literal syntax.
+
+## Local timestamp display correction - Dev, 29 October 2026
+
+Verified on Dev only; this display correction has not been merged or deployed to production.
+
+Ticket scheduled time, Created, Updated, Resolved, Closed, documentation-request timestamps,
+quote/workflow evidence and SLA deadlines use the viewing employee's existing profile timezone.
+This also covers scheduled Ticket-list tooltips and the Ticket SLA report. **Timezone** in the Ticket
+details identifies it. With Europe/Oslo, 19:58 UTC displays as 20:58 in winter or 21:58 in summer.
+Legacy preferences are the fallback when no profile timezone exists; the application timezone
+is used last. Check **Profile > Work plan** if those settings disagree.
+
+The stored UTC instant and SLA deadline stay unchanged. Relative age, date-only work dates,
+registered minutes and billing totals retain their existing meanings. API timestamps keep
+their explicit offset. Workday uses its own saved record timezone and does not reinterpret
+existing days when profile settings change.

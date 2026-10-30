@@ -1,4 +1,8 @@
 @php
+    $dateTime = app(\App\Modules\UserManagement\Support\UserDateTime::class);
+@endphp
+
+@php
     $currentQuote = $ticket->salesContext?->opportunity?->currentQuoteVersion;
     $currentOpportunity = $ticket->salesContext?->opportunity;
     $plannedDecision = $actionDecision('add_planned_cost');
@@ -262,7 +266,7 @@
                 @forelse($activeWorkflowEvidence->sortByDesc('evidenced_at')->take(6) as $evidence)
                     <div class="d-flex justify-content-between gap-2 border-bottom py-2 small">
                         <div><strong>{{ ucfirst(str_replace('_', ' ', $evidence->evidence_type)) }}</strong><div class="text-muted">{{ $evidence->subject_name ?: $evidence->scope_key ?: 'Ticket evidence' }}</div></div>
-                        <div class="text-end text-muted">{{ $evidence->evidenced_at?->format('Y-m-d H:i') }}<br>{{ $evidence->creator?->name }}</div>
+                        <div class="text-end text-muted">{{ $dateTime->format($evidence->evidenced_at) }}<br>{{ $evidence->creator?->name }}</div>
                     </div>
                 @empty
                     <p class="small text-muted mb-0">No classified workflow evidence yet.</p>

@@ -1,5 +1,11 @@
 @extends('layouts.default_tech')
 
+@php
+    $dateTime = app(\App\Modules\UserManagement\Support\UserDateTime::class);
+@endphp
+
+
+
 @section('title', 'Ticket SLA Report')
 
 @section('pageHeader')
@@ -86,10 +92,10 @@
                             <td>{{ $ticket->priority?->name ?? '—' }}</td>
                             <td>{{ $ticket->owner?->name ?? 'Unassigned' }}</td>
                             <td class="{{ $ticket->first_response_due_at?->isPast() && ! $ticket->first_responded_at ? 'text-danger fw-semibold' : '' }}">
-                                {{ $ticket->first_response_due_at?->format('Y-m-d H:i') ?? '—' }}
+                                {{ $dateTime->format($ticket->first_response_due_at) ?? '—' }}
                             </td>
                             <td class="{{ $ticket->resolve_due_at?->isPast() && ! $ticket->resolved_at ? 'text-danger fw-semibold' : '' }}">
-                                {{ $ticket->resolve_due_at?->format('Y-m-d H:i') ?? '—' }}
+                                {{ $dateTime->format($ticket->resolve_due_at) ?? '—' }}
                             </td>
                         </tr>
                     @empty

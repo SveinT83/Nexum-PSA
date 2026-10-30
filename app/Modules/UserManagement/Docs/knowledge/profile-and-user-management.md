@@ -270,3 +270,63 @@ MFA policy, invitations and session-bound local security/SSO. API abilities alwa
 the account's current ordinary permissions. See [User Management API](user-management-api.md)
 for exact steps, concurrency/retry rules, local verification and deployment availability.
 Production deployment and provider/authentication activation remain separate.
+
+## Workday timezones and rejected saves - 29 October 2026
+
+The current Workday **Save interval** and **Save day details** actions record effective actual
+time immediately. Separate draft review and confirmation belong to the legacy API workflow.
+
+1. Open **Profile > Work plan** and check the timezone. The canonical profile timezone wins
+   over legacy calendar preferences; if no profile exists, preferences are used, then the
+   application timezone (UTC on this installation). Conflicting settings need administrator review.
+2. Open **My Day > My workdays** and select the correct date. A new date uses your work-plan
+   timezone; a saved day retains its original timezone. Changing the profile does not reinterpret
+   a saved day's times. Ask an administrator before correcting a wrongly established day.
+3. Enter completed local **Start** and **End** in that record's timezone. Europe/Oslo handles
+   summer and winter offsets: local 20:40 is 19:40Z in winter and 18:40Z in summer.
+   At local 20:45, 20:40 is complete; 20:46 is still future.
+4. A rejected save shows the timezone/current clock and keeps submitted input in the modal.
+   Correct the named field before retrying. Do not manually subtract an hour from actual minutes.
+5. If an assistant receives HTTP 422, ask it for the exact field/message and a safe request
+   reference. Use the same verified personal employee connection for date context, Save and
+   read-back. Never send a token or password in a support message.
+
+A plan of 480 minutes and 300 saved actual minutes can be legitimate. They do not prove wrong
+identity. GET /api/v1/workdays/{work_date}/entry supplies the same user's date/timezone/version;
+PUT /api/v1/workdays/{work_date}/save uses that version and an Idempotency-Key. Rejected
+validation stores no partial day or receipt. Breaks need an explicit included boolean; owner
+IDs and response-only minutes/state are not writable fields. A shared administrator connection
+cannot substitute for the intended employee. The reported gateway identity/422 response still
+requires the original safe diagnostic evidence; synthetic Dev tests do not establish it.
+
+## Workday through the existing ChatGPT connection - 30 October 2026
+
+For employees whose personal Nexum connection has been configured, use the existing
+**Trønder Data – MCP** plugin in ChatGPT. Workday runs through its existing **nexumpsa**
+connection. You do not need a separate Workday integration or a manually managed LiteLLM key.
+
+1. Select the existing **Trønder Data – MCP** plugin in ChatGPT.
+2. Ask it to read your Workday for the intended date before recording anything. The date
+   context must show your own day, current version and record timezone. A plan or suggestion
+   is not proof of work performed.
+3. State the actual intervals and whether each break is included. Review the date, timezone
+   and total before instructing the assistant to save. The current API action is **workdaySave**.
+4. After saving, ask for a fresh read of that same day and compare intervals, breaks and total.
+   Do not blindly repeat a failed save with a new retry key.
+
+Access remains personal: another employee's day and administrative settings are not included.
+A missing or revoked personal connection must fail rather than use a shared administrator.
+For 401, ask the integration administrator to check the personal Nexum binding. For 403,
+ask them to check the token scope and native Workday permission. For 422, obtain the exact
+field error before changing the request. Never paste passwords or tokens into the chat.
+
+For Norwegian local input, check **Profile > Work hours** and the date context for
+**Europe/Oslo**. Profile/work-plan settings take precedence over older Preferences values.
+A previously saved day keeps its own timezone: changing the profile does not reinterpret
+historical intervals or change recorded minutes. Ask an administrator before correcting a
+historical timezone; do not shift recorded work to compensate manually.
+
+Availability: the gateway's personal list/date-context reads and denial checks are verified
+for the configured incident accounts in production. Actual employee ChatGPT use and a real
+employee-approved save remain human acceptance. The Ticket/Task local-display source fix is
+still Dev-only until separately approved Main promotion and production deployment.

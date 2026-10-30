@@ -6,6 +6,10 @@
 --}}
 @extends('layouts.default_tech')
 
+@php
+    $dateTime = app(\App\Modules\UserManagement\Support\UserDateTime::class);
+@endphp
+
 @section('pageHeader')
     <div class="col">
         <h1 class="h4 mb-0">Tasks</h1>
@@ -180,7 +184,7 @@
                         <th>Client / Site</th>
                         <th>
                             <a href="{{ $sortLink('due_at') }}" class="text-decoration-none text-body d-inline-flex align-items-center gap-1">
-                                Due <i class="bi {{ $sortIcon('due_at') }}"></i>
+                                Due ({{ $dateTime->timezone() }}) <i class="bi {{ $sortIcon('due_at') }}"></i>
                             </a>
                         </th>
                         <th>
@@ -224,7 +228,7 @@
                                 @endif
                                 <div class="small {{ blank($task->site?->name) ? 'text-muted' : '' }}">{{ $missing($task->site?->name) }}</div>
                             </td>
-                            <td class="{{ blank($task->due_at) ? 'text-muted' : '' }}">{{ $task->due_at?->format('Y-m-d H:i') ?? '—' }}</td>
+                            <td class="{{ blank($task->due_at) ? 'text-muted' : '' }}">{{ $dateTime->format($task->due_at) ?? '—' }}</td>
                             <td class="{{ blank($task->estimated_minutes) ? 'text-muted' : '' }}">
                                 {{ $task->estimated_minutes ? $task->estimated_minutes.' min' : '—' }}
                             </td>

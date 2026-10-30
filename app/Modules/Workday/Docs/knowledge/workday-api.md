@@ -7,8 +7,11 @@ The server resolves the worker from the authenticated active human. No user_id o
 worker field is accepted. System actors, portal-only users without employee permissions and
 coordinator workload-bound tokens are denied, including wildcard credentials.
 
-The API is independent of the external gateway. LiteLLM is the intended external direction;
-MCP/adapter implementation and live testing are deferred. The complete operation inventory,
+The API is independent of the external gateway. From 30 October 2026, the existing nexumpsa
+connection in LiteLLM resolves configured employees personally for Workday. Eleven own-day
+tools, request-body schemas and idempotency forwarding are available on that main registration;
+list/date-context and denial checks are verified for the incident accounts. Other API capabilities
+remain subject to their own gateway grants/scopes. This is not a complete migration of other PSA domains. The complete operation inventory,
 retry rules and examples are in the Workday API consumer guide. Existing coordinator
 worklog read credentials are not employee delegation.
 
@@ -72,6 +75,11 @@ colon or hyphen) with every mutation, including preview. On a network timeout, r
 operation/body/key. The response is the persisted original result, even if later revisions exist.
 Use GET to inspect the latest state. Reusing a key for another request returns 409.
 
+### Legacy draft compatibility example
+
+The following draft/preview/confirm example is only for a client deliberately retaining that
+legacy workflow. Ordinary effective time registration uses the Save operation above.
+
 Create a draft with version 0:
 
 ```json
@@ -102,6 +110,19 @@ because the employee saved a draft or an AI tool found activity evidence.
 To change a confirmed day, POST corrections with current version and a nonempty reason.
 Save changes to the resulting draft using its new version, preview and confirm again.
 The previous confirmed snapshot remains in data.confirmed until that final confirmation.
+
+## Gateway rejection diagnostics
+
+For a 422, preserve the structured errors fields, method/path and safe request reference.
+Use GET workdays/{work_date}/entry and Save with the same verified personal employee token.
+Compare planned_minutes with the plan, actual_minutes with saved work, and the record timezone
+with the submitted local clocks. A 480/300-minute difference alone does not prove wrong identity.
+Do not send user_id, minutes, state or other response-only fields back to Save. Each break
+requires included=true/false. Invalid requests leave no partial day or consumed receipt.
+At 20:45 Europe/Oslo, 20:40 local is complete in both winter and summer; 20:46 is future.
+If an error reports UTC while Norwegian local time was intended, use the saved record context
+and ask an administrator to investigate a misconfigured existing day; do not rewrite history.
+See the consumer guide for the exact read/save/read-back and retry sequence.
 
 ## Errors and settings
 

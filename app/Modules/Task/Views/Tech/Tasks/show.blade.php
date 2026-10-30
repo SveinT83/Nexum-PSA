@@ -7,6 +7,10 @@
 @extends('layouts.default_tech')
 
 @php
+    $dateTime = app(\App\Modules\UserManagement\Support\UserDateTime::class);
+@endphp
+
+@php
     $isTicketTask = $task->owner instanceof \App\Modules\Ticket\Models\Ticket;
     $defaultInvoiceText = 'Task: '.$task->title;
     $defaultTicketRateKey = old('rate_key', $task->metadata['ticket_rate_key'] ?? ($timeRateOptions->first()['key'] ?? null));
@@ -82,7 +86,8 @@
                 </div>
                 <div class="col-md-3">
                     <div class="text-muted">Due</div>
-                    <div class="fw-semibold">{{ $task->due_at?->format('Y-m-d H:i') ?? '—' }}</div>
+                    <div class="fw-semibold">{{ $dateTime->format($task->due_at) ?? '—' }}</div>
+                    <div class="text-muted small">{{ $dateTime->timezone() }}</div>
                 </div>
                 <div class="col-md-3">
                     <div class="text-muted">Estimated / Actual</div>
@@ -263,7 +268,7 @@
                         <div class="list-group-item small">
                             <div class="d-flex justify-content-between gap-2">
                                 <span class="fw-semibold">{{ $activity->user?->name ?? 'System' }}</span>
-                                <span class="text-muted">{{ $activity->created_at?->format('Y-m-d H:i') }}</span>
+                                <span class="text-muted">{{ $dateTime->format($activity->created_at) }}</span>
                             </div>
                             <div>{{ $activity->body ?? $activity->type }}</div>
                         </div>
@@ -395,7 +400,7 @@
                     </div>
                     <div class="d-flex justify-content-between mt-2">
                         <span class="text-muted">Completed</span>
-                        <span>{{ $task->completed_at?->format('Y-m-d H:i') ?? '—' }}</span>
+                        <span>{{ $dateTime->format($task->completed_at) ?? '—' }}</span>
                     </div>
                 </div>
             </div>
