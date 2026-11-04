@@ -1543,3 +1543,29 @@ read-back and explicit unknown-outcome reconciliation. Invitation queued is not 
 See the User Management API guide in the employee handbook (Profile And User Management)
 and Swagger's UserManagement group. Production deployment and provider activation
 remain separate; verify the installed release before use.
+
+## Ticket time deletion API (2026-11-04)
+
+Availability: Dev implementation; Main promotion authorized; production/gateway rollout
+and manual acceptance are separate. No existing API key receives new grants.
+
+The tickets.time.delete write scope covers three typed operations:
+- GET /api/v1/tickets/{ticket}/time-entries/{timeEntry}/delete-preview
+- DELETE /api/v1/tickets/{ticket}/time-entries/{timeEntry}
+- GET /api/v1/tickets/{ticket}/time-entry-deletions/{event}
+
+All three require current ticket.view, ticket.register_time and ticket.update authority,
+active identity, current Ticket context and time-registration workflow eligibility.
+DELETE requires reason, preview_token and idempotency_key. Preview binds actor, source,
+current record and ten-minute expiry. Protected or changed rows return 409.
+The same exact retry returns the existing audit receipt after source removal; a reused
+key with different input returns 409. Unsupported fields are rejected, including force.
+The successful receipt has deleted, ticket_id, time_entry_id, audit_event_id, actor_id,
+reason, deleted_at and receipt_url; it never exposes internal request/key hashes.
+
+This API removes only pending direct manual time without any Task, financial or retained
+Workday dependency. Billing uses the shared Economy mutex and Workday owner/source locks.
+It retains a Ticket deletion event and does not reverse financial/payroll records.
+Follow the numbered procedure in Ticket Time Registration. No browser transport, SQL
+access, production cleanup or gateway catalog change is required or implied by this
+source implementation. Deployed operations must be checked against actual Swagger.

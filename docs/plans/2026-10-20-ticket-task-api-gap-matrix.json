@@ -4,13 +4,13 @@
     "projection": "Verified Main source from PR #379; production remains separate",
     "main_base": "81d1eb2a59ceabc0b36d4d65721cad6f7658f5ca",
     "browser_route_rows": 130,
-    "api_route_rows": 215,
-    "api_http_operations": 217,
+    "api_route_rows": 218,
+    "api_http_operations": 220,
     "http_methods": {
-      "GET": 114,
+      "GET": 116,
       "POST": 62,
       "PUT": 22,
-      "DELETE": 12,
+      "DELETE": 13,
       "PATCH": 7
     },
     "functional_groups": 41,
@@ -76,6 +76,13 @@
       "sha": "f949c346347a037ea6e28a4a50e1f62bb0b9da48",
       "tree": "c55fc241f284f146193121245aaa820189195427",
       "exact_tested_tree": true
+    },
+    "time_deletion_extension": {
+      "date": "2026-11-04",
+      "status": "Implemented and verified on Dev and independent Main candidate; scoped merge authorized; production separate",
+      "rfc": "docs/rfc/2026-11-04-ticket-time-entry-deletion-api.md",
+      "human_review": "HR-2026-11-04-TIME-DELETE Pending",
+      "operations": 3
     }
   },
   "functional_matrix": [
@@ -17652,6 +17659,193 @@
         "api.v1.tasks.show"
       ],
       "readback_note": "Use the applicable exact resource or receipt ID returned by the operation. Independent GETs require their own scopes and current object permissions. Preview/AI/invoice suggestions return their result directly without claiming domain persistence; settings/template/rule deletes are verified by collection absence and retained audit/history."
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/tickets/{ticket}/time-entries/{timeEntry}/delete-preview",
+      "name": "api.v1.tickets.time-entries.delete-preview",
+      "action": "App\\Modules\\Ticket\\Controllers\\Api\\V1\\TicketTimeDeletionController@preview",
+      "middleware": [
+        "api",
+        "auth:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:tickets.time.delete",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.view",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.register_time",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.update"
+      ],
+      "path": null,
+      "business_domain": "Ticket",
+      "source": "app/Modules/Ticket/Controllers/Api/V1/TicketTimeDeletionController.php",
+      "source_line": 29,
+      "operation_kind": "read",
+      "verification_tests": [
+        "app/Modules/Ticket/Tests/Feature/TicketTimeDeletionApiTest.php"
+      ],
+      "operation_contracts": [
+        {
+          "method": "GET",
+          "path": "/api/v1/tickets/{ticket}/time-entries/{timeEntry}/delete-preview",
+          "operation_id": "ticketTimeDeletionPreview",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "required_scopes": [
+            "tickets.time.delete"
+          ],
+          "domain_permissions": "ticket.view",
+          "additional_domain_permissions": [
+            "ticket.register_time",
+            "ticket.update"
+          ],
+          "success_media_types": [
+            "application/json"
+          ],
+          "success_schema_refs": [
+            "#/components/schemas/TicketTimeDeletionPreview"
+          ],
+          "documented_statuses": [
+            "200",
+            "401",
+            "403",
+            "404",
+            "409",
+            "422",
+            "503"
+          ]
+        }
+      ],
+      "readback_routes": [
+        "api.v1.tickets.time-entry-deletions.show"
+      ],
+      "readback_note": "Delete returns audit_event_id and receipt_url. Exact receipt requires the same scope/current authority; ordinary source absence is checked through separate time-read scopes."
+    },
+    {
+      "domain": null,
+      "method": "DELETE",
+      "uri": "api/v1/tickets/{ticket}/time-entries/{timeEntry}",
+      "name": "api.v1.tickets.time-entries.destroy",
+      "action": "App\\Modules\\Ticket\\Controllers\\Api\\V1\\TicketTimeDeletionController@destroy",
+      "middleware": [
+        "api",
+        "auth:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:tickets.time.delete",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.view",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.register_time",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.update",
+        "App\\Modules\\Integration\\Http\\Middleware\\RejectUnsupportedDomainApiInput"
+      ],
+      "path": null,
+      "business_domain": "Ticket",
+      "source": "app/Modules/Ticket/Controllers/Api/V1/TicketTimeDeletionController.php",
+      "source_line": 48,
+      "operation_kind": "action",
+      "verification_tests": [
+        "app/Modules/Ticket/Tests/Feature/TicketTimeDeletionApiTest.php"
+      ],
+      "operation_contracts": [
+        {
+          "method": "DELETE",
+          "path": "/api/v1/tickets/{ticket}/time-entries/{timeEntry}",
+          "operation_id": "ticketTimeDeletionDelete",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "required_scopes": [
+            "tickets.time.delete"
+          ],
+          "domain_permissions": "ticket.view",
+          "additional_domain_permissions": [
+            "ticket.register_time",
+            "ticket.update"
+          ],
+          "success_media_types": [
+            "application/json"
+          ],
+          "success_schema_refs": [
+            "#/components/schemas/TicketTimeDeletionReceipt"
+          ],
+          "documented_statuses": [
+            "200",
+            "401",
+            "403",
+            "404",
+            "409",
+            "422",
+            "503"
+          ]
+        }
+      ],
+      "readback_routes": [
+        "api.v1.tickets.time-entry-deletions.show"
+      ],
+      "readback_note": "Delete returns audit_event_id and receipt_url. Exact receipt requires the same scope/current authority; ordinary source absence is checked through separate time-read scopes."
+    },
+    {
+      "domain": null,
+      "method": "GET|HEAD",
+      "uri": "api/v1/tickets/{ticket}/time-entry-deletions/{event}",
+      "name": "api.v1.tickets.time-entry-deletions.show",
+      "action": "App\\Modules\\Ticket\\Controllers\\Api\\V1\\TicketTimeDeletionController@show",
+      "middleware": [
+        "api",
+        "auth:sanctum",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:tickets.time.delete",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.view",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.register_time",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.update"
+      ],
+      "path": null,
+      "business_domain": "Ticket",
+      "source": "app/Modules/Ticket/Controllers/Api/V1/TicketTimeDeletionController.php",
+      "source_line": 71,
+      "operation_kind": "read",
+      "verification_tests": [
+        "app/Modules/Ticket/Tests/Feature/TicketTimeDeletionApiTest.php"
+      ],
+      "operation_contracts": [
+        {
+          "method": "GET",
+          "path": "/api/v1/tickets/{ticket}/time-entry-deletions/{event}",
+          "operation_id": "ticketTimeDeletionReceipt",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "required_scopes": [
+            "tickets.time.delete"
+          ],
+          "domain_permissions": "ticket.view",
+          "additional_domain_permissions": [
+            "ticket.register_time",
+            "ticket.update"
+          ],
+          "success_media_types": [
+            "application/json"
+          ],
+          "success_schema_refs": [
+            "#/components/schemas/TicketTimeDeletionReceipt"
+          ],
+          "documented_statuses": [
+            "200",
+            "401",
+            "403",
+            "404",
+            "409",
+            "422",
+            "503"
+          ]
+        }
+      ],
+      "readback_routes": [
+        "api.v1.tickets.time-entry-deletions.show"
+      ],
+      "readback_note": "Delete returns audit_event_id and receipt_url. Exact receipt requires the same scope/current authority; ordinary source absence is checked through separate time-read scopes."
     }
   ],
   "livewire_actions": [

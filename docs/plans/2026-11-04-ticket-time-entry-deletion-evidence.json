@@ -1,0 +1,96 @@
+{
+  "native": {
+    "engine": "MariaDB 10.11.19 / InnoDB",
+    "environment": "private socket on Dev host, isolated Main candidate schema; no operational data",
+    "cases": [
+      {
+        "case": "concurrent_exact_delete_retry",
+        "passed": true,
+        "same_event": true
+      },
+      {
+        "case": "deletion_waits_for_financial_writer",
+        "passed": true,
+        "deletion_status": 409,
+        "source_preserved": true
+      },
+      {
+        "case": "deletion_waits_for_workday_writer",
+        "passed": true,
+        "deletion_status": 409,
+        "source_preserved": true
+      }
+    ]
+  },
+  "openapi": {
+    "generated_file_sha256": "3d0a49afbf1358d13ad888a2bbb3eff2488e9042e7221f701154a59f117d5646",
+    "operations": [
+      {
+        "path": "/api/v1/tickets/{ticket}/time-entries/{timeEntry}/delete-preview",
+        "method": "get",
+        "operation_id": "ticketTimeDeletionPreview",
+        "scope": "tickets.time.delete"
+      },
+      {
+        "path": "/api/v1/tickets/{ticket}/time-entries/{timeEntry}",
+        "method": "delete",
+        "operation_id": "ticketTimeDeletionDelete",
+        "scope": "tickets.time.delete"
+      },
+      {
+        "path": "/api/v1/tickets/{ticket}/time-entry-deletions/{event}",
+        "method": "get",
+        "operation_id": "ticketTimeDeletionReceipt",
+        "scope": "tickets.time.delete"
+      }
+    ]
+  },
+  "bookstack": [
+    {
+      "page": 427,
+      "revision": 34,
+      "exact_new_section": true
+    },
+    {
+      "page": 449,
+      "revision": 167,
+      "exact_new_section": true
+    }
+  ],
+  "tests": {
+    "dev_broad": [
+      91,
+      43290
+    ],
+    "main_broad": [
+      91,
+      43259
+    ],
+    "dev_and_main_final_each": [
+      27,
+      346
+    ],
+    "counts_overlap": true
+  },
+  "candidate_code_sha256": {
+    "app/Modules/Ticket/Actions/DeleteTicketTimeEntry.php": "34a7cb3f0010bfcb6d24bf91bee5f333898939d3e3bdb0d27dfddd29d44cf7b6",
+    "app/Modules/Ticket/Controllers/Api/V1/TicketTimeDeletionController.php": "fedb929e3a1b20e61727a5c1ae3bfc52c1f0b0fbb25bf9499a0f74b958bcfd4a",
+    "app/Modules/Ticket/Resources/Api/V1/TicketTimeDeletionOpenApi.php": "ad95961bbc80dee7cdc1f465c2610429d660cbebe068beceae98dcc0c1e9ae4e",
+    "app/Modules/Ticket/Tests/Feature/TicketTimeDeletionApiTest.php": "480dc105a990df1eb29dd003bd972956ff3597e9a1482d1a23624477668fa968",
+    "app/Modules/Ticket/routes.php": "fc304a0a6fb8f59f31eebeccd721cf39d1930ac278a4a451c4d1f7f8623032fb",
+    "app/Modules/Integration/Support/ApiAbilityCatalog.php": "36fa527d41db772fbc697e81f617a5f7214e9ee186711c85e57f057b7bcfdb58"
+  },
+  "private_native_qa_cleanup_verified": true,
+  "tracked_swagger": {
+    "operations_added": 3,
+    "schemas_imported": [
+      "TicketTimeDeletionPreview",
+      "TicketTimeDeletionReceipt",
+      "TicketTimeDeletionRequest",
+      "TicketTimeEntryReadback"
+    ],
+    "preexisting_operations_and_schemas_preserved": true,
+    "main_candidate_sha256": "cfd913a7b66baf384f27883d4b6253e835de0160700027059423bde78fb9ee21",
+    "dev_same_three_operations_verified": true
+  }
+}

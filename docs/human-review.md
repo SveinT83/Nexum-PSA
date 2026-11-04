@@ -1,5 +1,42 @@
 # Human Review Register
 
+## HR-2026-11-04-TIME-DELETE - Guarded Ticket time deletion API
+
+Status: Pending
+Owner: Codex; named human reviewer: Svein Tore.
+Parent: rfc/2026-11-04-ticket-time-entry-deletion-api.md (Approved).
+Svein explicitly authorized implementation and scoped Main merge on 2026-11-04:
+"Godkjenner. Lag det og merge til main". This permits the tested source merge without
+asserting that the manual checks below have been performed.
+Gate: manual acceptance before production deployment/release; this entry does not block
+the separately authorized source merge. No production data cleanup is authorized here.
+Related broad HR-2026-10-20-TICKET-TASK-API remains Pending; Worklog export review and
+HR-2026-11-04-TICKET-MESSAGE-API acceptance remain independent and unconfirmed.
+
+Scope: three Ticket API operations, dedicated deletion scope, actor-bound preview,
+pending direct-time removal, dependency guards and retained audit/receipt.
+Affected workflows: API client correction of manual time; Ticket Activity/time reads;
+billing and Workday evidence must remain untouched.
+
+- [ ] Using controlled Dev records and the intended employee account, preview one duplicate,
+      remove exactly that entry, keep its original and verify remaining minutes.
+- [ ] Fetch the returned receipt independently and inspect original technician/values,
+      deleting employee and reason in the audit. Retry the unchanged request; one event only.
+- [ ] Confirm missing scope/current permission, wrong nested Ticket and stale preview deny.
+- [ ] Confirm Task, processed/allocated/ordered time and retained Workday evidence block deletion.
+- [ ] Verify the intended client can send the DELETE body; gateway exposure remains separate.
+- [ ] Verify employee handbook access/retrieval for the intended audience; BookStack API
+      read-back and actual employee OpenWebUI retrieval are separate claims.
+
+Expected: only eligible exact manual records disappear; billing/payroll/provider data
+do not change and retry cannot delete another entry.
+Deployment after separate approval: no new migration or frontend build; verify existing
+Economy/Workday schema, deploy scoped source, refresh normal cache/opcache and regenerate
+Swagger with php artisan l5-swagger:generate. No worker/scheduler or new grants required.
+Rollback disables/removes only new access and preserves audit. Never restore deleted rows
+automatically or remove their audit to pretend the operation was undone.
+Tests, actual Main merge and handbook evidence are recorded in the scoped plan at handoff.
+
 ## HR-2026-10-30-NEXUM-GATEWAY-WORKDAY - Existing Nexum Connection And Oslo Profile
 
 Status: Pending. Owner: Codex. Named human reviewer: Svein Tore.

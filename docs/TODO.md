@@ -1,5 +1,25 @@
 # tdPSA Development TODO
 
+## Guarded Ticket time-entry deletion API (2026-11-04)
+
+Status: Done On Dev / Independently Verified Main Candidate; scoped merge authorized by Svein Tore on 2026-11-04.
+Owner: Codex; approval/promotion owner: Svein Tore.
+RFC: rfc/2026-11-04-ticket-time-entry-deletion-api.md.
+Requested after reported duplicate Benjamin registrations on TD-2026-000277.
+Dev already has PATCH editing; new deletion is outside existing browser/API parity.
+Proposed: exact preview and guarded DELETE for pending direct manual rows; audit/retry
+receipt; dedicated scope plus current Ticket rights; block all financial, Task and
+retained Workday dependencies. No migration, real-data cleanup, deployment or grant.
+Parent parity source is already Main per PR #379; its operational gates remain separate.
+Related open #391 pooling design remains separate; do not change timebank allocation.
+Verification: Dev91/43290 and independent Main91/43259; final27/346 on both.
+Three native MariaDB concurrency checks pass. BookStack427/34 and449/167 exact sections
+read back with existing audience unchanged. Evidence: plans/2026-11-04-ticket-time-entry-deletion-verification.md.
+Next: merge only the independently tested delta, then Svein performs manual acceptance.
+Human-review checklist HR-2026-11-04-TIME-DELETE
+remains Pending for manual acceptance before production rollout; merge is explicitly
+authorized separately and does not mark any manual check reviewed.
+
 ## Workday main gateway and local time - Issues #385 / #386 (2026-10-30)
 
 Status: Implemented / Main Merged (PR #387) / Scoped Production Patch Verified / Human Acceptance Pending.
