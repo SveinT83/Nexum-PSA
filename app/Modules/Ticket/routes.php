@@ -345,6 +345,20 @@ if (($tdpsaLoadingApiRoutes ?? false) === true) {
         ->name('tickets.not-ticket')->withTrashed()->middleware([\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':tickets.classify', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.delete'])
         ->defaults('parity_domain', 'ticket')->defaults('parity_scope', 'tickets.classify')->defaults('parity_permissions', 'ticket.delete')->defaults('parity_input_fields', ['expected_snapshot'])->middleware(\App\Modules\Integration\Http\Middleware\RejectUnsupportedDomainApiInput::class);
 
+    // Time deletion is independent of ordinary edit/read grants and remains auditable after removal.
+    Route::get('tickets/{ticket}/time-entries/{timeEntry}/delete-preview', [\App\Modules\Ticket\Controllers\Api\V1\TicketTimeDeletionController::class, 'preview'])
+        ->name('tickets.time-entries.delete-preview')->whereNumber('timeEntry')
+        ->middleware([\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':tickets.time.delete', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.view', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.register_time', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.update'])
+        ->defaults('parity_domain', 'ticket')->defaults('parity_scope', 'tickets.time.delete')->defaults('parity_permissions', 'ticket.view')->defaults('parity_additional_permissions', ['ticket.register_time', 'ticket.update']);
+    Route::delete('tickets/{ticket}/time-entries/{timeEntry}', [\App\Modules\Ticket\Controllers\Api\V1\TicketTimeDeletionController::class, 'destroy'])
+        ->name('tickets.time-entries.destroy')->whereNumber('timeEntry')
+        ->middleware([\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':tickets.time.delete', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.view', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.register_time', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.update'])
+        ->defaults('parity_domain', 'ticket')->defaults('parity_scope', 'tickets.time.delete')->defaults('parity_permissions', 'ticket.view')->defaults('parity_additional_permissions', ['ticket.register_time', 'ticket.update'])->defaults('parity_input_fields', ['reason', 'preview_token', 'idempotency_key'])->middleware(\App\Modules\Integration\Http\Middleware\RejectUnsupportedDomainApiInput::class);
+    Route::get('tickets/{ticket}/time-entry-deletions/{event}', [\App\Modules\Ticket\Controllers\Api\V1\TicketTimeDeletionController::class, 'show'])
+        ->name('tickets.time-entry-deletions.show')->whereNumber('event')
+        ->middleware([\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':tickets.time.delete', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.view', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.register_time', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.update'])
+        ->defaults('parity_domain', 'ticket')->defaults('parity_scope', 'tickets.time.delete')->defaults('parity_permissions', 'ticket.view')->defaults('parity_additional_permissions', ['ticket.register_time', 'ticket.update']);
+
     Route::patch('tickets/{ticket}/time-entries/{timeEntry}', [\App\Modules\Ticket\Controllers\Api\V1\TicketLedgerController::class, 'updateTime'])
         ->name('tickets.time-entries.update')->middleware([\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':tickets.time.update', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.register_time'])
         ->defaults('parity_domain', 'ticket')->defaults('parity_scope', 'tickets.time.update')->defaults('parity_permissions', 'ticket.register_time')->defaults('parity_input_fields', ['invoice_text', 'minutes', 'note', 'rate_key', 'work_date'])->middleware(\App\Modules\Integration\Http\Middleware\RejectUnsupportedDomainApiInput::class);

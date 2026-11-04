@@ -136229,6 +136229,373 @@
                     }
                 ]
             }
+        },
+        "/api/v1/tickets/{ticket}/time-entries/{timeEntry}/delete-preview": {
+            "get": {
+                "tags": [
+                    "Tickets"
+                ],
+                "operationId": "ticketTimeDeletionPreview",
+                "parameters": [
+                    {
+                        "name": "ticket",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "timeEntry",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exact record and current deletion eligibility",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TicketTimeDeletionPreview"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication, current authority, nested ownership or validation failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authentication, current authority, nested ownership or validation failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authentication, current authority, nested ownership or validation failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale preview, protected state or conflicting retry",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authentication, current authority, nested ownership or validation failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required existing schema is unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-required-scopes": [
+                    "tickets.time.delete"
+                ],
+                "x-domain-permissions": "ticket.view",
+                "x-additional-domain-permissions": [
+                    "ticket.register_time",
+                    "ticket.update"
+                ]
+            }
+        },
+        "/api/v1/tickets/{ticket}/time-entries/{timeEntry}": {
+            "delete": {
+                "tags": [
+                    "Tickets"
+                ],
+                "operationId": "ticketTimeDeletionDelete",
+                "parameters": [
+                    {
+                        "name": "ticket",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "timeEntry",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TicketTimeDeletionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Persisted deletion audit receipt",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TicketTimeDeletionReceipt"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication, current authority, nested ownership or validation failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authentication, current authority, nested ownership or validation failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authentication, current authority, nested ownership or validation failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale preview, protected state or conflicting retry",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authentication, current authority, nested ownership or validation failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required existing schema is unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-required-scopes": [
+                    "tickets.time.delete"
+                ],
+                "x-domain-permissions": "ticket.view",
+                "x-additional-domain-permissions": [
+                    "ticket.register_time",
+                    "ticket.update"
+                ]
+            }
+        },
+        "/api/v1/tickets/{ticket}/time-entry-deletions/{event}": {
+            "get": {
+                "tags": [
+                    "Tickets"
+                ],
+                "operationId": "ticketTimeDeletionReceipt",
+                "parameters": [
+                    {
+                        "name": "ticket",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Persisted deletion audit receipt",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TicketTimeDeletionReceipt"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication, current authority, nested ownership or validation failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authentication, current authority, nested ownership or validation failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Authentication, current authority, nested ownership or validation failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale preview, protected state or conflicting retry",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Authentication, current authority, nested ownership or validation failure",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Required existing schema is unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-required-scopes": [
+                    "tickets.time.delete"
+                ],
+                "x-domain-permissions": "ticket.view",
+                "x-additional-domain-permissions": [
+                    "ticket.register_time",
+                    "ticket.update"
+                ]
+            }
         }
     },
     "components": {
@@ -188499,6 +188866,250 @@
                     },
                     "meta": {
                         "$ref": "#/components/schemas/SystemPageMeta"
+                    }
+                },
+                "type": "object"
+            },
+            "TicketTimeDeletionReceipt": {
+                "required": [
+                    "deleted",
+                    "ticket_id",
+                    "time_entry_id",
+                    "audit_event_id",
+                    "actor_id",
+                    "reason",
+                    "deleted_at",
+                    "receipt_url"
+                ],
+                "properties": {
+                    "deleted": {
+                        "type": "boolean",
+                        "enum": [
+                            true
+                        ]
+                    },
+                    "ticket_id": {
+                        "type": "integer"
+                    },
+                    "time_entry_id": {
+                        "type": "integer"
+                    },
+                    "audit_event_id": {
+                        "type": "integer"
+                    },
+                    "actor_id": {
+                        "type": "integer"
+                    },
+                    "reason": {
+                        "type": "string"
+                    },
+                    "deleted_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "receipt_url": {
+                        "type": "string",
+                        "format": "uri"
+                    }
+                },
+                "type": "object"
+            },
+            "TicketTimeDeletionRequest": {
+                "required": [
+                    "reason",
+                    "preview_token",
+                    "idempotency_key"
+                ],
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "maxLength": 2000,
+                        "minLength": 1
+                    },
+                    "preview_token": {
+                        "type": "string",
+                        "maxLength": 8192
+                    },
+                    "idempotency_key": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_.:-]{8,100}$",
+                        "maxLength": 100,
+                        "minLength": 8
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "TicketTimeDeletionPreview": {
+                "required": [
+                    "ticket_id",
+                    "time_entry_id",
+                    "entry",
+                    "allowed",
+                    "blockers",
+                    "preview_token",
+                    "expires_in_seconds"
+                ],
+                "properties": {
+                    "ticket_id": {
+                        "description": "Explicit preview and receipt contracts never expose internal retry hashes.",
+                        "type": "integer"
+                    },
+                    "time_entry_id": {
+                        "type": "integer"
+                    },
+                    "entry": {
+                        "$ref": "#/components/schemas/TicketTimeEntryReadback"
+                    },
+                    "allowed": {
+                        "type": "boolean"
+                    },
+                    "blockers": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "workflow_blocked",
+                                "not_direct_manual_time",
+                                "time_already_processed",
+                                "financial_allocation_exists",
+                                "financial_order_exists",
+                                "retained_workday_reference"
+                            ]
+                        }
+                    },
+                    "preview_token": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "expires_in_seconds": {
+                        "type": "integer",
+                        "example": 600
+                    }
+                },
+                "type": "object"
+            },
+            "TicketTimeEntryReadback": {
+                "required": [
+                    "id"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Explicit fields prevent storage paths, arbitrary metadata and coupled records from escaping.",
+                        "type": "integer"
+                    },
+                    "ticket_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "task_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "work_date": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "started_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "ended_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "minutes": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "cost_account": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "note": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "billable": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "billing_status": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "timebank_status": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "billing_basis": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "invoice_text": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "contract_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "contract_item_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "contract_item_time_rate_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "time_rate_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "rate_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "rate_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "rate_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "rate_unit": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "rate_amount_ex_vat": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "rate_currency": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
                     }
                 },
                 "type": "object"

@@ -40,3 +40,47 @@ the actual day. Task-linked rows and task_billing projections are excluded becau
 effort belongs to the Task source. Five actual Task minutes with thirty billing minutes therefore
 contributes five minutes of evidence. Workday selection does not update rates, billing state,
 timebank state or invoice text, and never increases the actual day total.
+
+## Correcting erroneous time through the API
+
+Availability: implemented on Dev for verification. Main promotion is separately authorized;
+production rollout, gateway tool exposure and manual acceptance are pending.
+There is no new Delete button on the Ticket page. Do not assume this operation exists
+on a production installation until its routes and Swagger have been verified.
+
+Prerequisites: an active employee with Ticket access and the current ticket.view,
+ticket.register_time and ticket.update permissions, plus the tickets.time.delete API
+scope. Existing grants are never expanded automatically. Ordinary read/edit scopes do
+not grant deletion. An authorized employee can correct another technician's eligible
+manual entry; its original technician remains in the deletion audit.
+
+1. Identify the exact Ticket and time-entry IDs. Use existing time reads with their
+   separate tickets.time.read scope. Review dates, minutes and technician before selecting
+   duplicates. Keep the intended original; matching text alone is not proof of a duplicate.
+2. Call GET /api/v1/tickets/{ticket}/time-entries/{timeEntry}/delete-preview.
+   Check the exact entry, allowed and blockers. A blocked preview has no usable token.
+3. If allowed, call DELETE /api/v1/tickets/{ticket}/time-entries/{timeEntry} with a
+   nonblank reason, the unchanged preview_token and a unique idempotency_key
+   (8-100 letters, digits, underscores, periods, colons or hyphens).
+   The actor-bound preview expires after ten minutes.
+4. A successful response contains deleted=true, the exact IDs, audit_event_id and
+   receipt_url. Fetch receipt_url independently to verify the retained audit receipt.
+   The entry must disappear from ordinary time reads; the original values, technician,
+   deleting employee and reason remain in Ticket history.
+5. If the response is uncertain, retry the exact same body and key. A successful prior
+   deletion returns its existing receipt without another deletion or audit event.
+   Keep the same key/token/reason for retries; never substitute another source ID.
+
+Only direct manual entries with both billing and timebank states pending are eligible.
+Task-linked time, Task billing projections, any financial allocation/order reference,
+and any retained Workday evidence reference block deletion, including historical
+revisions. The current Ticket workflow must also permit time registration.
+
+Troubleshooting: 403 means missing current permission/scope or inactive identity;
+404 means no permitted exact Ticket/entry/receipt; 409 means changed/expired preview,
+protected time/workflow or a conflicting retry key; 422 means invalid request fields.
+503 means required existing schema is unavailable; an administrator must reconcile the
+installation. Request a new preview only after reviewing a 409. Financially processed
+time needs its owning correction workflow; do not force deletion or edit SQL.
+Workday references must be reconciled through their normal owner workflow; this API
+never rewrites payroll, invoices, timebank consumption or historical Workday revisions.
