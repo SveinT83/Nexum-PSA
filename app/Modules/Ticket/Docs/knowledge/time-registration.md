@@ -43,8 +43,8 @@ timebank state or invoice text, and never increases the actual day total.
 
 ## Correcting erroneous time through the API
 
-Availability: implemented on Dev for verification. Main promotion is separately authorized;
-production rollout, gateway tool exposure and manual acceptance are pending.
+Availability: implemented and verified on Dev; source merged to Main in PR #393.
+Production rollout, gateway tool exposure and manual acceptance remain pending.
 There is no new Delete button on the Ticket page. Do not assume this operation exists
 on a production installation until its routes and Swagger have been verified.
 

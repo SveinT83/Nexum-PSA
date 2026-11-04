@@ -48,13 +48,15 @@
   "bookstack": [
     {
       "page": 427,
-      "revision": 34,
-      "exact_new_section": true
+      "revision": 35,
+      "exact_new_section": true,
+      "main_source_pr": 393
     },
     {
       "page": 449,
-      "revision": 167,
-      "exact_new_section": true
+      "revision": 168,
+      "exact_new_section": true,
+      "main_source_pr": 393
     }
   ],
   "tests": {
@@ -92,5 +94,11 @@
     "preexisting_operations_and_schemas_preserved": true,
     "main_candidate_sha256": "cfd913a7b66baf384f27883d4b6253e835de0160700027059423bde78fb9ee21",
     "dev_same_three_operations_verified": true
+  },
+  "main_promotion": {
+    "pr": 393,
+    "sha": "f63badb326ad4259ce0f18dde97001fcba05da42",
+    "tree": "cff2416dfe2fe48d08c1e11b808ccf3ab6cbc2fe",
+    "independent_exact_tree_readback": true
   }
 }

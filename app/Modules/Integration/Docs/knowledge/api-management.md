@@ -1546,8 +1546,8 @@ remain separate; verify the installed release before use.
 
 ## Ticket time deletion API (2026-11-04)
 
-Availability: Dev implementation; Main promotion authorized; production/gateway rollout
-and manual acceptance are separate. No existing API key receives new grants.
+Availability: verified on Dev; source merged to Main in PR #393.
+Production/gateway rollout and manual acceptance remain separate. Existing API-key grants are unchanged.
 
 The tickets.time.delete write scope covers three typed operations:
 - GET /api/v1/tickets/{ticket}/time-entries/{timeEntry}/delete-preview

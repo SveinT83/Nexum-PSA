@@ -4,7 +4,7 @@ Status: Approved
 Date: 2026-11-04
 Owner: Codex; approval and promotion owner: Svein Tore
 Change level: Level 3 - API, time records, authorization and financial dependencies
-Implementation: Done On Dev and independently verified on the Main candidate. Scoped Main merge authorized by Svein Tore on 2026-11-04; production remains separate.
+Implementation: Done On Dev; merged to Main in PR #393 on 2026-11-04 (f63badb326ad4259ce0f18dde97001fcba05da42), independently read back as the exact tested tree. Production remains separate.
 
 ## Context
 
