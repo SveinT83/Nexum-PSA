@@ -2,7 +2,7 @@
 
 ## Guarded Ticket time-entry deletion API (2026-11-04)
 
-Status: Done On Dev / Independently Verified Main Candidate; scoped merge authorized by Svein Tore on 2026-11-04.
+Status: Done On Dev / Merged And Independently Read Back On Main In PR #393 (2026-11-04).
 Owner: Codex; approval/promotion owner: Svein Tore.
 RFC: rfc/2026-11-04-ticket-time-entry-deletion-api.md.
 Requested after reported duplicate Benjamin registrations on TD-2026-000277.
@@ -13,9 +13,10 @@ retained Workday dependencies. No migration, real-data cleanup, deployment or gr
 Parent parity source is already Main per PR #379; its operational gates remain separate.
 Related open #391 pooling design remains separate; do not change timebank allocation.
 Verification: Dev91/43290 and independent Main91/43259; final27/346 on both.
-Three native MariaDB concurrency checks pass. BookStack427/34 and449/167 exact sections
+Three native MariaDB concurrency checks pass. BookStack427/35 and449/168 exact sections
 read back with existing audience unchanged. Evidence: plans/2026-11-04-ticket-time-entry-deletion-verification.md.
-Next: merge only the independently tested delta, then Svein performs manual acceptance.
+Main source merge: f63badb326ad4259ce0f18dde97001fcba05da42; exact tested tree cff2416dfe2fe48d08c1e11b808ccf3ab6cbc2fe.
+Next: Svein performs manual acceptance before separately approved production/gateway rollout.
 Human-review checklist HR-2026-11-04-TIME-DELETE
 remains Pending for manual acceptance before production rollout; merge is explicitly
 authorized separately and does not mark any manual check reviewed.

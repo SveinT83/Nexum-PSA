@@ -5,6 +5,9 @@
 Status: Pending
 Owner: Codex; named human reviewer: Svein Tore.
 Parent: rfc/2026-11-04-ticket-time-entry-deletion-api.md (Approved).
+Source merged in PR #393, f63badb326ad4259ce0f18dde97001fcba05da42; independent
+Git read-back exactly matches tested tree cff2416dfe2fe48d08c1e11b808ccf3ab6cbc2fe.
+This verifies source promotion only; no manual checkbox is marked Reviewed.
 Svein explicitly authorized implementation and scoped Main merge on 2026-11-04:
 "Godkjenner. Lag det og merge til main". This permits the tested source merge without
 asserting that the manual checks below have been performed.

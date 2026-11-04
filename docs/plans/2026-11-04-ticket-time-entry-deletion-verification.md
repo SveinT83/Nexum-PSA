@@ -90,8 +90,8 @@ from the original browser parity scope.
 
 Repository Ticket Time Registration and API Management sources are updated.
 Their exact new sections were published through the supported BookStack connector:
-- page 427, revision 34, Ticket Time Registration;
-- page 449, revision 167, Api Management.
+- page 427, revision 35, Ticket Time Registration;
+- page 449, revision 168, Api Management.
 Both actual stored sections match the reviewed source exactly and preserve all earlier
 content. Existing page and chapter permissions inherit; book 339 and global view roles
 were inspected without changes. Existing Editor/Viewer view permissions provide the
@@ -117,6 +117,8 @@ Code rollback must preserve audit and must not silently restore or re-delete rem
 
 ## Promotion Record
 
-The containing PR promotes only this verified scope to main. The actual PR, merge SHA and
-independent origin/main read-back are reported in the handoff and authoritative Dev TODO.
+PR #393 merged this verified scope as f63badb326ad4259ce0f18dde97001fcba05da42.
+An independent Git fetch/read-back proves tree cff2416dfe2fe48d08c1e11b808ccf3ab6cbc2fe
+is exactly the tested candidate tree. The follow-up record updates status/docs only;
+all six delivered PHP/source files and the scoped Swagger artifact remain unchanged.
 Production and Benjamin's reported duplicate entries remain unchanged by this work.

@@ -1,6 +1,6 @@
 # Feature Slice: Guarded Ticket Time Deletion
 
-Status: Done On Dev / Main Promotion Authorized
+Status: Done On Dev / Merged To Main In PR #393
 Date: 2026-11-04
 Parent: ../rfc/2026-11-04-ticket-time-entry-deletion-api.md (Approved)
 Owner: Codex; review/promotion owner Svein Tore
@@ -54,6 +54,6 @@ review; exact-source BookStack content/audience read-back and public-safe websit
 
 - [x] Focused Dev tests and schema inventory pass.
 - [x] Native isolated concurrency boundaries verified; configured Dev database remains unavailable.
-- [x] Scoped latest-main candidate independently verified and authorized for merge; actual merge is read back in the handoff.
+- [x] Scoped candidate merged in PR #393; independent origin/main tree cff2416dfe2fe48d08c1e11b808ccf3ab6cbc2fe exactly matches the tested candidate.
 - [x] Exact BookStack sections and existing reading audience inspected/read back; employee OpenWebUI retrieval remains a human check.
 - [x] Human review remains Pending for actual manual acceptance before production.

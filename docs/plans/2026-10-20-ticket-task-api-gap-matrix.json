@@ -79,7 +79,7 @@
     },
     "time_deletion_extension": {
       "date": "2026-11-04",
-      "status": "Implemented and verified on Dev and independent Main candidate; scoped merge authorized; production separate",
+      "status": "Merged to Main in PR #393 and independently read back as exact tested source; production separate",
       "rfc": "docs/rfc/2026-11-04-ticket-time-entry-deletion-api.md",
       "human_review": "HR-2026-11-04-TIME-DELETE Pending",
       "operations": 3
