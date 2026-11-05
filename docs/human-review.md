@@ -6,6 +6,8 @@ Status: Pending. Owner: Codex; named human reviewer: Svein Tore.
 RFC: rfc/2026-11-05-client-time-report-api.md (Approved).
 Svein explicitly authorized Dev implementation and Main merge: "Godkjenner, kjør på og merge til main etterpå".
 Gate: manual consumer acceptance before production release; does not block the separately approved source merge.
+Source merged in PR #397 (5b9b862a1ef79162266602afb4ad8f320e3830e7); independent read-back
+exactly matches verified tree da9eda40c67993969f55eb43798e3493a3b5a3a9. No checkbox inferred from merge.
 
 - [ ] With the intended native account/key, retrieve a known customer period and compare totals,
       items and entries with the browser report and original sources.

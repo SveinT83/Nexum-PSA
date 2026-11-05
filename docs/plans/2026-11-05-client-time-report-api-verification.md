@@ -1,6 +1,6 @@
 # Customer reporting API verification - 2026-11-05
 
-Status: Verification In Progress; scoped Main promotion authorized by Svein Tore.
+Status: Done On Dev / Main Merged And Independently Verified / Manual Acceptance Pending.
 RFC: ../rfc/2026-11-05-client-time-report-api.md (Approved).
 ADR: ../adr/2026-11-05-report-api-discovery.md.
 Human review: HR-2026-11-05-CLIENT-TIME-REPORT-API Pending before production release.
@@ -71,3 +71,13 @@ Final isolated Main API/contract/Report matrix passes16/586 on PHP8.3 (02:55); D
 passes. All earlier non-contract regression cases passed; only the exact manifest/test contract was
 updated afterward. Scoped Pint and diff checks pass. Source application files remain identical
 to Dev except Main preserves its unrelated existing catalog ordering. No new runtime repair.
+
+## Main delivery - 2026-11-05
+
+PR397 merged expected head b338c4f550797e5a5221a09a62dc647ce0fbae28 as
+5b9b862a1ef79162266602afb4ad8f320e3830e7. Independent fetch confirms the entire Main tree
+da9eda40c67993969f55eb43798e3493a3b5a3a9 exactly equals the verified candidate (empty diff).
+21 scoped files only; unrelated Dev catalog ordering/gateway changes preserved. Source documentation
+follow-up records this completion without changing application code or rerunning runtime tests.
+No production/gateway rollout, grant, worker or scheduler activation occurred. Source merge
+is complete; both parent browser review and new API manual acceptance remain explicitly separate.

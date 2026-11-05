@@ -2,7 +2,7 @@
 
 ## Customer time reporting API (2026-11-05)
 
-Status: Done On Dev / Main Candidate Verified / Scoped Merge Authorized. Owner: Codex; approval/promotion owner: Svein Tore.
+Status: Done On Dev / Main Merged And Independently Verified / Manual Acceptance Pending. Owner: Codex; approval/promotion owner: Svein Tore.
 Approved RFC: rfc/2026-11-05-client-time-report-api.md. Approval includes scoped Main merge.
 Coverage: summary/items/entries and binary XLSX/PDF using existing shared query/export; dedicated
 read/export abilities and all five native rights. Existing report metadata gains domain-owned
@@ -14,7 +14,9 @@ BookStack451/17 and506/3 exact source sections independently read back; inherite
 Evidence: plans/2026-11-05-client-time-report-api-verification.md. HR-2026-11-05-CLIENT-TIME-REPORT-API
 Pending gates manual consumer/privacy/download/assistant acceptance before production, not the
 explicitly approved source merge. Main final API/contract/Report16/586 passes.
-Next Codex: commit/push/merge scoped source and independently read back Main.
+Source merged PR #397:5b9b862a1ef79162266602afb4ad8f320e3830e7; independent Git fetch
+confirms exact verified tree da9eda40c67993969f55eb43798e3493a3b5a3a9.
+Next owner Svein: intended-consumer human review and separately approved deployment/tool refresh.
 No migration/build, financial change, production/gateway deployment or automatic grants.
 Parent browser report PR395/396 and its open manual review remain independent.
 

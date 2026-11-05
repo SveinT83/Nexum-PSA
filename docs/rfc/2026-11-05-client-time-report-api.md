@@ -10,8 +10,8 @@ Classification: Level 3 API and cross-domain authorization extension
 
 Svein requested an API for reporting after approving and merging the customer time report.
 The parent explicitly excluded API/MCP expansion, so that exclusion must be superseded for this
-scoped API before implementation. The new request authorizes investigation and RFC preparation;
-it is not yet explicit approval of this concrete API/authorization contract.
+scoped API before implementation. The initial request authorized investigation/RFC preparation; the subsequent explicit approval
+of implementation and scoped Main merge is recorded below.
 
 Current Report API discovers reports but does not execute the new customer time calculation.
 A caller needs to retrieve all customer Tickets/Tasks and time, for example the customer identified
@@ -195,3 +195,6 @@ The previous Main merge approval applied to the browser report and its records, 
 
 Approved by Svein Tore, 2026-11-05: "Godkjenner, kjør på og merge til main etterpå".
 Authorizes scoped Dev implementation, verification and Main promotion; no production activation.
+
+Source delivery: Dev verified and Main merged PR #397,5b9b862a1ef79162266602afb4ad8f320e3830e7.
+Independent full-tree read-back matches tested candidate; production/gateway rollout remains separate.
