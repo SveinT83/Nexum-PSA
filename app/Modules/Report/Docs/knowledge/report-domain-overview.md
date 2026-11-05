@@ -99,3 +99,12 @@ identity/permission policy before legacy report discovery shortcuts. Workday use
 explicit oversight permission; report.view and the Superuser role name do not bypass it.
 The hub shows only domains with a currently visible report. Workday owns confirmed list/detail/
 history and totals; the Report hub only links to them. See Workday confirmed-oversight guidance.
+
+## Client time consumption (Dev, 2026-11-05)
+
+The Client-owned internal report is registered as client.time. Requires report.view, client.view,
+ticket.view, task.view and commercial.timebank.view together, even for discovery. Open Reports >
+Client time consumption, find a Client by name/number/website, then select it. Use inclusive work-date
+filters or leave dates blank for all history. Excel/PDF preserve the same scope. Read the Client
+Domain Overview section for source-aware totals, private Task restrictions and internal-only sharing.
+Done on Dev is separate from Main/production and human acceptance; no new API data export.

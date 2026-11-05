@@ -1,5 +1,29 @@
 # tdPSA Development TODO
 
+## Client time consumption report (2026-11-05)
+
+Status: Done On Dev / Delivered Implementation Approved / Human Browser Checks Pending. Owner: Codex; reviewer/promotion owner: Svein Tore.
+Approved RFC: rfc/2026-11-05-client-time-report.md (chat approval 2026-11-05).
+Scope: internal read-only Client/Reports UI, date filters, complete ordered history, source-safe
+registered work/billing/processed allocation totals, XLSX/PDF. Preserve private Task visibility.
+Verification: Clients/Report regression85/1074 on PHP8.4; final report+synthetic PDF QA23/219
+on PHP8.3 (11 report cases, also inherited by the temporary QA subclass). Real XLSX reopened;
+formula-like notes remain literal text. Five-page Norwegian PDF rendered/visually checked.
+BookStack451 revision16 matches the exact new source section;437 revision4 read back.
+Page/chapter inheritance and book339 audience inspected, unchanged. Employee assistant retrieval
+is still a separate manual check. Evidence: plans/2026-11-05-client-time-report-verification.md.
+Current: scoped Main promotion explicitly authorized by Svein Tore on 2026-11-05.
+Main candidate verified: PHP8.3 matrix87/1089, Pint5/5 and scoped diff checks pass.
+Next: Codex commits/pushes/merges the scoped report and independently reads back Main.
+Owner Svein: confirm Dev web reachability and complete remaining manual checks before production.
+Public Dev HTTPS and trusted-SNI/IP route timed out from Dev; Windows HTTPS also timed out.
+No TLS bypass, authenticated live-customer browser result, or production availability is claimed.
+Svein Tore approved the delivered implementation on 2026-11-05 ("Godkjenenr").
+HR-2026-11-05-CLIENT-TIME-REPORT In Review; outstanding manual checks still gate production release.
+Existing dirty work remains untouched. #390/#391 financial changes and #290 external Worklog
+remain separate; no financial mutation, production deployment, token/provider or runtime activation.
+
+
 ## Guarded Ticket time-entry deletion API (2026-11-04)
 
 Status: Done On Dev / Merged And Independently Read Back On Main In PR #393 (2026-11-04).

@@ -289,3 +289,48 @@ Client rights and API editability flags. The extension supports all 11 current t
 atomic invalid-input rejection, required values and optional null clearing. Searchable
 values keep the existing Client/Site filters. Definition deletion retains values but
 hides the definition; updating a definition does not convert stored values.
+
+## Client time consumption report (Dev, 2026-11-05)
+
+Availability: implemented on Dev only. Main promotion, production deployment and human acceptance
+are separate. Do not tell customers this is live until the production rollout is verified.
+
+Prerequisites: an active technician account with all of report.view, client.view, ticket.view,
+task.view and commercial.timebank.view. Existing private Task visibility still applies.
+
+1. Open Clients, select the customer, then open the Time tab.
+2. Select Time consumption report. Alternatively open Reports, select Client time consumption,
+   search the Client name, number or website and select the matching customer.
+3. Set Work date from and Work date to, then select Apply. Boundaries are inclusive; leave both
+   dates blank for all history. Dates select registered work dates, not case creation/closure.
+4. Review Tickets, Tasks and direct timebank usage. Closed and archived records and already ordered
+   time remain included. An object with no time in the chosen period shows zero; its existence
+   does not mean it was worked on during that period.
+5. Review Time entries for work date, employee, description, provenance and processing/order state.
+6. Select Excel for a two-sheet XLSX workbook or PDF for a printable report using the same filters.
+
+Interpretation:
+- Registered work counts direct Ticket entries, Task entries and direct timebank usage once.
+  Registered Task time can include an estimate-based completion entry. This is not approved payroll
+  or proof that every minute was measured with a clock.
+- Customer billing basis is separate from effort. A Task with 5 registered minutes and a
+  30-minute billing minimum shows 5 registered minutes and 30 billing-basis minutes.
+- Task billing projections are not added to registered work. Task rows show their Ticket parent;
+  the report does not roll the same Task minutes up again into the parent Ticket row.
+- Covered (processed) and Billable (processed) use existing allocation or direct-consumption
+  snapshots. Unresolved billing basis is unallocated billable Ticket time, not confirmed overuse.
+  These measures must not be added together as if they were independent work.
+- Ordered means an Economy order line exists; it does not prove the customer was invoiced or paid.
+- Private Tasks and their billing projections are excluded unless visible to the signed-in employee.
+  Explicit internal or inconsistent customer contexts are excluded.
+- Excel stores minute values as numbers and notes/titles as literal text.
+
+Troubleshooting: missing report/link usually means one required permission is absent. Ask an
+authorized administrator to check the account; this report does not grant permissions. If no Client
+matches, refine the search (up to 25 matches), check its stored website, or open it from Clients.
+For a limit error, narrow the period. There is no silent partial export; if the object count itself
+exceeds the limit, contact the administrator. Empty periods retain zero-time objects.
+
+Internal use: exports contain employee names and internal notes. Review content before any sharing.
+No customer portal access, automatic email, financial update, timebank pooling or payroll approval
+is performed. Employee OpenWebUI retrieval is a separate acceptance check.
