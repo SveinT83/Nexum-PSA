@@ -1,6 +1,6 @@
 # Client time report verification - 2026-11-05
 
-Status: Done On Dev / Human Browser Acceptance Pending.
+Status: Done On Dev / Main Merged And Independently Verified / Human Browser Acceptance Pending.
 Owner: Codex. Reviewer/promotion owner: Svein Tore.
 RFC: ../rfc/2026-11-05-client-time-report.md.
 ADR: ../adr/2026-11-05-client-time-report-source-authority.md.
@@ -8,7 +8,7 @@ Human review: HR-2026-11-05-CLIENT-TIME-REPORT In Review; manual checks gate pro
 
 ## Implementation and state
 Authoritative /var/Projects/tdPSA, branch Dev. Existing dirty/staged/untracked work preserved.
-No commit/push/Main merge/deployment, production data or customer send. New employee browser
+Scoped source committed/pushed and merged in PR #395; no production deployment, data change or customer send. New employee browser
 route tech.clients.time-report (/tech/clients/time-report), Report registry key client.time and
 Client Time link. Require all five existing permissions; no grants or new data API.
 No migration/backfill, queue/scheduler, provider activation or frontend build required.
@@ -91,7 +91,7 @@ The same human-review entry records that approval. No individual manual scenario
 as performed; browser, employee-account and assistant retrieval checks remain open. No commit,
 push, Main merge, deployment or production verification was requested or performed.
 
-## Scoped Main promotion in progress
+## Scoped Main promotion authorization
 
 Svein Tore explicitly approved commit/push/Main merge on 2026-11-05: "Godkjent. Fix å merge til main".
 Candidate based on Main 8737f577461de079e4fed30a67001dfa7dc12ed0. Only eight new feature files,
@@ -109,3 +109,15 @@ exactly match Dev. Scoped Pint5/5, syntax and staged diff checks pass. Regenerat
 is a test artifact and is excluded; only the 18 approved source/documentation paths are staged.
 No application-code repair was needed for Main integration. Main source merge is authorized;
 production rollout and unperformed operational acceptance remain separate.
+
+## Verified Main merge - 2026-11-05
+
+PR #395 is merged as bcd643b137fe8cdc1c4afc93179d29fd1e757ce1. The expected PR head was
+b64afb55f27e616e3a4930c9faea735e2ca1465e. Independent Git fetch and full-tree comparison verify
+cde83d8f19247a64b407fd8ca54852bcd92ee281 exactly; git diff HEAD origin/main was empty against
+the tested candidate. GitHub confirmed merge success. No CI statuses were configured/reported for
+the source head; the actual PHP8.3 matrix87/1089 and Pint5/5 remain the validation evidence.
+Only the scoped18 paths were committed; authoritative Dev index/unrelated dirty work preserved.
+A documentation-only follow-up records completed source promotion in the same session.
+No runtime tests repeated for this status-only documentation update; application source is
+byte-identical to the verified merge. Production deployment and HR manual checks remain separate.
