@@ -13,8 +13,10 @@ supersedes it for commit/push/Main merge only. No production deployment is reque
 Source merge approval: Svein Tore, 2026-11-05: "Godkjent. Fix å merge til main".
 This explicitly authorizes the scoped commit/push/PR merge. Individual unreported manual checks
 stay open and do not block this separately approved source merge.
-Gate: human acceptance before production release. Main promotion/commit/push/deployment remain
-Svein's separate responsibility; none is authorized by implementation approval alone.
+Source merge complete: PR #395, bcd643b137fe8cdc1c4afc93179d29fd1e757ce1. Independent Git
+read-back matches tested tree cde83d8f19247a64b407fd8ca54852bcd92ee281 exactly.
+Gate: outstanding manual acceptance before production release. The separately approved source
+merge is complete; production deployment is not requested or performed.
 
 Scope: Client Time > Time consumption report and Reports > Client time consumption;
 inclusive work-date filters, historical Tickets/Tasks/direct timebank, source-aware totals and XLSX/PDF.

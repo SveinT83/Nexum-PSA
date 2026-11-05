@@ -70,7 +70,7 @@ not approved payroll or a guarantee of clock-measured actual work.
 
 ## Approval
 Svein Tore, 2026-11-05: "Godkjenner" following the proposed report scope and required RFC.
-Implementation authorized on Dev. No commit, push, Main merge or production deployment requested.
+Initial implementation approval covered Dev. Later explicit scoped Main promotion approval is recorded below; production deployment remains separate.
 
 ## Implementation evidence
 
@@ -80,3 +80,6 @@ and actual production promotion remain separate; no manual checkbox was marked R
 Source promotion approved by Svein Tore on 2026-11-05: "Godkjent. Fix å merge til main".
 This permits the scoped commit/push/PR merge; production deployment and unperformed operational
 checks remain separate.
+
+Main source delivery: PR #395, merge bcd643b137fe8cdc1c4afc93179d29fd1e757ce1; independent
+read-back exactly matches the tested tree. Dev and Main are delivered; production is unchanged.
