@@ -1,5 +1,27 @@
 # Human Review Register
 
+## HR-2026-11-05-CLIENT-TIME-REPORT-API - Native customer reporting API
+
+Status: Pending. Owner: Codex; named human reviewer: Svein Tore.
+RFC: rfc/2026-11-05-client-time-report-api.md (Approved).
+Svein explicitly authorized Dev implementation and Main merge: "Godkjenner, kjør på og merge til main etterpå".
+Gate: manual consumer acceptance before production release; does not block the separately approved source merge.
+
+- [ ] With the intended native account/key, retrieve a known customer period and compare totals,
+      items and entries with the browser report and original sources.
+- [ ] Follow page links; verify full-period totals and no missing/duplicate entries.
+- [ ] Verify both binary formats open with the same period and minute totals.
+- [ ] Confirm missing scopes/current rights/inactive users deny; private Tasks/projections remain hidden.
+- [ ] Verify the intended employee/assistant can retrieve the handbook. BookStack read-back is separate.
+- [ ] At any future separately approved rollout, verify actual API/Swagger and gateway tools if requested.
+
+No migration/build, financial writes, automatic grants, provider/runtime activation or production
+deployment. Existing HR-2026-11-05-CLIENT-TIME-REPORT remains independent. Source coverage and tests:
+plans/2026-11-05-client-time-report-api-verification.md. Future deployment refreshes normal
+route/config/opcache/Swagger after approval; no queued jobs or scheduled delivery.
+Rollback removes scoped endpoints/scopes/descriptors, preserving source time/financial data.
+
+
 ## HR-2026-11-05-CLIENT-TIME-REPORT - Internal customer time reporting
 
 Status: In Review — delivered Dev implementation approved by Svein Tore, 2026-11-05.

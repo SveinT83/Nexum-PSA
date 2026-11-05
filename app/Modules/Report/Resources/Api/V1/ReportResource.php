@@ -22,6 +22,7 @@ class ReportResource extends JsonResource
     {
         return [
             'key' => $this->key,
+            'api_endpoints' => $this->apiEndpoints,
             'title' => $this->title,
             'description' => $this->description,
             'domain' => $this->domain,

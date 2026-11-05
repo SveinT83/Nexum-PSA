@@ -25,7 +25,11 @@ class ClientsApiContractTest extends TestCase
         $expected = [];
         foreach ($manifest['operations'] as $op) {
             $expected[] = $op['method'].' '.$op['path'];
-            $this->assertArrayHasKey($op['response'], $manifest['schemas']);
+            if (isset($op['media_types'])) {
+                $this->assertNotEmpty($op['media_types']);
+            } else {
+                $this->assertArrayHasKey($op['response'], $manifest['schemas']);
+            }
             if ($op['request']) {
                 $this->assertArrayHasKey($op['request'], $manifest['schemas']);
             }
@@ -48,7 +52,14 @@ class ClientsApiContractTest extends TestCase
             $this->assertSame($op['operationId'], $operation['operationId']);
             foreach ($operation['responses'] as $status => $response) {
                 if ((int) $status >= 200 && (int) $status < 300) {
-                    $this->assertSame('#/components/schemas/'.($op['responses'][(string) $status] ?? $op['response']), $response['content']['application/json']['schema']['$ref']);
+                    if (isset($op['media_types'])) {
+                        foreach ($op['media_types'] as $type) {
+                            $this->assertSame('string', $response['content'][$type]['schema']['type']);
+                            $this->assertSame('binary', $response['content'][$type]['schema']['format']);
+                        }
+                    } else {
+                        $this->assertSame('#/components/schemas/'.($op['responses'][(string) $status] ?? $op['response']), $response['content']['application/json']['schema']['$ref']);
+                    }
                 }
             }
         }

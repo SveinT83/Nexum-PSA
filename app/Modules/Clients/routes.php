@@ -38,6 +38,10 @@ if (($clientsApiRoutes ?? false) === true) {
         Route::get('client-operations/{command}', [\App\Modules\Clients\Controllers\Api\V1\ClientOperationsController::class, 'operation'])->name('clients.operations.show')->middleware(CheckAbilities::class.':clients.operations.read')->defaults('client_permissions', ['client.view']);
         Route::get('clients/{client}/related/{section}', [\App\Modules\Clients\Controllers\Api\V1\ClientRelatedController::class, 'index'])
             ->name('clients.related.index')->middleware(CheckAbilities::class.':clients.read');
+        Route::get('clients/{client}/reports/time', [\App\Modules\Clients\Controllers\Api\V1\ClientTimeReportApiController::class, 'summary'])->name('clients.reports.time.summary')->middleware(CheckAbilities::class.':clients.reports.time.read');
+        Route::get('clients/{client}/reports/time/items', [\App\Modules\Clients\Controllers\Api\V1\ClientTimeReportApiController::class, 'items'])->name('clients.reports.time.items')->middleware(CheckAbilities::class.':clients.reports.time.read');
+        Route::get('clients/{client}/reports/time/entries', [\App\Modules\Clients\Controllers\Api\V1\ClientTimeReportApiController::class, 'entries'])->name('clients.reports.time.entries')->middleware(CheckAbilities::class.':clients.reports.time.read');
+        Route::get('clients/{client}/reports/time/export', [\App\Modules\Clients\Controllers\Api\V1\ClientTimeReportApiController::class, 'export'])->name('clients.reports.time.export')->middleware(CheckAbilities::class.':clients.reports.time.read,clients.reports.time.export');
         Route::get('clients/{client}/time-usage', [\App\Modules\Clients\Controllers\Api\V1\ClientTimeController::class, 'index'])
             ->name('clients.time.index')->middleware(CheckAbilities::class.':clients.time.read');
         Route::get('clients/{client}/time-usage/{source}/{entry}', [\App\Modules\Clients\Controllers\Api\V1\ClientTimeController::class, 'show'])

@@ -1,5 +1,24 @@
 # tdPSA Development TODO
 
+## Customer time reporting API (2026-11-05)
+
+Status: Done On Dev / Main Candidate Verified / Scoped Merge Authorized. Owner: Codex; approval/promotion owner: Svein Tore.
+Approved RFC: rfc/2026-11-05-client-time-report-api.md. Approval includes scoped Main merge.
+Coverage: summary/items/entries and binary XLSX/PDF using existing shared query/export; dedicated
+read/export abilities and all five native rights. Existing report metadata gains domain-owned
+API links; governed Worklog and Workday gates unchanged. No scope/token/provider activation.
+Initial API7/97 passes. Full Dev95/1210 and Main94/1202 each found only the missing exact contract
+inventory for new routes; all other cases passed. Manifest now includes all four routes and eight
+schemas; binary and JSON contract checks updated. Final Dev API/contract10/520 passes.
+BookStack451/17 and506/3 exact source sections independently read back; inherited audience unchanged.
+Evidence: plans/2026-11-05-client-time-report-api-verification.md. HR-2026-11-05-CLIENT-TIME-REPORT-API
+Pending gates manual consumer/privacy/download/assistant acceptance before production, not the
+explicitly approved source merge. Main final API/contract/Report16/586 passes.
+Next Codex: commit/push/merge scoped source and independently read back Main.
+No migration/build, financial change, production/gateway deployment or automatic grants.
+Parent browser report PR395/396 and its open manual review remain independent.
+
+
 ## Client time consumption report (2026-11-05)
 
 Status: Done On Dev / Main Merged And Independently Verified / Human Browser Checks Pending. Owner: Codex; reviewer/promotion owner: Svein Tore.
