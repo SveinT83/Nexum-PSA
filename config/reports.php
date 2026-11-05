@@ -12,6 +12,7 @@ return [
     |
     */
     'definitions' => [
+        App\Modules\Clients\Reports\ClientTimeReportDefinition::class,
         App\Modules\Ticket\Reports\TicketSlaReportDefinition::class,
         App\Modules\Workday\Reports\ConfirmedWorkReportDefinition::class,
     ],

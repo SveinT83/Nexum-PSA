@@ -123,6 +123,9 @@ if (($clientsPortalRoutes ?? false) === true) {
     return;
 }
 
+// Historical internal report; controller enforces all participating domain permissions.
+Route::get('/clients/time-report', \App\Modules\Clients\Controllers\Tech\ClientTimeReportController::class)->name('clients.time-report');
+
 Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
 Route::get('/clients/index', [ClientController::class, 'index'])->name('client.index');
 Route::get('/clients/create', [ClientController::class, 'create'])->name('clients.create');

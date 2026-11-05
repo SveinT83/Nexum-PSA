@@ -502,6 +502,10 @@
                 </div>
 
                 <div @class(['tab-pane fade', 'show active' => $activeClientTab === 'time-usage']) id="client-time-usage-pane" role="tabpanel" aria-labelledby="client-time-usage-tab" tabindex="0">
+                    {{-- Full historical reporting is separate from editable pending usage. --}}
+                    @if(app(\App\Modules\Clients\Reports\ClientTimeReportDefinition::class)->visibleTo(auth()->user()))
+                        <div class="mb-3"><a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.clients.time-report', ['client_id' => $client->id]) }}"><i class="bi bi-clock-history me-1"></i>Time consumption report</a></div>
+                    @endif
                     @if($canViewTimebank && $quickTimebankPolicy['quick_timebank_enabled'] && $canQuickConsumeTimebank)
                         <div class="card mb-4">
                             <div class="card-header d-flex justify-content-between align-items-center">

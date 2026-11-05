@@ -1,5 +1,48 @@
 # Human Review Register
 
+## HR-2026-11-05-CLIENT-TIME-REPORT - Internal customer time reporting
+
+Status: In Review — delivered Dev implementation approved by Svein Tore, 2026-11-05.
+Owner: Codex. Named human reviewer: Svein Tore.
+RFC: rfc/2026-11-05-client-time-report.md (Approved in chat, 2026-11-05).
+Approval follow-up: Svein Tore replied "Godkjenenr" to the completed Dev handoff on
+2026-11-05. This records approval of the delivered implementation. Individual browser/export,
+employee-account and OpenWebUI checks were not reported as performed, so their checkboxes remain
+open. Dev web reachability remains unverified after the recorded timeouts. That earlier approval did not request source promotion; the later explicit merge approval below
+supersedes it for commit/push/Main merge only. No production deployment is requested.
+Source merge approval: Svein Tore, 2026-11-05: "Godkjent. Fix å merge til main".
+This explicitly authorizes the scoped commit/push/PR merge. Individual unreported manual checks
+stay open and do not block this separately approved source merge.
+Gate: human acceptance before production release. Main promotion/commit/push/deployment remain
+Svein's separate responsibility; none is authorized by implementation approval alone.
+
+Scope: Client Time > Time consumption report and Reports > Client time consumption;
+inclusive work-date filters, historical Tickets/Tasks/direct timebank, source-aware totals and XLSX/PDF.
+
+- [ ] Open the intended customer (for example Trønder Service) on Dev, then Time > Time consumption
+      report. Confirm the correct customer by name/number, including closed and archived objects.
+- [ ] Compare a known date period and all-history totals to source entries, including previously
+      ordered time. Verify zero-time objects do not imply work in the selected period.
+- [ ] Confirm a Task with 5 registered minutes and 30 billing-basis minutes is not summed as
+      35 registered minutes. Verify parent Ticket and Task rows are not added twice.
+- [ ] Review processed covered/billable versus unresolved billing basis; this is not an invoice,
+      timebank entitlement/balance recalculation or payroll report.
+- [ ] Open the Excel/PDF downloads and compare customer, filters, rows and totals with the page.
+      Check Norwegian characters, long descriptions, multiple pages and legibility.
+- [ ] With intended employee accounts, confirm all five permissions are required and private Tasks
+      and their linked billing projections remain hidden from unrelated staff.
+- [ ] Verify handbook guidance is understandable and employee OpenWebUI retrieval works for the
+      intended audience. API BookStack read-back does not prove employee assistant retrieval.
+
+Expected: source records, contract/allocation snapshots and Economy orders remain unchanged.
+Exports are internal, with employee names/notes. Customer delivery/audience policy is not approved.
+No migration, queue/scheduler or frontend build required. Future approved deployment: ship scoped
+source, refresh the ordinary route/view/config cache and PHP opcache, verify authenticated browser
+and exports. Do not activate unrelated background work. Rollback removes the new route, registry
+entry, views/action/query and Client Time link; preserve all customer/financial data.
+Evidence: plans/2026-11-05-client-time-report-verification.md.
+
+
 ## HR-2026-11-04-TIME-DELETE - Guarded Ticket time deletion API
 
 Status: Pending
