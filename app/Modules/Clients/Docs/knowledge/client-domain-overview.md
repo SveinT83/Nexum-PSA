@@ -334,3 +334,50 @@ exceeds the limit, contact the administrator. Empty periods retain zero-time obj
 Internal use: exports contain employee names and internal notes. Review content before any sharing.
 No customer portal access, automatic email, financial update, timebank pooling or payroll approval
 is performed. Employee OpenWebUI retrieval is a separate acceptance check.
+
+## Customer time reporting API (2026-11-05)
+
+Availability: implemented on Dev; source promotion to Main is separately verified in the API
+handoff. Production deployment and gateway tool registration are separate; do not assume live access.
+
+Prerequisites: an active native technician with report.view, client.view, ticket.view, task.view
+and commercial.timebank.view. An administrator must explicitly select clients.reports.time.read
+on an appropriate native API key. Downloading also requires clients.reports.time.export.
+No existing key, role or permission is automatically changed. Exports contain employee names and
+internal descriptions: use only for the approved recipient/purpose. report.read remains metadata-only.
+Existing Worklog/coordinator credentials, provider approval and installation gates are not replaced.
+
+1. Resolve the customer with the existing Clients API and verify its ID/name/number.
+2. GET /api/v1/clients/{client}/reports/time for totals, definitions, counts and result links.
+3. GET the same path with /items for Tickets/Tasks/direct timebank rows, or /entries for detailed
+   source registrations. Use page and per_page (1–100, default50); follow next links until null.
+4. Send date_from/date_to as inclusive YYYY-MM-DD work dates on every request. Either boundary is
+   optional; omit both for all history. Retain identical filters when following result links.
+5. GET /api/v1/clients/{client}/reports/time/export?format=xlsx or format=pdf for the complete
+   authorized period. Preserve Content-Type/Content-Disposition; the body is binary, not JSON.
+
+All durations are integer minutes. meta.totals covers the whole authorized period, not just a page.
+meta.total/returned/page/per_page/last_page and links.next/previous describe list paging.
+Successful JSON reports explicitly say truncated:false. Over10,000 rows in a source/object list
+returns422 instead of a partial export; narrow the dates where possible. A large object list itself
+requires separate pagination/scalability work. A single response uses one materialized report;
+pages are live reads, so concurrent edits can change results between requests. generated_at and
+cross_request_snapshot:false make this limitation explicit.
+
+Registered effort and billing basis are separate; never add Task billing projections to effort.
+Zero-time/closed/archived/ordered history remains visible. Private Task visibility and customer
+context are enforced. Processed allocations are stored facts; unresolved basis is not assumed
+overuse. Registered Task time may include estimate-completion provenance and is not approved payroll.
+Use Economy for historical invoice ownership after customer moves.
+
+GET /api/v1/reports and /reports/{reportKey} return metadata plus api_endpoints descriptors.
+client.time describes the four new operations and scopes. ticket.sla links the existing Ticket SLA
+API (period/context/limit); workday.confirmed links its existing overview (from/to/worker filters).
+Descriptors do not authorize requests or activate Workday; domain/runtime checks remain authoritative.
+
+Troubleshooting:401 means authenticate;403 means current native rights or token scopes are missing;
+404 means customer not found or an existing domain feature is unavailable;422 means invalid
+date/page/format or explicit report limit. Reload current rights rather than expanding shared keys.
+Do not treat this identified customer report as the governed pseudonymized Worklog export.
+Swagger lists getClientTimeReport, getClientTimeReportItems, getClientTimeReportEntries and
+exportClientTimeReport with typed responses. No report sends mail or modifies financial records.

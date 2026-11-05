@@ -760,6 +760,71 @@
       ],
       "portal": false,
       "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/{client}/reports/time",
+      "name": "api.v1.clients.reports.time.summary",
+      "operationId": "getClientTimeReport",
+      "request": null,
+      "response": "ClientTimeReportSummary",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.reports.time.read"
+      ],
+      "portal": false,
+      "list": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/{client}/reports/time/items",
+      "name": "api.v1.clients.reports.time.items",
+      "operationId": "getClientTimeReportItems",
+      "request": null,
+      "response": "ClientTimeReportItems",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.reports.time.read"
+      ],
+      "portal": false,
+      "list": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/{client}/reports/time/entries",
+      "name": "api.v1.clients.reports.time.entries",
+      "operationId": "getClientTimeReportEntries",
+      "request": null,
+      "response": "ClientTimeReportEntries",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.reports.time.read"
+      ],
+      "portal": false,
+      "list": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clients/{client}/reports/time/export",
+      "name": "api.v1.clients.reports.time.export",
+      "operationId": "exportClientTimeReport",
+      "request": null,
+      "response": null,
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.reports.time.read",
+        "clients.reports.time.export"
+      ],
+      "portal": false,
+      "list": false,
+      "media_types": [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      ]
     }
   ],
   "schemas": {
@@ -3452,6 +3517,302 @@
           "nullable": true
         }
       }
+    },
+    "ClientTimeReportTotals": {
+      "properties": {
+        "work_minutes": {
+          "description": "Typed identified report responses; all durations are integer minutes.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "basis_minutes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "covered_minutes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "processed_billable_minutes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unresolved_minutes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "type": "object"
+    },
+    "ClientTimeReportItem": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "reference": {
+          "type": "string",
+          "nullable": true
+        },
+        "status": {
+          "type": "string",
+          "nullable": true
+        },
+        "parent": {
+          "type": "string",
+          "nullable": true
+        },
+        "id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "entry_count": {
+          "type": "integer"
+        },
+        "work_minutes": {
+          "type": "integer"
+        },
+        "basis_minutes": {
+          "type": "integer"
+        },
+        "covered_minutes": {
+          "type": "integer"
+        },
+        "processed_billable_minutes": {
+          "type": "integer"
+        },
+        "unresolved_minutes": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "ClientTimeReportEntry": {
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "object_key": {
+          "type": "string"
+        },
+        "reference": {
+          "type": "string"
+        },
+        "employee": {
+          "type": "string"
+        },
+        "provenance": {
+          "type": "string"
+        },
+        "billing_status": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "nullable": true
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "invoice_text": {
+          "type": "string",
+          "nullable": true
+        },
+        "id": {
+          "type": "integer"
+        },
+        "ordered": {
+          "type": "boolean"
+        },
+        "work_minutes": {
+          "type": "integer"
+        },
+        "basis_minutes": {
+          "type": "integer"
+        },
+        "covered_minutes": {
+          "type": "integer"
+        },
+        "processed_billable_minutes": {
+          "type": "integer"
+        },
+        "unresolved_minutes": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "ClientTimeReportMeta": {
+      "properties": {
+        "date_from": {
+          "type": "string",
+          "format": "date",
+          "nullable": true
+        },
+        "date_to": {
+          "type": "string",
+          "format": "date",
+          "nullable": true
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "units": {
+          "type": "string"
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "cross_request_snapshot": {
+          "type": "boolean"
+        },
+        "totals": {
+          "$ref": "#/components/schemas/ClientTimeReportTotals"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "returned": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        },
+        "per_page": {
+          "type": "integer"
+        },
+        "last_page": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "ClientTimeReportSummary": {
+      "properties": {
+        "data": {
+          "properties": {
+            "client": {
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "client_number": {
+                  "type": "string",
+                  "nullable": true
+                }
+              },
+              "type": "object"
+            },
+            "totals": {
+              "$ref": "#/components/schemas/ClientTimeReportTotals"
+            },
+            "object_count": {
+              "type": "integer"
+            },
+            "entry_count": {
+              "type": "integer"
+            },
+            "metric_definitions": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "links": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "type": "object"
+        },
+        "meta": {
+          "$ref": "#/components/schemas/ClientTimeReportMeta"
+        }
+      },
+      "type": "object"
+    },
+    "ClientTimeReportValidation": {
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "errors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "type": "object"
+    },
+    "ClientTimeReportItems": {
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientTimeReportItem"
+          }
+        },
+        "meta": {
+          "$ref": "#/components/schemas/ClientTimeReportMeta"
+        },
+        "links": {
+          "properties": {
+            "next": {
+              "type": "string",
+              "nullable": true
+            },
+            "previous": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "ClientTimeReportEntries": {
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientTimeReportEntry"
+          }
+        },
+        "meta": {
+          "$ref": "#/components/schemas/ClientTimeReportMeta"
+        },
+        "links": {
+          "properties": {
+            "next": {
+              "type": "string",
+              "nullable": true
+            },
+            "previous": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     }
   },
   "main_promoted": true,

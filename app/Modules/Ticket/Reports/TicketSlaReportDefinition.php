@@ -4,7 +4,7 @@ namespace App\Modules\Ticket\Reports;
 
 use App\Modules\Report\Contracts\ReportDefinition;
 
-class TicketSlaReportDefinition implements ReportDefinition
+class TicketSlaReportDefinition implements \App\Modules\Report\Contracts\ReportApiDefinition, ReportDefinition
 {
     public function key(): string
     {
@@ -44,5 +44,10 @@ class TicketSlaReportDefinition implements ReportDefinition
     public function tags(): array
     {
         return ['SLA', 'Risk', 'Operations'];
+    }
+
+    public function apiEndpoints(): array
+    {
+        return [['method' => 'GET', 'uri_template' => '/api/v1/tickets/reports/sla', 'abilities' => ['tickets.reports.read'], 'permissions' => ['report.view'], 'parameters' => ['period', 'context', 'limit']]];
     }
 }

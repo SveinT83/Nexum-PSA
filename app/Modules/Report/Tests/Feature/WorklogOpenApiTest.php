@@ -31,6 +31,21 @@ class WorklogOpenApiTest extends TestCase
             $this->assertTrue($operation['x-workload-bound']);
             $this->assertSame([200, 401, 403, 422, 429], array_keys($operation['responses']));
         }
+        // Native customer reporting must not acquire or replace governed Worklog contracts.
+        foreach (['' => 'ClientTimeReportSummary', '/items' => 'ClientTimeReportItems', '/entries' => 'ClientTimeReportEntries', '/export' => null] as $suffix => $schema) {
+            $operation = $spec['paths']['/api/v1/clients/{client}/reports/time'.$suffix]['get'];
+            $this->assertContains('clients.reports.time.read', $operation['x-required-scopes']);
+            if ($schema) {
+                $this->assertSame('#/components/schemas/'.$schema, $operation['responses'][200]['content']['application/json']['schema']['$ref']);
+                $this->assertArrayHasKey($schema, $spec['components']['schemas']);
+            } else {
+                $this->assertContains('clients.reports.time.export', $operation['x-required-scopes']);
+                $this->assertArrayHasKey('application/pdf', $operation['responses'][200]['content']);
+            }
+        }
+        foreach (['ClientTimeReportItem', 'ClientTimeReportEntry', 'ClientTimeReportTotals', 'ClientTimeReportMeta', 'ClientTimeReportValidation'] as $schema) {
+            $this->assertArrayHasKey($schema, $spec['components']['schemas']);
+        }
         $meta = $spec['components']['schemas']['WorklogWindowMeta'];
         foreach (['total', 'available_total', 'returned_count', 'truncated', 'recovery', 'maximum_results'] as $field) {
             $this->assertContains($field, $meta['required']);

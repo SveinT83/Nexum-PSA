@@ -7,7 +7,7 @@ use App\Modules\Report\Contracts\ReportDefinition;
 use App\Modules\Report\Contracts\ReportVisibility;
 
 /** Discovery and direct access share the complete permission requirement. */
-class ClientTimeReportDefinition implements ReportDefinition, ReportVisibility
+class ClientTimeReportDefinition implements \App\Modules\Report\Contracts\ReportApiDefinition, ReportDefinition, ReportVisibility
 {
     public const PERMISSIONS = ['report.view', 'client.view', 'ticket.view', 'task.view', 'commercial.timebank.view'];
 
@@ -60,5 +60,12 @@ class ClientTimeReportDefinition implements ReportDefinition, ReportVisibility
         }
 
         return true;
+    }
+
+    public function apiEndpoints(): array
+    {
+        return array_map(fn ($action) => ['method' => 'GET', 'uri_template' => '/api/v1/clients/{client}/reports/time'.($action === 'summary' ? '' : '/'.$action),
+            'abilities' => $action === 'export' ? ['clients.reports.time.read', 'clients.reports.time.export'] : ['clients.reports.time.read'],
+            'permissions' => self::PERMISSIONS, 'parameters' => $action === 'export' ? ['client', 'date_from', 'date_to', 'format'] : ['client', 'date_from', 'date_to', 'page', 'per_page']], ['summary', 'items', 'entries', 'export']);
     }
 }

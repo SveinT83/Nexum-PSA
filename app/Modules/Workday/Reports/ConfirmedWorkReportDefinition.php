@@ -7,7 +7,7 @@ use App\Modules\Report\Contracts\ReportDefinition;
 use App\Modules\Report\Contracts\ReportVisibility;
 use App\Modules\Workday\Support\WorkdayAccess;
 
-class ConfirmedWorkReportDefinition implements ReportDefinition, ReportVisibility
+class ConfirmedWorkReportDefinition implements \App\Modules\Report\Contracts\ReportApiDefinition, ReportDefinition, ReportVisibility
 {
     public function key(): string
     {
@@ -52,5 +52,10 @@ class ConfirmedWorkReportDefinition implements ReportDefinition, ReportVisibilit
     public function visibleTo(User $user): bool
     {
         return app(WorkdayAccess::class)->canViewOverview($user);
+    }
+
+    public function apiEndpoints(): array
+    {
+        return [['method' => 'GET', 'uri_template' => '/api/v1/workdays/overview', 'abilities' => ['workdays.read-all'], 'permissions' => ['workday.view_all'], 'runtime' => 'Existing Workday runtime and actor gates apply; follow official domain context.', 'parameters' => ['from', 'to', 'worker_id', 'worker', 'page', 'per_page']]];
     }
 }
