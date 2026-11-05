@@ -266,8 +266,8 @@ Own workday scope remains self-only; no draft or absence data is added to Report
 
 ## Customer time reporting API (2026-11-05)
 
-Availability: implemented on Dev; source promotion to Main is separately verified in the API
-handoff. Production deployment and gateway tool registration are separate; do not assume live access.
+Availability: installed on production 2026-11-05, with native read/download and gateway catalog
+read-back verified. Intended employee/browser acceptance remains separate; see the current notice below.
 
 Prerequisites: an active native technician with report.view, client.view, ticket.view, task.view
 and commercial.timebank.view. An administrator must explicitly select clients.reports.time.read
@@ -310,3 +310,39 @@ date/page/format or explicit report limit. Reload current rights rather than exp
 Do not treat this identified customer report as the governed pseudonymized Worklog export.
 Swagger lists getClientTimeReport, getClientTimeReportItems, getClientTimeReportEntries and
 exportClientTimeReport with typed responses. No report sends mail or modifies financial records.
+
+## Production Main and complete API catalog (2026-11-05)
+
+Production application source is pinned to Main `9270d2f19413506483717b48b1b241c658e20cb7`,
+with the three documented existing Workday/Tripletex production corrections retained. Native
+Swagger contains 1304 HTTP operations; the existing gateway now exposes 1409 tools including
+compatibility aliases. All previously allowed 238 tools remain available. Existing native scopes,
+actor rights, private Task rules, identity bindings and provider/runtime flags remain authoritative.
+No API key or member grant was automatically expanded.
+
+The customer report summary/items/entries and XLSX/PDF downloads were independently read back
+through trusted public HTTPS. Report discovery through the existing connected gateway also works.
+The gateway lists `getclienttimereport`, `getclienttimereportitems`, `getclienttimereportentries` and
+`exportclienttimereport`. Read requires clients.reports.time.read; download additionally requires
+clients.reports.time.export and the five existing native report/source permissions.
+
+1. Reload the connected app's tools or start a fresh chat to discover the expanded catalog.
+2. Resolve and verify the intended customer; select the report period or all history.
+3. Use summary/items/entries for structured data. Keep date filters identical across pages.
+4. Use the native export endpoint for binary XLSX/PDF and verify its content type.
+5. If denied, check the current account's native rights and selected token scopes; do not reuse
+   another employee's credential or broaden a shared token to bypass the denial.
+
+OpenAPI UI: https://portal.tronderdata.no/api/documentation . Raw JSON: https://portal.tronderdata.no/docs .
+Successful JSON responses explicitly report no truncation; pages remain live reads, not a durable
+cross-request snapshot. Existing limits and source effort/billing distinctions remain unchanged.
+
+This production notice supersedes older statements on this page that source deployment or API
+catalog publication is still pending. It does not mark the older manual reviews as completed.
+
+Queue workers and the Laravel scheduler remain inactive/disabled. Installing Main and API tools
+has not activated pending email/notification/provider jobs or replayed old queues. Individual
+risky writes/provider workflows require their existing native approvals and runtime settings.
+Human browser/2FA, intended employee workflow and employee-assistant handbook retrieval remain
+separate acceptance checks under HR-2026-11-05-FULL-MAIN-ROLLOUT. Installing source and listing
+operations is not proof that every mutating workflow was exercised against live customer data.
