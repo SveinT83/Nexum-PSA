@@ -1,11 +1,31 @@
 # Human Review Register
 
+## HR-2026-11-05-FULL-MAIN-ROLLOUT - Whole Main and native API installation
+
+Status: In Review. Installation/catalog rollout completed and independently verified.
+Owner: Codex; named reviewer: Svein Tore.
+User explicitly authorizes installation and accepts report API: "Aksepterer så kan du ta å
+implementere hele main og alle nye API'er". This permits deployment before subsequent operator
+acceptance; it does not claim individual scenario execution or authorize queue/provider activation.
+
+- [ ] Verify normal login/2FA, Tickets/Tasks and intended customer report in the actual browser.
+- [ ] Verify report totals and binary downloads with the intended employee account.
+- [ ] Reload connected tools and confirm the new report API in a fresh chat with native rights.
+- [ ] Verify employee assistant handbook retrieval separately from BookStack read-back.
+
+Expected: entire pinned Main plus three documented preserved production overlays, source/Swagger
+read-back, old application/DB backup retained, background services/provider flags/rights unchanged.
+Earlier outstanding Ticket/Task/Workday/operator checks remain recorded; no false Reviewed status.
+Evidence: plans/2026-11-05-full-main-production-rollout.md.
+
+
+
 ## HR-2026-11-05-CLIENT-TIME-REPORT-API - Native customer reporting API
 
 Status: Pending. Owner: Codex; named human reviewer: Svein Tore.
 RFC: rfc/2026-11-05-client-time-report-api.md (Approved).
 Svein explicitly authorized Dev implementation and Main merge: "Godkjenner, kjør på og merge til main etterpå".
-Gate: manual consumer acceptance before production release; does not block the separately approved source merge.
+Gate: remaining manual consumer acceptance is post-installation follow-up; installation was explicitly authorized.
 Source merged in PR #397 (5b9b862a1ef79162266602afb4ad8f320e3830e7); independent read-back
 exactly matches verified tree da9eda40c67993969f55eb43798e3493a3b5a3a9. No checkbox inferred from merge.
 
@@ -24,6 +44,12 @@ route/config/opcache/Swagger after approval; no queued jobs or scheduled deliver
 Rollback removes scoped endpoints/scopes/descriptors, preserving source time/financial data.
 
 
+Current rollout update (2026-11-05): Svein explicitly accepted the delivery and authorized full
+Main/API installation. Production and gateway rollout are complete; older source-only and
+pre-installation gate statements in this historical record are superseded for deployment.
+Unreported human scenarios remain open under HR-2026-11-05-FULL-MAIN-ROLLOUT In Review.
+Evidence: plans/2026-11-05-full-main-production-rollout.md. No further deployment approval pending.
+
 ## HR-2026-11-05-CLIENT-TIME-REPORT - Internal customer time reporting
 
 Status: In Review — delivered Dev implementation approved by Svein Tore, 2026-11-05.
@@ -39,8 +65,8 @@ This explicitly authorizes the scoped commit/push/PR merge. Individual unreporte
 stay open and do not block this separately approved source merge.
 Source merge complete: PR #395, bcd643b137fe8cdc1c4afc93179d29fd1e757ce1. Independent Git
 read-back matches tested tree cde83d8f19247a64b407fd8ca54852bcd92ee281 exactly.
-Gate: outstanding manual acceptance before production release. The separately approved source
-merge is complete; production deployment is not requested or performed.
+Gate: remaining manual acceptance is post-installation follow-up. The separately approved source
+merge and production installation are complete; individual unreported checks remain open.
 
 Scope: Client Time > Time consumption report and Reports > Client time consumption;
 inclusive work-date filters, historical Tickets/Tasks/direct timebank, source-aware totals and XLSX/PDF.
@@ -68,6 +94,12 @@ and exports. Do not activate unrelated background work. Rollback removes the new
 entry, views/action/query and Client Time link; preserve all customer/financial data.
 Evidence: plans/2026-11-05-client-time-report-verification.md.
 
+
+Current rollout update (2026-11-05): Svein explicitly accepted the delivery and authorized full
+Main/API installation. Production and gateway rollout are complete; older source-only and
+pre-installation gate statements in this historical record are superseded for deployment.
+Unreported human scenarios remain open under HR-2026-11-05-FULL-MAIN-ROLLOUT In Review.
+Evidence: plans/2026-11-05-full-main-production-rollout.md. No further deployment approval pending.
 
 ## HR-2026-11-04-TIME-DELETE - Guarded Ticket time deletion API
 

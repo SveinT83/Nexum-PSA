@@ -1,8 +1,25 @@
 # tdPSA Development TODO
 
+## Full Main and API production rollout (2026-11-05)
+
+Status: Production Installed / Gateway Published / Operator Acceptance In Review.
+Owner: Codex; authorization/reviewer: Svein Tore. Explicit rollout authorization recorded.
+VM169 live HEAD 9270d2f1 plus three preserved Workday/Tripletex overlays; environment unchanged,
+no migration/dependency/frontend change. Fresh 3.69GB SQL backup and full old application retained.
+247/1681 candidate tests pass. Public health/login/report reads and XLSX/PDF200; unauth401.
+Native Swagger 1304 operations; existing gateway 1409 SDK tools including original 238 aliases,
+all auth/bindings/groups unchanged. No native grant/provider/queue/scheduler activation.
+Evidence: plans/2026-11-05-full-main-production-rollout.md. Existing connected metadata read works.
+Next owner Svein: reload tools/new chat and complete browser/2FA/employee acceptance and handbook
+retrieval under HR-2026-11-05-FULL-MAIN-ROLLOUT In Review. No deployment approval remains pending.
+Code rollback: /root/nexum-main-rollout-20261105/rollback.sh; preserve storage/database history.
+Handbook: BookStack451/19,506/5,449/171 exact source read-back; existing inherited scope unchanged.
+
+
+
 ## Customer time reporting API (2026-11-05)
 
-Status: Done On Dev / Main Merged And Independently Verified / Manual Acceptance Pending. Owner: Codex; approval/promotion owner: Svein Tore.
+Status: Production Installed / Gateway Published / Operator Acceptance In Review. Owner: Codex; approval/promotion owner: Svein Tore.
 Approved RFC: rfc/2026-11-05-client-time-report-api.md. Approval includes scoped Main merge.
 Coverage: summary/items/entries and binary XLSX/PDF using existing shared query/export; dedicated
 read/export abilities and all five native rights. Existing report metadata gains domain-owned
@@ -21,9 +38,15 @@ No migration/build, financial change, production/gateway deployment or automatic
 Parent browser report PR395/396 and its open manual review remain independent.
 
 
+Current rollout update (2026-11-05): Svein explicitly accepted the delivery and authorized full
+Main/API installation. Production and gateway rollout are complete; older source-only and
+pre-installation gate statements in this historical record are superseded for deployment.
+Unreported human scenarios remain open under HR-2026-11-05-FULL-MAIN-ROLLOUT In Review.
+Evidence: plans/2026-11-05-full-main-production-rollout.md. No further deployment approval pending.
+
 ## Client time consumption report (2026-11-05)
 
-Status: Done On Dev / Main Merged And Independently Verified / Human Browser Checks Pending. Owner: Codex; reviewer/promotion owner: Svein Tore.
+Status: Production Installed / Gateway Published / Operator Acceptance In Review. Owner: Codex; reviewer/promotion owner: Svein Tore.
 Approved RFC: rfc/2026-11-05-client-time-report.md (chat approval 2026-11-05).
 Scope: internal read-only Client/Reports UI, date filters, complete ordered history, source-safe
 registered work/billing/processed allocation totals, XLSX/PDF. Preserve private Task visibility.
@@ -44,6 +67,12 @@ HR-2026-11-05-CLIENT-TIME-REPORT In Review; outstanding manual checks still gate
 Existing dirty work remains untouched. #390/#391 financial changes and #290 external Worklog
 remain separate; no financial mutation, production deployment, token/provider or runtime activation.
 
+
+Current rollout update (2026-11-05): Svein explicitly accepted the delivery and authorized full
+Main/API installation. Production and gateway rollout are complete; older source-only and
+pre-installation gate statements in this historical record are superseded for deployment.
+Unreported human scenarios remain open under HR-2026-11-05-FULL-MAIN-ROLLOUT In Review.
+Evidence: plans/2026-11-05-full-main-production-rollout.md. No further deployment approval pending.
 
 ## Guarded Ticket time-entry deletion API (2026-11-04)
 
