@@ -7,8 +7,8 @@ Owner: Codex. Named human reviewer: Svein Tore.
 RFC: rfc/2026-11-09-timebank-adjustments-and-charge-reversals.md (Approved).
 ADR: adr/2026-11-09-timebank-correction-ledger-and-employee-time.md (Accepted).
 Gate: Delivered Dev implementation accepted. BookStack is an explicitly approved deferral.
-Main promotion, production installation and gateway publication still require separate authorization
-and installation-specific verification; this acceptance does not perform or authorize those actions.
+Svein subsequently authorized Main promotion and production installation; both are complete with
+installation-specific evidence below. Gateway publication is blocked by admin HTTP401; BookStack is deferred.
 
 Affected: Client Contracts/time usage/report; source Ticket/Task details; Economy draft correction;
 official Commercial correction API, report API, Swagger and MCP/gateway after authorized publication.
@@ -51,6 +51,15 @@ Owner: Svein Tore / Integration; resume when Svein requests the deferred documen
 Production authorization update, 2026-11-09: Svein explicitly requests Main merge and
 production rollout. This supersedes earlier no-rollout-authorization statements for this scope.
 BookStack remains deferred. Evidence: plans/2026-11-09-timebank-corrections-main-production-rollout.md.
+
+## Main And Production Installation (2026-11-09)
+
+Main PR #400 is merged; VM169 runs 26c28cab with the feature enabled (migration batch60).
+Main candidate301/3589 tests pass; production HTTPS reads/previews/XLSX/PDF are verified.
+All1050 existing source/Workday rows are unchanged; no real correction or permission grant.
+Gateway tool publication is blocked by admin HTTP401; BookStack remains explicitly deferred.
+See plans/2026-11-09-timebank-corrections-main-production-rollout.md for current evidence.
+
 
 ## HR-2026-11-05-FULL-MAIN-ROLLOUT - Whole Main and native API installation
 

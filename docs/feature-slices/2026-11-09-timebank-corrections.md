@@ -1,6 +1,6 @@
 # Feature Slices: Customer Timebank Corrections
 
-Status: Done On Dev - accepted by Svein Tore; BookStack publication explicitly deferred
+Status: Main Merged / Production Installed And Enabled / Human Reviewed / BookStack Deferred
 Date: 2026-11-09
 Parent: ../rfc/2026-11-09-timebank-adjustments-and-charge-reversals.md (Approved)
 Owner: Codex. Approver/reviewer: Svein Tore.
@@ -52,3 +52,11 @@ when requested. HR-2026-11-09-TIMEBANK-CORRECTIONS is Reviewed. No Main/producti
 See ../plans/2026-11-09-timebank-corrections-verification.md.
 
 Svein Tore explicitly accepted the delivered Dev implementation on 2026-11-09: "Godkjenner. BookStack får vente".
+
+## Main And Production Installation (2026-11-09)
+
+Main PR #400 is merged; VM169 runs 26c28cab with the feature enabled (migration batch60).
+Main candidate301/3589 tests pass; production HTTPS reads/previews/XLSX/PDF are verified.
+All1050 existing source/Workday rows are unchanged; no real correction or permission grant.
+Gateway tool publication is blocked by admin HTTP401; BookStack remains explicitly deferred.
+See ../plans/2026-11-09-timebank-corrections-main-production-rollout.md for current evidence.

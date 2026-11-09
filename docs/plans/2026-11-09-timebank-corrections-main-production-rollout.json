@@ -1,0 +1,78 @@
+{
+  "main": {
+    "pr": 400,
+    "commit": "26c28cab6796b600c52abbddc77cbaa12ff6006f",
+    "tree": "fb881c1f711055074f7afa9866ffbd3648853dcd",
+    "candidate_tests": 301,
+    "assertions": 3589,
+    "php": "8.3",
+    "merged_tree_matches_tested_candidate": true
+  },
+  "production": {
+    "vm": 169,
+    "release": "/var/www/nexumpsa/releases/20261109-main-26c28cab",
+    "commit": "26c28cab6796b600c52abbddc77cbaa12ff6006f",
+    "migration": "2026_11_09_120000_create_timebank_corrections",
+    "batch": 60,
+    "enabled": true,
+    "permission_definitions": 2,
+    "explicit_grants": 0,
+    "correction_rows": 0,
+    "effect_rows": 0,
+    "foreign_keys": 5,
+    "source_sequence_columns": true,
+    "preserved_source_tables": 16,
+    "preserved_source_rows": 1050,
+    "source_comparison": "Canonical SHA256 SQL tuple multisets, predeploy backup versus current transaction-consistent dump; added sequence required zero and excluded. Multiline INSERTs parsed. Initial empty verifiers rejected.",
+    "overlays_preserved": 3,
+    "knowledge_notices_preserved": 3,
+    "dependencies_assets_unchanged": true,
+    "environment_delta": "COMMERCIAL_TIMEBANK_CORRECTIONS_ENABLED=true only",
+    "worker": "inactive",
+    "scheduler": "inactive",
+    "fpm": "active",
+    "maintenance": false,
+    "native_swagger_operations": 1311,
+    "new_operations": 7,
+    "backup_compressed_bytes": 237409680,
+    "backup_compressed_sha256": "db64a3ca56548ebc6c77022738fe52d71991423a985f36676ce2d98e1c2de544",
+    "protected_evidence": "/root/nexum-timebank-release-20261109"
+  },
+  "https": {
+    "origin": "https://portal.tronderdata.no",
+    "login": 200,
+    "timebank": 200,
+    "history": 200,
+    "report": 200,
+    "xlsx": 200,
+    "pdf": 200,
+    "adjustment_preview": {
+      "status": 200,
+      "allowed": true,
+      "employee_time_preserved": true
+    },
+    "reversal_preview": {
+      "status": 200,
+      "allowed": false,
+      "financial_blocker": true,
+      "employee_time_preserved": true,
+      "blocker": "financial_correction_required"
+    },
+    "anonymous_history": 401,
+    "apply_operations_called": false
+  },
+  "gateway": {
+    "published": false,
+    "blocker": "Approved stored admin credential returned HTTP401. No registration or permission changes.",
+    "owner": "Svein / Integration"
+  },
+  "bookstack": {
+    "status": "Explicitly deferred by Svein Tore"
+  },
+  "human_review": {
+    "id": "HR-2026-11-09-TIMEBANK-CORRECTIONS",
+    "status": "Reviewed",
+    "reviewer": "Svein Tore",
+    "individual_production_ui_scenarios": "Not separately reported"
+  }
+}

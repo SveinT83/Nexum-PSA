@@ -1,6 +1,6 @@
 # Timebank Corrections Main Promotion And Production Rollout
 
-Status: Authorized / Isolated Main candidate verified; merge and production rollout in progress.
+Status: Main Merged / Production Installed And Verified / Native API Live / Gateway Publication Blocked / BookStack Deferred.
 Date: 2026-11-09. Owner: Codex; authorization/reviewer: Svein Tore.
 Authorization: "ok. Merge til main og rull ut til produktsjon".
 BookStack remains explicitly deferred by Svein: "Godkjenner. BookStack faar vente".
@@ -51,3 +51,31 @@ Before any code rollback after exposure, check correction/effect rows. Never run
 schema down or serve old balance readers if posted corrections exist; disable writes and use a
 compatible reader/roll-forward. Keep the prior application and database backup intact.
 BookStack publication/read-back and employee retrieval remain deferred, not completed.
+
+## Main And Production Installation (2026-11-09)
+
+Svein Tore explicitly authorized Main merge and production rollout. PR #400 merged as
+26c28cab6796b600c52abbddc77cbaa12ff6006f; the merged tree equals the isolated candidate
+tested on Dev with production PHP8.3: 301 tests passed / 3589 assertions.
+VM169 now serves /var/www/nexumpsa/releases/20261109-main-26c28cab.
+The single additive migration ran in batch60; correction exposure is enabled.
+Two permission definitions were created without role/user grants; correction/effect rows remain zero.
+The prior release, protected verified database backup and three Workday/Tripletex overlays remain.
+Existing dependency lock, assets, environment (apart from the new exposure flag), live storage,
+and inactive worker/scheduler state were preserved.
+
+Trusted production HTTPS: login200; authenticated timebank/history/report and XLSX/PDF200;
+anonymous history401. Both pure preview endpoints returned200: adjustment allowed; the
+financial_correction_required blocker correctly prevented the reversal. No apply operation was called.
+Swagger publishes all seven new paths (1311 total native operations). Independent canonical
+SQL tuple comparison confirms 1050 existing rows across16 source/Workday tables unchanged.
+Initial empty snapshot verifiers were rejected and replaced by the nonempty backup comparison.
+
+Native official API production rollout is complete. MCP/gateway publication is separate and
+not completed: the approved stored gateway-admin credential returned HTTP401; no registration,
+binding, token, permission or manager change was made. Owner Svein / Integration must restore
+approved gateway administration before publishing/discovering the seven tools.
+BookStack publication/read-back and employee retrieval remain explicitly deferred by Svein.
+Existing individual human scenario boxes remain unreported; named Dev acceptance stays Reviewed.
+Structured evidence: 2026-11-09-timebank-corrections-main-production-rollout.json.
+Protected operational evidence: /root/nexum-timebank-release-20261109 (VM169).

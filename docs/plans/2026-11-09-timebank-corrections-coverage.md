@@ -1,6 +1,6 @@
 # Customer Timebank Correction Coverage
 
-Status: Implemented On Dev / Automated Verification Passed / Human Reviewed / BookStack Deferred.
+Status: Main Merged / Production Installed / Automated Verification Passed / Human Reviewed / BookStack Deferred.
 Date: 2026-11-09. Owner: Codex. Approver/reviewer: Svein Tore.
 RFC: ../rfc/2026-11-09-timebank-adjustments-and-charge-reversals.md.
 HR: HR-2026-11-09-TIMEBANK-CORRECTIONS (Reviewed by Svein Tore, 2026-11-09).
@@ -50,3 +50,11 @@ access. Employee OpenWebUI retrieval remains a separate human check.
 Svein Tore explicitly accepted the delivered Dev implementation on 2026-11-09: "Godkjenner. BookStack får vente".
 BookStack publication/read-back and employee retrieval remain incomplete and deferred; no retry
 or publication is performed. Future Main/production/gateway actions require separate authorization.
+
+## Main And Production Installation (2026-11-09)
+
+Main PR #400 is merged; VM169 runs 26c28cab with the feature enabled (migration batch60).
+Main candidate301/3589 tests pass; production HTTPS reads/previews/XLSX/PDF are verified.
+All1050 existing source/Workday rows are unchanged; no real correction or permission grant.
+Gateway tool publication is blocked by admin HTTP401; BookStack remains explicitly deferred.
+See 2026-11-09-timebank-corrections-main-production-rollout.md for current evidence.
