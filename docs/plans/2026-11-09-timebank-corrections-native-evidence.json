@@ -1,0 +1,194 @@
+{
+  "date": "2026-11-09",
+  "engine": "MariaDB 10.11.19",
+  "isolation": "private UNIX socket on Dev, networking disabled; synthetic fixture only",
+  "limits": "Supporting fixture columns are normalized from the isolated SQLite schema; exact current Commercial command, Economy command and correction migrations are applied. This is a focused workflow/constraint test, not certification of every historical migration.",
+  "cases": {
+    "same-key-race": [
+      {
+        "exit": 0,
+        "result": {
+          "status": 201,
+          "id": 1,
+          "replayed": true
+        },
+        "stderr": ""
+      },
+      {
+        "exit": 0,
+        "result": {
+          "status": 201,
+          "id": 1,
+          "replayed": false
+        },
+        "stderr": ""
+      }
+    ],
+    "different-key-race": [
+      {
+        "exit": 0,
+        "result": {
+          "status": 409,
+          "reason": "Correction dependencies changed; preview again."
+        },
+        "stderr": ""
+      },
+      {
+        "exit": 0,
+        "result": {
+          "status": 201,
+          "id": 2,
+          "replayed": false
+        },
+        "stderr": ""
+      }
+    ],
+    "reversal-key-race": [
+      {
+        "exit": 0,
+        "result": {
+          "status": 201,
+          "id": 3,
+          "replayed": true
+        },
+        "stderr": ""
+      },
+      {
+        "exit": 0,
+        "result": {
+          "status": 201,
+          "id": 3,
+          "replayed": false
+        },
+        "stderr": ""
+      }
+    ],
+    "consumption-race": {
+      "writer": {
+        "status": 201,
+        "minutes": 1
+      },
+      "correction": {
+        "status": 409,
+        "reason": "Correction dependencies changed; preview again."
+      }
+    },
+    "invariants": {
+      "original_source_unchanged": true,
+      "source_edit_guard": true,
+      "database_unique_reversal": true,
+      "destructive_rollback_refused": true,
+      "generation_query_excludes_reversal": true,
+      "corrections": 3,
+      "effects": 3,
+      "original_parent_deletion_restricted": true
+    },
+    "rollback-result": {
+      "complete_rollback": true,
+      "before": {
+        "corrections": 3,
+        "effects": 3,
+        "revision": 7
+      },
+      "after": {
+        "corrections": 3,
+        "effects": 3,
+        "revision": 7
+      }
+    },
+    "schema-validation": {
+      "payloads_validated": 15,
+      "native_payloads": 3,
+      "http_payloads": 12,
+      "cases": [
+        {
+          "schema": "TimebankCorrectionPreviewResponse",
+          "native": true,
+          "valid": true
+        },
+        {
+          "schema": "TimebankCorrectionPreviewResponse",
+          "native": true,
+          "valid": true
+        },
+        {
+          "schema": "TimebankCorrectionResponse",
+          "native": true,
+          "valid": true
+        },
+        {
+          "path": "/api/v1/commercial/clients/{client}/timebank",
+          "method": "get",
+          "status": "200",
+          "valid": true
+        },
+        {
+          "path": "/api/v1/commercial/clients/{client}/timebank/adjustment-preview",
+          "method": "post",
+          "status": "200",
+          "valid": true
+        },
+        {
+          "path": "/api/v1/commercial/clients/{client}/timebank/adjustments",
+          "method": "post",
+          "status": "201",
+          "valid": true
+        },
+        {
+          "path": "/api/v1/commercial/clients/{client}/timebank/corrections/{correction}",
+          "method": "get",
+          "status": "200",
+          "valid": true
+        },
+        {
+          "path": "/api/v1/commercial/clients/{client}/timebank/operations/{operation}",
+          "method": "get",
+          "status": "200",
+          "valid": true
+        },
+        {
+          "path": "/api/v1/commercial/clients/{client}/timebank/reversal-preview",
+          "method": "post",
+          "status": "200",
+          "valid": true
+        },
+        {
+          "path": "/api/v1/commercial/clients/{client}/timebank/reversals",
+          "method": "post",
+          "status": "201",
+          "valid": true
+        },
+        {
+          "path": "/api/v1/commercial/clients/{client}/timebank/history",
+          "method": "get",
+          "status": "200",
+          "valid": true
+        },
+        {
+          "path": "/api/v1/commercial/clients/{client}/timebank/consumptions/{consumption}",
+          "method": "get",
+          "status": "200",
+          "valid": true
+        },
+        {
+          "path": "/api/v1/commercial/clients/{client}/timebank",
+          "method": "get",
+          "status": "200",
+          "valid": true
+        },
+        {
+          "path": "/api/v1/clients/{client}/reports/time",
+          "method": "get",
+          "status": "200",
+          "valid": true
+        },
+        {
+          "path": "/api/v1/clients/{client}/reports/time/entries",
+          "method": "get",
+          "status": "200",
+          "valid": true
+        }
+      ]
+    }
+  }
+}

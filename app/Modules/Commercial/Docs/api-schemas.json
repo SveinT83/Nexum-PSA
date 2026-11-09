@@ -2475,6 +2475,13 @@
   },
   "CommercialConsumption": {
     "properties": {
+      "customer_charge_reversed": {
+        "type": "boolean"
+      },
+      "correction_id": {
+        "type": "integer",
+        "nullable": true
+      },
       "id": {
         "type": "integer"
       },
@@ -2488,13 +2495,16 @@
         "type": "integer"
       },
       "contract_item_time_rate_id": {
-        "type": "integer"
+        "type": "integer",
+        "nullable": true
       },
       "time_rate_id": {
-        "type": "integer"
+        "type": "integer",
+        "nullable": true
       },
       "user_id": {
-        "type": "integer"
+        "type": "integer",
+        "nullable": true
       },
       "minutes": {
         "type": "integer"
@@ -2558,6 +2568,29 @@
   },
   "CommercialTimebank": {
     "properties": {
+      "corrections": {
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "history": {
+            "type": "string"
+          },
+          "adjustment_preview": {
+            "type": "string"
+          },
+          "adjustments": {
+            "type": "string"
+          },
+          "reversal_preview": {
+            "type": "string"
+          },
+          "reversals": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "client_id": {
         "type": "integer"
       },
@@ -2579,6 +2612,15 @@
               "type": "integer"
             },
             "service_id": {
+              "type": "integer"
+            },
+            "adjustment_minutes": {
+              "type": "integer"
+            },
+            "effective_included_minutes": {
+              "type": "integer"
+            },
+            "signed_balance_minutes": {
               "type": "integer"
             },
             "included_minutes": {
@@ -3138,5 +3180,451 @@
       }
     },
     "type": "object"
+  },
+  "TimebankAdjustmentInput": {
+    "required": [
+      "contract_item_id",
+      "effective_date",
+      "mode",
+      "reason"
+    ],
+    "properties": {
+      "contract_item_id": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "effective_date": {
+        "type": "string",
+        "format": "date"
+      },
+      "mode": {
+        "type": "string",
+        "enum": [
+          "restore",
+          "zero",
+          "custom"
+        ]
+      },
+      "target_minutes": {
+        "type": "integer",
+        "nullable": true,
+        "maximum": 52560000,
+        "minimum": 0
+      },
+      "reason": {
+        "type": "string",
+        "maxLength": 2000,
+        "minLength": 1
+      },
+      "preview_token": {
+        "type": "string"
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "TimebankReversalInput": {
+    "required": [
+      "source_type",
+      "source_id",
+      "reason"
+    ],
+    "properties": {
+      "source_type": {
+        "description": "task_billing uses the TicketTimeEntry ID, never a Task work ID.",
+        "type": "string",
+        "enum": [
+          "quick",
+          "ticket",
+          "task_billing"
+        ]
+      },
+      "source_id": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "reason": {
+        "type": "string",
+        "maxLength": 2000,
+        "minLength": 1
+      },
+      "preview_token": {
+        "type": "string"
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "TimebankAdjustmentCommandInput": {
+    "allOf": [
+      {
+        "$ref": "#/components/schemas/TimebankAdjustmentInput"
+      },
+      {
+        "required": [
+          "preview_token"
+        ],
+        "properties": {
+          "preview_token": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "type": "object"
+      }
+    ]
+  },
+  "TimebankReversalCommandInput": {
+    "allOf": [
+      {
+        "$ref": "#/components/schemas/TimebankReversalInput"
+      },
+      {
+        "required": [
+          "preview_token"
+        ],
+        "properties": {
+          "preview_token": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "type": "object"
+      }
+    ]
+  },
+  "TimebankCorrectionPreview": {
+    "properties": {
+      "client_id": {
+        "type": "integer"
+      },
+      "source_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "contract_item_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "included_minutes": {
+        "type": "integer"
+      },
+      "before_signed_minutes": {
+        "type": "integer"
+      },
+      "after_signed_minutes": {
+        "type": "integer"
+      },
+      "adjustment_minutes": {
+        "type": "integer"
+      },
+      "reversed_usage_minutes": {
+        "type": "integer"
+      },
+      "reversed_covered_minutes": {
+        "type": "integer"
+      },
+      "reversed_billable_minutes": {
+        "type": "integer"
+      },
+      "expires_in_seconds": {
+        "type": "integer"
+      },
+      "kind": {
+        "type": "string",
+        "nullable": true
+      },
+      "source_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "period_start": {
+        "type": "string",
+        "nullable": true
+      },
+      "period_end": {
+        "type": "string",
+        "nullable": true
+      },
+      "effective_date": {
+        "type": "string",
+        "nullable": true
+      },
+      "revision": {
+        "type": "string",
+        "nullable": true
+      },
+      "preview_token": {
+        "type": "string",
+        "nullable": true
+      },
+      "dependency": {
+        "type": "string",
+        "nullable": true
+      },
+      "allowed": {
+        "type": "boolean"
+      },
+      "preserved_employee_time": {
+        "type": "boolean"
+      },
+      "draft_line_ids": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        }
+      },
+      "blockers": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "TimebankCorrectionEffect": {
+    "properties": {
+      "id": {
+        "type": "integer"
+      },
+      "correction_id": {
+        "type": "integer"
+      },
+      "contract_item_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "adjustment_minutes": {
+        "type": "integer"
+      },
+      "reversed_usage_minutes": {
+        "type": "integer"
+      },
+      "reversed_covered_minutes": {
+        "type": "integer"
+      },
+      "reversed_billable_minutes": {
+        "type": "integer"
+      },
+      "period_start": {
+        "type": "string",
+        "nullable": true
+      },
+      "period_end": {
+        "type": "string",
+        "nullable": true
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "TimebankCorrection": {
+    "properties": {
+      "id": {
+        "type": "integer"
+      },
+      "client_id": {
+        "type": "integer"
+      },
+      "actor_id": {
+        "type": "integer"
+      },
+      "source_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "kind": {
+        "type": "string"
+      },
+      "source_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "reason": {
+        "type": "string"
+      },
+      "effective_date": {
+        "type": "string"
+      },
+      "created_at": {
+        "type": "string"
+      },
+      "financial_outcome": {
+        "type": "string"
+      },
+      "preserved_employee_time": {
+        "type": "boolean"
+      },
+      "effects": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/TimebankCorrectionEffect"
+        }
+      },
+      "result": {
+        "$ref": "#/components/schemas/TimebankCorrectionPreview"
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "TimebankCorrectionResponse": {
+    "required": [
+      "data"
+    ],
+    "properties": {
+      "data": {
+        "$ref": "#/components/schemas/TimebankCorrection"
+      },
+      "operation_id": {
+        "type": "integer"
+      },
+      "replayed": {
+        "type": "boolean"
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "TimebankCorrectionPreviewResponse": {
+    "required": [
+      "data"
+    ],
+    "properties": {
+      "data": {
+        "$ref": "#/components/schemas/TimebankCorrectionPreview"
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "TimebankHistoryRow": {
+    "properties": {
+      "kind": {
+        "type": "string",
+        "nullable": true
+      },
+      "source_type": {
+        "type": "string",
+        "nullable": true
+      },
+      "effective_date": {
+        "type": "string",
+        "nullable": true
+      },
+      "recorded_at": {
+        "type": "string",
+        "nullable": true
+      },
+      "reason": {
+        "type": "string",
+        "nullable": true
+      },
+      "source_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "contract_item_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "minutes": {
+        "type": "integer",
+        "nullable": true
+      },
+      "correction_id": {
+        "type": "integer",
+        "nullable": true
+      },
+      "reversed": {
+        "type": "boolean"
+      },
+      "detail": {
+        "$ref": "#/components/schemas/TimebankCorrection"
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
+  },
+  "TimebankCorrectionHistory": {
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/TimebankHistoryRow"
+        }
+      },
+      "current_page": {
+        "type": "integer",
+        "nullable": true
+      },
+      "from": {
+        "type": "integer",
+        "nullable": true
+      },
+      "to": {
+        "type": "integer",
+        "nullable": true
+      },
+      "last_page": {
+        "type": "integer",
+        "nullable": true
+      },
+      "per_page": {
+        "type": "integer",
+        "nullable": true
+      },
+      "total": {
+        "type": "integer",
+        "nullable": true
+      },
+      "first_page_url": {
+        "type": "string",
+        "nullable": true
+      },
+      "last_page_url": {
+        "type": "string",
+        "nullable": true
+      },
+      "next_page_url": {
+        "type": "string",
+        "nullable": true
+      },
+      "prev_page_url": {
+        "type": "string",
+        "nullable": true
+      },
+      "path": {
+        "type": "string",
+        "nullable": true
+      },
+      "links": {
+        "type": "array",
+        "items": {
+          "properties": {
+            "url": {
+              "type": "string",
+              "nullable": true
+            },
+            "label": {
+              "type": "string"
+            },
+            "active": {
+              "type": "boolean"
+            },
+            "page": {
+              "type": "integer",
+              "nullable": true
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
+        }
+      }
+    },
+    "type": "object",
+    "additionalProperties": false
   }
 }

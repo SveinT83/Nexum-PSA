@@ -81,7 +81,7 @@ class GenerateOrders
 
     private function generateTimeLines(CarbonInterface $periodStart, CarbonInterface $periodEnd, ?User $actor, $settings, array &$summary): void
     {
-        $query = TicketTimeEntry::query()
+        $query = \App\Modules\Commercial\Support\TimebankLedger::excludeReversed(TicketTimeEntry::query(), 'ticket')
             ->with(['ticket.status', 'ticket.client'])
             ->where('billable', true)
             ->where('billing_status', 'pending')
@@ -294,12 +294,20 @@ class GenerateOrders
             [$allocationPeriodStart, $allocationPeriodEnd] = $this->timebankPeriod($entry, $contractItem, $periodStart, $periodEnd);
 
             if ($includedMinutes > 0) {
-                $alreadyCovered = TicketTimeEntryAllocation::query()
+                $alreadyCovered = \App\Modules\Commercial\Support\TimebankLedger::excludeReversed(TicketTimeEntryAllocation::query(), 'ticket', 'ticket_time_entry_allocations.ticket_time_entry_id')
                     ->where('contract_item_id', $entry->contract_item_id)
                     ->whereDate('period_start', $allocationPeriodStart->toDateString())
                     ->whereDate('period_end', $allocationPeriodEnd->toDateString())
                     ->sum('covered_minutes');
-                $remaining = max(0, $includedMinutes - (int) $alreadyCovered);
+                $adjustments = \App\Modules\Commercial\Support\TimebankLedger::adjustments($entry->contract_item_id,
+                    $allocationPeriodStart->toDateString(), $allocationPeriodEnd->toDateString(), $entry->work_date->toDateString(), (int) $entry->timebank_ledger_sequence);
+                $quickCovered = \App\Modules\Commercial\Support\TimebankLedger::excludeReversed(ClientContractTimeConsumption::query(), 'quick')
+                    ->where('contract_item_id', $entry->contract_item_id)
+                    ->whereDate('period_start', $allocationPeriodStart->toDateString())
+                    ->whereDate('period_end', $allocationPeriodEnd->toDateString())
+                    ->whereDate('work_date', '<=', $entry->work_date->toDateString())
+                    ->selectRaw('COALESCE(SUM(minutes - overused_minutes), 0) as covered')->value('covered');
+                $remaining = max(0, $includedMinutes + $adjustments - (int) $alreadyCovered - (int) $quickCovered);
                 $coveredMinutes = min($entry->minutes, $remaining);
                 $billableMinutes = max(0, $entry->minutes - $coveredMinutes);
                 $status = $billableMinutes > 0 ? ($coveredMinutes > 0 ? 'partially_billable' : 'billable') : 'covered';
@@ -449,7 +457,7 @@ class GenerateOrders
 
     private function generateQuickTimebankLines(CarbonInterface $periodStart, CarbonInterface $periodEnd, ?User $actor, $settings, array &$summary): void
     {
-        ClientContractTimeConsumption::query()
+        \App\Modules\Commercial\Support\TimebankLedger::excludeReversed(ClientContractTimeConsumption::query(), 'quick')
             ->with(['client', 'contract', 'contractItem'])
             ->where('overused_minutes', '>', 0)
             ->whereNotNull('rate_amount_ex_vat')

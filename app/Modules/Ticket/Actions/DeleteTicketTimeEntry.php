@@ -36,6 +36,7 @@ final class DeleteTicketTimeEntry
     {
         $this->authorize($ticket, $actor);
         abort_unless((int) $entry->ticket_id === (int) $ticket->id, 404);
+        \App\Modules\Commercial\Support\TimebankLedger::assertMutable('ticket', $entry->id);
         $blockers = $this->blockers($ticket, $entry, $actor);
 
         return [
@@ -93,6 +94,7 @@ final class DeleteTicketTimeEntry
             }
 
             abort_unless($entry, 404);
+            \App\Modules\Commercial\Support\TimebankLedger::assertMutable('ticket', $entry->id);
             $this->assertPreview($input['preview_token'], $currentTicket, $entry, $currentActor);
             $blockers = $this->blockers($currentTicket, $entry, $currentActor, lock: true);
             abort_if($blockers !== [], 409, 'Time entry cannot be deleted: '.implode(', ', $blockers).'.');

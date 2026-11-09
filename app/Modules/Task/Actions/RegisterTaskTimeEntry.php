@@ -31,7 +31,7 @@ class RegisterTaskTimeEntry
             ]);
         }
 
-        return DB::transaction(function () use ($task, $user, $data, $rateOption) {
+        return app(\App\Modules\Economy\Support\EconomyMutex::class)->run(function () use ($task, $user, $data, $rateOption) {
             $task = Task::query()->with('owner')->lockForUpdate()->findOrFail($task->id);
             $sourceType = 'manual';
             $billable = false;

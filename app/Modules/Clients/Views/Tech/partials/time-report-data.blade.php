@@ -5,6 +5,7 @@
     Generated {{ $generated_at->format('Y-m-d H:i T') }}.<br>
     Registered work counts direct Ticket time, Task time and direct timebank registrations once.
     Task billing projections are included only in billing basis. Registered time can include estimate-completion entries and is not approved payroll.
+    Customer measures are net of linked reversals; registered work remains unchanged. Corrections never delete work.<br>
     Covered and billable show stored processed allocations; unresolved billing basis has no allocation yet.
     Objects with no time in the period remain listed. Private Tasks are excluded. Archived and ordered history is included.
 </div>
@@ -47,6 +48,7 @@
             <div>Registered work: {{ $duration($entry['work_minutes']) }} · Billing basis: {{ $duration($entry['basis_minutes']) }} · Covered: {{ $duration($entry['covered_minutes']) }} · Billable: {{ $duration($entry['processed_billable_minutes']) }} · Unresolved: {{ $duration($entry['unresolved_minutes']) }}</div>
             <div class="text-muted">{{ $entry['provenance'] }} · {{ $entry['billing_status'] }} {{ $entry['ordered'] ? '· On order' : '' }}</div>
             <p class="entry-description">{{ $entry['description'] ?: '—' }}</p>
+            @if($entry['correction_id'] ?? null)<p>Correction #{{ $entry['correction_id'] }}: {{ $entry['correction_reason'] }}. Original billing basis: {{ $entry['gross_basis_minutes'] }} min. Employee work retained.</p>@endif
             @if(filled($entry['invoice_text']))
                 <p class="entry-description">Invoice: {{ $entry['invoice_text'] }}</p>
             @endif
@@ -70,7 +72,12 @@
                     <td class="text-end">{{ $duration($entry['basis_minutes']) }}</td>
                     <td class="text-end">{{ $duration($entry['covered_minutes']) }}</td>
                     <td class="text-end">{{ $duration($entry['processed_billable_minutes']) }}</td>
-                    <td>{{ $entry['billing_status'] }} @if($entry['ordered'])<br>On order
+                    <td>{{ $entry['billing_status'] }}
+                        @if($entry['correction_id'] ?? null)<br>{{ $entry['correction_reason'] }} · Original basis {{ $entry['gross_basis_minutes'] }} min @endif
+                        @if(config('commercial.timebank_corrections_enabled') && in_array($entry['source'], ['quick', 'ticket'], true) && !($entry['customer_charge_reversed'] ?? false))
+                        @if(app(\App\Modules\Integration\Support\DomainApiAuthorization::class)->permits(request(), 'commercial.timebank.reverse'))<br><a href="{{ route('tech.clients.timebank-corrections.index', [$client, 'selected_source' => $entry['source'], 'selected_entry' => $entry['id']]) }}">Reverse customer charge</a>@endif
+                        @endif
+                        @if($entry['ordered'])<br>On order
                     @endif @if($entry['unresolved_minutes'])<br>{{ $duration($entry['unresolved_minutes']) }} unresolved
                     @endif</td>
                 </tr>
@@ -82,4 +89,15 @@
     </div>
 </div>
 
+@endif
+
+{{-- Corrections explain commercial changes without becoming employee work entries --}}
+@if(isset($corrections) && $corrections->isNotEmpty())
+<div class="card mt-3"><div class="card-header">Commercial correction history · employee work retained</div>
+    <div class="table-responsive"><table class="table table-sm"><thead><tr><th>ID / type</th><th>Effective / recorded</th><th>Adjustment / reversed usage (min)</th><th>Reason</th></tr></thead><tbody>
+    @foreach($corrections as $correction)
+        <tr><td>#{{ $correction['id'] }} {{ $correction['kind'] }}</td><td>{{ $correction['effective_date'] }}<br>{{ $correction['recorded_at'] }}</td><td>{{ $correction['adjustment_minutes'] }} / {{ $correction['reversed_usage_minutes'] }}</td><td>{{ $correction['reason'] }}</td></tr>
+    @endforeach
+    </tbody></table></div>
+</div>
 @endif

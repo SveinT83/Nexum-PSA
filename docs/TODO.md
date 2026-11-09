@@ -1,5 +1,38 @@
 # tdPSA Development TODO
 
+## Customer timebank adjustments and charge reversals (2026-11-09)
+
+Status: Done On Dev / Migrated And Enabled / Human Reviewed / BookStack Deferred By Svein Tore.
+Owner: Codex (implementation); Svein Tore (named reviewer/promotion); Svein Tore / Integration
+(remaining supported gateway/handbook connection).
+Approved RFC: rfc/2026-11-09-timebank-adjustments-and-charge-reversals.md.
+Accepted ADR: adr/2026-11-09-timebank-correction-ledger-and-employee-time.md.
+Slices: feature-slices/2026-11-09-timebank-corrections.md.
+Evidence/coverage/native checks: plans/2026-11-09-timebank-corrections-verification.md,
+-coverage.md and -native-evidence.json.
+Scope: restore/zero/custom period balance, full named customer-charge reversal, immutable
+original work/history, draft financial safeguards, source/parent retention, UI/API/Swagger parity
+and correction-aware report/XLSX/PDF. Actual employee time/payroll remains unchanged.
+Dev migration batch53; exposure enabled only on Dev; zero observed correction/effect rows and no
+explicit role/user grants. Affected matrix300/3572 and final correction14/126 pass (overlapping).
+15 native/HTTP payloads validate; focused native contention/uniqueness/rollback passes.
+HR-2026-11-09-TIMEBANK-CORRECTIONS Reviewed by Svein Tore, 2026-11-09.
+Approved deferral: Svein explicitly states "Godkjenner. BookStack får vente", 2026-11-09.
+The prior gateway connection failure is retained as context; source Markdown is updated, but
+Knowledge/BookStack synchronization/publication/read-back and employee retrieval are not complete.
+Owner Svein / Integration: resume the deferred documentation step when Svein requests it; preserve
+existing article mappings/access. This approved deferral no longer blocks closing the Dev work item.
+Future Main promotion/production/gateway rollout remains owned by Svein and separately authorized.
+No new BookStack attempts, reminder or automation is requested or created.
+#390 agreement amendment and #391 pooling remain separate/open, unmodified.
+No commit/push, Main change, production/gateway rollout, provider or scheduler/queue activation,
+real customer reset/reversal, or employee work change. Public-safe website handoff: one item
+appended/read back, klar for vurdering with explicit Ikke publiser.
+
+Production authorization update, 2026-11-09: Svein explicitly requests Main merge and
+production rollout. This supersedes earlier no-rollout-authorization statements for this scope.
+BookStack remains deferred. Evidence: plans/2026-11-09-timebank-corrections-main-production-rollout.md.
+
 ## Full Main and API production rollout (2026-11-05)
 
 Status: Production Installed / Gateway Published / Operator Acceptance In Review.

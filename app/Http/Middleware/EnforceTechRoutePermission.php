@@ -255,6 +255,7 @@ class EnforceTechRoutePermission
         'tech.clients.assets.*' => 'asset.view',
         'tech.clients.contracts.timebank-consumptions.store' => 'commercial.timebank.quick-consume',
         'tech.clients.time-usage.update' => 'client.view',
+        'tech.clients.timebank-corrections.*' => 'commercial.timebank.view',
         'tech.clients.settings.*' => 'client.manage_settings',
         'tech.clients.users.index' => 'contact.view',
         'tech.clients.user_management.index' => 'contact.view',

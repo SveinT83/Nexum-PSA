@@ -93,7 +93,7 @@ class ClientTimeController extends Controller
             $higher = ['quick' => 'commercial.timebank.overconsume', 'ticket' => 'ticket.update', 'task' => 'task.update'][$source];
             abort_unless((int) $row->user_id === (int) $request->user()->id || $request->user()->can($higher), 403);
         };
-        $result = app(ExecuteClientCommand::class)->handle($request, $authorize, function () use ($request, $client, $source, $entry) {
+        $result = app(\App\Modules\Economy\Support\EconomyMutex::class)->run(fn () => app(ExecuteClientCommand::class)->handle($request, $authorize, function () use ($request, $client, $source, $entry) {
             return app(\App\Modules\Economy\Support\EconomyMutex::class)->run(function () use ($request, $client, $source, $entry) {
                 ClientRevision::check($request, $this->record($request, $client, $source, $entry));
                 app(CorrectClientTimeUsage::class)->handle($client, $source, $entry, $request,
@@ -101,7 +101,7 @@ class ClientTimeController extends Controller
 
                 return ['entry_id' => $entry, 'source' => $source];
             });
-        });
+        }));
 
         return response()->json($result + ['data' => $this->projection($this->record($request, $client, $source, $entry), $source)]);
     }

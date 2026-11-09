@@ -43,7 +43,7 @@ class RegisterClientTimebankConsumption
             ]);
         }
 
-        return DB::transaction(function () use ($client, $actor, $data, $minutes, $settings, $expectedBalanceRevision): ClientContractTimeConsumption {
+        return app(\App\Modules\Economy\Support\EconomyMutex::class)->run(function () use ($client, $actor, $data, $minutes, $settings, $expectedBalanceRevision): ClientContractTimeConsumption {
             $item = ContractItem::query()
                 ->with(['contract', 'service'])
                 ->lockForUpdate()
@@ -77,10 +77,11 @@ class RegisterClientTimebankConsumption
                 abort_unless(hash_equals(\App\Modules\Commercial\Support\TimebankRevision::of($balance, $settings), $expectedBalanceRevision), 409, 'The timebank balance or policy changed; reload it.');
             }
 
+            $capacity = $balance['effective_included_minutes'];
             $usedAfter = $balance['used_minutes'] + $minutes;
-            $willOverconsume = $usedAfter > $balance['included_minutes'];
-            $overusedBefore = max(0, $balance['used_minutes'] - $balance['included_minutes']);
-            $overusedAfter = max(0, $usedAfter - $balance['included_minutes']);
+            $willOverconsume = $usedAfter > $capacity;
+            $overusedBefore = max(0, $balance['used_minutes'] - $capacity);
+            $overusedAfter = max(0, $usedAfter - $capacity);
             $overusedByEntry = max(0, $overusedAfter - $overusedBefore);
 
             if ($settings['quick_timebank_require_remaining'] && $balance['remaining_minutes'] <= 0) {
@@ -103,6 +104,7 @@ class RegisterClientTimebankConsumption
                 'contract_item_id' => $item->id,
                 'contract_item_time_rate_id' => $rate['contract_item_time_rate_id'],
                 'time_rate_id' => $rate['time_rate_id'],
+                ...\App\Modules\Commercial\Support\TimebankLedger::sourceSnapshot('client_contract_time_consumptions'),
                 'user_id' => $actor->id,
                 'work_date' => $data['work_date'],
                 'minutes' => $minutes,

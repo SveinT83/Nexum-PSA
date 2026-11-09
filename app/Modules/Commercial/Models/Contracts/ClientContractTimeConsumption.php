@@ -9,7 +9,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ClientContractTimeConsumption extends Model
 {
+    protected static function booted(): void
+    {
+        static::updating(fn ($row) => \App\Modules\Commercial\Support\TimebankLedger::assertMutable('quick', $row->id));
+        static::deleting(fn ($row) => \App\Modules\Commercial\Support\TimebankLedger::assertMutable('quick', $row->id));
+    }
+
     protected $fillable = [
+        'timebank_ledger_sequence',
         'client_id',
         'contract_id',
         'contract_item_id',

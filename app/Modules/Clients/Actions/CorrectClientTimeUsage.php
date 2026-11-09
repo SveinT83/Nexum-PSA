@@ -44,14 +44,17 @@ class CorrectClientTimeUsage
         $entry = ClientContractTimeConsumption::query()->with(['contract', 'contractItem.service'])->findOrFail($entryId);
         abort_unless((int) $entry->client_id === (int) $client->id, 404);
         $this->authorizeOwnerOrPermission($entry->user_id, $request, 'commercial.timebank.overconsume');
+        \App\Modules\Commercial\Support\TimebankLedger::assertMutable('quick', $entry->id);
         $this->abortIfOrdered($entry);
 
         $workDate = Carbon::parse($data['work_date'])->startOfDay();
         $contractItem = ContractItem::query()->with(['contract', 'service'])->findOrFail($entry->contract_item_id);
-        $period = $balances->forContractItem($client, $contractItem->contract, $contractItem, $workDate);
-        $usedWithoutEntry = max(0, $period['used_minutes'] - $entry->minutes);
-        $overusedBefore = max(0, $usedWithoutEntry - $period['included_minutes']);
-        $overusedAfter = max(0, ($usedWithoutEntry + (int) $data['minutes']) - $period['included_minutes']);
+        $period = $balances->forContractItem($client, $contractItem->contract, $contractItem, $workDate, true);
+        $samePeriod = $entry->period_start?->toDateString() === $period['period_start']->toDateString()
+            && $entry->period_end?->toDateString() === $period['period_end']->toDateString();
+        $usedWithoutEntry = max(0, $period['used_minutes'] - ($samePeriod ? $entry->minutes : 0));
+        $overusedBefore = max(0, $usedWithoutEntry - $period['effective_included_minutes']);
+        $overusedAfter = max(0, ($usedWithoutEntry + (int) $data['minutes']) - $period['effective_included_minutes']);
         $rate = filled($data['time_rate_source'] ?? null)
             ? $this->resolveQuickRate($contractItem, $data['time_rate_source'])
             : null;
@@ -79,6 +82,7 @@ class CorrectClientTimeUsage
         $entry = TicketTimeEntry::query()->with(['ticket', 'allocation'])->findOrFail($entryId);
         abort_unless((int) $entry->ticket?->client_id === (int) $client->id, 404);
         $this->authorizeOwnerOrPermission($entry->user_id, $request, 'ticket.update');
+        \App\Modules\Commercial\Support\TimebankLedger::assertMutable('ticket', $entry->id);
         $this->abortIfOrdered($entry);
 
         if ($entry->task_id) {

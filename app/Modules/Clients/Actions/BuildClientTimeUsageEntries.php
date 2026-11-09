@@ -55,7 +55,9 @@ class BuildClientTimeUsageEntries
                     'rate_amount_ex_vat' => $entry->rate_amount_ex_vat,
                     'overused_minutes' => $entry->overused_minutes,
                     'ordered' => $ordered,
-                    'can_edit' => $this->canEditQuick($entry, $actor) && ! $ordered,
+                    'customer_charge_reversed' => (bool) \App\Modules\Commercial\Support\TimebankLedger::reversal('quick', $entry->id),
+                    'can_edit' => $this->canEditQuick($entry, $actor) && ! $ordered
+                        && ! \App\Modules\Commercial\Support\TimebankLedger::reversal('quick', $entry->id),
                     'rate_options' => $entry->contractItem ? $this->balances->timeRateOptions($entry->contractItem) : collect(),
                     'current_rate_source' => $this->currentRateSource($entry->contract_item_time_rate_id, $entry->time_rate_id),
                     'sort_at' => ($entry->work_date?->toDateString() ?? $entry->created_at?->toDateString() ?? '0000-00-00').' '.$entry->id,
@@ -93,7 +95,9 @@ class BuildClientTimeUsageEntries
                     'rate_amount_ex_vat' => $entry->rate_amount_ex_vat,
                     'overused_minutes' => null,
                     'ordered' => $ordered,
-                    'can_edit' => ! $entry->task_id && $this->canEditTicket($entry, $actor) && ! $ordered,
+                    'customer_charge_reversed' => (bool) \App\Modules\Commercial\Support\TimebankLedger::reversal('ticket', $entry->id),
+                    'can_edit' => ! $entry->task_id && $this->canEditTicket($entry, $actor) && ! $ordered
+                        && ! \App\Modules\Commercial\Support\TimebankLedger::reversal('ticket', $entry->id),
                     'rate_options' => $entry->ticket ? $this->ticketTimeRateOptions->forTicket($entry->ticket)->map(fn (array $option): array => [
                         'value' => $option['key'],
                         'label' => trim($option['label'].' - '.$option['description']),

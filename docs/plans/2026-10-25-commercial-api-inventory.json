@@ -6,7 +6,7 @@
   "head": "36918edbcaae1ce7b1208ba34f84a3a1719f0e98",
   "dirty_paths_at_preflight": 872,
   "counts": {
-    "browser_route_entries": 73,
+    "browser_route_entries": 76,
     "api_route_entries": 18,
     "api_http_operations_excluding_head": 22,
     "livewire_components": 6,
@@ -1178,6 +1178,27 @@
       ],
       "path": "app/Modules/Commercial/routes.php:212",
       "workflow": "C16"
+    },
+    {
+      "name": "tech.clients.timebank-corrections.index",
+      "method": "GET",
+      "uri": "tech/clients/{client}/timebank-corrections",
+      "workflow": "Timebank corrections RFC 2026-11-09",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\TimebankCorrectionController@index"
+    },
+    {
+      "name": "tech.clients.timebank-corrections.preview",
+      "method": "POST",
+      "uri": "tech/clients/{client}/timebank-corrections/{kind}/preview",
+      "workflow": "Timebank corrections RFC 2026-11-09",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\TimebankCorrectionController@preview"
+    },
+    {
+      "name": "tech.clients.timebank-corrections.store",
+      "method": "POST",
+      "uri": "tech/clients/{client}/timebank-corrections/{kind}",
+      "workflow": "Timebank corrections RFC 2026-11-09",
+      "action": "App\\Modules\\Commercial\\Controllers\\Tech\\Contracts\\TimebankCorrectionController@store"
     }
   ],
   "current_api_routes": [

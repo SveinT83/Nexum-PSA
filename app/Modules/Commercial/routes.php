@@ -44,6 +44,30 @@ if (($commercialPublicApiRoutes ?? false) === true) {
 }
 
 if (($commercialApiRoutes ?? false) === true) {
+    foreach ([
+        ['post', 'adjustment-preview', 'preview', 'adjustment', 'adjust'],
+        ['post', 'adjustments', 'store', 'adjustment', 'adjust'],
+        ['post', 'reversal-preview', 'preview', 'reversal', 'reverse'],
+        ['post', 'reversals', 'store', 'reversal', 'reverse'],
+    ] as [$method, $path, $action, $kind, $ability]) {
+        Route::$method('commercial/clients/{client}/timebank/'.$path,
+            [\App\Modules\Commercial\Controllers\Api\V1\TimebankCorrectionController::class, $action])
+            ->where('client', '[1-9][0-9]{0,17}')->name('commercial.timebank.corrections.'.$path)->defaults('kind', $kind)
+            ->defaults('parity_domain', 'Commercial')->defaults('parity_scope', 'commercial.timebank.'.$ability)
+            ->defaults('parity_permissions', 'commercial.timebank.'.$ability)
+            ->defaults('parity_conditional_authorization', ['client.view', 'commercial.timebank.view', 'source visibility', 'private Task policy', 'draft: economy.order_manage + economy.update token ability'])
+            ->middleware([CheckAbilities::class.':commercial.timebank.'.$ability, \App\Modules\Commercial\Http\Middleware\CommercialApiErrors::class]);
+    }
+    foreach (['history' => 'history', 'corrections/{correction}' => 'show', 'operations/{operation}' => 'operation'] as $path => $action) {
+        Route::get('commercial/clients/{client}/timebank/'.$path,
+            [\App\Modules\Commercial\Controllers\Api\V1\TimebankCorrectionController::class, $action])
+            ->where(['client' => '[1-9][0-9]{0,17}', 'correction' => '[1-9][0-9]{0,17}', 'operation' => '[1-9][0-9]{0,17}'])->name('commercial.timebank.corrections.'.$action)
+            ->defaults('parity_domain', 'Commercial')->defaults('parity_scope', 'commercial.timebank.read')
+            ->defaults('parity_permissions', 'commercial.timebank.view')
+            ->defaults('parity_conditional_authorization', ['client.view', 'current source visibility', 'actor-bound operation read-back'])
+            ->middleware([CheckAbilities::class.':commercial.timebank.read', \App\Modules\Commercial\Http\Middleware\CommercialApiErrors::class]);
+    }
+
     Route::post('commercial/contracts/{contract}/pricing-preview', [\App\Modules\Commercial\Controllers\Api\V1\CommercialContractController::class, 'previewPricing'])->name('commercial.contracts.pricing-preview')->middleware([CheckAbilities::class.':commercial.read', \App\Modules\Commercial\Http\Middleware\CommercialApiGuard::class, \App\Modules\Commercial\Http\Middleware\CommercialApiErrors::class])->defaults('commercial_permission', 'commercial.contract_manage');
     Route::get('commercial/services', [\App\Modules\Commercial\Controllers\Api\V1\CommercialCatalogueController::class, 'index'])->name('commercial.services.index')
         ->middleware([CheckAbilities::class.':commercial.read', \App\Modules\Commercial\Http\Middleware\CommercialApiGuard::class, \App\Modules\Commercial\Http\Middleware\CommercialApiErrors::class])->defaults('commercial_permission', 'commercial.service_manage')->defaults('commercial_kind', 'services')->defaults('commercial_parameter', 'service')->defaults('commercial_new', false);
@@ -290,6 +314,17 @@ Route::post('/contracts/{contract}/terms/refresh', [ContractController::class, '
     ->name('contracts.terms.refresh');
 Route::post('/contracts/{contract}/terms', [ContractController::class, 'termsUpdate'])
     ->name('contracts.terms.update');
+// Customer correction history and two-step browser commands share the official API workflow.
+Route::get('/clients/{client}/timebank-corrections',
+    [\App\Modules\Commercial\Controllers\Tech\Contracts\TimebankCorrectionController::class, 'index'])
+    ->name('clients.timebank-corrections.index');
+Route::post('/clients/{client}/timebank-corrections/{kind}/preview',
+    [\App\Modules\Commercial\Controllers\Tech\Contracts\TimebankCorrectionController::class, 'preview'])
+    ->whereIn('kind', ['adjustment', 'reversal'])->name('clients.timebank-corrections.preview');
+Route::post('/clients/{client}/timebank-corrections/{kind}',
+    [\App\Modules\Commercial\Controllers\Tech\Contracts\TimebankCorrectionController::class, 'store'])
+    ->whereIn('kind', ['adjustment', 'reversal'])->name('clients.timebank-corrections.store');
+
 Route::post('/clients/{client}/contracts/timebank-consumptions', [ClientTimebankConsumptionController::class, 'store'])
     ->name('clients.contracts.timebank-consumptions.store');
 

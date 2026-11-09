@@ -18,7 +18,7 @@ class RegisterIdempotentTaskApiTime
             'rate_key' => $data['rate_key'] ?? null, 'invoice_text' => $data['invoice_text'] ?? null, 'note' => $data['note'] ?? null,
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
-        return DB::transaction(function () use ($task, $actor, $data, $rate, $fingerprint) {
+        return app(\App\Modules\Economy\Support\EconomyMutex::class)->run(function () use ($task, $actor, $data, $rate, $fingerprint) {
             $task = Task::query()->lockForUpdate()->findOrFail($task->id);
             app(\App\Modules\Task\Services\TaskApiScope::class)->assert($task, $actor);
             $existing = $task->activities()->where('type', 'api_time_entry_created')
