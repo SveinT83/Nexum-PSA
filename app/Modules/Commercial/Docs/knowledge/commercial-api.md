@@ -171,12 +171,13 @@ The existing workload-bound pseudonymous exports keep their separate access/acti
 This describes Dev and prerequisites, not production deployment, real message delivery
 or successful retrieval by an employee's AI assistant.
 
-## Customer timebank corrections - enabled on Dev, not deployed to production
+## Customer timebank corrections - available in production
 
-The correction workflow is enabled on Dev on 2026-11-09 and remains default-off elsewhere.
-It adds seven official operations under
-/api/v1/commercial/clients/{client}/timebank. Availability is separate from Main, production
-and gateway publication. Source employee minutes and payroll evidence remain unchanged.
+The correction workflow is enabled on Dev and production VM169 on 2026-11-09 after Main PR #400.
+It remains default-off for other installations and adds seven official operations under
+/api/v1/commercial/clients/{client}/timebank. Native HTTPS reads/previews and exports are verified.
+The seven new MCP tools have not been published: gateway admin access returned HTTP401.
+Existing gateway registration and permissions are unchanged. Employee minutes and payroll remain unchanged.
 
 | Method | Suffix | Ability |
 | --- | --- | --- |

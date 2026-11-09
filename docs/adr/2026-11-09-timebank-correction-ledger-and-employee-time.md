@@ -105,3 +105,11 @@ See ../plans/2026-11-09-timebank-corrections-verification.md and ../plans/2026-1
 Svein Tore accepted Dev delivery on 2026-11-09 and explicitly deferred BookStack. Human review is
 Reviewed; publication/retrieval remains incomplete. No Main promotion, commit/push, production
 deployment or live customer correction is implied by that approval.
+
+## Main And Production Installation (2026-11-09)
+
+Main PR #400 is merged; VM169 runs 26c28cab with the feature enabled (migration batch60).
+Main candidate301/3589 tests pass; production HTTPS reads/previews/XLSX/PDF are verified.
+All1050 existing source/Workday rows are unchanged; no real correction or permission grant.
+Gateway tool publication is blocked by admin HTTP401; BookStack remains explicitly deferred.
+See ../plans/2026-11-09-timebank-corrections-main-production-rollout.md for current evidence.

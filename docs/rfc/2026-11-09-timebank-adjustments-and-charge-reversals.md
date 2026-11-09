@@ -4,7 +4,7 @@ Status: Approved
 Date: 2026-11-09
 Owner: Codex; product approver and intended human reviewer: Svein Tore
 Change level: Level 3 - financial corrections, permissions, data model and operational API
-Implementation: Done On Dev, enabled and accepted by Svein Tore, 2026-11-09; BookStack explicitly deferred.
+Implementation: Merged To Main / Production Installed And Enabled, 2026-11-09; BookStack explicitly deferred.
 Related ADR: ../adr/2026-11-09-timebank-correction-ledger-and-employee-time.md
 Human review: HR-2026-11-09-TIMEBANK-CORRECTIONS (Reviewed by Svein Tore, 2026-11-09).
 
@@ -299,3 +299,11 @@ is implied. Human acceptance remains Pending.
 Svein Tore explicitly accepted the delivered Dev implementation on 2026-11-09: "Godkjenner. BookStack får vente".
 This accepts Dev delivery and defers BookStack; it does not claim individual scenario execution,
 completed handbook publication, Main promotion or production/gateway rollout authorization.
+
+## Main And Production Installation (2026-11-09)
+
+Main PR #400 is merged; VM169 runs 26c28cab with the feature enabled (migration batch60).
+Main candidate301/3589 tests pass; production HTTPS reads/previews/XLSX/PDF are verified.
+All1050 existing source/Workday rows are unchanged; no real correction or permission grant.
+Gateway tool publication is blocked by admin HTTP401; BookStack remains explicitly deferred.
+See ../plans/2026-11-09-timebank-corrections-main-production-rollout.md for current evidence.

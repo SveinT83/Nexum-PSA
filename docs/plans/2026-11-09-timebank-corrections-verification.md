@@ -1,6 +1,6 @@
-# Timebank Corrections: Dev Verification And Handoff
+# Timebank Corrections: Verification And Production Handoff
 
-Status: Done On Dev, migrated/enabled and accepted by Svein Tore / Human Reviewed /
+Status: Main Merged / Production Migrated And Enabled / Human Reviewed /
 BookStack explicitly deferred on 2026-11-09.
 Date: 2026-11-09. Owner: Codex. Product approver/reviewer and promotion owner: Svein Tore.
 
@@ -199,3 +199,11 @@ Svein Tore explicitly accepted the delivered Dev implementation on 2026-11-09: "
 The Dev delivery is accepted and the handbook work is deferred by the reviewer. This does not
 claim completed BookStack/employee retrieval, individual scenario execution or permission to
 commit/push, promote Main, deploy production or publish gateway tools. No such action is performed.
+
+## Main And Production Installation (2026-11-09)
+
+Main PR #400 is merged; VM169 runs 26c28cab with the feature enabled (migration batch60).
+Main candidate301/3589 tests pass; production HTTPS reads/previews/XLSX/PDF are verified.
+All1050 existing source/Workday rows are unchanged; no real correction or permission grant.
+Gateway tool publication is blocked by admin HTTP401; BookStack remains explicitly deferred.
+See 2026-11-09-timebank-corrections-main-production-rollout.md for current evidence.

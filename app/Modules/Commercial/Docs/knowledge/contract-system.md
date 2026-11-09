@@ -317,11 +317,12 @@ completed delivery on 25 October 2026; HR-2026-10-25-COMMERCIAL-API is Reviewed.
 Main source promotion is verified: [PR #313](https://github.com/SveinT83/Nexum-PSA/pull/313), 25 October 2026.
 Production deployment and controlled delivery activation remain separate actions.
 
-## Timebank adjustments and customer-charge reversal (Dev implementation)
+## Timebank adjustments and customer-charge reversal
 
-Availability: implemented, migrated and enabled on Dev on 2026-11-09; disabled by default
-for other installations. This feature has not been deployed to production by this task.
-Dev delivery was accepted by Svein Tore on 2026-11-09; BookStack publication is explicitly deferred. Existing employee time-registration workflows are unchanged.
+Availability: implemented, migrated and enabled on Dev and production VM169 on 2026-11-09
+(Main PR #400). Disabled by default for other installations. Dev delivery was accepted by
+Svein Tore; production reads/previews/exports are verified without posting real corrections.
+BookStack publication is explicitly deferred. Existing employee time-registration workflows are unchanged.
 
 Prerequisites: an active staff account with Client and timebank view access, plus
 commercial.timebank.adjust or commercial.timebank.reverse. Source Ticket/Task visibility,
@@ -377,7 +378,7 @@ reversal must be reviewed separately; do not delete or edit its evidence.
 - Expired/stale preview: request a new preview. Reviewed previews expire after ten minutes.
 - Unknown transport outcome: read the operation/correction result before retrying. Reuse the
   same idempotency key and exact reviewed input; a different input with that key is refused.
-- Feature unavailable: verify migration and Dev exposure with the release owner. Do not enable
+- Feature unavailable: verify migration and installation exposure with the release owner. Do not enable
   background jobs/providers or grant extra rights as a workaround.
 
 ### Official API
@@ -388,7 +389,7 @@ reversals, corrections/{correction} and operations/{operation}. Mutations requir
 commercial.timebank.adjust/reverse ability, Idempotency-Key, If-Match and preview_token.
 MCP uses the official API and the same current user rights. Published gateway tools and successful
 employee-assistant retrieval are separate verification steps; availability must not be inferred
-from this Dev guide.
+from this guide. The seven new MCP tools are not yet published because gateway admin access returned HTTP401.
 
 Financial record references are redacted when the current caller lacks Economy read/update
 access. Mutation replay rechecks the original Economy write authority. The balance meter uses
