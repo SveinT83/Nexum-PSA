@@ -170,3 +170,61 @@ The existing workload-bound pseudonymous exports keep their separate access/acti
 
 This describes Dev and prerequisites, not production deployment, real message delivery
 or successful retrieval by an employee's AI assistant.
+
+## Customer timebank corrections - enabled on Dev, not deployed to production
+
+The correction workflow is enabled on Dev on 2026-11-09 and remains default-off elsewhere.
+It adds seven official operations under
+/api/v1/commercial/clients/{client}/timebank. Availability is separate from Main, production
+and gateway publication. Source employee minutes and payroll evidence remain unchanged.
+
+| Method | Suffix | Ability |
+| --- | --- | --- |
+| GET | history | commercial.timebank.read |
+| POST | adjustment-preview | commercial.timebank.adjust |
+| POST | adjustments | commercial.timebank.adjust |
+| POST | reversal-preview | commercial.timebank.reverse |
+| POST | reversals | commercial.timebank.reverse |
+| GET | corrections/{correction} | commercial.timebank.read |
+| GET | operations/{operation} | commercial.timebank.read |
+
+An adjustment preview accepts contract_item_id, effective_date (YYYY-MM-DD, not future),
+mode (restore, zero or custom), target_minutes for custom mode, and reason. A reversal preview
+accepts source_type (quick, ticket or task_billing), source_id and reason. For task_billing,
+source_id is the TicketTimeEntry customer-billing projection, never a TaskTimeEntry work ID.
+All source aliases resolve to one canonical reversal identity.
+
+Read the allowed/blockers, signed before/after balance, period and source effects. The preview
+does not write business data and expires after 600 seconds. To apply, POST the same input plus
+preview_token to adjustments/reversals with the returned revision in If-Match and a stable
+Idempotency-Key. A successful 201 response includes correction details and operation_id.
+Keep the exact input/key for an uncertain retry; same input returns the durable result,
+different input with that key returns 409. Read corrections/{id} or your operations/{id}
+to verify persisted results before starting a new command.
+
+Current native client.view and commercial.timebank.view are mandatory. Mutations require
+separate commercial.timebank.adjust/reverse permissions. Ticket and private Task policies
+also apply. Draft Economy line correction requires economy.order_manage and, for API calls,
+economy.update on the same token. Invoiced/exported/unknown financial state blocks the entire
+correction until verified through the owning Economy process; there is no automatic refund.
+
+Responses: 401 unauthenticated, 403 missing current scope/right, 404 wrong parent/invisible
+source, 409 stale/expired/mismatched preview, duplicate reversal or financial conflict,
+422 invalid/unknown input, 428 missing preview/revision and 503 default-off/missing migration.
+GET history supports date_from/date_to, source_type and contract_item_id filters, page and
+per_page (maximum 100). Totals include only authorized history rows. Over 10,000 source rows
+requires a narrower period; the API never silently truncates the history.
+
+The existing balance endpoint exposes original allowance, effective adjustments, signed
+balance and remaining/overuse separately. Exact consumption/Ticket read-back exposes linked
+reversal status. Report summary/entries/XLSX/PDF preserve gross registered work while customer
+measures reflect corrections; correction history is separate from work entries.
+MCP must preserve official inputs, headers, errors and receipts. No automatic ability grants
+or provider/queue/scheduler activation follows from API or tool discovery.
+
+Financial record references are redacted when the current caller lacks Economy read/update
+access. Mutation replay rechecks the original Economy write authority. The balance meter uses
+effective allowance including adjustments; original allowance and employee work remain visible.
+
+Documentation status: source updated; actual BookStack publication/read-back and employee
+retrieval are deferred by Svein Tore on 2026-11-09 and are not claimed complete.

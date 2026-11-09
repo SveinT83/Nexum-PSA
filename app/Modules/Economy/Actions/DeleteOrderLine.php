@@ -28,6 +28,8 @@ class DeleteOrderLine
             $line = EconomyOrderLine::query()->where('economy_order_id', $order->id)->lockForUpdate()->findOrFail($line->id);
             abort_unless((int) $line->economy_order_id === (int) $order->id, 404);
             abort_unless($order->status === 'draft', 422);
+            abort_if(($line->metadata['timebank_correction_id'] ?? null) || $line->status === 'reversed', 409,
+                'Retain this reversed line and its correction evidence.');
 
             DB::transaction(function () use ($order, $line): void {
                 abort_unless((int) $line->client_id === (int) $order->client_id, 409, 'Line financial ownership does not match its order.');

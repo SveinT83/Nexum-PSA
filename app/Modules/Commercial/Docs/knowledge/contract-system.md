@@ -316,3 +316,83 @@ until controlled worker verification and deliberate activation. Svein Tore accep
 completed delivery on 25 October 2026; HR-2026-10-25-COMMERCIAL-API is Reviewed.
 Main source promotion is verified: [PR #313](https://github.com/SveinT83/Nexum-PSA/pull/313), 25 October 2026.
 Production deployment and controlled delivery activation remain separate actions.
+
+## Timebank adjustments and customer-charge reversal (Dev implementation)
+
+Availability: implemented, migrated and enabled on Dev on 2026-11-09; disabled by default
+for other installations. This feature has not been deployed to production by this task.
+Dev delivery was accepted by Svein Tore on 2026-11-09; BookStack publication is explicitly deferred. Existing employee time-registration workflows are unchanged.
+
+Prerequisites: an active staff account with Client and timebank view access, plus
+commercial.timebank.adjust or commercial.timebank.reverse. Source Ticket/Task visibility,
+including private Task access, still applies. Draft order correction additionally requires
+Economy order-management authority (API tokens also need economy.update).
+These rights are not granted automatically.
+
+### Adjust remaining balance
+
+1. Open Clients, select the customer, then open Time Usage.
+2. Select "Timebank corrections and history".
+3. Select the exact contract timebank, its effective date and "Restore allowance",
+   "Set remaining to zero" or "Set remaining balance".
+4. For a custom target, enter remaining integer minutes. Enter a reason.
+5. Select "Preview adjustment". Check the period, before/after signed balance and delta.
+6. Confirm only when the preview is allowed. "Employee work time will remain unchanged"
+   applies to every correction. The result includes the correction and operation IDs.
+7. Open correction history to verify the persisted result. The contracted allowance is unchanged.
+
+Overuse is a signed balance: if the bank is 120 minutes overdrawn, setting remaining to zero
+adds 120 minutes. Restoring a 600-minute bank after 480 minutes of use adds 480 minutes.
+Original consumption and employee work remain visible. Adjusting a balance does not cancel earlier
+customer charges, pending overuse billing or invoices; reverse an incorrect charge separately.
+An expired-period correction does not
+move hours to a newer period or renew the agreement.
+
+### Reverse a mistaken customer charge
+
+1. Open the source entry in Client Time Usage, the customer time report, Ticket time details
+   or the Task's linked customer-billing entry.
+2. Select "Reverse customer charge". For Task billing, the entry is the Ticket billing
+   projection ID; it is not the employee's Task work ID.
+3. Enter the reason and select "Preview reversal".
+4. Check the source ID, original period, covered/billable effects and financial blockers.
+5. Select "Confirm reversal" when allowed. A new linked correction is retained, with one
+   reversal per original source. The original employee minutes/date/person/notes remain.
+6. Verify the correction result and report. Registered work remains gross actual work;
+   customer billing measures are net of reversals. XLSX/PDF preserve this distinction.
+
+Reversal is full-source only. This action does not correct payroll, rebook to another customer,
+issue a refund or send a credit note. A second independent reversal is refused. A mistaken
+reversal must be reviewed separately; do not delete or edit its evidence.
+
+### Blockers and retry behavior
+
+- Finalized, exported, invoiced or uncertain financial state: no bank or billing correction
+  is applied. Resolve through the owning Economy workflow; never assume a refund was issued.
+- allocation_reconciliation_required: existing processed economics would be changed by a
+  backdated adjustment or are inconsistent. Ask the financial owner to reconcile; do not
+  change source work or delete allocations to bypass the blocker.
+- Missing source visibility or private Task access: use an authorized account; do not broaden
+  handbook or assistant permissions.
+- Expired/stale preview: request a new preview. Reviewed previews expire after ten minutes.
+- Unknown transport outcome: read the operation/correction result before retrying. Reuse the
+  same idempotency key and exact reviewed input; a different input with that key is refused.
+- Feature unavailable: verify migration and Dev exposure with the release owner. Do not enable
+  background jobs/providers or grant extra rights as a workaround.
+
+### Official API
+
+Use the existing /api/v1/commercial/clients/{client}/timebank context and its correction links.
+The supported reads/actions are history, adjustment-preview, adjustments, reversal-preview,
+reversals, corrections/{correction} and operations/{operation}. Mutations require the matching
+commercial.timebank.adjust/reverse ability, Idempotency-Key, If-Match and preview_token.
+MCP uses the official API and the same current user rights. Published gateway tools and successful
+employee-assistant retrieval are separate verification steps; availability must not be inferred
+from this Dev guide.
+
+Financial record references are redacted when the current caller lacks Economy read/update
+access. Mutation replay rechecks the original Economy write authority. The balance meter uses
+effective allowance including adjustments; original allowance and employee work remain visible.
+
+Documentation status: source updated; actual BookStack publication/read-back and employee
+retrieval are deferred by Svein Tore on 2026-11-09 and are not claimed complete.

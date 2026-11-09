@@ -369,6 +369,18 @@
             </h2>
             <div id="taskTimeCollapse" class="accordion-collapse collapse show" aria-labelledby="taskTimeHeading" data-bs-parent="#taskDetailRightbar">
                 <div class="accordion-body small">
+                    {{-- Reverse only a named billing projection; actual Task time is retained. --}}
+                    @if(config('commercial.timebank_corrections_enabled') && $task->client_id)
+                        @if(app(\App\Modules\Integration\Support\DomainApiAuthorization::class)->permits(request(), 'commercial.timebank.reverse'))
+                        @foreach($customerBillingEntries as $billingEntry)
+                            @if(\App\Modules\Commercial\Support\TimebankLedger::reversal('ticket', $billingEntry->id))
+                                <span class="badge text-bg-secondary">Customer charge #{{ $billingEntry->id }} reversed · employee work retained</span>
+                            @else
+                            <a class="btn btn-sm btn-outline-secondary mb-2" href="{{ route('tech.clients.timebank-corrections.index', [$task->client_id, 'selected_source' => 'task_billing', 'selected_entry' => $billingEntry->id]) }}">Reverse customer charge #{{ $billingEntry->id }} ({{ $billingEntry->minutes }} min)</a>
+                            @endif
+                        @endforeach
+                        @endif
+                    @endif
                     <x-time.stopwatch
                         id="taskStopwatch"
                         storage-key="{{ 'task-stopwatch-'.$task->id }}"

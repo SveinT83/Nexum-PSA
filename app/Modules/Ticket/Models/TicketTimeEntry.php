@@ -17,7 +17,14 @@ class TicketTimeEntry extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::updating(fn ($row) => \App\Modules\Commercial\Support\TimebankLedger::assertMutable('ticket', $row->id));
+        static::deleting(fn ($row) => \App\Modules\Commercial\Support\TimebankLedger::assertMutable('ticket', $row->id));
+    }
+
     protected $fillable = [
+        'timebank_ledger_sequence',
         'ticket_id',
         'task_id',
         'user_id',

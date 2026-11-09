@@ -471,7 +471,11 @@
                                             aria-labelledby="{{ $timeHeadingId }}">
                                             <div class="accordion-body px-0 pt-2 pb-3">
                                                 <!-- Time activity rows show billing intent without settling billing or contract minutes. -->
+                                                @php($chargeCorrection = \App\Modules\Commercial\Support\TimebankLedger::reversal('ticket', $timeEntry->id))
                                                 <div class="d-flex justify-content-end mb-2">
+                                                    @if($chargeCorrection)
+                                                        <span class="badge text-bg-secondary">Customer charge reversed #{{ $chargeCorrection->id }} · employee work retained</span>
+                                                    @else
                                                     <button
                                                         type="button"
                                                         class="btn btn-sm btn-outline-primary ticket-edit-time"
@@ -485,6 +489,7 @@
                                                         data-note="{{ $timeEntry->note }}">
                                                         Edit
                                                     </button>
+                                                    @endif
                                                 </div>
                                                 <div class="row g-2 small mb-2">
                                                     <div class="col-md-3">
@@ -517,6 +522,11 @@
                                                 <div class="d-flex flex-wrap gap-1 mt-3">
                                                     <span class="badge text-bg-light border">{{ ucfirst(str_replace('_', ' ', $timeEntry->billing_basis ?: 'manual')) }}</span>
                                                     <span class="badge text-bg-light border">Billing: {{ ucfirst($timeEntry->billing_status) }}</span>
+                                                    @if(config('commercial.timebank_corrections_enabled') && $ticket->client_id && !$chargeCorrection)
+                                                        @if(app(\App\Modules\Integration\Support\DomainApiAuthorization::class)->permits(request(), 'commercial.timebank.reverse'))
+                                                        <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.clients.timebank-corrections.index', [$ticket->client_id, 'selected_source' => $timeEntry->task_id ? 'task_billing' : 'ticket', 'selected_entry' => $timeEntry->id]) }}">Reverse customer charge</a>
+                                                        @endif
+                                                    @endif
                                                     <span class="badge text-bg-light border">Timebank: {{ ucfirst($timeEntry->timebank_status) }}</span>
                                                 </div>
                                             </div>

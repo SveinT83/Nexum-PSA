@@ -1,0 +1,154 @@
+{
+  "dev": {
+    "migration": {
+      "migration": "2026_11_09_120000_create_timebank_corrections",
+      "batch": 53
+    },
+    "corrections_enabled": true,
+    "correction_rows": 0,
+    "effect_rows": 0,
+    "head_foreign_keys": 3,
+    "effect_foreign_keys": 2,
+    "source_sequence_columns": true,
+    "permission_definitions": 2,
+    "role_grants": 0,
+    "direct_user_grants": 0
+  },
+  "broad_tests": {
+    "tests": 300,
+    "assertions": 3572
+  },
+  "final_correction_tests": {
+    "tests": 14,
+    "assertions": 126,
+    "overlaps_broad_matrix": true
+  },
+  "openapi": {
+    "payloads_validated": 15,
+    "native_payloads": 3,
+    "http_payloads": 12,
+    "cases": [
+      {
+        "schema": "TimebankCorrectionPreviewResponse",
+        "native": true,
+        "valid": true
+      },
+      {
+        "schema": "TimebankCorrectionPreviewResponse",
+        "native": true,
+        "valid": true
+      },
+      {
+        "schema": "TimebankCorrectionResponse",
+        "native": true,
+        "valid": true
+      },
+      {
+        "path": "/api/v1/commercial/clients/{client}/timebank",
+        "method": "get",
+        "status": "200",
+        "valid": true
+      },
+      {
+        "path": "/api/v1/commercial/clients/{client}/timebank/adjustment-preview",
+        "method": "post",
+        "status": "200",
+        "valid": true
+      },
+      {
+        "path": "/api/v1/commercial/clients/{client}/timebank/adjustments",
+        "method": "post",
+        "status": "201",
+        "valid": true
+      },
+      {
+        "path": "/api/v1/commercial/clients/{client}/timebank/corrections/{correction}",
+        "method": "get",
+        "status": "200",
+        "valid": true
+      },
+      {
+        "path": "/api/v1/commercial/clients/{client}/timebank/operations/{operation}",
+        "method": "get",
+        "status": "200",
+        "valid": true
+      },
+      {
+        "path": "/api/v1/commercial/clients/{client}/timebank/reversal-preview",
+        "method": "post",
+        "status": "200",
+        "valid": true
+      },
+      {
+        "path": "/api/v1/commercial/clients/{client}/timebank/reversals",
+        "method": "post",
+        "status": "201",
+        "valid": true
+      },
+      {
+        "path": "/api/v1/commercial/clients/{client}/timebank/history",
+        "method": "get",
+        "status": "200",
+        "valid": true
+      },
+      {
+        "path": "/api/v1/commercial/clients/{client}/timebank/consumptions/{consumption}",
+        "method": "get",
+        "status": "200",
+        "valid": true
+      },
+      {
+        "path": "/api/v1/commercial/clients/{client}/timebank",
+        "method": "get",
+        "status": "200",
+        "valid": true
+      },
+      {
+        "path": "/api/v1/clients/{client}/reports/time",
+        "method": "get",
+        "status": "200",
+        "valid": true
+      },
+      {
+        "path": "/api/v1/clients/{client}/reports/time/entries",
+        "method": "get",
+        "status": "200",
+        "valid": true
+      }
+    ]
+  },
+  "https": [
+    {
+      "path": "/login",
+      "status": 200,
+      "tls_validated": true
+    },
+    {
+      "path": "/api/v1/commercial/clients/1/timebank/history",
+      "status": 401,
+      "tls_validated": true
+    }
+  ],
+  "handbook": {
+    "status": "explicitly deferred by Svein Tore",
+    "reason": "ConnectError: All connection attempts failed",
+    "owner": "Svein Tore / Integration",
+    "attempts": 2,
+    "resume": "when Svein requests deferred documentation work",
+    "completed": false
+  },
+  "website_handoff": {
+    "items_added": 1,
+    "read_back": true,
+    "publication": "do not publish",
+    "human_review": "accepted by Svein Tore, 2026-11-09"
+  },
+  "native_database_stopped": true,
+  "human_review": {
+    "id": "HR-2026-11-09-TIMEBANK-CORRECTIONS",
+    "status": "Reviewed",
+    "reviewer": "Svein Tore",
+    "date": "2026-11-09",
+    "individual_scenarios_reported": false
+  }
+}

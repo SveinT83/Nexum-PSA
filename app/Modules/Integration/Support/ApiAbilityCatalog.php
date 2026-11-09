@@ -331,6 +331,8 @@ class ApiAbilityCatalog
         'commercial.operations.read' => self::ACCESS_READ,
         'commercial.timebank.read' => self::ACCESS_READ,
         'commercial.timebank.consume' => self::ACCESS_WRITE,
+        'commercial.timebank.adjust' => self::ACCESS_WRITE,
+        'commercial.timebank.reverse' => self::ACCESS_WRITE,
         'commercial.settings.read' => self::ACCESS_READ,
         'commercial.settings.update' => self::ACCESS_WRITE,
         'commercial.read' => self::ACCESS_READ,
@@ -1155,6 +1157,16 @@ class ApiAbilityCatalog
         'commercial.timebank.read' => [
             'label' => 'Read client timebank',
             'description' => 'Read permitted client balances and consumption evidence.',
+            'domain' => 'Commercial',
+        ],
+        'commercial.timebank.adjust' => [
+            'label' => 'Adjust customer timebank',
+            'description' => 'Preview and confirm an audited period balance adjustment. Employee time is unchanged.',
+            'domain' => 'Commercial',
+        ],
+        'commercial.timebank.reverse' => [
+            'label' => 'Reverse customer time charge',
+            'description' => 'Preview and reverse one customer charge with retained source work and financial safeguards.',
             'domain' => 'Commercial',
         ],
         'commercial.timebank.consume' => [

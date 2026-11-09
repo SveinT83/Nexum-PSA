@@ -31,9 +31,10 @@ class RegisterTicketTimeEntry
             throw ValidationException::withMessages(['time_entry' => $reason]);
         }
 
-        $entry = DB::transaction(function () use ($ticket, $data, $rateOption, $actor) {
+        $entry = app(\App\Modules\Economy\Support\EconomyMutex::class)->run(function () use ($ticket, $data, $rateOption, $actor) {
             $entry = TicketTimeEntry::create([
                 'ticket_id' => $ticket->id,
+                ...\App\Modules\Commercial\Support\TimebankLedger::sourceSnapshot('ticket_time_entries'),
                 'user_id' => $actor?->id,
                 'task_id' => $data['task_id'] ?? null,
                 'type' => $data['type'] ?? 'manual',

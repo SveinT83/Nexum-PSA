@@ -1,5 +1,57 @@
 # Human Review Register
 
+## HR-2026-11-09-TIMEBANK-CORRECTIONS - Customer corrections preserve employee work
+
+Status: Reviewed - accepted by Svein Tore on 2026-11-09; BookStack explicitly deferred.
+Owner: Codex. Named human reviewer: Svein Tore.
+RFC: rfc/2026-11-09-timebank-adjustments-and-charge-reversals.md (Approved).
+ADR: adr/2026-11-09-timebank-correction-ledger-and-employee-time.md (Accepted).
+Gate: Delivered Dev implementation accepted. BookStack is an explicitly approved deferral.
+Main promotion, production installation and gateway publication still require separate authorization
+and installation-specific verification; this acceptance does not perform or authorize those actions.
+
+Affected: Client Contracts/time usage/report; source Ticket/Task details; Economy draft correction;
+official Commercial correction API, report API, Swagger and MCP/gateway after authorized publication.
+
+- [ ] Restore allowance, zero an overused balance and set custom remaining minutes; verify signed
+  delta, effective date/period, reason, actor and retained original consumption/history.
+- [ ] Reverse a direct quick/Ticket charge and a Task billing projection; inspect original rows,
+  employee work, Workday/payroll evidence unchanged and exact covered/billable countereffects.
+- [ ] Verify duplicate prevention, retries, stale/expired previews and revoked/missing rights.
+- [ ] Verify pending generation/Task synchronization cannot recreate reversed customer charges.
+- [ ] Verify draft financial correction/totals and retained source/allocation evidence.
+- [ ] Confirm finalized/exported/unknown financial states block apply with an actionable Economy
+  requirement; no false refund/completed label or partial bank change.
+- [ ] Compare browser/API persisted read-back, report gross/net totals and XLSX/PDF, including
+  private Task visibility, original periods and no Task/Ticket double counting.
+- [ ] Verify intended native account/scopes and newly discovered MCP actions after authorized
+  tool publication. Separately verify employee-assistant retrieval of the published handbook.
+
+Expected: traceable commercial correction only; no original work deletion, payroll edit, automatic
+cross-period transfer, contractual change, external credit/provider or runtime activation.
+Risk: old readers/writers ignoring correction ledger can misstate/recreate balances or billing.
+Future deploy: additive migrations, compatible readers/writers and native concurrency evidence
+before exposing controls; retain ledger/receipts on rollback. Exact commands belong to slice evidence.
+Dev migration 2026_11_09_120000 ran in batch53; Dev exposure enabled, source default-off elsewhere.
+Affected matrix300/3572 and final correction14/126 pass (overlap); native races/retention/rollback
+and15 OpenAPI payload checks pass. No real correction/effect rows or new explicit grants.
+Handbook source Markdown updated; supported BookStack connection failed twice. Owner Svein /
+Integration restores gateway and completes targeted Knowledge/BookStack publication/read-back.
+Individual browser/visual scenarios and employee retrieval were not separately reported as executed.
+The original scenario boxes remain unchecked as evidence of that distinction, not a pending request
+for the same overall Dev approval. Future gateway discovery/employee retrieval remains separate.
+No Main/production/gateway rollout or provider/background activation. No individual checkbox inferred.
+Evidence: plans/2026-11-09-timebank-corrections-verification.md and linked coverage/native evidence.
+
+
+Svein Tore explicitly accepted the delivered Dev implementation on 2026-11-09: "Godkjenner. BookStack får vente".
+BookStack/targeted Knowledge publication and read-back are deferred by the reviewer, not completed.
+Owner: Svein Tore / Integration; resume when Svein requests the deferred documentation work.
+
+Production authorization update, 2026-11-09: Svein explicitly requests Main merge and
+production rollout. This supersedes earlier no-rollout-authorization statements for this scope.
+BookStack remains deferred. Evidence: plans/2026-11-09-timebank-corrections-main-production-rollout.md.
+
 ## HR-2026-11-05-FULL-MAIN-ROLLOUT - Whole Main and native API installation
 
 Status: In Review. Installation/catalog rollout completed and independently verified.

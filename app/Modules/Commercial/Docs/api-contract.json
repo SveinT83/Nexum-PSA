@@ -17457,5 +17457,893 @@
       }
     },
     "security": []
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/clients/{client}/timebank/history",
+    "tags": [
+      "Commercial"
+    ],
+    "summary": "Read or preview correction",
+    "description": "Requires commercial.timebank.read plus current native customer/source authority. No employee/payroll/provider mutation.",
+    "operationId": "timebankCorrectionHistory",
+    "parameters": [
+      {
+        "name": "client",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      {
+        "name": "date_from",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "date_to",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "source_type",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "contract_item_id",
+        "in": "query",
+        "schema": {
+          "type": "integer"
+        }
+      },
+      {
+        "name": "page",
+        "in": "query",
+        "schema": {
+          "type": "integer"
+        }
+      },
+      {
+        "name": "per_page",
+        "in": "query",
+        "schema": {
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Exact authorized correction result. Employee work unchanged.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TimebankCorrectionHistory"
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Authentication required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "403": {
+        "description": "Current scope or permission denied",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Record is not visible or wrong parent",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "409": {
+        "description": "Stale preview, duplicate reversal or financial dependency",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "422": {
+        "description": "Typed input validation failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "428": {
+        "description": "Required preview/revision precondition missing",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "503": {
+        "description": "Corrections disabled or migration unavailable",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "bearerAuth": []
+      }
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/clients/{client}/timebank/adjustment-preview",
+    "tags": [
+      "Commercial"
+    ],
+    "summary": "Read or preview correction",
+    "description": "Requires commercial.timebank.adjust plus current native customer/source authority. No employee/payroll/provider mutation.",
+    "operationId": "timebankCorrectionAdjustmentPreview",
+    "parameters": [
+      {
+        "name": "client",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    ],
+    "requestBody": {
+      "required": true,
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/TimebankAdjustmentInput"
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Exact authorized correction result. Employee work unchanged.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TimebankCorrectionPreviewResponse"
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Authentication required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "403": {
+        "description": "Current scope or permission denied",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Record is not visible or wrong parent",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "409": {
+        "description": "Stale preview, duplicate reversal or financial dependency",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "422": {
+        "description": "Typed input validation failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "428": {
+        "description": "Required preview/revision precondition missing",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "503": {
+        "description": "Corrections disabled or migration unavailable",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "bearerAuth": []
+      }
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/clients/{client}/timebank/adjustments",
+    "tags": [
+      "Commercial"
+    ],
+    "summary": "Confirm reviewed command",
+    "description": "Requires commercial.timebank.adjust plus current native customer/source authority. No employee/payroll/provider mutation.",
+    "operationId": "timebankCorrectionAdjustments",
+    "parameters": [
+      {
+        "name": "client",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "If-Match",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "requestBody": {
+      "required": true,
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/TimebankAdjustmentCommandInput"
+          }
+        }
+      }
+    },
+    "responses": {
+      "201": {
+        "description": "Exact authorized correction result. Employee work unchanged.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TimebankCorrectionResponse"
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Authentication required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "403": {
+        "description": "Current scope or permission denied",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Record is not visible or wrong parent",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "409": {
+        "description": "Stale preview, duplicate reversal or financial dependency",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "422": {
+        "description": "Typed input validation failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "428": {
+        "description": "Required preview/revision precondition missing",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "503": {
+        "description": "Corrections disabled or migration unavailable",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "bearerAuth": []
+      }
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/clients/{client}/timebank/reversal-preview",
+    "tags": [
+      "Commercial"
+    ],
+    "summary": "Read or preview correction",
+    "description": "Requires commercial.timebank.reverse plus current native customer/source authority. No employee/payroll/provider mutation.",
+    "operationId": "timebankCorrectionReversalPreview",
+    "parameters": [
+      {
+        "name": "client",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    ],
+    "requestBody": {
+      "required": true,
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/TimebankReversalInput"
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Exact authorized correction result. Employee work unchanged.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TimebankCorrectionPreviewResponse"
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Authentication required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "403": {
+        "description": "Current scope or permission denied",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Record is not visible or wrong parent",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "409": {
+        "description": "Stale preview, duplicate reversal or financial dependency",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "422": {
+        "description": "Typed input validation failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "428": {
+        "description": "Required preview/revision precondition missing",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "503": {
+        "description": "Corrections disabled or migration unavailable",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "bearerAuth": []
+      }
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/commercial/clients/{client}/timebank/reversals",
+    "tags": [
+      "Commercial"
+    ],
+    "summary": "Confirm reviewed command",
+    "description": "Requires commercial.timebank.reverse plus current native customer/source authority. No employee/payroll/provider mutation.",
+    "operationId": "timebankCorrectionReversals",
+    "parameters": [
+      {
+        "name": "client",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "If-Match",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "requestBody": {
+      "required": true,
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/TimebankReversalCommandInput"
+          }
+        }
+      }
+    },
+    "responses": {
+      "201": {
+        "description": "Exact authorized correction result. Employee work unchanged.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TimebankCorrectionResponse"
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Authentication required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "403": {
+        "description": "Current scope or permission denied",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Record is not visible or wrong parent",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "409": {
+        "description": "Stale preview, duplicate reversal or financial dependency",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "422": {
+        "description": "Typed input validation failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "428": {
+        "description": "Required preview/revision precondition missing",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "503": {
+        "description": "Corrections disabled or migration unavailable",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "bearerAuth": []
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/clients/{client}/timebank/corrections/{correction}",
+    "tags": [
+      "Commercial"
+    ],
+    "summary": "Read or preview correction",
+    "description": "Requires commercial.timebank.read plus current native customer/source authority. No employee/payroll/provider mutation.",
+    "operationId": "timebankCorrectionCorrectionsCorrection",
+    "parameters": [
+      {
+        "name": "client",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      {
+        "name": "correction",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Exact authorized correction result. Employee work unchanged.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TimebankCorrectionResponse"
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Authentication required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "403": {
+        "description": "Current scope or permission denied",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Record is not visible or wrong parent",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "409": {
+        "description": "Stale preview, duplicate reversal or financial dependency",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "422": {
+        "description": "Typed input validation failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "428": {
+        "description": "Required preview/revision precondition missing",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "503": {
+        "description": "Corrections disabled or migration unavailable",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "bearerAuth": []
+      }
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/commercial/clients/{client}/timebank/operations/{operation}",
+    "tags": [
+      "Commercial"
+    ],
+    "summary": "Read or preview correction",
+    "description": "Requires commercial.timebank.read plus current native customer/source authority. No employee/payroll/provider mutation.",
+    "operationId": "timebankCorrectionOperationsOperation",
+    "parameters": [
+      {
+        "name": "client",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      {
+        "name": "operation",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Exact authorized correction result. Employee work unchanged.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TimebankCorrectionResponse"
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Authentication required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "403": {
+        "description": "Current scope or permission denied",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Record is not visible or wrong parent",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "409": {
+        "description": "Stale preview, duplicate reversal or financial dependency",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "422": {
+        "description": "Typed input validation failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "428": {
+        "description": "Required preview/revision precondition missing",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      },
+      "503": {
+        "description": "Corrections disabled or migration unavailable",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CommercialError"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "bearerAuth": []
+      }
+    ]
   }
 ]

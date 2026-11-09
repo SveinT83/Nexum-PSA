@@ -12,7 +12,7 @@ class UpdateTicketTimeEntry
 {
     public function handle(Ticket $ticket, TicketTimeEntry $entry, array $data, array $rateOption, ?User $actor = null): TicketTimeEntry
     {
-        return DB::transaction(function () use ($ticket, $entry, $data, $rateOption, $actor) {
+        return app(\App\Modules\Economy\Support\EconomyMutex::class)->run(function () use ($ticket, $entry, $data, $rateOption, $actor) {
             $before = $entry->only([
                 'work_date',
                 'minutes',

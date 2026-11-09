@@ -143,6 +143,9 @@ class TaskController extends Controller
             'statuses' => TaskStatus::query()->active()->orderBy('sort_order')->get(),
             'timeRateOptions' => $task->owner instanceof Ticket ? $timeRateOptions->forTicket($task->owner) : collect(),
             'taskSettings' => $settings->get(),
+            'customerBillingEntries' => config('commercial.timebank_corrections_enabled') && $task->owner instanceof Ticket
+                ? \App\Modules\Ticket\Models\TicketTimeEntry::where('task_id', $task->id)->where('ticket_id', $task->owner_id)->get()
+                : collect(),
         ]);
     }
 

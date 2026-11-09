@@ -38,17 +38,21 @@ class CalculateClientTimebankBalances
             ->values();
     }
 
-    public function forContractItem(Client $client, Contracts $contract, ContractItem $item, ?CarbonInterface $workDate = null): array
+    public function forContractItem(Client $client, Contracts $contract, ContractItem $item, ?CarbonInterface $workDate = null, bool $asOf = false): array
     {
         $workDate = Carbon::parse($workDate ?? now())->startOfDay();
         [$periodStart, $periodEnd] = $this->timebankPeriod($workDate, $contract, $item);
         $includedMinutes = $this->includedMinutesForContractItem($item);
-        $allocatedMinutes = $this->allocatedTicketMinutes($item, $periodStart, $periodEnd);
-        $pendingMinutes = $this->pendingTicketMinutes($item, $periodStart, $periodEnd);
-        $quickMinutes = $this->quickConsumptionMinutes($item, $periodStart, $periodEnd);
+        $cutoff = $asOf ? $workDate->toDateString() : null;
+        $adjustmentMinutes = \App\Modules\Commercial\Support\TimebankLedger::adjustments($item->id,
+            $periodStart->toDateString(), $periodEnd->toDateString(), $workDate->toDateString());
+        $allocatedMinutes = $this->allocatedTicketMinutes($item, $periodStart, $periodEnd, $cutoff);
+        $pendingMinutes = $this->pendingTicketMinutes($item, $periodStart, $periodEnd, $cutoff);
+        $quickMinutes = $this->quickConsumptionMinutes($item, $periodStart, $periodEnd, $cutoff);
         $usedMinutes = $allocatedMinutes + $pendingMinutes + $quickMinutes;
-        $remainingMinutes = max(0, $includedMinutes - $usedMinutes);
-        $overusedMinutes = max(0, $usedMinutes - $includedMinutes);
+        $effectiveMinutes = $includedMinutes + $adjustmentMinutes;
+        $remainingMinutes = max(0, $includedMinutes + $adjustmentMinutes - $usedMinutes);
+        $overusedMinutes = max(0, $usedMinutes - $includedMinutes - $adjustmentMinutes);
 
         return [
             'client' => $client,
@@ -58,13 +62,16 @@ class CalculateClientTimebankBalances
             'period_start' => $periodStart->copy(),
             'period_end' => $periodEnd->copy(),
             'included_minutes' => $includedMinutes,
+            'adjustment_minutes' => $adjustmentMinutes,
+            'effective_included_minutes' => $includedMinutes + $adjustmentMinutes,
+            'signed_balance_minutes' => $includedMinutes + $adjustmentMinutes - $usedMinutes,
             'used_minutes' => $usedMinutes,
             'allocated_ticket_minutes' => $allocatedMinutes,
             'pending_ticket_minutes' => $pendingMinutes,
             'quick_minutes' => $quickMinutes,
             'remaining_minutes' => $remainingMinutes,
             'overused_minutes' => $overusedMinutes,
-            'usage_percent' => $includedMinutes > 0 ? min(100, (int) round(($usedMinutes / $includedMinutes) * 100)) : 0,
+            'usage_percent' => $effectiveMinutes > 0 ? min(100, (int) round(($usedMinutes / $effectiveMinutes) * 100)) : ($usedMinutes > 0 ? 100 : 0),
             'overuse_percent' => $includedMinutes > 0 ? min(100, (int) round(($overusedMinutes / $includedMinutes) * 100)) : 0,
             'recent_consumptions' => ClientContractTimeConsumption::query()
                 ->with('user')
@@ -154,9 +161,10 @@ class CalculateClientTimebankBalances
         return max(0, (int) round((float) $item->service?->timebank_minutes * max(1, (int) $item->quantity)));
     }
 
-    private function allocatedTicketMinutes(ContractItem $item, CarbonInterface $periodStart, CarbonInterface $periodEnd): int
+    private function allocatedTicketMinutes(ContractItem $item, CarbonInterface $periodStart, CarbonInterface $periodEnd, ?string $cutoff = null): int
     {
-        return (int) TicketTimeEntryAllocation::query()
+        return (int) \App\Modules\Commercial\Support\TimebankLedger::excludeReversed(TicketTimeEntryAllocation::query(), 'ticket', 'ticket_time_entry_allocations.ticket_time_entry_id')
+            ->when($cutoff, fn ($q) => $q->whereHas('timeEntry', fn ($e) => $e->whereDate('work_date', '<=', $cutoff)))
             ->where('contract_item_id', $item->id)
             ->whereDate('period_start', $periodStart->toDateString())
             ->whereDate('period_end', $periodEnd->toDateString())
@@ -164,18 +172,20 @@ class CalculateClientTimebankBalances
             ->value('minutes');
     }
 
-    private function pendingTicketMinutes(ContractItem $item, CarbonInterface $periodStart, CarbonInterface $periodEnd): int
+    private function pendingTicketMinutes(ContractItem $item, CarbonInterface $periodStart, CarbonInterface $periodEnd, ?string $cutoff = null): int
     {
-        return (int) TicketTimeEntry::query()
+        return (int) \App\Modules\Commercial\Support\TimebankLedger::excludeReversed(TicketTimeEntry::query(), 'ticket')
+            ->when($cutoff, fn ($q) => $q->whereDate('work_date', '<=', $cutoff))
             ->where('contract_item_id', $item->id)
             ->whereDoesntHave('allocation')
             ->whereBetween('work_date', [$periodStart->toDateString(), $periodEnd->toDateString()])
             ->sum('minutes');
     }
 
-    private function quickConsumptionMinutes(ContractItem $item, CarbonInterface $periodStart, CarbonInterface $periodEnd): int
+    private function quickConsumptionMinutes(ContractItem $item, CarbonInterface $periodStart, CarbonInterface $periodEnd, ?string $cutoff = null): int
     {
-        return (int) ClientContractTimeConsumption::query()
+        return (int) \App\Modules\Commercial\Support\TimebankLedger::excludeReversed(ClientContractTimeConsumption::query(), 'quick')
+            ->when($cutoff, fn ($q) => $q->whereDate('work_date', '<=', $cutoff))
             ->where('contract_item_id', $item->id)
             ->whereDate('period_start', $periodStart->toDateString())
             ->whereDate('period_end', $periodEnd->toDateString())

@@ -110,6 +110,29 @@ class ClientTimeReportQuery
             });
         }
 
+        // Preserve registered work; net the customer measures only for a retained reversed source.
+        $entries = $entries->map(function (array $entry) use ($to): array {
+            $correction = in_array($entry['source'], ['quick', 'ticket'], true)
+                ? \App\Modules\Commercial\Support\TimebankLedger::reversal($entry['source'], $entry['id']) : null;
+            if ($correction && (! $to || $correction->effective_date->toDateString() <= $to)) {
+                $entry['gross_basis_minutes'] = $entry['basis_minutes'];
+                $entry['correction_id'] = $correction->id;
+                $entry['correction_reason'] = $correction->reason;
+                $entry['customer_charge_reversed'] = true;
+                foreach (['basis_minutes', 'covered_minutes', 'processed_billable_minutes', 'unresolved_minutes'] as $key) {
+                    $entry[$key] = 0;
+                }
+                $entry['billing_status'] = 'Customer charge reversed #'.$correction->id;
+            } else {
+                $entry['gross_basis_minutes'] = $entry['basis_minutes'];
+                $entry['correction_id'] = null;
+                $entry['correction_reason'] = null;
+                $entry['customer_charge_reversed'] = false;
+            }
+
+            return $entry;
+        });
+
         $metrics = ['work_minutes', 'basis_minutes', 'covered_minutes', 'processed_billable_minutes', 'unresolved_minutes'];
         $groups = $entries->groupBy('object_key');
         $objects = $objects->map(function (array $object, string $key) use ($groups, $metrics): array {
@@ -126,9 +149,24 @@ class ClientTimeReportQuery
             $totals[$metric] = (int) $entries->sum($metric);
         }
 
+        $correctionHistory = collect();
+        if (\App\Modules\Commercial\Support\TimebankLedger::installed()) {
+            $visibleSources = $entries->mapWithKeys(fn ($e) => [$e['source'].':'.$e['id'] => true]);
+            $correctionHistory = \App\Modules\Commercial\Models\TimebankCorrection::where('client_id', $client->id)
+                ->when($from, fn ($q) => $q->whereDate('effective_date', '>=', $from))
+                ->when($to, fn ($q) => $q->whereDate('effective_date', '<=', $to))
+                ->with('effects')->orderBy('id')->get()
+                ->filter(fn ($c) => $c->kind === 'adjustment' || $visibleSources->has($c->source_type.':'.$c->source_id))
+                ->map(fn ($c) => ['id' => $c->id, 'kind' => $c->kind, 'source_type' => $c->source_type,
+                    'source_id' => $c->source_id, 'reason' => $c->reason,
+                    'effective_date' => $c->effective_date->toDateString(), 'recorded_at' => $c->created_at->toIso8601String(),
+                    'adjustment_minutes' => (int) $c->effects->sum('adjustment_minutes'),
+                    'reversed_usage_minutes' => (int) $c->effects->sum('reversed_usage_minutes')])->values();
+        }
+
         return ['client' => $client, 'from' => $from, 'to' => $to, 'objects' => $objects,
             'entries' => $entries->sortBy([['date', 'asc'], ['source', 'asc'], ['id', 'asc']])->values(),
-            'totals' => $totals, 'generated_at' => now()];
+            'totals' => $totals, 'corrections' => $correctionHistory, 'generated_at' => now()];
     }
 
     private function context(Builder $query, Client $client): Builder

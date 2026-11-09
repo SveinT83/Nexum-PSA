@@ -145,7 +145,7 @@ class ClientTimeReportApiController extends Controller
         $parameters = array_filter(['client' => $report['client']->id, 'date_from' => $report['from'], 'date_to' => $report['to']]);
 
         return ['client' => $report['client']->only(['id', 'name', 'client_number']),
-            'totals' => $report['totals'], 'object_count' => $report['objects']->count(), 'entry_count' => $report['entries']->count(),
+            'totals' => $report['totals'], 'corrections' => $report['corrections']->all(), 'object_count' => $report['objects']->count(), 'entry_count' => $report['entries']->count(),
             'metric_definitions' => [
                 'work_minutes' => 'Registered direct Ticket, Task and quick time once; may include estimate-completion provenance; not approved payroll.',
                 'basis_minutes' => 'Customer billing basis; Task billing projections are not extra effort.',

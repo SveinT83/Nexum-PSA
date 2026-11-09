@@ -31,6 +31,8 @@ class CommercialTimebankController extends CommercialApiController
             return [
                 'contract_id' => $b['contract']->id, 'contract_item_id' => $b['contract_item']->id, 'service_id' => $b['service']->id,
                 'period_start' => $b['period_start']->toDateString(), 'period_end' => $b['period_end']->toDateString(),
+                'adjustment_minutes' => $b['adjustment_minutes'],
+                'effective_included_minutes' => $b['effective_included_minutes'], 'signed_balance_minutes' => $b['signed_balance_minutes'],
                 'included_minutes' => $b['included_minutes'], 'used_minutes' => $b['used_minutes'], 'remaining_minutes' => $b['remaining_minutes'], 'overused_minutes' => $b['overused_minutes'],
                 'allocated_ticket_minutes' => $b['allocated_ticket_minutes'], 'pending_ticket_minutes' => $b['pending_ticket_minutes'], 'quick_minutes' => $b['quick_minutes'],
                 'time_rate_options' => $b['time_rate_options']->all(), 'revision' => TimebankRevision::of($b, $policy),
@@ -38,12 +40,21 @@ class CommercialTimebankController extends CommercialApiController
             ];
         });
 
-        return response()->json(['data' => ['client_id' => $client->id, 'work_date' => $date->toDateString(), 'policy' => $policy, 'balances' => $rows]]);
+        return response()->json(['data' => ['client_id' => $client->id, 'work_date' => $date->toDateString(),
+            'corrections' => ['enabled' => (bool) config('commercial.timebank_corrections_enabled'),
+                'history' => url('/api/v1/commercial/clients/'.$client->id.'/timebank/history'),
+                'adjustment_preview' => url('/api/v1/commercial/clients/'.$client->id.'/timebank/adjustment-preview'),
+                'adjustments' => url('/api/v1/commercial/clients/'.$client->id.'/timebank/adjustments'),
+                'reversal_preview' => url('/api/v1/commercial/clients/'.$client->id.'/timebank/reversal-preview'),
+                'reversals' => url('/api/v1/commercial/clients/'.$client->id.'/timebank/reversals')],
+            'policy' => $policy, 'balances' => $rows]]);
     }
 
     private function entry(ClientContractTimeConsumption $row): array
     {
-        return $row->only(['id', 'client_id', 'contract_id', 'contract_item_id', 'contract_item_time_rate_id', 'time_rate_id', 'user_id', 'work_date', 'minutes', 'note', 'source', 'rate_name', 'rate_code', 'rate_type', 'rate_unit', 'rate_amount_ex_vat', 'rate_currency', 'period_start', 'period_end', 'included_minutes_snapshot', 'used_before_minutes_snapshot', 'overused_minutes']);
+        $correction = \App\Modules\Commercial\Support\TimebankLedger::reversal('quick', $row->id);
+        return ['customer_charge_reversed' => (bool) $correction, 'correction_id' => $correction?->id]
+            + $row->only(['id', 'client_id', 'contract_id', 'contract_item_id', 'contract_item_time_rate_id', 'time_rate_id', 'user_id', 'work_date', 'minutes', 'note', 'source', 'rate_name', 'rate_code', 'rate_type', 'rate_unit', 'rate_amount_ex_vat', 'rate_currency', 'period_start', 'period_end', 'included_minutes_snapshot', 'used_before_minutes_snapshot', 'overused_minutes']);
     }
 
     public function show(Request $request)
@@ -61,11 +72,11 @@ class CommercialTimebankController extends CommercialApiController
         $data = CommercialInput::validate($request, ['contract_item_id' => 'required|integer|exists:contract_items,id', 'time_rate_source' => 'required|string|max:50', 'work_date' => 'required|date', 'minutes' => 'required|integer|min:1|max:'.$policy['quick_timebank_max_minutes'], 'note' => ($policy['quick_timebank_require_note'] ? 'required' : 'nullable').'|string|max:2000']);
         $item = ContractItem::query()->with('contract')->findOrFail($data['contract_item_id']);
         abort_unless((int) $item->contract?->client_id === (int) $client->id, 404);
-        $result = $this->command($request, $item->contract, function () use ($request, $client, $data) {
+        $result = app(\App\Modules\Economy\Support\EconomyMutex::class)->run(fn () => $this->command($request, $item->contract, function () use ($request, $client, $data) {
             $row = app(RegisterClientTimebankConsumption::class)->handle($client, $request->user(), $data, trim($request->header('If-Match'), '"'));
 
             return ['data' => $this->entry($row)];
-        }, true, fn () => abort_unless($request->header('If-Match'), 428, 'Read the balance revision and supply If-Match.'));
+        }, true, fn () => abort_unless($request->header('If-Match'), 428, 'Read the balance revision and supply If-Match.')));
 
         return response()->json($result, 201);
     }

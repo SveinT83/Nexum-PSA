@@ -394,6 +394,9 @@
                                     <span class="fw-semibold">Contract Timebank</span>
                                     <span class="badge text-bg-light border">{{ $clientTimebankBalances->count() }}</span>
                                 </div>
+                                @if(config('commercial.timebank_corrections_enabled'))
+                                    <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.clients.timebank-corrections.index', $client) }}">Adjust balance / history</a>
+                                @endif
                                 @unless($quickTimebankPolicy['quick_timebank_enabled'])
                                     <span class="badge text-bg-secondary">Quick registration disabled</span>
                                 @endunless
@@ -417,11 +420,11 @@
                                                     @endif
                                                 </div>
 
-                                                <div class="progress mb-2" style="height: 0.85rem;" role="progressbar" aria-label="Timebank usage" aria-valuenow="{{ $timebank['used_minutes'] }}" aria-valuemin="0" aria-valuemax="{{ max(1, $timebank['included_minutes']) }}">
+                                                <div class="progress mb-2" style="height: 0.85rem;" role="progressbar" aria-label="Timebank usage" aria-valuenow="{{ $timebank['used_minutes'] }}" aria-valuemin="0" aria-valuemax="{{ max(1, $timebank['effective_included_minutes']) }}">
                                                     <div class="progress-bar {{ $timebank['overused_minutes'] > 0 ? 'bg-danger' : 'bg-success' }}" style="width: {{ $timebank['usage_percent'] }}%"></div>
                                                 </div>
                                                 @if($timebank['overused_minutes'] > 0)
-                                                    <div class="progress mb-2" style="height: 0.35rem;" role="progressbar" aria-label="Timebank overuse" aria-valuenow="{{ $timebank['overused_minutes'] }}" aria-valuemin="0" aria-valuemax="{{ max(1, $timebank['included_minutes']) }}">
+                                                    <div class="progress mb-2" style="height: 0.35rem;" role="progressbar" aria-label="Timebank overuse" aria-valuenow="{{ $timebank['overused_minutes'] }}" aria-valuemin="0" aria-valuemax="{{ max(1, $timebank['effective_included_minutes']) }}">
                                                         <div class="progress-bar bg-danger" style="width: {{ max(6, $timebank['overuse_percent']) }}%"></div>
                                                     </div>
                                                 @endif
@@ -430,6 +433,9 @@
                                                     <div class="col-6 col-md-3">
                                                         <span class="text-muted">Included</span>
                                                         <div class="fw-semibold">{{ $formatMinutes($timebank['included_minutes']) }}</div>
+                                                        @if($timebank['adjustment_minutes'] ?? 0)
+                                                            <small class="text-muted">Balance adjustments: {{ $timebank['adjustment_minutes'] > 0 ? '+' : '' }}{{ $timebank['adjustment_minutes'] }} min</small>
+                                                        @endif
                                                     </div>
                                                     <div class="col-6 col-md-3">
                                                         <span class="text-muted">Used</span>
@@ -502,6 +508,10 @@
                 </div>
 
                 <div @class(['tab-pane fade', 'show active' => $activeClientTab === 'time-usage']) id="client-time-usage-pane" role="tabpanel" aria-labelledby="client-time-usage-tab" tabindex="0">
+                    {{-- Commercial corrections preserve employee work and require separate authority. --}}
+                    @if(config('commercial.timebank_corrections_enabled') && $canViewTimebank)
+                        <div class="mb-2"><a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.clients.timebank-corrections.index', $client) }}">Timebank corrections and history</a></div>
+                    @endif
                     {{-- Full historical reporting is separate from editable pending usage. --}}
                     @if(app(\App\Modules\Clients\Reports\ClientTimeReportDefinition::class)->visibleTo(auth()->user()))
                         <div class="mb-3"><a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.clients.time-report', ['client_id' => $client->id]) }}"><i class="bi bi-clock-history me-1"></i>Time consumption report</a></div>
@@ -639,6 +649,14 @@
                                             </td>
                                             <td class="{{ blank($usage['note'] ?? $usage['invoice_text']) ? 'text-muted' : '' }}">{{ \Illuminate\Support\Str::limit($usage['note'] ?: $usage['invoice_text'] ?: '—', 80) }}</td>
                                             <td class="text-end">
+                                                @if(config('commercial.timebank_corrections_enabled') && in_array($usage['source'], ['quick', 'ticket'], true) && !($usage['customer_charge_reversed'] ?? false))
+                                                    @if(app(\App\Modules\Integration\Support\DomainApiAuthorization::class)->permits(request(), 'commercial.timebank.reverse'))
+                                                    <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.clients.timebank-corrections.index', [$client, 'selected_source' => $usage['source'], 'selected_entry' => $usage['id']]) }}">Reverse customer charge</a>
+                                                    @endif
+                                                @endif
+                                                @if($usage['customer_charge_reversed'] ?? false)
+                                                    <span class="badge text-bg-secondary">Customer charge reversed · work retained</span>
+                                                @endif
                                                 @if($usage['ordered'])
                                                     <span class="badge text-bg-secondary">Ordered</span>
                                                 @elseif($usage['can_edit'])

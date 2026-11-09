@@ -33,6 +33,10 @@ use OpenApi\Attributes as OA;
     new OA\Property(property: 'invoice_text', type: 'string', nullable: true),
     new OA\Property(property: 'id', type: 'integer'),
     new OA\Property(property: 'ordered', type: 'boolean'),
+    new OA\Property(property: 'gross_basis_minutes', type: 'integer'),
+    new OA\Property(property: 'customer_charge_reversed', type: 'boolean'),
+    new OA\Property(property: 'correction_id', type: 'integer', nullable: true),
+    new OA\Property(property: 'correction_reason', type: 'string', nullable: true),
     new OA\Property(property: 'work_minutes', type: 'integer'),
     new OA\Property(property: 'basis_minutes', type: 'integer'),
     new OA\Property(property: 'covered_minutes', type: 'integer'),
@@ -53,6 +57,12 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(schema: 'ClientTimeReportSummary', type: 'object', properties: [new OA\Property(property: 'data', type: 'object', properties: [
     new OA\Property(property: 'client', type: 'object', properties: [new OA\Property(property: 'id', type: 'integer'), new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'client_number', type: 'string', nullable: true)]),
     new OA\Property(property: 'totals', ref: '#/components/schemas/ClientTimeReportTotals'),
+    new OA\Property(property: 'corrections', type: 'array', items: new OA\Items(type: 'object', properties: [
+        new OA\Property(property: 'id', type: 'integer'), new OA\Property(property: 'kind', type: 'string'),
+        new OA\Property(property: 'source_type', type: 'string', nullable: true), new OA\Property(property: 'source_id', type: 'integer', nullable: true),
+        new OA\Property(property: 'reason', type: 'string'), new OA\Property(property: 'effective_date', type: 'string', format: 'date'),
+        new OA\Property(property: 'recorded_at', type: 'string'), new OA\Property(property: 'adjustment_minutes', type: 'integer'),
+        new OA\Property(property: 'reversed_usage_minutes', type: 'integer')], additionalProperties: false)),
     new OA\Property(property: 'object_count', type: 'integer'), new OA\Property(property: 'entry_count', type: 'integer'),
     new OA\Property(property: 'metric_definitions', type: 'object', additionalProperties: new OA\AdditionalProperties(type: 'string')),
     new OA\Property(property: 'links', type: 'object', additionalProperties: new OA\AdditionalProperties(type: 'string'))]),

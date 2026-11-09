@@ -46,13 +46,18 @@ class ExportClientTimeReport
             $this->row($summary, $index, ['TOTAL', '', '', '', '', '', ...array_values($report['totals']), $report['entries']->count()]);
             $detail = $book->createSheet()->setTitle('Time entries');
             $this->row($detail, 1, ['Source', 'Entry ID', 'Object', 'Reference', 'Work date', 'Employee', 'Work description', 'Invoice text',
-                'Provenance', 'Registered work', 'Billing basis', 'Covered (processed)', 'Billable (processed)', 'Unresolved billing basis', 'Billing status', 'On order']);
+                'Provenance', 'Registered work', 'Billing basis', 'Covered (processed)', 'Billable (processed)', 'Unresolved billing basis', 'Billing status', 'On order', 'Gross billing basis', 'Correction ID', 'Correction reason']);
             $index = 2;
             foreach ($report['entries'] as $entry) {
                 $this->row($detail, $index++, [$entry['source'], $entry['id'], $entry['object_key'], $entry['reference'], $entry['date'],
                     $entry['employee'], $entry['description'], $entry['invoice_text'], $entry['provenance'], $entry['work_minutes'],
                     $entry['basis_minutes'], $entry['covered_minutes'], $entry['processed_billable_minutes'], $entry['unresolved_minutes'],
-                    $entry['billing_status'], $entry['ordered'] ? 'Yes' : 'No']);
+                    $entry['billing_status'], $entry['ordered'] ? 'Yes' : 'No', $entry['gross_basis_minutes'], $entry['correction_id'], $entry['correction_reason']]);
+            }
+            $history = $book->createSheet()->setTitle('Corrections');
+            $this->row($history, 1, ['ID', 'Kind', 'Source', 'Source ID', 'Reason', 'Effective date', 'Recorded at', 'Adjustment minutes', 'Reversed usage minutes']);
+            foreach (($report['corrections'] ?? collect()) as $index => $correction) {
+                $this->row($history, $index + 2, array_values($correction));
             }
             foreach ($book->getAllSheets() as $sheet) {
                 $sheet->freezePane($sheet === $summary ? 'G9' : 'J2');
