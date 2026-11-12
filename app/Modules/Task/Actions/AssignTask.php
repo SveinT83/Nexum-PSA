@@ -17,7 +17,7 @@ class AssignTask
         }
 
         $oldAssignee = $task->assignee?->name;
-        $task->forceFill(['assigned_to' => $data['assigned_to'] ?? null])->save();
+        $task->forceFill(['assigned_to' => $data['assigned_to'] ?? null, 'updated_by' => $actor->id])->save();
         $task->load('assignee');
 
         TaskActivity::query()->create([

@@ -78,7 +78,7 @@ class TransitionTicketWorkflow
                     throw ValidationException::withMessages(['transition' => $reason]);
                 }
                 $this->approvedScope->assertWithinApprovedScope($locked);
-                $locked->forceFill(['close_outcome' => $locked->close_outcome ?: 'completed'])->save();
+                $locked->forceFill(['close_outcome' => $locked->close_outcome ?: 'completed', 'updated_by' => $actor?->id])->save();
             }
             $ruleBefore = $this->ruleEvents->snapshot($locked);
             $before = [
@@ -108,7 +108,7 @@ class TransitionTicketWorkflow
                 'updated_by' => $actor?->id,
             ])->save();
 
-            $this->applyAssignmentPolicy($locked, $target['assignment_policy'] ?? []);
+            $this->applyAssignmentPolicy($locked, $target['assignment_policy'] ?? [], $actor);
 
             $invalidatedReviews = $locked->workflowReviews()
                 ->where('state_key', '!=', $target['state_key'])
@@ -236,7 +236,7 @@ class TransitionTicketWorkflow
     }
 
     /** @param array<string, mixed> $policy */
-    private function applyAssignmentPolicy(Ticket $ticket, array $policy): void
+    private function applyAssignmentPolicy(Ticket $ticket, array $policy, ?User $actor): void
     {
         $strategy = (string) ($policy['strategy'] ?? 'keep_if_eligible');
         $eligible = collect($policy['eligible_user_ids'] ?? [])->map(fn ($id) => (int) $id)->filter()->unique()->values();
@@ -260,9 +260,9 @@ class TransitionTicketWorkflow
             return;
         }
 
-        $ticket->forceFill(['owner_id' => null])->save();
+        $ticket->forceFill(['owner_id' => null, 'updated_by' => $actor?->id])->save();
         if ($strategy === 'auto' || ($strategy === 'keep_if_eligible' && ! $ownerEligible)) {
-            $this->assignments->assign($ticket, force: true, eligibleUserIds: $eligibleIds);
+            $this->assignments->assign($ticket, force: true, eligibleUserIds: $eligibleIds, actor: $actor);
         }
     }
 

@@ -187,7 +187,7 @@ final class MutateTicketTags
                 }
             }
 
-            $ticket->forceFill(['updated_by' => $actor?->id])->touch();
+            $ticket->recordRelatedMutation($actor);
             $history = TicketEvent::query()->create([
                 'ticket_id' => $ticket->id,
                 'actor_id' => $actor?->id,

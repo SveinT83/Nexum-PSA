@@ -7,11 +7,24 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class TaskResource extends JsonResource
 {
+    /** Eager-load only safe actor references before collection serialization. */
+    public static function collection($resource)
+    {
+        $records = method_exists($resource, 'getCollection') ? $resource->getCollection() : $resource;
+        if ($records instanceof \Illuminate\Database\Eloquent\Collection) {
+            $records->loadMissing(['creator', 'updater']);
+        }
+
+        return parent::collection($resource);
+    }
+
     /**
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
     {
+        $this->resource->loadMissing(['creator', 'updater']);
+
         return [
             'id' => $this->id,
             'parent_id' => $this->parent_id,
@@ -68,6 +81,10 @@ class TaskResource extends JsonResource
             ])->values()),
             'tags' => $this->whenLoaded('tags', fn () => $this->tags->map(fn ($tag) => $tag->only(['id', 'name', 'slug']))->values()),
             'metadata' => $this->metadata,
+            'updated_by' => $this->updated_by === null ? null : (int) $this->updated_by,
+            'creator' => $this->creator?->only(['id', 'name']),
+            'updater' => $this->updater?->only(['id', 'name']),
+            'actor_updated_at' => $this->actor_updated_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'links' => [

@@ -192,8 +192,8 @@ class TicketRuleScheduledOccurrenceParityTest extends TestCase
             'owner_id' => null,
             'channel' => 'manual',
         ], $creator);
-        // Preserve a historical raw creator ID without fighting unrelated immutable Email evidence.
-        $parent->forceFill(['created_by' => $missingCreatorId])->save();
+        // Seed legacy database evidence directly: ordinary model edits now preserve the creator.
+        DB::table('tickets')->where('id', $parent->id)->update(['created_by' => $missingCreatorId]);
         $plannedStart = Carbon::now()->addDay()->startOfMinute();
         TicketSchedule::query()->create([
             'ticket_id' => $parent->id,

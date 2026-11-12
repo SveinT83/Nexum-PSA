@@ -90,3 +90,53 @@ Older internal Tickets may have no stored Work Context. A Task can still use its
 context while belonging to that Ticket. API create/read/edit preserves that legacy owner rather
 than silently rewriting the Ticket. Current non-null owner contexts, client mismatch and private
 Task rules remain enforced.
+
+## Creator and last editor (Dev, 12 November 2026)
+
+Availability: implemented on Dev under the approved creator/updater RFC. This
+section does not claim Main promotion or production availability. Manual review
+HR-2026-11-12-TICKET-TASK-ATTRIBUTION remains pending before production release.
+
+You need ordinary permission to view the Ticket or Task. This adds no new access
+to records or another user's private Tasks.
+
+1. Open **Tickets** or **Tasks** and open the record.
+2. Read the small **Created by** and **Updated by** line below the subject/title.
+3. **Created by** identifies the original creator. Assignment changes do not
+   replace the creator.
+4. **Updated by** identifies the verified actor for the last recorded domain
+   change, such as an edit, status/assignment change, tag/custom-field update,
+   or a change to the Task's own checklist. The displayed time uses your Nexum
+   date/time preferences.
+5. Reading, marking a Ticket read, unchanged submissions and technical timestamp
+   touches do not replace the last editor. Comments and time entries retain
+   their own authors; a parent workflow/field change is attributed separately.
+
+**Unknown** means attribution is absent or the user reference is unavailable.
+Existing history is not guessed from the assignee or email sender. An older
+record may have a known name but no verified edit time. Automation with a
+verified managed actor shows that actor's name; unattributed background changes
+do not impersonate the previous employee.
+
+### API read-back
+
+Authorized list, detail and record mutation responses include:
+
+- `created_by` and `updated_by`: nullable user IDs, set by the server.
+- `creator` and `updater`: nullable objects containing only `id` and `name`.
+- `created_at`: the original creation time.
+- `actor_updated_at`: the last tracked domain change time; null for older
+  records without that evidence.
+- `updated_at`: the existing general timestamp, which may also change for
+  technical touches. Use `actor_updated_at` with `updater` for last-editor display.
+
+Do not send actor IDs or actor timestamps as write inputs. The authenticated
+operation supplies the actor, and unsupported attribution inputs are rejected.
+A null actor reference is an unknown/unavailable identity, not an authorization
+to assume a particular employee. Existing token scopes, record permissions and
+private Task restrictions still apply.
+
+If the line is absent, check which environment/version you are using. If an old
+record shows Unknown, that is expected until a real supported change supplies
+new evidence. Do not rewrite historical creator identities to make the line
+look complete.

@@ -29,7 +29,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use RuntimeException;
@@ -173,37 +172,42 @@ class TaskController extends Controller
             }
         }
 
-        $task->forceFill([
-            'parent_id' => $data['parent_id'] ?? null,
-            'title' => $data['title'],
-            'description' => $data['description'] ?? null,
-            'assigned_to' => $data['assigned_to'] ?? null,
-            'status_id' => $data['status_id'] ?? null,
-            'queue_id' => $data['queue_id'] ?? null,
-            'priority_id' => $data['priority_id'] ?? null,
-            'category_id' => $data['category_id'] ?? null,
-            'client_id' => $clientId,
-            'work_context_id' => $workContexts->fromClientId($clientId)->id,
-            'site_id' => $clientId ? ($data['site_id'] ?? null) : null,
-            'due_at' => $data['due_at'] ?? null,
-            'scheduled_start_at' => $data['scheduled_start_at'] ?? null,
-            'scheduled_end_at' => $data['scheduled_end_at'] ?? null,
-            'estimated_minutes' => $data['estimated_minutes'] ?? null,
-            'blocks_owner_completion' => (bool) ($data['blocks_owner_completion'] ?? false),
-            'metadata' => $metadata,
-        ])->save();
+        $task->getConnection()->transaction(function () use ($task, $data, $metadata, $clientId, $workContexts, $request): void {
+            $task->forceFill([
+                'updated_by' => $request->user()->id,
+                'parent_id' => $data['parent_id'] ?? null,
+                'title' => $data['title'],
+                'description' => $data['description'] ?? null,
+                'assigned_to' => $data['assigned_to'] ?? null,
+                'status_id' => $data['status_id'] ?? null,
+                'queue_id' => $data['queue_id'] ?? null,
+                'priority_id' => $data['priority_id'] ?? null,
+                'category_id' => $data['category_id'] ?? null,
+                'client_id' => $clientId,
+                'work_context_id' => $workContexts->fromClientId($clientId)->id,
+                'site_id' => $clientId ? ($data['site_id'] ?? null) : null,
+                'due_at' => $data['due_at'] ?? null,
+                'scheduled_start_at' => $data['scheduled_start_at'] ?? null,
+                'scheduled_end_at' => $data['scheduled_end_at'] ?? null,
+                'estimated_minutes' => $data['estimated_minutes'] ?? null,
+                'blocks_owner_completion' => (bool) ($data['blocks_owner_completion'] ?? false),
+                'metadata' => $metadata,
+            ])->save();
 
-        $task->tags()->syncWithPivotValues($this->resolveTagIds($data['tag_names'] ?? []), ['module' => 'Task']);
+            app(\App\Modules\Task\Services\TaskApiPayload::class)->sync($task, $data + ['tag_names' => []], $request->user());
 
-        $this->replaceChecklist($task, $data['checklist_text'] ?? null);
+            app(\App\Modules\Task\Actions\ReplaceTaskChecklist::class)->handle(
+                $task, $this->parseChecklist($data['checklist_text'] ?? null), $request->user(),
+            );
 
-        TaskActivity::query()->create([
-            'task_id' => $task->id,
-            'user_id' => $request->user()?->id,
-            'type' => 'updated',
-            'visibility' => Task::VISIBILITY_INTERNAL,
-            'body' => 'Task updated.',
-        ]);
+            TaskActivity::query()->create([
+                'task_id' => $task->id,
+                'user_id' => $request->user()?->id,
+                'type' => 'updated',
+                'visibility' => Task::VISIBILITY_INTERNAL,
+                'body' => 'Task updated.',
+            ]);
+        });
 
         return redirect()
             ->route('tech.tasks.show', $task)
@@ -247,24 +251,24 @@ class TaskController extends Controller
     {
         $data = $request->validate(['status_id' => ['required', 'integer', 'exists:task_statuses,id']]);
         $changeStatus->handle($task, $data['status_id'], $request->user());
+
         return back()->with('success', 'Task status updated.');
     }
-
 
     public function assign(Request $request, Task $task, \App\Modules\Task\Actions\AssignTask $assign): RedirectResponse
     {
         $data = $request->validate(['assigned_to' => ['nullable', 'integer', Rule::exists((new User)->getTable(), 'id')]]);
         $assign->handle($task, $data['assigned_to'] ?? null, $request->user());
+
         return back()->with('success', 'Task assignment updated.');
     }
-
 
     public function toggleChecklistItem(Request $request, Task $task, TaskChecklistItem $item, \App\Modules\Task\Actions\SetTaskChecklistState $setState): RedirectResponse
     {
         $setState->handle($task, $item, ! $item->is_checked, $request->user());
+
         return back()->with('success', 'Checklist updated.');
     }
-
 
     public function complete(Request $request, Task $task, CompleteTask $completeTask, TicketTimeRateOptions $timeRateOptions): RedirectResponse
     {
@@ -455,26 +459,10 @@ class TaskController extends Controller
             ->all();
     }
 
-    private function replaceChecklist(Task $task, ?string $text): void
-    {
-        $items = collect($this->parseChecklist($text));
-
-        $task->checklistItems()->delete();
-
-        foreach ($items as $item) {
-            $task->checklistItems()->create([
-                'title' => $item['title'],
-                'description' => $item['description'] ?? null,
-                'sort_order' => $item['sort_order'],
-            ]);
-        }
-    }
-
     private function parseChecklist(?string $text): array
     {
         return app(\App\Modules\Task\Support\TaskFormValues::class)->parseChecklist($text);
     }
-
 
     private function resolveTagIds(array $tagNames): array
     {

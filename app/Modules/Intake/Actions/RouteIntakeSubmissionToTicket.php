@@ -46,6 +46,7 @@ class RouteIntakeSubmissionToTicket
             ], $actor);
 
             $ticket->forceFill([
+                'updated_by' => $actor?->id,
                 'metadata' => array_replace($ticket->metadata ?: [], $metadata),
                 'is_unread' => true,
             ])->save();

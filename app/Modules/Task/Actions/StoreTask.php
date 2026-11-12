@@ -46,6 +46,7 @@ class StoreTask
                 'owner_type' => $owner->getMorphClass(),
                 'owner_id' => $owner->getKey(),
                 'created_by' => $creator->id,
+                'updated_by' => $creator->id,
                 'assigned_to' => $data['assigned_to'] ?? null,
                 'status_id' => $statusId,
                 'queue_id' => $data['queue_id'] ?? null,

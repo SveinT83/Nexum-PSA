@@ -82,7 +82,7 @@ class TaskController extends Controller
 
         $task = \Illuminate\Support\Facades\DB::transaction(function () use ($storeTask, $data, $request, $owner) {
             $task = $storeTask->handle($data, $request->user(), $owner);
-            app(\App\Modules\Task\Services\TaskApiPayload::class)->sync($task, $data);
+            app(\App\Modules\Task\Services\TaskApiPayload::class)->sync($task, $data, $request->user());
 
             return $task;
         });
@@ -116,7 +116,7 @@ class TaskController extends Controller
                 }
 
                 $values = \Illuminate\Support\Arr::except($data, ['checklist', 'checklist_text', 'tag_names', 'ticket_rate_key', 'assigned_to', 'status_id']);
-                $task->forceFill($values)->save();
+                $task->forceFill($values + ['updated_by' => $request->user()->id])->save();
                 if (array_key_exists('assigned_to', $data)) {
                     app(\App\Modules\Task\Actions\AssignTask::class)->handle($task, $data['assigned_to'], $request->user());
                 }
@@ -124,12 +124,9 @@ class TaskController extends Controller
                     app(\App\Modules\Task\Actions\ChangeTaskStatus::class)->handle($task->refresh(), $data['status_id'], $request->user());
                 }
                 if (array_key_exists('checklist', $data)) {
-                    $task->checklistItems()->delete();
-                    foreach ($data['checklist'] as $item) {
-                        $task->checklistItems()->create($item);
-                    }
+                    app(\App\Modules\Task\Actions\ReplaceTaskChecklist::class)->handle($task, $data['checklist'], $request->user());
                 }
-                app(\App\Modules\Task\Services\TaskApiPayload::class)->sync($task, $data);
+                app(\App\Modules\Task\Services\TaskApiPayload::class)->sync($task, $data, $request->user());
 
                 TaskActivity::query()->create([
                     'task_id' => $task->id,

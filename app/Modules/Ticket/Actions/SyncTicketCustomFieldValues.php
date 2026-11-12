@@ -148,7 +148,7 @@ final class SyncTicketCustomFieldValues
                 }
             }
 
-            $ticket->forceFill(['updated_by' => $actor->id])->touch();
+            $ticket->recordRelatedMutation($actor);
 
             $beforeAudit = [];
             $afterAudit = [];

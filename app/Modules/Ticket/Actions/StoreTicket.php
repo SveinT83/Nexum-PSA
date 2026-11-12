@@ -216,6 +216,7 @@ class StoreTicket
                     $slaContext['sla_id'] = $ticket->sla_id;
                     $sla = $this->ticketSlaResolver->resolve($this->slaContext($slaContext), $priority, $ticket->created_at);
                     $ticket->forceFill([
+                        'updated_by' => $actor?->id,
                         'sla_id' => $sla['sla_id'],
                         'sla_source' => $sla['sla_source'],
                         'sla_source_id' => $sla['sla_source_id'],
@@ -230,7 +231,7 @@ class StoreTicket
             // an explicit Queue or Owner decision. Only rerun_assignment asks
             // the engine to reassess inside the ordered rule branch.
             if (! (bool) data_get($ruleExecutionResult?->summary, 'assignment_decision', false)) {
-                $this->ticketAssignmentEngine->assign($ticket);
+                $this->ticketAssignmentEngine->assign($ticket, actor: $actor);
             }
 
             $ticket->refresh();

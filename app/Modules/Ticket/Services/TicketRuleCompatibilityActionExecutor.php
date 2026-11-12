@@ -190,7 +190,7 @@ final class TicketRuleCompatibilityActionExecutor
             $ticket->tags()->syncWithoutDetaching([
                 $targetId => ['module' => 'ticket'],
             ]);
-            $ticket->forceFill(['updated_by' => $actor->id])->save();
+            $ticket->recordRelatedMutation($actor);
         }
 
         return [

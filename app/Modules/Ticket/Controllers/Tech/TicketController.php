@@ -13,9 +13,6 @@ use App\Modules\CustomField\Support\CustomFieldPresenter;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailTicketConversationLink;
 use App\Modules\Email\Services\MailboxAccess;
-use App\Modules\Integration\Models\AiChat;
-use App\Modules\Integration\Services\AiAgentResolver;
-use App\Modules\Integration\Services\AiChatResponder;
 use App\Modules\Knowledge\Queries\ArticleQuery;
 use App\Modules\Notification\Actions\MarkNotificationsReadBySource;
 use App\Modules\Relationship\Models\NexumRelationship;
@@ -48,8 +45,6 @@ use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketAttachment;
 use App\Modules\Ticket\Models\TicketCostEntry;
 use App\Modules\Ticket\Models\TicketEmailOutboundCommunication;
-use App\Modules\Ticket\Models\TicketEvent;
-use App\Modules\Ticket\Models\TicketMergeSuggestionDismissal;
 use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
@@ -790,7 +785,6 @@ class TicketController extends Controller
         return response()->json($draft->handle($ticket, $request->user(), $data));
     }
 
-
     public function downloadAttachment(Ticket $ticket, TicketAttachment $attachment): StreamedResponse
     {
         abort_unless((int) $attachment->ticket_id === (int) $ticket->id, 404);
@@ -1062,9 +1056,9 @@ class TicketController extends Controller
     public function markMessageRead(Request $request, Ticket $ticket, TicketMessage $message, \App\Modules\Ticket\Actions\AcknowledgeTicketMessage $acknowledge): RedirectResponse
     {
         $acknowledge->handle($ticket, $message, $request->user());
+
         return redirect()->route('tech.tickets.show', $ticket->refresh())->with('success', 'Reply marked as read.');
     }
-
 
     public function markMessageSolution(Request $request, Ticket $ticket, TicketMessage $message, MarkTicketMessageSolution $markSolution): RedirectResponse
     {
@@ -1081,7 +1075,7 @@ class TicketController extends Controller
         }
 
         $previousOwnerId = $ticket->owner_id;
-        $ownerId = $assignmentEngine->assign($ticket, force: true);
+        $ownerId = $assignmentEngine->assign($ticket, force: true, actor: $request->user());
 
         if ($ownerId && (int) $previousOwnerId !== (int) $ownerId) {
             app(\App\Modules\Ticket\Actions\ApplyTicketWorkflowActionTrigger::class)->handle($ticket->refresh(), TicketAction::ASSIGN_OWNER, $request->user());
@@ -1216,9 +1210,9 @@ class TicketController extends Controller
     public function destroy(Request $request, Ticket $ticket, \App\Modules\Ticket\Actions\SoftDeleteTicket $delete): RedirectResponse
     {
         $delete->handle($ticket, $request->user());
+
         return redirect()->route('tech.tickets.index')->with('success', 'Ticket '.$ticket->ticket_key.' deleted.');
     }
-
 
     private function technicians()
     {
@@ -1261,7 +1255,6 @@ class TicketController extends Controller
                 'location' => trim(($item->warehouse?->name ?? 'No warehouse').($item->box ? ' / '.$item->box->code_human : '')),
             ]);
     }
-
 
     private function ccContactSuggestions(Ticket $ticket): Collection
     {
@@ -1421,7 +1414,6 @@ class TicketController extends Controller
         return app(\App\Modules\Ticket\Support\TicketFormValues::class)->resolveTagIds($tagNames);
     }
 
-
     private function ticketCategoryRule(): Exists
     {
         return Rule::exists('categories', 'id')
@@ -1529,6 +1521,4 @@ class TicketController extends Controller
     {
         return app(\App\Modules\Ticket\Support\TicketFormValues::class)->resolveSiteId($clientId, $siteId, $contactId, $assetId);
     }
-
-
 }

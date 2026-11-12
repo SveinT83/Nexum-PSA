@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Task extends Model
 {
+    use \App\Modules\UserManagement\Support\RecordsActorAttribution;
     use SoftDeletes;
 
     public const VISIBILITY_INTERNAL = 'internal';
@@ -33,6 +34,7 @@ class Task extends Model
         'owner_type',
         'owner_id',
         'created_by',
+        'updated_by',
         'assigned_to',
         'status_id',
         'queue_id',
@@ -59,6 +61,7 @@ class Task extends Model
     ];
 
     protected $casts = [
+        'actor_updated_at' => 'datetime',
         'due_at' => 'datetime',
         'scheduled_start_at' => 'datetime',
         'scheduled_end_at' => 'datetime',
@@ -91,7 +94,7 @@ class Task extends Model
 
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by')->select(['id', 'name']);
     }
 
     public function assignee(): BelongsTo

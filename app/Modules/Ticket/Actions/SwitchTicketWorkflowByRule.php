@@ -140,7 +140,7 @@ final class SwitchTicketWorkflowByRule
                 );
             }
 
-            $assignment = $this->assignments->apply($locked->refresh(), $state);
+            $assignment = $this->assignments->apply($locked->refresh(), $state, $actor);
             $locked->refresh();
             $reviewsInvalidated = app(InvalidateTicketWorkflowReviews::class)->handle(
                 $locked,

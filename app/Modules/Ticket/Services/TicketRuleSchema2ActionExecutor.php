@@ -662,7 +662,7 @@ final class TicketRuleSchema2ActionExecutor
             'queue_id' => $ticket->queue_id === null ? null : (int) $ticket->queue_id,
             'owner_id' => $ticket->owner_id === null ? null : (int) $ticket->owner_id,
         ];
-        $this->assignmentEngine->assign($ticket, true);
+        $this->assignmentEngine->assign($ticket, true, actor: User::query()->findOrFail($event->automationActorId));
         $ticket->refresh();
         $after = [
             'queue_id' => $ticket->queue_id === null ? null : (int) $ticket->queue_id,

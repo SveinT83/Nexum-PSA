@@ -21,7 +21,7 @@ final class ReconcileTicketOwnedWork
     {
         $contextId = $target->work_context_id ?: app(ResolveWorkContext::class)->fromClientId($target->client_id)->id;
         if (! $target->work_context_id) {
-            $target->forceFill(['work_context_id' => $contextId])->save();
+            $target->forceFill(['updated_by' => $actor?->id, 'work_context_id' => $contextId])->save();
         }
         $tasks = Task::query()->where('owner_type', $target->getMorphClass())->where('owner_id', $sourceTicketId)->orderBy('id')->lockForUpdate()->get();
         $rates = null;
@@ -38,7 +38,7 @@ final class ReconcileTicketOwnedWork
                     unset($metadata['ticket_rate_key'], $metadata['ticket_rate_label']);
                 }
             }
-            $task->forceFill(['owner_id' => $target->id, 'client_id' => $target->client_id, 'work_context_id' => $contextId, 'site_id' => $siteId, 'metadata' => $metadata])->save();
+            $task->forceFill(['updated_by' => $actor?->id, 'owner_id' => $target->id, 'client_id' => $target->client_id, 'work_context_id' => $contextId, 'site_id' => $siteId, 'metadata' => $metadata])->save();
             $after = $task->only(['owner_id', 'client_id', 'work_context_id', 'site_id']);
             if ($before !== $after) {
                 TaskActivity::create(['task_id' => $task->id, 'user_id' => $actor?->id, 'type' => 'owner_context_changed', 'visibility' => Task::VISIBILITY_INTERNAL,

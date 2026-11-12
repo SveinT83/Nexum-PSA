@@ -11,8 +11,7 @@ class CreateTicketFromTelephonyCall
 {
     public function __construct(
         private readonly StoreTicket $storeTicket,
-    ) {
-    }
+    ) {}
 
     public function handle(TelephonyCall $call, array $data): Ticket
     {
@@ -38,7 +37,7 @@ class CreateTicketFromTelephonyCall
             $metadata = $ticket->metadata ?? [];
             $metadata['telephony_call_id'] = $call->id;
             $metadata['telephony_caller_number'] = $call->caller_number_normalized ?: $call->caller_number_raw;
-            $ticket->forceFill(['metadata' => $metadata])->save();
+            $ticket->forceFill(['metadata' => $metadata, 'updated_by' => $actor?->id])->save();
 
             $call->forceFill([
                 'linked_ticket_id' => $ticket->id,

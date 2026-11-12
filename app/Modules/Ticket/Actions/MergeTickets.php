@@ -123,6 +123,7 @@ class MergeTickets
             $ids = $sources->pluck('id')->push($target->id)->unique()->sort()->values();
             $locked = Ticket::withTrashed()->whereIn('id', $ids)->orderBy('id')->lockForUpdate()->get();
             $snapshots = $locked->mapWithKeys(fn (Ticket $ticket) => [$ticket->id => TicketMergeSnapshot::fingerprint($ticket)])->all();
+
             return $this->handleMany($sources, $target, $actor, $reason, $snapshots);
         }, 3);
     }
@@ -220,10 +221,8 @@ class MergeTickets
             ],
         ]);
 
-        $target->forceFill([
-            'is_unread' => $target->is_unread || $source->is_unread,
-            'updated_by' => $actor?->id,
-        ])->touch();
+        $target->forceFill(['is_unread' => $target->is_unread || $source->is_unread]);
+        $target->recordRelatedMutation($actor);
 
         $source->delete();
     }
@@ -246,6 +245,7 @@ class MergeTickets
 
             if (! $targetLink) {
                 $sourceLink->forceFill(['ticket_id' => $target->id])->save();
+
                 continue;
             }
 

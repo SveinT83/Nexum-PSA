@@ -110,7 +110,7 @@ final class SelectTicketWorkflowForCreation
                 );
             }
 
-            $assignment = $this->assignments->apply($locked->refresh(), $state);
+            $assignment = $this->assignments->apply($locked->refresh(), $state, $actor);
             $locked->refresh();
             $after = $this->events->snapshot($locked);
             if ($before === $after) {

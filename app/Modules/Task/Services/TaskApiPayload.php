@@ -77,10 +77,20 @@ class TaskApiPayload
         return $data;
     }
 
-    public function sync(Task $task, array $data): void
+    public function sync(Task $task, array $data, ?\App\Models\Core\User $actor = null): void
     {
         if (array_key_exists('tag_names', $data)) {
-            $task->tags()->syncWithPivotValues(app(TaskFormValues::class)->resolveTagIds($data['tag_names'] ?? []), ['module' => 'Task']);
+            $desired = app(TaskFormValues::class)->resolveTagIds($data['tag_names'] ?? []);
+            $current = $task->tags()->pluck('tags.id')->map(fn ($id) => (int) $id)->all();
+            sort($desired);
+            sort($current);
+            if ($desired !== $current) {
+                $task->getConnection()->transaction(function () use ($task, $desired, $actor): void {
+                    $task->tags()->syncWithPivotValues($desired, ['module' => 'Task']);
+                    $task->recordRelatedMutation($actor);
+                });
+                $task->unsetRelation('tags');
+            }
         }
     }
 }

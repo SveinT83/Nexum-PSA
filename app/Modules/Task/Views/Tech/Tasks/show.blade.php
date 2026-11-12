@@ -23,6 +23,7 @@
 @section('pageHeader')
     <div class="col">
         <h1 class="h4 mb-0">{{ $task->title }}</h1>
+        <x-record-attribution :record="$task" />
     </div>
     <div class="col-auto">
         <x-buttons.back url="{{ route('tech.tasks.index') }}" class="mb-0">Back</x-buttons.back>

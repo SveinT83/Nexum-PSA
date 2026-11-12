@@ -1,5 +1,20 @@
 # tdPSA Development TODO
 
+## Ticket and Task creator/updater attribution (2026-11-12)
+
+Status: Human Approved / Main Candidate Preparing / Production Authorized.
+Owner: Codex; approver/reviewer: Svein Tore ("Godkjenner. Merge til Main og push til produktsjon").
+RFC: rfc/2026-11-12-ticket-task-actor-attribution.md.
+ADR: adr/2026-11-12-explicit-ticket-task-actor-attribution.md.
+Slice: feature-slices/2026-11-12-ticket-task-actor-attribution.md.
+HR-2026-11-12-TICKET-TASK-ATTRIBUTION Reviewed by Svein Tore on2026-11-12.
+Dev is verified; scoped Main promotion and production rollout are now explicitly authorized.
+Preserve existing production overlays and unrelated dirty Dev work.
+Next Codex: verify isolated Main candidate, merge/push Main and install/verify production.
+Employee-assistant retrieval remains separate and is not claimed tested.
+Evidence: plans/2026-11-12-ticket-task-attribution-main-production.md.
+
+
 ## Customer timebank adjustments and charge reversals (2026-11-09)
 
 Status: Main Merged / Production Installed And Enabled / Human Reviewed / Gateway Publication Blocked / BookStack Deferred.
