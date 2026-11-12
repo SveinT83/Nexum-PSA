@@ -2,17 +2,22 @@
 
 ## Ticket and Task creator/updater attribution (2026-11-12)
 
-Status: Human Approved / Main Candidate Preparing / Production Authorized.
-Owner: Codex; approver/reviewer: Svein Tore ("Godkjenner. Merge til Main og push til produktsjon").
-RFC: rfc/2026-11-12-ticket-task-actor-attribution.md.
-ADR: adr/2026-11-12-explicit-ticket-task-actor-attribution.md.
-Slice: feature-slices/2026-11-12-ticket-task-actor-attribution.md.
-HR-2026-11-12-TICKET-TASK-ATTRIBUTION Reviewed by Svein Tore on2026-11-12.
-Dev is verified; scoped Main promotion and production rollout are now explicitly authorized.
-Preserve existing production overlays and unrelated dirty Dev work.
-Next Codex: verify isolated Main candidate, merge/push Main and install/verify production.
-Employee-assistant retrieval remains separate and is not claimed tested.
-Evidence: plans/2026-11-12-ticket-task-attribution-main-production.md.
+Status: Done / Main Merged / Production Installed And Verified / Human Reviewed.
+Owner: Codex; reviewer/release authorizer: Svein Tore, 2026-11-12.
+Explicit approval: "Godkjenner. Merge til Main og push til produktsjon".
+PR403 main merge15104b5b; exact verified treef905ac4b. All38 scoped production
+runtime files match Main, additive migration/schema/journal verified; historical
+rows not backfilled. Protected configuration/vendor/build and old overlays retained.
+Tests: isolated Main PHP8.3 105/42727 PASS, final Blade1/2 PASS.
+Production Ticket/Task authorized page/API reads200, public HTTPS login/Swagger/
+actual OpenAPI200; protected/source hashes verified. No real work/provider writes.
+Four production handbook source sections and BookStack398/14,409/43 read back.
+HR-2026-11-12-TICKET-TASK-ATTRIBUTION Reviewed by Svein Tore; no repeat approval.
+Employee-assistant retrieval remains separate and unverified; no bulk native Knowledge sync.
+RFC/ADR/slice: 2026-11-12-ticket-task-actor-attribution / explicit-ticket-task-actor-attribution.
+Evidence/rollback: plans/2026-11-12-ticket-task-attribution-main-production.md.
+Worker/scheduler holds and existing provider/runtime switches preserved.
+Public-safe editorial queue updated; actual public marketing publication not authorized.
 
 
 ## Customer timebank adjustments and charge reversals (2026-11-09)
