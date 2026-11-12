@@ -1,5 +1,11 @@
 # RFC: Client time consumption report
 
+Current human acceptance (2026-11-12): Svein Tore approved the report/validation delivery
+as part of "Godkjenenr dem alle". The matching feature checklist is Reviewed.
+Earlier human-acceptance-pending wording is historical and does not require another
+approval. Unreported individual scenario execution and employee-assistant retrieval
+are not inferred. See 2026-11-12-three-delivery-human-acceptance.md in docs/plans.
+
 Status: Approved
 Date: 2026-11-05
 Owner: Codex; reviewer: Svein Tore

@@ -1,5 +1,93 @@
 # Human Review Register
 
+## HR-2026-11-05-CLIENT-GATEWAY - Client creation tool validation and contract
+
+Status: Reviewed. Reviewer: Svein Tore, 2026-11-12.
+
+Named human acceptance, 2026-11-12: Svein Tore explicitly approved all three
+listed deliveries: "Godkjenenr dem alle". This clears this feature's human-review
+gate. Do not request the same approval again.
+No individual unreported browser/provider/assistant scenario is marked executed.
+The original checkbox list below is retained as the verification plan, not proof
+that each scenario was performed. Employee-assistant retrieval remains a separate
+operational check under existing Integration follow-up.
+Acceptance record: plans/2026-11-12-three-delivery-human-acceptance.md.
+
+Accepted scope: Useful missing/invalid Client-field explanations and request-ID/customer-number distinction.
+Scope: Level 1 existing API/tool contract repair authorized by "Kjør på" on 2026-11-05.
+The fresh-chat feature acceptance gate is cleared by the named approval. The narrow gateway deployment is authorized.
+Main promotion, PSA deployment and actual customer/provider creation are outside this repair.
+
+- [ ] Reload tools/start a fresh chat; the assistant explains missing/invalid Client fields.
+- [ ] UUID is explained as tripletex_request_key, never the customer number.
+- [ ] The assistant checks number authority and preserves attempt/idempotency keys on retries;
+  uncertain earlier provider attempts are reconciled before another creation.
+- [ ] Confirm employee-assistant handbook retrieval separately from BookStack publication.
+
+Expected: known422 remains a typed failure with field errors; arbitrary bodies stay hidden.
+Checks use rejected synthetic inputs and mocked provider writes; no real Client is created.
+Deployment: only backed-up gateway manager/spec; keep existing Workday overlay and all rights.
+Rollback restores exact preimages only if deployed hashes match, then recreates gateway only.
+No migration, queue/scheduler activation or asset build. Evidence: plans/2026-11-05-client-gateway-repair.md.
+Automated evidence:39 gateway tests; Dev21/515 plus final contract3/388 pass. Live connected-app
+invalid probes return name/UUID/invoice-email reasons with422/isError. Missing key is clearly
+rejected. BookStack449 revision170 exact source section and existing inherited scope read back.
+Live manager/spec hashes match candidates. Backup: /opt/ai-gateway/backups/client-validation-20261105T145545Z.
+Official API legacy header optionality is retained; the gateway consistently requires a stable key.
+Deployment complete; no customer was created. Human checklist is Reviewed by Svein Tore on2026-11-12.
+
+
+
+## [HR-2026-11-04-TICKET-MESSAGE-API] Scoped production message API repair
+
+Status: Reviewed. Reviewer: Svein Tore, 2026-11-12.
+
+Named human acceptance, 2026-11-12: Svein Tore explicitly approved all three
+listed deliveries: "Godkjenenr dem alle". This clears this feature's human-review
+gate. Do not request the same approval again.
+No individual unreported browser/provider/assistant scenario is marked executed.
+The original checkbox list below is retained as the verification plan, not proof
+that each scenario was performed. Employee-assistant retrieval remains a separate
+operational check under existing Integration follow-up.
+Acceptance record: plans/2026-11-12-three-delivery-human-acceptance.md.
+
+Accepted scope: The intended internal Ticket reply, solution marking and close flow through KI.
+Owner: Codex; named reviewer: Svein Tore.
+Authorization: Svein Tore on 2026-11-04: "Jeg godkjenner den. Fix det du", explicitly identifying
+the dedicated production VM. This authorizes the narrow missing message API and LiteLLM repair.
+It does not assert that unreported manual/provider/billing/stock scenarios in the broad
+HR-2026-10-20-TICKET-TASK-API checklist were performed. That broad entry remains Pending.
+Parent: approved RFC 2026-10-20-ticket-task-full-api-parity and existing Main PR #379.
+
+Scope: seven existing Main message API routes, five source dependencies and a bounded module
+route loader on VM169; existing customer-reply schema repair and four personal gateway tools.
+No migration/package/frontend build, token grant widening, queue/scheduler activation or Main edit.
+Backup: VM /root/nexum-ticket-message-api-20261104T145518Z; gateway schema backup
+/opt/ai-gateway/backups/nexum-ticket-schema-20261104T143717Z.
+Automated: authoritative Dev and production-source candidate each pass 11 tests / 122 assertions;
+VM route inventory and public Swagger contain all seven routes; authenticated conversation and
+attachment reads return 200. Transaction-only production QA confirms internal notes, exact
+replays/conflicts, policy-checked solution selection/read-back, synthetic time and completed close.
+All synthetic rows rolled back, notifications/queues faked, no existing Ticket changed.
+
+- [x] Verify the dedicated VM identity and actual routes; preserve existing production hotfixes.
+- [x] Run focused Dev and production-source tests before deployment.
+- [x] Verify internal-note retry semantics, solution replay, workflow time guard and native closure.
+- [x] Four new LiteLLM tools exposed; both read tools succeed with the existing personal binding.
+      No real-case gateway writes were performed; new write routes passed rollback-only VM QA.
+- [x] Exact new guidance published/read back in BookStack449 revision165; existing page/chapter
+      inheritance and book339 audience inspected without changes. Employee OpenWebUI retrieval
+      is not claimed.
+- [ ] Svein confirms the intended internal-reply/solution/close flow in a fresh chat on a case
+      explicitly selected for that purpose. No existing case was changed for automated QA.
+
+Gate: production deployment of this bounded repair is authorized above. Broad unrelated
+Ticket/Task release scenarios retain their original gate. Named human acceptance is now recorded above; this entry is Reviewed.
+The intended flow is human-approved. Technical deployment and docs were already complete.
+Gateway backup: /opt/ai-gateway/backups/nexum-message-tools-20261104T150842Z.
+The connected-app catalog refresh and actual model-directed writes remain unverified.
+
+
 ## HR-2026-11-12-MAIN-DEV-HISTORY-SYNC - Preserve work while synchronizing Git
 
 Status: Reviewed (maintenance plan). Reviewer/authorizer: Svein Tore, 2026-11-12.
@@ -148,7 +236,18 @@ Evidence: plans/2026-11-05-full-main-production-rollout.md. No further deploymen
 
 ## HR-2026-11-05-CLIENT-TIME-REPORT - Internal customer time reporting
 
-Status: In Review — delivered Dev implementation approved by Svein Tore, 2026-11-05.
+Status: Reviewed. Reviewer: Svein Tore, 2026-11-12.
+
+Named human acceptance, 2026-11-12: Svein Tore explicitly approved all three
+listed deliveries: "Godkjenenr dem alle". This clears this feature's human-review
+gate. Do not request the same approval again.
+No individual unreported browser/provider/assistant scenario is marked executed.
+The original checkbox list below is retained as the verification plan, not proof
+that each scenario was performed. Employee-assistant retrieval remains a separate
+operational check under existing Integration follow-up.
+Acceptance record: plans/2026-11-12-three-delivery-human-acceptance.md.
+
+Accepted scope: Internal customer time report, known-period totals and XLSX/PDF delivery.
 Owner: Codex. Named human reviewer: Svein Tore.
 RFC: rfc/2026-11-05-client-time-report.md (Approved in chat, 2026-11-05).
 Approval follow-up: Svein Tore replied "Godkjenenr" to the completed Dev handoff on
@@ -161,7 +260,7 @@ This explicitly authorizes the scoped commit/push/PR merge. Individual unreporte
 stay open and do not block this separately approved source merge.
 Source merge complete: PR #395, bcd643b137fe8cdc1c4afc93179d29fd1e757ce1. Independent Git
 read-back matches tested tree cde83d8f19247a64b407fd8ca54852bcd92ee281 exactly.
-Gate: remaining manual acceptance is post-installation follow-up. The separately approved source
+Gate: the delivered report is human-approved on2026-11-12. The separately approved source
 merge and production installation are complete; individual unreported checks remain open.
 
 Scope: Client Time > Time consumption report and Reports > Client time consumption;

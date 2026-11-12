@@ -1,6 +1,12 @@
 # Client time report verification - 2026-11-05
 
-Status: Done On Dev / Main Merged And Independently Verified / Human Browser Acceptance Pending.
+Current human acceptance (2026-11-12): Svein Tore approved the report/validation delivery
+as part of "Godkjenenr dem alle". The matching feature checklist is Reviewed.
+Earlier human-acceptance-pending wording is historical and does not require another
+approval. Unreported individual scenario execution and employee-assistant retrieval
+are not inferred. See 2026-11-12-three-delivery-human-acceptance.md in docs/plans.
+
+Status: Delivered And Verified / Human Reviewed By Svein Tore, 2026-11-12.
 Owner: Codex. Reviewer/promotion owner: Svein Tore.
 RFC: ../rfc/2026-11-05-client-time-report.md.
 ADR: ../adr/2026-11-05-client-time-report-source-authority.md.

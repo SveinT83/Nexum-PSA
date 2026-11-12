@@ -1,5 +1,77 @@
 # tdPSA Development TODO
 
+## Client creation gateway contract and validation repair (2026-11-05)
+
+Status: Done / Delivered And Human Reviewed By Svein Tore, 2026-11-12.
+
+Current acceptance: HR-2026-11-05-CLIENT-GATEWAY is Reviewed. Svein explicitly approved this
+listed delivery on2026-11-12: "Godkjenenr dem alle". No repeat feature approval is pending.
+Older Pending/In Review acceptance wording below is superseded for this delivery;
+individual scenario execution and employee-assistant retrieval are not inferred.
+See plans/2026-11-12-three-delivery-human-acceptance.md. No new deployment or real write.
+Owner: Codex; fresh-chat acceptance and normal source-promotion owner: Svein Tore.
+Authorized in chat: "Kjør på" (2026-11-05). Level1 repair under existing approved Clients API parity.
+Evidence: plans/2026-11-05-client-gateway-repair.md. The exact existing nexumpsa registration now
+preserves known Client-create422 field errors, typed body/name requirements and forwards the
+caller-selected key as HTTP header. Gateway consistently requires a stable Idempotency-Key;
+official API simple-create optionality remains unchanged (required for primary_contact/create_in_rmm).
+Number authority, customer-number/request-UUID/provider-ID distinctions and invoice-email rules
+are explained in tool descriptions. No customer workflow/permissions/provider activation changed.
+Verification:39 gateway tests pass; two original-manager regressions fail as expected.
+Dev Clients contract/parity21/515 pass; final official optionality contract3/388 pass.
+Actual connected-app rejected probes return readable name/UUID/invoice-email reasons; missing
+key is rejected clearly before transport. Tested mounted hashes and local liveness200 pass.
+BookStack449 revision170 exact section read back; existing inherited audience unchanged.
+Gateway package: /opt/ai-gateway/client-validation-20261105. Protected rollback:
+/opt/ai-gateway/backups/client-validation-20261105T145545Z. Retain/revalidate on LiteLLM upgrade.
+HR-2026-11-05-CLIENT-GATEWAY is Reviewed by Svein Tore on2026-11-12.
+Employee-assistant retrieval remains a separate operational verification.
+This checklist gates human acceptance only, not the already authorized completed gateway rollout.
+No customer was created; no Main commit/push/merge, PSA deployment or job activation.
+Existing Workday and Clients broader human-review entries remain independent and unchanged.
+
+
+
+## Nexum gateway Ticket reply schema incident (2026-11-04)
+
+Status: Done / Delivered And Human Reviewed By Svein Tore, 2026-11-12.
+
+Current acceptance: HR-2026-11-04-TICKET-MESSAGE-API is Reviewed. Svein explicitly approved this
+listed delivery on2026-11-12: "Godkjenenr dem alle". No repeat feature approval is pending.
+Older Pending/In Review acceptance wording below is superseded for this delivery;
+individual scenario execution and employee-assistant retrieval are not inferred.
+See plans/2026-11-12-three-delivery-human-acceptance.md. No new deployment or real write.
+Owner: Codex; reviewer: Svein Tore. Svein explicitly approved the narrow repair/deployment on 2026-11-04.
+Parent: approved Ticket/Task API parity RFC; scoped HR-2026-11-04-TICKET-MESSAGE-API Reviewed on2026-11-12.
+Broad HR-2026-10-20-TICKET-TASK-API remains Pending for unrelated manual/provider/billing/stock checks.
+
+The first LiteLLM repair preserves nested body/idempotency_key requirements in the existing reply
+tool; 234 tools retained, other233 definitions unchanged. Seven approved Main message routes and
+five dependencies are now deployed on the actual dedicated production VM169 (192.168.2.83,
+/var/www/nexumpsa/app), not on the former Plesk web copy. Existing hashes/hotfixes were preserved.
+No migration, Main change, queue/scheduler activation or native token/permission grant.
+Dev and production-source candidate each pass11 tests/122 assertions. VM route inventory and
+public Swagger read-back contain all seven operations; authenticated reads200. Transaction-only
+production QA verifies notes/replay/conflict, solution/replay/read-back, synthetic time and normal
+completed closure; all fixtures rolled back and no existing case/customer send changed.
+
+Recovery: VM /root/nexum-ticket-message-api-20261104T145518Z; LiteLLM first repair
+/opt/ai-gateway/backups/nexum-ticket-schema-20261104T143717Z.
+LiteLLM now exposes four added tools (getticketconversation, getticketmessage,
+createticketinternalnote, markticketmessagesolution), retaining the prior234 names (238 total).
+Existing personal credentials remain authoritative; no user/token grants were widened.
+Both new read tools succeeded from the logged-in owner's existing personal binding in the
+LiteLLM playground. Note/solution/close success was verified by rollback-only VM HTTP-kernel QA;
+no real-case writes or new temporary credentials were used for gateway verification.
+Backup: /opt/ai-gateway/backups/nexum-message-tools-20261104T150842Z. Api Management source
+and BookStack449 revision165 match exactly for the new section; page/chapter inheritance and
+book339's existing audience were inspected without changes. Employee OpenWebUI retrieval is
+a separate untested claim. Remaining owner Svein: refresh the existing connected-app catalog
+The intended flow is now accepted under HR-2026-11-04-TICKET-MESSAGE-API (Reviewed2026-11-12).
+Existing time and solution prerequisites must not be bypassed. No more deployment approval is
+pending for this repair; broad unrelated API review remains separate.
+
+
 ## Main to Dev history synchronization (2026-11-12)
 
 Status: Done / Main History Included In Remote And Local Dev / Pending Work Preserved.
@@ -126,7 +198,13 @@ Evidence: plans/2026-11-05-full-main-production-rollout.md. No further deploymen
 
 ## Client time consumption report (2026-11-05)
 
-Status: Production Installed / Gateway Published / Operator Acceptance In Review. Owner: Codex; reviewer/promotion owner: Svein Tore.
+Status: Done / Delivered And Human Reviewed By Svein Tore, 2026-11-12.
+
+Current acceptance: HR-2026-11-05-CLIENT-TIME-REPORT is Reviewed. Svein explicitly approved this
+listed delivery on2026-11-12: "Godkjenenr dem alle". No repeat feature approval is pending.
+Older Pending/In Review acceptance wording below is superseded for this delivery;
+individual scenario execution and employee-assistant retrieval are not inferred.
+See plans/2026-11-12-three-delivery-human-acceptance.md. No new deployment or real write.
 Approved RFC: rfc/2026-11-05-client-time-report.md (chat approval 2026-11-05).
 Scope: internal read-only Client/Reports UI, date filters, complete ordered history, source-safe
 registered work/billing/processed allocation totals, XLSX/PDF. Preserve private Task visibility.
@@ -139,11 +217,11 @@ is still a separate manual check. Evidence: plans/2026-11-05-client-time-report-
 Source merged in PR #395 after isolated latest-Main PHP8.3 matrix87/1089, Pint5/5 and scoped diff checks.
 Main commit bcd643b137fe8cdc1c4afc93179d29fd1e757ce1 independently fetched; exact tested tree
 cde83d8f19247a64b407fd8ca54852bcd92ee281. No unrelated Dev work promoted.
-Owner Svein: confirm Dev web reachability and complete remaining manual checks before production.
+Report feature acceptance is complete, approved by Svein Tore on2026-11-12.
 Public Dev HTTPS and trusted-SNI/IP route timed out from Dev; Windows HTTPS also timed out.
 No TLS bypass, authenticated live-customer browser result, or production availability is claimed.
 Svein Tore approved the delivered implementation on 2026-11-05 ("Godkjenenr").
-HR-2026-11-05-CLIENT-TIME-REPORT In Review; outstanding manual checks still gate production release.
+HR-2026-11-05-CLIENT-TIME-REPORT is Reviewed; its feature acceptance gate is cleared.
 Existing dirty work remains untouched. #390/#391 financial changes and #290 external Worklog
 remain separate; no financial mutation, production deployment, token/provider or runtime activation.
 
