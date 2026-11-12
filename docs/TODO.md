@@ -2,17 +2,20 @@
 
 ## Main to Dev history synchronization (2026-11-12)
 
-Status: Validated / Approved Maintenance Sync In Progress. Owner: Codex.
-Svein Tore authorized the concrete synchronization and clarified mandatory Dev-first delivery.
-Main d093f34c contains all four local Dev-only-vs-remote commits; no history rewrite is needed.
-The shared working copy and two existing staged blobs have a private snapshot.
-Scope: move Dev to verified Main history while retaining ongoing work byte-for-byte,
-and clarify Dev-first for code, documentation and release records. No production change.
-Dev verification:105 tests/42769 assertions PASS; protected source snapshot matches.
-Next Codex: publish the scoped history/rule commit to Dev,
-advance local Dev/index with exact staged-blob preservation and verify remote ancestry.
-Evidence: plans/2026-11-12-main-to-dev-history-sync.md.
-Review: HR-2026-11-12-MAIN-DEV-HISTORY-SYNC (approved maintenance scope only).
+Status: Done / Main History Included In Remote And Local Dev / Pending Work Preserved.
+Owner: Codex. Svein Tore explicitly approved the controlled synchronization and Dev-first rule.
+Sync commit1af8e441 advances remote Dev from8f9b86cd and local Dev from36918edb,
+retaining Main d093f34c and all prior Dev commits without rewriting history.
+Before/after verification:5917 original paths unchanged except five owned process/
+coordination docs; both original staged blobs retained exactly and excluded from push.
+Dev tests105/42769 PASS; Dev HTTPS login200. Main-only commit count is now0.
+Dev-first rules for application, documentation and release-record changes are committed
+to Dev in AGENTS.md and ai-team-process.md. No GitHub ruleset/protection setting changed.
+Existing pending code remains uncommitted; the two pre-existing staged versions remain
+staged and require their owner's review before any unrelated later commit.
+No Main/production deployment, schema, provider or runtime activation change.
+HR-2026-11-12-MAIN-DEV-HISTORY-SYNC records the approved maintenance plan only.
+Backup/verification/rollback: plans/2026-11-12-main-to-dev-history-sync.md.
 
 
 ## Ticket and Task creator/updater attribution (2026-11-12)

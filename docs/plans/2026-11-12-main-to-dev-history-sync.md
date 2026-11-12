@@ -1,6 +1,6 @@
 # Main to Dev history synchronization - 2026-11-12
 
-Status: Validated / History Publication In Progress. Owner: Codex.
+Status: Done / Remote And Local Dev Synchronized / Pending Work Preserved. Owner: Codex.
 Explicit user request: synchronize Main back to Dev, preserve ongoing work and
 use mandatory Dev-first publication. No Main or production change is requested.
 
@@ -59,3 +59,27 @@ remote ancestry read-back are the remaining publication steps.
 No provider/customer/work data, database schema, queues, schedulers or production
 source is changed. Existing feature review gates remain independent.
 HR-2026-11-12-MAIN-DEV-HISTORY-SYNC records Svein's reviewed maintenance plan.
+
+## Completed synchronization
+
+Sync commit1af8e4413dca40873c212ad23425e1b1c47dba68 was pushed normally to Dev,
+without force. Remote Dev8f9b86cd advanced to that descendant of Main d093f34c.
+The authoritative local Dev ref advanced from36918edb to the same commit with a
+compare-and-swap ref update and atomic prepared-index installation under index lock.
+
+All5917 original non-ignored paths were checked against the private snapshot;
+only the five intentionally owned instruction/coordination documents changed.
+Application source bytes remained unchanged. Both original staged blobs and their
+modes are identical to the pre-sync index. Their contents were not committed/pushed.
+The partially staged Storage draft remains a pending staged version, not approved
+current code; its owner must inspect staging before a future unrelated commit.
+
+Independent fetch/read-back confirms origin/main is an ancestor of origin/Dev:
+Main-only commits0. Local Dev and remote Dev match at the synchronization step.
+The final evidence-only follow-up commit advances Dev without changing runtime code.
+Dev HTTPS login200; required Dev matrix105 tests/42769 assertions passed.
+
+No Main ref, production source, migration, customer/provider/work data, queue,
+scheduler, live setting or GitHub branch-protection configuration changed.
+Prior human-review entries retain their original status and gates. Maintenance
+scope was explicitly approved by Svein Tore; no product scenario execution is inferred.
