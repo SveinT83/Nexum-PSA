@@ -1,10 +1,10 @@
 # Feature Slice: Ticket and Task actor attribution
 
-Status: Done On Dev - implementation, migration, tests and scoped handbook verified.
+Status: Done On Main And Production - verified; human approved.
 Owner: Codex. Product approver/reviewer: Svein Tore.
 Approved RFC: ../rfc/2026-11-12-ticket-task-actor-attribution.md.
 Accepted ADR: ../adr/2026-11-12-explicit-ticket-task-actor-attribution.md.
-Human-review checklist: HR-2026-11-12-TICKET-TASK-ATTRIBUTION (Pending).
+Human-review checklist: HR-2026-11-12-TICKET-TASK-ATTRIBUTION (Reviewed by Svein Tore, 2026-11-12).
 
 ## Goal and user-visible behavior
 
@@ -45,8 +45,10 @@ Employee assistant retrieval is a separate manual check.
 ## Done criteria
 
 Dev migration applied and read back; tests/contracts pass; source/BookStack docs
-verified; TODO and evidence reconciled. Human acceptance remains Pending and gates
-Main/production release independently of automated Dev completion.
+verified; TODO and evidence reconciled. Svein Tore explicitly approved the feature and Main/production rollout; no repeat
+acceptance gate remains. Employee-assistant retrieval is a separate follow-up.
 
 Final evidence: 72/42534 affected rerun, 32/233 ingress; broad585 cases reconciled
-with the sole legacy-fixture failure corrected and rerun. Human review remains Pending.
+with the sole legacy-fixture failure corrected and rerun. Human review is Reviewed; Main PR403 and production rollout are complete.
+
+Release evidence: ../plans/2026-11-12-ticket-task-attribution-main-production.md.

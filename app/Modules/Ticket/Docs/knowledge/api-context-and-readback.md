@@ -72,11 +72,12 @@ No migration, frontend build, queue restart or scheduler activation is required 
 Promotion/deployment belongs to Svein. Regenerate OpenAPI during authorized deployment and verify
 runtime path availability before configuring a production client.
 
-## Creator and last editor (Dev, 12 November 2026)
+## Creator and last editor (Production, 12 November 2026)
 
-Availability: implemented on Dev under the approved creator/updater RFC. This
-section does not claim Main promotion or production availability. Manual review
-HR-2026-11-12-TICKET-TASK-ATTRIBUTION remains pending before production release.
+Availability: merged to Main in PR #403 and installed and verified in production
+on 12 November 2026. Ticket and Task pages and API read-back passed authorized
+server checks. Svein Tore approved HR-2026-11-12-TICKET-TASK-ATTRIBUTION and the
+production rollout. Retrieval through an employee assistant is a separate check.
 
 You need ordinary permission to view the Ticket or Task. This adds no new access
 to records or another user's private Tasks.

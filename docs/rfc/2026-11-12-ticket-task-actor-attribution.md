@@ -112,12 +112,14 @@ technical updated_at touches. Existing configurable-user-table ID conventions ar
 ## Approval
 
 Approved by Svein Tore on 2026-11-12 in chat: "Ja godkjenner".
-Implementation authorized on Dev; Main/production/commit/push remain separate. The human-review checklist
-HR-2026-11-12-TICKET-TASK-ATTRIBUTION is registered and remains Pending.
+Initial Dev implementation approval was followed by explicit Main/production
+authorization on2026-11-12: "Godkjenner. Merge til Main og push til produktsjon". The human-review checklist
+HR-2026-11-12-TICKET-TASK-ATTRIBUTION is Reviewed by Svein Tore on2026-11-12.
 
 ## Delivery
 
-Implemented and verified on authoritative Dev; scoped migration applied. Main and
-production unchanged. Evidence: ../plans/2026-11-12-ticket-task-attribution-verification.md.
-Handbook sections published/read back in BookStack409/42 and398/13. Human visual/
-operator/employee-assistant acceptance remains separate from RFC approval.
+Implemented and verified on Dev, merged Main PR403 and installed/verified in
+production; scoped migration applied and read back. Evidence: ../plans/2026-11-12-ticket-task-attribution-verification.md.
+Handbook availability published/read back in BookStack409/43 and398/14.
+Human feature/release approval is recorded; employee-assistant retrieval remains
+separate and unverified. Rollout: ../plans/2026-11-12-ticket-task-attribution-main-production.md.

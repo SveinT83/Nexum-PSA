@@ -1,5 +1,9 @@
 # Ticket and Task actor attribution verification - 2026-11-12
 
+Current delivery: Main PR403 merged and production verified after explicit Svein Tore
+approval. See 2026-11-12-ticket-task-attribution-main-production.md for final evidence.
+The Dev-only statements below preserve the original pre-promotion snapshot.
+
 ## Authority and state
 
 Svein Tore approved the RFC in chat: "Ja godkjenner". Implementation is in the

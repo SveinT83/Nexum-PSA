@@ -1,6 +1,6 @@
 # Ticket/Task attribution Main and production rollout - 2026-11-12
 
-Status: Main Candidate Verified / Merge And Production Explicitly Authorized.
+Status: Main Merged / Production Installed And Verified / Human Approved.
 Reviewer/release authorizer: Svein Tore, 2026-11-12:
 "Godkjenner. Merge til Main og push til produktsjon".
 HR-2026-11-12-TICKET-TASK-ATTRIBUTION is Reviewed for this delivered feature.
@@ -62,3 +62,45 @@ records and avoid real writes/provider/mail/notification side effects. Record
 maintenance/FPM/unit state, protected hashes and errors. Update only the two
 published handbook sections and public-safe editorial status after production
 availability is established. No public marketing publication is authorized.
+
+## Completed Main merge and production installation
+
+PR403 merged successfully to main as15104b5bfe5e91a5919bbecd1baee2b0ebe6a5b8.
+Independent Git fetch verifies treef905ac4b84d29fe7662140dec20501939899fdff
+exactly equals the105-test candidate. Source branch commitac32d182.
+A final one-test/two-assertion Blade compilation rerun also passed after retaining
+the production repair's existing explanatory comment.
+
+Installed exactly38 runtime paths into the existing active release; every installed
+SHA256 matches merged Main. All live preimages matched before installation.
+The additive migration completed and the three new columns and migration journal
+were independently read back. No historical backfill or ordinary work write occurred.
+Privately saved source preimages, table DDL, manifest and rollback script are under
+/root/nexum-attribution-release-20261112. Maintenance exited; PHP-FPM is active.
+
+Environment, cached config, composer manifests/autoload and built-asset hashes are
+unchanged. Earlier PRIVATE-customer and hosting overlays remain untouched. Worker
+and scheduler timer remain disabled. No customer/provider/mail action was run.
+
+Authorized existing-user internal HTTP-kernel reads as the web runtime user:
+Ticket page200/header verified, Task page200/header verified, Ticket API200 and
+Task API200 with exact nullable IDs and safe ID/name projections. The probe used
+array cache/session and fake queue/mail/notifications; its database transaction
+was rolled back. This verifies server rendering/authorization, not a fresh browser
+login, real write or employee-assistant acceptance.
+
+Trusted public HTTPS: /login200, /api/documentation200, /docs?api-docs.json200.
+The actual Swagger page supplied the JSON URL; the guessed /docs/api-docs.json
+path returned404 and was not treated as a contract failure or TLS bypass.
+Public JSON independently confirms all five readOnly actor fields in both schemas.
+Final all38 source hashes and all protected hashes were rechecked.
+
+Four handbook source sections were appended/read back on production, preserving
+prior prose and private preimages. BookStack398 revision14 and409 revision43
+independently match only the intended availability edits; prior content, owners,
+hierarchy and inherited scope are retained. No bulk native Knowledge sync occurred.
+Employee-assistant retrieval remains an explicit separate follow-up.
+
+The public-safe editorial queue is updated for verified production availability;
+publication itself is not authorized. No additional implementation or rollout
+approval is pending for this feature.
