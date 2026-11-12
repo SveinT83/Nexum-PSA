@@ -117,6 +117,7 @@ class UpdateTicketFields
             if (array_key_exists('is_scheduled', $data)) {
                 $isScheduled = (bool) $data['is_scheduled'];
                 $schedule = $ticket->schedule()->first(); // Use query to avoid stale cache
+                $scheduleBefore = $schedule?->getAttributes();
                 $changed = true;
 
                 if ($isScheduled) {
@@ -158,6 +159,15 @@ class UpdateTicketFields
                 } elseif ($schedule) {
                     $schedule->delete();
                     $ticket->unsetRelation('schedule');
+                }
+            }
+
+            if (array_key_exists('is_scheduled', $data)) {
+                $scheduleAfter = $ticket->schedule()->first()?->getAttributes();
+                $technicalKeys = ['created_by', 'updated_by', 'created_at', 'updated_at'];
+                if (\Illuminate\Support\Arr::except($scheduleBefore ?? [], $technicalKeys)
+                    !== \Illuminate\Support\Arr::except($scheduleAfter ?? [], $technicalKeys)) {
+                    $ticket->recordRelatedMutation($actor);
                 }
             }
 

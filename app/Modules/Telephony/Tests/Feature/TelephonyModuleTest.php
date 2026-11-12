@@ -239,6 +239,8 @@ class TelephonyModuleTest extends TestCase
 
         $ticket = Ticket::query()->where('subject', 'Phone support follow-up')->firstOrFail();
         $this->assertSame('phone', $ticket->channel);
+        $this->assertSame($this->tech->id, (int) $ticket->created_by);
+        $this->assertSame($this->tech->id, (int) $ticket->updated_by);
         $this->assertSame($client->id, $ticket->client_id);
         $this->assertSame($site->id, $ticket->site_id);
         $this->assertSame($clientUser->id, $ticket->contact_id);

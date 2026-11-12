@@ -1,5 +1,23 @@
 # Human Review Register
 
+## HR-2026-11-12-TICKET-TASK-ATTRIBUTION - Creator and last editor
+
+Status: Reviewed. Reviewer: Svein Tore, 2026-11-12.
+Explicit acceptance and rollout authorization in chat:
+"Godkjenner. Merge til Main og push til produktsjon".
+This approves the delivered Ticket/Task attribution feature and authorizes its scoped
+Main merge and production installation. Employee-assistant retrieval has not been
+separately reported as tested and remains an operational follow-up, not a repeated
+implementation/rollout approval requirement.
+Scope: compact headers, safe API attribution, immutable creator, unknown history,
+explicit domain actors and no-op/technical-touch semantics.
+Automated Dev evidence: final72/42534 plus ingress32/233; all16 dedicated attribution tests pass.
+Migration: 2026_11_12_120000_add_ticket_task_actor_attribution.php.
+Evidence: plans/2026-11-12-ticket-task-attribution-verification.md.
+Rollout evidence: plans/2026-11-12-ticket-task-attribution-main-production.md.
+No unrelated parent API, hosting activation or other human-review entry is approved here.
+
+
 ## HR-2026-11-09-TIMEBANK-CORRECTIONS - Customer corrections preserve employee work
 
 Status: Reviewed - accepted by Svein Tore on 2026-11-09; BookStack explicitly deferred.

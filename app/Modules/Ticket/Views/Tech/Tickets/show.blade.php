@@ -12,7 +12,7 @@
 
 @section('pageHeader')
     <div class="d-flex flex-column flex-xl-row align-items-xl-center gap-2 w-100">
-        <div class="flex-shrink-0">
+        <div class="flex-shrink-1">
             <div class="d-flex align-items-center gap-2 mb-1">
                 <h1 class="mb-0">{{ $ticket->ticket_key }}</h1>
                 @if ($ticket->is_unread)
@@ -26,6 +26,7 @@
                 @endif
             </div>
             <p class="text-muted mb-0">{{ $ticket->subject }}</p>
+            <x-record-attribution :record="$ticket" />
         </div>
 
         @include('ticket::Tech.Tickets.partials.workflow-stepper')
@@ -471,7 +472,10 @@
                                             aria-labelledby="{{ $timeHeadingId }}">
                                             <div class="accordion-body px-0 pt-2 pb-3">
                                                 <!-- Time activity rows show billing intent without settling billing or contract minutes. -->
-                                                @php($chargeCorrection = \App\Modules\Commercial\Support\TimebankLedger::reversal('ticket', $timeEntry->id))
+                                                @php
+                                                    // Use a block directive so Blade preserves the surrounding timeline conditions.
+                                                    $chargeCorrection = \App\Modules\Commercial\Support\TimebankLedger::reversal('ticket', $timeEntry->id);
+                                                @endphp
                                                 <div class="d-flex justify-content-end mb-2">
                                                     @if($chargeCorrection)
                                                         <span class="badge text-bg-secondary">Customer charge reversed #{{ $chargeCorrection->id }} · employee work retained</span>

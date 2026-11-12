@@ -99,7 +99,7 @@ class EscalateTicketWorkflow
             ])->save();
 
             if (! empty($path['target_ticket_type_id'])) {
-                $locked->forceFill(['type' => TicketType::query()->findOrFail((int) $path['target_ticket_type_id'])->slug])->save();
+                $locked->forceFill(['type' => TicketType::query()->findOrFail((int) $path['target_ticket_type_id'])->slug, 'updated_by' => $actor->id])->save();
             }
 
             if (! empty($targetState['ticket_status_id']) && (int) $targetState['ticket_status_id'] !== (int) $locked->status_id) {
@@ -249,15 +249,15 @@ class EscalateTicketWorkflow
                 throw ValidationException::withMessages(['owner_id' => 'The selected owner is not eligible for the target workflow.']);
             }
 
-            $ticket->forceFill(['owner_id' => $targetOwnerId])->save();
+            $ticket->forceFill(['owner_id' => $targetOwnerId, 'updated_by' => $actor->id])->save();
 
             return;
         }
 
-        $ticket->forceFill(['owner_id' => null])->save();
+        $ticket->forceFill(['owner_id' => null, 'updated_by' => $actor->id])->save();
 
         if (in_array($strategy, ['auto', 'keep_if_eligible'], true)) {
-            $this->assignments->assign($ticket, force: true, eligibleUserIds: $eligibleUserIds);
+            $this->assignments->assign($ticket, force: true, eligibleUserIds: $eligibleUserIds, actor: $actor);
         }
     }
 }

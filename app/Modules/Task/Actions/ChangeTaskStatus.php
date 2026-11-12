@@ -17,7 +17,7 @@ class ChangeTaskStatus
         }
 
         $oldStatus = $task->status?->name;
-        $task->forceFill(['status_id' => $data['status_id']])->save();
+        $task->forceFill(['status_id' => $data['status_id'], 'updated_by' => $actor->id])->save();
         $task->load('status');
 
         TaskActivity::query()->create([

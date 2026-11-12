@@ -88,6 +88,7 @@ class CompleteTask
                 'status_id' => $doneStatusId,
                 'completed_at' => now(),
                 'completed_by' => $user->id,
+                'updated_by' => $user->id,
             ])->save();
 
             TaskActivity::query()->create([

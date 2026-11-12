@@ -130,7 +130,7 @@ class TicketWorkflowMigrationService
                     );
                 }
 
-                $this->assignments->assign($ticket->refresh(), force: false);
+                $this->assignments->assign($ticket->refresh(), force: false, actor: $actor);
                 $ticket->refresh();
                 $after = $ticket->only(['workflow_version_id', 'workflow_state_key', 'status_id', 'owner_id']);
 

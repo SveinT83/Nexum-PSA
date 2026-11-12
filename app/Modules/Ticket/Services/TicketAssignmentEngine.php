@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
 
 class TicketAssignmentEngine
 {
-    public function assign(Ticket $ticket, bool $force = false, ?array $eligibleUserIds = null): ?int
+    public function assign(Ticket $ticket, bool $force = false, ?array $eligibleUserIds = null, ?User $actor = null): ?int
     {
         $policy = app(TicketWorkflowRuntime::class)->currentState($ticket)['assignment_policy'] ?? [];
         $eligibleUserIds ??= $this->eligibleUserIds($policy);
@@ -19,7 +19,7 @@ class TicketAssignmentEngine
 
         if ($strategy === 'unassigned') {
             if ($ticket->owner_id) {
-                $ticket->forceFill(['owner_id' => null])->save();
+                $ticket->forceFill(['owner_id' => null, 'updated_by' => $actor?->id])->save();
             }
 
             return null;
@@ -30,23 +30,23 @@ class TicketAssignmentEngine
         }
 
         if ($ticket->owner_id && $eligibleUserIds !== null && ! in_array((int) $ticket->owner_id, $eligibleUserIds, true)) {
-            $ticket->forceFill(['owner_id' => null])->save();
+            $ticket->forceFill(['owner_id' => null, 'updated_by' => $actor?->id])->save();
         }
 
-        $ruleOwnerId = $this->assignByRule($ticket, $eligibleUserIds);
+        $ruleOwnerId = $this->assignByRule($ticket, $eligibleUserIds, actor: $actor);
 
         if ($ruleOwnerId) {
             return $ruleOwnerId;
         }
 
-        return $this->assignByProfileScore($ticket, $eligibleUserIds);
+        return $this->assignByProfileScore($ticket, $eligibleUserIds, actor: $actor);
     }
 
     /**
      * Resolve the same deterministic owner decision without mutating the Ticket,
      * assignment-rule counters, history, or workload records.
      *
-     * @param list<int>|null $eligibleUserIds
+     * @param  list<int>|null  $eligibleUserIds
      */
     public function plan(
         Ticket $ticket,
@@ -96,8 +96,8 @@ class TicketAssignmentEngine
         Ticket $ticket,
         ?array $eligibleUserIds = null,
         bool $apply = true,
-    ): ?int
-    {
+        ?User $actor = null,
+    ): ?int {
         if (! Schema::hasTable('ticket_assignment_rules')) {
             return null;
         }
@@ -119,7 +119,7 @@ class TicketAssignmentEngine
             if ($apply) {
                 $this->applyOwner($ticket, $ownerId, 'Ticket assigned by assignment rule: '.$rule->name, [
                     'assignment_rule_id' => $rule->id,
-                ]);
+                ], $actor);
                 $rule->forceFill([
                     'last_hit_at' => now(),
                     'hit_count' => $rule->hit_count + 1,
@@ -136,8 +136,8 @@ class TicketAssignmentEngine
         Ticket $ticket,
         ?array $eligibleUserIds = null,
         bool $apply = true,
-    ): ?int
-    {
+        ?User $actor = null,
+    ): ?int {
         if (! Schema::hasTable('ticket_assignment_settings')) {
             return null;
         }
@@ -188,7 +188,7 @@ class TicketAssignmentEngine
             $this->applyOwner($ticket, $ownerId, 'Ticket assigned by assignment settings scoring.', [
                 'score' => $winner['score'],
                 'open_tickets' => $winner['open_tickets'],
-            ]);
+            ], $actor);
         }
 
         return $ownerId;
@@ -274,15 +274,15 @@ class TicketAssignmentEngine
         return $time >= ($hours['start'] ?? '00:00') && $time <= ($hours['end'] ?? '23:59');
     }
 
-    private function applyOwner(Ticket $ticket, int $ownerId, string $message, array $metadata = []): void
+    private function applyOwner(Ticket $ticket, int $ownerId, string $message, array $metadata = [], ?User $actor = null): void
     {
         $before = ['owner_id' => $ticket->owner_id];
 
-        $ticket->forceFill(['owner_id' => $ownerId])->save();
+        $ticket->forceFill(['owner_id' => $ownerId, 'updated_by' => $actor?->id])->save();
 
         TicketEvent::create([
             'ticket_id' => $ticket->id,
-            'actor_id' => null,
+            'actor_id' => $actor?->id,
             'type' => 'assigned',
             'message' => $message,
             'before' => $before,

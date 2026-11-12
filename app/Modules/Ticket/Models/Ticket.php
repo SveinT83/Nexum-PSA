@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Ticket extends Model
 {
+    use \App\Modules\UserManagement\Support\RecordsActorAttribution;
     use HasFactory;
     use SoftDeletes;
 
@@ -77,6 +78,7 @@ class Ticket extends Model
     ];
 
     protected $casts = [
+        'actor_updated_at' => 'datetime',
         'is_unread' => 'boolean',
         'metadata' => 'array',
         'sla_snapshot' => 'array',
@@ -158,6 +160,11 @@ class Ticket extends Model
     public function site(): BelongsTo
     {
         return $this->belongsTo(ClientSite::class, 'site_id');
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by')->select(['id', 'name']);
     }
 
     public function owner(): BelongsTo

@@ -63,7 +63,7 @@ final class TicketRuleWorkflowAssignmentPolicy
      * @param  array<string, mixed>  $state
      * @return array<string, mixed>
      */
-    public function apply(Ticket $ticket, array $state): array
+    public function apply(Ticket $ticket, array $state, ?User $actor = null): array
     {
         $result = $this->plan($ticket, $state);
         $strategy = $result['strategy'];
@@ -72,28 +72,28 @@ final class TicketRuleWorkflowAssignmentPolicy
 
         if ($strategy === 'unassigned') {
             if ($ticket->owner_id !== null) {
-                $ticket->forceFill(['owner_id' => null])->save();
+                $ticket->forceFill(['owner_id' => null, 'updated_by' => $actor?->id])->save();
             }
         } elseif ($strategy === 'auto') {
             if ($ticket->owner_id !== null) {
-                $ticket->forceFill(['owner_id' => null])->save();
+                $ticket->forceFill(['owner_id' => null, 'updated_by' => $actor?->id])->save();
             }
-            $this->assignments->assign($ticket->refresh(), force: true, eligibleUserIds: $eligibleIds);
+            $this->assignments->assign($ticket->refresh(), force: true, eligibleUserIds: $eligibleIds, actor: $actor);
         } elseif ($strategy === 'manual') {
             if (! $ownerEligible && $ticket->owner_id !== null) {
-                $ticket->forceFill(['owner_id' => null])->save();
+                $ticket->forceFill(['owner_id' => null, 'updated_by' => $actor?->id])->save();
             }
         } elseif (! $ownerEligible) {
             if ($ticket->owner_id !== null) {
-                $ticket->forceFill(['owner_id' => null])->save();
+                $ticket->forceFill(['owner_id' => null, 'updated_by' => $actor?->id])->save();
             }
-            $this->assignments->assign($ticket->refresh(), force: true, eligibleUserIds: $eligibleIds);
+            $this->assignments->assign($ticket->refresh(), force: true, eligibleUserIds: $eligibleIds, actor: $actor);
         }
 
         $ticket->refresh();
         $afterOwnerId = $ticket->owner_id === null ? null : (int) $ticket->owner_id;
         if (! $this->ownerEligible($afterOwnerId, $eligibleIds)) {
-            $ticket->forceFill(['owner_id' => null])->save();
+            $ticket->forceFill(['owner_id' => null, 'updated_by' => $actor?->id])->save();
             $ticket->refresh();
             $afterOwnerId = null;
         }

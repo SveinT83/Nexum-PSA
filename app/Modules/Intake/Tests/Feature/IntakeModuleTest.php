@@ -623,6 +623,8 @@ class IntakeModuleTest extends TestCase
 
         $submission->refresh();
         $ticket = Ticket::query()->firstOrFail();
+        $this->assertSame($this->admin->id, (int) $ticket->created_by);
+        $this->assertSame($this->admin->id, (int) $ticket->updated_by);
 
         $this->assertSame(IntakeSubmission::STATUS_ROUTED, $submission->status);
         $this->assertSame(Ticket::class, $submission->target_type);

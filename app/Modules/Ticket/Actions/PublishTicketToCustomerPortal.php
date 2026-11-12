@@ -40,6 +40,7 @@ class PublishTicketToCustomerPortal
             }
 
             $lockedTicket->forceFill([
+                'updated_by' => $actor?->id,
                 'portal_visible_at' => now(),
                 'portal_visible_by' => $actor?->id,
             ])->save();

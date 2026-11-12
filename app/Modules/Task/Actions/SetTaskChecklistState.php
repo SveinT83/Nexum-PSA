@@ -18,19 +18,23 @@ class SetTaskChecklistState
             return $item;
         }
 
-        $item->forceFill([
-            'is_checked' => $checked,
-            'checked_by' => $checked ? $actor->id : null,
-            'checked_at' => $checked ? now() : null,
-        ])->save();
+        \Illuminate\Support\Facades\DB::transaction(function () use ($task, $item, $checked, $actor): void {
+            $item->forceFill([
+                'is_checked' => $checked,
+                'checked_by' => $checked ? $actor->id : null,
+                'checked_at' => $checked ? now() : null,
+            ])->save();
 
-        TaskActivity::query()->create([
-            'task_id' => $task->id,
-            'user_id' => $actor->id,
-            'type' => $checked ? 'checklist_checked' : 'checklist_unchecked',
-            'visibility' => Task::VISIBILITY_INTERNAL,
-            'body' => ($checked ? 'Checklist item completed: ' : 'Checklist item reopened: ').$item->title,
-        ]);
+            TaskActivity::query()->create([
+                'task_id' => $task->id,
+                'user_id' => $actor->id,
+                'type' => $checked ? 'checklist_checked' : 'checklist_unchecked',
+                'visibility' => Task::VISIBILITY_INTERNAL,
+                'body' => ($checked ? 'Checklist item completed: ' : 'Checklist item reopened: ').$item->title,
+            ]);
+
+            $task->recordRelatedMutation($actor);
+        });
 
         return $item->refresh();
     }
