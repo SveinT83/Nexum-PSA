@@ -77,6 +77,23 @@ agent-specific file conflicts with this file, this file wins.
   the mailbox, and one Ticket may link several independent email conversations
   through guarded, auditable actions.
 
+## Dev-First Git Promotion (Mandatory)
+
+- All ordinary application and documentation changes, including release records,
+  must be committed and pushed to Dev after the required Dev verification before
+  they are proposed for main (Main).
+- Main promotions must use the reviewed Dev history. Do not create a Main-only
+  implementation or documentation branch as a shortcut around Dev.
+- An instruction to merge or deploy Main does not, by itself, waive Dev-first.
+  Svein must explicitly authorize a named emergency exception.
+- After any authorized emergency Main-first change, synchronize Main back into
+  Dev and verify ancestry before handing off. Do not leave Main-only commits.
+- Keep unrelated uncommitted and partially staged work intact. Never bulk-commit
+  a shared dirty checkout merely to bring branch history up to date.
+- Before ordinary work, fetch and compare origin/main, origin/Dev and the actual
+  Dev working copy. A feature present on disk is not proof it is committed or
+  pushed. See docs/development/ai-team-process.md.
+
 ## Change Levels
 
 - Level 1 small fixes: typo, clear bug, narrow validation fix, small styling

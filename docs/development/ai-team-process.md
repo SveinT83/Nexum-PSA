@@ -78,6 +78,27 @@ The active register must be updated in the same work session whenever an item st
 changes scope, is superseded, passes verification, receives human review, or completes. Related
 GitHub Issue state and RFC/ADR/Feature Slice status must be reconciled at the same time.
 
+## Dev To Main Promotion
+
+Normal delivery order is: authoritative Dev implementation -> Dev tests -> scoped
+commit/push to Dev -> reviewed Main PR -> separately authorized production rollout.
+Documentation-only changes and final rollout records follow the same Dev-first order.
+
+1. Fetch both branches and inspect committed ancestry separately from uncommitted
+   working-tree and staged changes.
+2. Preserve other contributors' work; isolate only the owned change when committing.
+3. Run the required verification on the Dev server before publishing the Dev commit.
+4. Ensure the proposed Main commit history has already been pushed to Dev. Do not
+   start a Main-only candidate and leave its new commits out of Dev.
+5. Record the Dev commit, tests, human review and Main/production authorization.
+6. Only an explicitly named emergency exception from Svein permits Main-first;
+   record the exception and synchronize Main back to Dev before final handoff.
+7. Verify final remote ancestry. Shared GitHub author names alone do not prove
+   which colleague or AI performed a push, and a PR merge is not a direct-push audit.
+
+These are Git publication rules. Pending human reviews, runtime switches and
+production release gates remain independent and are not approved by synchronization.
+
 ## Change Levels
 
 ### Level 1: Small Fix

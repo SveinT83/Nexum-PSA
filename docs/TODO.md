@@ -1,5 +1,20 @@
 # tdPSA Development TODO
 
+## Main to Dev history synchronization (2026-11-12)
+
+Status: Validated / Approved Maintenance Sync In Progress. Owner: Codex.
+Svein Tore authorized the concrete synchronization and clarified mandatory Dev-first delivery.
+Main d093f34c contains all four local Dev-only-vs-remote commits; no history rewrite is needed.
+The shared working copy and two existing staged blobs have a private snapshot.
+Scope: move Dev to verified Main history while retaining ongoing work byte-for-byte,
+and clarify Dev-first for code, documentation and release records. No production change.
+Dev verification:105 tests/42769 assertions PASS; protected source snapshot matches.
+Next Codex: publish the scoped history/rule commit to Dev,
+advance local Dev/index with exact staged-blob preservation and verify remote ancestry.
+Evidence: plans/2026-11-12-main-to-dev-history-sync.md.
+Review: HR-2026-11-12-MAIN-DEV-HISTORY-SYNC (approved maintenance scope only).
+
+
 ## Ticket and Task creator/updater attribution (2026-11-12)
 
 Status: Done / Main Merged / Production Installed And Verified / Human Reviewed.

@@ -1,5 +1,17 @@
 # Human Review Register
 
+## HR-2026-11-12-MAIN-DEV-HISTORY-SYNC - Preserve work while synchronizing Git
+
+Status: Reviewed (maintenance plan). Reviewer/authorizer: Svein Tore, 2026-11-12.
+Explicit response to the proposed controlled Main-to-Dev synchronization: "Ja, gjør det".
+This approval covers history synchronization and preservation of pending work,
+not unperformed product acceptance checks, unrelated staged code or production changes.
+Verification: private source/index backup, unchanged application-file hashes,
+exact retention of the two original staged blobs, required Dev tests and ancestry.
+Existing feature human-review entries and their unchecked scenarios remain unchanged.
+Evidence: plans/2026-11-12-main-to-dev-history-sync.md.
+
+
 ## HR-2026-11-12-TICKET-TASK-ATTRIBUTION - Creator and last editor
 
 Status: Reviewed. Reviewer: Svein Tore, 2026-11-12.
