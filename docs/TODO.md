@@ -1,5 +1,10 @@
 # tdPSA Development TODO
 
+## Registration suggestions by email, phone and organization number (2026-11-18)
+
+Approved RFC in docs/rfc/2026-11-18-client-email-phone-suggestions.md. Implemented in the authoritative Dev working copy. Svein Tore approved HR-2026-11-18-CLIENT-REGISTRATION-SUGGESTIONS and authorized this release.
+Dev evidence on 2026-11-18: 10 distinct Laravel tests (562 assertions) across the candidate, recovery and generated-contract suites; Chromium exercised email/phone/org input and explicit actions on synthetic data. BookStack 451/617/639 read back. Svein Tore approved the workflow on Dev on 2026-11-18.
+
 ## Existing Tripletex customer registration recovery (2026-11-18)
 
 Released on Dev (02cbdfd2) and Main (5f8e5650) with Svein Tore's approval.

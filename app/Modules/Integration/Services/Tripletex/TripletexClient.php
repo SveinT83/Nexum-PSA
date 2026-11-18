@@ -65,6 +65,24 @@ final class TripletexClient
         return $rows;
     }
 
+    /** Exact registration matching needs only active customer identities and their contact channels. */
+    public function registrationCustomers(): array
+    {
+        $this->customerDeadline ??= microtime(true) + 90;
+
+        $rows = $this->pages('/customer', [
+            'fields' => 'id,customerNumber,name,organizationNumber,email,invoiceEmail,phoneNumber,phoneNumberMobile,isInactive',
+            'isInactive' => false,
+        ]);
+        foreach ($rows as $row) {
+            if (! is_int($row['customerNumber'] ?? null) || ! is_string($row['name'] ?? null) || ! is_bool($row['isInactive'] ?? null)) {
+                throw new TripletexException('invalid_customer_response');
+            }
+        }
+
+        return $rows;
+    }
+
     public function supplierNumbers(): array
     {
         $this->customerDeadline ??= microtime(true) + 90;

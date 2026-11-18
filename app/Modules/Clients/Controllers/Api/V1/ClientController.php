@@ -115,8 +115,19 @@ class ClientController extends Controller
 
         \App\Modules\Clients\Support\ClientInput::fields($request, new Client);
         abort_if($request->boolean('create_in_rmm') && ! config('clients-api.provider_writes_enabled'), 409, 'Client API provider writes are disabled.');
+        $discovery = app(\App\Modules\Clients\Actions\FindRegistrationCandidates::class);
+        $identity = ['billing_email' => $validated['billing_email'] ?? null, 'org_no' => $validated['org_no'] ?? null,
+            'email' => data_get($validated, 'primary_contact.email'), 'phone' => data_get($validated, 'primary_contact.phone')];
+        $choices = null;
         $result = app(\App\Modules\Clients\Actions\ExecuteClientCommand::class)->handle($request, fn () => null,
-            function () use ($request, $validated, $createClient, $customFields) {
+            function () use ($request, $validated, $createClient, $customFields, $discovery, $identity, &$choices) {
+                // Run inside the command so a successful keyed replay still returns the created Client.
+                if (empty($validated['tripletex_customer_id']) && ! $request->boolean('confirm_distinct')
+                    && $discovery->allowed($request) && ($choices = $discovery->handle($request, $identity))) {
+                    return ['state' => 'selection_required'];
+                }
+
+
                 $client = $createClient->handle(array_filter([
                     'tripletex_site' => $this->tripletexSitePayload($request),
                     'tripletex_number_mode' => $validated['tripletex_number_mode'] ?? false,
@@ -158,6 +169,11 @@ class ClientController extends Controller
 
                 return ['client_id' => $client->id, 'rmm' => $rmm];
             }, $request->has('primary_contact') || $request->boolean('create_in_rmm'), $request->boolean('create_in_rmm') || (bool) app(\App\Modules\DataExchange\Services\TripletexCustomerNumbers::class)->connection());
+        if (($result['state'] ?? '') === 'selection_required') {
+            // Replayed selections reflect current permissions and the latest available identities.
+            return response()->json(['state' => 'selection_required', 'candidates' => $choices ?? $discovery->handle($request, $identity)])
+                ->header('Cache-Control', 'private, no-store');
+        }
         if (! isset($result['client_id'])) {
             return response()->json($result, 202);
         }
@@ -293,9 +309,10 @@ class ClientController extends Controller
             $numberRules[] = Rule::unique('clients', 'client_number')->ignore($client?->id);
         }
 
-        \App\Modules\Clients\Support\ClientInput::allowed($request, ['name', 'client_number', 'tripletex_number_mode', 'tripletex_request_key', 'tripletex_customer_id', 'org_no', 'client_format_id', 'website', 'sales_category_id', 'lead_temperature', 'billing_email', 'notes', 'active', 'custom_fields', 'site', 'site_name', 'site_address', 'site_co_address', 'site_zip', 'site_city', 'site_county', 'site_country', 'primary_contact', 'create_in_rmm']);
+        \App\Modules\Clients\Support\ClientInput::allowed($request, ['name', 'confirm_distinct', 'client_number', 'tripletex_number_mode', 'tripletex_request_key', 'tripletex_customer_id', 'org_no', 'client_format_id', 'website', 'sales_category_id', 'lead_temperature', 'billing_email', 'notes', 'active', 'custom_fields', 'site', 'site_name', 'site_address', 'site_co_address', 'site_zip', 'site_city', 'site_county', 'site_country', 'primary_contact', 'create_in_rmm']);
 
         return \App\Modules\Integration\Support\DomainApiInput::validate($request, [
+            'confirm_distinct' => [$creating ? 'sometimes' : 'prohibited', 'boolean'],
             'name' => [$nameRule, 'string', 'max:255'],
             'client_number' => $numberRules,
             'tripletex_number_mode' => [$creating ? 'sometimes' : 'prohibited', 'boolean'],

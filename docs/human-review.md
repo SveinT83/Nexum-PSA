@@ -1,5 +1,16 @@
 # Human Review Register
 
+## HR-2026-11-18-CLIENT-REGISTRATION-SUGGESTIONS — registration identity selection
+Dev evidence on 2026-11-18: 10 distinct Laravel tests (562 assertions) across the candidate, recovery and generated-contract suites; Chromium exercised email/phone/org input and explicit actions on synthetic data. BookStack 451/617/639 read back. Svein Tore approved the workflow on Dev on 2026-11-18.
+
+Status: Reviewed by Svein Tore, 2026-11-18. The reviewer explicitly approved Dev, Main promotion and production deployment for manual and API registration by email, phone and organization number. The individual checks below retain their reported status.
+Scope: Clients > New Client and the official Clients registration API. No migration, queue restart or build.
+On deployment refresh Laravel route/view caches as applicable and regenerate the API documentation.
+
+- [ ] Enter an existing email, telephone and organization number separately. Confirm the right candidates and source, including shared contact details. Verify an unrelated record can be deliberately kept separate.
+- [ ] Open an existing Nexum customer from a result. Select an unlinked Tripletex customer on approved test data, check the address and save. Verify the existing provider number and one Nexum customer.
+- [ ] As an authorized API consumer, verify selection_required, explicit provider selection and successful replay. Check restricted permissions and confirm provider lookup failures are distinguishable from no matches.
+
 ## HR-2026-11-18-TRIPLETEX-EXISTING-CUSTOMER - Existing customer registration
 
 Status: Reviewed by Svein Tore, 2026-11-18. Owner: Codex. Named reviewer/release owner: Svein Tore.

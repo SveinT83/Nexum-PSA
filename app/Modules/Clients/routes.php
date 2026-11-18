@@ -56,6 +56,8 @@ if (($clientsApiRoutes ?? false) === true) {
         Route::patch('clients/{client}/licenses/{subscription}/quantity', [\App\Modules\Clients\Controllers\Api\V1\ClientLicenceController::class, 'write'])->name('clients.licenses.quantity')->middleware(CheckAbilities::class.':clients.licenses.write')->defaults('client_permissions', ['client.view', 'integration.cloudfactory_write'])->defaults('licence_action', 'quantity');
         Route::patch('clients/{client}/licenses/{subscription}/renewal', [\App\Modules\Clients\Controllers\Api\V1\ClientLicenceController::class, 'write'])->name('clients.licenses.renewal')->middleware(CheckAbilities::class.':clients.licenses.write')->defaults('client_permissions', ['client.view', 'integration.cloudfactory_write'])->defaults('licence_action', 'renewal');
         Route::patch('clients/{client}/licenses/{subscription}/status', [\App\Modules\Clients\Controllers\Api\V1\ClientLicenceController::class, 'write'])->name('clients.licenses.status')->middleware(CheckAbilities::class.':clients.licenses.write')->defaults('client_permissions', ['client.view', 'integration.cloudfactory_write'])->defaults('licence_action', 'status');
+        Route::post('clients/context/registration-candidates', \App\Modules\Clients\Controllers\RegistrationCandidateController::class)
+            ->name('clients.context.registration-candidates')->middleware([CheckAbilities::class.':clients.read', 'throttle:30,1'])->defaults('client_permissions', ['client.view', 'client.create']);
         Route::get('clients/context/rmm', [\App\Modules\Clients\Controllers\Api\V1\ClientProviderController::class, 'rmmLookup'])->name('clients.context.rmm')->middleware(CheckAbilities::class.':clients.settings.read')->defaults('client_permissions', ['client.manage_settings'])->defaults('rmm_reconcile', false);
         Route::get('clients/context/tripletex/customers', [\App\Modules\Clients\Controllers\Api\V1\ClientProviderController::class, 'tripletex'])->name('clients.context.tripletex')->middleware(CheckAbilities::class.':clients.read')->defaults('client_permissions', ['client.view', 'client.create'])->defaults('rmm_reconcile', false);
         Route::get('clients/context/tripletex/customers/{customer}', [\App\Modules\Clients\Controllers\Api\V1\ClientProviderController::class, 'tripletex'])->name('clients.context.tripletex.profile')->middleware(CheckAbilities::class.':clients.read')->defaults('client_permissions', ['client.view', 'client.create']);
@@ -133,6 +135,8 @@ Route::get('/clients/time-report', \App\Modules\Clients\Controllers\Tech\ClientT
 Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
 Route::get('/clients/index', [ClientController::class, 'index'])->name('client.index');
 Route::get('/clients/create', [ClientController::class, 'create'])->name('clients.create');
+Route::post('/clients/registration-candidates', \App\Modules\Clients\Controllers\RegistrationCandidateController::class)
+    ->name('clients.registration-candidates')->middleware('throttle:30,1');
 Route::post('/clients/store', [ClientController::class, 'store'])->name('clients.store');
 Route::get('/clients/show/{client}', [ClientController::class, 'show'])->name('clients.show');
 Route::get('/clients/{client}/licenses', [CloudFactoryLicenceController::class, 'index'])

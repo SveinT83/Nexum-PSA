@@ -228,7 +228,8 @@
       "list": false,
       "responses": {
         "201": "ClientApiRecordResponse",
-        "202": "ClientApiUnresolvedCommand"
+        "202": "ClientApiUnresolvedCommand",
+        "200": "ClientApiRegistrationChoices"
       }
     },
     {
@@ -825,6 +826,24 @@
         "application/pdf",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/clients/context/registration-candidates",
+      "name": "api.v1.clients.context.registration-candidates",
+      "operationId": "clientsApiRegistrationCandidates",
+      "request": "ClientApiRegistrationLookup",
+      "response": "ClientApiRegistrationChoices",
+      "required_key": false,
+      "required_revision": false,
+      "scopes": [
+        "clients.read"
+      ],
+      "portal": false,
+      "list": false,
+      "responses": {
+        "200": "ClientApiRegistrationChoices"
+      }
     }
   ],
   "schemas": {
@@ -1404,6 +1423,10 @@
         },
         "tripletex_customer_id": {
           "type": "integer"
+        },
+        "confirm_distinct": {
+          "type": "boolean",
+          "description": "Explicitly create a separate customer after reviewing possible matches. Existing provider identity checks still apply."
         }
       },
       "required": [
@@ -3630,6 +3653,20 @@
         "ordered": {
           "type": "boolean"
         },
+        "gross_basis_minutes": {
+          "type": "integer"
+        },
+        "customer_charge_reversed": {
+          "type": "boolean"
+        },
+        "correction_id": {
+          "type": "integer",
+          "nullable": true
+        },
+        "correction_reason": {
+          "type": "string",
+          "nullable": true
+        },
         "work_minutes": {
           "type": "integer"
         },
@@ -3715,6 +3752,45 @@
             },
             "totals": {
               "$ref": "#/components/schemas/ClientTimeReportTotals"
+            },
+            "corrections": {
+              "type": "array",
+              "items": {
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "source_type": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "source_id": {
+                    "type": "integer",
+                    "nullable": true
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "effective_date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "recorded_at": {
+                    "type": "string"
+                  },
+                  "adjustment_minutes": {
+                    "type": "integer"
+                  },
+                  "reversed_usage_minutes": {
+                    "type": "integer"
+                  }
+                },
+                "type": "object",
+                "additionalProperties": false
+              }
             },
             "object_count": {
               "type": "integer"
@@ -3813,6 +3889,97 @@
         }
       },
       "type": "object"
+    },
+    "ClientApiRegistrationLookup": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "maxLength": 255,
+          "nullable": true
+        },
+        "billing_email": {
+          "type": "string",
+          "maxLength": 255,
+          "nullable": true
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 50,
+          "nullable": true
+        },
+        "org_no": {
+          "type": "string",
+          "maxLength": 50,
+          "nullable": true
+        }
+      }
+    },
+    "ClientApiRegistrationCandidate": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "use_existing",
+            "link_provider",
+            "review"
+          ]
+        },
+        "id": {
+          "type": "integer"
+        },
+        "number": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "org_no": {
+          "type": "string"
+        },
+        "matched_fields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "email",
+              "phone",
+              "org_no"
+            ]
+          }
+        }
+      },
+      "required": [
+        "action",
+        "id",
+        "number",
+        "name",
+        "org_no",
+        "matched_fields"
+      ]
+    },
+    "ClientApiRegistrationChoices": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "no_match",
+            "selection_required"
+          ]
+        },
+        "candidates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ClientApiRegistrationCandidate"
+          }
+        }
+      },
+      "required": [
+        "state",
+        "candidates"
+      ]
     }
   },
   "main_promoted": true,
