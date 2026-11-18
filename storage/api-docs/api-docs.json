@@ -6143,7 +6143,7 @@
                 "tags": [
                     "Clients"
                 ],
-                "summary": "clients store. A no-write duplicate preflight returns errors.tripletex_customer_id. Select the verified internal ID and submit corrected input with fresh command and request keys. Reconcile unknown outcomes before retrying.",
+                "summary": "clients store. A no-write duplicate preflight returns errors.tripletex_customer_id. Select the verified internal ID and submit corrected input with fresh command and request keys. Reconcile unknown outcomes before retrying. A matching email, phone or organization number returns HTTP 200 selection_required to authorized readers. Use GET /api/v1/clients/{id} to reuse a local Client or submit the selected Tripletex identity with a fresh command key.",
                 "operationId": "clientsApiClientsStorePost",
                 "parameters": [
                     {
@@ -6174,6 +6174,16 @@
                     }
                 },
                 "responses": {
+                    "200": {
+                        "description": "Review possible customers before registration",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClientApiRegistrationChoices"
+                                }
+                            }
+                        }
+                    },
                     "202": {
                         "description": "Unresolved committed external intent; reconcile before retry",
                         "content": {
@@ -6491,6 +6501,55 @@
                 ],
                 "x-required-scopes": [
                     "clients.settings.read"
+                ],
+                "x-current-actor-rights-required": true
+            }
+        },
+        "/api/v1/clients/context/registration-candidates": {
+            "post": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Find authorized Nexum and active Tripletex customers by email, phone or organization number before registration",
+                "operationId": "clientsApiRegistrationCandidates",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ClientApiRegistrationLookup"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Review possible customers before registration",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClientApiRegistrationChoices"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Client view and create authority required"
+                    },
+                    "422": {
+                        "description": "Invalid input"
+                    },
+                    "503": {
+                        "description": "Lookup unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-required-scopes": [
+                    "clients.read"
                 ],
                 "x-current-actor-rights-required": true
             }
@@ -140139,6 +140198,97 @@
                 },
                 "type": "object"
             },
+            "ClientApiRegistrationLookup": {
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "billing_email": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 50
+                    },
+                    "org_no": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 50
+                    }
+                },
+                "type": "object"
+            },
+            "ClientApiRegistrationCandidate": {
+                "required": [
+                    "action",
+                    "id",
+                    "number",
+                    "name",
+                    "org_no",
+                    "matched_fields"
+                ],
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "enum": [
+                            "use_existing",
+                            "link_provider",
+                            "review"
+                        ]
+                    },
+                    "id": {
+                        "type": "integer"
+                    },
+                    "number": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "org_no": {
+                        "type": "string"
+                    },
+                    "matched_fields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "email",
+                                "phone",
+                                "org_no"
+                            ]
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ClientApiRegistrationChoices": {
+                "required": [
+                    "state",
+                    "candidates"
+                ],
+                "properties": {
+                    "state": {
+                        "type": "string",
+                        "enum": [
+                            "no_match",
+                            "selection_required"
+                        ]
+                    },
+                    "candidates": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ClientApiRegistrationCandidate"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "ClientApiFieldValues": {
                 "properties": {},
                 "type": "object",
@@ -140629,6 +140779,10 @@
                     "name"
                 ],
                 "properties": {
+                    "confirm_distinct": {
+                        "description": "Explicitly create a separate customer after reviewing possible matches. Existing provider identity checks still apply.",
+                        "type": "boolean"
+                    },
                     "name": {
                         "type": "string",
                         "maxLength": 255

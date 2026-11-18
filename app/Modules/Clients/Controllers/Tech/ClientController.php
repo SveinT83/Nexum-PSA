@@ -343,6 +343,15 @@ class ClientController extends Controller
             $data['client_number'] = null;
         }
 
+        $discovery = app(\App\Modules\Clients\Actions\FindRegistrationCandidates::class);
+        if (empty($data['tripletex_customer_id']) && ! $request->boolean('confirm_distinct') && $discovery->allowed($request)) {
+            $choices = $discovery->handle($request, ['billing_email' => $data['billing_email'] ?? null,
+                'email' => $data['user_email'] ?? null, 'phone' => $data['user_phone'] ?? null, 'org_no' => $data['org_no'] ?? null]);
+            if ($choices) {
+                return back()->withInput()->with('registration_candidates', $choices);
+            }
+        }
+
         unset($data['suggested_client_number']);
 
         try {
