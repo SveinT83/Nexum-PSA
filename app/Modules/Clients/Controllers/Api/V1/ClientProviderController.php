@@ -33,7 +33,7 @@ class ClientProviderController extends Controller
         $authority = app(\App\Modules\DataExchange\Services\TripletexCustomerNumbers::class);
         $connection = $authority->connection();
         abort_unless($connection, 409, 'Tripletex customer synchronization is paused.');
-        $request->validate(['customer_id' => 'sometimes|integer|min:1']);
+        $request->validate(['customer_id' => 'sometimes|integer|min:1', 'q' => 'sometimes|string|min:2|max:100']);
         $api = new \App\Modules\Integration\Services\Tripletex\TripletexClient($connection);
         try {
             if ($request->route('customer')) {
@@ -48,7 +48,13 @@ class ClientProviderController extends Controller
 
                 return response()->json(['data' => $data])->header('Cache-Control', 'private, no-store');
             }
-            $rows = collect($api->customers())->map(fn ($c) => \Illuminate\Support\Arr::only($c, ['id', 'customerNumber', 'name', 'organizationNumber']));
+            $query = mb_strtolower(trim((string) $request->input('q', '')));
+            // Match the browser's active-customer picker and filter before pagination.
+            $rows = collect($api->customers())->filter(fn ($c) => ($c['isInactive'] ?? true) === false
+                && ($query === '' || str_contains(mb_strtolower($c['name'] ?? ''), $query)
+                    || str_contains((string) ($c['customerNumber'] ?? ''), $query)
+                    || str_contains((string) ($c['organizationNumber'] ?? ''), $query)))
+                ->map(fn ($c) => \Illuminate\Support\Arr::only($c, ['id', 'customerNumber', 'name', 'organizationNumber']))->values();
 
             return response()->json(DomainApiRead::paginateCollection($rows, $request))->header('Cache-Control', 'private, no-store');
         } catch (\App\Modules\Integration\Exceptions\TripletexException $error) {

@@ -6143,7 +6143,7 @@
                 "tags": [
                     "Clients"
                 ],
-                "summary": "clients store",
+                "summary": "clients store. A no-write duplicate preflight returns errors.tripletex_customer_id. Select the verified internal ID and submit corrected input with fresh command and request keys. Reconcile unknown outcomes before retrying.",
                 "operationId": "clientsApiClientsStorePost",
                 "parameters": [
                     {
@@ -6500,9 +6500,19 @@
                 "tags": [
                     "Clients"
                 ],
-                "summary": "clients context tripletex",
+                "summary": "Search active Tripletex customers by name, customer number or organization number. Explicitly select the returned internal id as tripletex_customer_id to register the existing customer in Nexum.",
                 "operationId": "clientsApiClientsContextTripletexGet",
                 "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Case-insensitive name, customer number or organization number search before pagination.",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100,
+                            "minLength": 2
+                        }
+                    },
                     {
                         "name": "page",
                         "in": "query",

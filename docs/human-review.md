@@ -1,5 +1,36 @@
 # Human Review Register
 
+## HR-2026-11-18-TRIPLETEX-EXISTING-CUSTOMER - Existing customer registration
+
+Status: Reviewed by Svein Tore, 2026-11-18. Owner: Codex. Named reviewer/release owner: Svein Tore.
+Svein explicitly approved the correction, Main promotion and production installation. Unreported manual checks are retained below.
+Existing approved customer-number and Clients API RFC scope; no renewed parent-feature approval.
+Evidence: plans/2026-11-18-tripletex-existing-customer-registration.md.
+
+Scope: Clients > New Client duplicate preflight, Existing Tripletex customer search/selection,
+official Client lookup/create/read-back, immutable attempt recovery and API command replay.
+Automated Dev verification: 14 distinct Laravel tests / 540 assertions, scoped Pint,
+actual picker-script synthetic DOM interaction and trusted HTTPS login200 pass.
+All database/provider data is synthetic; actual operator/provider acceptance is not inferred.
+
+- [ ] On approved test data, trigger a duplicate preflight, select the intended existing customer,
+      review preserved Site/Contact fields and save one local Client with its provider number.
+      Verify there is no second provider customer and the original attempt remains.
+- [ ] In the intended API/assistant client, search by name/number/org number, select internal id,
+      create with the correct keys, read back Client and replay the successful command.
+      Expected: one local Client, same provider number, no provider customer POST.
+- [ ] Verify an unknown-outcome message retains the original attempt and requires administrator
+      reconciliation; no new-key bypass or implicit name-only pairing.
+- [ ] Confirm the handbook's Dev/production distinction and intended employee-assistant retrieval.
+      Retrieval is a separate operational check and is not proved by BookStack API read-back.
+
+No migration, queue/scheduler, dependency, frontend-build, permission or activation changes.
+Production source/customer data remains unchanged. Explicit deployment authorization is separate.
+Existing HR-2026-11-09-TRIPLETEX-PRIVATE-CUSTOMER and Issue #392 remain independent.
+
+
+
+
 ## HR-2026-11-05-CLIENT-GATEWAY - Client creation tool validation and contract
 
 Status: Reviewed. Reviewer: Svein Tore, 2026-11-12.

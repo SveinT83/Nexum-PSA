@@ -585,4 +585,113 @@ class TripletexCustomerNumberTest extends TestCase
         $this->expectException(ValidationException::class);
         $this->create($attributes);
     }
+    /** A definitive duplicate preflight must let the operator choose the existing identity. */
+    public function test_browser_duplicate_can_be_selected_without_reusing_the_rejected_payload_key(): void
+    {
+        $payload = $this->attributes('Existing provider customer') + [
+            'site_name' => 'Reviewed site', 'user_name' => 'Reviewed contact',
+            'user_email' => 'reviewed@example.test', 'billing_email' => 'invoice@example.test',
+        ];
+        $this->from(route('tech.clients.create'))->post(route('tech.clients.store'), $payload)
+            ->assertRedirect(route('tech.clients.create'))->assertSessionHasErrors('tripletex_customer_id');
+        $this->assertSame(0, $this->posts);
+        $attempt = TripletexCustomerLink::sole();
+        $this->assertSame('prepared', $attempt->status);
+        $this->assertNull($attempt->customer_id);
+        $page = $this->get(route('tech.clients.create'))->assertOk()->assertSee('reviewed@example.test');
+        $document = new \DOMDocument;
+        @$document->loadHTML($page->getContent());
+        $xpath = new \DOMXPath($document);
+        $nextKey = $xpath->query('//input[@name="tripletex_request_key"]')->item(0)->getAttribute('value');
+        $this->assertTrue(Str::isUuid($nextKey));
+        $this->assertNotSame($payload['tripletex_request_key'], $nextKey);
+        $this->assertSame($payload['name'], $xpath->query('//input[@id="tripletex-customer-search"]')->item(0)->getAttribute('value'));
+        $payload['tripletex_request_key'] = $nextKey;
+        $payload['tripletex_customer_id'] = 10;
+        $this->post(route('tech.clients.store'), $payload)->assertRedirect(route('tech.clients.index'));
+        $this->assertSame(0, $this->posts);
+        $this->assertDatabaseCount('clients', 1);
+        $this->assertDatabaseCount('client_sites', 1);
+        $this->assertDatabaseCount('contacts', 1);
+        $this->assertDatabaseHas('clients', ['client_number' => '100393', 'name' => $payload['name']]);
+        $this->assertSame('prepared', $attempt->fresh()->status);
+        $this->assertDatabaseHas('tripletex_customer_links', ['customer_id' => 10, 'status' => 'linked']);
+    }
+
+    public function test_api_duplicate_lookup_explicit_link_and_replay_never_create_a_provider_customer(): void
+    {
+        Sanctum::actingAs($this->user, ['clients.create', 'clients.read']);
+        $payload = $this->attributes('Existing provider customer');
+        $headers = ['Idempotency-Key' => (string) Str::uuid()];
+        $this->postJson('/api/v1/clients', $payload, $headers)->assertUnprocessable()
+            ->assertJsonValidationErrors('tripletex_customer_id');
+        $this->postJson('/api/v1/clients', $payload, $headers)->assertAccepted()->assertJsonPath('state', 'rejected');
+        $this->getJson('/api/v1/clients/context/tripletex/customers?q=EXISTING')->assertOk()
+            ->assertJsonPath('total', 1)->assertJsonPath('data.0.id', 10)->assertJsonMissingPath('data.0.email');
+        $payload['tripletex_customer_id'] = 10;
+        $payload['tripletex_request_key'] = (string) Str::uuid();
+        $headers = ['Idempotency-Key' => (string) Str::uuid()];
+        $response = $this->postJson('/api/v1/clients', $payload, $headers)->assertCreated()
+            ->assertJsonPath('data.client_number', '100393');
+        $this->postJson('/api/v1/clients', $payload, $headers)->assertCreated()
+            ->assertJsonPath('data.id', $response->json('data.id'))->assertJsonPath('replayed', true);
+        $this->getJson('/api/v1/clients/'.$response->json('data.id'))->assertOk()
+            ->assertJsonPath('data.client_number', '100393');
+        $this->assertSame(0, $this->posts);
+        $this->assertDatabaseCount('clients', 1);
+        $this->assertDatabaseCount('client_sites', 1);
+        $this->assertDatabaseCount('contacts', 0);
+        $this->assertSame(1, TripletexCustomerLink::where('status', 'linked')->count());
+    }
+
+    public function test_api_provider_lookup_filters_active_customers_before_pagination(): void
+    {
+        Sanctum::actingAs($this->user, ['clients.read']);
+        $this->remote[11] = $this->customer(11, 100400, 'Unrelated company');
+        $this->remote[11]['organizationNumber'] = '987654321';
+        $this->remote[12] = $this->customer(12, 100401, 'Existing inactive');
+        $this->remote[12]['isInactive'] = true;
+        foreach (['existing' => 10, '100400' => 11, '987654321' => 11] as $q => $expected) {
+            $this->getJson('/api/v1/clients/context/tripletex/customers?q='.$q.'&per_page=1')
+                ->assertOk()->assertJsonPath('total', 1)->assertJsonPath('data.0.id', $expected);
+        }
+        $this->getJson('/api/v1/clients/context/tripletex/customers?q=missing')->assertOk()->assertJsonPath('total', 0);
+        $this->getJson('/api/v1/clients/context/tripletex/customers?q[]=invalid')->assertUnprocessable();
+    }
+
+    public function test_unknown_browser_outcome_retains_original_key_and_requires_reconciliation(): void
+    {
+        $this->loseResponse = true;
+        $payload = $this->attributes('Synthetic uncertain browser') + [
+            'site_name' => 'Uncertain site', 'user_name' => 'Uncertain contact', 'user_email' => 'uncertain@example.test',
+        ];
+        $this->from(route('tech.clients.create'))->post(route('tech.clients.store'), $payload)
+            ->assertRedirect(route('tech.clients.create'))->assertSessionHasErrors('client_number')
+            ->assertSessionDoesntHaveErrors('tripletex_customer_id');
+        $page = $this->get(route('tech.clients.create'))->assertOk();
+        $document = new \DOMDocument;
+        @$document->loadHTML($page->getContent());
+        $xpath = new \DOMXPath($document);
+        $this->assertSame($payload['tripletex_request_key'], $xpath->query('//input[@name="tripletex_request_key"]')->item(0)->getAttribute('value'));
+        $payload['tripletex_customer_id'] = 10;
+        $this->postJson(route('tech.clients.store'), $payload)->assertUnprocessable();
+        $this->assertSame(1, $this->posts);
+        $this->assertSame('sending', TripletexCustomerLink::sole()->status);
+        $this->assertDatabaseCount('clients', 0);
+    }
+
+    public function test_api_existing_customer_lookup_requires_scope_current_permission_and_active_sync(): void
+    {
+        $url = '/api/v1/clients/context/tripletex/customers?q=Existing';
+        Sanctum::actingAs($this->user, ['clients.create']);
+        $this->getJson($url)->assertForbidden();
+        Sanctum::actingAs($this->user, ['clients.read']);
+        $this->user->revokePermissionTo('client.create');
+        $this->getJson($url)->assertForbidden();
+        Http::assertNothingSent();
+        $this->user->givePermissionTo('client.create');
+        $this->paused();
+        $this->getJson($url)->assertConflict();
+        Http::assertNothingSent();
+    }
 }

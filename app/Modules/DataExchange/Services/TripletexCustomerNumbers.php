@@ -136,7 +136,13 @@ class TripletexCustomerNumbers
                         $customers = $api->customers();
                         foreach ($customers as $candidate) {
                             if ($this->possibleDuplicate($candidate, $attributes)) {
-                                $this->fail('A possible customer already exists in Tripletex. Select that customer explicitly before saving.');
+                                // This preflight performed no customer POST. Only this error permits a fresh
+                                // form key for explicit selection; unknown/provider outcomes retain their key.
+                                $message = 'A possible customer already exists in Tripletex. Select that customer explicitly before saving. No customer was created by this attempt.';
+                                throw \App\Modules\DataExchange\Exceptions\TripletexCustomerSelectionRequired::withMessages([
+                                    'client_number' => $message,
+                                    'tripletex_customer_id' => $message,
+                                ]);
                             }
                         }
                         $number = $this->next($api, $customers);

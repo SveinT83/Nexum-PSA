@@ -417,3 +417,29 @@ risky writes/provider workflows require their existing native approvals and runt
 Human browser/2FA, intended employee workflow and employee-assistant handbook retrieval remain
 separate acceptance checks under HR-2026-11-05-FULL-MAIN-ROLLOUT. Installing source and listing
 operations is not proof that every mutating workflow was exercised against live customer data.
+
+## Existing Tripletex customers during registration (2026-11-18)
+
+The existing explicit selection is available in production. Improved duplicate-error recovery and
+API search filtering are a Dev repair pending human review and separate production deployment.
+
+1. Open **Clients > New Client**, search **Existing Tripletex customer**, and click the intended
+   result before **Create Client**. Review its name, organization number, number and suggested
+   billing/Site/contact fields. Nexum uses the verified Tripletex identity and number without
+   creating a second provider customer.
+2. On repaired Dev, a no-write duplicate error preserves your fields, highlights the picker and
+   prepares a fresh attempt. Select the correct result and save. Enter in the picker searches.
+3. For API registration, read **Client creation context**, look up existing Tripletex customers at
+   `GET /api/v1/clients/context/tripletex/customers`, then explicitly pass the returned internal
+   `id` as `tripletex_customer_id` to `POST /api/v1/clients`, alongside
+   `tripletex_number_mode=true` and a UUID `tripletex_request_key`. Omit `client_number`.
+   On repaired Dev, `q` filters active choices by name, customer number or organization number.
+4. After a confirmed no-write duplicate preflight, a corrected API selection needs a fresh
+   `Idempotency-Key` and request UUID. Successful keyed replay returns the same Client.
+   For timeouts or unknown outcomes, preserve both keys and ask an administrator to reconcile.
+5. Read the saved Client and confirm its Tripletex customer number. Already-linked identities,
+   local number conflicts, inactive provider customers and changed identity are rejected.
+
+Employees need current Client view/create permissions; API tokens also need Clients read/create
+scopes. Contact data requires the corresponding Contact authority. See **Tripletex Customer
+Numbers** for the full recovery procedure. No production customer was created or paired as a test.
