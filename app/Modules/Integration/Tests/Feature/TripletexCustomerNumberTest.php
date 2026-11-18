@@ -644,6 +644,59 @@ class TripletexCustomerNumberTest extends TestCase
         $this->assertSame(1, TripletexCustomerLink::where('status', 'linked')->count());
     }
 
+
+    public function test_registration_suggests_reuse_or_link_by_exact_email_phone_and_org_for_web_and_api(): void
+    {
+        $client = Client::create(['name' => 'Local customer', 'client_number' => '32109', 'active' => true, 'org_no' => 'NO 987 654 321 MVA', 'billing_email' => 'shared@example.test']);
+        $this->remote[10] = array_replace($this->remote[10], ['email' => 'Shared@example.test', 'phoneNumberMobile' => '0047 47 12 34 56', 'organizationNumber' => '987654321']);
+        $this->remote[11] = array_replace($this->customer(11, 12345, 'Inactive'), ['isInactive' => true, 'organizationNumber' => '987654321']);
+        $this->user->givePermissionTo('contact.view');
+        $lookup = '/api/v1/clients/context/registration-candidates';
+        $this->postJson(route('tech.clients.registration-candidates'), ['phone' => '47 12 34 56'])->assertOk()->assertJsonPath('candidates.0.id', 10);
+        Sanctum::actingAs($this->user, ['clients.read', 'clients.create', 'contacts.read']);
+        foreach ([['email' => 'SHARED@example.test'], ['org_no' => '987 654 321']] as $input) {
+            $this->postJson($lookup, $input)->assertOk()->assertJsonCount(2, 'candidates')
+                ->assertJsonPath('candidates.0.id', $client->id)->assertJsonPath('candidates.0.action', 'use_existing')
+                ->assertJsonPath('candidates.1.action', 'link_provider')->assertJsonMissingPath('candidates.1.email');
+        }
+        $this->postJson($lookup, ['phone' => '+47 47123456'])->assertOk()->assertJsonCount(1, 'candidates')->assertJsonPath('candidates.0.matched_fields.0', 'phone');
+        $this->postJson($lookup, ['phone' => '+46 47123456'])->assertOk()->assertJsonPath('state', 'no_match');
+        $payload = $this->attributes('Existing provider customer') + ['org_no' => '987654321'];
+        $headers = ['Idempotency-Key' => (string) Str::uuid()];
+        $this->postJson('/api/v1/clients', $payload, $headers)->assertOk()->assertJsonPath('state', 'selection_required')->assertJsonCount(2, 'candidates');
+        $this->postJson('/api/v1/clients', $payload, $headers)->assertOk()->assertJsonPath('state', 'selection_required');
+        $this->assertDatabaseCount('clients', 1);
+        $this->assertDatabaseCount('tripletex_customer_links', 0);
+        $selected = $this->postJson('/api/v1/clients', $payload + ['tripletex_customer_id' => 10], ['Idempotency-Key' => (string) Str::uuid()])
+            ->assertCreated()->assertJsonPath('data.client_number', '100393')->json('data.id');
+        $this->postJson($lookup, ['phone' => '47123456'])->assertOk()->assertJsonCount(1, 'candidates')
+            ->assertJsonPath('candidates.0.action', 'use_existing')->assertJsonPath('candidates.0.id', $selected);
+        $this->assertSame(0, $this->posts);
+    }
+
+    public function test_registration_discovery_respects_contact_authority_and_fails_closed_on_provider_failure(): void
+    {
+        $client = Client::create(['name' => 'Contact client', 'active' => true, 'client_number' => '43210']);
+        app(\App\Modules\Contact\Actions\StoreContact::class)->handle(['client_id' => $client->id, 'display_name' => 'Synthetic', 'email' => 'contact@example.test', 'phone' => '+47 99887766']);
+        $this->user->givePermissionTo('contact.view');
+        $path = '/api/v1/clients/context/registration-candidates';
+        $this->remote[10]['phoneNumberMobile'] = '99887766';
+        Sanctum::actingAs($this->user, ['clients.read']);
+        $this->postJson($path, ['phone' => '99887766'])->assertOk()->assertJsonPath('state', 'no_match');
+        Sanctum::actingAs($this->user, ['clients.read', 'contacts.read']);
+        foreach ([['phone' => '99887766'], ['email' => 'CONTACT@example.test']] as $input) {
+            $this->postJson($path, $input)->assertOk()->assertJsonPath('candidates.0.id', $client->id);
+        }
+        Sanctum::actingAs($this->user, ['clients.create']);
+        $this->postJson($path, ['phone' => '99887766'])->assertForbidden();
+        Sanctum::actingAs($this->user, ['clients.read', 'clients.create']);
+        $this->failList = true;
+        $this->postJson($path, ['org_no' => '987654321'])->assertServiceUnavailable();
+        $this->postJson('/api/v1/clients', $this->attributes() + ['org_no' => '987654321'], ['Idempotency-Key' => (string) Str::uuid()])->assertServiceUnavailable();
+        $this->assertSame(0, $this->posts);
+        $this->assertDatabaseCount('clients', 1);
+    }
+
     public function test_api_provider_lookup_filters_active_customers_before_pagination(): void
     {
         Sanctum::actingAs($this->user, ['clients.read']);

@@ -60,6 +60,20 @@ document.addEventListener('DOMContentLoaded', () => {
             if (version === detailVersion) status.textContent = 'Selected: ' + selectedLabel + '. ' + error.message;
         }
     };
+    const selectCustomer = (customer, label) => {
+        searchVersion++;
+        id.value = customer.id;
+        form.elements.client_number.value = customer.customerNumber;
+        form.elements.name.value = customer.name;
+        form.elements.org_no.value = customer.organizationNumber || '';
+        results.replaceChildren();
+        loadProfile(customer, label);
+        form.dispatchEvent(new Event('registration:provider-selected'));
+    };
+    form.addEventListener('registration:select-provider', event => {
+        const candidate = event.detail;
+        selectCustomer({id: candidate.id, customerNumber: candidate.number, name: candidate.name, organizationNumber: candidate.org_no}, candidate.name);
+    });
     document.getElementById('tripletex-customer-search-button').addEventListener('click', async () => {
         const version = ++searchVersion;
         const q = document.getElementById('tripletex-customer-search').value.trim();
@@ -79,14 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 button.type = 'button';
                 button.className = 'list-group-item list-group-item-action';
                 button.textContent = customer.customerNumber + ' · ' + customer.name + (customer.organizationNumber ? ' · ' + customer.organizationNumber : '');
-                button.addEventListener('click', () => {
-                    id.value = customer.id;
-                    form.elements.client_number.value = customer.customerNumber;
-                    form.elements.name.value = customer.name;
-                    form.elements.org_no.value = customer.organizationNumber || '';
-                    results.replaceChildren();
-                    loadProfile(customer, button.textContent);
-                });
+                button.addEventListener('click', () => selectCustomer(customer, button.textContent));
                 results.append(button);
             });
         } catch (error) {

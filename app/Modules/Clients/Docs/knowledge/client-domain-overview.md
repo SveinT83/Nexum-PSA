@@ -420,26 +420,16 @@ operations is not proof that every mutating workflow was exercised against live 
 
 ## Existing Tripletex customers during registration (2026-11-18)
 
-The existing explicit selection is available in production. Improved duplicate-error recovery and
-API search filtering are a Dev repair pending human review and separate production deployment.
+Customer registration with an existing Tripletex customer is available in production. Customer-number synchronization must be active. Staff need Client view and create permissions. API callers also need the corresponding Clients scopes and Contact authority when creating a Contact.
 
-1. Open **Clients > New Client**, search **Existing Tripletex customer**, and click the intended
-   result before **Create Client**. Review its name, organization number, number and suggested
-   billing/Site/contact fields. Nexum uses the verified Tripletex identity and number without
-   creating a second provider customer.
-2. On repaired Dev, a no-write duplicate error preserves your fields, highlights the picker and
-   prepares a fresh attempt. Select the correct result and save. Enter in the picker searches.
-3. For API registration, read **Client creation context**, look up existing Tripletex customers at
-   `GET /api/v1/clients/context/tripletex/customers`, then explicitly pass the returned internal
-   `id` as `tripletex_customer_id` to `POST /api/v1/clients`, alongside
-   `tripletex_number_mode=true` and a UUID `tripletex_request_key`. Omit `client_number`.
-   On repaired Dev, `q` filters active choices by name, customer number or organization number.
-4. After a confirmed no-write duplicate preflight, a corrected API selection needs a fresh
-   `Idempotency-Key` and request UUID. Successful keyed replay returns the same Client.
-   For timeouts or unknown outcomes, preserve both keys and ask an administrator to reconcile.
-5. Read the saved Client and confirm its Tripletex customer number. Already-linked identities,
-   local number conflicts, inactive provider customers and changed identity are rejected.
+1. In **Clients > New Client**, enter the name, customer number or organization number in **Existing Tripletex customer**. Click **Search** or press Enter. Select the intended active customer and check its identity and customer number.
+2. Review the proposed billing, Site address and primary contact details. Click **Create Client**. Nexum verifies the selected Tripletex identity and uses its customer number. After a confirmed duplicate preflight, the form keeps your entries and highlights the picker so you can select the customer and save.
+3. For API registration, check `GET /api/v1/clients/context` for Tripletex number authority. Search `GET /api/v1/clients/context/tripletex/customers?q=...` by name, customer number or organization number. Pass the selected internal `id` as `tripletex_customer_id` to `POST /api/v1/clients` with `tripletex_number_mode=true`, a UUID `tripletex_request_key` and an `Idempotency-Key`. Omit `client_number`.
+4. If the API returns HTTP 422 with `errors.tripletex_customer_id` and confirms no customer was created, select the correct match and submit the corrected request with a fresh request UUID and idempotency key. For a timeout or unknown outcome, keep both original keys and ask an integration administrator to reconcile the attempt.
+5. Open the saved Client, or read `GET /api/v1/clients/{client}`, to verify its customer number and check its Site address. If the provider identity is already linked, check the linked Nexum Client before taking further action.
 
-Employees need current Client view/create permissions; API tokens also need Clients read/create
-scopes. Contact data requires the corresponding Contact authority. See **Tripletex Customer
-Numbers** for the full recovery procedure. No production customer was created or paired as a test.
+## Find an existing customer while registering (Dev only, 2026-11-18)
+
+On Dev, open **Clients > New Client** and enter a complete billing or primary contact email, a phone number or an organization number. Review each possible match. **Use Nexum customer** opens the existing customer. **Use Tripletex customer** loads that customer's details for review. Verify the Site address before clicking **Create Client**. Shared contact details can identify several customers. Select the intended record. If every match belongs to someone else, explicitly confirm that you need a separate customer. Provider conflicts still require review.
+
+The Dev API accepts a JSON body with `email`, `billing_email`, `phone` or `org_no` at `POST /api/v1/clients/context/registration-candidates`. With a human actor and Clients view/create permissions, the lookup requires `clients.read`. An ordinary registration with both `clients.create` and `clients.read` that matches can return HTTP 200 with `state=selection_required` and `candidates`. This outcome creates no customer. For `use_existing`, read `GET /api/v1/clients/{id}`. For `link_provider`, submit the chosen ID as `tripletex_customer_id`, using the provider name and organization number and a fresh command key for the changed input. The original Tripletex request UUID can be retained after this no-write selection response. Keep the normal reconciliation rules for unknown outcomes. Matching contact email or phone in Nexum or Tripletex requires Contact view authority and, through the API, the `contacts.read` scope. Billing email and organization number follow Client permissions. A failed provider lookup is reported separately.

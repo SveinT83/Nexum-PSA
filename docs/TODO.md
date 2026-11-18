@@ -1,23 +1,19 @@
 # tdPSA Development TODO
 
+## Registration suggestions by email, phone and organization number (2026-11-18)
+
+Approved RFC in docs/rfc/2026-11-18-client-email-phone-suggestions.md. Implemented in the authoritative Dev working copy. Svein Tore approved HR-2026-11-18-CLIENT-REGISTRATION-SUGGESTIONS and authorized this release.
+Dev evidence on 2026-11-18: 10 distinct Laravel tests (562 assertions) across the candidate, recovery and generated-contract suites; Chromium exercised email/phone/org input and explicit actions on synthetic data. BookStack 451/617/639 read back. Svein Tore approved the workflow on Dev on 2026-11-18.
+
 ## Existing Tripletex customer registration recovery (2026-11-18)
 
-Status: Done On Dev / Handbook Published And Read Back / Reviewed / Release authorized.
-Owner: Codex; reviewer and release owner: Svein Tore.
-Scope: bounded repair under approved RFCs 2026-10-08-tripletex-customer-numbers and
-2026-10-25-clients-full-api-parity. Browser duplicate preflight now prepares a fresh UUID only
-for explicit selection after proven no customer POST; preserves inputs and original evidence.
-Official API q filters active provider choices before pagination; typed errors and safe-key
-recovery are documented. Unknown outcomes remain blocked for reconciliation.
-Verification: 14 distinct Laravel tests / 540 assertions PASS; seven-file Pint, picker-script
-interaction, diff check, readable file modes and trusted Dev HTTPS login200 PASS.
-Evidence: plans/2026-11-18-tripletex-existing-customer-registration.md.
-BookStack617 revision4 and451 revision22 exact new sections independently read back;
-existing owners/hierarchy/access unchanged. Employee-assistant retrieval remains unverified.
-Svein approved HR-2026-11-18-TRIPLETEX-EXISTING-CUSTOMER on 2026-11-18.
-Release evidence is recorded separately.
-Existing #392 private-customer operator acceptance remains separate; no new Issue is created.
-
+Released on Dev (02cbdfd2) and Main (5f8e5650) with Svein Tore's approval.
+A six-file overlay preserved the installed production private-customer behavior. All six installed hashes matched.
+Production login returned HTTP 200, PHP-FPM was active and the generated API contract included the q filter.
+A user-authorized registration was independently read back with the existing provider identity, number and requested local address.
+BookStack pages 451/617/639 were read back after publication with inherited page access.
+The browser operator and employee-assistant retrieval checks remain open in HR-2026-11-18-TRIPLETEX-EXISTING-CUSTOMER.
+Details in plans/2026-11-18-tripletex-existing-customer-registration.md.
 
 ## Ticket and Task creator/updater attribution (2026-11-12)
 

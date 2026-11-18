@@ -142,6 +142,8 @@
         </div>
 
         <!-- ------------------------------------------------- -->
+        @include('clients::Tech.registration-candidates')
+
         <!-- Optional: primary contact role selector -->
         <!-- ------------------------------------------------- -->
         <div class="row mb-3">
