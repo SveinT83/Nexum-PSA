@@ -1,5 +1,24 @@
 # tdPSA Development TODO
 
+## Existing Tripletex customer registration recovery (2026-11-18)
+
+Status: Done On Dev / Handbook Published And Read Back / Reviewed / Release authorized.
+Owner: Codex; reviewer and release owner: Svein Tore.
+Scope: bounded repair under approved RFCs 2026-10-08-tripletex-customer-numbers and
+2026-10-25-clients-full-api-parity. Browser duplicate preflight now prepares a fresh UUID only
+for explicit selection after proven no customer POST; preserves inputs and original evidence.
+Official API q filters active provider choices before pagination; typed errors and safe-key
+recovery are documented. Unknown outcomes remain blocked for reconciliation.
+Verification: 14 distinct Laravel tests / 540 assertions PASS; seven-file Pint, picker-script
+interaction, diff check, readable file modes and trusted Dev HTTPS login200 PASS.
+Evidence: plans/2026-11-18-tripletex-existing-customer-registration.md.
+BookStack617 revision4 and451 revision22 exact new sections independently read back;
+existing owners/hierarchy/access unchanged. Employee-assistant retrieval remains unverified.
+Svein approved HR-2026-11-18-TRIPLETEX-EXISTING-CUSTOMER on 2026-11-18.
+Release evidence is recorded separately.
+Existing #392 private-customer operator acceptance remains separate; no new Issue is created.
+
+
 ## Ticket and Task creator/updater attribution (2026-11-12)
 
 Status: Done / Main Merged / Production Installed And Verified / Human Reviewed.

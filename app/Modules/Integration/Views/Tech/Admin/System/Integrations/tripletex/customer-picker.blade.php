@@ -1,11 +1,18 @@
 {{-- Explicit selection preserves identity; suggestions alone never link customers. --}}
+@php($duplicatePreflight = session('tripletex_selection_required', false))
 <input type="hidden" name="tripletex_number_mode" value="1">
 <input type="hidden" name="tripletex_request_key" value="{{ old('tripletex_request_key', (string) \Illuminate\Support\Str::uuid()) }}">
 <input type="hidden" id="tripletex-customer-id" name="tripletex_customer_id" value="{{ old('tripletex_customer_id') }}">
 <div class="mb-3 border-bottom pb-3" id="tripletex-customer-picker">
+    @if($duplicatePreflight)
+        <div class="alert alert-warning py-2 mb-2" role="alert">
+            Select the matching Tripletex customer below, review its details, then click <strong>Create Client</strong>.
+            Nexum will use its existing customer number without creating another customer in Tripletex.
+        </div>
+    @endif
     <label for="tripletex-customer-search" class="form-label">Existing Tripletex customer</label>
     <div class="input-group">
-        <input type="search" id="tripletex-customer-search" class="form-control" placeholder="Search name, customer number or organization number" autocomplete="off">
+        <input type="search" id="tripletex-customer-search" class="form-control" value="{{ $duplicatePreflight ? old('name') : '' }}" placeholder="Search name, customer number or organization number" autocomplete="off">
         <button class="btn btn-outline-secondary" type="button" id="tripletex-customer-search-button">Search</button>
         <button class="btn btn-outline-secondary" type="button" id="tripletex-customer-clear">Create new</button>
     </div>
@@ -84,6 +91,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         } catch (error) {
             if (version === searchVersion) status.textContent = error.message;
+        }
+    });
+    // Enter in the lookup must search rather than resubmit the unselected Client form.
+    document.getElementById('tripletex-customer-search').addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            document.getElementById('tripletex-customer-search-button').click();
         }
     });
     document.getElementById('tripletex-customer-clear').addEventListener('click', () => {

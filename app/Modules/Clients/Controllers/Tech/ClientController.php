@@ -345,7 +345,16 @@ class ClientController extends Controller
 
         unset($data['suggested_client_number']);
 
-        $result = $createClient->handle($data);
+        try {
+            $result = $createClient->handle($data);
+        } catch (\App\Modules\DataExchange\Exceptions\TripletexCustomerSelectionRequired $exception) {
+            // Only a definitive no-POST duplicate preflight can renew the form key.
+            // All provider errors and uncertain outcomes keep the original recovery identity.
+            $data['tripletex_request_key'] = (string) \Illuminate\Support\Str::uuid();
+
+            return back()->withErrors($exception->errors())->withInput($data)
+                ->with('tripletex_selection_required', true);
+        }
 
         $response = redirect()->route('tech.clients.index')->with('status', 'Client created');
         if ($result['warning']) {

@@ -183,3 +183,61 @@ Client command migration before declaring the target installation available.
 The default-off provider API switch is an independent deliberate activation;
 API documentation or passing tests never enables a provider or changes rights.
 Employee OpenWebUI retrieval is a separate acceptance check.
+
+## Register a customer that already exists in Tripletex (2026-11-18)
+
+Availability: the existing-customer picker and explicit API selection are installed in production.
+The improved duplicate-error recovery, Enter-to-search behavior and API `q` filtering described
+below are a Dev repair, pending human review and a separately authorized Main/production rollout.
+
+Prerequisites: customer synchronization is enabled for the verified Tripletex company, and the
+employee has `client.view` and `client.create`. API lookup needs `clients.read`; creation needs
+`clients.create`, in addition to the employee's current permissions.
+
+### Manual registration
+
+1. Open **Clients > New Client**. In **Existing Tripletex customer**, enter the name, customer
+   number or organization number and click **Search**. On the repaired Dev form, Enter also searches.
+2. Click the correct search result. Check the selected name, organization number and customer number.
+   Review Billing Email, the default Site and primary-contact details before saving.
+3. Click **Create Client**. Nexum reads the selected provider identity again and creates the local
+   Client and related records with the existing Tripletex number. It does not create another
+   customer in Tripletex.
+4. If the repaired Dev form reports a possible duplicate before any provider creation, it highlights
+   the picker, keeps the entered fields and prepares a fresh attempt for the corrected selection.
+   Search, select and save. The original unsuccessful attempt remains in the audit evidence.
+5. In production before this repair is installed, a duplicate error can leave the old form tied to
+   its original payload. After confirming it was only a duplicate preflight, open **New Client**
+   again and select the existing provider customer before the first save.
+
+Never use step 5 for a timeout, unknown provider outcome or failed provider creation without
+administrator reconciliation. An old form must not be used to bypass an unresolved attempt.
+
+### API registration
+
+1. Read `GET /api/v1/clients/context` and confirm `number.authority=tripletex`.
+2. Read `GET /api/v1/clients/context/tripletex/customers`. On repaired Dev, optional `q` searches
+   name, customer number or organization number before pagination (2-100 characters, case-insensitive
+   for names). Only active choices are returned. Before rollout, follow all pages and select the
+   intended result; production does not yet apply this new search filter.
+3. Explicitly select the returned `id`. This is the internal Tripletex customer ID, distinct from
+   `customerNumber`. Optional detail is available at
+   `GET /api/v1/clients/context/tripletex/customers/{customer}`.
+4. Submit `POST /api/v1/clients` with the verified provider name and organization number,
+   `tripletex_number_mode=true`, a UUID `tripletex_request_key` and the selected
+   `tripletex_customer_id`. Omit `client_number`. Supply reviewed Site/Contact data as needed and
+   an `Idempotency-Key`. Additional Contact scopes/permissions apply when creating a Contact.
+5. Read the HTTP201 result and `GET /api/v1/clients/{client}`. Confirm the persisted name and
+   provider customer number. Repeating the identical successful keyed request returns the same
+   result without another local Client or provider customer.
+6. The repaired Dev duplicate preflight returns HTTP422 with `errors.tripletex_customer_id`
+   and explicitly confirms no customer was created by that attempt. After lookup and explicit
+   selection, send the corrected request with a fresh `Idempotency-Key` and fresh
+   `tripletex_request_key`; retain the rejected receipt and original attempt. Replaying the old
+   rejected command returns its saved rejected state, not a new registration.
+
+Names alone never authorize automatic pairing. Inactive customers, changed provider identity,
+occupied local numbers and identities already linked or awaiting recovery stop the operation.
+For unknown outcomes, preserve both keys and ask an integration administrator to reconcile.
+No synchronization switch, user permission or provider invoice setting is changed by this repair.
+Employee-assistant retrieval and real browser/API provider acceptance remain separate verification.
