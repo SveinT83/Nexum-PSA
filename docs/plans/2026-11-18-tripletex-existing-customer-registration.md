@@ -1,8 +1,8 @@
 # Existing Tripletex customer registration repair - 2026-11-18
 
-Status: Done On Dev / Handbook Published And Read Back / Human Review Pending.
+Status: Approved, installed in production and verified on 2026-11-18. Earlier observations below are chronological.
 Owner: Codex. Reporter, reviewer and release owner: Svein Tore.
-Human-review checklist: HR-2026-11-18-TRIPLETEX-EXISTING-CUSTOMER (Pending).
+Human-review checklist: HR-2026-11-18-TRIPLETEX-EXISTING-CUSTOMER (approved for release by Svein Tore).
 Approval basis: existing approved customer-number RFC (2026-10-08) and full Clients API
 parity RFC (2026-10-25). This repairs their explicit-selection workflow; no new matching,
 permission, provider-write authority or architecture decision is introduced.
@@ -163,3 +163,18 @@ All application database queries ran in READ ONLY transactions and rolled back. 
 were customer GETs plus the existing short-lived authentication session exchange; no customer
 POST/PUT, link/adopt action, registration, address update, command replay or production source
 change occurred. The Dev repair and Pending human-review/deployment state are unchanged.
+
+## Approved release and operational read-back
+
+Svein Tore approved Main and production. Feature commit 5f8e5650 was first included on Dev at
+02cbdfd2. Main was fast-forwarded directly; GitHub reported a pull-request rule bypass.
+Five isolated regression tests passed with 70 assertions before the production overlay.
+Six scoped application files were installed on VM169. All six production SHA-256 hashes matched
+the verified postimages. The existing PRIVATE behavior was preserved. Maintenance mode was off,
+PHP-FPM was active, login returned HTTP 200 and the regenerated live OpenAPI lists the q filter.
+No migration, provider activation or queue change. Rollback copies are in /root/nexum-pair-1811/before.
+An authorized real registration used the production API and existing provider ID. Independent
+read-back verified one local record with the existing provider number, a linked identity and the
+requested local Site address. No additional live command was issued to simulate a duplicate.
+Handbook pages 451, 617 and 639 were updated and independently read back at revisions 23, 5 and 4.
+Browser operator and employee-assistant checks remain separate from these production checks.
