@@ -25,7 +25,7 @@ All database/provider data is synthetic; actual operator/provider acceptance is 
       Retrieval is a separate operational check and is not proved by BookStack API read-back.
 
 No migration, queue/scheduler, dependency, frontend-build, permission or activation changes.
-Production source/customer data remains unchanged. Explicit deployment authorization is separate.
+Production overlay installed and checked. One explicitly authorized API registration, link, number and Site address were independently read back. Individual manual checks above remain open where unreported.
 Existing HR-2026-11-09-TRIPLETEX-PRIVATE-CUSTOMER and Issue #392 remain independent.
 
 
