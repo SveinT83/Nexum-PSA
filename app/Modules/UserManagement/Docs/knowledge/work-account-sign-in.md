@@ -49,12 +49,12 @@ Normal logout ends the local Nexum session. Profile > Work Account (SSO) offers 
 logout and explains that other applications can also be signed out. Keycloak may show its own
 logout confirmation because Nexum does not retain an ID token.
 
-The workday-session change verified on Dev on 22 November 2026 gives newly issued SSO
+The workday-session change installed in production on 22 November 2026 gives newly issued SSO
 sessions a fixed maximum of 12 hours, including idle periods when the web-session idle
 allowance is also configured to 720 minutes. Activity does not extend that fixed expiry.
-This change is not deployed to production: production still has the independently verified
-60-minute SSO limit and 120-minute web-session idle allowance until a separate rollout.
-After that rollout, sign out and choose Sign in with work account again to receive a new
+Production configuration and actual HTTPS cookies have been independently verified with
+720-minute SSO/idle allowances and a 43200-second session cookie.
+Sign out and choose Sign in with work account again to receive a new
 grant; existing grants are not extended. There is no persistent SSO remember-me cookie. Back-channel
 logout, unlinking, provider configuration changes and local account-security changes revoke
 matching SSO access. Revocation is checked at the next request. Disabling a Keycloak user alone
@@ -96,7 +96,7 @@ nonce/state/PKCE and session revocation. An administrative bearer scope cannot s
 for the signed-in employee's local proof. See [User Management API](user-management-api.md).
 Availability is verified on Dev and merged to Main in PR #353; this does not authorize provider or production activation.
 
-## Workday session operations - Dev verified, production rollout pending
+## Workday session operations - installed in production on 22 November 2026
 
 An installation operator sets SSO_SESSION_MINUTES=720 and SESSION_LIFETIME=720 and refreshes
 configuration through the approved deployment procedure. The SSO override accepts integer
@@ -107,7 +107,7 @@ extend that installation's web sessions. The shared idle allowance also covers l
 password and Customer Portal sessions; local sessions retain their usual sliding idle limit.
 There is no session-duration field in Work Account Sign-in settings.
 
-1. After the change is installed in your environment, sign out of Nexum.
+1. The change is installed in production. Sign out of Nexum to replace an older grant.
 2. Choose Sign in with work account and complete the provider's required authentication.
 3. Return to Nexum and continue working; an ordinary pause should not require another
    sign-in during the new 12-hour allowance.
@@ -119,4 +119,4 @@ page/error, without credentials. Check effective SSO and web-session configurati
 configuration-cache refresh, whether the grant predates rollout, and provider logout
 notifications. A Keycloak token-lifetime change is not a substitute for the Nexum fix.
 The relevant Keycloak client's current session limits and elapsed-time employee acceptance
-remain separate checks in HR-2026-11-22-WORKDAY-SESSIONS. OpenWebUI retrieval is unverified.
+remain separate checks in HR-2026-11-22-WORKDAY-SESSIONS (In Review). OpenWebUI retrieval is unverified.

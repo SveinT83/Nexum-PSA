@@ -127,3 +127,13 @@ Approved by Svein Tore in conversation on 2026-11-22:
 Dev implementation, scoped commit/push and Main merge are authorized. Production deployment
 is separate. Human acceptance must remain Pending until explicitly confirmed; the Main
 merge request does not mark the manual checklist Reviewed.
+
+## Production authorization and delivery - 22 November 2026
+
+Svein Tore explicitly approved production rollout: "Godkjenner. Oppdater produksjon med
+12-timersøktene også." (Norwegian approval, recorded without changing the prior decision.)
+The three tested Main runtime files were installed as a scoped overlay; both effective
+session policies are now 720 minutes and public HTTPS cookie Max-Age is 43200. This amends
+the earlier no-production-authorization statements for this named rollout only. Remaining
+manual/provider/employee-assistant checks stay In Review, not inferred Reviewed from rollout.
+See ../plans/2026-11-22-workday-session-production.md for verification and rollback.

@@ -2,12 +2,13 @@
 
 ## HR-2026-11-22-WORKDAY-SESSIONS - Twelve-hour Nexum login sessions
 
-Status: Pending. Owner: Codex. Named reviewer: Svein Tore (manual acceptance not yet supplied).
+Status: In Review. Owner: Codex. Named reviewer: Svein Tore (rollout approved; unchecked manual results not yet supplied).
 Scope: approved RFC/ADR 2026-11-22 workday session policy; UserManagement SSO and shared web idle lifetime.
 Authorization: Svein Tore explicitly approved the 12-hour proposal and requested implementation
 and Main merge on 2026-11-22. This permits the scoped tested Main merge; it does not mark
-manual checks Reviewed. Remaining checks block production rollout/availability claims, not
-the explicitly requested Main merge. Production deployment has not been requested.
+manual checks Reviewed. Svein then explicitly approved production rollout on 2026-11-22. This authorizes the
+scoped installation and moves remaining human/provider checks to production acceptance; it
+does not assert the unchecked checks were performed or mark this entry Reviewed.
 
 - [ ] Sign out and sign in using Sign in with work account; confirm the new session works
   without a duplicate local MFA challenge. Keep local password MFA and recovery available.
@@ -17,9 +18,9 @@ the explicitly requested Main merge. Production deployment has not been requeste
   the relevant session; inactive/unlinked/security-changed users remain denied.
 - [ ] Verify local password and Customer Portal sessions use the shared 12-hour idle
   allowance while their own permissions, MFA and access boundaries remain effective.
-- [ ] Before rollout, inspect the relevant Nexum Keycloak client's session limits and
+- [ ] Inspect the relevant Nexum Keycloak client's session limits and
   actual logout behaviour. No shared realm-wide or token-lifetime change is authorized.
-- [ ] After separately authorized production rollout, verify installed code, effective
+- [x] Codex: after Svein's explicitly authorized production rollout, verified installed code, effective
   SSO_SESSION_MINUTES=720 and SESSION_LIFETIME=720, config cache and HTTPS cookie flags.
 - [ ] Verify the affected handbook articles through an employee's OpenWebUI assistant.
 
@@ -36,6 +37,13 @@ check skipped because that separate component is absent from Main (passes on Dev
 and BookStack612/5,613/4 content and inherited ACL read-back pass. Manual boxes remain unchecked.
 Details: docs/plans/2026-11-22-workday-session-verification.md.
 
+
+Production evidence: exact Main3 runtime hashes match; effective config720/720 read as www-data;
+new valid grant720 minutes tested inside a rolled-back transaction, with no retained test grant;
+public login/up200 and actual HTTPS session Max-Age43200, Secure/HttpOnly/SameSite=Lax.
+This checked item records machine-verifiable installation evidence, not human sign-in acceptance.
+Rollback/code/env/config backup and details: plans/2026-11-22-workday-session-production.md.
+No earlier unchecked personal/provider/elapsed-time/OpenWebUI check is marked complete.
 
 ## HR-2026-11-18-CLIENT-REGISTRATION-SUGGESTIONS — registration identity selection
 Dev evidence on 2026-11-18: 10 distinct Laravel tests (562 assertions) across the candidate, recovery and generated-contract suites; Chromium exercised email/phone/org input and explicit actions on synthetic data. BookStack 451/617/639 read back. Svein Tore approved the workflow on Dev on 2026-11-18.

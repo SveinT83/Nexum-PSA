@@ -42,8 +42,8 @@ Dev pilot was configured and verified on 2026-10-06; see docs/plans/2026-10-06-i
 ## Workday session policy - approved 22 November 2026
 
 RFC: docs/rfc/2026-11-22-workday-login-sessions.md.
-Human-review checklist: HR-2026-11-22-WORKDAY-SESSIONS (Pending).
-Dev implementation and Main merge are authorized; production rollout is separate.
+Human-review checklist: HR-2026-11-22-WORKDAY-SESSIONS (In Review).
+Dev implementation, Main merge and the named production rollout were explicitly authorized.
 
 For a newly installed workday-session build, set SSO_SESSION_MINUTES=720 and
 SESSION_LIFETIME=720 in the target installation. The first is a fixed SSO grant maximum;
@@ -64,3 +64,16 @@ Preserve old code/configuration for rollback. Reverting source/config affects fu
 previously issued 12-hour grants remain valid until expiry unless explicitly revoked. Record
 rollout time and grant cohort before a rollback requiring immediate shorter policy. Keep local
 fallback working and do not bulk-delete identity links or ordinary web sessions.
+
+## Installed production workday policy - 22 November 2026
+
+Svein Tore explicitly authorized the scoped production rollout after Main PR408. The three
+runtime files from Main7301a74a are installed; retained SESSION_LIFETIME was changed to720,
+SSO_SESSION_MINUTES=720 added, configuration rebuilt and PHP-FPM gracefully reloaded.
+Actual public HTTPS session cookies use Max-Age43200 with Secure/HttpOnly/SameSite=Lax;
+FPM-user config and a fully rolled-back grant probe independently confirm720/720 minutes.
+Existing grants retain old expiry: ask employees to sign out and use Sign in with work account
+again. No session flush, migration, queue/scheduler or Keycloak configuration change occurred.
+See docs/plans/2026-11-22-workday-session-production.md for the private rollback location and
+procedure. HR-2026-11-22-WORKDAY-SESSIONS is In Review; provider-client limits, employee
+long-idle/workday experience and assistant retrieval are not proved by runtime installation.

@@ -1,6 +1,6 @@
 # RFC Index
 
-- [Approved: Workday login sessions](2026-11-22-workday-login-sessions.md) (Dev implementation and Main merge authorized; HR-2026-11-22-WORKDAY-SESSIONS Pending; production separate)
+- [Approved: Workday login sessions](2026-11-22-workday-login-sessions.md) (Main PR408 merged; production runtime verified; HR-2026-11-22-WORKDAY-SESSIONS In Review)
 
 - [Approved: Full DataExchange browser/API coverage](2026-10-25-data-exchange-full-api-parity.md) (Merged to Main via PR #317; HR-2026-10-25-DATA-EXCHANGE-API Reviewed)
 

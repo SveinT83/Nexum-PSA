@@ -1,6 +1,6 @@
 # Workday login session verification - 2026-11-22
 
-Status: Done On Dev / Merged To Main In PR #408 / Production Unchanged.
+Status: Done On Dev / Main PR408 Merged / Production Installed And Runtime Verified.
 Owner: Codex. Policy and Main merge authorized by Svein Tore on 2026-11-22.
 RFC: ../rfc/2026-11-22-workday-login-sessions.md.
 ADR: ../adr/2026-11-22-bounded-workday-login-sessions.md.
@@ -107,3 +107,13 @@ fallback and revocation checks, provider-client session limits, separately autho
 installation/configuration read-back and employee OpenWebUI retrieval. Checklist status Pending;
 Main merge authorization is not human acceptance. Production remains at the previously verified
 60-minute SSO / 120-minute idle values; it was not deployed or reconfigured in this session.
+
+## Subsequent authorized production rollout
+
+The no-production statements above record the earlier implementation/Main handoff. Svein
+subsequently explicitly approved production deployment on 2026-11-22. Production now has
+the three tested Main runtime files and effective session policies720/720, independently
+verified with an actual43200-second secure HTTPS session cookie and a rolled-back grant probe.
+The deployment record supersedes the earlier pending-rollout status for this named scope:
+[Production verification and rollback](2026-11-22-workday-session-production.md).
+HR-2026-11-22-WORKDAY-SESSIONS remains In Review for unperformed human/provider checks.

@@ -2,27 +2,26 @@
 
 ## Workday login sessions (2026-11-22)
 
-Status: Done On Dev / Merged To Main In PR #408 / Production Unchanged.
-Owner: Codex; policy and Main merge authorized by Svein Tore on 2026-11-22.
+Status: Done On Dev / Main PR408 Merged / Production Installed And Runtime Verified.
+Owner: Codex; policy/Main/production authorization: Svein Tore, 2026-11-22.
 RFC: rfc/2026-11-22-workday-login-sessions.md (Approved).
 ADR: adr/2026-11-22-bounded-workday-login-sessions.md (Accepted).
-Evidence: plans/2026-11-22-workday-session-verification.md.
-New SSO grants have a fixed maximum of 720 minutes; shared web idle allowance defaults
-and Dev effective configuration are 720 minutes. Local/password and Customer Portal idle
-behaviour is included. Existing grants, provider settings, permissions and local MFA remain.
-Dev tests: 101 distinct / 1690 assertions passed; HTTPS login200 and actual Secure/HttpOnly/
-SameSite=Lax session cookie Max-Age43200 verified. BookStack612/5 and613/4 exact normalized
-read-back, unchanged owners/parents and inherited page/chapter ACLs verified.
-Main candidate: PHP8.3 100 passed / 1 optional provider check skipped / 1673 assertions;
-zero warnings/failures. The optional provider check passes on authoritative Dev.
-Dev-first source b849f472 was published through Dev51963399 before Main PR408.
-Main merge7301a74a is independently read back and exactly matches the tested candidate.
-Next: Svein authorizes a separate production rollout and completes the remaining manual checks.
-Human review HR-2026-11-22-WORKDAY-SESSIONS remains Pending for fresh employee SSO/idle/logout,
-provider limits, local/portal manual checks and employee-assistant retrieval. It blocks production
-rollout/availability claims, not Svein's explicitly requested Main merge. Production rollout
-and config override update remain Svein-owned and separately authorized. Existing SSO review
-entries remain In Review. No production application/environment/provider mutation.
+Implementation evidence: plans/2026-11-22-workday-session-verification.md.
+Rollout/rollback: plans/2026-11-22-workday-session-production.md.
+Main7301a74a's exact three runtime files are installed, preserving unrelated production overlays.
+Effective cached configuration read as www-data: SSO720 / shared idle720 minutes. Transactional
+new-grant probe is valid for720 minutes and fully rolled back; no retained grant or login.
+Public trusted HTTPS login/up200; actual Secure/HttpOnly/SameSite=Lax session Max-Age43200.
+Old code/environment/config cache have a root-private rollback. Existing employee grants were
+not extended/revoked. No schema, queue/scheduler, Keycloak policy, permission or credential change.
+Prior Dev101/1690 and exact Main100/1673 with one optional provider skip remain the code evidence.
+HR-2026-11-22-WORKDAY-SESSIONS is In Review for fresh human SSO, long idle/workday, provider
+client limits/logout, local/portal manual checks and OpenWebUI retrieval. Svein authorized the
+rollout; this is not a report that all manual checks were performed. Next owner: Svein for those
+checks. Source handbook and BookStack612/6,613/5 now describe installed production; full
+normalized content, owners/parents/tags and page/chapter inheritance were independently read back.
+Codex completed the publication/read-back and delivery record; no employee-assistant retrieval
+or elapsed-time/provider acceptance is inferred.
 
 ## Registration suggestions by email, phone and organization number (2026-11-18)
 
