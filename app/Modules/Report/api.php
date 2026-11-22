@@ -16,6 +16,11 @@ use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 |
 */
 
+// Load new Report-owned routes from the mandatory module entry point.
+$reportTimeApiRoutes = true;
+require __DIR__.'/routes.php';
+unset($reportTimeApiRoutes);
+
 Route::get('reports', [ReportController::class, 'index'])
     ->name('reports.index')
     ->middleware(CheckAbilities::class.':report.read');

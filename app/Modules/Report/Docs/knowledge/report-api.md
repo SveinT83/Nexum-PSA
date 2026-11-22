@@ -346,3 +346,47 @@ risky writes/provider workflows require their existing native approvals and runt
 Human browser/2FA, intended employee workflow and employee-assistant handbook retrieval remain
 separate acceptance checks under HR-2026-11-05-FULL-MAIN-ROLLOUT. Installing source and listing
 operations is not proof that every mutating workflow was exercised against live customer data.
+
+## Identified registered Ticket/Task time — 22 November 2026
+
+Availability: implemented and tested on Dev; source promotion, production installation and an
+employee assistant's tool catalog/retrieval are separate checks. Existing coordinator Worklog
+continues to use its original pseudonymized policy and is not replaced.
+
+Personal active internal actors need report.view, ticket.view, task.view and client.view.
+Coordinator-bound tokens are denied even with wildcard abilities; no grants are added automatically.
+
+| Operation | Required abilities | Purpose |
+| --- | --- | --- |
+| GET /api/v1/reports/time/entries | reports.time.read | Entry/group pages and full-filter registered totals |
+| GET /api/v1/reports/time/lookups/{kind} | reports.time.read | employee, client, ticket or task suggestions |
+| GET /api/v1/reports/time/export | reports.time.read and reports.time.export | Complete internal XLSX/PDF |
+| GET /api/v1/workdays/overview/employees | workdays.read-all | Workday employee suggestions with explicit workday.view_all |
+
+Report filters: date_from, date_to, employee_id, client_id, ticket_id, task_id, source
+(all/ticket/task), context (all/client/internal), billable (all/yes/no), status (ticket:ID/task:ID),
+group_by (employee/client/record/date/employee_client), all_history, page, group_page and per_page.
+Dates are inclusive work dates. Default current Oslo month through today; all_history=1 allows
+open-ended dates. Omit Employee/Client to include all permitted matching records.
+Page size defaults to 25, maximum 100. Totals cover all matching entries. Entries and groups page
+independently; consult meta.total, meta.last_page, meta.groups_total and meta.groups_last_page.
+Each request has one read transaction; separate pages are live reads, not a durable frozen export.
+At most 10,000 matching entries; oversized windows return 422, never silent partial totals.
+
+Lookups accept q (0–100 characters), page and optional exact id (report lookups only). Follow
+meta.next_page until null. Employee search folds Unicode, includes inactive internal staff and
+does not depend on time rows/date filters. Responses expose selection labels/hints, not email.
+Workday suggestions retain Workday feature/identity/permission gates and do not expose drafts.
+
+Export requires format=xlsx or format=pdf and uses all filtered entries/groups, not just one page.
+Spreadsheet text cells remain strings even if notes start with a formula character. All results
+are private/no-store. Private Tasks and inconsistent contexts cannot leak through lookup or billing.
+
+Registered totals = direct Ticket minutes plus Task minutes. Task-linked Ticket billing
+projections do not contribute. Direct Commercial consumption and Workday/Calendar totals are
+outside this report. Estimated registration provenance remains visible; billable is a source flag,
+not a processed invoice total. Existing Client reporting financial semantics remain unchanged.
+
+401: authentication/token unavailable. 403: missing scope/native rights or ineligible/coordinator
+identity. 404: unknown lookup/disabled Workday. 422: invalid filters, unavailable selection or
+oversized report. Narrow dates or correct scope; do not widen permissions to bypass a denial.

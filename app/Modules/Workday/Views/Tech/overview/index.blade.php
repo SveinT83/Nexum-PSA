@@ -9,10 +9,9 @@
     @if($errors->any())<div class="alert alert-danger"><ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
     <section class="card mb-3"><div class="card-body">
         <form method="GET" class="row g-2 align-items-end">
-            <div class="col-md-3"><label for="worker" class="form-label">Employee name</label><input id="worker" name="worker" class="form-control" value="{{ old('worker', $result['meta']['worker']) }}" maxlength="100" type="search"></div>
+            <div class="col-md-3"><x-forms.report-lookup id="worker" label="Employee name" name="worker_id" text-name="worker" :url="route('tech.workdays.overview.employees')" :value="$result['meta']['worker_id']" :text="$result['meta']['worker'] ?: $workerLabel" /></div>
             <div class="col-md-3"><label for="from" class="form-label">From</label><input id="from" name="from" class="form-control" type="date" value="{{ old('from', $result['meta']['from']) }}" required></div>
             <div class="col-md-3"><label for="to" class="form-label">To</label><input id="to" name="to" class="form-control" type="date" value="{{ old('to', $result['meta']['to']) }}" required></div>
-            @if($result['meta']['worker_id'])<input type="hidden" name="worker_id" value="{{ $result['meta']['worker_id'] }}">@endif
             <div class="col-auto"><button type="submit" class="btn btn-primary">Filter</button> <a class="btn btn-outline-secondary" href="{{ route('tech.workdays.overview') }}">Reset</a></div>
         </form>
         <p class="small text-muted mt-2 mb-0">Up to 93 calendar dates. Each day uses its saved work date and timezone. A day remains at its last confirmed version while an employee prepares a correction.</p>
