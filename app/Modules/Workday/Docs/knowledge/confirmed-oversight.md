@@ -77,3 +77,22 @@ Responses are private/no-store. Retention remains three years, and expired days 
 
 The feature remains default-off while the full pilot is prepared. Human review, Main/production
 promotion remain separate rollout gates. LiteLLM/MCP tooling is deferred and does not block the API contract.
+
+## Clickable employee filter — Dev, 22 November 2026
+
+In Reports > Confirmed workdays, Employee name now opens a searchable list on focus. Every
+eligible current/former internal employee is reachable via More suggestions, including employees
+with no recorded days in the current period. Type to narrow names; click or use Arrow/Enter to
+select the exact employee. Escape closes. Editing or clearing the name removes the previous
+selected ID; typed names without a selection retain literal substring filtering.
+From/To, Filter, Reset and the existing 93-day/date/recorded-time rules remain unchanged.
+
+Suggestions require the same enabled Workday and explicit workday.view_all gate as the overview.
+GET /api/v1/workdays/overview/employees requires workdays.read-all and returns paginated id/label/hint
+selection metadata; q and page are supported. No email, drafts, absence reasons or source notes.
+Inactive people are labelled; system and portal-only identities are excluded.
+
+For registered Ticket/Task effort across people or Clients, use Reports > Ticket and Task time.
+That report has separate native rights and does not add source or billing totals to Workday actual
+time. See Report Domain Overview for filter examples and exports.
+Verified Dev availability is separate from production installation and intended operator acceptance.

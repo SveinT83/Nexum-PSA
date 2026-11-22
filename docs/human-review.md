@@ -1,5 +1,40 @@
 # Human Review Register
 
+## HR-2026-11-22-TIME-REPORTS - Employee suggestions and registered Ticket/Task time
+
+Status: Pending. Owner: Codex. Human reviewer: Svein Tore (checks not yet confirmed).
+RFC: rfc/2026-11-22-employee-suggestions-and-ticket-task-time-report.md (Approved).
+ADR: adr/2026-11-22-identified-registered-time-reporting.md.
+Svein explicitly authorized Dev implementation and Main source merge on 2026-11-22.
+This checklist gates production acceptance/release, not that separately authorized source merge.
+It is not marked Reviewed by automated verification or the RFC approval.
+Automated Dev evidence: affected matrix 51/523 plus final focused 12/127, five Node regressions,
+synthetic content browser desktop/mobile pass; BookStack 437/506 sections read back.
+Evidence: plans/2026-11-22-time-report-verification.md.
+
+Pages/workflows: Reports > Confirmed workdays and Reports > Ticket and Task time; personal API
+lookups/report/export; Excel/PDF. No migration or source time/billing writes are planned.
+
+- [ ] Focus Employee name with no typing; all current/former staff remain reachable, including
+  staff with no days in the period. Search a Norwegian name and click/select it with keyboard.
+- [ ] Select one employee, edit/clear the name and select another; no stale employee ID restricts it.
+  Dates remain selected; Workday confirmed/recorded totals and private draft restrictions remain.
+- [ ] Report one employee across Clients, one Client across staff, and the combined selection.
+  Check inclusive work dates, source, record, context, status and billable-source filters.
+- [ ] Check direct Ticket plus Task work once, including Task entries whose billing projection is
+  larger. Internal/private/archive/estimated records retain the intended access and labels.
+- [ ] Compare full-filter totals and grouped summaries across pages, then Excel/PDF for the same
+  scope. Downloads include all matching rows and remain internal.
+- [ ] Intended personal API consumer has appropriate explicit abilities and native source rights;
+  a coordinator credential cannot read identified reports. No native grants are widened.
+- [ ] Employee assistant can retrieve the updated handbook with its existing access, separately
+  from successful BookStack publication/read-back.
+
+Risks: mistaken employee selection, Task double count/privacy, incomplete totals or export scope.
+Deploy: ship scoped source, regenerate Swagger, clear normal route/view/config caches and refresh
+PHP-FPM opcache where required. No schema, worker/scheduler or provider activation.
+Production deployment and actual operator acceptance remain separate from source merge.
+
 ## HR-2026-11-22-WORKDAY-SESSIONS - Twelve-hour Nexum login sessions
 
 Status: In Review. Owner: Codex. Named reviewer: Svein Tore (rollout approved; unchecked manual results not yet supplied).

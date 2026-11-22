@@ -18,6 +18,7 @@ if (($tdpsaLoadingApiRoutes ?? false) === true) {
     Route::post('workday-reminders/{id}/snooze', [\App\Modules\Workday\Controllers\Tech\ReminderController::class, 'snooze'])->whereUuid('id')->name('workday-reminders.snooze')->middleware(CheckAbilities::class.':workday-reminders.write');
     Route::get('workday-reminder-preferences', [\App\Modules\Workday\Controllers\Tech\ReminderController::class, 'preferences'])->name('workday-reminder-preferences.show')->middleware(CheckAbilities::class.':workday-reminders.read');
     Route::put('workday-reminder-preferences', [\App\Modules\Workday\Controllers\Tech\ReminderController::class, 'updatePreferences'])->name('workday-reminder-preferences.update')->middleware(CheckAbilities::class.':workday-reminders.write');
+    Route::get('workdays/overview/employees', [OverviewController::class, 'employees'])->name('workdays.overview.employees')->middleware(CheckAbilities::class.':workdays.read-all');
     Route::get('workdays/overview', [OverviewController::class, 'index'])->name('workdays.overview')->middleware(CheckAbilities::class.':workdays.read-all');
     Route::get('workdays/overview/{id}', [OverviewController::class, 'show'])->whereUuid('id')->name('workdays.overview.show')->middleware(CheckAbilities::class.':workdays.read-all');
     Route::get('workdays/overview/{id}/history', [OverviewController::class, 'history'])->whereUuid('id')->name('workdays.overview.history')->middleware(CheckAbilities::class.':workdays.read-all');
@@ -48,6 +49,7 @@ if (($tdpsaLoadingApiRoutes ?? false) === true) {
 Route::get('/workday-reminders/{id}/open', [\App\Modules\Workday\Controllers\Tech\ReminderController::class, 'open'])->whereUuid('id')->name('workday-reminders.open');
 Route::post('/workday-reminders/{id}/snooze', [\App\Modules\Workday\Controllers\Tech\ReminderController::class, 'snooze'])->whereUuid('id')->name('workday-reminders.snooze');
 
+Route::get('/workdays/overview/employees', [OverviewController::class, 'employees'])->name('workdays.overview.employees');
 Route::get('/workdays/overview', [OverviewController::class, 'index'])->name('workdays.overview');
 Route::get('/workdays/overview/{id}', [OverviewController::class, 'show'])->whereUuid('id')->name('workdays.overview.show');
 Route::get('/workdays/overview/{id}/history', [OverviewController::class, 'history'])->whereUuid('id')->name('workdays.overview.history');

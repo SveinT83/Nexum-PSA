@@ -26,9 +26,31 @@ class OverviewController extends Controller
     public function index(Request $request, ConfirmedWorkdays $query)
     {
         $result = $query->listing($request->user(), $request->query());
+        $workerLabel = app(\App\Modules\UserManagement\Queries\ReportEmployees::class)->label($result['meta']['worker_id']);
 
         return $request->routeIs('api.*') ? response()->json($result)->header('Cache-Control', 'private, no-store')
-            : response()->view('workday::Tech.overview.index', compact('result'))->header('Cache-Control', 'private, no-store');
+            : response()->view('workday::Tech.overview.index', compact('result', 'workerLabel'))->header('Cache-Control', 'private, no-store');
+    }
+
+    /** Employee suggestions never depend on the selected work-date range or existing workdays. */
+    #[OA\Get(path: '/api/v1/workdays/overview/employees', operationId: 'getWorkdayEmployeeSuggestions', tags: ['Workday'],
+        summary: 'Find internal employees independently of workday records', security: [['bearerAuth' => []]],
+        description: 'Requires enabled Workday, explicit workday.view_all, active internal human actor and workdays.read-all. Coordinator credentials denied. All current/former internal staff are reachable through paged names-only suggestions.',
+        parameters: [new OA\Parameter(name: 'q', in: 'query', schema: new OA\Schema(type: 'string', maxLength: 100)),
+            new OA\Parameter(name: 'page', in: 'query', schema: new OA\Schema(type: 'integer', minimum: 1, maximum: 100000))],
+        responses: [new OA\Response(response: 200, description: 'Names with continuation', content: new OA\JsonContent(ref: '#/components/schemas/TimeReportLookupResponse')),
+            new OA\Response(response: 401, description: 'Unauthenticated'), new OA\Response(response: 403, description: 'Denied'),
+            new OA\Response(response: 404, description: 'Workday disabled'), new OA\Response(response: 422, description: 'Invalid search/page')],
+        x: ['required-scopes' => ['workdays.read-all']])]
+    public function employees(Request $request)
+    {
+        $actor = \App\Modules\UserManagement\Support\UserManagementApiAccess::actor($request);
+        app(\App\Modules\Workday\Support\WorkdayAccess::class)->authorize($actor, 'view_all');
+        $data = $request->validate(['q' => ['nullable', 'string', 'max:100'],
+            'page' => ['nullable', 'integer', 'min:1', 'max:100000']]);
+
+        return response()->json(app(\App\Modules\UserManagement\Queries\ReportEmployees::class)
+            ->page($data['q'] ?? '', (int) ($data['page'] ?? 1)))->header('Cache-Control', 'private, no-store');
     }
 
     #[OA\Get(path: '/api/v1/workdays/overview/{id}', operationId: 'workdayOverviewShow', summary: 'Read latest confirmed workday',
