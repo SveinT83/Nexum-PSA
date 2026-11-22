@@ -1,6 +1,6 @@
 # Employee suggestions and registered time report verification
 
-Status: Implemented On Authoritative Dev / Source Promotion In Progress.
+Status: Done On Dev / Main Merged And Independently Verified / Human Review Pending.
 Date: 2026-11-22
 Owner: Codex. Approver: Svein Tore.
 RFC: ../rfc/2026-11-22-employee-suggestions-and-ticket-task-time-report.md (Approved).
@@ -49,7 +49,7 @@ created in the live Dev database. PHPUnit fixtures and bearer tokens are isolate
 
 ## Handbook
 Authoritative Report overview/API and Workday oversight Knowledge source updated.
-BookStack 437 revision 5 and 506 revision 6 were independently read back against the appended
+BookStack 437 revision 6 and 506 revision 7 were independently read back against the appended
 source sections (BookStack strips trailing newlines). Earlier article text, owner, book/chapter
 and unrelated content were preserved.
 Pages 437/506 and chapter 436 inherit their audience; book 339 retains its existing documentation
@@ -73,3 +73,25 @@ refreshes PHP-FPM opcache as needed and regenerates Swagger. No migration, front
 queue restart, scheduler activation or provider setup is required.
 Check the installed report routes, explicit abilities and intended human account after deployment.
 Rollback reverts the scoped report definitions/routes/views/queries; source work remains unchanged.
+
+## Main source delivery
+
+Svein Tore explicitly authorized Dev implementation and Main merge.
+Dev integration f41ea63b292b5a6c1f3d77a5f98bc7aec75ad73b passed the final 51-test / 525-assertion
+matrix and was pushed before Main was proposed. Main PR #409 merged source 1a0b6ef4e2bf317e72c30e2a8dca5a5b1a7eb641
+as 413e3a10352b987e91e1f8e81aab46823ffba9a0. Independent Git fetch proves exact tested tree
+f591591183744ca309fc67cd44f58b563a403092. Final focused Dev and Main runs each pass 11/115.
+Five JS regressions and synthetic browser desktop/mobile checks pass. Dev trusted HTTPS login200,
+report302 and employee-lookup302 verify the unauthenticated FPM paths; they do not establish an
+actual employee's authenticated UI acceptance. Original staged blobs remain byte-identical.
+
+The shared authoritative checkout retains its older HEAD and unrelated pending work rather than
+being reset or bulk-committed. This task's source remains there and is verified; scoped publication
+used isolated Dev/Main worktrees with correct candidate-local loaders. Generated Swagger remains
+an uncommitted derived verification artifact. No production report installation, migrations,
+permission grants, provider/queue/scheduler changes or employee-assistant retrieval were performed.
+HR-2026-11-22-TIME-REPORTS stays Pending. The approved source merge is complete.
+
+Public-safe editorial handoff: one item added/read back in the fixed Content and Visibility queue.
+Status is klar for vurdering, with explicit do-not-publish gates for human/production verification.
+No public website or social publication is authorized or performed.

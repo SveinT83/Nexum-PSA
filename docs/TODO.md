@@ -2,7 +2,7 @@
 
 ## Workday employee suggestions and Ticket/Task time report (2026-11-22)
 
-Status: Implemented And Verified On Dev / Scoped Source Promotion In Progress. Owner: Codex; approver: Svein Tore.
+Status: Done On Dev / Main Merged And Verified / Human Review Pending. Owner: Codex; approver: Svein Tore.
 RFC: rfc/2026-11-22-employee-suggestions-and-ticket-task-time-report.md.
 Scope: clickable employee suggestions on focus and while typing; a separate Reports entry for
 registered Ticket/Task time across employees/Clients with combined work-date/source/context/status
@@ -11,10 +11,11 @@ and Client time-report source authority; no Task billing double count, permissio
 Read-only authoritative Dev inspection and related open GitHub title searches found no competing
 report implementation task. Existing Client report/API are approved delivered work, not this new scope.
 Approval: Svein Tore, 2026-11-22, explicitly requested Dev implementation and Main merge.
-Next Codex: finish isolated candidate verification, publish scoped history through Dev and merge Main.
-Evidence: plans/2026-11-22-time-report-verification.md. Dev affected matrix 51/523 plus final
-focused 12/127; five JS regressions and synthetic desktop/mobile browser checks pass.
-BookStack 437 revision 5 / 506 revision 6 read back; existing audience inherited.
+Main PR #409 merged as 413e3a10; independent tree f5915911 exactly matches the tested candidate.
+Source 1a0b6ef4 was published through Dev f41ea63b before Main promotion.
+Next Svein Tore: perform HR-2026-11-22-TIME-REPORTS operator checks; production rollout is separate.
+Evidence: plans/2026-11-22-time-report-verification.md. Dev publication matrix 51/525 plus final focused 11/115; five JS regressions and synthetic desktop/mobile browser checks pass.
+BookStack Report overview/API sections published and read back; existing audience inherited.
 Human-review checklist HR-2026-11-22-TIME-REPORTS Pending gates production acceptance,
 not the separately authorized source merge. No production deployment is authorized.
 Separately owned login-session work is outside this report change and remains preserved.

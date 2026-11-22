@@ -95,4 +95,5 @@ Inactive people are labelled; system and portal-only identities are excluded.
 For registered Ticket/Task effort across people or Clients, use Reports > Ticket and Task time.
 That report has separate native rights and does not add source or billing totals to Workday actual
 time. See Report Domain Overview for filter examples and exports.
-Verified Dev availability is separate from production installation and intended operator acceptance.
+Verified on Dev and merged to Main in PR #409. Production installation and intended operator
+acceptance remain separate.

@@ -208,7 +208,16 @@ Production deployment and runtime activation remain separate.
    mouse/keyboard and stale-result regressions. No source time changes.
 2. Registered-time report (Done On Dev): Ticket/Task source adapters, combined filters, totals/groups,
    paged detail, XLSX/PDF, personal typed API parity and privacy/duplicate-count regressions.
-3. Delivery (In Progress): affected regression matrix, synthetic browser QA, Knowledge/BookStack read-back,
+3. Delivery (Done On Dev / Main Merged; human/production gates remain): affected regression matrix, synthetic browser QA, Knowledge/BookStack read-back,
    HR-2026-11-22-TIME-REPORTS and scoped Dev-to-Main promotion.
 Each slice uses this RFC and ADR 2026-11-22-identified-registered-time-reporting.
 Done requires Dev verification, source documentation and honest delivery/review status.
+
+## Delivery verification
+
+Main PR #409 merged as 413e3a10352b987e91e1f8e81aab46823ffba9a0; independently fetched tree
+f591591183744ca309fc67cd44f58b563a403092 equals the tested source candidate.
+Source commit 1a0b6ef4 was published through Dev f41ea63b before Main promotion.
+Dev publication matrix 51/525; Main 51/523 plus exact final focused 11/115; Node five and synthetic
+browser desktop/mobile pass. Handbook published/read back. HR-2026-11-22-TIME-REPORTS remains
+Pending for operator/production acceptance; no production deployment was performed.

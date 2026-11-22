@@ -349,8 +349,8 @@ operations is not proof that every mutating workflow was exercised against live 
 
 ## Identified registered Ticket/Task time — 22 November 2026
 
-Availability: implemented and tested on Dev; source promotion, production installation and an
-employee assistant's tool catalog/retrieval are separate checks. Existing coordinator Worklog
+Availability: implemented and tested on Dev; source merged to Main in PR #409.
+Production installation and an employee assistant's tool catalog/retrieval are separate checks. Existing coordinator Worklog
 continues to use its original pseudonymized policy and is not replaced.
 
 Personal active internal actors need report.view, ticket.view, task.view and client.view.
