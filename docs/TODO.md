@@ -2,7 +2,7 @@
 
 ## Workday login sessions (2026-11-22)
 
-Status: Done On Dev / Main Candidate Verified / Production Unchanged.
+Status: Done On Dev / Merged To Main In PR #408 / Production Unchanged.
 Owner: Codex; policy and Main merge authorized by Svein Tore on 2026-11-22.
 RFC: rfc/2026-11-22-workday-login-sessions.md (Approved).
 ADR: adr/2026-11-22-bounded-workday-login-sessions.md (Accepted).
@@ -15,7 +15,9 @@ SameSite=Lax session cookie Max-Age43200 verified. BookStack612/5 and613/4 exact
 read-back, unchanged owners/parents and inherited page/chapter ACLs verified.
 Main candidate: PHP8.3 100 passed / 1 optional provider check skipped / 1673 assertions;
 zero warnings/failures. The optional provider check passes on authoritative Dev.
-Next: Codex publishes the scoped tested change through Dev and merges the exact Main candidate.
+Dev-first source b849f472 was published through Dev51963399 before Main PR408.
+Main merge7301a74a is independently read back and exactly matches the tested candidate.
+Next: Svein authorizes a separate production rollout and completes the remaining manual checks.
 Human review HR-2026-11-22-WORKDAY-SESSIONS remains Pending for fresh employee SSO/idle/logout,
 provider limits, local/portal manual checks and employee-assistant retrieval. It blocks production
 rollout/availability claims, not Svein's explicitly requested Main merge. Production rollout

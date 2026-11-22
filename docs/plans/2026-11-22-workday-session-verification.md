@@ -1,6 +1,6 @@
 # Workday login session verification - 2026-11-22
 
-Status: Done On Dev / Main Candidate Verified / Production Unchanged.
+Status: Done On Dev / Merged To Main In PR #408 / Production Unchanged.
 Owner: Codex. Policy and Main merge authorized by Svein Tore on 2026-11-22.
 RFC: ../rfc/2026-11-22-workday-login-sessions.md.
 ADR: ../adr/2026-11-22-bounded-workday-login-sessions.md.
@@ -62,7 +62,7 @@ Rollback needs old code/config plus targeted revocation of the rollout cohort on
 ## Publication evidence
 
 Dev-first scoped commit/push, exact Main-candidate verification and final merge references
-will be recorded below. Main merge is explicitly authorized; no manual-review checkbox is
+are recorded below. Main merge is explicitly authorized; no manual-review checkbox is
 inferred complete. Production deployment has not been requested.
 
 ## Exact Main candidate verification
@@ -82,3 +82,28 @@ Final documentation additions do not alter the tested runtime or tests.
 Publication order: publish the scoped source history through an additive merge into remote Dev
 before proposing the same source branch to Main. This preserves unrelated dirty working-copy
 and staged changes and excludes them from both publications. No Main-first exception is used.
+
+## Verified Main merge and final handoff
+
+PR: https://github.com/SveinT83/Nexum-PSA/pull/408 (MERGED, independently read back).
+Tested runtime commit: 1c8db8562fdf3623fc663dce606b2d15bdd04135.
+Final documentation/source head: b849f472d6d537fcbf0ccc4540ccc4e77e40b986.
+Published to Dev first through 51963399e06ce00c7b5cd1319f91b5f08ec65661.
+Main merge: 7301a74a65e4f5c319b363b928291c76d0696b49. Its complete tree exactly matches the
+validated source candidate. No additional application code or provider/environment state
+was promoted. The repository Main workflow prepares releases; it does not deploy production.
+
+Final source records are published through Dev, with the verified Main merge included in Dev
+ancestry; this does not activate any runtime. The authoritative dirty checkout and original
+staging remain intact. Its local branch reference may remain behind the published Dev history;
+do not reset the shared working copy to make it appear clean.
+
+One public-safe editorial item was added/read back in the agreed Content and Visibility handoff
+queue. Its status is ready for assessment with explicit do-not-publish production/manual gates.
+No public website or social-media publication was performed.
+
+Svein still needs HR-2026-11-22-WORKDAY-SESSIONS: fresh SSO, long idle/workday, local/portal
+fallback and revocation checks, provider-client session limits, separately authorized production
+installation/configuration read-back and employee OpenWebUI retrieval. Checklist status Pending;
+Main merge authorization is not human acceptance. Production remains at the previously verified
+60-minute SSO / 120-minute idle values; it was not deployed or reconfigured in this session.
