@@ -8,9 +8,11 @@ ADR: adr/2026-11-22-identified-registered-time-reporting.md.
 Svein explicitly authorized Dev implementation and Main source merge on 2026-11-22.
 This checklist gates production acceptance/release, not that separately authorized source merge.
 It is not marked Reviewed by automated verification or the RFC approval.
-Automated Dev evidence: affected matrix 51/523 plus final focused 12/127, five Node regressions,
+Automated Dev evidence: publication matrix 51/525, final focused 11/115, five Node regressions,
 synthetic content browser desktop/mobile pass; BookStack 437/506 sections read back.
 Evidence: plans/2026-11-22-time-report-verification.md.
+Main source merge #409 is complete (413e3a10), with exact tested-tree read-back f5915911.
+Dev source was published first. No production report deployment or completed human checks are inferred.
 
 Pages/workflows: Reports > Confirmed workdays and Reports > Ticket and Task time; personal API
 lookups/report/export; Excel/PDF. No migration or source time/billing writes are planned.
@@ -34,6 +36,7 @@ Risks: mistaken employee selection, Task double count/privacy, incomplete totals
 Deploy: ship scoped source, regenerate Swagger, clear normal route/view/config caches and refresh
 PHP-FPM opcache where required. No schema, worker/scheduler or provider activation.
 Production deployment and actual operator acceptance remain separate from source merge.
+
 
 ## HR-2026-11-22-WORKDAY-SESSIONS - Twelve-hour Nexum login sessions
 
