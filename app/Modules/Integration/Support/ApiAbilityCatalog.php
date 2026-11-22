@@ -354,6 +354,8 @@ class ApiAbilityCatalog
         'data_exchange.download' => self::ACCESS_READ,
         'data_exchange.import' => self::ACCESS_WRITE,
         'data_exchange.approve_import' => self::ACCESS_WRITE,
+        'reports.time.read' => self::ACCESS_READ,
+        'reports.time.export' => self::ACCESS_READ,
         'report.read' => self::ACCESS_READ,
         'commercial.worklog.read' => self::ACCESS_READ,
         'commercial.worklog-links.read' => self::ACCESS_READ,
@@ -1251,6 +1253,8 @@ class ApiAbilityCatalog
             'description' => 'Commit valid import previews through approved module-owned targets.',
             'domain' => 'Data Exchange',
         ],
+        'reports.time.read' => ['label' => 'Read identified registered time reports', 'description' => 'Personal internal Ticket/Task time, employee directory, filters and grouped totals. Native source rights required; not a coordinator grant.', 'domain' => 'Report'],
+        'reports.time.export' => ['label' => 'Export identified registered time reports', 'description' => 'Internal XLSX/PDF with names/notes; also requires reports.time.read and current native source rights.', 'domain' => 'Report'],
         'report.read' => [
             'label' => 'Read reports',
             'description' => 'List and view available report definitions.',

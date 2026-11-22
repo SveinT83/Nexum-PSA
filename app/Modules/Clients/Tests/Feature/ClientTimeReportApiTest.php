@@ -46,10 +46,10 @@ class ClientTimeReportApiTest extends TestCase
         return '/api/v1/clients/'.$this->client->id.'/reports/time'.$suffix;
     }
 
-    private function fixture(): Ticket
+    private function fixture(?User $author = null): Ticket
     {
         $ticket = Ticket::factory()->create(['client_id' => $this->client->id]);
-        $task = app(StoreTask::class)->handle(['title' => 'Synthetic registered effort'], $this->actor, $ticket);
+        $task = app(StoreTask::class)->handle(['title' => 'Synthetic registered effort'], $author ?? $this->actor, $ticket);
         TaskTimeEntry::create(['task_id' => $task->id, 'user_id' => $this->actor->id, 'source_type' => 'manual', 'work_date' => '2026-11-01', 'minutes' => 5]);
         $ticket->timeEntries()->create(['task_id' => $task->id, 'user_id' => $this->actor->id, 'type' => 'manual', 'work_date' => '2026-11-01', 'minutes' => 30, 'billable' => true, 'billing_status' => 'pending', 'timebank_status' => 'pending']);
 
@@ -110,10 +110,10 @@ class ClientTimeReportApiTest extends TestCase
 
     public function test_private_task_and_projection_and_other_customer_remain_hidden(): void
     {
-        $ticket = $this->fixture();
-        $task = \App\Modules\Task\Models\Task::first();
         $other = User::factory()->create();
-        $task->update(['visibility' => 'private', 'created_by' => $other->id, 'assigned_to' => null]);
+        $ticket = $this->fixture($other);
+        $task = \App\Modules\Task\Models\Task::first();
+        $task->update(['visibility' => 'private', 'assigned_to' => null]);
         $foreign = Ticket::factory()->create(['client_id' => Client::factory()->create()->id]);
         $foreign->timeEntries()->create(['user_id' => $this->actor->id, 'type' => 'manual', 'work_date' => '2026-11-01', 'minutes' => 999, 'billable' => true]);
         $this->getJson($this->url())->assertOk()->assertJsonPath('data.totals.work_minutes', 0)->assertJsonPath('data.totals.basis_minutes', 0);

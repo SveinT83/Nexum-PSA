@@ -1,5 +1,25 @@
 # tdPSA Development TODO
 
+## Workday employee suggestions and Ticket/Task time report (2026-11-22)
+
+Status: Implemented And Verified On Dev / Scoped Source Promotion In Progress. Owner: Codex; approver: Svein Tore.
+RFC: rfc/2026-11-22-employee-suggestions-and-ticket-task-time-report.md.
+Scope: clickable employee suggestions on focus and while typing; a separate Reports entry for
+registered Ticket/Task time across employees/Clients with combined work-date/source/context/status
+filters, grouping and consistent internal Excel/PDF/API reads. Preserve existing Workday oversight
+and Client time-report source authority; no Task billing double count, permission grants or provider effects.
+Read-only authoritative Dev inspection and related open GitHub title searches found no competing
+report implementation task. Existing Client report/API are approved delivered work, not this new scope.
+Approval: Svein Tore, 2026-11-22, explicitly requested Dev implementation and Main merge.
+Next Codex: finish isolated candidate verification, publish scoped history through Dev and merge Main.
+Evidence: plans/2026-11-22-time-report-verification.md. Dev affected matrix 51/523 plus final
+focused 12/127; five JS regressions and synthetic desktop/mobile browser checks pass.
+BookStack 437 revision 5 / 506 revision 6 read back; existing audience inherited.
+Human-review checklist HR-2026-11-22-TIME-REPORTS Pending gates production acceptance,
+not the separately authorized source merge. No production deployment is authorized.
+Separately owned login-session work is outside this report change and remains preserved.
+Production is unchanged. Employee-assistant retrieval and human operator checks remain separate.
+
 ## Workday login sessions (2026-11-22)
 
 Status: Done On Dev / Main Candidate Verified / Production Unchanged.
