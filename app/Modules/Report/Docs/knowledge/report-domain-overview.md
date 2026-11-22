@@ -48,6 +48,7 @@ This keeps the hub decoupled from individual module controllers.
 Current registered reports:
 
 - Ticket SLA Report.
+- Ticket and Task time (Dev; Main source merged, production deployment separate).
 - Confirmed workdays, when Workday is enabled and the viewer has explicit workday.view_all.
 
 The Ticket SLA Report is Work Context aware. It defaults to client work so customer/SLA reporting
@@ -111,7 +112,8 @@ Done on Dev is separate from Main/production and human acceptance; no new API da
 
 ## Ticket/Task time and employee suggestions — 22 November 2026
 
-Availability: implemented on Dev. Main source promotion and production deployment are separate.
+Availability: implemented and verified on Dev; source merged to Main in PR #409.
+Production deployment is separate.
 Do not assume this workflow is available in production until its installed version is verified.
 
 ### Select an employee in Workday
