@@ -31,7 +31,10 @@ revocation of the rollout's new-grant cohort. Code rollback alone does not short
 Risks: longer unattended-browser access, stale environment/config caches, provider-side logout,
 and confusing Main merge with production availability. Old HR-2026-10-05-SSO and
 HR-2026-10-08-SSO-MFA stay In Review for their remaining scopes.
-Automated evidence will be recorded in docs/plans/2026-11-22-workday-session-verification.md.
+Automated evidence: Dev101/1690 PASS; exact Main PHP8.3 100/1673 PASS, one optional protected-provider
+check skipped because that separate component is absent from Main (passes on Dev). Dev HTTPS/cookie
+and BookStack612/5,613/4 content and inherited ACL read-back pass. Manual boxes remain unchecked.
+Details: docs/plans/2026-11-22-workday-session-verification.md.
 
 
 ## HR-2026-11-18-CLIENT-REGISTRATION-SUGGESTIONS — registration identity selection

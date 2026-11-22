@@ -1,6 +1,6 @@
 # Workday login session verification - 2026-11-22
 
-Status: Done On Dev / Main promotion in progress / Production unchanged.
+Status: Done On Dev / Main Candidate Verified / Production Unchanged.
 Owner: Codex. Policy and Main merge authorized by Svein Tore on 2026-11-22.
 RFC: ../rfc/2026-11-22-workday-login-sessions.md.
 ADR: ../adr/2026-11-22-bounded-workday-login-sessions.md.
@@ -64,3 +64,21 @@ Rollback needs old code/config plus targeted revocation of the rollout cohort on
 Dev-first scoped commit/push, exact Main-candidate verification and final merge references
 will be recorded below. Main merge is explicitly authorized; no manual-review checkbox is
 inferred complete. Production deployment has not been requested.
+
+## Exact Main candidate verification
+
+Scoped runtime candidate 1c8db8562fdf3623fc663dce606b2d15bdd04135 is based on Main9028f68f;
+its diff contains exactly the 13 owned files. No other Dev implementation was included.
+Isolated validation on the Dev server uses a private copied vendor/autoloader and synthetic
+SQLite :memory: test environment, not a symlink that could load shared Dev application code.
+PHP8.3: 100 passed / 1 explicitly skipped / 1673 assertions (69.85s), zero failures/errors/warnings.
+The pre-existing optional protected UserSecurity-provider check is skipped because that
+unpublished component is absent from Main; it passes in the 101-test authoritative Dev matrix.
+An initial candidate run exposed missing test-only .env warnings; the isolated synthetic
+fixture was supplied and the complete matrix rerun cleanly. No live credential was copied.
+Candidate Pint and whitespace checks pass. The original shared staged index is unchanged.
+Final documentation additions do not alter the tested runtime or tests.
+
+Publication order: publish the scoped source history through an additive merge into remote Dev
+before proposing the same source branch to Main. This preserves unrelated dirty working-copy
+and staged changes and excludes them from both publications. No Main-first exception is used.
