@@ -38,3 +38,29 @@ A Keycloak account disable is not sufficient evidence of logout: terminate exist
 verify matching provider logout and Nexum denial, and disable the local user when required.
 
 Dev pilot was configured and verified on 2026-10-06; see docs/plans/2026-10-06-internal-sso-pilot-verification.md for current state and rollback.
+
+## Workday session policy - approved 22 November 2026
+
+RFC: docs/rfc/2026-11-22-workday-login-sessions.md.
+Human-review checklist: HR-2026-11-22-WORKDAY-SESSIONS (Pending).
+Dev implementation and Main merge are authorized; production rollout is separate.
+
+For a newly installed workday-session build, set SSO_SESSION_MINUTES=720 and
+SESSION_LIFETIME=720 in the target installation. The first is a fixed SSO grant maximum;
+the latter is a shared sliding idle allowance for SSO, local and Customer Portal web sessions.
+Retained environment overrides take precedence over new code defaults. Refresh config with
+umask 0002 and php artisan config:cache through the existing deployment procedure. No schema,
+frontend build, queue, scheduler or Keycloak token change is required. Never run session/cache
+clears or revoke live employee sessions as an installation smoke test.
+
+Read back only session.driver/lifetime/expire_on_close, sso.session_minutes and cookie flags.
+Verify trusted HTTPS Set-Cookie expiry (12 hours), Secure/HttpOnly/SameSite and actual FPM
+responses. New SSO grants must last 720 minutes; existing grants retain their original expiry.
+Have the employee sign in again after rollout. Activity must never extend the fixed grant.
+Check provider-specific session limits and genuine logout/revocation separately before
+claiming a full real workday pilot. Do not expand shared Keycloak realm settings.
+
+Preserve old code/configuration for rollback. Reverting source/config affects future grants;
+previously issued 12-hour grants remain valid until expiry unless explicitly revoked. Record
+rollout time and grant cohort before a rollback requiring immediate shorter policy. Keep local
+fallback working and do not bulk-delete identity links or ordinary web sessions.

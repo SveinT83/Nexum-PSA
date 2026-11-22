@@ -16,6 +16,10 @@ class SsoSessions
 
     public function create(User $user, SsoProvider $provider, object $claims): string
     {
+        // Malformed policy fails closed; neither overrides nor activity may create unlimited access.
+        $configuredMinutes = filter_var(config('sso.session_minutes', 720), FILTER_VALIDATE_INT);
+        $minutes = $configuredMinutes === false ? 1 : min(720, max(1, $configuredMinutes));
+
         $id = (string) Str::uuid();
         DB::table('user_sso_sessions')->where('expires_at', '<', now())->delete();
         DB::table('user_sso_sessions')->insert([
@@ -24,7 +28,7 @@ class SsoSessions
             'sid_hash' => isset($claims->sid) ? hash('sha256', $provider->issuer."\0".$claims->sid) : null,
             'security_fingerprint' => $this->access->fingerprint($user),
             'provider_revision' => $provider->revision, 'created_at' => now(),
-            'expires_at' => now()->addMinutes(min(60, max(1, (int) config('sso.session_minutes', 60)))),
+            'expires_at' => now()->addMinutes($minutes),
         ]);
 
         return $id;
