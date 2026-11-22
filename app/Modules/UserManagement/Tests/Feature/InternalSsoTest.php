@@ -721,4 +721,85 @@ class InternalSsoTest extends TestCase
         $this->assertDatabaseCount('user_management_api_commands', 0);
         $this->assertSame('synthetic-client-secret', $this->provider->fresh()->client_secret);
     }
+
+    /** Activity never turns the finite SSO grant into a sliding or remembered login. */
+    public function test_workday_grant_survives_activity_until_exact_twelve_hour_expiry(): void
+    {
+        $user = $this->employee();
+        $this->finish($this->begin($user))->assertRedirect(route('tech.dashboard'));
+        $grantId = session('sso.grant');
+        $grant = DB::table('user_sso_sessions')->where('id', $grantId)->first();
+        $issuedAt = \Illuminate\Support\Carbon::parse($grant->created_at);
+        $this->assertSame(720, (int) $issuedAt->diffInMinutes($grant->expires_at));
+
+        try {
+            foreach ([61, 480, 719] as $minutes) {
+                $this->travelTo($issuedAt->copy()->addMinutes($minutes));
+                $this->get(route('tech.profile.sso'))->assertOk();
+                $this->assertAuthenticatedAs($user);
+                $this->assertSame($grant->expires_at, DB::table('user_sso_sessions')->where('id', $grantId)->value('expires_at'));
+            }
+            $this->travelTo($issuedAt->copy()->addMinutes(720));
+            $this->get(route('tech.profile.sso'))->assertRedirect(route('login'));
+            $this->assertGuest();
+        } finally {
+            $this->travelBack();
+        }
+    }
+
+    /** Use persisted encrypted session data and a fresh guard/store after the idle period. */
+    public function test_workday_database_session_and_cookie_survive_eight_idle_hours(): void
+    {
+        config(['session.driver' => 'database', 'session.lifetime' => 720,
+            'session.encrypt' => true, 'session.secure' => true, 'session.lottery' => [0, 100]]);
+        $this->app['session']->forgetDrivers();
+        $this->app->forgetInstance('session.store');
+        $user = $this->employee();
+        $response = $this->finish($this->begin($user))->assertRedirect(route('tech.dashboard'));
+        $sessionId = session()->getId();
+        $cookieName = config('session.cookie');
+        $cookie = $response->getCookie($cookieName, false);
+        $this->assertNotNull($cookie);
+        $this->assertEqualsWithDelta(now()->addMinutes(720)->timestamp, $cookie->getExpiresTime(), 2);
+        $this->assertTrue($cookie->isSecure());
+        $this->assertTrue($cookie->isHttpOnly());
+        $this->assertSame('lax', $cookie->getSameSite());
+        $this->assertDatabaseHas('sessions', ['id' => $sessionId, 'user_id' => $user->id]);
+        $startedAt = now();
+
+        try {
+            $this->travelTo($startedAt->copy()->addHours(8));
+            $this->app['auth']->forgetGuards();
+            $this->app['session']->forgetDrivers();
+            $this->app->forgetInstance('session.store');
+            $this->withCookie($cookieName, $sessionId)->get(route('tech.profile.sso'))->assertOk();
+            $this->assertAuthenticatedAs($user);
+            $this->assertSame($sessionId, session()->getId());
+            $this->assertNotNull(session('sso.grant'));
+        } finally {
+            $this->travelBack();
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('workdaySessionMinutes')]
+    public function test_workday_grant_configuration_is_finite(mixed $configured, int $expected): void
+    {
+        config(['sso.session_minutes' => $configured]);
+        $user = $this->employee();
+        $id = app(\App\Modules\UserManagement\Sso\SsoSessions::class)->create($user, $this->provider,
+            (object) ['sub' => 'employee-'.$user->id]);
+        $grant = DB::table('user_sso_sessions')->where('id', $id)->first();
+        $this->assertSame($expected, (int) \Illuminate\Support\Carbon::parse($grant->created_at)->diffInMinutes($grant->expires_at));
+    }
+
+    public static function workdaySessionMinutes(): array
+    {
+        return [
+            'workday' => [720, 720], 'explicit shorter policy' => ['360', 360],
+            'over maximum' => [1440, 720], 'zero' => [0, 1], 'negative' => [-10, 1],
+            'malformed' => ['unlimited', 1], 'partial integer' => ['720minutes', 1],
+            'fraction' => ['720.5', 1], 'overflow' => ['9999999999999999999999999999', 1],
+            'null' => [null, 1], 'array' => [[720], 1],
+        ];
+    }
 }
