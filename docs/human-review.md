@@ -1,5 +1,39 @@
 # Human Review Register
 
+## HR-2026-11-22-WORKDAY-SESSIONS - Twelve-hour Nexum login sessions
+
+Status: Pending. Owner: Codex. Named reviewer: Svein Tore (manual acceptance not yet supplied).
+Scope: approved RFC/ADR 2026-11-22 workday session policy; UserManagement SSO and shared web idle lifetime.
+Authorization: Svein Tore explicitly approved the 12-hour proposal and requested implementation
+and Main merge on 2026-11-22. This permits the scoped tested Main merge; it does not mark
+manual checks Reviewed. Remaining checks block production rollout/availability claims, not
+the explicitly requested Main merge. Production deployment has not been requested.
+
+- [ ] Sign out and sign in using Sign in with work account; confirm the new session works
+  without a duplicate local MFA challenge. Keep local password MFA and recovery available.
+- [ ] Return after more than two hours idle, and after a working day; remain signed in up
+  to the fixed 12-hour SSO limit. Activity must not extend the grant beyond that expiry.
+- [ ] Confirm ordinary logout and the approved signed provider logout/revocation flow end
+  the relevant session; inactive/unlinked/security-changed users remain denied.
+- [ ] Verify local password and Customer Portal sessions use the shared 12-hour idle
+  allowance while their own permissions, MFA and access boundaries remain effective.
+- [ ] Before rollout, inspect the relevant Nexum Keycloak client's session limits and
+  actual logout behaviour. No shared realm-wide or token-lifetime change is authorized.
+- [ ] After separately authorized production rollout, verify installed code, effective
+  SSO_SESSION_MINUTES=720 and SESSION_LIFETIME=720, config cache and HTTPS cookie flags.
+- [ ] Verify the affected handbook articles through an employee's OpenWebUI assistant.
+
+Migration/deploy: no schema migration/build/queue/scheduler change. Explicitly update retained
+SESSION_LIFETIME=120 overrides and refresh configuration with umask 0002 / config:cache.
+Existing grants retain their original expiry and require fresh sign-in for the new allowance.
+Rollback: old source/config plus, only if an immediate shorter policy is needed, explicit
+revocation of the rollout's new-grant cohort. Code rollback alone does not shorten old grants.
+Risks: longer unattended-browser access, stale environment/config caches, provider-side logout,
+and confusing Main merge with production availability. Old HR-2026-10-05-SSO and
+HR-2026-10-08-SSO-MFA stay In Review for their remaining scopes.
+Automated evidence will be recorded in docs/plans/2026-11-22-workday-session-verification.md.
+
+
 ## HR-2026-11-18-CLIENT-REGISTRATION-SUGGESTIONS — registration identity selection
 Dev evidence on 2026-11-18: 10 distinct Laravel tests (562 assertions) across the candidate, recovery and generated-contract suites; Chromium exercised email/phone/org input and explicit actions on synthetic data. BookStack 451/617/639 read back. Svein Tore approved the workflow on Dev on 2026-11-18.
 
