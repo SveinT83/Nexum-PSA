@@ -62,6 +62,9 @@ if (($clientsApiRoutes ?? false) === true) {
         Route::get('clients/context/tripletex/customers', [\App\Modules\Clients\Controllers\Api\V1\ClientProviderController::class, 'tripletex'])->name('clients.context.tripletex')->middleware(CheckAbilities::class.':clients.read')->defaults('client_permissions', ['client.view', 'client.create'])->defaults('rmm_reconcile', false);
         Route::get('clients/context/tripletex/customers/{customer}', [\App\Modules\Clients\Controllers\Api\V1\ClientProviderController::class, 'tripletex'])->name('clients.context.tripletex.profile')->middleware(CheckAbilities::class.':clients.read')->defaults('client_permissions', ['client.view', 'client.create']);
         Route::get('clients/context/tripletex/number', [\App\Modules\Clients\Controllers\Api\V1\ClientProviderController::class, 'number'])->name('clients.context.number')->middleware(CheckAbilities::class.':clients.read')->defaults('client_permissions', ['client.view', 'client.create'])->defaults('rmm_reconcile', false);
+        Route::post('clients/{client}/tripletex/merge', \App\Modules\Clients\Controllers\Api\V1\TripletexMergeController::class)
+            ->whereNumber('client')->name('clients.tripletex.merge')
+            ->middleware(CheckAbilities::class.':clients.read,clients.update')->defaults('client_permissions', ['client.view', 'client.update', 'integration.tripletex_manage']);
         Route::post('clients/{client}/rmm', [\App\Modules\Clients\Controllers\Api\V1\ClientProviderController::class, 'rmm'])->name('clients.rmm.create')->middleware(CheckAbilities::class.':clients.settings.update')->defaults('client_permissions', ['client.manage_settings'])->defaults('rmm_reconcile', false);
         Route::post('clients/{client}/rmm/reconcile', [\App\Modules\Clients\Controllers\Api\V1\ClientProviderController::class, 'rmm'])->name('clients.rmm.reconcile')->middleware(CheckAbilities::class.':clients.settings.update')->defaults('client_permissions', ['client.manage_settings'])->defaults('rmm_reconcile', true);
         Route::post('client-sites/{site}/rmm', [\App\Modules\Clients\Controllers\Api\V1\ClientProviderController::class, 'rmm'])->name('client-sites.rmm.create')->middleware(CheckAbilities::class.':clients.settings.update')->defaults('client_permissions', ['client.manage_settings'])->defaults('rmm_reconcile', false);
@@ -137,6 +140,10 @@ Route::get('/clients/index', [ClientController::class, 'index'])->name('client.i
 Route::get('/clients/create', [ClientController::class, 'create'])->name('clients.create');
 Route::post('/clients/registration-candidates', \App\Modules\Clients\Controllers\RegistrationCandidateController::class)
     ->name('clients.registration-candidates')->middleware('throttle:30,1');
+Route::get('/clients/tripletex/{connection}/review', [\App\Modules\Clients\Controllers\Tech\TripletexPairingController::class, 'review'])
+    ->whereUuid('connection')->name('clients.tripletex.review');
+Route::post('/clients/tripletex/{connection}/link', [\App\Modules\Clients\Controllers\Tech\TripletexPairingController::class, 'store'])
+    ->whereUuid('connection')->name('clients.tripletex.link');
 Route::post('/clients/store', [ClientController::class, 'store'])->name('clients.store');
 Route::get('/clients/show/{client}', [ClientController::class, 'show'])->name('clients.show');
 Route::get('/clients/{client}/licenses', [CloudFactoryLicenceController::class, 'index'])

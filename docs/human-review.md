@@ -1,5 +1,28 @@
 # Human Review Register
 
+## HR-2026-11-26-COMMERCIAL-MCP - Employee Commercial catalogue connection
+
+Status: In Review. Svein Tore accepted the Dev delivery and explicitly approved Main and production on 26 November. Individual employee connection checks remain open. No database migration. Related: [RFC](rfc/2026-11-26-commercial-dev-mcp.md) and [ADR](adr/2026-11-26-commercial-dev-mcp.md).
+
+- [ ] From the office network, connect an MCP client to the Dev endpoint using the tester's own Dev token. Check which cost, term and service tools the account can see. A read-only token must omit all three writes.
+- [ ] Using approved synthetic Dev records, create or find a cost and a versioned term, attach them to a service with the current revision, and read the service back. Verify its IDs and term version.
+- [ ] After an authorized network path and personal Dev gateway binding are ready, repeat discovery and a harmless catalogue read from the intended employee's ChatGPT connection. Verify that a second user without the native rights cannot access that catalogue.
+
+Existing Dev network policy rejected the shared gateway before authentication. Keep employee onboarding pending until this is resolved and separately verified. Fallback to a shared credential or production customer data is outside the approved scope.
+
+## HR-2026-11-25-CLIENT-REGISTRATION-TRANSFER - Link a Tripletex customer and transfer a Ticket
+
+Status: In Review. Svein Tore accepted the Dev delivery and explicitly authorized Main and production on 26 November. Individual end-to-end checks remain below.
+
+- [ ] On Dev with synthetic customers, open **Clients → New Client**. Check a shared email or telephone number and verify multiple choices remain distinguishable. Select a provider-only record, then separately review a matching local/provider pair. Confirm the existing Client ID, customer number, contact and history. A conflicting organization number must stop the pairing.
+- [ ] Use an internal test Ticket with a message, attachment and recorded time. Preview and confirm the correct destination. Verify the original Ticket number, attachment and minutes. Check with separate source and destination portal sessions that neither can open the Ticket or its attachment. No customer notification should arrive. Review the contents before performing any separate publication.
+- [ ] After an approved release, refresh the Nexum gateway specification and employee MCP connector. From an intended staff account verify customer discovery, pairing with a test identity and Ticket transfer preview. Re-read the returned records. Capture staff-tool visibility and check that a user without the necessary permissions cannot perform the writes.
+
+- [ ] With a selected synthetic Tripletex customer, submit a primary contact and leave Billing Email empty. Check the Client keeps an empty invoice address and the primary contact keeps its email. Product rule approved by Svein Tore on 26 November; manual verification remains open.
+
+The API requires the existing scopes and native rights. No migration, provider write or data backfill is required for this change. Check any queued or unresolved Ticket email before transferring. Historical material could become visible after a separate portal publication. An actual customer, production Ticket or provider record requires a separately authorized operational action.
+Related: [RFC](rfc/2026-11-25-ticket-client-transfer.md), [ADR](adr/2026-11-25-reviewed-customer-identity-and-ticket-transfer.md), [Issue #411](https://github.com/SveinT83/Nexum-PSA/issues/411).
+
 ## HR-2026-11-22-TIME-REPORTS - Employee suggestions and registered Ticket/Task time
 
 Status: Pending. Owner: Codex. Human reviewer: Svein Tore (checks not yet confirmed).

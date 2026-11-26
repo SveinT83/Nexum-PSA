@@ -37,7 +37,7 @@ class CreateClientWithDefaults
             'website' => $data['website'] ?? null,
             'sales_category_id' => $data['sales_category_id'] ?? null,
             'lead_temperature' => $data['lead_temperature'] ?? 3,
-            'billing_email' => $data['billing_email'] ?? null,
+            'billing_email' => \App\Modules\Clients\Support\ClientBillingEmail::fromInput($data),
             'notes' => $data['notes'] ?? null,
             'active' => $data['active'] ?? true,
         ], function (Client $client) use ($data, &$warning): void {

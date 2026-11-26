@@ -17846,6 +17846,124 @@
         "api.v1.tickets.time-entry-deletions.show"
       ],
       "readback_note": "Delete returns audit_event_id and receipt_url. Exact receipt requires the same scope/current authority; ordinary source absence is checked through separate time-read scopes."
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/tickets/{ticket}/client-transfer/preview",
+      "name": "api.v1.tickets.client-transfer.preview",
+      "action": "App\\Modules\\Ticket\\Controllers\\Api\\V1\\TicketClientTransferController",
+      "middleware": [
+        "api",
+        "auth:sanctum",
+        "App\\Modules\\Integration\\Http\\Middleware\\RejectUnsupportedDomainApiInput",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:client.view",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:tickets.update,clients.read",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.update"
+      ],
+      "business_domain": "Ticket",
+      "source": "app/Modules/Ticket/Controllers/Api/V1/TicketClientTransferController.php",
+      "operation_kind": "read",
+      "verification_tests": [
+        "app/Modules/Ticket/Tests/Feature/TicketLifecycleApiTest.php"
+      ],
+      "operation_contracts": [
+        {
+          "method": "POST",
+          "path": "/api/v1/tickets/{ticket}/client-transfer/preview",
+          "operation_id": "previewTicketClientTransfer",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "required_scopes": [
+            "tickets.update",
+            "clients.read"
+          ],
+          "domain_permissions": "ticket.update",
+          "additional_domain_permissions": [
+            "client.view"
+          ],
+          "success_media_types": [
+            "application/json"
+          ],
+          "success_schema_refs": [
+            "#/components/schemas/TicketClientTransferResult"
+          ],
+          "documented_statuses": [
+            "200",
+            "401",
+            "403",
+            "404",
+            "409",
+            "422"
+          ]
+        }
+      ],
+      "readback_routes": [
+        "api.v1.tickets.show"
+      ],
+      "readback_note": "Read the same Ticket number and verify its Client and hidden portal status."
+    },
+    {
+      "domain": null,
+      "method": "POST",
+      "uri": "api/v1/tickets/{ticket}/client-transfer",
+      "name": "api.v1.tickets.client-transfer.store",
+      "action": "App\\Modules\\Ticket\\Controllers\\Api\\V1\\TicketClientTransferController",
+      "middleware": [
+        "api",
+        "auth:sanctum",
+        "App\\Modules\\Integration\\Http\\Middleware\\RejectUnsupportedDomainApiInput",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:client.view",
+        "Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:tickets.update,clients.read",
+        "App\\Modules\\Integration\\Http\\Middleware\\RequireDomainApiPermission:ticket.update"
+      ],
+      "business_domain": "Ticket",
+      "source": "app/Modules/Ticket/Controllers/Api/V1/TicketClientTransferController.php",
+      "operation_kind": "action",
+      "verification_tests": [
+        "app/Modules/Ticket/Tests/Feature/TicketLifecycleApiTest.php"
+      ],
+      "operation_contracts": [
+        {
+          "method": "POST",
+          "path": "/api/v1/tickets/{ticket}/client-transfer",
+          "operation_id": "transferTicketClient",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "required_scopes": [
+            "tickets.update",
+            "clients.read"
+          ],
+          "domain_permissions": "ticket.update",
+          "additional_domain_permissions": [
+            "client.view"
+          ],
+          "success_media_types": [
+            "application/json"
+          ],
+          "success_schema_refs": [
+            "#/components/schemas/TicketClientTransferResult"
+          ],
+          "documented_statuses": [
+            "200",
+            "401",
+            "403",
+            "404",
+            "409",
+            "422"
+          ]
+        }
+      ],
+      "readback_routes": [
+        "api.v1.tickets.show"
+      ],
+      "readback_note": "Read the same Ticket number and verify its Client and hidden portal status."
     }
   ],
   "livewire_actions": [

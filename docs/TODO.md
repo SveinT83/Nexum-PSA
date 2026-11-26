@@ -1,5 +1,9 @@
 # tdPSA Development TODO
 
+## Approved issue release, 26 November 2026
+
+Svein Tore approved the Tripletex pairing and Ticket transfer (#411), scoped employee Commercial MCP (#412) and decimal cost form (#413) for Main and production. Dev tests and handbook verification are recorded in the issue RFCs and human-review entries. Employee connector read-back remains open.
+
 ## Workday employee suggestions and Ticket/Task time report (2026-11-22)
 
 Status: Done On Dev / Main Merged And Verified / Human Review Pending. Owner: Codex; approver: Svein Tore.

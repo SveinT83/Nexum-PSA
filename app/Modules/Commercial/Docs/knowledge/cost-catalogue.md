@@ -68,3 +68,9 @@ until controlled worker verification and deliberate activation. Svein Tore accep
 completed delivery on 25 October 2026; HR-2026-10-25-COMMERCIAL-API is Reviewed.
 Main source promotion is verified: [PR #313](https://github.com/SveinT83/Nexum-PSA/pull/313), 25 October 2026.
 Production deployment and controlled delivery activation remain separate actions.
+
+## Enter a manual cost
+
+1. Open **Sales → Costs → New Cost**. To change an existing manual cost, open the cost and select **Edit**.
+2. Enter the amount excluding VAT, then select **Cost unit**, **Recurrence** and **Vendor**. The **Cost** field accepts whole and decimal amounts. In Chromium with Norwegian number formatting, typing `22,40` submits `22.40`.
+3. Save the form and open the cost. The catalogue displays `22,40`.

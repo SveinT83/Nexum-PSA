@@ -59,6 +59,9 @@ class SendTicketReplyEmail implements ShouldQueue
         }
 
         $ticket = $message->ticket;
+        if ($ticket && $message->id <= (int) data_get($ticket->metadata, 'transfer_message_cutoff', 0)) {
+            return;
+        }
         $contact = $this->recipientContact($message);
 
         if (! $ticket || empty($contact?->email)) {

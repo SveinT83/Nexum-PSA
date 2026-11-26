@@ -6143,9 +6143,18 @@
                 "tags": [
                     "Clients"
                 ],
-                "summary": "clients store. A no-write duplicate preflight returns errors.tripletex_customer_id. Select the verified internal ID and submit corrected input with fresh command and request keys. Reconcile unknown outcomes before retrying. A matching email, phone or organization number returns HTTP 200 selection_required to authorized readers. Use GET /api/v1/clients/{id} to reuse a local Client or submit the selected Tripletex identity with a fresh command key.",
+                "summary": "Create a Client. First read clients context. Use a stable Idempotency-Key for identical retries; required for primary_contact or create_in_rmm input. If number.authority is tripletex, set tripletex_number_mode=true and one stable tripletex_request_key UUID; omit client_number. UUID is an attempt key, never the customer number. Search/reconcile an existing customer before creating; an existing customer number is not a Tripletex customer ID. A no-write duplicate preflight returns errors.tripletex_customer_id; search GET /api/v1/clients/context/tripletex/customers, explicitly select its id, then submit the corrected selection with fresh Idempotency-Key and tripletex_request_key values. Never renew keys for an unknown provider outcome. For an existing selected Tripletex customer, only an explicit billing_email supplies the invoice address. For ordinary new-customer creation, explicit billing_email wins; otherwise use the submitted primary_contact.email as billing_email. PRIVATE customers use EMAIL with an address and MANUAL without one. Read back the exact persisted Client; reconcile unknown outcomes before retrying. A matching email, phone or organization number returns HTTP 200 selection_required to authorized readers. Use GET /clients/{id} to reuse a local Client or submit the selected Tripletex identity with a fresh command key.",
                 "operationId": "clientsApiClientsStorePost",
                 "parameters": [
+                    {
+                        "name": "Prefer",
+                        "in": "header",
+                        "description": "Use handling=strict to return 409 with selection_required and authorized candidates.",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     {
                         "name": "Idempotency-Key",
                         "in": "header",
@@ -6175,11 +6184,11 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Review possible customers before registration",
+                        "description": "Review matching customers or read the already linked Client",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ClientApiRegistrationChoices"
+                                    "$ref": "#/components/schemas/ClientApiRegistrationOutcome"
                                 }
                             }
                         }
@@ -6235,21 +6244,21 @@
                         }
                     },
                     "409": {
-                        "description": "Stale revision, conflicting key, unresolved operation or disabled capability",
+                        "description": "Strict matching choices or an operation conflict",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ClientApiError"
+                                    "$ref": "#/components/schemas/ClientApiRegistrationConflict"
                                 }
                             }
                         }
                     },
                     "422": {
-                        "description": "Invalid or unsupported input",
+                        "description": "Validation errors, including actionable provider duplicate identities for authorized readers",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ClientApiError"
+                                    "$ref": "#/components/schemas/ClientApiRegistrationValidation"
                                 }
                             }
                         }
@@ -6291,7 +6300,7 @@
                 "tags": [
                     "Clients"
                 ],
-                "summary": "clients context",
+                "summary": "Read Client creation context first: number.authority selects local or Tripletex numbering. constraints.provider_number_request_key=uuid describes tripletex_request_key, not client_number. A number suggestion is not reserved.",
                 "operationId": "clientsApiClientsContextGet",
                 "responses": {
                     "200": {
@@ -136665,6 +136674,348 @@
                     "ticket.update"
                 ]
             }
+        },
+        "/api/v1/clients/{client}/tripletex/merge": {
+            "post": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Link a reviewed Tripletex customer to an existing Nexum Client and retain its local ID, fields and contacts",
+                "operationId": "mergeTripletexCustomer",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 8
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ClientApiTripletexMergeInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Verified local pairing or keyed replay",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClientApiTripletexMergeResult"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Previous command unresolved; reconcile it before retrying",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClientApiTripletexMergeResult"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing Client or Tripletex management authority"
+                    },
+                    "409": {
+                        "description": "Conflicting or stale customer identity or reviewed numbers"
+                    },
+                    "422": {
+                        "description": "Invalid input or unavailable number"
+                    },
+                    "503": {
+                        "description": "Could not verify provider identity"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-required-scopes": [
+                    "clients.read",
+                    "clients.update"
+                ],
+                "x-current-actor-rights-required": true
+            }
+        },
+        "/api/v1/tickets/{ticket}/client-transfer/preview": {
+            "post": {
+                "tags": [
+                    "Tickets"
+                ],
+                "summary": "Review the destination, retained work and portal visibility",
+                "operationId": "previewTicketClientTransfer",
+                "parameters": [
+                    {
+                        "name": "ticket",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "client_id"
+                                ],
+                                "properties": {
+                                    "client_id": {
+                                        "type": "integer"
+                                    },
+                                    "contact_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "site_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "asset_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object",
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Verified transfer context",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TicketClientTransferResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing scope or current authority",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Ticket not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale preview, conflicting retry or unresolved communication",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid destination context",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-required-scopes": [
+                    "tickets.update",
+                    "clients.read"
+                ],
+                "x-domain-permissions": "ticket.update",
+                "x-additional-domain-permissions": [
+                    "client.view"
+                ]
+            }
+        },
+        "/api/v1/tickets/{ticket}/client-transfer": {
+            "post": {
+                "tags": [
+                    "Tickets"
+                ],
+                "summary": "Apply a reviewed transfer without notifying customers; replay with the same key and revision",
+                "operationId": "transferTicketClient",
+                "parameters": [
+                    {
+                        "name": "ticket",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "client_id",
+                                    "revision",
+                                    "idempotency_key"
+                                ],
+                                "properties": {
+                                    "client_id": {
+                                        "type": "integer"
+                                    },
+                                    "contact_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "site_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "asset_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "revision": {
+                                        "type": "string"
+                                    },
+                                    "idempotency_key": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object",
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Verified transfer context",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TicketClientTransferResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing scope or current authority",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Ticket not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Stale preview, conflicting retry or unresolved communication",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid destination context",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ParityReadError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "x-required-scopes": [
+                    "tickets.update",
+                    "clients.read"
+                ],
+                "x-domain-permissions": "ticket.update",
+                "x-additional-domain-permissions": [
+                    "client.view"
+                ]
+            }
         }
     },
     "components": {
@@ -140233,6 +140584,18 @@
                     "matched_fields"
                 ],
                 "properties": {
+                    "merge_url": {
+                        "type": "string",
+                        "format": "uri"
+                    },
+                    "review_url": {
+                        "type": "string",
+                        "format": "uri"
+                    },
+                    "connection_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
                     "action": {
                         "type": "string",
                         "enum": [
@@ -140788,6 +141151,7 @@
                         "maxLength": 255
                     },
                     "client_number": {
+                        "description": "Customer number, not UUID. Local mode: exactly five digits. With Tripletex authority omit this field; Tripletex supplies the number.",
                         "type": "string",
                         "nullable": true
                     },
@@ -140796,6 +141160,7 @@
                         "nullable": true
                     },
                     "billing_email": {
+                        "description": "For a selected Tripletex customer, submit billing_email only for an explicitly reviewed invoice address. Otherwise leave it empty. For ordinary new-customer creation: Explicit invoice email wins. On creation only, blank or omitted values use primary_contact.email. PRIVATE customers without any email use MANUAL in Tripletex.",
                         "type": "string",
                         "nullable": true
                     },
@@ -140808,6 +141173,7 @@
                         "nullable": true
                     },
                     "client_format_id": {
+                        "description": "Installation-specific format ID; code PRIVATE maps to Tripletex isPrivateIndividual=true on creation.",
                         "type": "integer",
                         "nullable": true
                     },
@@ -140863,13 +141229,16 @@
                         "type": "boolean"
                     },
                     "tripletex_number_mode": {
+                        "description": "Set true when context number.authority is tripletex. This does not enable a provider connection.",
                         "type": "boolean"
                     },
                     "tripletex_request_key": {
+                        "description": "Stable UUID identifying the Tripletex creation attempt, not the customer number. Preserve and reconcile on uncertain outcome.",
                         "type": "string",
                         "format": "uuid"
                     },
                     "tripletex_customer_id": {
+                        "description": "Existing Tripletex internal customer ID after authorized lookup; not customerNumber. Do not put a customer number here.",
                         "type": "integer"
                     }
                 },
@@ -142052,6 +142421,11 @@
                     "data"
                 ],
                 "properties": {
+                    "connection_id": {
+                        "description": "Active connection for staff permitted to pair customers.",
+                        "type": "string",
+                        "format": "uuid"
+                    },
                     "data": {
                         "$ref": "#/components/schemas/ClientApiProviderProfile"
                     }
@@ -142183,6 +142557,7 @@
                         "type": "string"
                     },
                     "errors": {
+                        "description": "Field validation messages, including reviewed Tripletex customer-create errors. Provider invoiceSendMethod uses the literal key tripletex.invoiceSendMethod. Raw provider values and bodies are excluded.",
                         "type": "object",
                         "additionalProperties": {
                             "type": "array",
@@ -142675,6 +143050,11 @@
                     "data"
                 ],
                 "properties": {
+                    "connection_id": {
+                        "description": "Active connection for staff permitted to pair customers.",
+                        "type": "string",
+                        "format": "uuid"
+                    },
                     "data": {
                         "type": "array",
                         "items": {
@@ -189274,6 +189654,225 @@
                         "type": "string",
                         "format": "date-time",
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ClientApiTripletexMergeInput": {
+                "required": [
+                    "connection_id",
+                    "customer_id",
+                    "expected_local",
+                    "expected_remote",
+                    "accept_change"
+                ],
+                "properties": {
+                    "connection_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "customer_id": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "expected_local": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "expected_remote": {
+                        "type": "string"
+                    },
+                    "accept_change": {
+                        "type": "boolean",
+                        "enum": [
+                            true
+                        ]
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
+            },
+            "ClientApiRegistrationOutcome": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/ClientApiRegistrationChoices"
+                    },
+                    {
+                        "$ref": "#/components/schemas/ClientApiExistingRegistration"
+                    }
+                ]
+            },
+            "ClientApiExistingRegistration": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/ClientApiRecordResponse"
+                    },
+                    {
+                        "required": [
+                            "state",
+                            "registration_applied"
+                        ],
+                        "properties": {
+                            "state": {
+                                "type": "string",
+                                "enum": [
+                                    "use_existing"
+                                ]
+                            },
+                            "registration_applied": {
+                                "type": "boolean",
+                                "enum": [
+                                    false
+                                ]
+                            }
+                        },
+                        "type": "object"
+                    }
+                ]
+            },
+            "ClientApiRegistrationConflict": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/ClientApiRegistrationChoices"
+                    },
+                    {
+                        "$ref": "#/components/schemas/ClientApiError"
+                    }
+                ]
+            },
+            "ClientApiRegistrationValidation": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/ClientApiError"
+                    },
+                    {
+                        "properties": {
+                            "state": {
+                                "type": "string",
+                                "enum": [
+                                    "selection_required"
+                                ]
+                            },
+                            "lookup_url": {
+                                "type": "string",
+                                "format": "uri"
+                            },
+                            "provider_candidates": {
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "number": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "org_no": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "type": "object"
+                    }
+                ]
+            },
+            "ClientApiTripletexMergeResult": {
+                "properties": {
+                    "client_id": {
+                        "type": "integer"
+                    },
+                    "tripletex_customer_id": {
+                        "type": "integer"
+                    },
+                    "client_number": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "replayed": {
+                        "type": "boolean"
+                    },
+                    "operation_id": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "TicketClientTransferResult": {
+                "properties": {
+                    "data": {
+                        "properties": {
+                            "state": {
+                                "description": "Staff-only preview and confirmation of a customer transfer; the destination portal starts hidden.",
+                                "type": "string",
+                                "enum": [
+                                    "preview",
+                                    "transferred"
+                                ]
+                            },
+                            "ticket_id": {
+                                "type": "integer"
+                            },
+                            "ticket_number": {
+                                "type": "string"
+                            },
+                            "source_client_id": {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            "client_id": {
+                                "type": "integer"
+                            },
+                            "site_id": {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            "contact_id": {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            "asset_id": {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            "portal_visible": {
+                                "type": "boolean"
+                            },
+                            "impact": {
+                                "properties": {
+                                    "tasks": {
+                                        "type": "integer"
+                                    },
+                                    "attachments": {
+                                        "type": "integer"
+                                    },
+                                    "time_entries": {
+                                        "type": "integer"
+                                    },
+                                    "cost_entries": {
+                                        "type": "integer"
+                                    },
+                                    "reservations": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "revision": {
+                                "type": "string"
+                            },
+                            "replayed": {
+                                "type": "boolean"
+                            }
+                        },
+                        "type": "object"
                     }
                 },
                 "type": "object"

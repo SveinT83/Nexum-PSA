@@ -13,6 +13,7 @@ use App\Modules\Commercial\Models\Economy\Units;
 use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Commercial\Support\CommercialRevision;
 use App\Modules\Commercial\Support\ContractTermSnapshotReadiness;
+use App\Modules\Documentation\Models\Vendor;
 use App\Modules\System\Support\CompanyProfileSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -110,6 +111,124 @@ class CommercialApiParityTest extends TestCase
         $this->assertSame($before, $c->fresh()->getRawOriginal());
         $this->assertSame($versions, DB::table('term_versions')->count());
         $this->assertDatabaseCount('commercial_command_receipts', 0);
+    }
+
+    #[Test]
+    public function commercial_mcp_runs_scoped_catalogue_workflow_and_checks_each_call(): void
+    {
+        $service = $this->service();
+        $vendor = Vendor::create(['name' => 'MCP vendor']);
+        $employee = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $employee->givePermissionTo(['commercial.cost_manage', 'commercial.contract_manage', 'commercial.service_manage']);
+        $scopes = ['commercial.read', 'commercial.create', 'commercial.update'];
+        auth()->forgetGuards();
+        $url = '/mcp/commercial';
+        $rpc = fn ($method, $params = []) => $this->postJson($url,
+            ['jsonrpc' => '2.0', 'id' => 1, 'method' => $method, 'params' => (object) $params]);
+        $rpc('tools/list')->assertUnauthorized();
+        $this->withToken($employee->createToken('Commercial Dev MCP', $scopes)->plainTextToken);
+        auth()->forgetGuards();
+        $rpc('initialize', ['protocolVersion' => '2025-06-18', 'capabilities' => (object) [],
+            'clientInfo' => ['name' => 'Test', 'version' => '1']])->assertOk()->assertJsonPath('result.serverInfo.name', 'Nexum Commercial');
+        $rpc('initialize', ['protocolVersion' => '2025-11-25', 'capabilities' => (object) [],
+            'clientInfo' => ['name' => 'Newer MCP client', 'version' => '1']])->assertOk()
+            ->assertJsonPath('result.protocolVersion', '2025-06-18');
+        $catalogue = $rpc('tools/list')->assertOk()->assertJsonCount(12, 'result.tools')->json('result.tools');
+        $tools = collect($catalogue)->keyBy('name');
+        $link = $tools['api_v1_commercial_services_update_patch']['inputSchema'];
+        $this->assertEqualsCanonicalizing(['costs', 'terms'], array_keys($link['properties']['body']['properties']));
+        $this->assertContains('If-Match', $link['required']);
+        $call = function ($name, array $arguments) use ($rpc) {
+            return $rpc('tools/call', ['name' => 'api_v1_commercial_'.$name, 'arguments' => (object) $arguments])->assertOk();
+        };
+        $read = function ($name, $args, $status = 200) use ($call) {
+            $response = $call($name, $args)->assertJsonPath('result.isError', false);
+            $payload = json_decode($response->json('result.content.0.text'), true, flags: JSON_THROW_ON_ERROR);
+            $this->assertSame($status, $payload['status']);
+            return $payload['result'];
+        };
+        $this->assertSame($vendor->id, $read('costs_lookup_get', ['lookup' => 'vendors', 'q' => 'MCP vendor'])['data'][0]['id']);
+        $unit = $read('costs_lookup_get', ['lookup' => 'units', 'q' => 'Item'])['data'][0]['id'];
+        $cost = ['body' => ['name' => 'MCP cost', 'cost' => 22.40, 'recurrence' => 'month', 'vendor_id' => $vendor->id,
+            'unitId' => $unit], 'Idempotency-Key' => 'commercial-mcp-cost'];
+        $costId = $read('costs_store_post', $cost, 201)['data']['id'];
+        $this->assertSame($costId, $read('costs_store_post', $cost, 201)['data']['id']);
+        $term = ['body' => ['name' => 'MCP terms', 'type' => 'general', 'content' => 'Commercial test'],
+            'Idempotency-Key' => 'commercial-mcp-terms'];
+        $created = $read('terms_store_post', $term, 201)['data'];
+        $this->assertSame($created['current_version_id'], $read('terms_store_post', $term, 201)['data']['current_version_id']);
+        $revision = $read('services_show_get', ['service' => $service->id])['data']['revision'];
+        $args = ['service' => $service->id, 'If-Match' => $revision, 'Idempotency-Key' => 'commercial-mcp-link',
+            'body' => ['costs' => [$costId], 'terms' => [$created['id']]]];
+        $read('services_update_patch', $args);
+        $saved = $read('services_show_get', ['service' => $service->id])['data'];
+        $this->assertSame($costId, $saved['costs'][0]['id']);
+        $this->assertSame($created['current_version_id'], $saved['terms'][0]['current_version_id']);
+        $stale = $call('services_update_patch', array_replace($args, ['Idempotency-Key' => 'commercial-mcp-stale']))
+            ->assertJsonPath('result.isError', true);
+        $this->assertSame(409, json_decode($stale->json('result.content.0.text'), true)['status']);
+        $call('services_update_patch', array_replace($args, ['body' => ['name' => 'Other change']]))->assertJsonPath('result.isError', true);
+        $rpc('tools/call', ['name' => 'api_v1_commercial_costs_destroy_delete'])->assertJsonPath('error.code', -32602);
+        auth()->forgetGuards();
+        $this->withToken($employee->createToken('Read only', ['commercial.read'])->plainTextToken);
+        $rpc('tools/list')->assertJsonCount(9, 'result.tools');
+        $call('costs_store_post', $cost)->assertJsonPath('error.code', -32602);
+        auth()->forgetGuards();
+        $denied = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $this->withToken($denied->createToken('Missing native grants', $scopes)->plainTextToken);
+        $rpc('tools/list')->assertJsonCount(0, 'result.tools');
+        $call('costs_store_post', $cost)->assertJsonPath('error.code', -32602);
+        $this->withHeader('Origin', 'https://other.invalid');
+        $rpc('tools/list')->assertForbidden();
+    }
+
+    #[Test]
+    public function scoped_integration_can_link_a_recurring_cost_and_versioned_term_to_a_service(): void
+    {
+        $service = $this->service();
+        $vendor = Vendor::create(['name' => 'Monthly vendor']);
+        $integration = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $integration->givePermissionTo(['commercial.cost_manage', 'commercial.contract_manage', 'commercial.service_manage']);
+        $scopes = ['commercial.read', 'commercial.create', 'commercial.update'];
+        auth()->forgetGuards();
+        $this->withToken($integration->createToken('Catalogue smoke', $scopes)->plainTextToken);
+
+        $base = '/api/v1/commercial';
+        $vendorId = $this->getJson("$base/costs/context/vendors?q=Monthly")->assertOk()->json('data.0.id');
+        $unitId = $this->getJson("$base/costs/context/units?q=Item")->assertOk()->json('data.0.id');
+        $this->assertSame($vendor->id, $vendorId);
+        $this->assertSame($service->unitId, $unitId);
+
+        $cost = ['name' => 'Monthly cost', 'cost' => 22.40, 'unitId' => $unitId, 'vendor_id' => $vendorId, 'recurrence' => 'month'];
+        $term = ['name' => 'Support terms', 'type' => 'general', 'content' => 'Monthly service terms.'];
+        $costKey = ['Idempotency-Key' => 'smoke-create-cost'];
+        $termKey = ['Idempotency-Key' => 'smoke-create-term'];
+        $costId = $this->postJson("$base/costs", $cost, $costKey)->assertCreated()->json('data.id');
+        $created = $this->postJson("$base/terms", $term, $termKey)->assertCreated();
+        $termId = $created->json('data.id');
+        $versionId = $created->json('data.current_version_id');
+        $this->assertNotNull($versionId);
+        $this->postJson("$base/costs", $cost, $costKey)->assertCreated()->assertJsonPath('data.id', $costId)->assertJsonPath('replayed', true);
+        $this->postJson("$base/terms", $term, $termKey)->assertCreated()->assertJsonPath('data.current_version_id', $versionId)->assertJsonPath('replayed', true);
+        $this->getJson("$base/costs?q=Monthly")->assertOk()->assertJsonPath('data.0.id', $costId);
+        $this->getJson("$base/terms?q=Support")->assertOk()->assertJsonPath('data.0.id', $termId);
+        $this->getJson("$base/costs/$costId")->assertOk()->assertJsonPath('data.cost', '22.4000');
+        $this->getJson("$base/terms/$termId")->assertOk()->assertJsonPath('data.versions.0.id', $versionId);
+
+        $url = "$base/services/{$service->id}";
+        $revision = $this->getJson($url)->assertOk()->json('data.revision');
+        $links = ['costs' => [$costId], 'terms' => [$termId]];
+        $this->patchJson($url, $links, ['If-Match' => $revision, 'Idempotency-Key' => 'smoke-link-service'])->assertOk();
+        $this->getJson($url)->assertOk()->assertJsonPath('data.costs.0.id', $costId)
+            ->assertJsonPath('data.terms.0.id', $termId)->assertJsonPath('data.terms.0.current_version_id', $versionId);
+        $this->patchJson($url, $links, ['If-Match' => $revision, 'Idempotency-Key' => 'smoke-stale-link'])->assertConflict();
+
+        $denied = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        auth()->forgetGuards();
+        $this->withToken($denied->createToken('No catalogue rights', $scopes)->plainTextToken);
+        $this->getJson("$base/costs/context/vendors")->assertForbidden();
+        $this->postJson("$base/costs", $cost, $costKey)->assertForbidden();
+        $this->postJson("$base/terms", $term, $termKey)->assertForbidden();
     }
 
     #[Test]

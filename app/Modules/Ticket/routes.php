@@ -35,7 +35,7 @@ if (($ticketRelationshipApiRoutes ?? false) === true) {
     return;
 }
 
-// Full operational API registration remains isolated from browser and compatibility routes.
+// Typed parity APIs use the same actor permissions as browser operations.
 if (($tdpsaLoadingApiRoutes ?? false) === true) {
     Route::get('ticket-settings/documentation-requests', [\App\Modules\Ticket\Controllers\Api\V1\TicketFollowUpApiController::class, 'administration'])
         ->name('ticket-settings.documentation-requests.index')->middleware([\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':tickets.settings.read', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.manage_settings'])
@@ -462,6 +462,15 @@ Route::match(['put', 'patch'], 'tickets/{ticket}', [\App\Modules\Ticket\Controll
     ->name('tickets.update')
     ->middleware([\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':tickets.update', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.update'])->defaults('parity_domain', 'ticket')->defaults('parity_scope', 'tickets.update')->defaults('parity_permissions', 'ticket.update')->defaults('parity_conditional_authorization', ['owner change: native ticket.assign policy.', 'status change: current transition and reopen gates.', 'Custom Fields: current API-write switch and field edit rights.'])->defaults('parity_input_fields', ['asset_id', 'category_id', 'client_id', 'contact_id', 'custom_fields', 'description', 'impact', 'is_scheduled', 'owner_id', 'planned_end_at', 'planned_start_at', 'priority_id', 'queue_id', 'recurrence_ends_at', 'recurrence_rule', 'schedule_type', 'site_id', 'sla_id', 'sla_mode', 'status_id', 'subject', 'tag_names', 'task_template_group_id', 'ticket_type_id', 'timezone', 'urgency'])->middleware(\App\Modules\Integration\Http\Middleware\RejectUnsupportedDomainApiInput::class);
 
+foreach (['preview' => '/preview', 'store' => ''] as $operation => $suffix) {
+    Route::post('tickets/{ticket}/client-transfer'.$suffix, \App\Modules\Ticket\Controllers\Api\V1\TicketClientTransferController::class)
+        ->name('tickets.client-transfer.'.$operation)
+        ->defaults('parity_domain', 'ticket')->defaults('parity_scope', 'tickets.update')->defaults('parity_additional_scopes', ['clients.read'])
+        ->defaults('parity_permissions', 'ticket.update')->defaults('parity_additional_permissions', ['client.view'])
+        ->defaults('parity_input_fields', array_merge(['client_id', 'site_id', 'contact_id', 'asset_id'], $operation === 'preview' ? [] : ['revision', 'idempotency_key']))
+        ->middleware([\App\Modules\Integration\Http\Middleware\RejectUnsupportedDomainApiInput::class, \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':client.view', \Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':tickets.update,clients.read', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.update']);
+}
+
 Route::get('tickets/{ticket}/messages', [\App\Modules\Ticket\Controllers\Api\V1\TicketMessageController::class, 'index'])
     ->name('tickets.messages.index')
     ->middleware([\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':tickets.read', \App\Modules\Integration\Http\Middleware\RequireDomainApiPermission::class.':ticket.view'])->defaults('parity_domain', 'ticket')->defaults('parity_scope', 'tickets.read')->defaults('parity_permissions', 'ticket.view')->withTrashed();
@@ -562,6 +571,7 @@ Route::post('ticket-workflows/{workflow}/migrations', [\App\Modules\Ticket\Contr
 
     return;
 }
+
 
 if (($ticketPortalRoutes ?? false) === true) {
     Route::middleware(['auth', EnsureCustomerPortalAccess::class])

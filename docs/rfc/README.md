@@ -61,3 +61,6 @@ Drafts:
 - `2026-07-04-technician-notes.md`
 
 - [Approved: Full Economy browser/API coverage](2026-10-25-economy-full-api-parity.md) (Merged to Main; HR-2026-10-25-ECONOMY-API Reviewed)
+
+- [Commercial catalogue connection on Dev](2026-11-26-commercial-dev-mcp.md) — approved for Dev.
+- [Approved for Dev: Transfer a Ticket to a different Client](2026-11-25-ticket-client-transfer.md) (Issue #411, Tripletex registration and hidden transfer)
