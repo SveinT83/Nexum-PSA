@@ -1,5 +1,16 @@
 # tdPSA Development TODO
 
+## Sales quote service billing cadence (2026-11-26)
+
+PR #415 was merged to Main at 9ecaff86 with Svein Tore's explicit administrator-exception
+approval. Installed on production VM169 on 26 November. The Blade view and handbook source
+matched Main after read-back. Chromium verified that the form rendered on production selected
+and submitted monthly for both AP 5013 and switch 5012, and preserved a quarterly manual
+override. The check inspected form data without saving a customer quote. Sales feature suite
+30 tests / 469 assertions. Production HTTPS login and health both returned 200. BookStack Sales
+Overview page 428 revision 13 was read back. Rollback copies are under
+`/root/nexum-quote-cadence-20261126T164001Z` on VM169.
+
 ## Approved issue release, 26 November 2026
 
 Svein Tore approved the Tripletex pairing and Ticket transfer (#411), scoped employee Commercial MCP (#412) and decimal cost form (#413) for Main and production. Dev tests and handbook verification are recorded in the issue RFCs and human-review entries. Employee connector read-back remains open.
