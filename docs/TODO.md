@@ -1,5 +1,25 @@
 # tdPSA Development TODO
 
+## Editing a saved Sales quote line (2026-11-26)
+
+PR #416 merged to Main at 6c3ae58f after Svein Tore explicitly authorized the administrator
+exception and production rollout. Production VM169 runs the reviewed controller, Blade view and
+Sales handbook source. The three installed file hashes match Main, and the three rollback copies
+match their preimages under `/root/nexum-quote-save-line-20261126T204516Z`.
+
+Chromium used the editor rendered by production PHP for an isolated AP service line (SKU 5013).
+The native Save line submission updated the same row via the bound production web controller.
+A fresh database read confirmed the changed name, quantity 5 to 6 at NOK 49, retained monthly
+cadence and a line and quote total of NOK 294 excluding VAT. The transaction was rolled back
+and absence of the test customer, opportunity and line was checked. This used a scoped internal
+actor and session. Public HTTPS login and health both returned 200. BookStack Sales Overview
+page 428 revision 15 was read back with its inherited access.
+
+The isolated PHP 8.3 candidate passed all 52 Sales feature tests (2,060 assertions). Shared Dev
+passed the 31 Sales module tests (488 assertions) and Chromium validation/retry (19 assertions).
+The separate shared-Dev invoice-address assertion for local client registration remains tracked
+with #414.
+
 ## Sales quote service billing cadence (2026-11-26)
 
 PR #415 was merged to Main at 9ecaff86 with Svein Tore's explicit administrator-exception
