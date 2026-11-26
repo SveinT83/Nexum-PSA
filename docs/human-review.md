@@ -4,6 +4,8 @@
 
 Status: In Review. Svein Tore accepted the Dev delivery and explicitly approved Main and production on 26 November. Individual employee connection checks remain open. No database migration. Related: [RFC](rfc/2026-11-26-commercial-dev-mcp.md) and [ADR](adr/2026-11-26-commercial-dev-mcp.md).
 
+Production release verified on 26 November with the authorized PR #414 administrator merge. See [production evidence](plans/2026-11-26-pr414-production.md). The named employee checks below remain open.
+
 - [ ] From the office network, connect an MCP client to the Dev endpoint using the tester's own Dev token. Check which cost, term and service tools the account can see. A read-only token must omit all three writes.
 - [ ] Using approved synthetic Dev records, create or find a cost and a versioned term, attach them to a service with the current revision, and read the service back. Verify its IDs and term version.
 - [ ] After an authorized network path and personal Dev gateway binding are ready, repeat discovery and a harmless catalogue read from the intended employee's ChatGPT connection. Verify that a second user without the native rights cannot access that catalogue.
@@ -13,6 +15,8 @@ Existing Dev network policy rejected the shared gateway before authentication. K
 ## HR-2026-11-25-CLIENT-REGISTRATION-TRANSFER - Link a Tripletex customer and transfer a Ticket
 
 Status: In Review. Svein Tore accepted the Dev delivery and explicitly authorized Main and production on 26 November. Individual end-to-end checks remain below.
+
+Production release verified on 26 November with the authorized PR #414 administrator merge. See [production evidence](plans/2026-11-26-pr414-production.md). The named employee checks below remain open.
 
 - [ ] On Dev with synthetic customers, open **Clients → New Client**. Check a shared email or telephone number and verify multiple choices remain distinguishable. Select a provider-only record, then separately review a matching local/provider pair. Confirm the existing Client ID, customer number, contact and history. A conflicting organization number must stop the pairing.
 - [ ] Use an internal test Ticket with a message, attachment and recorded time. Preview and confirm the correct destination. Verify the original Ticket number, attachment and minutes. Check with separate source and destination portal sessions that neither can open the Ticket or its attachment. No customer notification should arrive. Review the contents before performing any separate publication.

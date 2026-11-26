@@ -31,9 +31,9 @@ override. The check inspected form data without saving a customer quote. Sales f
 Overview page 428 revision 13 was read back. Rollback copies are under
 `/root/nexum-quote-cadence-20261126T164001Z` on VM169.
 
-## Approved issue release, 26 November 2026
+## Production deployment of PR #414, 26 November 2026
 
-Svein Tore approved the Tripletex pairing and Ticket transfer (#411), scoped employee Commercial MCP (#412) and decimal cost form (#413) for Main and production. Dev tests and handbook verification are recorded in the issue RFCs and human-review entries. Employee connector read-back remains open.
+PR #414 merged to Main at 36c738a0 and is live on production VM169. Customer pairing, Ticket transfer and decimal costs were installed. The authenticated production Commercial endpoint returned 12 tools and cost context HTTP 200. Individual employee ChatGPT discovery and named manual checks remain open. See [production verification](plans/2026-11-26-pr414-production.md).
 
 ## Workday employee suggestions and Ticket/Task time report (2026-11-22)
 

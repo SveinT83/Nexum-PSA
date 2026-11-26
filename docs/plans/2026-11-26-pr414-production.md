@@ -1,0 +1,11 @@
+# PR #414 production deployment
+
+On 26 November 2026 Svein Tore explicitly authorized the repository administrator exception for PR #414 and production activation. GitHub merged the tested head 3fe8460f4677e7ccd6944f4b79cea2318954d898 into Main as 36c738a01c3a0eba781e844d2844bbc80149cad6. All 61 changed paths matched the approved head after the merge. The isolated PHP 8.3 candidate had passed 158 tests and 2,023 assertions.
+
+Production VM169 now serves release 20261126-issues-411-413-161514. All 40 changed runtime files matched their checked hashes after activation. The three production Sales files changed by PRs #415 and #416 since initial staging were reconciled against Main and verified again after activation. The existing application environment and shared storage were preserved. No schema migration or business data backfill was required. PHP-FPM reloaded and returned active.
+
+Public HTTPS returned 200 for /up and /login. Without a bearer token, the Commercial MCP endpoint, customer pairing and Ticket transfer preview returned 401. Independent retrieval of the production OpenAPI document exposed mergeTripletexCustomer, previewTicketClientTransfer, transferTicketClient and clientsApiRegistrationCandidates. A production token negotiated MCP protocol 2025-06-18 at https://portal.tronderdata.no/mcp/commercial and discovered 12 tools. The cost context tool returned native HTTP 200. The production verification issued no business writes.
+
+The prior release and OpenAPI descriptor are recoverable through the VM's root-private /root/nexum-411-413-20261126T161514Z/activate.py rollback. This restores the previous release pointer and descriptor and reloads PHP-FPM. The rollback command was prepared and inspected. Production rollback was not invoked.
+
+Seven employee documentation pages were updated and read back at their existing locations: 389 rev17, 424 rev38, 451 rev29, 457 rev16, 617 rev11, 639 rev10 and 843 rev9. The native endpoint is deployed. No shared LiteLLM registration, catalogue, network rule or user binding changed in this release. Actual employee ChatGPT discovery and read-back, and the human registration/portal checks, remain in HR-2026-11-25-CLIENT-REGISTRATION-TRANSFER and HR-2026-11-26-COMMERCIAL-MCP.
