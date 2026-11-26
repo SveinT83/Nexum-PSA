@@ -287,7 +287,14 @@ class SalesController extends Controller
         RecalculateSalesQuoteVersion $recalculate,
         SalesQuotePresentation $quotePresentation
     ): RedirectResponse {
-        $result = app(\App\Modules\Sales\Actions\SalesWorkflow::class)->updateQuoteLine($request, $sale, $line, $recalculate, $quotePresentation);
+        try {
+            $result = app(\App\Modules\Sales\Actions\SalesWorkflow::class)->updateQuoteLine($request, $sale, $line, $recalculate, $quotePresentation);
+        } catch (ValidationException $error) {
+            // Reopen the same line with Laravel's flashed input after a failed web edit.
+            $request->session()->flash('quote_line_edit_id', $line->getKey());
+            throw $error->errorBag('quoteLineEdit');
+        }
+
         $response = back()->with($result->level, $result->message);
         $response->with('open_quote_modal', true);
 
