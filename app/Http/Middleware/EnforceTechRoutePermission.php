@@ -267,6 +267,8 @@ class EnforceTechRoutePermission
         'tech.clients.user.delete' => 'contact.delete',
         'tech.clients.create' => 'client.create',
         'tech.clients.store' => 'client.create',
+        'tech.clients.tripletex.review' => 'client.update',
+        'tech.clients.tripletex.link' => 'client.update',
         'tech.clients.edit' => 'client.update',
         'tech.clients.update' => 'client.update',
         'tech.clients.delete' => 'client.delete',

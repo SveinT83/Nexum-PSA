@@ -701,6 +701,31 @@ class CommercialModuleTest extends TestCase
     }
 
     #[Test]
+    public function cost_forms_accept_decimal_amounts_on_create_and_edit(): void
+    {
+        $unit = Units::query()->create(['name' => 'Month', 'short' => 'mo']);
+        $vendor = Vendor::query()->create(['name' => 'Catalogue vendor']);
+        $payload = ['name' => 'Monthly cost', 'unitId' => $unit->id, 'vendor_id' => $vendor->id, 'recurrence' => 'month'];
+
+        $this->actingAs($this->tech);
+        $this->get(route('tech.costs.create'))->assertOk()->assertSee('step="0.0001"', false);
+        $this->post(route('tech.costs.store'), $payload + ['cost' => '22.40'])
+            ->assertSessionHasNoErrors()->assertRedirect(route('tech.costs.index'));
+
+        $cost = Cost::query()->where('name', $payload['name'])->sole();
+        $this->assertSame('22.4000', $cost->cost);
+        $this->get(route('tech.costs.show', $cost))->assertOk()->assertSee('22,40');
+        $this->get(route('tech.costs.edit', $cost))->assertOk()->assertSee('step="0.0001"', false);
+        $this->post(route('tech.costs.update', $cost), $payload + ['cost' => '31.75'])
+            ->assertSessionHasNoErrors()->assertRedirect(route('tech.costs.show', $cost));
+        $this->assertSame('31.7500', $cost->refresh()->cost);
+        $this->get(route('tech.costs.show', $cost))->assertOk()->assertSee('31,75');
+        $this->post(route('tech.costs.update', $cost), $payload + ['cost' => '-1'])
+            ->assertSessionHasErrors('cost');
+        $this->assertSame('31.7500', $cost->refresh()->cost);
+    }
+
+    #[Test]
     public function cost_can_be_created_without_note(): void
     {
         $unit = Units::query()->create(['name' => 'Lisens', 'short' => 'lic']);

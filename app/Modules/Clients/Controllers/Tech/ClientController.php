@@ -356,6 +356,13 @@ class ClientController extends Controller
 
         try {
             $result = $createClient->handle($data);
+        } catch (\App\Modules\DataExchange\Exceptions\TripletexCustomerAlreadyLinked $existing) {
+            if (! $discovery->allowed($request)) {
+                throw $existing;
+            }
+
+            return redirect()->route('tech.clients.show', $existing->clientId)
+                ->with('status', 'This Tripletex customer is already linked. Review the existing Client before changing its details.');
         } catch (\App\Modules\DataExchange\Exceptions\TripletexCustomerSelectionRequired $exception) {
             // Only a definitive no-POST duplicate preflight can renew the form key.
             // All provider errors and uncertain outcomes keep the original recovery identity.

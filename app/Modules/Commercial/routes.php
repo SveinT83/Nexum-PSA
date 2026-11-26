@@ -270,6 +270,13 @@ if (($commercialPortalRoutes ?? false) === true) {
 }
 
 if (($commercialPublicRoutes ?? false) === true) {
+    // The catalogue authenticates a personal API token from this installation.
+    Route::withoutMiddleware('web')->middleware(['api', \App\Modules\Commercial\Http\Middleware\CommercialMcpAccess::class])
+        ->group(function () {
+            \Laravel\Mcp\Facades\Mcp::web('/mcp/commercial', \App\Modules\Commercial\Mcp\CommercialCatalogueServer::class)
+                ->name('commercial.dev-mcp');
+        });
+
     Route::get('/contract/view/{token}', [PublicContractController::class, 'view'])
         ->name('contracts.public.view');
     Route::post('/contract/accept/{token}', [PublicContractController::class, 'accept'])

@@ -104,11 +104,24 @@ class TripletexCustomerNumbers
                 }
                 $this->ready($current);
                 $api = new TripletexClient($current);
-                $state = TripletexCustomerLink::firstOrCreate(
-                    ['connection_id' => $current->id, 'request_key' => $key],
-                    ['company_id' => $current->config['company_id'], 'environment' => $current->config['environment'],
-                        'payload_hash' => $payloadHash]
-                );
+                $state = TripletexCustomerLink::where('connection_id', $current->id)->where('request_key', $key)->first();
+                // Resolve a selected identity under the same provider lock before allocating another attempt.
+                if ($selectedId && (! $state || ($state->client_id && hash_equals((string) $state->payload_hash, $payloadHash)))) {
+                    $bound = TripletexCustomerLink::where('connection_id', $current->id)->where('customer_id', $selectedId)->first();
+                    if ($bound?->status === 'linked' && $bound->client_id && $bound->company_id === (int) $current->config['company_id']
+                        && $bound->environment === $current->config['environment']) {
+                        $remote = $api->customer((int) $selectedId);
+                        $this->assertUsable($remote);
+                        $this->assertSelectedIdentity($remote, $attributes);
+                        if ((string) $bound->customer_number === (string) $remote['customerNumber'] && Client::whereKey($bound->client_id)
+                            ->where('active', true)->where('client_number', $bound->customer_number)->exists()) {
+                            throw \App\Modules\DataExchange\Exceptions\TripletexCustomerAlreadyLinked::forClient((int) $bound->client_id);
+                        }
+                        $this->fail('The existing customer link has changed. Review both records before continuing.');
+                    }
+                }
+                $state ??= TripletexCustomerLink::create(['connection_id' => $current->id, 'request_key' => $key,
+                    'company_id' => $current->config['company_id'], 'environment' => $current->config['environment'], 'payload_hash' => $payloadHash]);
                 if ($state->company_id !== (int) $current->config['company_id'] || $state->environment !== $current->config['environment']) {
                     $this->fail('The saved attempt belongs to another provider company or environment.');
                 }
@@ -134,24 +147,42 @@ class TripletexCustomerNumbers
                         $this->assertSelectedIdentity($remote, $attributes);
                     } else {
                         $customers = $api->customers();
-                        foreach ($customers as $candidate) {
-                            if ($this->possibleDuplicate($candidate, $attributes)) {
-                                // This preflight performed no customer POST. Only this error permits a fresh
-                                // form key for explicit selection; unknown/provider outcomes retain their key.
-                                $message = 'A possible customer already exists in Tripletex. Select that customer explicitly before saving. No customer was created by this attempt.';
-                                throw \App\Modules\DataExchange\Exceptions\TripletexCustomerSelectionRequired::withMessages([
-                                    'client_number' => $message,
-                                    'tripletex_customer_id' => $message,
-                                ]);
+                        $duplicates = array_values(array_filter($customers, fn ($row) => $this->possibleDuplicate($row, $attributes)));
+                        if ($duplicates) {
+                            // The legacy duplicate preflight has not issued a customer POST.
+                            $message = 'A possible customer already exists in Tripletex. Select that customer explicitly before saving. No customer was created by this attempt.';
+                            $error = \App\Modules\DataExchange\Exceptions\TripletexCustomerSelectionRequired::withMessages([
+                                'client_number' => $message, 'tripletex_customer_id' => $message,
+                            ]);
+                            foreach ($duplicates as $row) {
+                                if (($row['isInactive'] ?? true) === false && ($row['customerNumber'] ?? 0) > 0) {
+                                    $error->providerCandidates[] = ['id' => (int) $row['id'], 'name' => $row['name'],
+                                        'number' => (string) $row['customerNumber'], 'org_no' => $row['organizationNumber'] ?? ''];
+                                }
                             }
+                            throw $error;
                         }
                         $number = $this->next($api, $customers);
                         $payload = ['name' => $attributes['name'], 'customerNumber' => (int) $number];
+                        // Format IDs are installation-specific; PRIVATE is the stable domain code.
+                        $private = \App\Models\Clients\ClientFormat::whereKey($attributes['client_format_id'] ?? null)
+                            ->where('code', 'PRIVATE')->exists();
+                        if ($private) {
+                            $payload['isPrivateIndividual'] = true;
+                        }
+                        if ($private) {
+                            // Never inherit EHF for a private person; no address means manual delivery.
+                            $payload['invoiceSendMethod'] = filled($attributes['billing_email'] ?? null) ? 'EMAIL' : 'MANUAL';
+                        }
                         if (filled($attributes['org_no'] ?? null)) {
                             $payload['organizationNumber'] = $attributes['org_no'];
                         }
                         if (filled($attributes['billing_email'] ?? null)) {
                             $payload['invoiceEmail'] = $attributes['billing_email'];
+                            // Preserve the company rule; PRIVATE always uses an explicit non-EHF channel.
+                            if ($private || blank($attributes['org_no'] ?? null)) {
+                                $payload['invoiceSendMethod'] = 'EMAIL';
+                            }
                         }
                         if ($siteData !== null && array_filter($siteData, fn ($value) => filled($value))) {
                             $profile = app(\App\Modules\Integration\Services\Tripletex\CustomerProfileData::class);
@@ -169,8 +200,7 @@ class TripletexCustomerNumbers
                     }
                     $this->assertUsable($remote);
                     $this->assertSelectedIdentity($remote, $attributes);
-                    if (TripletexCustomerLink::where('connection_id', $current->id)->where('customer_id', $remote['id'])
-                        ->whereKeyNot($state->id)->exists()) {
+                    if (TripletexCustomerLink::where('connection_id', $current->id)->where('customer_id', $remote['id'])->whereKeyNot($state->id)->exists()) {
                         $this->fail('This Tripletex customer is already linked or awaiting recovery.');
                     }
                     $state->update(['customer_id' => $remote['id'], 'customer_number' => (string) $remote['customerNumber'],
@@ -200,7 +230,9 @@ class TripletexCustomerNumbers
                     }
                     $state->error_code = $exception->reason;
                     $state->save();
-                    $this->fail($exception->getMessage().' Reload or reconcile the saved attempt; no local fallback was used.');
+                    throw ValidationException::withMessages([
+                        'client_number' => $exception->getMessage().' Reload or reconcile the saved attempt; no local fallback was used.',
+                    ] + $exception->fieldErrors);
                 }
             });
         } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
@@ -248,10 +280,17 @@ class TripletexCustomerNumbers
         }
     }
 
+    public static function organizationNumber(?string $value): string
+    {
+        $compact = strtoupper(preg_replace('/[\s-]+/', '', (string) $value));
+
+        return preg_match('/^(?:NO)?([0-9]{9})(?:MVA)?$/D', $compact, $matches) ? $matches[1] : $compact;
+    }
+
     private function assertSelectedIdentity(array $remote, array $attributes): void
     {
         if (mb_strtolower(trim($remote['name'])) !== mb_strtolower(trim($attributes['name']))
-            || (filled($attributes['org_no'] ?? null) && trim($remote['organizationNumber'] ?? '') !== trim($attributes['org_no']))) {
+            || (filled($attributes['org_no'] ?? null) && self::organizationNumber($remote['organizationNumber'] ?? null) !== self::organizationNumber($attributes['org_no']))) {
             $this->fail('The selected Tripletex customer does not match the submitted name or organization number. Review the selected customer.');
         }
     }

@@ -58,7 +58,7 @@
                         @endforeach
                     </select>
                     @error('client_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    <div class="form-text">Saving after changing client uses the client's default site when no site is selected.</div>
+                    <div class="form-text">Saving after changing client uses the client's default site when no site is selected. Changing the client hides this ticket from the customer portal. No customer notification is sent by the transfer.</div>
                 </div>
 
                 <div class="col-md-6">

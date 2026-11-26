@@ -35,7 +35,7 @@
 
                     <!-- Cost EX vat -->
                     <div class="col-md-2 mb-3">
-                        <x-forms.input_text name="cost" labelName="Cost:" type="number" value="{{$cost->cost ?? ''}}" inputVar="required"></x-forms.input_text>
+                        <x-forms.input_text name="cost" labelName="Cost:" type="number" min="0" step="0.0001" value="{{$cost->cost ?? ''}}" inputVar="required"></x-forms.input_text>
                     </div>
 
                     <!-- Cost PR. User, Client? -->

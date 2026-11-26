@@ -42,6 +42,7 @@
        id="{{ $name }}"
        name="{{ $name }}"
        value="{{ $value ?? '' }}"
+       {{ $attributes->only(['min', 'step']) }}
        placeholder="{{ $placeholder ?? '' }}"
         {{ $enabled ?? "enabled" }}
         {{ $inputVar ?? '' }}

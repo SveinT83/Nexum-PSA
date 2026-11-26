@@ -229,7 +229,9 @@
       "responses": {
         "201": "ClientApiRecordResponse",
         "202": "ClientApiUnresolvedCommand",
-        "200": "ClientApiRegistrationChoices"
+        "200": "ClientApiRegistrationOutcome",
+        "409": "ClientApiRegistrationConflict",
+        "422": "ClientApiRegistrationValidation"
       }
     },
     {
@@ -844,6 +846,22 @@
       "responses": {
         "200": "ClientApiRegistrationChoices"
       }
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/clients/{client}/tripletex/merge",
+      "name": "api.v1.clients.tripletex.merge",
+      "operationId": "mergeTripletexCustomer",
+      "request": "ClientApiTripletexMergeInput",
+      "response": "ClientApiTripletexMergeResult",
+      "required_key": true,
+      "required_revision": false,
+      "scopes": [
+        "clients.read",
+        "clients.update"
+      ],
+      "portal": false,
+      "list": false
     }
   ],
   "schemas": {
@@ -1341,7 +1359,8 @@
         },
         "client_number": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "Customer number, not UUID. Local mode: exactly five digits. With Tripletex authority omit this field; Tripletex supplies the number."
         },
         "org_no": {
           "type": "string",
@@ -1349,7 +1368,8 @@
         },
         "billing_email": {
           "type": "string",
-          "nullable": true
+          "nullable": true,
+          "description": "For a selected Tripletex customer, submit billing_email only for an explicitly reviewed invoice address. Otherwise leave it empty. For ordinary new-customer creation: Explicit invoice email wins. On creation only, blank or omitted values use primary_contact.email. PRIVATE customers without any email use MANUAL in Tripletex."
         },
         "website": {
           "type": "string",
@@ -1361,7 +1381,8 @@
         },
         "client_format_id": {
           "type": "integer",
-          "nullable": true
+          "nullable": true,
+          "description": "Installation-specific format ID; code PRIVATE maps to Tripletex isPrivateIndividual=true on creation."
         },
         "sales_category_id": {
           "type": "integer",
@@ -1415,14 +1436,17 @@
           "type": "boolean"
         },
         "tripletex_number_mode": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Set true when context number.authority is tripletex. This does not enable a provider connection."
         },
         "tripletex_request_key": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Stable UUID identifying the Tripletex creation attempt, not the customer number. Preserve and reconcile on uncertain outcome."
         },
         "tripletex_customer_id": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Existing Tripletex internal customer ID after authorized lookup; not customerNumber. Do not put a customer number here."
         },
         "confirm_distinct": {
           "type": "boolean",
@@ -2606,15 +2630,20 @@
       }
     },
     "ClientApiProviderProfileResponse": {
-      "type": "object",
+      "required": [
+        "data"
+      ],
       "properties": {
+        "connection_id": {
+          "description": "Active connection for staff permitted to pair customers.",
+          "type": "string",
+          "format": "uuid"
+        },
         "data": {
           "$ref": "#/components/schemas/ClientApiProviderProfile"
         }
       },
-      "required": [
-        "data"
-      ]
+      "type": "object"
     },
     "ClientApiRmmOption": {
       "type": "object",
@@ -2745,7 +2774,8 @@
             "items": {
               "type": "string"
             }
-          }
+          },
+          "description": "Field validation messages, including reviewed Tripletex customer-create errors. Provider invoiceSendMethod uses the literal key tripletex.invoiceSendMethod. Raw provider values and bodies are excluded."
         }
       },
       "required": [
@@ -3229,8 +3259,15 @@
       ]
     },
     "ClientApiProviderCustomerList": {
-      "type": "object",
+      "required": [
+        "data"
+      ],
       "properties": {
+        "connection_id": {
+          "description": "Active connection for staff permitted to pair customers.",
+          "type": "string",
+          "format": "uuid"
+        },
         "data": {
           "type": "array",
           "items": {
@@ -3282,9 +3319,7 @@
           "nullable": true
         }
       },
-      "required": [
-        "data"
-      ]
+      "type": "object"
     },
     "ClientApiAsset": {
       "type": "object",
@@ -3916,8 +3951,27 @@
       }
     },
     "ClientApiRegistrationCandidate": {
-      "type": "object",
+      "required": [
+        "action",
+        "id",
+        "number",
+        "name",
+        "org_no",
+        "matched_fields"
+      ],
       "properties": {
+        "merge_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "review_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "connection_id": {
+          "type": "string",
+          "format": "uuid"
+        },
         "action": {
           "type": "string",
           "enum": [
@@ -3950,14 +4004,7 @@
           }
         }
       },
-      "required": [
-        "action",
-        "id",
-        "number",
-        "name",
-        "org_no",
-        "matched_fields"
-      ]
+      "type": "object"
     },
     "ClientApiRegistrationChoices": {
       "type": "object",
@@ -3979,6 +4026,153 @@
       "required": [
         "state",
         "candidates"
+      ]
+    },
+    "ClientApiTripletexMergeResult": {
+      "properties": {
+        "client_id": {
+          "type": "integer"
+        },
+        "tripletex_customer_id": {
+          "type": "integer"
+        },
+        "client_number": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "replayed": {
+          "type": "boolean"
+        },
+        "operation_id": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ClientApiTripletexMergeInput": {
+      "required": [
+        "connection_id",
+        "customer_id",
+        "expected_local",
+        "expected_remote",
+        "accept_change"
+      ],
+      "properties": {
+        "connection_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "customer_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "expected_local": {
+          "type": "string",
+          "nullable": true
+        },
+        "expected_remote": {
+          "type": "string"
+        },
+        "accept_change": {
+          "type": "boolean",
+          "enum": [
+            true
+          ]
+        }
+      },
+      "type": "object",
+      "additionalProperties": false
+    },
+    "ClientApiRegistrationOutcome": {
+      "oneOf": [
+        {
+          "$ref": "#/components/schemas/ClientApiRegistrationChoices"
+        },
+        {
+          "$ref": "#/components/schemas/ClientApiExistingRegistration"
+        }
+      ]
+    },
+    "ClientApiExistingRegistration": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/ClientApiRecordResponse"
+        },
+        {
+          "required": [
+            "state",
+            "registration_applied"
+          ],
+          "properties": {
+            "state": {
+              "type": "string",
+              "enum": [
+                "use_existing"
+              ]
+            },
+            "registration_applied": {
+              "type": "boolean",
+              "enum": [
+                false
+              ]
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "ClientApiRegistrationConflict": {
+      "oneOf": [
+        {
+          "$ref": "#/components/schemas/ClientApiRegistrationChoices"
+        },
+        {
+          "$ref": "#/components/schemas/ClientApiError"
+        }
+      ]
+    },
+    "ClientApiRegistrationValidation": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/ClientApiError"
+        },
+        {
+          "properties": {
+            "state": {
+              "type": "string",
+              "enum": [
+                "selection_required"
+              ]
+            },
+            "lookup_url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "provider_candidates": {
+              "type": "array",
+              "items": {
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "number": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "org_no": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
       ]
     }
   },

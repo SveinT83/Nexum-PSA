@@ -140,6 +140,39 @@ class PortalTicketApiTest extends TestCase
         $this->getJson(route('api.v1.portal.tickets.attachments.download', [$ticket, $file]))->assertNotFound();
     }
 
+    public function test_transferred_attachment_url_is_denied_to_both_portal_accounts(): void
+    {
+        [$old, $oldSite, , $oldUser] = $this->portalFixture('old-transfer@example.test');
+        [$new, $newSite, , $newUser] = $this->portalFixture('new-transfer@example.test');
+        $tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $tech->assignRole(\Spatie\Permission\Models\Role::findOrCreate('Tech', 'web'));
+        foreach (['ticket.update', 'client.view'] as $permission) {
+            $tech->givePermissionTo(\Spatie\Permission\Models\Permission::findOrCreate($permission, 'web'));
+        }
+        $ticket = app(\App\Modules\Ticket\Actions\StoreTicket::class)->handle(['subject' => 'Transfer attachment',
+            'client_id' => $old->id, 'site_id' => $oldSite->id], $tech);
+        $ticket->forceFill(['portal_visible_at' => now()])->save();
+        $message = $ticket->messages()->create(['type' => 'customer_reply', 'visibility' => 'public', 'body' => 'Test attachment']);
+        $file = $ticket->attachments()->create(['ticket_message_id' => $message->id, 'source' => 'upload',
+            'filename' => 'transfer.txt', 'disk' => 'local', 'path' => 'portal-api/transfer.txt']);
+        $url = route('api.v1.portal.tickets.attachments.download', [$ticket, $file]);
+        Storage::fake('local');
+        Storage::disk('local')->put('portal-api/transfer.txt', 'Test file');
+        Sanctum::actingAs($oldUser, ['portal.tickets.attachments.download']);
+        $this->get($url)->assertOk()->assertDownload();
+        Sanctum::actingAs($tech, ['tickets.update', 'clients.read']);
+        $fields = ['client_id' => $new->id, 'site_id' => $newSite->id];
+        $revision = $this->postJson(route('api.v1.tickets.client-transfer.preview', $ticket), $fields)
+            ->assertOk()->json('data.revision');
+        $this->postJson(route('api.v1.tickets.client-transfer.store', $ticket),
+            $fields + ['revision' => $revision, 'idempotency_key' => 'portal-transfer-check'])->assertOk();
+        foreach ([$oldUser, $newUser] as $user) {
+            Sanctum::actingAs($user, ['portal.tickets.read', 'portal.tickets.attachments.download']);
+            $this->getJson(route('api.v1.portal.tickets.show', $ticket))->assertNotFound();
+            $this->getJson($url)->assertNotFound();
+        }
+    }
+
     private function portalFixture(string $email): array
     {
         $client = Client::factory()->create(['name' => 'Portal Ticket Client AS']);

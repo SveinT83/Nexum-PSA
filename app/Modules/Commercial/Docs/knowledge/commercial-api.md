@@ -229,3 +229,12 @@ effective allowance including adjustments; original allowance and employee work 
 
 Documentation status: source updated; actual BookStack publication/read-back and employee
 retrieval are deferred by Svein Tore on 2026-11-09 and are not claimed complete.
+
+## Commercial MCP
+
+Connect a Streamable HTTP MCP client to `https://portal.tronderdata.no/mcp/commercial` with your own Nexum production API token. For Dev, use `https://dev.nexumpsa.eu/mcp/commercial` from the office network with your Dev token. Keep the token in your client's credential store. The tools you see depend on your token scopes and your current cost, contract and service permissions.
+
+1. List the available tools. With all three management permissions and the commercial read, create and update scopes, there are 12. Use the cost lookup for `vendors` and `units`.
+2. Create the cost and term with a separate stable `Idempotency-Key` for each. Read back the two IDs and the term's current version.
+3. Read the target service, then submit its `If-Match` revision, a stable key and the intended `costs` and `terms` lists. Reopen the service and verify the associations. A stale revision requires a fresh read.
+4. HTTP 401 means the service needs a valid personal bearer for the selected installation. Missing tools can indicate missing token scopes or native Nexum permissions. The Dev office-network restriction still applies. Staff ChatGPT discovery depends on the workspace connection and your personal credential binding.

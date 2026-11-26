@@ -11,3 +11,6 @@ ADRs document important decisions and why they were made. They should be treated
 history, not as living task lists.
 
 - [Accepted: Economy API commands and source locking](2026-10-25-economy-api-commands-and-source-locking.md) - Merged to Main; HR-2026-10-25-ECONOMY-API Reviewed.
+
+- [Scoped Commercial catalogue on Nexum Dev](2026-11-26-commercial-dev-mcp.md) — accepted for Dev.
+- [Reviewed Tripletex identity and Ticket transfer](2026-11-25-reviewed-customer-identity-and-ticket-transfer.md) — accepted for Dev on 25 November 2026.
