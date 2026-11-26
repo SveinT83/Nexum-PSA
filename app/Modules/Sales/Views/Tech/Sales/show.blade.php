@@ -1094,6 +1094,7 @@
                 'name' => $service->name,
                 'description' => $service->short_description,
                 'price' => $service->price_ex_vat,
+                'billing_cadence' => $service->billing_cycle === 'yearly' ? 'annual' : ($service->billing_cycle ?? 'monthly'),
                 'cost' => $service->costRelations->sum(fn($relation) => (float) ($relation->cost?->cost ?? 0)),
                 'vat' => 25,
             ])->values(),
@@ -1144,6 +1145,7 @@
             const search = document.getElementById('quoteCatalogSearch');
             const options = document.getElementById('quoteCatalogOptions');
             const sourceId = document.getElementById('quoteSourceId');
+            const billingCadence = document.getElementById('quoteLineBillingCadence');
             const nameInput = document.getElementById('quoteLineName');
             const descriptionInput = document.getElementById('quoteLineDescription');
             const priceInput = document.getElementById('quoteLinePrice');
@@ -1327,7 +1329,14 @@
                 });
             };
 
+            let suggestedCadence = null;
             const syncPickerVisibility = () => {
+                // Drop a service default when switching sources, preserving a seller's override.
+                if (billingCadence.value === suggestedCadence) {
+                    billingCadence.value = 'one_time';
+                }
+                suggestedCadence = null;
+
                 const isCatalogSource = sourceType.value !== 'custom';
                 pickerWrap.classList.toggle('d-none', !isCatalogSource);
                 search.required = isCatalogSource;
@@ -1346,6 +1355,10 @@
                     return;
                 }
 
+                if (selected.billing_cadence) {
+                    suggestedCadence = selected.billing_cadence;
+                    billingCadence.value = suggestedCadence;
+                }
                 nameInput.value = selected.name || '';
                 descriptionInput.value = selected.description || '';
                 priceInput.value = formatDecimal(selected.price);
@@ -1395,7 +1408,7 @@
 
                     quoteLineForm.querySelector('[name="section"]').value = button.dataset.section || 'monthly_services';
                     quoteLineForm.querySelector('[name="downstream_type"]').value = button.dataset.downstreamType || 'one_time_order';
-                    quoteLineForm.querySelector('[name="billing_cadence"]').value = button.dataset.billingCadence || 'one_time';
+                    billingCadence.value = button.dataset.billingCadence || 'one_time';
                     nameInput.value = button.dataset.name || '';
                     descriptionInput.value = button.dataset.description || '';
                     quantityInput.value = button.dataset.quantity || '1';
