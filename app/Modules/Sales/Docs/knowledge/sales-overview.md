@@ -45,6 +45,14 @@ Legacy recurring-contract and Monthly services lines are classified as monthly d
 For an existing draft, select **Edit** on the line, check **Billing cadence**, and select
 **Save line** to correct it. The saved cadence is kept when you reopen a line.
 
+**Editing a saved quote line**
+
+1. Open the draft in **Edit Quote**, select **Edit** on the line, and change the quantity,
+   price, name or billing cadence. The source and catalog item identify the original line.
+2. Select **Save line**. A successful save updates that line and its totals.
+3. If validation fails, the editor reopens the same line with your entries. Read the messages
+   above **Source**, correct the indicated fields, and select **Save line** again.
+
 The draft editor also manages customer-facing version text: title, introduction, solution/scope,
 assumptions and alternatives, exclusions, next steps, and expiry. Introduction and scope appear before
 the price groups; assumptions, exclusions, and next steps appear after them. Text is escaped and

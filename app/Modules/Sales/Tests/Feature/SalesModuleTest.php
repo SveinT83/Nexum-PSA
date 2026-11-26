@@ -1230,6 +1230,56 @@ class SalesModuleTest extends TestCase
     }
 
     #[Test]
+    public function technician_can_correct_and_retry_an_invalid_edit_on_the_same_quote_line(): void
+    {
+        $sale = SalesOpportunity::query()->create([
+            'opportunity_key' => 'SO-EDIT-LINE',
+            'client_id' => Client::factory()->create()->id,
+            'owner_id' => $this->tech->id,
+            'title' => 'Quote line edit',
+            'type' => 'service_agreement',
+            'status' => 'quote_ready',
+        ]);
+        $page = route('tech.sales.show', $sale);
+        $this->actingAs($this->tech)->from($page);
+        $fields = [
+            'section' => 'monthly_services',
+            'downstream_type' => 'recurring_contract',
+            'billing_cadence' => 'monthly',
+            'name' => 'Managed access point',
+            'quantity' => '5',
+            'unit_price_ex_vat' => '49',
+            'discount_type' => 'amount',
+        ];
+        $this->post(route('tech.sales.quote.lines.store', $sale), $fields + ['source_type' => 'custom'])
+            ->assertSessionHasNoErrors();
+        $version = $sale->refresh()->currentQuoteVersion;
+        $line = $version->lines()->sole();
+        $update = route('tech.sales.quote.lines.update', [$sale, $line]);
+
+        $fields['name'] = 'Updated access point';
+        $fields['quantity'] = '0';
+        $this->post($update, $fields + ['_method' => 'PATCH'])
+            ->assertRedirect($page)
+            ->assertSessionHasErrorsIn('quoteLineEdit', ['quantity'])
+            ->assertSessionHas('quote_line_edit_id', $line->id)
+            ->assertSessionHasInput('name', 'Updated access point');
+        $this->get($page)->assertOk()->assertSee('The line could not be saved.')
+            ->assertSee('id="quoteLineEditErrors"', false);
+        $this->assertSame('Managed access point', $line->fresh()->name);
+
+        $fields['quantity'] = '6';
+        $this->post($update, $fields + ['_method' => 'PATCH'])
+            ->assertRedirect($page)->assertSessionHasNoErrors();
+        $saved = $version->lines()->sole();
+        $this->assertSame($line->id, $saved->id);
+        $this->assertSame('Updated access point', $saved->name);
+        $this->assertEquals(6, $saved->quantity);
+        $this->assertSame('monthly', $saved->billing_cadence);
+        $this->assertEquals(294, $saved->line_total_ex_vat);
+    }
+
+    #[Test]
     public function quote_editor_offers_the_catalog_service_cadence_and_saves_the_sellers_choice(): void
     {
         $client = Client::factory()->create();
