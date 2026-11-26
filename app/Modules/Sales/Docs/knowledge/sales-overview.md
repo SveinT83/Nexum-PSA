@@ -33,6 +33,18 @@ cadence and show separate ex-VAT, VAT, and inc-VAT totals. A recurring amount is
 `NOK/month`, `NOK/quarter`, or `NOK/year` and is never presented as part of a one-time customer total.
 Legacy recurring-contract and Monthly services lines are classified as monthly during upgrade.
 
+**Adding a catalog service to a draft**
+
+1. In **Sales**, open the opportunity and select **Edit Quote** on its draft.
+2. Under **Add line**, set **Source** to **Service** and select the service in **Catalog item**.
+   **Billing cadence** follows the service's billing cycle. A monthly service selects
+   **Monthly recurring charges (NOK/month)**. A yearly service selects annual charges, and a
+   one-time service selects one-time charges. You can change the cadence for this quote line.
+3. Select **Add line** and check the amount in the matching price group in **Quote Lines**.
+
+For an existing draft, select **Edit** on the line, check **Billing cadence**, and select
+**Save line** to correct it. The saved cadence is kept when you reopen a line.
+
 The draft editor also manages customer-facing version text: title, introduction, solution/scope,
 assumptions and alternatives, exclusions, next steps, and expiry. Introduction and scope appear before
 the price groups; assumptions, exclusions, and next steps appear after them. Text is escaped and

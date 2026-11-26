@@ -8,6 +8,8 @@ use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Modules\Calendar\Models\CalendarEvent;
+use App\Modules\Commercial\Models\Economy\Units;
+use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Email\Jobs\ProcessInboundRules;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailFolder;
@@ -1225,6 +1227,65 @@ class SalesModuleTest extends TestCase
         $this->postJson(route('api.v1.sales.opportunities.lost', $opportunity), [
             'lost_reason' => 'Should not be accepted.',
         ])->assertForbidden();
+    }
+
+    #[Test]
+    public function quote_editor_offers_the_catalog_service_cadence_and_saves_the_sellers_choice(): void
+    {
+        $client = Client::factory()->create();
+        $sale = SalesOpportunity::query()->create([
+            'opportunity_key' => 'SO-CADENCE',
+            'client_id' => $client->id,
+            'owner_id' => $this->tech->id,
+            'title' => 'Service cadence',
+            'type' => 'service_agreement',
+            'status' => 'quote_ready',
+        ]);
+        $this->actingAs($this->tech)->post(route('tech.sales.quote.ensure', $sale))
+            ->assertSessionHasNoErrors()->assertRedirect();
+
+        $unit = Units::query()->create(['name' => 'Device', 'short' => 'ea']);
+        foreach (['monthly', 'yearly', 'one_time'] as $cycle) {
+            Services::query()->create([
+                'name' => 'Service '.$cycle,
+                'sku' => 'SVC-'.$cycle,
+                'unitId' => $unit->id,
+                'created_by_user_id' => $this->tech->id,
+                'status' => 'active',
+                'billing_cycle' => $cycle,
+                'price_ex_vat' => 49,
+            ]);
+        }
+
+        $html = $this->get(route('tech.sales.show', $sale))->assertOk()->getContent();
+        $this->assertSame(1, preg_match('/const catalogs = (.+);/', $html, $matches));
+        $services = collect(json_decode($matches[1], true, flags: JSON_THROW_ON_ERROR)['service'])->keyBy('name');
+        foreach (['monthly' => 'monthly', 'yearly' => 'annual', 'one_time' => 'one_time'] as $cycle => $expected) {
+            $this->assertSame($expected, $services['Service '.$cycle]['billing_cadence'] ?? null);
+        }
+
+        $monthly = $services['Service monthly'];
+        $line = [
+            'source_type' => 'service',
+            'source_id' => $monthly['id'],
+            'section' => 'monthly_services',
+            'downstream_type' => 'recurring_contract',
+            'quantity' => 5,
+            'discount_type' => 'amount',
+            'billing_cadence' => $monthly['billing_cadence'],
+        ];
+        $this->post(route('tech.sales.quote.lines.store', $sale), $line)
+            ->assertSessionHasNoErrors()->assertRedirect();
+
+        $version = $sale->refresh()->currentQuoteVersion;
+        $this->get(route('sales.quotes.public.view', $version->secure_token))
+            ->assertOk()->assertSee('Monthly recurring charges')->assertSee('245,00 NOK/month')
+            ->assertDontSee('One-time charges');
+
+        $line['billing_cadence'] = 'one_time';
+        $this->post(route('tech.sales.quote.lines.store', $sale), $line)
+            ->assertSessionHasNoErrors()->assertRedirect();
+        $this->assertSame(['monthly', 'one_time'], $version->lines()->orderBy('id')->pluck('billing_cadence')->all());
     }
 
     #[Test]
