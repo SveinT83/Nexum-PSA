@@ -687,6 +687,7 @@
                                                             <button
                                                                 type="button"
                                                                 class="btn btn-sm btn-outline-primary quote-line-edit"
+                                                                data-line-id="{{ $line->getKey() }}"
                                                                 data-action="{{ route('tech.sales.quote.lines.update', [$sale, $line]) }}"
                                                                 data-source-type="{{ $line->source_type }}"
                                                                 data-source-id="{{ $line->source_id }}"
@@ -745,6 +746,18 @@
                                     <form method="POST" action="{{ route('tech.sales.quote.lines.store', $sale) }}" id="quoteLineForm" class="row g-3 align-items-end" data-store-action="{{ route('tech.sales.quote.lines.store', $sale) }}" data-store-method="POST" data-update-method="PATCH">
                                         @csrf
                                         <input type="hidden" name="_method" id="quoteLineMethod" value="POST">
+                                        @if($errors->quoteLineEdit->any())
+                                            <div id="quoteLineEditErrors" class="col-12" role="alert" tabindex="-1">
+                                                <div class="border border-danger rounded p-2">
+                                                    <strong>The line could not be saved.</strong>
+                                                    <ul class="mb-0">
+                                                        @foreach($errors->quoteLineEdit->all() as $message)
+                                                            <li>{{ $message }}</li>
+                                                        @endforeach
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        @endif
                                         <div class="col-md-3">
                                             <label class="form-label">Source</label>
                                             <select name="source_type" class="form-select" id="quoteSourceType">
@@ -1153,6 +1166,7 @@
             const vatInput = document.getElementById('quoteLineVat');
             const quoteLineForm = document.getElementById('quoteLineForm');
             const quoteLineMethod = document.getElementById('quoteLineMethod');
+            const editErrors = document.getElementById('quoteLineEditErrors');
             const quoteLineTitle = document.getElementById('quoteLineFormTitle');
             const quoteLineSubmit = document.getElementById('quoteLineSubmit');
             const editCancel = document.getElementById('quoteLineEditCancel');
@@ -1337,6 +1351,13 @@
                 }
                 suggestedCadence = null;
 
+                // Catalog identity is fixed on a saved line and is accepted only by the create route.
+                const editing = quoteLineMethod.value === 'PATCH';
+                sourceType.disabled = editing;
+                sourceId.disabled = editing;
+                search.disabled = editing;
+                if (editErrors) editErrors.hidden = true;
+
                 const isCatalogSource = sourceType.value !== 'custom';
                 pickerWrap.classList.toggle('d-none', !isCatalogSource);
                 search.required = isCatalogSource;
@@ -1401,10 +1422,8 @@
                     syncPickerVisibility();
 
                     const selected = itemBySource(button.dataset.sourceType, button.dataset.sourceId);
-                    if (selected) {
-                        search.value = selected.label;
-                        sourceId.value = selected.id;
-                    }
+                    search.value = selected?.label || button.dataset.name || '';
+                    sourceId.value = button.dataset.sourceId || '';
 
                     quoteLineForm.querySelector('[name="section"]').value = button.dataset.section || 'monthly_services';
                     quoteLineForm.querySelector('[name="downstream_type"]').value = button.dataset.downstreamType || 'one_time_order';
@@ -1444,7 +1463,26 @@
 
             editCancel?.addEventListener('click', resetLineForm);
 
-            @if(session('open_quote_modal') || $errors->any() || request()->boolean('open_quote'))
+            @if($errors->quoteLineEdit->any())
+                // Restore visible inputs only. The saved line supplies the source, action and HTTP method.
+                const failedEdit = document.querySelector('.quote-line-edit[data-line-id="{{ (int) session('quote_line_edit_id') }}"]');
+                if (failedEdit) {
+                    failedEdit.click();
+                    const attempted = @js(collect(session()->getOldInput())->except(['_token', '_method', 'source_type', 'source_id'])->all());
+                    for (const field of quoteLineForm.elements) {
+                        if (field.disabled || field.type === 'hidden' || !Object.hasOwn(attempted, field.name)) continue;
+                        if (field.type === 'checkbox') {
+                            field.checked = String(attempted[field.name]) === field.value;
+                        } else {
+                            field.value = attempted[field.name] ?? '';
+                        }
+                    }
+                    editErrors.hidden = false;
+                    document.getElementById('quoteLineModal').addEventListener('shown.bs.modal', () => editErrors.focus(), { once: true });
+                }
+            @endif
+
+            @if(session('open_quote_modal') || $errors->any() || $errors->quoteLineEdit->any() || request()->boolean('open_quote'))
                 const quoteModalElement = document.getElementById('quoteLineModal');
                 if (quoteModalElement && window.bootstrap) {
                     window.bootstrap.Modal.getOrCreateInstance(quoteModalElement).show();
