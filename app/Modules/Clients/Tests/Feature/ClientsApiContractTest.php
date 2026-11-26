@@ -41,6 +41,34 @@ class ClientsApiContractTest extends TestCase
     }
 
     #[Test]
+    public function client_creation_contract_explains_number_authority_and_preserves_legacy_header_optionality(): void
+    {
+        $this->artisan('l5-swagger:generate')->assertSuccessful();
+        $swagger = json_decode(file_get_contents(storage_path('api-docs/api-docs.json')), true, 512, JSON_THROW_ON_ERROR);
+        $operation = $swagger['paths']['/api/v1/clients']['post'];
+        $key = collect($operation['parameters'])->firstWhere('name', 'Idempotency-Key');
+        // The gateway requires a key; the official API preserves legacy simple-create compatibility.
+        $this->assertFalse($key['required']);
+        $this->assertContains('name', $swagger['components']['schemas']['ClientApiCreateInput']['required']);
+        $this->assertStringContainsString('omit client_number', $operation['summary']);
+        $this->assertStringContainsString('primary_contact.email', $operation['summary']);
+        $input = $swagger['components']['schemas']['ClientApiCreateInput']['properties'];
+        $this->assertStringContainsString('MANUAL', $input['billing_email']['description']);
+        $this->assertStringContainsString('isPrivateIndividual=true', $input['client_format_id']['description']);
+        $this->assertStringContainsString('tripletex.invoiceSendMethod', $swagger['components']['schemas']['ClientApiError']['properties']['errors']['description']);
+        $lookup = $swagger['paths']['/api/v1/clients/context/tripletex/customers']['get'];
+        $search = collect($lookup['parameters'])->firstWhere('name', 'q');
+        $this->assertSame('string', $search['schema']['type']);
+        $this->assertSame(2, $search['schema']['minLength']);
+        $this->assertSame(100, $search['schema']['maxLength']);
+        $this->assertStringContainsString('tripletex_customer_id', $lookup['summary']);
+        $this->assertStringContainsString('fresh Idempotency-Key', $operation['summary']);
+        foreach (['client_number', 'tripletex_request_key', 'tripletex_customer_id', 'billing_email'] as $field) {
+            $this->assertNotEmpty($swagger['components']['schemas']['ClientApiCreateInput']['properties'][$field]['description']);
+        }
+    }
+
+    #[Test]
     public function generated_swagger_contains_every_exact_method_and_response_schema(): void
     {
         $manifest = json_decode(file_get_contents(base_path('docs/plans/2026-10-25-clients-api-contract.json')), true, 512, JSON_THROW_ON_ERROR);

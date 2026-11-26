@@ -43,6 +43,12 @@ class AddTicketMessage
         $suppressReplyDelivery = (bool) ($data['_suppress_reply_delivery'] ?? false);
 
         return DB::transaction(function () use ($ticket, $data, $actor, $authorType, $suppressReplyDelivery) {
+            // Serialize the recipient context with ownership transfers before creating customer communication.
+            if (($data['type'] ?? null) === 'customer_reply') {
+                $current = Ticket::whereKey($ticket->id)->lockForUpdate()->firstOrFail();
+                abort_unless((int) $ticket->client_id === (int) $current->client_id, 409, 'The Ticket customer changed. Review the recipient before replying.');
+                $ticket = $current;
+            }
             $beforeOwnerId = $ticket->owner_id ? (int) $ticket->owner_id : null;
             $message = TicketMessage::create([
                 'ticket_id' => $ticket->id,

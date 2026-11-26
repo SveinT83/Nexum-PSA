@@ -33,6 +33,12 @@ class TripletexCustomerNumberTest extends TestCase
 
     private int $posts = 0;
 
+    private bool $defaultEhf = false;
+
+    private ?array $customerRejection = null;
+
+    private int $customerRejectionStatus = 422;
+
     private bool $loseResponse = false;
 
     private bool $failReadback = false;
@@ -85,6 +91,14 @@ class TripletexCustomerNumberTest extends TestCase
             }
             if ($path === '/v2/customer' && $request->method() === 'POST') {
                 $this->posts++;
+                if ($this->customerRejection !== null) {
+                    return Http::response($this->customerRejection, $this->customerRejectionStatus);
+                }
+                if ($this->defaultEhf && empty($request['organizationNumber']) && ($request['invoiceSendMethod'] ?? 'EHF') === 'EHF') {
+                    return Http::response(['code' => 18000, 'validationMessages' => [
+                        ['field' => 'organizationNumber', 'message' => 'Required for EHF'],
+                    ]], 422);
+                }
                 $id = 100 + $this->posts;
                 $this->remote[$id] = array_replace($this->customer($id, $request['customerNumber'], $request['name']), $request->data());
                 if ($this->loseResponse) {
@@ -310,6 +324,32 @@ class TripletexCustomerNumberTest extends TestCase
         $this->assertDatabaseHas('clients', ['client_number' => '100394']);
         $this->assertDatabaseCount('client_sites', 1);
         $this->assertDatabaseCount('contacts', 1);
+        $this->assertDatabaseHas('clients', ['billing_email' => 'synthetic@example.test']);
+        Http::assertSent(fn ($request) => $request->method() === 'POST' && str_ends_with($request->url(), '/customer')
+            && $request['invoiceEmail'] === 'synthetic@example.test' && $request['invoiceSendMethod'] === 'EMAIL');
+    }
+
+    /** The browser must send the same PRIVATE identity and recipient as the official API. */
+    public function test_browser_private_customer_uses_contact_invoice_fallback(): void
+    {
+        $this->defaultEhf = true;
+        $format = \App\Models\Clients\ClientFormat::where('code', 'PRIVATE')->firstOrFail();
+        $payload = $this->attributes('Synthetic browser private customer') + [
+            'suggested_client_number' => '100394', 'site_name' => 'Synthetic private site',
+            'client_format_id' => $format->id, 'user_name' => 'Synthetic private contact',
+            'user_email' => 'private-contact@example.test', 'billing_email' => '',
+        ];
+        $payload['client_number'] = '100394';
+
+        $this->post(route('tech.clients.store'), $payload)->assertRedirect(route('tech.clients.index'));
+
+        $this->assertDatabaseHas('clients', ['name' => 'Synthetic browser private customer',
+            'billing_email' => 'private-contact@example.test', 'client_format_id' => $format->id]);
+        $this->assertSame(1, $this->posts);
+        $this->assertSame('linked', TripletexCustomerLink::sole()->status);
+        Http::assertSent(fn ($request) => $request->method() === 'POST' && str_ends_with($request->url(), '/customer')
+            && ($request['isPrivateIndividual'] ?? null) === true && $request['invoiceSendMethod'] === 'EMAIL'
+            && $request['invoiceEmail'] === 'private-contact@example.test');
     }
 
     public function test_api_create_and_update_enforce_same_authority(): void
@@ -558,6 +598,213 @@ class TripletexCustomerNumberTest extends TestCase
             && $request['invoiceEmail'] === 'billing@example.test' && ! isset($request['notes']) && ! isset($request['email']));
     }
 
+    public function test_api_customer_without_org_uses_supplied_invoice_email_instead_of_default_ehf(): void
+    {
+        $this->defaultEhf = true;
+        Sanctum::actingAs($this->user, ['clients.create']);
+        $response = $this->postJson('/api/v1/clients', $this->attributes() + ['billing_email' => 'billing@example.test']);
+        $response->assertCreated()->assertJsonPath('data.client_number', '100394');
+        $this->assertSame(1, $this->posts);
+        $this->assertSame('linked', TripletexCustomerLink::sole()->status);
+        Http::assertSent(fn ($request) => $request->method() === 'POST' && str_ends_with($request->url(), '/customer')
+            && $request['invoiceSendMethod'] === 'EMAIL' && $request['invoiceEmail'] === 'billing@example.test');
+    }
+
+    public function test_customer_with_org_preserves_provider_invoice_default(): void
+    {
+        $this->defaultEhf = true;
+        $this->create($this->attributes() + ['org_no' => '123456789', 'billing_email' => 'billing@example.test']);
+        $this->assertSame(1, $this->posts);
+        Http::assertSent(fn ($request) => $request->method() === 'POST' && str_ends_with($request->url(), '/customer')
+            && $request['organizationNumber'] === '123456789' && ! isset($request['invoiceSendMethod']));
+    }
+
+    public function test_customer_transport_rejects_unapproved_invoice_method_before_http(): void
+    {
+        try {
+            (new \App\Modules\Integration\Services\Tripletex\TripletexClient($this->connection))->createCustomer([
+                'name' => 'Synthetic customer', 'customerNumber' => 100394,
+                'invoiceEmail' => 'billing@example.test', 'invoiceSendMethod' => 'EHF',
+            ]);
+            $this->fail('Unsupported invoice method accepted');
+        } catch (TripletexException $exception) {
+            $this->assertSame('invalid_customer_payload', $exception->reason);
+        }
+        Http::assertNothingSent();
+    }
+
+    /** Numeric format IDs differ by installation; the stable PRIVATE code is authoritative. */
+    public function test_api_private_format_sends_boolean_flag_and_explicit_invoice_email(): void
+    {
+        $format = \App\Models\Clients\ClientFormat::where('code', 'PRIVATE')->firstOrFail();
+        $format->setAttribute('id', 73)->save();
+        $this->defaultEhf = true;
+        Sanctum::actingAs($this->user, ['clients.create']);
+        $payload = $this->attributes() + ['client_format_id' => $format->id, 'billing_email' => 'invoice@example.test'];
+        $this->postJson('/api/v1/clients', $payload)->assertCreated();
+        Http::assertSent(fn ($request) => $request->method() === 'POST' && str_ends_with($request->url(), '/customer')
+            && ($request['isPrivateIndividual'] ?? null) === true && $request['invoiceSendMethod'] === 'EMAIL'
+            && $request['invoiceEmail'] === 'invoice@example.test');
+        $this->assertSame(1, $this->posts);
+        $this->assertSame('linked', TripletexCustomerLink::sole()->status);
+    }
+
+    public function test_api_private_customer_without_any_email_uses_manual_and_persists_no_email(): void
+    {
+        $this->defaultEhf = true;
+        $format = \App\Models\Clients\ClientFormat::where('code', 'PRIVATE')->firstOrFail();
+        Sanctum::actingAs($this->user, ['clients.create']);
+        foreach ([null, ''] as $index => $email) {
+            $response = $this->postJson('/api/v1/clients', $this->attributes('No email '.$index)
+                + ['client_format_id' => $format->id, 'billing_email' => $email])->assertCreated();
+            $this->assertNull(Client::findOrFail($response->json('data.id'))->billing_email);
+        }
+        Http::assertSent(fn ($request) => $request->method() === 'POST' && str_ends_with($request->url(), '/customer')
+            && ($request['isPrivateIndividual'] ?? null) === true && $request['invoiceSendMethod'] === 'MANUAL'
+            && ! isset($request['invoiceEmail']) && ! isset($request['email']));
+        $this->assertSame(2, $this->posts);
+        $this->assertSame(2, TripletexCustomerLink::where('status', 'linked')->count());
+    }
+
+    public function test_selected_import_keeps_invoice_and_primary_contact_separate(): void
+    {
+        Sanctum::actingAs($this->user, ['clients.create', 'clients.read']);
+        foreach ([[null, null], [null, ''], [null, 'billing@example.test'], ['987654321', null], ['987654321', 'orgbilling@example.test']] as $index => [$org, $invoice]) {
+            $id = 30 + $index;
+            $name = 'Selected customer '.$index;
+            $this->remote[$id] = $this->customer($id, 100420 + $index, $name);
+            $this->remote[$id]['organizationNumber'] = $org ?? '';
+            $contact = 'primary'.$index.'@example.test';
+            $input = $this->attributes($name) + ['tripletex_customer_id' => $id, 'org_no' => $org,
+                'primary_contact' => ['display_name' => 'Main contact', 'email' => $contact]];
+            if ($invoice !== null) {
+                $input['billing_email'] = $invoice;
+            }
+            $result = $this->postJson('/api/v1/clients', $input, ['Idempotency-Key' => (string) Str::uuid()])->assertCreated();
+            $this->assertSame($invoice ?: null, Client::findOrFail($result->json('data.id'))->billing_email);
+            $this->assertDatabaseHas('contact_emails', ['email' => $contact]);
+        }
+        $this->assertSame(0, $this->posts);
+    }
+
+    public function test_browser_selected_import_without_invoice_keeps_contact_address_only_on_contact(): void
+    {
+        $input = $this->attributes('Existing provider customer') + ['tripletex_customer_id' => 10,
+            'site_name' => 'Main office', 'user_name' => 'Main contact', 'user_email' => 'operator@example.test'];
+        $this->post(route('tech.clients.store'), $input)->assertSessionHasNoErrors()->assertRedirect(route('tech.clients.index'));
+        $this->assertNull(Client::sole()->billing_email);
+        $this->assertDatabaseHas('contact_emails', ['email' => 'operator@example.test']);
+        $this->assertSame(0, $this->posts);
+    }
+
+    public function test_api_private_billing_email_falls_back_to_contact_but_explicit_address_wins(): void
+    {
+        $this->defaultEhf = true;
+        $format = \App\Models\Clients\ClientFormat::where('code', 'PRIVATE')->firstOrFail();
+        Sanctum::actingAs($this->user, ['clients.create']);
+        foreach ([null, '', 'explicit@example.test'] as $index => $billing) {
+            $contact = 'contact'.$index.'@example.test';
+            $expected = filled($billing) ? $billing : $contact;
+            $payload = $this->attributes('Contact fallback '.$index) + ['client_format_id' => $format->id,
+                'billing_email' => $billing, 'primary_contact' => ['display_name' => 'Synthetic contact', 'email' => $contact]];
+            $response = $this->postJson('/api/v1/clients', $payload, ['Idempotency-Key' => (string) Str::uuid()])
+                ->assertCreated()->assertJsonPath('data.billing_email', $expected);
+            $this->assertSame($expected, Client::findOrFail($response->json('data.id'))->billing_email);
+            Http::assertSent(fn ($request) => $request->method() === 'POST' && str_ends_with($request->url(), '/customer')
+                && ($request['isPrivateIndividual'] ?? null) === true && $request['invoiceSendMethod'] === 'EMAIL'
+                && $request['invoiceEmail'] === $expected && ! isset($request['email']));
+            $this->assertDatabaseHas('contact_emails', ['email' => $contact]);
+        }
+        $this->assertSame(3, $this->posts);
+    }
+
+    public function test_manual_payload_is_limited_to_private_customers_without_invoice_email(): void
+    {
+        foreach ([['isPrivateIndividual' => false], ['invoiceEmail' => 'invoice@example.test', 'isPrivateIndividual' => true]] as $invalid) {
+            try {
+                (new \App\Modules\Integration\Services\Tripletex\TripletexClient($this->connection))->createCustomer([
+                    'name' => 'Synthetic manual', 'customerNumber' => 100394, 'invoiceSendMethod' => 'MANUAL',
+                ] + $invalid);
+                $this->fail('Unapproved MANUAL combination accepted');
+            } catch (TripletexException $error) {
+                $this->assertSame('invalid_customer_payload', $error->reason);
+            }
+        }
+        Http::assertNothingSent();
+    }
+
+    public function test_company_format_does_not_become_private(): void
+    {
+        $format = \App\Models\Clients\ClientFormat::where('code', 'AS')->firstOrFail();
+        $this->create($this->attributes() + ['client_format_id' => $format->id, 'org_no' => '123456789']);
+        Http::assertSent(fn ($request) => $request->method() === 'POST' && str_ends_with($request->url(), '/customer')
+            && ! ($request['isPrivateIndividual'] ?? false) && ! isset($request['invoiceSendMethod']));
+    }
+
+    public function test_private_flag_payload_rejects_non_boolean_before_http(): void
+    {
+        foreach (['true', 1, null, []] as $invalid) {
+            try {
+                (new \App\Modules\Integration\Services\Tripletex\TripletexClient($this->connection))->createCustomer([
+                    'name' => 'Synthetic customer', 'customerNumber' => 100394, 'isPrivateIndividual' => $invalid,
+                ]);
+                $this->fail('Non-boolean private flag accepted');
+            } catch (TripletexException $exception) {
+                $this->assertSame('invalid_customer_payload', $exception->reason);
+            }
+        }
+        Http::assertNothingSent();
+    }
+
+    public function test_provider_field_errors_reach_api_without_raw_body_and_keyed_replay_never_posts(): void
+    {
+        $this->customerRejection = ['message' => 'SECRET top level', 'requestId' => 'SECRET request',
+            'validationMessages' => [
+                ['field' => 'postalAddress', 'message' => 'Må fylles ut ved bruk av EHF', 'value' => 'SECRET value'],
+                ['field' => 'invoiceSendMethod', 'message' => 'Kunden kan ikke motta EHF-dokumenter'],
+                ['field' => 'invoiceEmail', 'message' => 'SECRET arbitrary provider text'],
+                ['field' => 'accessToken', 'message' => 'SECRET token'],
+            ]];
+        Sanctum::actingAs($this->user, ['clients.create']);
+        $payload = $this->attributes() + ['billing_email' => 'invoice@example.test'];
+        $headers = ['Idempotency-Key' => (string) Str::uuid()];
+        $response = $this->postJson('/api/v1/clients', $payload, $headers)->assertUnprocessable()
+            ->assertJsonValidationErrors(['client_number', 'site_address', 'tripletex.invoiceSendMethod', 'billing_email'])
+            ->assertJsonPath('errors.site_address.0', 'Tripletex requires this field for EHF invoicing.')
+            ->assertJsonPath('errors.billing_email.0', 'Tripletex rejected this field. Review the supplied value.');
+        $this->assertSame('This customer cannot receive EHF documents.', $response->json('errors')['tripletex.invoiceSendMethod'][0]);
+        $this->assertStringNotContainsString('SECRET', $response->getContent());
+        $this->assertStringNotContainsString('accessToken', $response->getContent());
+        $this->assertDatabaseCount('clients', 0);
+        $this->assertDatabaseCount('client_sites', 0);
+        $this->assertSame('rejected', TripletexCustomerLink::sole()->status);
+        $this->assertNull(TripletexCustomerLink::sole()->customer_id);
+        $this->assertSame('request_failed', TripletexCustomerLink::sole()->error_code);
+        $this->assertSame('rejected', \App\Modules\Clients\Models\ClientApiCommand::sole()->state);
+        $this->postJson('/api/v1/clients', $payload, $headers)->assertAccepted()->assertJsonPath('state', 'rejected');
+        $this->assertSame(1, $this->posts);
+    }
+
+    public function test_malformed_provider_errors_remain_generic_and_server_errors_remain_unknown(): void
+    {
+        Sanctum::actingAs($this->user, ['clients.create']);
+        foreach ([422, 503] as $status) {
+            $this->customerRejectionStatus = $status;
+            $this->customerRejection = ['message' => 'SECRET', 'validationMessages' => [
+                null, 'SECRET', ['field' => ['name'], 'message' => 'SECRET'],
+                ['field' => 'name', 'message' => ['SECRET']], ['field' => 'unknown', 'message' => 'SECRET'],
+            ]];
+            $response = $this->postJson('/api/v1/clients', $this->attributes('Synthetic '.$status),
+                ['Idempotency-Key' => (string) Str::uuid()])->assertUnprocessable();
+            $this->assertSame(['client_number'], array_keys($response->json('errors')));
+            $this->assertStringNotContainsString('SECRET', $response->getContent());
+            $state = TripletexCustomerLink::latest('id')->first();
+            $this->assertSame($status === 422 ? 'rejected' : 'sending', $state->status);
+        }
+        $this->assertSame(2, $this->posts);
+        $this->assertDatabaseCount('clients', 0);
+    }
+
     public function test_explicit_review_can_finish_verified_orphan_without_original_form(): void
     {
         try {
@@ -585,6 +832,7 @@ class TripletexCustomerNumberTest extends TestCase
         $this->expectException(ValidationException::class);
         $this->create($attributes);
     }
+
     /** A definitive duplicate preflight must let the operator choose the existing identity. */
     public function test_browser_duplicate_can_be_selected_without_reusing_the_rejected_payload_key(): void
     {
@@ -614,6 +862,10 @@ class TripletexCustomerNumberTest extends TestCase
         $this->assertDatabaseCount('client_sites', 1);
         $this->assertDatabaseCount('contacts', 1);
         $this->assertDatabaseHas('clients', ['client_number' => '100393', 'name' => $payload['name']]);
+        $repeat = array_replace($payload, ['tripletex_customer_id' => 10, 'tripletex_request_key' => (string) Str::uuid()]);
+        $this->post(route('tech.clients.store'), $repeat)->assertRedirect(route('tech.clients.show', Client::sole()));
+        $this->assertDatabaseCount('clients', 1);
+        $this->assertDatabaseCount('contacts', 1);
         $this->assertSame('prepared', $attempt->fresh()->status);
         $this->assertDatabaseHas('tripletex_customer_links', ['customer_id' => 10, 'status' => 'linked']);
     }
@@ -624,7 +876,8 @@ class TripletexCustomerNumberTest extends TestCase
         $payload = $this->attributes('Existing provider customer');
         $headers = ['Idempotency-Key' => (string) Str::uuid()];
         $this->postJson('/api/v1/clients', $payload, $headers)->assertUnprocessable()
-            ->assertJsonValidationErrors('tripletex_customer_id');
+            ->assertJsonValidationErrors('tripletex_customer_id')->assertJsonPath('state', 'selection_required')
+            ->assertJsonPath('provider_candidates.0.id', 10);
         $this->postJson('/api/v1/clients', $payload, $headers)->assertAccepted()->assertJsonPath('state', 'rejected');
         $this->getJson('/api/v1/clients/context/tripletex/customers?q=EXISTING')->assertOk()
             ->assertJsonPath('total', 1)->assertJsonPath('data.0.id', 10)->assertJsonMissingPath('data.0.email');
@@ -641,6 +894,12 @@ class TripletexCustomerNumberTest extends TestCase
         $this->assertDatabaseCount('clients', 1);
         $this->assertDatabaseCount('client_sites', 1);
         $this->assertDatabaseCount('contacts', 0);
+        $otherAttempt = array_replace($payload, ['tripletex_request_key' => (string) Str::uuid()]);
+        $this->postJson('/api/v1/clients', $otherAttempt, ['Idempotency-Key' => (string) Str::uuid()])
+            ->assertOk()->assertJsonPath('state', 'use_existing')->assertJsonPath('registration_applied', false)
+            ->assertJsonPath('data.id', $response->json('data.id'));
+        $this->assertDatabaseCount('clients', 1);
+        $this->assertSame(0, $this->posts);
         $this->assertSame(1, TripletexCustomerLink::where('status', 'linked')->count());
     }
 
@@ -731,6 +990,67 @@ class TripletexCustomerNumberTest extends TestCase
         $this->assertSame(1, $this->posts);
         $this->assertSame('sending', TripletexCustomerLink::sole()->status);
         $this->assertDatabaseCount('clients', 0);
+    }
+
+    public function test_technician_can_review_one_customer_pair_without_general_administration_access(): void
+    {
+        $client = Client::create(['name' => 'Reviewed local card', 'active' => true, 'client_number' => '123']);
+        $other = Client::create(['name' => 'Unrelated private card', 'active' => true, 'client_number' => '124']);
+        $pair = ['connection' => $this->connection->id, 'client_id' => $client->id, 'customer_id' => 10];
+        $review = route('tech.clients.tripletex.review', $pair);
+        $save = route('tech.clients.tripletex.link', $this->connection->id);
+        $this->get($review)->assertOk()->assertSee($client->name)->assertSee('Existing provider customer')
+            ->assertSee('Save reviewed link')->assertDontSee($other->name);
+        $body = ['client_id' => $client->id, 'customer_id' => 10, 'expected_local' => '123', 'expected_remote' => '100393'];
+        $this->from($review)->post($save, $body)->assertSessionHasErrors('accept_change');
+        $this->assertSame('123', (string) $client->fresh()->client_number);
+        $this->post($save, $body + ['accept_change' => '1'])->assertRedirect(route('tech.clients.show', $client));
+        $this->assertSame('100393', (string) $client->fresh()->client_number);
+        $this->assertSame(0, $this->posts);
+        $this->user->revokePermissionTo('integration.tripletex_manage');
+        $this->get($review)->assertForbidden();
+        $this->post($save, $body + ['accept_change' => '1'])->assertForbidden();
+    }
+
+    public function test_reviewed_provider_merge_reuses_the_client_and_denies_conflicts_and_missing_rights(): void
+    {
+        $this->remote[10]['organizationNumber'] = '987654321';
+        $client = Client::create(['name' => 'Local customer', 'active' => true, 'client_number' => '123', 'org_no' => 'NO 987 654 321 MVA']);
+        $url = '/api/v1/clients/'.$client->id.'/tripletex/merge';
+        $body = ['connection_id' => $this->connection->id, 'customer_id' => 10, 'expected_local' => '123',
+            'expected_remote' => '100393', 'accept_change' => true];
+        $key = ['Idempotency-Key' => 'reviewed-pair-001'];
+        Sanctum::actingAs($this->user, ['clients.create', 'clients.read', 'clients.update']);
+        $this->getJson('/api/v1/clients/context/tripletex/customers?q=100393')->assertOk()
+            ->assertJsonPath('connection_id', $this->connection->id)->assertJsonPath('data.0.id', 10);
+        $choices = $this->postJson('/api/v1/clients/context/registration-candidates', ['org_no' => '987654321'])
+            ->assertOk()->assertJsonPath('candidates.0.id', $client->id)->assertJsonPath('candidates.1.id', 10);
+        $this->assertSame(url($url), $choices->json('candidates.0.merge_url'));
+        $this->assertSame($this->connection->id, $choices->json('candidates.1.connection_id'));
+
+        $this->postJson('/api/v1/clients', $this->attributes('New attempt') + ['org_no' => '987654321'],
+            ['Prefer' => 'handling=strict', 'Idempotency-Key' => 'new-with-matches'])->assertConflict()
+            ->assertJsonPath('state', 'selection_required')->assertJsonCount(2, 'candidates');
+
+        $this->postJson($url, $body, $key)->assertOk()->assertJsonPath('state', 'linked')->assertJsonPath('client_id', $client->id);
+        $this->postJson($url, $body, $key)->assertOk()->assertJsonPath('replayed', true);
+        $this->postJson($url, $body, ['Idempotency-Key' => 'same-pair-new-key'])->assertOk()->assertJsonPath('client_id', $client->id);
+        $this->assertSame('100393', (string) $client->refresh()->client_number);
+        $this->assertSame('Local customer', $client->name);
+        $this->assertDatabaseCount('clients', 1);
+        $this->assertDatabaseCount('tripletex_customer_links', 1);
+        $this->assertSame(0, $this->posts);
+
+        $other = Client::create(['name' => 'Another customer', 'active' => true, 'client_number' => '456', 'org_no' => '111111111']);
+        $this->postJson('/api/v1/clients/'.$other->id.'/tripletex/merge', array_replace($body, ['expected_local' => '456']),
+            ['Idempotency-Key' => 'conflicting-customer'])->assertConflict();
+        $this->assertSame('456', (string) $other->refresh()->client_number);
+
+        Sanctum::actingAs($this->user, ['clients.read']);
+        $this->postJson($url, $body, $key)->assertForbidden();
+        $this->user->revokePermissionTo('integration.tripletex_manage');
+        Sanctum::actingAs($this->user, ['clients.read', 'clients.update']);
+        $this->postJson($url, $body, $key)->assertForbidden();
     }
 
     public function test_api_existing_customer_lookup_requires_scope_current_permission_and_active_sync(): void

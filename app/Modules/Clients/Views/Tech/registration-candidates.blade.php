@@ -47,6 +47,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 element.addEventListener('click', () => form.dispatchEvent(new CustomEvent('registration:select-provider', {detail: choice})));
             }
             list.append(element);
+            if (choice.review_url) {
+                const matches = choices.filter(candidate => candidate.merge_url && candidate.matched_fields.some(field => choice.matched_fields.includes(field)));
+                for (const candidate of matches) {
+                    const link = document.createElement('a');
+                    const url = new URL(choice.review_url);
+                    url.searchParams.set('client_id', candidate.id);
+                    link.href = url.toString();
+                    link.className = 'list-group-item list-group-item-action';
+                    link.textContent = 'Review link: ' + candidate.name + ' (' + candidate.number + ') to Tripletex ' + choice.name + ' (' + choice.number + ')';
+                    list.append(link);
+                }
+            }
         }
     }
 
@@ -55,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = {};
         for (const [key, name] of Object.entries(fields)) {
             const input = form.elements[name];
+            if (!input) continue;
             const value = input.value.trim();
             if (key === 'phone' && value.replace(/\D/g, '').length < 7) continue;
             if (key === 'org_no' && value.replace(/[\s-]/g, '').length < 6) continue;
@@ -80,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 500);
     }
 
-    Object.values(fields).forEach(name => form.elements[name].addEventListener('input', search));
+    Object.values(fields).forEach(name => form.elements[name]?.addEventListener('input', search));
     form.addEventListener('registration:provider-selected', reset);
     document.getElementById('tripletex-customer-clear')?.addEventListener('click', search);
     const initial = @json(session('registration_candidates', []));

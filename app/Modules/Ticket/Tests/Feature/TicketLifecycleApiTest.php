@@ -75,6 +75,8 @@ class TicketLifecycleApiTest extends TestCase
 
     public function test_patch_can_choose_verified_client_contact_site_and_sla(): void
     {
+        $this->tech->givePermissionTo('client.view');
+        Sanctum::actingAs($this->tech, ['tickets.update', 'clients.read', 'tickets.read']);
         $ticket = $this->ticket();
         [$client, $site, $contact] = $this->client();
         $sla = Sla::create(['name' => 'API SLA', 'description' => 'Test policy', 'is_default' => false,
@@ -185,8 +187,69 @@ class TicketLifecycleApiTest extends TestCase
         $this->getJson(route('api.v1.tickets.lifecycle-state.show', $source))->assertOk()->assertJsonPath('data.merged_into_ticket_id', $target->id);
     }
 
+    public function test_reviewed_transfer_hides_the_ticket_keeps_its_history_and_rejects_wrong_customer_context(): void
+    {
+        [$source, $oldSite, $oldContact] = $this->client();
+        [$target, $site, $contact] = $this->client();
+        $ticket = app(StoreTicket::class)->handle(['subject' => 'Transfer example', 'client_id' => $source->id,
+            'site_id' => $oldSite->id, 'contact_id' => $oldContact->id, 'owner_id' => $this->tech->id], $this->tech);
+        $ticket->forceFill(['portal_visible_at' => now(), 'portal_visible_by' => $this->tech->id])->save();
+        $message = $this->reply($ticket);
+        $attachment = $ticket->attachments()->create(['ticket_message_id' => $message->id, 'disk' => 'local',
+            'path' => 'synthetic/transfer.txt', 'filename' => 'transfer.txt', 'source' => 'upload']);
+        $time = \App\Modules\Ticket\Models\TicketTimeEntry::create(['ticket_id' => $ticket->id, 'user_id' => $this->tech->id,
+            'work_date' => now()->toDateString(), 'minutes' => 15, 'billable' => false, 'billing_status' => 'pending',
+            'timebank_status' => 'pending', 'billing_basis' => 'without_contract', 'invoice_text' => 'Synthetic time']);
+        $oldAsset = \App\Models\Tech\Work\Assets\Asset::create(['client_id' => $source->id, 'site_id' => $oldSite->id,
+            'name' => 'Old customer laptop', 'type' => 'computer', 'ip_type' => 'dhcp', 'status' => 'online']);
+        $preview = route('api.v1.tickets.client-transfer.preview', $ticket);
+        $apply = route('api.v1.tickets.client-transfer.store', $ticket);
+        $fields = ['client_id' => $target->id, 'site_id' => $site->id, 'contact_id' => $contact->id];
+        $this->postJson($preview, $fields)->assertForbidden();
+        $this->tech->givePermissionTo('client.view');
+        Sanctum::actingAs($this->tech, ['tickets.update', 'clients.read']);
+        $this->postJson($preview, array_replace($fields, ['contact_id' => $oldContact->id]))->assertUnprocessable();
+        $this->postJson($preview, array_replace($fields, ['site_id' => $oldSite->id]))->assertUnprocessable();
+        $this->postJson($preview, array_replace($fields, ['asset_id' => $oldAsset->id]))->assertUnprocessable();
+        $revision = $this->postJson($preview, $fields)->assertOk()->assertJsonPath('data.portal_visible', false)
+            ->assertJsonPath('data.source_client_id', $source->id)->assertJsonPath('data.impact.time_entries', 1)
+            ->assertJsonPath('data.impact.attachments', 1)->json('data.revision');
+        $this->assertTrue($ticket->refresh()->isPortalVisible());
+        $this->postJson($apply, $fields + ['revision' => str_repeat('0', 64), 'idempotency_key' => 'stale-review'])->assertConflict();
+        $input = $fields + ['revision' => $revision, 'idempotency_key' => 'confirmed-transfer'];
+        Queue::fake();
+        $this->postJson($apply, $input)->assertOk()->assertJsonPath('data.ticket_number', $ticket->ticket_key)
+            ->assertJsonPath('data.client_id', $target->id)->assertJsonPath('data.contact_id', $contact->id)->assertJsonPath('data.portal_visible', false);
+        $this->postJson($apply, $input)->assertOk()->assertJsonPath('data.replayed', true);
+        $this->assertNull($ticket->refresh()->portal_visible_by);
+        $this->assertSame($ticket->id, $message->fresh()->ticket_id);
+        $this->assertSame($ticket->id, $time->fresh()->ticket_id);
+        $this->assertSame(15, $time->fresh()->minutes);
+        $this->assertSame($ticket->id, $attachment->fresh()->ticket_id);
+        $this->assertSame($message->id, $attachment->fresh()->ticket_message_id);
+        // A delivery queued while the Ticket belonged to its previous customer must stop before resolving a recipient account.
+        $job = new \App\Modules\Ticket\Jobs\SendTicketReplyEmail($message->id);
+        $this->assertGreaterThanOrEqual($message->id, data_get($ticket->metadata, 'transfer_message_cutoff'));
+        $resolver = $this->mock(\App\Modules\Email\Services\DefaultEmailAccountResolver::class);
+        $resolver->shouldNotReceive('forScope');
+        $job->handle($resolver,
+            app(\App\Modules\Email\Services\EmailTemplateRenderer::class), app(\App\Modules\Email\Services\SmtpAccountMailer::class));
+        foreach ([$source, $target] as $client) {
+            $portal = new \App\Modules\CustomerPortal\Support\CustomerPortalContext(
+                new \App\Modules\CustomerPortal\Models\CustomerPortalAccount, new \App\Modules\CustomerPortal\Models\CustomerPortalMembership,
+                new \App\Modules\Contact\Models\Contact, $client, null);
+            $this->assertFalse(app(\App\Modules\Ticket\Support\PortalTicketAccess::class)->visibleTickets($portal)->whereKey($ticket->id)->exists());
+        }
+        $this->assertSame(1, $ticket->events()->where('type', 'client_transferred')->count());
+        $ticket->forceFill(['portal_visible_at' => now()])->save();
+        $this->postJson($apply, $input)->assertConflict();
+        Queue::assertNothingPushed();
+    }
+
     public function test_ticket_client_change_reconciles_existing_task_customer_context(): void
     {
+        $this->tech->givePermissionTo('client.view');
+        Sanctum::actingAs($this->tech, ['tickets.update', 'clients.read', 'tickets.read']);
         $first = Client::factory()->create(['active' => true]);
         $second = Client::factory()->create(['active' => true]);
         $ticket = app(StoreTicket::class)->handle(['subject' => 'Change linked Ticket customer', 'client_id' => $first->id], $this->tech);

@@ -44,7 +44,8 @@ class UpdateTicketFields
     public function handleWithResult(Ticket $ticket, array $data, ?User $actor = null): TicketMutationResult
     {
         $changed = false;
-        $result = DB::transaction(function () use ($ticket, $data, $actor, &$changed): TicketMutationResult {
+        $clientChanged = false;
+        $result = DB::transaction(function () use ($ticket, $data, $actor, &$changed, &$clientChanged): TicketMutationResult {
             $ticket = Ticket::query()->whereKey($ticket->getKey())->lockForUpdate()->firstOrFail();
             $fields = [
                 'subject',
@@ -64,6 +65,8 @@ class UpdateTicketFields
             ];
             $trackedFields = array_values(array_unique(array_merge($fields, [
                 'type',
+                'portal_visible_at',
+                'portal_visible_by',
                 'work_context_id',
                 'sla_source',
                 'sla_source_id',
@@ -93,6 +96,16 @@ class UpdateTicketFields
 
             if (array_key_exists('client_id', $updates)) {
                 $normalizedClientId = $updates['client_id'] === '' ? null : $updates['client_id'];
+                $clientChanged = ! $this->valuesEquivalent($ticket->client_id, $normalizedClientId);
+                if ($clientChanged) {
+                    app(ReviewTicketClientTransfer::class)->handle($ticket, array_replace($updates, ['client_id' => $normalizedClientId]), $actor);
+                    $after['portal_visible_at'] = null;
+                    $after['portal_visible_by'] = null;
+                    // A queued reply from the previous ownership must never be delivered to a new contact.
+                    $metadata = $ticket->metadata ?? [];
+                    $metadata['transfer_message_cutoff'] = (int) $ticket->messages()->withTrashed()->max('id');
+                    $after['metadata'] = $metadata;
+                }
                 $workContext = $this->workContexts->fromClientId($normalizedClientId);
 
                 if (! $this->valuesEquivalent($ticket->work_context_id, $workContext->id)) {
@@ -204,7 +217,7 @@ class UpdateTicketFields
             $ticketChangedBeforeClaim = collect($trackedFields)->contains(
                 fn (string $field): bool => ! $this->valuesEquivalent($initialState[$field] ?? null, $ticket->{$field}),
             );
-            if (($ticketChangedBeforeClaim || array_key_exists('is_scheduled', $data))
+            if (! $clientChanged && ($ticketChangedBeforeClaim || array_key_exists('is_scheduled', $data))
                 && ($wasUnassigned || ! $ownerWasSubmitted)) {
                 app(ClaimUnassignedTicket::class)->handle($ticket->refresh(), $actor, 'fields_updated');
             }
@@ -230,17 +243,17 @@ class UpdateTicketFields
             $history = TicketEvent::query()->create([
                 'ticket_id' => $ticket->id,
                 'actor_id' => $actor?->id,
-                'type' => 'fields_updated',
+                'type' => $clientChanged ? 'client_transferred' : 'fields_updated',
                 'before' => $eventBefore,
                 'after' => $eventAfter,
-                'message' => 'Ticket fields updated.',
+                'message' => $clientChanged ? 'Ticket transferred. Customer portal publication cleared.' : 'Ticket fields updated.',
             ]);
 
             if (array_intersect(array_keys($eventAfter), ['client_id', 'site_id', 'contact_id', 'asset_id', 'category_id', 'queue_id', 'owner_id']) !== []) {
                 app(InvalidateTicketWorkflowReviews::class)->handle($ticket, 'Material Ticket fields changed.', $actor);
             }
 
-            $mutationEvent = $eventAfter === []
+            $mutationEvent = $clientChanged || $eventAfter === []
                 ? null
                 : $this->mutationEvent($ticket, $eventBefore, $eventAfter, $history, $data, $actor);
 
@@ -251,7 +264,7 @@ class UpdateTicketFields
             return new TicketMutationResult($ticket->refresh(), $mutationEvent);
         });
 
-        if ($changed) {
+        if ($changed && ! $clientChanged) {
             app(ApplyTicketWorkflowActionTrigger::class)->handle($result->ticket->refresh(), TicketAction::UPDATE_FIELDS, $actor);
         }
 

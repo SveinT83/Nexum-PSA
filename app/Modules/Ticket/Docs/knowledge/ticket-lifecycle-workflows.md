@@ -170,3 +170,10 @@ This protects the supported current runtime path. It does not retry or delete hi
 jobs, approve a blocked queue, change Ticket Rules production activation, or claim customer
 notification delivery. HR-2026-10-27-OPS-RULES-COORDINATOR remains In Review; the named runtime/Email
 owners must review the exact pending/failed cohorts before further operating activation.
+
+## Transfer a Ticket to a Client
+
+1. Open the Ticket, choose **Edit**, and select the destination Client. Clear or replace a contact, site or asset belonging to the previous customer. Staff need Ticket update and Client view access.
+2. Save the change. The Ticket keeps its number, attachments, work and history. Both portals hide the Ticket. The transfer sends no customer notification. Review the contents before using the separate portal publication action.
+3. API operators can POST to `/api/v1/tickets/{ticket}/client-transfer/preview` with the destination `client_id` and any replacement `site_id`, `contact_id` or `asset_id`. Read the impact and revision. POST the same fields, revision and a stable `idempotency_key` to `/api/v1/tickets/{ticket}/client-transfer`. The token needs `tickets.update` and `clients.read` and the user needs the corresponding native rights.
+4. Reopen the same Ticket and verify the Client, contact and hidden portal status. If the preview is stale or outbound email is still open, resolve it and review a new preview.

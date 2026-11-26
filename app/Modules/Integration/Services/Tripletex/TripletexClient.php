@@ -196,7 +196,13 @@ final class TripletexClient
     {
         $this->customerDeadline ??= microtime(true) + 90;
         $this->assertCustomerWrites();
-        if (array_diff(array_keys($payload), ['name', 'customerNumber', 'organizationNumber', 'invoiceEmail', 'physicalAddress'])
+        if (array_diff(array_keys($payload), ['name', 'customerNumber', 'organizationNumber', 'invoiceEmail', 'physicalAddress', 'invoiceSendMethod', 'isPrivateIndividual'])
+            || (array_key_exists('isPrivateIndividual', $payload) && ! is_bool($payload['isPrivateIndividual']))
+            || (array_key_exists('invoiceSendMethod', $payload)
+                && (! in_array($payload['invoiceSendMethod'], ['EMAIL', 'MANUAL'], true)
+                    || ($payload['invoiceSendMethod'] === 'EMAIL' && ! filled($payload['invoiceEmail'] ?? null))
+                    || ($payload['invoiceSendMethod'] === 'MANUAL' && (($payload['isPrivateIndividual'] ?? false) !== true
+                        || filled($payload['invoiceEmail'] ?? null)))))
             || ! is_string($payload['name'] ?? null) || trim($payload['name']) === ''
             || ! is_int($payload['customerNumber'] ?? null) || $payload['customerNumber'] < 1
             || $payload['customerNumber'] > 2147483647) {
@@ -380,10 +386,50 @@ final class TripletexClient
             $response = $this->transport($method, $path, $options, $this->sessionToken());
         }
         if (! $response->successful()) {
-            throw new TripletexException('request_failed', $response->status());
+            // Only customer-create validation has a reviewed field/message contract.
+            $errors = $method === 'POST' && $path === '/customer' && $response->status() === 422
+                ? $this->customerFieldErrors($response) : [];
+            throw new TripletexException('request_failed', $response->status(), $errors);
         }
 
         return $response;
+    }
+
+    /** Translate known diagnostics rather than echoing arbitrary provider text or submitted values. */
+    private function customerFieldErrors(Response $response): array
+    {
+        $messages = $response->json('validationMessages');
+        if (! is_array($messages) || ! array_is_list($messages)) {
+            return [];
+        }
+        $fields = [
+            'name' => 'name', 'organizationNumber' => 'org_no', 'invoiceEmail' => 'billing_email',
+            'isPrivateIndividual' => 'client_format_id', 'invoiceSendMethod' => 'tripletex.invoiceSendMethod',
+            'postalAddress' => 'site_address', 'physicalAddress' => 'site_address',
+            'postalAddress.addressLine1' => 'site_address', 'physicalAddress.addressLine1' => 'site_address',
+            'postalAddress.postalCode' => 'site_zip', 'physicalAddress.postalCode' => 'site_zip',
+            'postalAddress.city' => 'site_city', 'physicalAddress.city' => 'site_city',
+        ];
+        $catalog = [
+            'Må fylles ut ved bruk av EHF' => 'Tripletex requires this field for EHF invoicing.',
+            'Kunden kan ikke motta EHF-dokumenter' => 'This customer cannot receive EHF documents.',
+            'Required for EHF' => 'Tripletex requires this field for EHF invoicing.',
+        ];
+        $errors = [];
+        foreach (array_slice($messages, 0, 20) as $message) {
+            if (! is_array($message) || ! is_string($message['field'] ?? null)
+                || ! is_string($message['message'] ?? null) || ! isset($fields[$message['field']])) {
+                continue;
+            }
+            $field = $fields[$message['field']];
+            $safe = $catalog[$message['message']] ?? 'Tripletex rejected this field. Review the supplied value.';
+            // Duplicate/large hostile provider lists cannot inflate the public error response.
+            if (count($errors[$field] ?? []) < 3 && ! in_array($safe, $errors[$field] ?? [], true)) {
+                $errors[$field][] = $safe;
+            }
+        }
+
+        return $errors;
     }
 
     private function sessionToken(): string

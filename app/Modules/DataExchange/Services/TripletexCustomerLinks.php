@@ -13,21 +13,34 @@ use Illuminate\Support\Str;
 /** Explicit, drift-checked adoption is the only way to change an existing linked number. */
 class TripletexCustomerLinks
 {
-    public function adopt(Integration $connection, Client $client, int $customerId, string $expectedLocal, string $expectedRemote, bool $acceptChange): void
+    public function adopt(Integration $connection, Client $client, int $customerId, string $expectedLocal, string $expectedRemote, bool $acceptChange, bool $requireActive = false): void
     {
-        Cache::lock(TripletexCustomerNumbers::lockKey($connection->id), 600)->block(30, function () use ($connection, $client, $customerId, $expectedLocal, $expectedRemote, $acceptChange) {
+        Cache::lock(TripletexCustomerNumbers::lockKey($connection->id), 600)->block(30, function () use ($connection, $client, $customerId, $expectedLocal, $expectedRemote, $acceptChange, $requireActive) {
             $authority = app(TripletexCustomerNumbers::class);
             abort_unless(config('tripletex.enabled'), 422, 'Enable the Tripletex integration runtime before reviewing customer links.');
+            if ($requireActive) {
+                abort_unless($authority->connection()?->id === $connection->id, 409, 'The active Tripletex connection changed. Review both customers again.');
+            }
             $authority->ready($connection->fresh());
             $remote = (new TripletexClient($connection->fresh()))->customer($customerId);
             $authority->assertUsable($remote);
             abort_unless((string) $remote['customerNumber'] === $expectedRemote, 409, 'Tripletex changed. Review the link again.');
-            DB::transaction(function () use ($connection, $client, $customerId, $expectedLocal, $expectedRemote, $acceptChange, $authority) {
+            DB::transaction(function () use ($connection, $client, $customerId, $expectedLocal, $expectedRemote, $acceptChange, $authority, $remote) {
                 $current = Client::whereKey($client->id)->lockForUpdate()->firstOrFail();
+                $localOrg = TripletexCustomerNumbers::organizationNumber($current->org_no);
+                $remoteOrg = TripletexCustomerNumbers::organizationNumber($remote['organizationNumber'] ?? null);
+                abort_if($localOrg !== '' && $remoteOrg !== '' && $localOrg !== $remoteOrg, 409, 'The organization numbers differ. Review both customer records.');
+                $link = TripletexCustomerLink::where('client_id', $current->id)->first();
+                // Different request keys may select the same already-confirmed pairing.
+                if ($link && $link->status === 'linked' && $link->connection_id === $connection->id
+                    && $link->customer_id === $customerId && $link->company_id === (int) $connection->config['company_id']
+                    && $link->environment === $connection->config['environment'] && (string) $link->customer_number === $expectedRemote
+                    && (string) $current->client_number === $expectedRemote) {
+                    return;
+                }
                 abort_unless((string) $current->client_number === $expectedLocal, 409, 'Client changed. Review the link again.');
                 abort_unless($expectedLocal === $expectedRemote || $acceptChange, 422, 'Explicitly accept the Tripletex number before applying this change.');
                 $authority->assertNumberFree($expectedRemote, $current->id);
-                $link = TripletexCustomerLink::where('client_id', $current->id)->first();
                 abort_if($link && ($link->connection_id !== $connection->id || $link->customer_id !== $customerId), 409, 'An established customer identity cannot be reassigned.');
                 $other = TripletexCustomerLink::where('connection_id', $connection->id)->where('customer_id', $customerId)->first();
                 abort_if($other && $other->client_id && $other->id !== $link?->id, 409, 'This customer is already linked.');

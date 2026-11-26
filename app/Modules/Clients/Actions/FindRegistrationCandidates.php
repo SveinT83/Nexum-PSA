@@ -118,15 +118,29 @@ final class FindRegistrationCandidates
                 'name' => $client->name, 'org_no' => (string) $client->org_no, 'matched_fields' => array_keys($reasons[$client->id])];
         }
 
+        // Publish the reviewed write path only to staff who can actually pair the two records.
+        if ($connection && ! $request->user()->isSystemActor() && $request->user()->checkPermissionTo('integration.tripletex_manage', 'web')
+            && app(DomainApiAuthorization::class)->permits($request, 'client.update')
+            && (! $request->is('api/*') || $request->user()->tokenCan('clients.update'))) {
+            foreach ($local as &$candidate) {
+                $candidate['merge_url'] = route('api.v1.clients.tripletex.merge', $candidate['id']);
+            }
+            unset($candidate);
+            foreach ($choices as &$candidate) {
+                $candidate['connection_id'] = $connection->id;
+                $candidate['review_url'] = route('tech.clients.tripletex.review', [
+                    'connection' => $connection->id, 'customer_id' => $candidate['id'],
+                ]);
+            }
+            unset($candidate);
+        }
+
         return array_merge($local, $choices);
     }
 
     private function organization(?string $value): ?string
     {
-        $value = strtoupper(preg_replace('/[\s-]+/', '', trim((string) $value)));
-        if (preg_match('/^(?:NO)?([0-9]{9})(?:MVA)?$/D', $value, $matches)) {
-            return $matches[1];
-        }
+        $value = TripletexCustomerNumbers::organizationNumber($value);
 
         return preg_match('/^[A-Z0-9]{6,50}$/D', $value) ? $value : null;
     }

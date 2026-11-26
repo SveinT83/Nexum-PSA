@@ -128,34 +128,41 @@ class ClientController extends Controller
                 }
 
 
-                $client = $createClient->handle(array_filter([
-                    'tripletex_site' => $this->tripletexSitePayload($request),
-                    'tripletex_number_mode' => $validated['tripletex_number_mode'] ?? false,
-                    'tripletex_request_key' => $validated['tripletex_request_key'] ?? null,
-                    'tripletex_customer_id' => $validated['tripletex_customer_id'] ?? null,
-                    'name' => $validated['name'],
-                    'client_number' => $validated['client_number'] ?? null,
-                    'org_no' => $validated['org_no'] ?? null,
-                    'client_format_id' => $validated['client_format_id'] ?? null,
-                    'website' => $validated['website'] ?? null,
-                    'sales_category_id' => $validated['sales_category_id'] ?? null,
-                    'lead_temperature' => $validated['lead_temperature'] ?? 3,
-                    'billing_email' => $validated['billing_email'] ?? null,
-                    'notes' => $validated['notes'] ?? null,
-                    'active' => $validated['active'] ?? true,
-                ], static fn ($value, $key) => $key !== 'tripletex_site' || $value !== null, ARRAY_FILTER_USE_BOTH), function (Client $client) use ($request, $customFields): void {
+                try {
+                    $client = $createClient->handle(array_filter([
+                        'tripletex_site' => $this->tripletexSitePayload($request),
+                        'tripletex_number_mode' => $validated['tripletex_number_mode'] ?? false,
+                        'tripletex_request_key' => $validated['tripletex_request_key'] ?? null,
+                        'tripletex_customer_id' => $validated['tripletex_customer_id'] ?? null,
+                        'name' => $validated['name'],
+                        'client_number' => $validated['client_number'] ?? null,
+                        'org_no' => $validated['org_no'] ?? null,
+                        'client_format_id' => $validated['client_format_id'] ?? null,
+                        'website' => $validated['website'] ?? null,
+                        'sales_category_id' => $validated['sales_category_id'] ?? null,
+                        'lead_temperature' => $validated['lead_temperature'] ?? 3,
+                        'billing_email' => \App\Modules\Clients\Support\ClientBillingEmail::fromInput($validated),
+                        'notes' => $validated['notes'] ?? null,
+                        'active' => $validated['active'] ?? true,
+                    ], static fn ($value, $key) => $key !== 'tripletex_site' || $value !== null, ARRAY_FILTER_USE_BOTH), function (Client $client) use ($request, $customFields): void {
 
-                    $sitePayload = $this->sitePayloadFromRequest($request, 'Default');
-                    $sitePayload['is_default'] = true;
-                    $site = $client->sites()->create($sitePayload);
-                    if ($request->has('primary_contact')) {
-                        app(\App\Modules\Contact\Actions\StoreContact::class)->handle($request->input('primary_contact') + [
-                            'client_id' => $client->id, 'site_id' => $site->id, 'is_default_for_site' => true,
-                            'is_default_for_client' => true, 'active' => true, 'created_from' => 'client_api_creation',
-                        ]);
+                        $sitePayload = $this->sitePayloadFromRequest($request, 'Default');
+                        $sitePayload['is_default'] = true;
+                        $site = $client->sites()->create($sitePayload);
+                        if ($request->has('primary_contact')) {
+                            app(\App\Modules\Contact\Actions\StoreContact::class)->handle($request->input('primary_contact') + [
+                                'client_id' => $client->id, 'site_id' => $site->id, 'is_default_for_site' => true,
+                                'is_default_for_client' => true, 'active' => true, 'created_from' => 'client_api_creation',
+                            ]);
+                        }
+                        $customFields->handle($client, (array) $request->input('custom_fields', []), $request->user(), 'api');
+                    });
+                } catch (\App\Modules\DataExchange\Exceptions\TripletexCustomerAlreadyLinked $existing) {
+                    if (! $discovery->allowed($request)) {
+                        throw $existing;
                     }
-                    $customFields->handle($client, (array) $request->input('custom_fields', []), $request->user(), 'api');
-                });
+                    return ['client_id' => $existing->clientId, 'state' => 'use_existing'];
+                }
 
                 $rmm = null;
                 if ($request->boolean('create_in_rmm')) {
@@ -171,13 +178,24 @@ class ClientController extends Controller
             }, $request->has('primary_contact') || $request->boolean('create_in_rmm'), $request->boolean('create_in_rmm') || (bool) app(\App\Modules\DataExchange\Services\TripletexCustomerNumbers::class)->connection());
         if (($result['state'] ?? '') === 'selection_required') {
             // Replayed selections reflect current permissions and the latest available identities.
-            return response()->json(['state' => 'selection_required', 'candidates' => $choices ?? $discovery->handle($request, $identity)])
+            // Older clients negotiate selections as a successful response. Strict clients receive a conflict.
+            $status = in_array('handling=strict', array_map('trim', explode(',', (string) $request->header('Prefer'))), true) ? 409 : 200;
+
+            return response()->json(['state' => 'selection_required', 'candidates' => $choices ?? $discovery->handle($request, $identity)], $status)
+                ->header('Vary', 'Prefer')
                 ->header('Cache-Control', 'private, no-store');
         }
         if (! isset($result['client_id'])) {
             return response()->json($result, 202);
         }
         $client = Client::query()->findOrFail($result['client_id']);
+        if (($result['state'] ?? null) === 'use_existing') {
+            abort_unless($discovery->allowed($request), 403);
+            return (new ClientResource($client->load('sites')))->additional([
+                'state' => 'use_existing', 'registration_applied' => false,
+                'operation_id' => $result['operation_id'], 'replayed' => $result['replayed'],
+            ])->response()->header('Cache-Control', 'private, no-store');
+        }
 
         return (new ClientResource($client->load('sites')))->additional(['operation_id' => $result['operation_id'], 'replayed' => $result['replayed'], 'rmm' => $result['rmm'] ?? null])
             ->response()
