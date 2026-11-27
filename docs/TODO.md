@@ -33,7 +33,7 @@ Overview page 428 revision 13 was read back. Rollback copies are under
 
 ## Production deployment of PR #414, 26 November 2026
 
-PR #414 merged to Main at 36c738a0 and is live on production VM169. Customer pairing, Ticket transfer and decimal costs were installed. The authenticated production Commercial endpoint returned 12 tools and cost context HTTP 200. Individual employee ChatGPT discovery and named manual checks remain open. See [production verification](plans/2026-11-26-pr414-production.md).
+PR #414 merged to Main at 36c738a0 and is live on production VM169. Customer pairing, Ticket transfer and decimal costs were installed. The authenticated production Commercial endpoint returned 12 tools and cost context HTTP 200. Individual employee ChatGPT discovery and named manual checks remain open. See [production verification](plans/2026-11-26-pr414-production.md). On 27 November both synthetic customer portal sessions passed on the release code. The restarted gateway exposed all four customer/Ticket actions and all twelve Commercial tools. The employee connector still serves the previous catalogue. Owner for the remaining workspace refresh and end-to-end read is the gateway/workspace maintainer. Both issues remain open.
 
 ## Workday employee suggestions and Ticket/Task time report (2026-11-22)
 

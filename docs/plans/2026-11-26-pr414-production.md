@@ -9,3 +9,13 @@ Public HTTPS returned 200 for /up and /login. Without a bearer token, the Commer
 The prior release and OpenAPI descriptor are recoverable through the VM's root-private /root/nexum-411-413-20261126T161514Z/activate.py rollback. This restores the previous release pointer and descriptor and reloads PHP-FPM. The rollback command was prepared and inspected. Production rollback was not invoked.
 
 Seven employee documentation pages were updated and read back at their existing locations: 389 rev17, 424 rev38, 451 rev29, 457 rev16, 617 rev11, 639 rev10 and 843 rev9. The native endpoint is deployed. No shared LiteLLM registration, catalogue, network rule or user binding changed in this release. Actual employee ChatGPT discovery and read-back, and the human registration/portal checks, remain in HR-2026-11-25-CLIENT-REGISTRATION-TRANSFER and HR-2026-11-26-COMMERCIAL-MCP.
+
+## 27 November 2026 verification
+
+Two customers signed in through the usual portal login in separate cookie sessions on the deployed release sources in an isolated Dev fixture. Staff preview and transfer returned 200. Before the move the original customer could view the Ticket and download the attachment. After the move both customers received 404 for detail and download, and both lists omitted the Ticket. The destination customer's own control Ticket remained available. Two focused Laravel tests passed with 40 assertions. No production customer session or record was used for the move.
+
+The production gateway restarted with the updated Nexum OpenAPI registration. Its live tool inventory returned 1,413 entries including the four registration, pairing and transfer actions and all twelve Commercial operations. Contract tests checked personal credential resolution and the missing-binding denial. A synthetic large catalogue verified that the affected OpenAI profile retained the existing visible tools and the new actions among 1,000 authorized entries.
+
+A genuine OpenAI connector service search succeeded after restart. Its saved tool list still lacked the new actions. Direct authenticated production MCP discovery returned twelve tools and the cost and term indexes both returned native HTTP 200. The production candidate lookup with a synthetic address returned `no_match`. Anonymous discovery returned HTTP 401 on both the public gateway and the native Commercial endpoint. The intended employee's ChatGPT catalogue refresh and calls remain outstanding. Both issues stay open. Named human review remains In Review.
+
+The isolated Commercial MCP workflow passed again with 54 assertions on 27 November. The gateway and Nexum MCP operational pages were published and read back in BookStack (799 revision 4, 843 revision 10).
